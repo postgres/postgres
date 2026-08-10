@@ -23,7 +23,12 @@
    </para>
 
    <para>
-    However, if you have any GIN indexes, see the changelog entry below
+    However, the first three security entries below describe configuration
+    adjustments and data cleanups that you may need to make after updating.
+   </para>
+
+   <para>
+    Also, if you have any GIN indexes, see the changelog entry below
     about possibly-corrupt <structfield>reltuples</structfield> values for
     their tables.
    </para>
@@ -44,6 +49,1026 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Jacob Champion <jchampion@postgresql.org>
+Branch: master [226e49cbe] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [5d47df21e] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [2a29b607d] 2026-08-10 06:38:12 -0700
+Branch: REL_17_STABLE [01992176e] 2026-08-10 06:38:18 -0700
+Branch: REL_16_STABLE [4e1252ee5] 2026-08-10 06:38:24 -0700
+Branch: REL_15_STABLE [99f205407] 2026-08-10 06:38:30 -0700
+Branch: REL_14_STABLE [bf3842a64] 2026-08-10 06:38:36 -0700
+Author: Jacob Champion <jchampion@postgresql.org>
+Branch: master [20e9dcefd] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [7082ce248] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [82fd68801] 2026-08-10 06:38:12 -0700
+Branch: REL_17_STABLE [4fcccea97] 2026-08-10 06:38:18 -0700
+-->
+     <para>
+      Restrict logical decoding output plugins to the set specified by a
+      new server parameter <varname>output_plugin_libraries</varname>
+      (Jacob Champion)
+      <ulink url="&commit_baseurl;2a29b607d">&sect;</ulink>
+      <ulink url="&commit_baseurl;82fd68801">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, a replication user could select any loadable library for
+      logical decoding, allowing exploits of various sorts.  To allow
+      locking this down without breaking setups that worked before,
+      introduce a whitelist of allowed output plugins.
+     </para>
+
+     <para>
+      By default, only the output plugins shipped as part
+      of <productname>PostgreSQL</productname>
+      (<literal>pgoutput</literal> and <literal>test_decoding</literal>)
+      are included in <varname>output_plugin_libraries</varname>.
+      Installations that rely on other output plugins must add them
+      after updating the server, for example
+<programlisting>
+output_plugin_libraries = 'pgoutput, test_decoding, my_trusted_decoder'
+</programlisting>
+     </para>
+
+     <para>
+      Additionally, <command>pg_upgrade --check</command> will fail if the
+      <varname>output_plugin_libraries</varname> parameter on the new
+      cluster does not permit the plugins of logical replication slots
+      on the old cluster, when migrating from versions 17 and later.
+      Make necessary additions to the new cluster's setting before
+      performing <application>pg_upgrade</application>.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Vladimir Tokarev and Yu Kunpeng
+      for reporting this problem.
+      (CVE-2026-6471)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+Branch: master [d0ecee6de] 2026-08-10 06:37:50 -0700
+Branch: REL_19_STABLE [ba207f58f] 2026-08-10 06:38:06 -0700
+Branch: REL_18_STABLE [fe32b10fc] 2026-08-10 06:38:13 -0700
+Branch: REL_17_STABLE [b05cfc693] 2026-08-10 06:38:19 -0700
+Branch: REL_16_STABLE [6ca6023ca] 2026-08-10 06:38:25 -0700
+Branch: REL_15_STABLE [472ef7e4a] 2026-08-10 06:38:31 -0700
+Branch: REL_14_STABLE [7e29eb6f4] 2026-08-10 06:38:37 -0700
+Author: Jacob Champion <jchampion@postgresql.org>
+Branch: master [49e795414] 2026-08-10 06:37:50 -0700
+Branch: REL_19_STABLE [d97b3f58c] 2026-08-10 06:38:06 -0700
+Branch: REL_18_STABLE [4c5128ca0] 2026-08-10 06:38:13 -0700
+Branch: REL_17_STABLE [7eed42aa8] 2026-08-10 06:38:19 -0700
+Branch: REL_16_STABLE [ba2a63faf] 2026-08-10 06:38:25 -0700
+Branch: REL_15_STABLE [953be116c] 2026-08-10 06:38:31 -0700
+Branch: REL_14_STABLE [e2c48c81f] 2026-08-10 06:38:37 -0700
+-->
+     <para>
+      Fix <filename>contrib/pgcrypto</filename>'s PGP encryption to detect
+      unsupported ciphers (Daniel Gustafsson)
+      <ulink url="&commit_baseurl;fe32b10fc">&sect;</ulink>
+      <ulink url="&commit_baseurl;4c5128ca0">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, if OpenSSL rejected the requested cipher (for example,
+      because it is running in FIPS mode, or the legacy provider hasn't
+      been loaded), <application>pgcrypto</application> failed to notice
+      the failure and simply XOR'd the non-encrypted block with the
+      plaintext, rendering the <quote>encryption</quote> trivially
+      breakable.  This will typically occur with deprecated or non-FIPS
+      cipher algorithms (cipher-algo=blowfish/bf, twofish, cast5, or
+      3des).
+     </para>
+
+     <para>
+      By default, <application>pgcrypto</application> will now fail to
+      decrypt any messages that were affected in this way.  To allow
+      retrieval of such data, a new
+      option <literal>ignore-cipher-failure</literal> has been added
+      to <function>pgp_pub_decrypt()</function>
+      and <function>pgp_sym_decrypt()</function>.
+      Setting <literal>ignore-cipher-failure=1</literal> will restore
+      their previous behavior, allowing the faulty encryption wrapper to
+      be stripped off:
+<programlisting>
+pgp_sym_decrypt(encrypted_column, <replaceable>any key</replaceable>, 'ignore-cipher-failure=1')
+</programlisting>
+      Once the affected messages are identified and stripped of their
+      wrappers, they can then be re-encrypted with a modern algorithm. It
+      is important however that the behavior of OpenSSL be the same as it
+      was when the faulty messages were created: if the set of unsupported
+      algorithms is not the same, this approach will not work. See the
+      documentation for <literal>ignore-cipher-failure</literal>.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Shishir Sharma
+      for reporting this problem.
+      (CVE-2026-14663)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3045a25ba] 2026-08-10 06:37:50 -0700
+Branch: REL_19_STABLE [d6ab88d37] 2026-08-10 06:38:06 -0700
+Branch: REL_18_STABLE [29921259e] 2026-08-10 06:38:13 -0700
+Branch: REL_17_STABLE [46fa1f6f3] 2026-08-10 06:38:19 -0700
+Branch: REL_16_STABLE [2bdfd5cdc] 2026-08-10 06:38:25 -0700
+Branch: REL_15_STABLE [3fdcfa8f7] 2026-08-10 06:38:31 -0700
+Branch: REL_14_STABLE [5c51ae455] 2026-08-10 06:38:36 -0700
+Branch: master [cf754f741] 2026-08-10 06:37:50 -0700
+Branch: REL_19_STABLE [8cf01e213] 2026-08-10 06:38:06 -0700
+Branch: REL_18_STABLE [900894d35] 2026-08-10 06:38:13 -0700
+Branch: REL_17_STABLE [dca6627de] 2026-08-10 06:38:19 -0700
+Branch: REL_16_STABLE [db96e87f9] 2026-08-10 06:38:25 -0700
+Branch: REL_15_STABLE [8cdbabea7] 2026-08-10 06:38:31 -0700
+Branch: REL_14_STABLE [7215c7e96] 2026-08-10 06:38:36 -0700
+-->
+     <para>
+      Fix <application>psql</application> to skip in-line data following a
+      scripted <command>COPY ... FROM STDIN</command> command, even if
+      the <command>COPY</command> fails before
+      sending <literal>PGRES_COPY_IN</literal> (Tom Lane)
+      <ulink url="&commit_baseurl;29921259e">&sect;</ulink>
+      <ulink url="&commit_baseurl;900894d35">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, if a <literal>COPY</literal> command failed at startup
+      (for instance, because the target table doesn't exist)
+      <application>psql</application> would not realize that and would
+      proceed to read the following in-line data as SQL commands.  In the
+      best case that's wrong and in the worst case it's a SQL-injection
+      hazard.  Teach <application>psql</application> to recognize
+      syntactically-valid <command>COPY ... FROM STDIN</command> commands
+      and to skip data on its own authority if the server doesn't respond
+      with <literal>PGRES_COPY_IN</literal>.
+     </para>
+
+     <para>
+      While this fix is unlikely to affect any production SQL scripts,
+      test scripts might intentionally exercise failing <command>COPY
+      ... FROM STDIN</command> commands.  Those will need to gain
+      a <literal>\.</literal> data terminator line after each such
+      command.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Alexander Lakhin
+      for reporting this problem.
+      (CVE-2026-6464)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [9e02e2e18] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [64a65ead1] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [37b8f3b0e] 2026-08-10 06:38:12 -0700
+Branch: REL_17_STABLE [60887d348] 2026-08-10 06:38:18 -0700
+Branch: REL_16_STABLE [7d150b5c9] 2026-08-10 06:38:24 -0700
+Branch: REL_15_STABLE [fc933ce00] 2026-08-10 06:38:30 -0700
+Branch: REL_14_STABLE [1f49beef2] 2026-08-10 06:38:36 -0700
+-->
+     <para>
+      Cross-check the output row type of a portal
+      running <command>EXECUTE</command> or <command>FETCH</command>
+      (Robert Haas)
+      <ulink url="&commit_baseurl;37b8f3b0e">&sect;</ulink>
+     </para>
+
+     <para>
+      <command>EXECUTE</command> and <command>FETCH</command> use two
+      portals: an outer one for the statement itself, and an inner one
+      running the query being executed on its behalf.  It was previously
+      possible to make the declared row types of the two portals diverge,
+      leading to server memory disclosure and arbitrary code execution.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Ben Morris (in collaboration with Claude and Anthropic Research)
+      and Peter Geoghegan
+      for reporting this problem.
+      (CVE-2026-16239)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3d724bf4f] 2026-08-10 06:37:47 -0700
+Branch: REL_19_STABLE [3294ab839] 2026-08-10 06:38:03 -0700
+Branch: REL_18_STABLE [4fafe2380] 2026-08-10 06:38:10 -0700
+Branch: REL_17_STABLE [12a620686] 2026-08-10 06:38:17 -0700
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+Branch: REL_16_STABLE [5dbeb69bc] 2026-07-29 17:15:45 +0200
+Branch: REL_15_STABLE [8f64cc83f] 2026-07-29 17:15:45 +0200
+Branch: REL_14_STABLE [5fb3c6389] 2026-07-29 17:15:45 +0200
+-->
+     <para>
+      Fix buffer overrun with long time zone abbreviation in
+      <function>to_char()</function> (Tom Lane)
+      <ulink url="&commit_baseurl;4fafe2380">&sect;</ulink>
+     </para>
+
+     <para>
+      This can easily crash the server, and exploits leading to arbitrary
+      code execution have been reported.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Hcamael, Amjad Shahzad, Tan Zhen of AntAISecurityLab, Tomer Fichman,
+      Zheng Yu, Amy Burnett (OpenAI Codex Security), Rick de Jager, Heewon
+      Song, Sylvie Mayer, Aleksander Alekseev, and Hillai Ben Sasson
+      for reporting this problem.
+      (CVE-2026-14669)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+Branch: master [343aabf1d] 2026-08-10 06:37:48 -0700
+Branch: REL_19_STABLE [7df2aa8ef] 2026-08-10 06:38:04 -0700
+Branch: REL_18_STABLE [b7e5c3f63] 2026-08-10 06:38:10 -0700
+Branch: REL_17_STABLE [e91dcfcca] 2026-08-10 06:38:17 -0700
+Branch: REL_16_STABLE [3179253c2] 2026-08-10 06:38:23 -0700
+Branch: REL_15_STABLE [127a0673f] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [890327639] 2026-08-10 06:38:35 -0700
+-->
+     <para>
+      Fix buffer overrun in regexp match/split functions (Masahiko Sawada)
+      <ulink url="&commit_baseurl;b7e5c3f63">&sect;</ulink>
+     </para>
+
+     <para>
+      If passed invalidly-encoded data, these functions could write past
+      the end of their conversion buffer.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Francesco Verardi
+      for reporting this problem.
+      (CVE-2026-14664)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [a16c31d39] 2026-08-10 06:37:50 -0700
+Branch: REL_19_STABLE [80ce920a5] 2026-08-10 06:38:06 -0700
+Branch: REL_18_STABLE [08e812c02] 2026-08-10 06:38:13 -0700
+Branch: REL_17_STABLE [849da8210] 2026-08-10 06:38:19 -0700
+Branch: REL_16_STABLE [ac450853d] 2026-08-10 06:38:25 -0700
+Branch: REL_15_STABLE [3b925133b] 2026-08-10 06:38:31 -0700
+Branch: REL_14_STABLE [42d333a78] 2026-08-10 06:38:36 -0700
+-->
+     <para>
+      Harden the <function>ascii()</function> function against invalid
+      input (Michael Paquier)
+      <ulink url="&commit_baseurl;08e812c02">&sect;</ulink>
+     </para>
+
+     <para>
+      By supplying invalidly-encoded input, this function could be coaxed
+      to read and return a few bytes of data that it shouldn't.  In
+      assert-enabled builds, its assertions could be triggered too.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Hcamael
+      for reporting this problem.
+      (CVE-2026-18024)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [57835938f] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [b3d9262bb] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [08454e8b2] 2026-08-10 06:38:12 -0700
+Branch: REL_18_STABLE [8d428c6e6] 2026-08-10 06:38:12 -0700
+-->
+     <para>
+      Fix multirange type handling
+      in <function>pg_restore_attribute_stats()</function>
+      (OpenAI Security Research Team)
+      <ulink url="&commit_baseurl;08454e8b2">&sect;</ulink>
+      <ulink url="&commit_baseurl;8d428c6e6">&sect;</ulink>
+     </para>
+
+     <para>
+      <function>pg_restore_attribute_stats()</function> treated multirange
+      types just like their underlying range type.  This works correctly
+      for the bounds histogram, but it was wrong for all the other
+      statistics kinds.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Amy Burnett (OpenAI Codex Security)
+      for reporting this problem.
+      (CVE-2026-16238)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8f0c3d2fe] 2026-08-10 06:37:48 -0700
+Branch: REL_19_STABLE [0d60ee717] 2026-08-10 06:38:04 -0700
+Branch: REL_18_STABLE [a2cb5a1cf] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [0ebf896f4] 2026-08-10 06:38:17 -0700
+Branch: REL_16_STABLE [591192e2e] 2026-08-10 06:38:23 -0700
+Branch: REL_15_STABLE [005ffaa7f] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [59205c7e9] 2026-08-10 06:38:35 -0700
+-->
+     <para>
+      Make <function>scalarineqsel()</function> check that a constant it
+      expects to be of type <type>tid</type> actually is (Tom Lane)
+      <ulink url="&commit_baseurl;a2cb5a1cf">&sect;</ulink>
+     </para>
+
+     <para>
+      This expectation will hold for all the built-in operators that use
+      this estimator, but a maliciously-constructed operator could violate
+      it, leading to a crash or server memory disclosure.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Hcamael
+      for reporting this problem.
+      (CVE-2026-14668)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [23d9ad771] 2026-08-10 06:37:47 -0700
+Branch: REL_19_STABLE [cb947ca31] 2026-08-10 06:38:03 -0700
+Branch: REL_18_STABLE [e25135057] 2026-08-10 06:38:10 -0700
+Branch: REL_17_STABLE [fe0b5bd6d] 2026-08-10 06:38:17 -0700
+Branch: REL_16_STABLE [7c1a8805a] 2026-08-10 06:38:23 -0700
+Branch: REL_15_STABLE [f443d0a0a] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [7c2ba321d] 2026-08-10 06:38:34 -0700
+Branch: master [90649b6f8] 2026-08-10 06:37:47 -0700
+Branch: REL_19_STABLE [3b2238fbe] 2026-08-10 06:38:03 -0700
+Branch: REL_18_STABLE [dddc8a69f] 2026-08-10 06:38:10 -0700
+Branch: REL_17_STABLE [8e87bd473] 2026-08-10 06:38:17 -0700
+Branch: REL_16_STABLE [84b6a7a06] 2026-08-10 06:38:23 -0700
+Branch: REL_15_STABLE [4f8b37b6b] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [1e3014f37] 2026-08-10 06:38:34 -0700
+-->
+     <para>
+      Harden <type>tsvector</type> and <type>tsquery</type> code against
+      overly long values (both individual lexemes and total vector/query
+      length) (Tom Lane)
+      <ulink url="&commit_baseurl;e25135057">&sect;</ulink>
+      <ulink url="&commit_baseurl;dddc8a69f">&sect;</ulink>
+     </para>
+
+     <para>
+      The documented limits were not enforced in all code paths.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Yuhang Wu, Zhenpeng Lin, Zheng Yu, and Hcamael
+      for reporting these problems.
+      (CVE-2026-14662)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7bd56f7a3] 2026-08-10 06:37:48 -0700
+Branch: REL_19_STABLE [92972e815] 2026-08-10 06:38:04 -0700
+Branch: REL_18_STABLE [7f0e1aac7] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [797e3cc4c] 2026-08-10 06:38:17 -0700
+Branch: REL_16_STABLE [8c67c4cf5] 2026-08-10 06:38:23 -0700
+Branch: REL_15_STABLE [b417744a7] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [cf44ff5e6] 2026-08-10 06:38:35 -0700
+Branch: master [60e7329b9] 2026-08-10 06:37:48 -0700
+Branch: REL_19_STABLE [42d9749b7] 2026-08-10 06:38:04 -0700
+Branch: REL_18_STABLE [2a03f21da] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [8a40f4b09] 2026-08-10 06:38:17 -0700
+Branch: REL_16_STABLE [32e0d25d4] 2026-08-10 06:38:23 -0700
+Branch: REL_15_STABLE [eb2fa2704] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [c7f462838] 2026-08-10 06:38:35 -0700
+-->
+     <para>
+      Fix various places that mistakenly assumed they would not have to
+      deal with more than <literal>FUNC_MAX_ARGS</literal> function
+      arguments (Tom Lane)
+      <ulink url="&commit_baseurl;7f0e1aac7">&sect;</ulink>
+      <ulink url="&commit_baseurl;2a03f21da">&sect;</ulink>
+     </para>
+
+     <para>
+      Notably, the server's actual limit on the number of arguments to an
+      aggregate function is <literal>FUNC_MAX_ARGS - 1</literal>, but the
+      parser failed to enforce that, creating hazards downstream.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Zheng Yu, ylwangtju, and Masahiko Sawada
+      for reporting these problems.
+      (CVE-2026-14679)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8f7e35b08] 2026-08-10 06:37:48 -0700
+Branch: REL_19_STABLE [21a00de43] 2026-08-10 06:38:04 -0700
+Branch: REL_18_STABLE [54649de65] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [eb9e55297] 2026-08-10 06:38:17 -0700
+Branch: REL_16_STABLE [4c0c1b2cd] 2026-08-10 06:38:23 -0700
+Branch: REL_15_STABLE [e926a9aac] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [155dacbc5] 2026-08-10 06:38:35 -0700
+Branch: master [1aa601b4f] 2026-08-10 06:37:48 -0700
+Branch: REL_19_STABLE [21d8cfb18] 2026-08-10 06:38:04 -0700
+Branch: REL_18_STABLE [722695db1] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [83d0a083f] 2026-08-10 06:38:18 -0700
+Branch: REL_16_STABLE [7f308dd7c] 2026-08-10 06:38:23 -0700
+Branch: REL_15_STABLE [d6e861e19] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [913fe0c31] 2026-08-10 06:38:35 -0700
+-->
+     <para>
+      Reject calls from SQL to functions that take or return
+      type <type>internal</type> (Tom Lane)
+      <ulink url="&commit_baseurl;54649de65">&sect;</ulink>
+      <ulink url="&commit_baseurl;722695db1">&sect;</ulink>
+     </para>
+
+     <para>
+      The existing defenses against doing this have been shown to be
+      insufficient, so add more explicit checks.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Amy Burnett (OpenAI Codex Security)
+      for reporting this problem.
+      (CVE-2026-14680)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+Branch: master [6713a6e04] 2026-08-10 06:37:48 -0700
+Branch: REL_19_STABLE [93b93f28f] 2026-08-10 06:38:04 -0700
+Branch: REL_18_STABLE [a1fa24127] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [75a03c569] 2026-08-10 06:38:18 -0700
+Branch: REL_16_STABLE [7c3367ab5] 2026-08-10 06:38:24 -0700
+Branch: REL_15_STABLE [fb6d1ca8d] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [70a3b4e18] 2026-08-10 06:38:35 -0700
+-->
+     <para>
+      Preserve the ownership of extended statistics objects when they are
+      rebuilt by <command>ALTER TABLE</command> (Masahiko Sawada)
+      <ulink url="&commit_baseurl;a1fa24127">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, the role running <command>ALTER TABLE</command> gained
+      ownership of such objects, but that seems inappropriate.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Noah Misch
+      for reporting this problem.
+      (CVE-2026-6469)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [f9729b507] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [a3832a757] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [0ddd9098a] 2026-08-10 06:38:12 -0700
+Branch: REL_17_STABLE [5981fe370] 2026-08-10 06:38:18 -0700
+Branch: REL_16_STABLE [5e5ea74e3] 2026-08-10 06:38:24 -0700
+Branch: REL_15_STABLE [44ea6764b] 2026-08-10 06:38:30 -0700
+Branch: REL_14_STABLE [967acab87] 2026-08-10 06:38:35 -0700
+-->
+     <para>
+      When deparsing an <function>EXTRACT()</function> function call,
+      quote the field name if needed (Nathan Bossart)
+      <ulink url="&commit_baseurl;0ddd9098a">&sect;</ulink>
+     </para>
+
+     <para>
+      The parser accepts any string literal as a field name
+      in <function>EXTRACT()</function>, deferring validation to
+      execution.  If the call is stored and deparsed (for example
+      during <application>pg_dump</application>), the string body was
+      regurgitated verbatim, allowing SQL injection.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Ben Morris (in collaboration with Claude and Anthropic Research)
+      for reporting this problem.
+      (CVE-2026-15741)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [a9f6e768a] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [efdb26072] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [2e91f8548] 2026-08-10 06:38:12 -0700
+Branch: REL_17_STABLE [fd6d3e7e9] 2026-08-10 06:38:19 -0700
+Branch: REL_16_STABLE [24855357c] 2026-08-10 06:38:24 -0700
+Branch: REL_15_STABLE [97e277402] 2026-08-10 06:38:30 -0700
+Branch: REL_14_STABLE [323af0a4e] 2026-08-10 06:38:36 -0700
+Branch: master [53ed5ebd8] 2026-08-10 06:37:50 -0700
+Branch: REL_19_STABLE [bb1bc525d] 2026-08-10 06:38:06 -0700
+Branch: REL_18_STABLE [57f59ca1d] 2026-08-10 06:38:12 -0700
+Branch: REL_17_STABLE [671359605] 2026-08-10 06:38:19 -0700
+Branch: REL_16_STABLE [7a761fe40] 2026-08-10 06:38:25 -0700
+Branch: REL_15_STABLE [c062734cd] 2026-08-10 06:38:30 -0700
+Branch: REL_14_STABLE [b6e45b4f8] 2026-08-10 06:38:36 -0700
+Branch: master [4fac4c108] 2026-08-10 06:37:50 -0700
+Branch: REL_19_STABLE [424fb7160] 2026-08-10 06:38:06 -0700
+Branch: REL_18_STABLE [278053843] 2026-08-10 06:38:12 -0700
+Branch: REL_17_STABLE [d1c8aa0b0] 2026-08-10 06:38:19 -0700
+Branch: REL_16_STABLE [7ce056b17] 2026-08-10 06:38:24 -0700
+Branch: REL_15_STABLE [6dbedd48b] 2026-08-10 06:38:30 -0700
+Branch: REL_14_STABLE [1a358b8f2] 2026-08-10 06:38:36 -0700
+-->
+     <para>
+      Check for <literal>USAGE</literal> privilege on data types in places
+      that formerly failed to check that (Nathan Bossart)
+      <ulink url="&commit_baseurl;2e91f8548">&sect;</ulink>
+      <ulink url="&commit_baseurl;57f59ca1d">&sect;</ulink>
+      <ulink url="&commit_baseurl;278053843">&sect;</ulink>
+     </para>
+
+     <para>
+      <command>CREATE TYPE AS RANGE</command> did not check, nor
+      did <command>ALTER TABLE OF</command>, nor did commands that create
+      stored expressions.  These omissions allowed roles
+      without <literal>USAGE</literal> privilege to nonetheless create
+      objects depending on the type, possibly blocking the type's owner
+      from changing the type later.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Jingzhou Fu
+      for reporting this problem.
+      (CVE-2026-6470)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [ffca23839] 2026-08-10 06:37:50 -0700
+Branch: REL_19_STABLE [567286b76] 2026-08-10 06:38:06 -0700
+Branch: REL_18_STABLE [0b12f56bf] 2026-08-10 06:38:13 -0700
+Branch: REL_17_STABLE [1974acf23] 2026-08-10 06:38:19 -0700
+Branch: REL_16_STABLE [f5f2da795] 2026-08-10 06:38:25 -0700
+Branch: REL_15_STABLE [17b6083db] 2026-08-10 06:38:30 -0700
+Branch: REL_14_STABLE [f4174aa84] 2026-08-10 06:38:36 -0700
+-->
+     <para>
+      Invalidate role-dependent cached plans after role changes
+      (Ilya Staroverov, Shinya Kato, Nathan Bossart)
+      <ulink url="&commit_baseurl;0b12f56bf">&sect;</ulink>
+     </para>
+
+     <para>
+      Role membership, role attribute, and database ownership changes may
+      impact the expected behavior of row-level security policies, but
+      previously we'd continue to use cached plans that were made
+      according to the old state of affairs.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Ilya Staroverov and Shinya Kato
+      for reporting this problem.
+      (CVE-2026-14666)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [3bf185b4b] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [bf1bb7e29] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [203a48209] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [067a64d40] 2026-08-10 06:38:18 -0700
+-->
+     <para>
+      Reject GSSEncRequest after direct SSL connection (Michael Paquier)
+      <ulink url="&commit_baseurl;203a48209">&sect;</ulink>
+     </para>
+
+     <para>
+      After establishing a TLS-encrypted connection, the server would
+      still accept a request for GSSAPI encryption.  If that succeeded,
+      the connection would proceed using TLS encryption, but it would look
+      like a GSS connection to the <filename>pg_hba</filename> rules.
+      Thus, a <filename>pg_hba</filename> policy intending to disallow TLS
+      would not be enforced correctly.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      p4p3r
+      for reporting this problem.
+      (CVE-2026-14681)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [feb8b0182] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [4d192fa16] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [822143c4d] 2026-08-10 06:38:12 -0700
+Branch: REL_17_STABLE [dec60e8ad] 2026-08-10 06:38:18 -0700
+Branch: REL_16_STABLE [fadbe882d] 2026-08-10 06:38:24 -0700
+-->
+     <para>
+      Make mock SCRAM authentication secrets more plausible (Nathan Bossart)
+      <ulink url="&commit_baseurl;822143c4d">&sect;</ulink>
+     </para>
+
+     <para>
+      If a SCRAM login is attempted against a role that doesn't exist or
+      doesn't have a SCRAM secret, we generate a mock secret and carry out
+      the authentication handshake anyway, to avoid revealing these facts
+      to an attacker.  But the mock secret was made with a fixed iteration
+      count, which in itself can be an observable response discrepancy.
+      Use the configuration setting <varname>scram_iterations</varname>
+      instead, to make the mock secret look more like the installation's
+      real secrets.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Radim Marek
+      for reporting this problem.
+      (CVE-2026-14672)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [c7da85fec] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [457b8737a] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [a14ba29b1] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [c3c830272] 2026-08-10 06:38:18 -0700
+Branch: REL_16_STABLE [39f855e0e] 2026-08-10 06:38:24 -0700
+Branch: REL_15_STABLE [5737110b6] 2026-08-10 06:38:30 -0700
+Branch: REL_14_STABLE [74c59d062] 2026-08-10 06:38:35 -0700
+-->
+     <para>
+      Fix out-of-bounds writes in <application>ecpg</application>
+      applications caused by invalid <type>bytea</type> data received from
+      the server (Michael Paquier)
+      <ulink url="&commit_baseurl;a14ba29b1">&sect;</ulink>
+     </para>
+
+     <para>
+      <application>ecpg</application> assumed without checking that
+      any <type>bytea</type> value must begin with <literal>\x</literal>.
+      A broken or malicious server might send a string shorter than 2
+      bytes, resulting in memory clobber in the application.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      ylwangtju
+      for reporting this problem.
+      (CVE-2026-16241)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [086f6f176] 2026-08-10 06:37:50 -0700
+Branch: REL_19_STABLE [0119aa30e] 2026-08-10 06:38:06 -0700
+Branch: REL_18_STABLE [71ca694c7] 2026-08-10 06:38:13 -0700
+Branch: REL_17_STABLE [0bfac9e1f] 2026-08-10 06:38:19 -0700
+Branch: REL_16_STABLE [33d0c63fb] 2026-08-10 06:38:25 -0700
+Branch: REL_15_STABLE [df245c374] 2026-08-10 06:38:31 -0700
+Branch: REL_14_STABLE [2006fca40] 2026-08-10 06:38:37 -0700
+-->
+     <para>
+      Do not do backquote expansion on the argument
+      of <application>psql</application>'s <command>\unrestrict</command>
+      command (Nathan Bossart)
+      <ulink url="&commit_baseurl;71ca694c7">&sect;</ulink>
+     </para>
+
+     <para>
+      This oversight in the fix for CVE-2025-8714 allows a malicious
+      server to inject shell commands into plain-text dump output that
+      will be run at restore time on the machine
+      running <application>psql</application>, the exact scenario that
+      CVE-2025-8714 intended to prevent.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Lucas Velgus, Filip Janus, and Daniel Bakker
+      for reporting this problem.
+      (CVE-2026-18408)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [13bb73aeb] 2026-08-10 06:37:48 -0700
+Branch: REL_19_STABLE [86cd82bf4] 2026-08-10 06:38:04 -0700
+Branch: REL_18_STABLE [3392cce5c] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [c2b16f5d4] 2026-08-10 06:38:17 -0700
+Branch: REL_16_STABLE [3299c2ba0] 2026-08-10 06:38:23 -0700
+Branch: REL_15_STABLE [71ba5705d] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [57aa21f69] 2026-08-10 06:38:35 -0700
+-->
+     <para>
+      Remove <application>pg_dump</application>'s assumption that
+      <structname>pg_proc</structname>.<structfield>protrftypes</structfield>
+      cannot have more than <literal>FUNC_MAX_ARGS</literal> entries
+      (Tom Lane)
+      <ulink url="&commit_baseurl;3392cce5c">&sect;</ulink>
+     </para>
+
+     <para>
+      Since there could be entries for both input and output arguments,
+      it's feasible for this array's length to exceed
+      <literal>FUNC_MAX_ARGS</literal> (which constrains only input
+      arguments).  Even if that were not so,
+      <application>pg_dump</application> cannot assume that the server was
+      built with the same value of <literal>FUNC_MAX_ARGS</literal> that
+      it has.  An overrun would lead to a memory clobber
+      inside <application>pg_dump</application>.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Masahiko Sawada
+      for reporting this problem.
+      (CVE-2026-19385)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [63cb15f40] 2026-08-10 06:37:48 -0700
+Branch: REL_19_STABLE [8c48cd615] 2026-08-10 06:38:04 -0700
+Branch: REL_18_STABLE [87c4b8219] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [2d78c34f8] 2026-08-10 06:38:17 -0700
+Branch: REL_16_STABLE [477a6bdb0] 2026-08-10 06:38:23 -0700
+Branch: REL_15_STABLE [cf4ae7c3b] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [d7fcfead3] 2026-08-10 06:38:35 -0700
+-->
+     <para>
+      Harden <application>PL/Perl</application>
+      against <quote>tied</quote> Perl arrays and hashes (Tom Lane)
+      <ulink url="&commit_baseurl;87c4b8219">&sect;</ulink>
+     </para>
+
+     <para>
+      A tied object that doesn't behave like a regular one could lead to
+      memory overwrite, or to constructing a corrupt result array (which
+      would likely cause problems later).
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Hcamael
+      for reporting this problem.
+      (CVE-2026-14670)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [776467301] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [a1c1727cb] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [028ee716a] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [b56cc7deb] 2026-08-10 06:38:18 -0700
+Branch: REL_16_STABLE [8bbdc0540] 2026-08-10 06:38:24 -0700
+Branch: REL_15_STABLE [1eb0d5380] 2026-08-10 06:38:30 -0700
+Branch: REL_14_STABLE [aff9dac1c] 2026-08-10 06:38:35 -0700
+-->
+     <para>
+      Fix integer overflows in memory-allocation calculations
+      in <application>PL/Perl</application>
+      and <application>PL/Tcl</application> (Heikki Linnakangas)
+      <ulink url="&commit_baseurl;028ee716a">&sect;</ulink>
+     </para>
+
+     <para>
+      This is the same type of problem as CVE-2026-6473, just in a
+      different part of the code, and is fixed in the same way.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      the Tulya Project (Team Dhiutsa, Bitecope Technologies Private Ltd)
+      for reporting this problem.
+      (CVE-2026-14677)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [0fbf785b1] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [557cc7186] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [0a61fcde0] 2026-08-10 06:38:12 -0700
+Branch: REL_17_STABLE [e41c72aff] 2026-08-10 06:38:18 -0700
+Branch: REL_16_STABLE [2cc147318] 2026-08-10 06:38:24 -0700
+Branch: REL_15_STABLE [e43e74756] 2026-08-10 06:38:30 -0700
+Branch: REL_14_STABLE [39d792040] 2026-08-10 06:38:36 -0700
+-->
+     <para>
+      Ensure that <filename>contrib/amcheck</filename> functions
+      restrict <varname>search_path</varname> before executing index
+      expressions (Noah Misch)
+      <ulink url="&commit_baseurl;0a61fcde0">&sect;</ulink>
+     </para>
+
+     <para>
+      Because amcheck will run such index expressions as the owner of
+      their tables, a caller could potentially
+      hijack <varname>search_path</varname>-dependent functions to run
+      arbitrary code as the table owner.  By default this is not a
+      vulnerability because only superusers are allowed to call amcheck
+      functions; but if that privilege was granted out, it created a
+      larger hazard than the documentation suggests.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Yuelin Wang and Jacob Brazeal
+      for reporting this problem.
+      (CVE-2026-14673)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [918683d12] 2026-08-10 06:37:49 -0700
+Branch: REL_19_STABLE [62c31b490] 2026-08-10 06:38:05 -0700
+Branch: REL_18_STABLE [e88eb4e76] 2026-08-10 06:38:12 -0700
+Branch: REL_17_STABLE [c4d51b627] 2026-08-10 06:38:19 -0700
+Branch: REL_16_STABLE [61481aa0e] 2026-08-10 06:38:24 -0700
+Branch: REL_15_STABLE [74916136f] 2026-08-10 06:38:30 -0700
+Branch: REL_14_STABLE [9505175f2] 2026-08-10 06:38:36 -0700
+-->
+     <para>
+      Fix integer overflows in <filename>contrib/fuzzystrmatch</filename>'s
+      <function>levenshtein()</function>
+      and <function>levenshtein_less_equal()</function> functions
+      (Nathan Bossart)
+      <ulink url="&commit_baseurl;e88eb4e76">&sect;</ulink>
+     </para>
+
+     <para>
+      Passing large cost values to these functions could cause integer
+      overflows, thereby producing nonsensical results, and even causing
+      out-of-bounds writes in some cases.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Ben Morris (in collaboration with Claude and Anthropic Research)
+      for reporting this problem.
+      (CVE-2026-15742)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+Branch: master [1e2795dde] 2026-08-10 06:37:48 -0700
+Branch: REL_19_STABLE [bb02eba53] 2026-08-10 06:38:04 -0700
+Branch: REL_18_STABLE [8a31ffc2d] 2026-08-10 06:38:11 -0700
+-->
+     <para>
+      Fix buffer overrun
+      in <filename>contrib/pg_stat_statements</filename> (Álvaro Herrera)
+      <ulink url="&commit_baseurl;8a31ffc2d">&sect;</ulink>
+     </para>
+
+     <para>
+      Query normalization didn't accurately account for the amount of
+      space the normalized string would require.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Sajeeb Lohani (with TrendAI Zero Day Initiative) and Yuelin Wang
+      for reporting this problem.
+      (CVE-2026-14676)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [66c2dbb20] 2026-08-10 06:37:48 -0700
+Branch: REL_19_STABLE [aa7b5815e] 2026-08-10 06:38:04 -0700
+Branch: REL_18_STABLE [849019a50] 2026-08-10 06:38:11 -0700
+Branch: REL_17_STABLE [1af08af69] 2026-08-10 06:38:18 -0700
+Branch: REL_16_STABLE [24c88cd39] 2026-08-10 06:38:24 -0700
+Branch: REL_15_STABLE [c7c82a88c] 2026-08-10 06:38:29 -0700
+Branch: REL_14_STABLE [a74aa0854] 2026-08-10 06:38:35 -0700
+-->
+     <para>
+      Fix datatype error in <filename>contrib/pg_trgm</filename>'s GiST
+      picksplit function (Heikki Linnakangas)
+      <ulink url="&commit_baseurl;849019a50">&sect;</ulink>
+     </para>
+
+     <para>
+      This mistake resulted in reading past the end of the buffer,
+      typically causing bad split decisions; but a crash could ensue
+      if you're very unlucky.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Mehmet D. Ince
+      for reporting this problem.
+      (CVE-2026-14678)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master Release: REL_19_BR [1fbe2066d] 2026-06-05 12:08:05 -0500
+Branch: REL_18_STABLE [79a506228] 2026-06-05 12:08:05 -0500
+Branch: REL_17_STABLE [66a5146dc] 2026-06-05 12:08:05 -0500
+Branch: REL_16_STABLE [a572dd213] 2026-06-05 12:08:05 -0500
+Branch: REL_15_STABLE [b7b513d9a] 2026-06-05 12:08:05 -0500
+Branch: REL_14_STABLE [5b72d0279] 2026-06-05 12:08:05 -0500
+-->
+     <para>
+      Remove the plan cache in <filename>contrib/refint</filename>
+      (Ayush Tiwari)
+      <ulink url="&commit_baseurl;79a506228">&sect;</ulink>
+     </para>
+
+     <para>
+      This caching behavior has several serious bugs, notably that
+      <function>check_foreign_key()</function> embeds the new key values
+      in its cascade-UPDATE queries, so a cached plan reuses the
+      originally-needed values rather than the key values that should be
+      used.  The simplest solution is to remove it.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Hcamael
+      for reporting this problem.
+      (CVE-2026-14671)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
@@ -2467,31 +3492,6 @@ Branch: REL_14_STABLE [1de0a711d] 2026-05-14 13:11:49 -0500
       In the on-update-cascade case, a null value of a referenced column
       led to a crash.  This is an oversight in the fix for CVE-2026-6637,
       but the code that was there before that wasn't really right either.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Nathan Bossart <nathan@postgresql.org>
-Branch: master Release: REL_19_BR [1fbe2066d] 2026-06-05 12:08:05 -0500
-Branch: REL_18_STABLE [79a506228] 2026-06-05 12:08:05 -0500
-Branch: REL_17_STABLE [66a5146dc] 2026-06-05 12:08:05 -0500
-Branch: REL_16_STABLE [a572dd213] 2026-06-05 12:08:05 -0500
-Branch: REL_15_STABLE [b7b513d9a] 2026-06-05 12:08:05 -0500
-Branch: REL_14_STABLE [5b72d0279] 2026-06-05 12:08:05 -0500
--->
-     <para>
-      Remove the plan cache in <filename>contrib/refint</filename>
-      (Ayush Tiwari)
-      <ulink url="&commit_baseurl;79a506228">&sect;</ulink>
-     </para>
-
-     <para>
-      This caching behavior has several serious bugs, notably that
-      <function>check_foreign_key()</function> embeds the new key values
-      in its cascade-UPDATE queries, so a cached plan reuses the
-      originally-needed values rather than the key values that should be
-      used.  The simplest solution is to remove it.
      </para>
     </listitem>
 
