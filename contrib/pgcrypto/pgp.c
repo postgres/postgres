@@ -49,6 +49,7 @@ static int	def_use_sess_key = 0;
 static int	def_text_mode = 0;
 static int	def_unicode_mode = 0;
 static int	def_convert_crlf = 0;
+static int	def_ignore_cipher_failure = 0;
 
 struct digest_info
 {
@@ -204,6 +205,7 @@ pgp_init(PGP_Context **ctx_p)
 	ctx->unicode_mode = def_unicode_mode;
 	ctx->convert_crlf = def_convert_crlf;
 	ctx->text_mode = def_text_mode;
+	ctx->ignore_cipher_failure = def_ignore_cipher_failure;
 
 	*ctx_p = ctx;
 	return 0;
@@ -346,6 +348,13 @@ int
 pgp_set_unicode_mode(PGP_Context *ctx, int mode)
 {
 	ctx->unicode_mode = mode ? 1 : 0;
+	return 0;
+}
+
+int
+pgp_set_ignore_cipher_failure(PGP_Context *ctx, int ignore)
+{
+	ctx->ignore_cipher_failure = ignore ? 1 : 0;
 	return 0;
 }
 

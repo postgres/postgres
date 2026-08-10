@@ -601,11 +601,29 @@ blH2nKZC9d6fi4YzSYMepZpMOFR65M80MCMiDUGnZBB8sEADu2/iVtqDUeG8mAA=
 -----END PGP MESSAGE-----
 ');
 
+-- CVE-2026-14663. This message was created with cipher-algo=bf using an OpenSSL
+-- that didn't actually support Blowfish.
+insert into encdata (id, data) values (6, '
+-----BEGIN PGP MESSAGE-----
+
+wcBOA9k2z2S7c/RmEAP8DYbU6AeEo6riMMdnf2G62BM9gC0Z32ODydewy3Ki8AnSzpwBDAHuDMcr
+P6RJDWvBOVOwgxHEwR7ZHMoFRDJEXdo6rQ9dQpDtbasMLyi6Lm1q+PbEefVd9WkU7fvFAFQx8k3t
+lxrlWg/byoNplc7/hFxIFO8bN+FIlLgilAdApNcD/3Mg2/nd7pczovsYoryf9ib04kQ+SVWs3iNE
+StoyEXT+oaT8u1vAxiY7fzPpQX1pnlHBUXn+v1J6LQL5Bwi5CTqOyDSyaFfgU0gQwTReFjS6L4Fs
+Cv+2cFwbJBGIzr1aI4DLbzSelkmVm4hbOVeET4DJVlUVhhIyy6ZfoXiTEG6s0jMB2JdRGIl0EUQR
+RMsQdABqdt5jU2VjcmV0IG1zZ9MUIIP4SPiU2pM/nF/A1hrltMhn/ZI=
+=Mkdj
+-----END PGP MESSAGE-----
+');
+
 -- successful decrypt
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
 from keytbl, encdata where keytbl.id=1 and encdata.id=1;
 
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
+from keytbl, encdata where keytbl.id=2 and encdata.id=2;
+
+select pgp_pub_decrypt(dearmor(data), dearmor(seckey), '', 'ignore-cipher-failure=1')
 from keytbl, encdata where keytbl.id=2 and encdata.id=2;
 
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
@@ -645,3 +663,12 @@ from keytbl, encdata where keytbl.id=5 and encdata.id=1;
 -- test for a short read from prefix_init
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
 from keytbl, encdata where keytbl.id=6 and encdata.id=5;
+
+-- Check that ignore-cipher-failure can strip faulty encryption if OpenSSL
+-- doesn't support the cipher. (The decryption will correctly fail both times if
+-- OpenSSL does support it.)
+select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
+from keytbl, encdata where keytbl.id=1 and encdata.id=6;
+
+select pgp_pub_decrypt(dearmor(data), dearmor(seckey), '', 'ignore-cipher-failure=1')
+from keytbl, encdata where keytbl.id=1 and encdata.id=6;
