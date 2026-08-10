@@ -131,6 +131,23 @@ typedef struct PsqlScanStateData
 	void	   *cb_passthrough;
 } PsqlScanStateData;
 
+/*
+ * Conditional scanning (\if ... \endif) needs to be able to reset the
+ * lexer's state to what it was at the beginning of a chunk of text that
+ * we choose to ignore.  PsqlScanStateSave holds the values that need
+ * to be saved and restored.  We assume that saving/restoring happens only
+ * while processing a backslash command, so we needn't save state that is
+ * concerned with comment or SQL literal processing: we won't be inside
+ * one of those.
+ */
+struct PsqlScanStateSave
+{
+	int			paren_depth;	/* depth of nesting in parentheses */
+	int			begin_depth;	/* depth of begin/end pairs */
+	int			identifier_count;	/* identifiers since start of statement */
+	char		identifiers[4]; /* records the first few identifiers */
+};
+
 
 /*
  * Functions exported by psqlscan.l, but only meant for use within

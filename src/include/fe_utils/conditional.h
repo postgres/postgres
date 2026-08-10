@@ -49,18 +49,18 @@ typedef enum ifState
  * query_len is used to determine what accumulated text to throw away at the
  * end of an inactive branch.  (We could, perhaps, teach the lexer to not add
  * stuff to the query buffer in the first place when inside an inactive branch;
- * but that would be very invasive.)  We also need to save and restore the
- * lexer's parenthesis nesting depth when throwing away text.  (We don't need
- * to save and restore any of its other state, such as comment nesting depth,
- * because a backslash command could never appear inside a comment or SQL
- * literal.)
+ * but that would be very invasive.)  We also need to save and restore some
+ * lexer state, such as parenthesis nesting depth, when throwing away text.
  */
+struct PsqlScanStateSave;		/* opaque outside lexer */
+
 typedef struct IfStackElem
 {
 	ifState		if_state;		/* current state, see enum above */
 	int			query_len;		/* length of query_buf at last branch start */
-	int			paren_depth;	/* parenthesis depth at last branch start */
+	int			paren_depth;	/* (obsolete, not used anymore) */
 	struct IfStackElem *next;	/* next surrounding \if, if any */
+	struct PsqlScanStateSave *lex_state;	/* lexer state at last branch start */
 } IfStackElem;
 
 typedef struct ConditionalStackData
@@ -92,6 +92,11 @@ extern bool conditional_active(ConditionalStack cstack);
 extern void conditional_stack_set_query_len(ConditionalStack cstack, int len);
 
 extern int	conditional_stack_get_query_len(ConditionalStack cstack);
+
+extern void conditional_stack_set_lex_state(ConditionalStack cstack,
+											struct PsqlScanStateSave *lex_state);
+
+extern struct PsqlScanStateSave *conditional_stack_get_lex_state(ConditionalStack cstack);
 
 extern void conditional_stack_set_paren_depth(ConditionalStack cstack, int depth);
 
