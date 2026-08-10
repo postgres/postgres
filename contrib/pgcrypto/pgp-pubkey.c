@@ -382,8 +382,15 @@ process_secret_key(PullFilter *pkt, PGP_PubKey **pk_p,
 
 		/*
 		 * create decrypt filter
+		 *
+		 * ignore-cipher-failure doesn't apply here; pgcrypto didn't encrypt
+		 * the secret key to begin with, and any stored encrypted data was
+		 * generated using the public key, so users don't have a reason to
+		 * want to incorrectly decrypt this. We'll ignore failures during
+		 * decryption with the session key, instead.
 		 */
-		res = pgp_cfb_create(&cfb, cipher_algo, s2k.key, s2k.key_len, 0, iv);
+		res = pgp_cfb_create(&cfb, cipher_algo, s2k.key, s2k.key_len, 0, iv,
+							 0 /* don't ignore cipher failures */ );
 		if (res < 0)
 			return res;
 		res = pullf_create(&pf_decrypt, &pgp_decrypt_filter, cfb, pkt);

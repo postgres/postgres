@@ -328,3 +328,29 @@ UCAAw2JRIISttRHMfDpDuZJpvYo=
 =AZ9M
 -----END PGP MESSAGE-----
 '), 'key', 'debug=1');
+
+-- Check ignore-cipher-failure. This message isn't actually encrypted; it was
+-- created with cipher-algo=bf using an OpenSSL that didn't actually support
+-- Blowfish. After the fix for CVE-2026-14663, we no longer create these broken
+-- ciphertexts, but we allow users to return to the previous behavior during
+-- decryption so that the bad wrapper can be stripped.
+--
+-- Note that if Blowfish is supported by the linked OpenSSL, both decryptions
+-- will fail.
+select pgp_sym_decrypt(dearmor('
+-----BEGIN PGP MESSAGE-----
+
+ww0EBAMC8wIKbtvzJtxi0jABUleCwFJWGCkYKcsNdABqdtXaU2VjcmV0LtMUlnPH3A2QBmZrcucm
+1GPb/s2Bkdg=
+=6aqD
+-----END PGP MESSAGE-----
+'), 'wrong key');
+
+select pgp_sym_decrypt(dearmor('
+-----BEGIN PGP MESSAGE-----
+
+ww0EBAMC8wIKbtvzJtxi0jABUleCwFJWGCkYKcsNdABqdtXaU2VjcmV0LtMUlnPH3A2QBmZrcucm
+1GPb/s2Bkdg=
+=6aqD
+-----END PGP MESSAGE-----
+'), 'wrong key', 'ignore-cipher-failure=1');
