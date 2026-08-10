@@ -1904,6 +1904,15 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </para>
 
   <para>
+   The name of the output plugin used by the replication connection must be
+   included in the server's <xref linkend="guc-output-plugin-libraries"/>. (For
+   subscriptions, the plugin name that is used is <literal>pgoutput</literal>.)
+   Superusers may modify the trusted list per-connection, by including
+   <literal>options=-coutput_plugin_libraries=...</literal> in the connection
+   string.
+  </para>
+
+  <para>
    In order to be able to copy the initial table data, the role used for the
    replication connection must have the <literal>SELECT</literal> privilege on
    a published table (or be a superuser).

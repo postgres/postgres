@@ -1816,6 +1816,7 @@ check_new_cluster_logical_replication_slots(void)
 	int			nslots_on_old;
 	int			nslots_on_new;
 	int			max_replication_slots;
+	char	   *output_plugin_libraries;
 	char	   *wal_level;
 
 	/* Logical slots can be migrated since PG17. */
@@ -1849,10 +1850,10 @@ check_new_cluster_logical_replication_slots(void)
 	PQclear(res);
 
 	res = executeQueryOrDie(conn, "SELECT setting FROM pg_settings "
-							"WHERE name IN ('wal_level', 'max_replication_slots') "
+							"WHERE name IN ('wal_level', 'output_plugin_libraries', 'max_replication_slots') "
 							"ORDER BY name DESC;");
 
-	if (PQntuples(res) != 2)
+	if (PQntuples(res) != 3)
 		pg_fatal("could not determine parameter settings on new cluster");
 
 	wal_level = PQgetvalue(res, 0, 0);
@@ -1861,7 +1862,85 @@ check_new_cluster_logical_replication_slots(void)
 		pg_fatal("\"wal_level\" must be \"logical\" but is set to \"%s\"",
 				 wal_level);
 
-	max_replication_slots = atoi(PQgetvalue(res, 1, 0));
+	output_plugin_libraries = PQgetvalue(res, 1, 0);
+
+	/*
+	 * Make sure the output_plugin_libraries setting covers all plugins needed
+	 * by any migrated slots.
+	 */
+	if (nslots_on_old > 0)
+	{
+		char	   *guc_copy = pg_strdup(output_plugin_libraries);
+		char	  **allowed_plugins;
+		char		output_path[MAXPGPATH];
+		FILE	   *script = NULL;
+
+		if (!SplitGUCList(guc_copy, ',', &allowed_plugins))
+		{
+			/*
+			 * Should not happen. (Frontend and backend GUC_LIST_QUOTE parsing
+			 * have to remain compatible for pg_dump at minimum.)
+			 */
+			pg_fatal("could not parse \"output_plugin_libraries\" setting '%s'",
+					 output_plugin_libraries);
+		}
+
+		snprintf(output_path, sizeof(output_path), "%s/%s",
+				 log_opts.basedir,
+				 "disallowed_output_plugins.txt");
+
+		for (int dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
+		{
+			LogicalSlotInfoArr *slot_arr = &old_cluster.dbarr.dbs[dbnum].slot_arr;
+
+			for (int slotnum = 0; slotnum < slot_arr->nslots; slotnum++)
+			{
+				LogicalSlotInfo *slot = &slot_arr->slots[slotnum];
+				bool		allowed = false;
+
+				/*
+				 * We expect the output_plugin_libraries length to be small in
+				 * practice; O(n*m) shouldn't be a problem here.
+				 */
+				for (char **p = allowed_plugins; *p; p++)
+				{
+					if (strcmp(slot->plugin, *p) == 0)
+					{
+						allowed = true;
+						break;
+					}
+				}
+
+				if (!allowed)
+				{
+					if (script == NULL &&
+						(script = fopen_priv(output_path, "w")) == NULL)
+						pg_fatal("could not open file \"%s\": %m", output_path);
+
+					fprintf(script, "The slot \"%s\" uses plugin \"%s\"\n",
+							slot->slotname, slot->plugin);
+				}
+			}
+		}
+
+		if (script)
+		{
+			fclose(script);
+
+			pg_log(PG_REPORT, "fatal");
+			pg_fatal("Your installation contains logical replication slots with plugins\n"
+					 "that are not allowed by the new cluster's output_plugin_libraries\n"
+					 "setting. You can add trusted plugins to output_plugin_libraries\n"
+					 "and/or remove affected slots, and then restart the upgrade.\n"
+					 "A list of the problematic slots is in the file:\n"
+					 "    %s", output_path);
+		}
+
+		pg_free(allowed_plugins);
+		pg_free(guc_copy);
+	}
+
+	max_replication_slots = atoi(PQgetvalue(res, 2, 0));
 
 	if (nslots_on_old > max_replication_slots)
 		pg_fatal("\"max_replication_slots\" (%d) must be greater than or equal to the number of "

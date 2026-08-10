@@ -66,6 +66,7 @@
 #include "postmaster/syslogger.h"
 #include "postmaster/walsummarizer.h"
 #include "postmaster/walwriter.h"
+#include "replication/logical.h"
 #include "replication/logicallauncher.h"
 #include "replication/slot.h"
 #include "replication/slotsync.h"
@@ -4729,6 +4730,18 @@ struct config_string ConfigureNamesString[] =
 		&restrict_nonsystem_relation_kind_string,
 		"",
 		check_restrict_nonsystem_relation_kind, assign_restrict_nonsystem_relation_kind, NULL
+	},
+
+	{
+		{"output_plugin_libraries", PGC_SUSET, REPLICATION_SENDING,
+			gettext_noop("Lists libraries that may be named as logical decoding output plugins."),
+			gettext_noop("Users with REPLICATION privileges may only use plugins in this list when creating logical replication slots."),
+			/* note: src/bin/pg_upgrade/check.c assumes GUC_LIST_QUOTE here */
+			GUC_LIST_INPUT | GUC_LIST_QUOTE | GUC_SUPERUSER_ONLY
+		},
+		&output_plugin_libraries_string,
+		"pgoutput, test_decoding",
+		NULL, NULL, NULL
 	},
 
 	/* End-of-list marker */

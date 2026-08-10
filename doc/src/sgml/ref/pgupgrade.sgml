@@ -447,8 +447,10 @@ make prefix=/usr/local/pgsql.new install
      </listitem>
      <listitem>
       <para>
-       The output plugins referenced by the slots on the old cluster must be
-       installed in the new PostgreSQL executable directory.
+       The output plugins referenced by the slots in the old cluster must be
+       installed in the new PostgreSQL executable directory. They must also be
+       included in the new cluster's <xref linkend="guc-output-plugin-libraries"/>;
+       see that parameter's documentation for safety information.
       </para>
      </listitem>
      <listitem>
