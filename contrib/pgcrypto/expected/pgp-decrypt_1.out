@@ -11,7 +11,7 @@ yA6Ce1QTMK3KdL2MPfamsTUSAML8huCJMwYQFfE=
 =JcP+
 -----END PGP MESSAGE-----
 '), 'foobar');
-ERROR:  Wrong key or corrupt data
+ERROR:  encrypt error: Cipher cannot be initialized
 select pgp_sym_decrypt(dearmor('
 -----BEGIN PGP MESSAGE-----
 Comment: dat1.aes.sha1.mdc.s2k3.z0
