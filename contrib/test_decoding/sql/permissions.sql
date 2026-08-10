@@ -15,6 +15,14 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
 SELECT pg_drop_replication_slot('regression_slot');
 RESET ROLE;
 
+-- no users can load an untrusted plugin
+SET output_plugin_libraries = pgoutput;
+SET ROLE regress_lr_replication;
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+RESET ROLE;
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+RESET output_plugin_libraries;
+
 -- replication user can control replication
 SET ROLE regress_lr_replication;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');

@@ -154,6 +154,9 @@ extern XLogRecPtr LogicalReplicationSlotCheckPendingWal(XLogRecPtr end_of_wal,
 extern XLogRecPtr LogicalSlotAdvanceAndCheckSnapState(XLogRecPtr moveto,
 													  bool *found_consistent_snapshot);
 
+/* GUCs */
+extern PGDLLIMPORT char *output_plugin_libraries_string;
+
 
 /*
  * This macro determines the log level for messages about starting logical
