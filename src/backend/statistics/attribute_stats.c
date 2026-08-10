@@ -492,11 +492,19 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 	{
 		bool		converted = false;
 		Datum		stavalues;
+		Oid			bounds_typid = atttypid;
+
+		/*
+		 * If it's a multirange, step down to the range type, as is done by
+		 * multirange_typanalyze().
+		 */
+		if (type_is_multirange(atttypid))
+			bounds_typid = get_multirange_range(atttypid);
 
 		stavalues = text_to_stavalues("range_bounds_histogram",
 									  &array_in_fn,
 									  PG_GETARG_DATUM(RANGE_BOUNDS_HISTOGRAM_ARG),
-									  atttypid, atttypmod,
+									  bounds_typid, atttypmod,
 									  &converted);
 
 		if (converted)
@@ -646,13 +654,6 @@ get_attr_stat_type(Oid reloid, AttrNumber attnum,
 			*atttypcoll = exprCollation(expr);
 	}
 	ReleaseSysCache(atup);
-
-	/*
-	 * If it's a multirange, step down to the range type, as is done by
-	 * multirange_typanalyze().
-	 */
-	if (type_is_multirange(*atttypid))
-		*atttypid = get_multirange_range(*atttypid);
 
 	/* finds the right operators even if atttypid is a domain */
 	typcache = lookup_type_cache(*atttypid, TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR);
