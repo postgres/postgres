@@ -29,6 +29,17 @@ SELECT pg_drop_replication_slot('regression_slot');
 (1 row)
 
 RESET ROLE;
+-- no users can load an untrusted plugin
+SET output_plugin_libraries = pgoutput;
+SET ROLE regress_lr_replication;
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+ERROR:  library "test_decoding" may not be used as an output plugin
+HINT:  If it is safe for all REPLICATION users to use this library as an output plugin, add it to "output_plugin_libraries" and reload the server configuration.
+RESET ROLE;
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+ERROR:  library "test_decoding" may not be used as an output plugin
+HINT:  If it is safe for all REPLICATION users to use this library as an output plugin, add it to "output_plugin_libraries" and reload the server configuration.
+RESET output_plugin_libraries;
 -- replication user can control replication
 SET ROLE regress_lr_replication;
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
