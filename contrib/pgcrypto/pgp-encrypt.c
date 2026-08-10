@@ -174,7 +174,8 @@ encrypt_init(PushFilter *next, void *init_arg, void **priv_p)
 			return res;
 	}
 	res = pgp_cfb_create(&ciph, ctx->cipher_algo,
-						 ctx->sess_key, ctx->sess_key_len, resync, NULL);
+						 ctx->sess_key, ctx->sess_key_len, resync, NULL,
+						 0 /* never ignore cipher failures for encrypt */ );
 	if (res < 0)
 		return res;
 
@@ -505,7 +506,8 @@ symencrypt_sesskey(PGP_Context *ctx, uint8 *dst)
 	uint8		algo = ctx->cipher_algo;
 
 	res = pgp_cfb_create(&cfb, ctx->s2k_cipher_algo,
-						 ctx->s2k.key, ctx->s2k.key_len, 0, NULL);
+						 ctx->s2k.key, ctx->s2k.key_len, 0, NULL,
+						 0 /* never ignore cipher failures for encrypt */ );
 	if (res < 0)
 		return res;
 
