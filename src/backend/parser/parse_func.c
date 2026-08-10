@@ -782,6 +782,22 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		aggref->location = location;
 
 		/*
+		 * The argument-count limit for aggregates is one less than for other
+		 * kinds of functions (cf. AggregateCreate).  Now that we know it's an
+		 * aggregate, apply the stricter limit.  We need an explicit check
+		 * because hypothetical-set aggregates don't have a fixed number of
+		 * arguments, so having matched the pg_proc entry proves nothing.
+		 */
+		if (list_length(fargs) > FUNC_MAX_ARGS - 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg_plural("aggregates cannot have more than %d argument",
+								   "aggregates cannot have more than %d arguments",
+								   FUNC_MAX_ARGS - 1,
+								   FUNC_MAX_ARGS - 1),
+					 parser_errposition(pstate, location)));
+
+		/*
 		 * Reject attempt to call a parameterless aggregate without (*)
 		 * syntax.  This is mere pedantry but some folks insisted ...
 		 */
@@ -843,6 +859,19 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("DISTINCT is not implemented for window functions"),
+					 parser_errposition(pstate, location)));
+
+		/*
+		 * As above, enforce the correct argument-count limit if it's really
+		 * an aggregate.
+		 */
+		if (wfunc->winagg && list_length(fargs) > FUNC_MAX_ARGS - 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+					 errmsg_plural("aggregates cannot have more than %d argument",
+								   "aggregates cannot have more than %d arguments",
+								   FUNC_MAX_ARGS - 1,
+								   FUNC_MAX_ARGS - 1),
 					 parser_errposition(pstate, location)));
 
 		/*
