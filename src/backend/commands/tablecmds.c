@@ -16094,12 +16094,17 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 	ObjectAddress tableobj,
 				typeobj;
 	HeapTuple	classtuple;
+	AclResult	aclresult;
 
 	/* Validate the type. */
 	typetuple = typenameType(NULL, ofTypename, NULL);
 	check_of_type(typetuple);
 	typeform = (Form_pg_type) GETSTRUCT(typetuple);
 	typeid = typeform->oid;
+
+	aclresult = pg_type_aclcheck(typeid, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error_type(aclresult, typeid);
 
 	/* Fail if the table has any inheritance parents. */
 	inheritsRelation = table_open(InheritsRelationId, AccessShareLock);
