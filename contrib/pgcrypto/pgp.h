@@ -150,6 +150,9 @@ struct PGP_Context
 	int			convert_crlf;
 	int			unicode_mode;
 
+	/* DANGEROUS recovery aid for CVE-2026-14663. Applies only to decryption. */
+	int			ignore_cipher_failure;
+
 	/*
 	 * internal variables
 	 */
@@ -258,6 +261,7 @@ int			pgp_set_compress_level(PGP_Context *ctx, int level);
 int			pgp_set_text_mode(PGP_Context *ctx, int mode);
 int			pgp_set_unicode_mode(PGP_Context *ctx, int mode);
 int			pgp_get_unicode_mode(PGP_Context *ctx);
+int			pgp_set_ignore_cipher_failure(PGP_Context *ctx, int ignore);
 
 int			pgp_set_symkey(PGP_Context *ctx, const uint8 *key, int len);
 int			pgp_set_pubkey(PGP_Context *ctx, MBuf *keypkt,
@@ -278,7 +282,8 @@ int			pgp_s2k_process(PGP_S2K *s2k, int cipher, const uint8 *key, int key_len);
 
 typedef struct PGP_CFB PGP_CFB;
 int			pgp_cfb_create(PGP_CFB **ctx_p, int algo,
-						   const uint8 *key, int key_len, int resync, uint8 *iv);
+						   const uint8 *key, int key_len, int resync, uint8 *iv,
+						   int ignore_decrypt_cipher_failure);
 void		pgp_cfb_free(PGP_CFB *ctx);
 int			pgp_cfb_encrypt(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst);
 int			pgp_cfb_decrypt(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst);
