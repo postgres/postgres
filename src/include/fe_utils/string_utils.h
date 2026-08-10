@@ -48,6 +48,8 @@ extern bool appendShellStringNoError(PQExpBuffer buf, const char *str);
 extern void appendConnStrVal(PQExpBuffer buf, const char *str);
 extern void appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname);
 
+extern bool SplitGUCList(char *rawstring, char separator, char ***namelist);
+
 extern bool parsePGArray(const char *atext, char ***itemarray, int *nitems);
 extern void appendPGArray(PQExpBuffer buffer, const char *value);
 
