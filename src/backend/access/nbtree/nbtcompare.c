@@ -427,7 +427,7 @@ btoidsortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
-	ssup->comparator = ssup_datum_unsigned_cmp;
+	ssup->comparator = ssup_datum_uint32_cmp;
 	PG_RETURN_VOID();
 }
 

@@ -54,4 +54,8 @@ SELECT o.* FROM OID_TBL o WHERE o.f1 >= '1234';
 
 SELECT o.* FROM OID_TBL o WHERE o.f1 > '1234';
 
+-- sort support must order oids above 2^31 the way btoidcmp does
+SELECT f1 FROM (SELECT f1 FROM OID_TBL UNION ALL SELECT '4294967000'::oid) ss
+  ORDER BY f1;
+
 DROP TABLE OID_TBL;
