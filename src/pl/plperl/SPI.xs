@@ -75,7 +75,7 @@ spi_spi_prepare(sv, ...)
 		char* query = sv2cstr(sv);
 		if (items < 1)
 			Perl_croak(aTHX_ "Usage: spi_prepare(query, ...)");
-		argv = ( SV**) palloc(( items - 1) * sizeof(SV*));
+		argv = palloc_array(SV*, items - 1);
 		for ( i = 1; i < items; i++)
 			argv[i - 1] = ST(i);
 		RETVAL = plperl_spi_prepare(query, items - 1, argv);
@@ -103,7 +103,7 @@ spi_spi_exec_prepared(sv, ...)
 			offset++;
 		}
 		argc = items - offset;
-		argv = ( SV**) palloc( argc * sizeof(SV*));
+		argv = palloc_array(SV*, argc);
 		for ( i = 0; offset < items; offset++, i++)
 			argv[i] = ST(offset);
 		ret_hash = plperl_spi_exec_prepared(query, attr, argc, argv);
@@ -123,7 +123,7 @@ spi_spi_query_prepared(sv, ...)
 		if ( items < 1)
 			Perl_croak(aTHX_ "Usage: spi_query_prepared(query, "
 					   "[\\@bind_values])");
-		argv = ( SV**) palloc(( items - 1) * sizeof(SV*));
+		argv = palloc_array(SV*, items - 1);
 		for ( i = 1; i < items; i++)
 			argv[i - 1] = ST(i);
 		RETVAL = plperl_spi_query_prepared(query, items - 1, argv);
