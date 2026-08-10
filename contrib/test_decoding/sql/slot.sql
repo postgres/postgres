@@ -9,7 +9,10 @@ SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_p', 'test
 
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_t2', 'test_decoding', true);
 
+BEGIN;
+SET LOCAL output_plugin_libraries = nonexistent;
 SELECT pg_create_logical_replication_slot('foo', 'nonexistent');
+ROLLBACK;
 
 -- here we want to start a new session and wait till old one is gone
 select pg_backend_pid() as oldpid \gset

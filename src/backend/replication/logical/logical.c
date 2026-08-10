@@ -41,7 +41,9 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
+#include "utils/varlena.h"
 
 /* data for errcontext callback */
 typedef struct LogicalErrorCallbackState
@@ -50,6 +52,9 @@ typedef struct LogicalErrorCallbackState
 	const char *callback_name;
 	XLogRecPtr	report_location;
 } LogicalErrorCallbackState;
+
+/* GUC variables */
+char	   *output_plugin_libraries_string;
 
 /* wrappers around output plugin callbacks */
 static void output_plugin_error_callback(void *arg);
@@ -175,7 +180,72 @@ StartupDecodingContext(List *output_plugin_options,
 	 * now.
 	 */
 	if (!fast_forward)
-		LoadOutputPlugin(&ctx->callbacks, NameStr(slot->data.plugin));
+	{
+		/*
+		 * Before loading this library, make sure it's been blessed for
+		 * logical decoding.
+		 */
+		const char *plugin = NameStr(slot->data.plugin);
+		bool		plugin_allowed = false;
+
+		if (output_plugin_libraries_string && output_plugin_libraries_string[0])
+		{
+			/* Check this plugin against output_plugin_libraries. */
+			char	   *rawstring;
+			List	   *elemlist = NIL;
+			ListCell   *lc;
+
+			/* Need a modifiable copy */
+			rawstring = pstrdup(output_plugin_libraries_string);
+
+			if (!SplitGUCList(rawstring, ',', &elemlist))
+			{
+				/* syntax error in list */
+				ereport(LOG,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("invalid list syntax in parameter \"%s\"",
+								"output_plugin_libraries")));
+
+				list_free(elemlist);
+				elemlist = NIL;
+			}
+
+			foreach(lc, elemlist)
+			{
+				char	   *allowed = lfirst(lc);
+
+				if (strcmp(allowed, plugin) == 0)
+				{
+					plugin_allowed = true;
+					break;
+				}
+			}
+
+			list_free(elemlist);
+			pfree(rawstring);
+		}
+
+		if (!plugin_allowed)
+		{
+			/*
+			 * Use the same error message as check_restricted_library_name(),
+			 * but provide additional context for the DBA in the logs. (The
+			 * HINT will be sent to the client, but that's not a secret.)
+			 */
+			ereport(ERROR,
+					errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("library \"%s\" may not be used as an output plugin",
+						   plugin),
+			/*- translator: The second %s is the value of the output_plugin_libraries GUC, which may contain whitespace, commas, and double-quotes (") */
+					errdetail_log("The configuration parameter \"%s\" (currently '%s') does not name this library as a trusted output plugin.",
+								  "output_plugin_libraries",
+								  output_plugin_libraries_string),
+					errhint("If it is safe for all REPLICATION users to use this library as an output plugin, add it to \"%s\" and reload the server configuration.",
+							"output_plugin_libraries"));
+		}
+
+		LoadOutputPlugin(&ctx->callbacks, plugin);
+	}
 
 	/*
 	 * Now that the slot's xmin has been set, we can announce ourselves as a
@@ -691,7 +761,9 @@ OutputPluginUpdateProgress(struct LogicalDecodingContext *ctx,
 
 /*
  * Load the output plugin, lookup its output plugin init function, and check
- * that it provides the required callbacks.
+ * that it provides the required callbacks. The caller must have checked that
+ * the current user has the necessary privileges to load the given plugin;
+ * standard LOAD restrictions are not applied here.
  */
 static void
 LoadOutputPlugin(OutputPluginCallbacks *callbacks, const char *plugin)
