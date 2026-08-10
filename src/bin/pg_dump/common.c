@@ -1089,35 +1089,126 @@ findOwningExtension(CatalogId catalogId)
 
 /*
  * parseOidArray
- *	  parse a string of numbers delimited by spaces into a character array
+ *	  parse a string of unsigned numbers separated by spaces
+ *	  into an array of OIDs
  *
- * Note: actually this is used for both Oids and potentially-signed
- * attribute numbers.  This should cause no trouble, but we could split
- * the function into two functions with different argument types if it does.
+ * The result is a malloc'd array.
+ *
+ * If arraysize >= 0, we insist that the input contain exactly that many
+ * OIDs, and the allocated array is of that length too.  If arraysize < 0,
+ * we dynamically size the array to have one more entry than the input
+ * provides, and fill the extra entry with zero.
  */
-
-void
-parseOidArray(const char *str, Oid *array, int arraysize)
+Oid *
+parseOidArray(const char *str, int arraysize)
 {
-	int			j,
-				argNum;
-	char		temp[100];
-	char		s;
+	Oid		   *array;
+	int			allocsize,
+				argNum,
+				templen;
+	char		temp[32];
 
-	argNum = 0;
-	j = 0;
-	for (;;)
+	if (arraysize >= 0)
+		allocsize = arraysize;
+	else
 	{
-		s = *str++;
+		/*
+		 * Make enough room for input + one extra entry (could be more than
+		 * enough, if there are redundant spaces in the input).
+		 */
+		allocsize = 2;
+		for (const char *s1 = str; *s1; s1++)
+		{
+			if (*s1 == ' ')
+				allocsize++;
+		}
+	}
+	array = pg_malloc_array(Oid, allocsize);
+	argNum = 0;
+	templen = 0;
+	for (const char *s1 = str;; s1++)
+	{
+		char		s = *s1;
+
 		if (s == ' ' || s == '\0')
 		{
-			if (j > 0)
+			if (templen > 0)
 			{
-				if (argNum >= arraysize)
+				if (arraysize >= 0 && argNum >= arraysize)
 					pg_fatal("could not parse numeric array \"%s\": too many numbers", str);
-				temp[j] = '\0';
+				temp[templen] = '\0';
 				array[argNum++] = atooid(temp);
-				j = 0;
+				templen = 0;
+			}
+			if (s == '\0')
+				break;
+		}
+		else
+		{
+			if (!isdigit((unsigned char) s) ||
+				templen >= sizeof(temp) - 1)
+				pg_fatal("could not parse numeric array \"%s\": invalid character in number", str);
+			temp[templen++] = s;
+		}
+	}
+
+	if (arraysize >= 0 && argNum != arraysize)
+		pg_fatal("could not parse numeric array \"%s\": too few numbers", str);
+
+	while (argNum < allocsize)
+		array[argNum++] = InvalidOid;
+
+	return array;
+}
+
+
+/*
+ * parseIntArray
+ *	  parse a string of possibly-signed numbers separated by spaces
+ *	  into an array of ints
+ *
+ * This is exactly like parseOidArray, but for integers.
+ */
+int *
+parseIntArray(const char *str, int arraysize)
+{
+	int		   *array;
+	int			allocsize,
+				argNum,
+				templen;
+	char		temp[32];
+
+	if (arraysize >= 0)
+		allocsize = arraysize;
+	else
+	{
+		/*
+		 * Make enough room for input + one extra entry (could be more than
+		 * enough, if there are redundant spaces in the input).
+		 */
+		allocsize = 2;
+		for (const char *s1 = str; *s1; s1++)
+		{
+			if (*s1 == ' ')
+				allocsize++;
+		}
+	}
+	array = pg_malloc_array(int, allocsize);
+	argNum = 0;
+	templen = 0;
+	for (const char *s1 = str;; s1++)
+	{
+		char		s = *s1;
+
+		if (s == ' ' || s == '\0')
+		{
+			if (templen > 0)
+			{
+				if (arraysize >= 0 && argNum >= arraysize)
+					pg_fatal("could not parse numeric array \"%s\": too many numbers", str);
+				temp[templen] = '\0';
+				array[argNum++] = atoi(temp);
+				templen = 0;
 			}
 			if (s == '\0')
 				break;
@@ -1125,14 +1216,19 @@ parseOidArray(const char *str, Oid *array, int arraysize)
 		else
 		{
 			if (!(isdigit((unsigned char) s) || s == '-') ||
-				j >= sizeof(temp) - 1)
+				templen >= sizeof(temp) - 1)
 				pg_fatal("could not parse numeric array \"%s\": invalid character in number", str);
-			temp[j++] = s;
+			temp[templen++] = s;
 		}
 	}
 
-	while (argNum < arraysize)
-		array[argNum++] = InvalidOid;
+	if (arraysize >= 0 && argNum != arraysize)
+		pg_fatal("could not parse numeric array \"%s\": too few numbers", str);
+
+	while (argNum < allocsize)
+		array[argNum++] = 0;
+
+	return array;
 }
 
 
