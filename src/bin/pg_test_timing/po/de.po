@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2026-07-04 06:24+0000\n"
-"PO-Revision-Date: 2026-07-04 13:00+0200\n"
+"PO-Revision-Date: 2026-08-04 14:02+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -108,7 +108,7 @@ msgstr ""
 #: pg_test_timing.c:230
 #, c-format
 msgid "TSC calibration did not converge\n"
-msgstr "TSC-Kalibrierung konvergierte nicht.\n"
+msgstr "TSC-Kalibrierung konvergierte nicht\n"
 
 #: pg_test_timing.c:240
 #, c-format

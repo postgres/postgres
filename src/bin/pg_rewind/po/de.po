@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-07-04 06:27+0000\n"
+"POT-Creation-Date: 2026-08-07 15:57+0000\n"
 "PO-Revision-Date: 2026-07-04 13:02+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -266,10 +266,9 @@ msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "Datenbankname enthält Newline oder Carriage Return: »%s«\n"
 
 #: file_ops.c:52
-#, fuzzy, c-format
-#| msgid "link target has unsafe path name: \"%s\""
+#, c-format
 msgid "target file path is unsafe for open: \"%s\""
-msgstr "Ziel der Verknüpfung hat unsicheren Pfadnamen: »%s«"
+msgstr "Zieldateipfad ist zum Öffnen nicht sicher: »%s«"
 
 #: file_ops.c:70
 #, c-format
@@ -297,10 +296,9 @@ msgid "invalid action (CREATE) for regular file"
 msgstr "ungültige Aktion (CREATE) für normale Datei"
 
 #: file_ops.c:195
-#, fuzzy, c-format
-#| msgid "link target has unsafe path name: \"%s\""
+#, c-format
 msgid "target file path is unsafe for removal: \"%s\""
-msgstr "Ziel der Verknüpfung hat unsicheren Pfadnamen: »%s«"
+msgstr "Zieldateipfad ist zum Entfernen nicht sicher: »%s«"
 
 #: file_ops.c:206
 #, c-format
@@ -308,10 +306,9 @@ msgid "could not remove file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht löschen: %m"
 
 #: file_ops.c:218
-#, fuzzy, c-format
-#| msgid "link target has unsafe path name: \"%s\""
+#, c-format
 msgid "target file path is unsafe for truncation: \"%s\""
-msgstr "Ziel der Verknüpfung hat unsicheren Pfadnamen: »%s«"
+msgstr "Zieldateipfad ist für das Kürzen nicht sicher: »%s«"
 
 #: file_ops.c:227
 #, c-format
@@ -326,7 +323,7 @@ msgstr "konnte Datei »%s« nicht auf %u kürzen: %m"
 #: file_ops.c:243
 #, c-format
 msgid "target directory path is unsafe for directory creation: \"%s\""
-msgstr ""
+msgstr "Zielverzeichnispfad ist zum Erstellen des Verzeichnisses nicht sicher: »%s«"
 
 #: file_ops.c:251
 #, c-format
@@ -336,7 +333,7 @@ msgstr "konnte Verzeichnis »%s« nicht erzeugen: %m"
 #: file_ops.c:261
 #, c-format
 msgid "target directory path is unsafe for directory removal: \"%s\""
-msgstr ""
+msgstr "Zielverzeichnispfad ist zum Entfernen des Verzeichnisses nicht sicher: »%s«"
 
 #: file_ops.c:269
 #, c-format
@@ -344,10 +341,9 @@ msgid "could not remove directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht löschen: %m"
 
 #: file_ops.c:279
-#, fuzzy, c-format
-#| msgid "link target has unsafe path name: \"%s\""
+#, c-format
 msgid "target symlink path is unsafe for creation: \"%s\""
-msgstr "Ziel der Verknüpfung hat unsicheren Pfadnamen: »%s«"
+msgstr "Ziel-Symlink-Pfad ist zum Erstellen nicht sicher: »%s«"
 
 #: file_ops.c:286
 #, c-format
@@ -357,7 +353,7 @@ msgstr "konnte symbolische Verknüpfung »%s« nicht erstellen: %m"
 #: file_ops.c:296
 #, c-format
 msgid "target symlink path is unsafe for removal: \"%s\""
-msgstr ""
+msgstr "Ziel-Symlink-Pfad ist zum Entfernen nicht sicher: »%s«"
 
 #: file_ops.c:303
 #, c-format

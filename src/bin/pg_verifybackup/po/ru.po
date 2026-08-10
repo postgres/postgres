@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-05-10 08:01+0300\n"
-"PO-Revision-Date: 2026-05-10 08:33+0300\n"
+"POT-Creation-Date: 2026-08-05 06:37+0300\n"
+"PO-Revision-Date: 2026-08-05 07:51+0300\n"
 "Last-Translator: Alexander Lakhin <a.lakhin@postgrespro.ru>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -111,16 +111,26 @@ msgstr "буфер назначения слишком мал"
 msgid "OpenSSL failure"
 msgstr "ошибка OpenSSL"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu * %zu\n"
 
 #: ../../common/jsonapi.c:2484
 msgid "Recursive descent parser cannot use incremental lexer."
@@ -479,12 +489,17 @@ msgstr "входной файл не похож на архив tar"
 msgid "tar member has empty name"
 msgstr "пустое имя у компонента tar"
 
-#: ../../fe_utils/astreamer_tar.c:328
+#: ../../fe_utils/astreamer_tar.c:309
+#, c-format
+msgid "tar member has unsafe path name: \"%s\""
+msgstr "компонент tar имеет небезопасный путь: \"%s\""
+
+#: ../../fe_utils/astreamer_tar.c:332
 #, c-format
 msgid "pax extensions to tar format are not supported"
 msgstr "расширения PAX для формата tar не поддерживаются"
 
-#: ../../fe_utils/astreamer_tar.c:357
+#: ../../fe_utils/astreamer_tar.c:361
 #, c-format
 msgid "COPY stream ended before last file was finished"
 msgstr "поток COPY закончился до завершения последнего файла"

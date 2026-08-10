@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-06-30 04:25+0000\n"
-"PO-Revision-Date: 2026-07-02 06:23+0200\n"
+"POT-Creation-Date: 2026-07-25 01:55+0000\n"
+"PO-Revision-Date: 2026-07-25 04:35+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -125,7 +125,7 @@ msgstr "ბრძანებიდან \"%s\" წაკითხვის შ
 msgid "no data was returned by command \"%s\""
 msgstr "ბრძანებამ \"%s\" მონაცემები არ დააბრუნა"
 
-#: ../../common/exec.c:406 parallel.c:1611
+#: ../../common/exec.c:406 parallel.c:1613
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s()-ის შეცდომა: %m"
@@ -740,22 +740,27 @@ msgstr "%s() -ის შეცდომა: შეცდომის კოდ�
 msgid "could not create communication channels: %m"
 msgstr "საკომუნიკაციო არხების შექმნა ვერ მოხერხდა: %m"
 
-#: parallel.c:1018
+#: parallel.c:980
+#, c-format
+msgid "could not create worker thread: %m"
+msgstr "დამხმარე ნაკადის შექმნა შეუძლებელია: %m"
+
+#: parallel.c:1020
 #, c-format
 msgid "could not create worker process: %m"
 msgstr "დამხმარე პროცესის შექმნა შეუძლებელია: %m"
 
-#: parallel.c:1148
+#: parallel.c:1150
 #, c-format
 msgid "unrecognized command received from leader: \"%s\""
 msgstr "თავსართიდან მიღებული ბრძანება უცნობია: %s"
 
-#: parallel.c:1191 parallel.c:1429
+#: parallel.c:1193 parallel.c:1431
 #, c-format
 msgid "invalid message received from worker: \"%s\""
 msgstr "დამხმარე პროცესისგან მიღებულია არასწორი შეტყობინება: %s"
 
-#: parallel.c:1323
+#: parallel.c:1325
 #, c-format
 msgid ""
 "could not obtain lock on relation \"%s\"\n"
@@ -764,47 +769,47 @@ msgstr ""
 "ურთიერთობის (\"%s\") დაბლოკვის შეცდომა\n"
 "ეს ჩვეულებრივ ნიშნავს, რომ ვინმემ მოითხოვა ACCESS EXCLUSIVE ბლოკი ცხრილზე მას შემდეგ, რაც pg_dump-ის მშობელმა პროცესმა საწყისი ACCESS SHARE ბლოკი ცხრილზე უკვე მიიღო."
 
-#: parallel.c:1412
+#: parallel.c:1414
 #, c-format
 msgid "a worker process died unexpectedly"
 msgstr "დამხმარე პროტოკოლის პროცესი მოულოდნელად მოკვდა"
 
-#: parallel.c:1534 parallel.c:1652
+#: parallel.c:1536 parallel.c:1654
 #, c-format
 msgid "could not write to the communication channel: %m"
 msgstr "საკომუნიკაციო არხში ჩაწერის შეცდომა: %m"
 
-#: parallel.c:1736
+#: parallel.c:1738
 #, c-format
 msgid "pgpipe: could not create socket: error code %d"
 msgstr "pgpipe: სოკეტის შექმნის შეცდომა. შეცდომის კოდი: %d"
 
-#: parallel.c:1747
+#: parallel.c:1749
 #, c-format
 msgid "pgpipe: could not bind: error code %d"
 msgstr "pgpipe: მიბმის შეცდომა: შეცდომის კოდი: %d"
 
-#: parallel.c:1754
+#: parallel.c:1756
 #, c-format
 msgid "pgpipe: could not listen: error code %d"
 msgstr "pgpipe: მოსმენის შეცდომა: შეცდომის კოდი: %d"
 
-#: parallel.c:1761
+#: parallel.c:1763
 #, c-format
 msgid "pgpipe: %s() failed: error code %d"
 msgstr "pgpipe: %s() -ის შეცდომა: შეცდომის კოდი %d"
 
-#: parallel.c:1772
+#: parallel.c:1774
 #, c-format
 msgid "pgpipe: could not create second socket: error code %d"
 msgstr "pgpipe: მეორე სოკეტის შექნა შეუძლებელია: შეცდომის კოდი: %d"
 
-#: parallel.c:1781
+#: parallel.c:1783
 #, c-format
 msgid "pgpipe: could not connect socket: error code %d"
 msgstr "pgpipe: სოკეტთან მიერთების შეცდომა: შეცდომის კოდი %d"
 
-#: parallel.c:1790
+#: parallel.c:1792
 #, c-format
 msgid "pgpipe: could not accept connection: error code %d"
 msgstr "pgpipe: შეერთების დადასტურება შეუძლებელია: შეცდომის კოდი %d"
@@ -2246,8 +2251,8 @@ msgstr "მწკრივის დონის უსაფრთხოებ�
 msgid "unexpected policy command type: %c"
 msgstr "წესების ბრძანების მოულოდნელი ტიპი: %c"
 
-#: pg_dump.c:4984 pg_dump.c:5600 pg_dump.c:8240 pg_dump.c:13795 pg_dump.c:20347
-#: pg_dump.c:20349 pg_dump.c:20990
+#: pg_dump.c:4984 pg_dump.c:5600 pg_dump.c:8271 pg_dump.c:13826 pg_dump.c:20378
+#: pg_dump.c:20380 pg_dump.c:21021
 #, c-format
 msgid "could not parse %s array"
 msgstr "მასივის დამუშავების შეცდომა: %s"
@@ -2282,328 +2287,328 @@ msgstr "სქემა OID-ით %u არ არსებობს"
 msgid "cannot dump statistics for relation kind \"%c\""
 msgstr "სტატისტიკის დამპი ურთიერთობის ტიპისთვის \"%c\" შეუძლებელია"
 
-#: pg_dump.c:7774 pg_dump.c:19674
+#: pg_dump.c:7805 pg_dump.c:19705
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "სისწორის შემოწმების შეცდომა. მშობელი ცხრილი OID-ით %u მიმდევრობიდან OID-ით %u არ არსებობს"
 
-#: pg_dump.c:7919
+#: pg_dump.c:7950
 #, c-format
 msgid "failed sanity check, table OID %u appearing in pg_partitioned_table not found"
 msgstr "სისწორის შემოწმების შეცდომა. pg_parttioned_table-ში მოხსენიებული ცხრილი OID-ით %u ვერ ვიპოვე"
 
-#: pg_dump.c:8182 pg_dump.c:8480 pg_dump.c:8943 pg_dump.c:9611 pg_dump.c:9755
-#: pg_dump.c:9900 pg_dump.c:10000
+#: pg_dump.c:8213 pg_dump.c:8511 pg_dump.c:8974 pg_dump.c:9642 pg_dump.c:9786
+#: pg_dump.c:9931 pg_dump.c:10031
 #, c-format
 msgid "unrecognized table OID %u"
 msgstr "ცხრილის უცნობი OID: %u"
 
-#: pg_dump.c:8186
+#: pg_dump.c:8217
 #, c-format
 msgid "unexpected index data for table \"%s\""
 msgstr "მოულოდნელი ინდექსის მონაცემები ცხრილისთვის \"%s\""
 
-#: pg_dump.c:8730
+#: pg_dump.c:8761
 #, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found"
 msgstr "სისწორის შემოწმების შეცდომა. მშობელი ცხრილი OID-ით %u pg_rewrite-ის ელემენტიდან OID-ით %u ვერ ვიპოვე"
 
-#: pg_dump.c:9618
+#: pg_dump.c:9649
 #, c-format
 msgid "unexpected column data for table \"%s\""
 msgstr "სვეტის მოულოდნელი მონაცემები ცხრილისთვის %s"
 
-#: pg_dump.c:9652
+#: pg_dump.c:9683
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "ცხრილში \"%s\" სვეტები არასწორადაა დანომრილი"
 
-#: pg_dump.c:9717
+#: pg_dump.c:9748
 #, c-format
 msgid "finding table default expressions"
 msgstr "ვეძებ ცხრილის ნაგულისხმევ გამოსახულებებს"
 
-#: pg_dump.c:9759
+#: pg_dump.c:9790
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "adnum -ის არასწორი მნიშვნელობა %d ცხრილისთვის \"%s\""
 
-#: pg_dump.c:9852
+#: pg_dump.c:9883
 #, c-format
 msgid "finding invalid not-null constraints"
 msgstr "ვეძებ არასწორ არანულოვან შეზღუდვებს"
 
-#: pg_dump.c:9950
+#: pg_dump.c:9981
 #, c-format
 msgid "finding table check constraints"
 msgstr "ვეძებ ცხრილის შემოწმების შეზღუდვებს"
 
-#: pg_dump.c:10004
+#: pg_dump.c:10035
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
 msgstr[0] "მოველოდი %d შემოწმების შეზღუდვას ცხრილზე \"%s\", მაგრამ %d"
 msgstr[1] "მოველოდი %d შემოწმების შეზღუდვას ცხრილზე \"%s\", მაგრამ %d"
 
-#: pg_dump.c:10008
+#: pg_dump.c:10039
 #, c-format
 msgid "The system catalogs might be corrupted."
 msgstr "სისტემის კატალოგი შეიძლება დაზიანებულია."
 
-#: pg_dump.c:10823
+#: pg_dump.c:10854
 #, c-format
 msgid "role with OID %u does not exist"
 msgstr "როლი OID-ით %u არ არსებობს"
 
-#: pg_dump.c:10935 pg_dump.c:10964
+#: pg_dump.c:10966 pg_dump.c:10995
 #, c-format
 msgid "unsupported pg_init_privs entry: %u %u %d"
 msgstr "pg_init_privs -ის არასწორი ჩანაწერი: %u %u %d"
 
-#: pg_dump.c:11286
+#: pg_dump.c:11317
 #, c-format
 msgid "statistics dumped out of order (current: %d %s %s, expected: %d %s %s)"
 msgstr "სტატისტიკის დამპი დალაგებული არაა (მიმდინარე: %d %s %s. მოველოდი: %d %s %s)"
 
-#: pg_dump.c:11441
+#: pg_dump.c:11472
 #, c-format
 msgid "unexpected null attname"
 msgstr "მოულოდნელი null attname"
 
-#: pg_dump.c:11470
+#: pg_dump.c:11501
 #, c-format
 msgid "could not find index attname \"%s\""
 msgstr "ინდექსის attname \"%s\" აღმოჩენილი არაა"
 
-#: pg_dump.c:11957
+#: pg_dump.c:11988
 #, c-format
 msgid "missing metadata for large objects \"%s\""
 msgstr "აკლია მეტამონაცემები დიდი ობიექტებისთვის \"%s\""
 
-#: pg_dump.c:12238
+#: pg_dump.c:12269
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "მონაცემის ტიპი %s-ის typetype თურმე არასორია"
 
-#: pg_dump.c:13866
+#: pg_dump.c:13897
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "უცნობი provolatile მნიშვნელობა ფუნქციისთვის \"%s\""
 
-#: pg_dump.c:13916 pg_dump.c:15816
+#: pg_dump.c:13947 pg_dump.c:15847
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "უცნობი proparallel მნიშვნელობა ფუნქციისთვის \"%s\""
 
-#: pg_dump.c:14050 pg_dump.c:14156 pg_dump.c:14163
+#: pg_dump.c:14081 pg_dump.c:14187 pg_dump.c:14194
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "ფუნქციის აღწერა ფუნქციისთვის OID-ით %u ვერ ვიპოვე"
 
-#: pg_dump.c:14089
+#: pg_dump.c:14120
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "pg_cast.castfunc ან pg_cast.castmethod ველების არასწორი მნიშვნელობა"
 
-#: pg_dump.c:14092
+#: pg_dump.c:14123
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "pg_cast.castmethod ველის არასწორი მნიშვნელობა"
 
-#: pg_dump.c:14182
+#: pg_dump.c:14213
 #, c-format
 msgid "bogus transform definition, at least one of trffromsql and trftosql should be nonzero"
 msgstr "არასწორი გარდაქმნის აღწერა. ერთ-ერთი, trffromsql ან trftosql ნულს არ უნდა უდრიდეს"
 
-#: pg_dump.c:14199
+#: pg_dump.c:14230
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "pg_transform.trffromsql ველის არასწორი მნიშვნელობა"
 
-#: pg_dump.c:14220
+#: pg_dump.c:14251
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "pg_transform.trftosql ველის არასწორი მნიშვნელობა"
 
-#: pg_dump.c:14365
+#: pg_dump.c:14396
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "postfix ოპერატორები მხარდაჭერილი აღარაა (ოპერატორი \"%s\")"
 
-#: pg_dump.c:14535
+#: pg_dump.c:14566
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "ოპერატორი OID-ით %s  არ არსებობს"
 
-#: pg_dump.c:14603
+#: pg_dump.c:14634
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "წვდომის მეთოდის (%2$s) არასწორი ტიპი: %1$c"
 
-#: pg_dump.c:15277 pg_dump.c:15345
+#: pg_dump.c:15308 pg_dump.c:15376
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "კოლაციის უცნობი მომწოდებელი: %s"
 
-#: pg_dump.c:15286 pg_dump.c:15293 pg_dump.c:15304 pg_dump.c:15314
-#: pg_dump.c:15329
+#: pg_dump.c:15317 pg_dump.c:15324 pg_dump.c:15335 pg_dump.c:15345
+#: pg_dump.c:15360
 #, c-format
 msgid "invalid collation \"%s\""
 msgstr "არასწორი კოლაცია \"%s\""
 
-#: pg_dump.c:15735
+#: pg_dump.c:15766
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "აგრეგატის (%s) aggfinalmodify -ის უცნობი ტიპი"
 
-#: pg_dump.c:15791
+#: pg_dump.c:15822
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "აგრეგატის (%s) aggmfinalmodify -ის უცნობი ტიპი"
 
-#: pg_dump.c:16514
+#: pg_dump.c:16545
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "ნაგულისხმევ პრივილეგიებში არსებული ობიექტის უცნობი ტიპი: %d"
 
-#: pg_dump.c:16530
+#: pg_dump.c:16561
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "ნაგულიხმები ACL სიის ანალიზი შეუძლებელია: %s"
 
-#: pg_dump.c:16614
+#: pg_dump.c:16645
 #, c-format
 msgid "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "საწყისი ACL სიის (%s) დამუშავების შეცდომა ან ნაგულისხმევი (%s) ობიექტისთვის \"%s\" (%s)"
 
-#: pg_dump.c:16639
+#: pg_dump.c:16670
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "შეცდომა ACL სიის (%s) დამუშავებისას ან ნაგულისხმევი (%s) ობიექტისთვის \"%s\" (%s)"
 
-#: pg_dump.c:17194
+#: pg_dump.c:17225
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "ხედის (%s) აღწერის გამოთხოვამ მონაცემები არ დააბრუნა"
 
-#: pg_dump.c:17197
+#: pg_dump.c:17228
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "ხედის (%s) აღწერის გამოთხოვამ ერთზე მეტი აღწერა დააბრუნა"
 
-#: pg_dump.c:17204
+#: pg_dump.c:17235
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "ხედის (%s) აღწერა, როგორც ჩანს, ცარიელია (ნულოვანი სიგრძე)"
 
-#: pg_dump.c:17289
+#: pg_dump.c:17320
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDS-ები უკვე მხარდაუჭერელია (ცხრილი \"%s\")"
 
-#: pg_dump.c:17352
+#: pg_dump.c:17383
 #, c-format
 msgid "query to obtain definition of property graph \"%s\" returned no data"
 msgstr "თვისების გრაფიკის \"%s\" აღწერის გამოთხოვამ მონაცემები არ დააბრუნა"
 
-#: pg_dump.c:17355
+#: pg_dump.c:17386
 #, c-format
 msgid "query to obtain definition of property graph \"%s\" returned more than one definition"
 msgstr "თვისების გრაფიკის \"%s\" აღწერის გამოთხოვამ ერთზე მეტი აღწერა დააბრუნა"
 
-#: pg_dump.c:17362
+#: pg_dump.c:17393
 #, c-format
 msgid "definition of property graph \"%s\" appears to be empty (length zero)"
 msgstr "თვისების გრაფიკის \"%s\" აღწერა, როგორც ჩანს, ცარიელია (ნულოვანი სიგრძე)"
 
-#: pg_dump.c:18471
+#: pg_dump.c:18502
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "სვეტების არასწორი რიცხვი %d ცხრილისთვის %s"
 
-#: pg_dump.c:18549
+#: pg_dump.c:18580
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "ინდექსის სტატისტიკის სვეტების დამუშავების შეცდომა"
 
-#: pg_dump.c:18551
+#: pg_dump.c:18582
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "ინდექსის სტატისტიკის მნიშვნელობების დამუშავების შეცდომა"
 
-#: pg_dump.c:18553
+#: pg_dump.c:18584
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "ინდექსის სტატისტიკისთვის სვეტებისა და მნიშვნელობების რაოდენობა არ ემთხვევა"
 
-#: pg_dump.c:18965
+#: pg_dump.c:18996
 #, c-format
 msgid "inherited cannot be NULL"
 msgstr "მემკვიდრეობა არ შეიძლება, NULL იყოს"
 
-#: pg_dump.c:19062
+#: pg_dump.c:19093
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "შეზღუდვას ინდექსი აკლია: \"%s\""
 
-#: pg_dump.c:19331
+#: pg_dump.c:19362
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "შეზღუდვის უცნობი ტიპი: %c"
 
-#: pg_dump.c:19384
+#: pg_dump.c:19415
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "მიმდევრობის უცნობი ტიპი: %s"
 
-#: pg_dump.c:19517 pg_dump.c:19755
+#: pg_dump.c:19548 pg_dump.c:19786
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "მოთხოვნამ, რომელსაც მონაცემები მიმდევრობიდან (%s) უნდა მიეღო, %d მწკრივი დააბრუნა. (მოველოდი: 1)"
 msgstr[1] "მოთხოვნამ, რომელსაც მონაცემები მიმდევრობიდან (%s) უნდა მიეღო, %d მწკრივი დააბრუნა. (მოველოდი: 1)"
 
-#: pg_dump.c:19553
+#: pg_dump.c:19584
 #, c-format
 msgid "unrecognized sequence type: %d"
 msgstr "მიმდევრობის უცნობი ტიპი: %d"
 
-#: pg_dump.c:19778
+#: pg_dump.c:19809
 #, c-format
 msgid "failed to get data for sequence \"%s\"; user may lack SELECT privilege on the sequence or the sequence may have been concurrently dropped"
 msgstr "ჩავარდა მონაცემების მიღება მიმდევრობისთვის \"%s\". მომხმარებელს, შეიძლება, SELECT პრივილეგია არ აქვს მიმდევრობაზე, ან მიმდევრობა, შეიძლება, იმავე დროს წაიშალა"
 
-#: pg_dump.c:20099
+#: pg_dump.c:20130
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "მოთხოვნის შეცდომა, რომელსაც ცხრილისთვის \"%2$s\" წესი \"%1$s\" უნდა მიეღო: დაბრუნებულია მწკრივების არასწორი რაოდენობა"
 
-#: pg_dump.c:20252
+#: pg_dump.c:20283
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "მიბმული გაფართოება (%u) ვერ ვიპოვე"
 
-#: pg_dump.c:20351
+#: pg_dump.c:20382
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "კონფიგურაციებისა და პირობების რაოდენობა გაფართოებისთვის არ ემთხვევა"
 
-#: pg_dump.c:20483
+#: pg_dump.c:20514
 #, c-format
 msgid "reading dependency data"
 msgstr "დამოკიდებულების მონაცემების კითხვა"
 
-#: pg_dump.c:20580
+#: pg_dump.c:20611
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "მიბმადი ობიექტის გარეშე %u %u"
 
-#: pg_dump.c:20591
+#: pg_dump.c:20622
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "მიბმული ობიექტის გარეშე %u %u"
 
-#: pg_dump.c:21024 pg_dump.c:21062 pg_dumpall.c:1858 pg_restore.c:642
+#: pg_dump.c:21055 pg_dump.c:21093 pg_dumpall.c:1858 pg_restore.c:642
 #: pg_restore.c:688
 #, c-format
 msgid "%s filter for \"%s\" is not allowed"

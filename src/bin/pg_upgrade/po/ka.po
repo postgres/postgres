@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-06-30 04:23+0000\n"
-"PO-Revision-Date: 2026-07-02 06:15+0200\n"
+"POT-Creation-Date: 2026-07-25 01:54+0000\n"
+"PO-Revision-Date: 2026-07-25 04:34+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -657,17 +657,17 @@ msgstr "gist_inet_ops/gist_cidr_ops-ის გამოყენების შ
 #: check.c:1862
 #, c-format
 msgid ""
-"Your installation contains indexes that use btree_gist extension's\n"
+"Your installation contains indexes that use the btree_gist extension's\n"
 "gist_inet_ops or gist_cidr_ops operator classes, which cannot be\n"
 "binary-upgraded.  Replace them with indexes that use the built-in GiST\n"
 "inet_ops operator class.\n"
 "A list of indexes with the problem is in the file:\n"
 "    %s"
 msgstr ""
-"თქვენი დაყენებული ვერსია შეიცავს ინდექსებს, რომლებიც იყენებენ btree_gist-ის\n"
-"gist_inet_ops, ან git_cidr_ops ოპერატორის კლასებს,\n"
+"თქვენი დაყენებული ვერსია შეიცავს ინდექსებს, რომლებიც იყენებენ გაფართოების btree_gist\n"
+"ოპერატორის კლასებს gist_inet_ops, ან git_cidr_ops ,\n"
 "რომლების ბინარული განახლებაც შეუძლებელია.  ჩაანაცვლეთ ისინი ინდექსებით, რომლებიც\n"
-"იყენებენ ჩაშენებულ GiST inet_ops ოპკლასს.\n"
+"იყენებენ ჩაშენებულ GiST inet_ops ოპერატორის კლასს.\n"
 "პრობლემის შემცველი ინდექსების ჩამონათვალი შეგიძლიათ იპოვოთ ფაილში:\n"
 "       %s"
 
@@ -1079,7 +1079,7 @@ msgstr "ძველი და ახალი pg_controldata-ის თარ�
 
 #: controldata.c:746
 #, c-format
-msgid "checksums are being enabled in the old cluster"
+msgid "data checksums are being enabled in the old cluster"
 msgstr "ხდება საკონტროლო ჯამების ჩართვა ძველ კლასტერში"
 
 #: controldata.c:754
