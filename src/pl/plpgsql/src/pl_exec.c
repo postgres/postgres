@@ -7884,12 +7884,20 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 		 * If there's no cast path according to the parser, fall back to using
 		 * an I/O coercion; this is semantically dubious but matches plpgsql's
 		 * historical behavior.  We would need something of the sort for
-		 * UNKNOWN literals in any case.  (This is probably now only reachable
-		 * in the case where srctype is UNKNOWN/RECORD.)
+		 * UNKNOWN literals in any case.  The only case we reject is casting
+		 * to/from INTERNAL.  (Other than that case, this is probably now only
+		 * reachable in the case where srctype is UNKNOWN/RECORD.)
 		 */
 		if (cast_expr == NULL)
 		{
 			CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+
+			if (srctype == INTERNALOID || dsttype == INTERNALOID)
+				ereport(ERROR,
+						(errcode(ERRCODE_CANNOT_COERCE),
+						 errmsg("cannot cast type %s to %s",
+								format_type_be(srctype),
+								format_type_be(dsttype))));
 
 			iocoerce->arg = (Expr *) placeholder;
 			iocoerce->resulttype = dsttype;
