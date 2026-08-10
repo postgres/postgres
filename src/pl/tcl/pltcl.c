@@ -1598,8 +1598,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 		prodesc->fn_xmin = HeapTupleHeaderGetRawXmin(procTup->t_data);
 		prodesc->fn_tid = procTup->t_self;
 		prodesc->nargs = procStruct->pronargs;
-		prodesc->arg_out_func = (FmgrInfo *) palloc0(prodesc->nargs * sizeof(FmgrInfo));
-		prodesc->arg_is_rowtype = (bool *) palloc0(prodesc->nargs * sizeof(bool));
+		prodesc->arg_out_func = palloc0_array(FmgrInfo, prodesc->nargs);
+		prodesc->arg_is_rowtype = palloc0_array(bool, prodesc->nargs);
 		MemoryContextSwitchTo(oldcontext);
 
 		/* Remember if function is STABLE/IMMUTABLE */
@@ -2118,7 +2118,7 @@ pltcl_quote(ClientData cdata, Tcl_Interp *interp,
 	 * grow to and initialize pointers
 	 ************************************************************/
 	cp1 = Tcl_GetStringFromObj(objv[1], &length);
-	tmp = palloc(length * 2 + 1);
+	tmp = palloc(add_size(mul_size(length, 2), 1));
 	cp2 = tmp;
 
 	/************************************************************
@@ -2677,9 +2677,9 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	qdesc = palloc0_object(pltcl_query_desc);
 	snprintf(qdesc->qname, sizeof(qdesc->qname), "%p", qdesc);
 	qdesc->nargs = nargs;
-	qdesc->argtypes = (Oid *) palloc(nargs * sizeof(Oid));
-	qdesc->arginfuncs = (FmgrInfo *) palloc(nargs * sizeof(FmgrInfo));
-	qdesc->argtypioparams = (Oid *) palloc(nargs * sizeof(Oid));
+	qdesc->argtypes = palloc_array(Oid, nargs);
+	qdesc->arginfuncs = palloc_array(FmgrInfo, nargs);
+	qdesc->argtypioparams = palloc_array(Oid, nargs);
 	MemoryContextSwitchTo(oldcontext);
 
 	/************************************************************
@@ -2922,7 +2922,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		 * Setup the value array for SPI_execute_plan() using
 		 * the type specific input functions
 		 ************************************************************/
-		argvalues = (Datum *) palloc(callObjc * sizeof(Datum));
+		argvalues = palloc_array(Datum, callObjc);
 
 		for (j = 0; j < callObjc; j++)
 		{
@@ -3296,7 +3296,7 @@ pltcl_build_tuple_result(Tcl_Interp *interp, Tcl_Obj **kvObjv, int kvObjc,
 		attinmeta = NULL;
 	}
 
-	values = (char **) palloc0(tupdesc->natts * sizeof(char *));
+	values = palloc0_array(char *, tupdesc->natts);
 
 	if (kvObjc % 2 != 0)
 		ereport(ERROR,
