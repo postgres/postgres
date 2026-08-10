@@ -726,6 +726,7 @@ bool
 variable_is_guc_list_quote(const char *name)
 {
 	if (pg_strcasecmp(name, "local_preload_libraries") == 0 ||
+		pg_strcasecmp(name, "output_plugin_libraries") == 0 ||
 		pg_strcasecmp(name, "search_path") == 0 ||
 		pg_strcasecmp(name, "session_preload_libraries") == 0 ||
 		pg_strcasecmp(name, "shared_preload_libraries") == 0 ||
