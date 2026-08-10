@@ -18,6 +18,30 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+7ce056b1798b81a287ae00e2c06f210fd0e59be2
+#
+# Check for USAGE privilege on types used by stored expressions.
+# 2026-08-10 06:38:24 -0700
+#
+# The addition of a parameter to AlterDomainAddConstraint() breaks ABI
+# compatibility, but we are unaware of any impacted third-party code.
+
+4e1252ee56c33b8a1144b25b5803f47276662519
+#
+# Add an output_plugin_libraries GUC to bless trusted output plugins
+# 2026-08-10 06:38:24 -0700
+#
+# Addition of a new GUC enlarges ConfigureNamesString[],
+# but that is not harmful.
+
+7c3367ab5dc42c34788cf9a4c768d46d4acf1041
+#
+# Preserve the owner of extended statistics rebuilt by ALTER TABLE.
+# 2026-08-10 06:38:24 -0700
+#
+# CreateStatistics()'s signature changes and CreateStatsStmt gains a field,
+# but no known third-party code calls the former or constructs the latter.
+
 e37b598028469d260650e5e1671c8275d30e22b6
 #
 # Add file_extend_method=posix_fallocate,write_zeros.
