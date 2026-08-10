@@ -2812,33 +2812,27 @@ static char *
 generate_normalized_query(JumbleState *jstate, const char *query,
 						  int query_loc, int *query_len_p)
 {
-	char	   *norm_query;
+	StringInfoData norm_query;
 	int			query_len = *query_len_p;
-	int			norm_query_buflen,	/* Space allowed for norm_query */
-				len_to_wrt,		/* Length (in bytes) to write */
+	int			len_to_wrt,		/* Length (in bytes) to write */
 				quer_loc = 0,	/* Source query byte location */
-				n_quer_loc = 0, /* Normalized query byte location */
 				last_off = 0,	/* Offset from start for previous tok */
 				last_tok_len = 0;	/* Length (in bytes) of that tok */
 	int			num_constants_replaced = 0;
 
 	/*
-	 * Get constants' lengths (core system only gives us locations).  Note
-	 * this also ensures the items are sorted by location.
+	 * Our output buffer is an expansible StringInfo, but avoid enlarging it
+	 * in most cases by reserving extra space for each constant location.
 	 */
-	fill_in_constant_lengths(jstate, query, query_loc);
+	Assert(jstate->clocations_count > 0);
+	initStringInfoExt(&norm_query, query_len + jstate->clocations_count * 10);
 
 	/*
-	 * Allow for $n symbols to be longer than the constants they replace.
-	 * Constants must take at least one byte in text form, while a $n symbol
-	 * certainly isn't more than 11 bytes, even if n reaches INT_MAX.  We
-	 * could refine that limit based on the max value of n for the current
-	 * query, but it hardly seems worth any extra effort to do so.
+	 * Determine constants' lengths (core system only gives us locations), and
+	 * return a sorted copy of jstate's LocationLen data with lengths filled
+	 * in.
 	 */
-	norm_query_buflen = query_len + jstate->clocations_count * 10;
-
-	/* Allocate result buffer */
-	norm_query = palloc(norm_query_buflen + 1);
+	fill_in_constant_lengths(jstate, query, query_loc);
 
 	for (int i = 0; i < jstate->clocations_count; i++)
 	{
@@ -2869,17 +2863,16 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 		len_to_wrt = off - last_off;
 		len_to_wrt -= last_tok_len;
 		Assert(len_to_wrt >= 0);
-		memcpy(norm_query + n_quer_loc, query + quer_loc, len_to_wrt);
-		n_quer_loc += len_to_wrt;
+		appendBinaryStringInfo(&norm_query, query + quer_loc, len_to_wrt);
 
 		/*
 		 * And insert a param symbol in place of the constant token; and, if
 		 * we have a squashable list, insert a placeholder comment starting
 		 * from the list's second value.
 		 */
-		n_quer_loc += sprintf(norm_query + n_quer_loc, "$%d%s",
-							  num_constants_replaced + 1 + jstate->highest_extern_param_id,
-							  jstate->clocations[i].squashed ? " /*, ... */" : "");
+		appendStringInfo(&norm_query, "$%d%s",
+						 num_constants_replaced + 1 + jstate->highest_extern_param_id,
+						 jstate->clocations[i].squashed ? " /*, ... */" : "");
 		num_constants_replaced++;
 
 		/* move forward */
@@ -2895,14 +2888,10 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 	len_to_wrt = query_len - quer_loc;
 
 	Assert(len_to_wrt >= 0);
-	memcpy(norm_query + n_quer_loc, query + quer_loc, len_to_wrt);
-	n_quer_loc += len_to_wrt;
+	appendBinaryStringInfo(&norm_query, query + quer_loc, len_to_wrt);
 
-	Assert(n_quer_loc <= norm_query_buflen);
-	norm_query[n_quer_loc] = '\0';
-
-	*query_len_p = n_quer_loc;
-	return norm_query;
+	*query_len_p = norm_query.len;
+	return norm_query.data;
 }
 
 /*
