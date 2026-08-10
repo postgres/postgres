@@ -32,6 +32,7 @@
 #define ECPG_NO_ARRAY			-214
 #define ECPG_DATA_NOT_ARRAY		-215
 #define ECPG_ARRAY_INSERT		-216
+#define ECPG_BYTEA_FORMAT		-217
 
 #define ECPG_NO_CONN			-220
 #define ECPG_NOT_CONN			-221
