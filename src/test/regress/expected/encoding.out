@@ -416,6 +416,25 @@ SELECT SUBSTRING(c FROM 3000 FOR 1) FROM toast_4b_utf8;
  🚀
 (1 row)
 
+-- ascii() and multibyte characters
+SELECT ascii(test_bytea_to_text('\xc3'));
+ERROR:  invalid byte sequence for encoding "UTF8"
+SELECT ascii(test_bytea_to_text('\xe2'));
+ERROR:  invalid byte sequence for encoding "UTF8"
+SELECT ascii(test_bytea_to_text('\xe282'));
+ERROR:  invalid byte sequence for encoding "UTF8"
+SELECT ascii(test_bytea_to_text('\xf0'));
+ERROR:  invalid byte sequence for encoding "UTF8"
+SELECT ascii(test_bytea_to_text('\xf09f'));
+ERROR:  invalid byte sequence for encoding "UTF8"
+SELECT ascii(test_bytea_to_text('\xf09f98'));
+ERROR:  invalid byte sequence for encoding "UTF8"
+-- invalid continuation byte
+SELECT ascii(test_bytea_to_text('\xc3ff'));
+ERROR:  invalid byte sequence for encoding "UTF8"
+-- invalid leading byte
+SELECT ascii(test_bytea_to_text('\x80'));
+ERROR:  invalid byte sequence for encoding "UTF8"
 DROP TABLE encoding_tests;
 DROP TABLE toast_4b_utf8;
 DROP FUNCTION test_encoding;
