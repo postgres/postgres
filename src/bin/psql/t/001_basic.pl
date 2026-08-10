@@ -395,4 +395,11 @@ psql_fails_like(
 	qr/backslash commands are restricted; only \\unrestrict is allowed/,
 	'meta-command in restrict mode fails');
 
+psql_fails_like(
+	$node,
+	qq{\\restrict test
+\\unrestrict `echo test`},
+	qr/wrong key/,
+	'\unrestrict does not do backquote expansion');
+
 done_testing();
