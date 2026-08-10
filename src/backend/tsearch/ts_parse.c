@@ -401,12 +401,30 @@ parsetext(Oid cfgId, ParsedText *prs, char *buf, int buflen)
 
 		while ((norms = LexizeExec(&ldata, NULL)) != NULL)
 		{
-			TSLexeme   *ptr = norms;
-
 			prs->pos++;			/* set pos */
 
-			while (ptr->lexeme)
+			for (TSLexeme *ptr = norms; ptr->lexeme; ptr++)
 			{
+				size_t		lexeme_len = strlen(ptr->lexeme);
+
+				if (lexeme_len > MAXSTRLEN)
+				{
+#ifdef IGNORE_LONGLEXEME
+					ereport(NOTICE,
+							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+							 errmsg("word is too long to be indexed"),
+							 errdetail("Words longer than %d characters are ignored.",
+									   MAXSTRLEN)));
+					continue;
+#else
+					ereport(ERROR,
+							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+							 errmsg("word is too long to be indexed"),
+							 errdetail("Words longer than %d characters are ignored.",
+									   MAXSTRLEN)));
+#endif
+				}
+
 				if (prs->curwords == prs->lenwords)
 				{
 					prs->lenwords *= 2;
@@ -415,13 +433,12 @@ parsetext(Oid cfgId, ParsedText *prs, char *buf, int buflen)
 
 				if (ptr->flags & TSL_ADDPOS)
 					prs->pos++;
-				prs->words[prs->curwords].len = strlen(ptr->lexeme);
+				prs->words[prs->curwords].len = lexeme_len;
 				prs->words[prs->curwords].word = ptr->lexeme;
 				prs->words[prs->curwords].nvariant = ptr->nvariant;
 				prs->words[prs->curwords].flags = ptr->flags & TSL_PREFIX;
 				prs->words[prs->curwords].alen = 0;
 				prs->words[prs->curwords].pos.pos = LIMITPOS(prs->pos);
-				ptr++;
 				prs->curwords++;
 			}
 			pfree(norms);
