@@ -1953,7 +1953,23 @@ get_aggregate_argtypes(Aggref *aggref, Oid *inputTypes)
 	int			numArguments = 0;
 	ListCell   *lc;
 
-	Assert(list_length(aggref->aggargtypes) <= FUNC_MAX_ARGS);
+	/*
+	 * Check the number of arguments to protect fixed-size arrays in callers.
+	 *
+	 * Aggregates can have at most FUNC_MAX_ARGS-1 args (compare
+	 * AggregateCreate, whose error message we want to match).  Ordinarily
+	 * this would have been checked while creating the Aggref, but it's
+	 * possible that we are looking at a parsetree from a stored view that was
+	 * made by a server executable with a different value of FUNC_MAX_ARGS, or
+	 * an executable in which parse_func.c didn't enforce the correct limit.
+	 */
+	if (list_length(aggref->aggargtypes) > FUNC_MAX_ARGS - 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg_plural("aggregates cannot have more than %d argument",
+							   "aggregates cannot have more than %d arguments",
+							   FUNC_MAX_ARGS - 1,
+							   FUNC_MAX_ARGS - 1)));
 
 	foreach(lc, aggref->aggargtypes)
 	{
