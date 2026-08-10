@@ -70,6 +70,12 @@ SwitchToUntrustedUser(Oid userid, UserContext *context)
 		 * session state. Also set up a new GUC nest level, so that we can
 		 * roll back any GUC changes that may be made by code running as the
 		 * target user, inasmuch as they could be malicious.
+		 *
+		 * Unlike most use of SECURITY_RESTRICTED_OPERATION, this opts not to
+		 * use RestrictSearchPath().  Calling it would just stop the current
+		 * user from attacking "userid", but we've already established that
+		 * the current user could just SET ROLE to "userid".  Calling it would
+		 * be a compatibility break.
 		 */
 		sec_context |= SECURITY_RESTRICTED_OPERATION;
 		SetUserIdAndSecContext(userid, sec_context);
