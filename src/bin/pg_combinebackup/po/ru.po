@@ -3,8 +3,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-05-10 08:01+0300\n"
-"PO-Revision-Date: 2026-02-07 09:22+0200\n"
+"POT-Creation-Date: 2026-08-05 06:37+0300\n"
+"PO-Revision-Date: 2026-08-05 07:49+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -53,7 +53,7 @@ msgstr "не удалось прочитать файл \"%s\" (прочитан
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
-#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:742
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:745
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -88,7 +88,7 @@ msgstr ""
 msgid "could not open file \"%s\": %m"
 msgstr "не удалось открыть файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:761
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:764
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -119,16 +119,26 @@ msgstr "буфер назначения слишком мал"
 msgid "OpenSSL failure"
 msgstr "ошибка OpenSSL"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu * %zu\n"
 
 #: ../../common/file_utils.c:76
 #, c-format
@@ -474,13 +484,13 @@ msgstr "%s: не удалось найти %s"
 msgid "%s: %s requires %s"
 msgstr "%s: %s требует %s"
 
-#: backup_label.c:162 reconstruct.c:763 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:766 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "не удалось записать файл \"%s\" (записано байт: %d из %d)"
 
-#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:723
-#: reconstruct.c:769 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:726
+#: reconstruct.c:772 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "не удалось изменить контекст контрольной суммы файла \"%s\""
@@ -496,7 +506,7 @@ msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr ""
 "не удалось записать в файл \"%s\" (смещение %u, записано байт: %d из %d)"
 
-#: copy_file.c:199 reconstruct.c:786
+#: copy_file.c:199 reconstruct.c:789
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "не удалось прочитать файл \"%s\": %m"
@@ -526,7 +536,7 @@ msgstr "клонирование файлов не поддерживается 
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "ошибка при копировании фрагмента файла \"%s\" в \"%s\": %m"
 
-#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:726
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:729
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range не поддерживается в этой ОС"
@@ -944,7 +954,13 @@ msgstr ""
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "не удалось прочитать файл \"%s\" (прочитано байт: %d из %u)"
 
-#: reconstruct.c:788
+#: reconstruct.c:709
+#, c-format
+msgid "unexpected end of file while copying file range from \"%s\" to \"%s\""
+msgstr ""
+"неожиданный конец файла при копировании фрагмента файла из \"%s\" в \"%s\""
+
+#: reconstruct.c:791
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr ""

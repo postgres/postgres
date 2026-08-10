@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-07 12:38+0000\n"
+"POT-Creation-Date: 2026-08-07 09:30+0000\n"
 "PO-Revision-Date: 2025-08-07 23:48+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -15,16 +15,26 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu * %zu\n"
 
 #: ../../common/restricted_token.c:168
 #, c-format
@@ -246,7 +256,7 @@ msgstr "Eine Liste der Problemspalten ist in der Datei:"
 #: check.c:496 check.c:971 check.c:1144 check.c:1259 check.c:1353 check.c:1481
 #: check.c:1557 check.c:1634 check.c:1700 check.c:1773 check.c:1952
 #: check.c:1971 check.c:2040 check.c:2092 file.c:378 file.c:415 function.c:189
-#: option.c:493 version.c:79 version.c:177
+#: option.c:493 version.c:110 version.c:208
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
@@ -764,7 +774,7 @@ msgstr "Im alten Cluster fehlen Cluster-Zustandsinformationen:"
 msgid "The target cluster lacks cluster state information:"
 msgstr "Im neuen Cluster fehlen Cluster-Zustandsinformationen:"
 
-#: controldata.c:213 dump.c:50 exec.c:118 pg_upgrade.c:558 pg_upgrade.c:598
+#: controldata.c:213 dump.c:54 exec.c:118 pg_upgrade.c:558 pg_upgrade.c:598
 #: pg_upgrade.c:947 relfilenumber.c:233 server.c:34 util.c:337
 #, c-format
 msgid "%s"
@@ -995,7 +1005,7 @@ msgstr ""
 msgid "Creating dump of global objects"
 msgstr "Erzeuge Dump der globalen Objekte"
 
-#: dump.c:32
+#: dump.c:33
 #, c-format
 msgid "Creating dump of database schemas"
 msgstr "Erzeuge Dump der Datenbankschemas"
@@ -1870,17 +1880,17 @@ msgstr "kopiere »%s« nach »%s« mit copy_file_range"
 msgid "linking \"%s\" to \"%s\""
 msgstr "verknüpfe »%s« nach »%s«"
 
-#: server.c:39 server.c:143 util.c:248 util.c:278
+#: server.c:39 server.c:145 util.c:248 util.c:278
 #, c-format
 msgid "Failure, exiting\n"
 msgstr "Fehlgeschlagen, Programm wird beendet\n"
 
-#: server.c:133
+#: server.c:135
 #, c-format
 msgid "executing: %s"
 msgstr "führe aus: %s"
 
-#: server.c:139
+#: server.c:141
 #, c-format
 msgid ""
 "SQL command failed\n"
@@ -1891,17 +1901,17 @@ msgstr ""
 "%s\n"
 "%s"
 
-#: server.c:169
+#: server.c:171
 #, c-format
 msgid "could not open version file \"%s\": %m"
 msgstr "konnte Versionsdatei »%s« nicht öffnen: %m"
 
-#: server.c:173
+#: server.c:175
 #, c-format
 msgid "could not parse version file \"%s\""
 msgstr "konnte Versionsdatei »%s« nicht interpretieren"
 
-#: server.c:299
+#: server.c:301
 #, c-format
 msgid ""
 "\n"
@@ -1910,7 +1920,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: server.c:303
+#: server.c:305
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -1919,7 +1929,7 @@ msgstr ""
 "konnte nicht mit dem Postmaster für den alten Cluster verbinden, gestartet mit dem Befehl:\n"
 "%s"
 
-#: server.c:307
+#: server.c:309
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -1928,22 +1938,22 @@ msgstr ""
 "konnte nicht mit dem Postmaster für den neuen Cluster verbinden, gestartet mit dem Befehl:\n"
 "%s"
 
-#: server.c:321
+#: server.c:323
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed"
 msgstr "pg_ctl konnte den Quellserver nicht starten, oder Verbindung fehlgeschlagen"
 
-#: server.c:323
+#: server.c:325
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed"
 msgstr "pg_ctl konnte den Zielserver nicht starten, oder Verbindung fehlgeschlagen"
 
-#: server.c:368
+#: server.c:370
 #, c-format
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
-#: server.c:381
+#: server.c:383
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s"
 msgstr "libpq-Umgebungsvariable %s hat einen nicht lokalen Serverwert: %s"
@@ -1987,17 +1997,17 @@ msgstr "konnte nicht auf Verzeichnis »%s« zugreifen: %m"
 msgid "ok"
 msgstr "ok"
 
-#: version.c:44
+#: version.c:75
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "Prüfe auf Hash-Indexe"
 
-#: version.c:121
+#: version.c:152
 #, c-format
 msgid "warning"
 msgstr "Warnung"
 
-#: version.c:123
+#: version.c:154
 #, c-format
 msgid ""
 "\n"
@@ -2012,7 +2022,7 @@ msgstr ""
 "daher mit dem Befehl REINDEX reindiziert werden. Nach dem Upgrade\n"
 "werden Sie Anweisungen zum REINDEX erhalten."
 
-#: version.c:129
+#: version.c:160
 #, c-format
 msgid ""
 "\n"
@@ -2032,17 +2042,17 @@ msgstr ""
 "ungültigen Indexe neu zu erzeugen. Bis dahin werden diese Indexe nicht\n"
 "verwendet werden."
 
-#: version.c:153
+#: version.c:184
 #, c-format
 msgid "Checking for extension updates"
 msgstr "Prüfe auf Aktualisierungen von Erweiterungen"
 
-#: version.c:200
+#: version.c:231
 #, c-format
 msgid "notice"
 msgstr "Hinweis"
 
-#: version.c:201
+#: version.c:232
 #, c-format
 msgid ""
 "\n"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-07 08:28+0000\n"
+"POT-Creation-Date: 2026-08-07 09:21+0000\n"
 "PO-Revision-Date: 2025-03-07 11:34+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -77,12 +77,12 @@ msgstr "konnte Nonce nicht erzeugen"
 #: fe-connect.c:5788 fe-connect.c:5886 fe-connect.c:6137 fe-connect.c:6164
 #: fe-connect.c:6240 fe-connect.c:6263 fe-connect.c:6287 fe-connect.c:6322
 #: fe-connect.c:6408 fe-connect.c:6416 fe-connect.c:6773 fe-connect.c:6923
-#: fe-exec.c:530 fe-exec.c:1320 fe-exec.c:3259 fe-exec.c:4330 fe-exec.c:4523
-#: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:210 fe-protocol3.c:233
-#: fe-protocol3.c:256 fe-protocol3.c:273 fe-protocol3.c:294 fe-protocol3.c:370
-#: fe-protocol3.c:738 fe-protocol3.c:977 fe-protocol3.c:1801
-#: fe-protocol3.c:2201 fe-secure-common.c:110 fe-secure-gssapi.c:508
-#: fe-secure-gssapi.c:699 fe-secure-openssl.c:427 fe-secure-openssl.c:1277
+#: fe-exec.c:531 fe-exec.c:1321 fe-exec.c:3274 fe-exec.c:4324 fe-exec.c:4517
+#: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:212 fe-protocol3.c:235
+#: fe-protocol3.c:258 fe-protocol3.c:275 fe-protocol3.c:296 fe-protocol3.c:372
+#: fe-protocol3.c:740 fe-protocol3.c:979 fe-protocol3.c:1803
+#: fe-protocol3.c:2214 fe-secure-common.c:110 fe-secure-gssapi.c:515
+#: fe-secure-gssapi.c:706 fe-secure-openssl.c:458 fe-secure-openssl.c:1309
 #, c-format
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
@@ -337,7 +337,7 @@ msgstr "unbekannter Passwortverschlüsselungsalgorithmus »%s«"
 msgid "connection pointer is NULL"
 msgstr "Verbindung ist ein NULL-Zeiger"
 
-#: fe-cancel.c:82 fe-misc.c:598
+#: fe-cancel.c:82 fe-misc.c:606
 #, c-format
 msgid "connection not open"
 msgstr "Verbindung nicht offen"
@@ -801,8 +801,8 @@ msgstr "verbotener Wert %%00 in Prozent-kodiertem Wert: »%s«"
 msgid "connection pointer is NULL\n"
 msgstr "Verbindung ist ein NULL-Zeiger\n"
 
-#: fe-connect.c:7185 fe-exec.c:718 fe-exec.c:980 fe-exec.c:3464
-#: fe-protocol3.c:992 fe-protocol3.c:1025
+#: fe-connect.c:7185 fe-exec.c:719 fe-exec.c:981 fe-exec.c:3479
+#: fe-protocol3.c:994 fe-protocol3.c:1027
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
@@ -826,176 +826,176 @@ msgstr "Passwort wurde aus Datei »%s« gelesen"
 msgid "invalid integer value \"%s\" for connection option \"%s\""
 msgstr "ungültiger Zahlenwert »%s« für Verbindungsoption »%s«"
 
-#: fe-exec.c:469 fe-exec.c:3538
+#: fe-exec.c:470 fe-exec.c:3553
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "Zeilennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:531 fe-protocol3.c:2007
+#: fe-exec.c:532 fe-protocol3.c:2009
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: fe-exec.c:839
+#: fe-exec.c:840
 #, c-format
 msgid "write to server failed"
 msgstr "Schreiben zum Server fehlgeschlagen"
 
-#: fe-exec.c:879
+#: fe-exec.c:880
 #, c-format
 msgid "no error text available"
 msgstr "kein Fehlertext verfügbar"
 
-#: fe-exec.c:968
+#: fe-exec.c:969
 msgid "NOTICE"
 msgstr "HINWEIS"
 
-#: fe-exec.c:1026
+#: fe-exec.c:1027
 msgid "PGresult cannot support more than INT_MAX tuples"
 msgstr "PGresult kann nicht mehr als INT_MAX Tupel enthalten"
 
-#: fe-exec.c:1038
+#: fe-exec.c:1039
 msgid "size_t overflow"
 msgstr "Überlauf von size_t"
 
-#: fe-exec.c:1443 fe-exec.c:1512 fe-exec.c:1558
+#: fe-exec.c:1444 fe-exec.c:1513 fe-exec.c:1559
 #, c-format
 msgid "command string is a null pointer"
 msgstr "Befehlszeichenkette ist ein NULL-Zeiger"
 
-#: fe-exec.c:1449 fe-exec.c:3008
+#: fe-exec.c:1450 fe-exec.c:3023
 #, c-format
 msgid "%s not allowed in pipeline mode"
 msgstr "%s im Pipeline-Modus nicht erlaubt"
 
-#: fe-exec.c:1517 fe-exec.c:1563 fe-exec.c:1657
+#: fe-exec.c:1518 fe-exec.c:1564 fe-exec.c:1658
 #, c-format
 msgid "number of parameters must be between 0 and %d"
 msgstr "Anzahl der Parameter muss zwischen 0 und %d sein"
 
-#: fe-exec.c:1553 fe-exec.c:1652
+#: fe-exec.c:1554 fe-exec.c:1653
 #, c-format
 msgid "statement name is a null pointer"
 msgstr "Anweisungsname ist ein NULL-Zeiger"
 
-#: fe-exec.c:1694 fe-exec.c:3384
+#: fe-exec.c:1695 fe-exec.c:3399
 #, c-format
 msgid "no connection to the server"
 msgstr "keine Verbindung mit dem Server"
 
-#: fe-exec.c:1702 fe-exec.c:3392
+#: fe-exec.c:1703 fe-exec.c:3407
 #, c-format
 msgid "another command is already in progress"
 msgstr "ein anderer Befehl ist bereits in Ausführung"
 
-#: fe-exec.c:1732
+#: fe-exec.c:1733
 #, c-format
 msgid "cannot queue commands during COPY"
 msgstr "während COPY können keine Befehle aufgereiht werden"
 
-#: fe-exec.c:1851
+#: fe-exec.c:1852
 #, c-format
 msgid "length must be given for binary parameter"
 msgstr "für binäre Parameter muss eine Länge angegeben werden"
 
-#: fe-exec.c:2210
+#: fe-exec.c:2211
 #, c-format
 msgid "unexpected asyncStatus: %d"
 msgstr "unerwarteter asyncStatus: %d"
 
-#: fe-exec.c:2366
+#: fe-exec.c:2367
 #, c-format
 msgid "synchronous command execution functions are not allowed in pipeline mode"
 msgstr "synchrone Befehlsausführungsfunktionen sind im Pipeline-Modus nicht erlaubt"
 
-#: fe-exec.c:2383
+#: fe-exec.c:2384
 msgid "COPY terminated by new PQexec"
 msgstr "COPY von neuem PQexec beendet"
 
-#: fe-exec.c:2399
+#: fe-exec.c:2400
 #, c-format
 msgid "PQexec not allowed during COPY BOTH"
 msgstr "PQexec ist während COPY BOTH nicht erlaubt"
 
-#: fe-exec.c:2635
+#: fe-exec.c:2636
 #, c-format
 msgid "unrecognized message type \"%c\""
 msgstr "unbekannter Message-Typ »%c«"
 
-#: fe-exec.c:2707 fe-exec.c:2761 fe-exec.c:2829 fe-protocol3.c:1938
+#: fe-exec.c:2708 fe-exec.c:2762 fe-exec.c:2830 fe-protocol3.c:1940
 #, c-format
 msgid "no COPY in progress"
 msgstr "keine COPY in Ausführung"
 
-#: fe-exec.c:3015
+#: fe-exec.c:3030
 #, c-format
 msgid "connection in wrong state"
 msgstr "Verbindung im falschen Zustand"
 
-#: fe-exec.c:3058
+#: fe-exec.c:3073
 #, c-format
 msgid "cannot enter pipeline mode, connection not idle"
 msgstr "kann Pipeline-Modus nicht einschalten, Verbindung ist nicht inaktiv"
 
-#: fe-exec.c:3094 fe-exec.c:3115
+#: fe-exec.c:3109 fe-exec.c:3130
 #, c-format
 msgid "cannot exit pipeline mode with uncollected results"
 msgstr "kann Pipeline-Modus nicht beenden, wegen nicht eingesammelter Ergebnisse"
 
-#: fe-exec.c:3098
+#: fe-exec.c:3113
 #, c-format
 msgid "cannot exit pipeline mode while busy"
 msgstr "kann Pipeline-Modus nicht beenden während die Verbindung beschäftigt ist"
 
-#: fe-exec.c:3109
+#: fe-exec.c:3124
 #, c-format
 msgid "cannot exit pipeline mode while in COPY"
 msgstr "kann Pipeline-Modus nicht beenden während COPY aktiv ist"
 
-#: fe-exec.c:3308
+#: fe-exec.c:3323
 #, c-format
 msgid "cannot send pipeline when not in pipeline mode"
 msgstr "Pipeline kann nicht gesendet werden, wenn der Pipeline-Modus aus ist"
 
-#: fe-exec.c:3427
+#: fe-exec.c:3442
 msgid "invalid ExecStatusType code"
 msgstr "ungültiger ExecStatusType-Kode"
 
-#: fe-exec.c:3454
+#: fe-exec.c:3469
 msgid "PGresult is not an error result\n"
 msgstr "PGresult ist kein Fehlerresultat\n"
 
-#: fe-exec.c:3522 fe-exec.c:3545
+#: fe-exec.c:3537 fe-exec.c:3560
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "Spaltennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:3560
+#: fe-exec.c:3575
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "Parameternummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:3871
+#: fe-exec.c:3886
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "konnte Ergebnis vom Server nicht interpretieren: %s"
 
-#: fe-exec.c:4146 fe-exec.c:4281
+#: fe-exec.c:4161 fe-exec.c:4275
 #, c-format
 msgid "incomplete multibyte character"
 msgstr "unvollständiges Mehrbyte-Zeichen"
 
-#: fe-exec.c:4148 fe-exec.c:4300
+#: fe-exec.c:4163 fe-exec.c:4294
 #, c-format
 msgid "invalid multibyte character"
 msgstr "ungültiges Mehrbytezeichen"
 
-#: fe-exec.c:4402
+#: fe-exec.c:4396
 #, c-format
 msgid "escaped string size exceeds the maximum allowed (%zu)"
 msgstr "Größe der escapten Zeichenkette überschreitet erlaubtes Maximum (%zu)"
 
-#: fe-exec.c:4579
+#: fe-exec.c:4573
 #, c-format
 msgid "escaped bytea size exceeds the maximum allowed (%zu)"
 msgstr "Größe des escapten bytea-Wertes überschreitet erlaubtes Maximum (%zu)"
@@ -1046,18 +1046,18 @@ msgstr "konnte nicht in Datei »%s« schreiben: %s"
 msgid "query to initialize large object functions did not return data"
 msgstr "Abfrage zur Initialisierung der Large-Object-Funktionen ergab keine Daten"
 
-#: fe-misc.c:239
+#: fe-misc.c:241
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "Integer der Größe %lu wird von pqGetInt nicht unterstützt"
 
-#: fe-misc.c:272
+#: fe-misc.c:274
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "Integer der Größe %lu wird von pqPutInt nicht unterstützt"
 
-#: fe-misc.c:776 fe-secure-openssl.c:203 fe-secure-openssl.c:309
-#: fe-secure.c:237 fe-secure.c:404
+#: fe-misc.c:818 fe-secure-openssl.c:204 fe-secure-openssl.c:340
+#: fe-secure.c:237 fe-secure.c:428
 #, c-format
 msgid ""
 "server closed the connection unexpectedly\n"
@@ -1068,172 +1068,182 @@ msgstr ""
 "\tDas heißt wahrscheinlich, dass der Server abnormal beendete\n"
 "\tbevor oder während die Anweisung bearbeitet wurde."
 
-#: fe-misc.c:843
+#: fe-misc.c:927
+#, c-format
+msgid "drained only %zd of %zd pending bytes in transport buffer"
+msgstr "nur %zd von %zd ausstehenden Bytes im Transportpuffer geleert"
+
+#: fe-misc.c:989
 msgid "connection not open\n"
 msgstr "Verbindung nicht offen\n"
 
-#: fe-misc.c:1031
+#: fe-misc.c:1177
 #, c-format
 msgid "timeout expired"
 msgstr "Timeout abgelaufen"
 
-#: fe-misc.c:1075
+#: fe-misc.c:1221
 #, c-format
 msgid "invalid socket"
 msgstr "ungültiges Socket"
 
-#: fe-misc.c:1097
+#: fe-misc.c:1241
 #, c-format
 msgid "%s() failed: %s"
 msgstr "%s() fehlgeschlagen: %s"
 
-#: fe-protocol3.c:188
+#: fe-protocol3.c:190
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "Nachricht vom Typ 0x%02x kam vom Server im Ruhezustand"
 
-#: fe-protocol3.c:403
+#: fe-protocol3.c:405
 #, c-format
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
 msgstr "Server sendete Daten (»D«-Nachricht) ohne vorherige Zeilenbeschreibung (»T«-Nachricht)"
 
-#: fe-protocol3.c:445
+#: fe-protocol3.c:447
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\""
 msgstr "unerwartete Antwort vom Server; erstes empfangenes Zeichen war »%c«"
 
-#: fe-protocol3.c:468
+#: fe-protocol3.c:470
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\""
 msgstr "Nachrichteninhalt stimmt nicht mit Länge in Nachrichtentyp »%c« überein"
 
-#: fe-protocol3.c:486
+#: fe-protocol3.c:488
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d"
 msgstr "Synchronisation mit Server verloren: Nachrichtentyp »%c« empfangen, Länge %d"
 
-#: fe-protocol3.c:538 fe-protocol3.c:578
+#: fe-protocol3.c:540 fe-protocol3.c:580
 msgid "insufficient data in \"T\" message"
 msgstr "nicht genug Daten in »T«-Nachricht"
 
-#: fe-protocol3.c:649 fe-protocol3.c:855
+#: fe-protocol3.c:651 fe-protocol3.c:857
 msgid "out of memory for query result"
 msgstr "Speicher für Anfrageergebnis aufgebraucht"
 
-#: fe-protocol3.c:718
+#: fe-protocol3.c:720
 msgid "insufficient data in \"t\" message"
 msgstr "nicht genug Daten in »t«-Nachricht"
 
-#: fe-protocol3.c:777 fe-protocol3.c:809 fe-protocol3.c:827
+#: fe-protocol3.c:779 fe-protocol3.c:811 fe-protocol3.c:829
 msgid "insufficient data in \"D\" message"
 msgstr "nicht genug Daten in »D«-Nachricht"
 
-#: fe-protocol3.c:783
+#: fe-protocol3.c:785
 msgid "unexpected field count in \"D\" message"
 msgstr "unerwartete Feldzahl in »D«-Nachricht"
 
-#: fe-protocol3.c:1038
+#: fe-protocol3.c:1040
 msgid "no error message available\n"
 msgstr "keine Fehlermeldung verfügbar\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1086 fe-protocol3.c:1105
+#: fe-protocol3.c:1088 fe-protocol3.c:1107
 #, c-format
 msgid " at character %s"
 msgstr " bei Zeichen %s"
 
-#: fe-protocol3.c:1118
+#: fe-protocol3.c:1120
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "DETAIL:  %s\n"
 
-#: fe-protocol3.c:1121
+#: fe-protocol3.c:1123
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "TIP:  %s\n"
 
-#: fe-protocol3.c:1124
+#: fe-protocol3.c:1126
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "ANFRAGE:  %s\n"
 
-#: fe-protocol3.c:1131
+#: fe-protocol3.c:1133
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "KONTEXT:  %s\n"
 
-#: fe-protocol3.c:1140
+#: fe-protocol3.c:1142
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "SCHEMANAME:  %s\n"
 
-#: fe-protocol3.c:1144
+#: fe-protocol3.c:1146
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "TABELLENNAME:  %s\n"
 
-#: fe-protocol3.c:1148
+#: fe-protocol3.c:1150
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "SPALTENNAME:  %s\n"
 
-#: fe-protocol3.c:1152
+#: fe-protocol3.c:1154
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "DATENTYPNAME:  %s\n"
 
-#: fe-protocol3.c:1156
+#: fe-protocol3.c:1158
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "CONSTRAINT-NAME:  %s\n"
 
-#: fe-protocol3.c:1168
+#: fe-protocol3.c:1170
 msgid "LOCATION:  "
 msgstr "ORT:  "
 
-#: fe-protocol3.c:1170
+#: fe-protocol3.c:1172
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1172
+#: fe-protocol3.c:1174
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1380
+#: fe-protocol3.c:1382
 #, c-format
 msgid "LINE %d: "
 msgstr "ZEILE %d: "
 
-#: fe-protocol3.c:1454
+#: fe-protocol3.c:1456
 #, c-format
 msgid "protocol version not supported by server: client uses %u.%u, server supports up to %u.%u"
 msgstr "Protokollversion nicht vom Server unterstützt: Client verwendet %u.%u, Server unterstützt bis %u.%u"
 
-#: fe-protocol3.c:1460
+#: fe-protocol3.c:1462
 #, c-format
 msgid "protocol extension not supported by server: %s"
 msgid_plural "protocol extensions not supported by server: %s"
 msgstr[0] "Protokollerweiterung nicht vom Server unterstützt: %s"
 msgstr[1] "Protokollerweiterungen nicht vom Server unterstützt: %s"
 
-#: fe-protocol3.c:1468
+#: fe-protocol3.c:1470
 #, c-format
 msgid "invalid %s message"
 msgstr "ungültige %s-Nachricht"
 
-#: fe-protocol3.c:1833
+#: fe-protocol3.c:1835
 #, c-format
 msgid "PQgetline: not doing text COPY OUT"
 msgstr "PQgetline: Text COPY OUT nicht ausgeführt"
 
-#: fe-protocol3.c:2207
+#: fe-protocol3.c:2166
+#, c-format
+msgid "server returned too much data"
+msgstr "Server hat zu viele Daten zurückgesendet"
+
+#: fe-protocol3.c:2220
 #, c-format
 msgid "protocol error: no function result"
 msgstr "Protokollfehler: kein Funktionsergebnis"
 
-#: fe-protocol3.c:2218
+#: fe-protocol3.c:2231
 #, c-format
 msgid "protocol error: id=0x%x"
 msgstr "Protokollfehler: id=0x%x"
@@ -1284,12 +1294,12 @@ msgstr "GSSAPI-Wrap-Fehler"
 msgid "outgoing GSSAPI message would not use confidentiality"
 msgstr "ausgehende GSSAPI-Nachricht würde keine Vertraulichkeit verwenden"
 
-#: fe-secure-gssapi.c:215 fe-secure-gssapi.c:726
+#: fe-secure-gssapi.c:215 fe-secure-gssapi.c:733
 #, c-format
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)"
 msgstr "Client versuchte übergroßes GSSAPI-Paket zu senden (%zu > %zu)"
 
-#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:602
+#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:609
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)"
 msgstr "übergroßes GSSAPI-Paket vom Server gesendet (%zu > %zu)"
@@ -1303,100 +1313,110 @@ msgstr "GSSAPI-Unwrap-Fehler"
 msgid "incoming GSSAPI message did not use confidentiality"
 msgstr "eingehende GSSAPI-Nachricht verwendete keine Vertraulichkeit"
 
-#: fe-secure-gssapi.c:665
+#: fe-secure-gssapi.c:672
 msgid "could not initiate GSSAPI security context"
 msgstr "konnte GSSAPI-Sicherheitskontext nicht initiieren"
 
-#: fe-secure-gssapi.c:715
+#: fe-secure-gssapi.c:722
 msgid "GSSAPI size check error"
 msgstr "GSSAPI-Fehler bei der Größenprüfung"
 
-#: fe-secure-openssl.c:207 fe-secure-openssl.c:313 fe-secure-openssl.c:1524
+#: fe-secure-openssl.c:208 fe-secure-openssl.c:344 fe-secure-openssl.c:1556
 #, c-format
 msgid "SSL SYSCALL error: %s"
 msgstr "SSL-SYSCALL-Fehler: %s"
 
-#: fe-secure-openssl.c:213 fe-secure-openssl.c:319 fe-secure-openssl.c:1527
+#: fe-secure-openssl.c:214 fe-secure-openssl.c:350 fe-secure-openssl.c:1559
 #, c-format
 msgid "SSL SYSCALL error: EOF detected"
 msgstr "SSL-SYSCALL-Fehler: Dateiende entdeckt"
 
-#: fe-secure-openssl.c:223 fe-secure-openssl.c:329 fe-secure-openssl.c:1535
+#: fe-secure-openssl.c:224 fe-secure-openssl.c:360 fe-secure-openssl.c:1567
 #, c-format
 msgid "SSL error: %s"
 msgstr "SSL-Fehler: %s"
 
-#: fe-secure-openssl.c:237 fe-secure-openssl.c:343
+#: fe-secure-openssl.c:238 fe-secure-openssl.c:374
 #, c-format
 msgid "SSL connection has been closed unexpectedly"
 msgstr "SSL-Verbindung wurde unerwartet geschlossen"
 
-#: fe-secure-openssl.c:242 fe-secure-openssl.c:348 fe-secure-openssl.c:1582
+#: fe-secure-openssl.c:243 fe-secure-openssl.c:379 fe-secure-openssl.c:1614
 #, c-format
 msgid "unrecognized SSL error code: %d"
 msgstr "unbekannter SSL-Fehlercode: %d"
 
-#: fe-secure-openssl.c:390
+#: fe-secure-openssl.c:273
+#, c-format
+msgid "OpenSSL reports negative bytes pending"
+msgstr "OpenSSL meldet eine negative Anzahl ausstehender Bytes"
+
+#: fe-secure-openssl.c:285
+#, c-format
+msgid "OpenSSL reports INT_MAX bytes pending"
+msgstr "OpenSSL meldet INT_MAX ausstehende Bytes"
+
+#: fe-secure-openssl.c:421
 #, c-format
 msgid "could not determine server certificate signature algorithm"
 msgstr "konnte Signaturalgorithmus des Serverzertifikats nicht ermitteln"
 
-#: fe-secure-openssl.c:410
+#: fe-secure-openssl.c:441
 #, c-format
 msgid "could not find digest for NID %s"
 msgstr "konnte Digest für NID %s nicht finden"
 
-#: fe-secure-openssl.c:419
+#: fe-secure-openssl.c:450
 #, c-format
 msgid "could not generate peer certificate hash"
 msgstr "konnte Hash des Zertifikats der Gegenstelle nicht erzeugen"
 
-#: fe-secure-openssl.c:501
+#: fe-secure-openssl.c:533
 #, c-format
 msgid "SSL certificate's name entry is missing"
 msgstr "Namenseintrag fehlt im SSL-Zertifikat"
 
-#: fe-secure-openssl.c:535
+#: fe-secure-openssl.c:567
 #, c-format
 msgid "SSL certificate's address entry is missing"
 msgstr "Adresseintrag fehlt im SSL-Zertifikat"
 
-#: fe-secure-openssl.c:935
+#: fe-secure-openssl.c:967
 #, c-format
 msgid "could not create SSL context: %s"
 msgstr "konnte SSL-Kontext nicht erzeugen: %s"
 
-#: fe-secure-openssl.c:977
+#: fe-secure-openssl.c:1009
 #, c-format
 msgid "invalid value \"%s\" for minimum SSL protocol version"
 msgstr "ungültiger Wert »%s« für minimale SSL-Protokollversion"
 
-#: fe-secure-openssl.c:987
+#: fe-secure-openssl.c:1019
 #, c-format
 msgid "could not set minimum SSL protocol version: %s"
 msgstr "konnte minimale SSL-Protokollversion nicht setzen: %s"
 
-#: fe-secure-openssl.c:1003
+#: fe-secure-openssl.c:1035
 #, c-format
 msgid "invalid value \"%s\" for maximum SSL protocol version"
 msgstr "ungültiger Wert »%s« für maximale SSL-Protokollversion"
 
-#: fe-secure-openssl.c:1013
+#: fe-secure-openssl.c:1045
 #, c-format
 msgid "could not set maximum SSL protocol version: %s"
 msgstr "konnte maximale SSL-Protokollversion nicht setzen: %s"
 
-#: fe-secure-openssl.c:1051
+#: fe-secure-openssl.c:1083
 #, c-format
 msgid "could not load system root certificate paths: %s"
 msgstr "konnte System-Root-Zertifikat-Pfade nicht laden: %s"
 
-#: fe-secure-openssl.c:1068
+#: fe-secure-openssl.c:1100
 #, c-format
 msgid "could not read root certificate file \"%s\": %s"
 msgstr "konnte Root-Zertifikat-Datei »%s« nicht lesen: %s"
 
-#: fe-secure-openssl.c:1120
+#: fe-secure-openssl.c:1152
 #, c-format
 msgid ""
 "could not get home directory to locate root certificate file\n"
@@ -1405,7 +1425,7 @@ msgstr ""
 "konnte Home-Verzeichnis nicht ermitteln, um Root-Zertifikat-Datei zu finden\n"
 "Legen Sie entweder die Datei an, verwenden Sie die vertrauenswürdigen Roots des Systems mit sslrootcert=system, oder ändern Sie sslmode, um die Überprüfung der Serverzertifikate abzuschalten."
 
-#: fe-secure-openssl.c:1123
+#: fe-secure-openssl.c:1155
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -1414,117 +1434,117 @@ msgstr ""
 "Root-Zertifikat-Datei »%s« existiert nicht\n"
 "Legen Sie entweder die Datei an, verwenden Sie die vertrauenswürdigen Roots des Systems mit sslrootcert=system, oder ändern Sie sslmode, um die Überprüfung der Serverzertifikate abzuschalten."
 
-#: fe-secure-openssl.c:1158
+#: fe-secure-openssl.c:1190
 #, c-format
 msgid "could not open certificate file \"%s\": %s"
 msgstr "konnte Zertifikatdatei »%s« nicht öffnen: %s"
 
-#: fe-secure-openssl.c:1176
+#: fe-secure-openssl.c:1208
 #, c-format
 msgid "could not read certificate file \"%s\": %s"
 msgstr "konnte Zertifikatdatei »%s« nicht lesen: %s"
 
-#: fe-secure-openssl.c:1200
+#: fe-secure-openssl.c:1232
 #, c-format
 msgid "could not establish SSL connection: %s"
 msgstr "konnte SSL-Verbindung nicht aufbauen: %s"
 
-#: fe-secure-openssl.c:1232
+#: fe-secure-openssl.c:1264
 #, c-format
 msgid "could not set SSL Server Name Indication (SNI): %s"
 msgstr "konnte SSL-Server-Name-Indication (SNI) nicht setzen: %s"
 
-#: fe-secure-openssl.c:1249
+#: fe-secure-openssl.c:1281
 #, c-format
 msgid "could not set SSL ALPN extension: %s"
 msgstr "konnte SSL-ALPN-Erweiterung nicht setzen: %s"
 
-#: fe-secure-openssl.c:1292
+#: fe-secure-openssl.c:1324
 #, c-format
 msgid "could not load SSL engine \"%s\": %s"
 msgstr "konnte SSL-Engine »%s« nicht laden: %s"
 
-#: fe-secure-openssl.c:1303
+#: fe-secure-openssl.c:1335
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s"
 msgstr "konnte SSL-Engine »%s« nicht initialisieren: %s"
 
-#: fe-secure-openssl.c:1318
+#: fe-secure-openssl.c:1350
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s"
 msgstr "konnte privaten SSL-Schlüssel »%s« nicht von Engine »%s« lesen: %s"
 
-#: fe-secure-openssl.c:1331
+#: fe-secure-openssl.c:1363
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s"
 msgstr "konnte privaten SSL-Schlüssel »%s« nicht von Engine »%s« laden: %s"
 
-#: fe-secure-openssl.c:1368
+#: fe-secure-openssl.c:1400
 #, c-format
 msgid "certificate present, but not private key file \"%s\""
 msgstr "Zertifikat vorhanden, aber keine private Schlüsseldatei »%s«"
 
-#: fe-secure-openssl.c:1371
+#: fe-secure-openssl.c:1403
 #, c-format
 msgid "could not stat private key file \"%s\": %m"
 msgstr "konnte »stat« für private Schlüsseldatei »%s« nicht ausführen: %m"
 
-#: fe-secure-openssl.c:1379
+#: fe-secure-openssl.c:1411
 #, c-format
 msgid "private key file \"%s\" is not a regular file"
 msgstr "private Schlüsseldatei »%s« ist keine normale Datei"
 
-#: fe-secure-openssl.c:1412
+#: fe-secure-openssl.c:1444
 #, c-format
 msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root"
 msgstr "private Schlüsseldatei »%s« erlaubt Lesezugriff für Gruppe oder Andere; Dateirechte müssen u=rw (0600) oder weniger sein, wenn der Eigentümer der aktuelle Benutzer ist, oder u=rw,g=r (0640) oder weniger, wenn der Eigentümer »root« ist"
 
-#: fe-secure-openssl.c:1436
+#: fe-secure-openssl.c:1468
 #, c-format
 msgid "could not load private key file \"%s\": %s"
 msgstr "konnte private Schlüsseldatei »%s« nicht laden: %s"
 
-#: fe-secure-openssl.c:1452
+#: fe-secure-openssl.c:1484
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s"
 msgstr "Zertifikat passt nicht zur privaten Schlüsseldatei »%s«: %s"
 
-#: fe-secure-openssl.c:1521
+#: fe-secure-openssl.c:1553
 #, c-format
 msgid "SSL error: certificate verify failed: %s"
 msgstr "SSL-Fehler: Zertifikatsüberprüfung fehlgeschlagen: %s"
 
-#: fe-secure-openssl.c:1566
+#: fe-secure-openssl.c:1598
 #, c-format
 msgid "This may indicate that the server does not support any SSL protocol version between %s and %s."
 msgstr "Das zeigt möglicherweise an, dass der Server keine SSL-Protokollversion zwischen %s und %s unterstützt."
 
-#: fe-secure-openssl.c:1598
+#: fe-secure-openssl.c:1630
 #, c-format
 msgid "direct SSL connection was established without ALPN protocol negotiation extension"
 msgstr "direkte SSL-Verbindung wurde ohne ALPN-Erweiterung zur Protokollverhandlung aufgebaut"
 
-#: fe-secure-openssl.c:1610
+#: fe-secure-openssl.c:1642
 #, c-format
 msgid "SSL connection was established with unexpected ALPN protocol"
 msgstr "SSL-Verbindung wurde mit unerwartetem ALPN-Protokoll aufgebaut"
 
-#: fe-secure-openssl.c:1627
+#: fe-secure-openssl.c:1659
 #, c-format
 msgid "certificate could not be obtained: %s"
 msgstr "Zertifikat konnte nicht ermittelt werden: %s"
 
-#: fe-secure-openssl.c:1734
+#: fe-secure-openssl.c:1766
 #, c-format
 msgid "no SSL error reported"
 msgstr "kein SSL-Fehler berichtet"
 
-#: fe-secure-openssl.c:1777
+#: fe-secure-openssl.c:1809
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL-Fehlercode %lu"
 
-#: fe-secure-openssl.c:2076
+#: fe-secure-openssl.c:2108
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "WARNUNG: sslpassword abgeschnitten\n"
@@ -1534,7 +1554,7 @@ msgstr "WARNUNG: sslpassword abgeschnitten\n"
 msgid "could not receive data from server: %s"
 msgstr "konnte keine Daten vom Server empfangen: %s"
 
-#: fe-secure.c:419
+#: fe-secure.c:443
 #, c-format
 msgid "could not send data to server: %s"
 msgstr "konnte keine Daten an den Server senden: %s"

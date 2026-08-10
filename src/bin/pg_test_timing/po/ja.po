@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-07-14 10:48+0900\n"
-"PO-Revision-Date: 2022-05-10 15:27+0900\n"
-"Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
+"POT-Creation-Date: 2026-05-12 14:48+0900\n"
+"PO-Revision-Date: 2026-05-15 11:52+0900\n"
+"Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: \n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -17,6 +17,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.8.13\n"
+
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "メモリ不足です\n"
+
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "nullポインタは複製できません(内部エラー)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu + %zu が不正です\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu * %zu が不正です\n"
 
 #: pg_test_timing.c:59
 #, c-format
@@ -56,8 +77,8 @@ msgstr "クロックの時刻が逆行していることを検出しました。
 
 #: pg_test_timing.c:152
 #, c-format
-msgid "Time warp: %d ms\n"
-msgstr "逆行した時間: %d ms\n"
+msgid "Time warp: %d us\n"
+msgstr "逆行した時間: %d us\n"
 
 #: pg_test_timing.c:175
 #, c-format

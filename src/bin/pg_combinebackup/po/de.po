@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-07 08:39+0000\n"
+"POT-Creation-Date: 2026-08-07 09:32+0000\n"
 "PO-Revision-Date: 2024-11-07 15:31+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -53,7 +53,7 @@ msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
-#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:742
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:745
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -88,7 +88,7 @@ msgstr ""
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:761
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:764
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -119,16 +119,26 @@ msgstr "Zielpuffer ist zu klein"
 msgid "OpenSSL failure"
 msgstr "OpenSSL-Fehler"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu * %zu\n"
 
 #: ../../common/file_utils.c:76
 #, c-format
@@ -165,99 +175,99 @@ msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "konnte Datei »%s« nicht in »%s« umbenennen: %m"
 
-#: ../../common/jsonapi.c:2124
+#: ../../common/jsonapi.c:2175
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr "Parser mit rekursivem Abstieg kann inkrementellen Lexer nicht benutzen."
 
-#: ../../common/jsonapi.c:2126
+#: ../../common/jsonapi.c:2177
 msgid "Incremental parser requires incremental lexer."
 msgstr "Inkrementeller Parser benötigt inkrementellen Lexer."
 
-#: ../../common/jsonapi.c:2128
+#: ../../common/jsonapi.c:2179
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr "JSON zu tief geschachtelt, maximale erlaubte Tiefe ist 6400."
 
-#: ../../common/jsonapi.c:2130
+#: ../../common/jsonapi.c:2181
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "Escape-Sequenz »\\%.*s« ist nicht gültig."
 
-#: ../../common/jsonapi.c:2134
+#: ../../common/jsonapi.c:2185
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Zeichen mit Wert 0x%02x muss escapt werden."
 
-#: ../../common/jsonapi.c:2138
+#: ../../common/jsonapi.c:2189
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "Ende der Eingabe erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2141
+#: ../../common/jsonapi.c:2192
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "Array-Element oder »]« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2144
+#: ../../common/jsonapi.c:2195
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "»,« oder »]« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2147
+#: ../../common/jsonapi.c:2198
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "»:« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2150
+#: ../../common/jsonapi.c:2201
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "JSON-Wert erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2153
+#: ../../common/jsonapi.c:2204
 msgid "The input string ended unexpectedly."
 msgstr "Die Eingabezeichenkette endete unerwartet."
 
-#: ../../common/jsonapi.c:2155
+#: ../../common/jsonapi.c:2206
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "Zeichenkette oder »}« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2158
+#: ../../common/jsonapi.c:2209
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "»,« oder »}« erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2161
+#: ../../common/jsonapi.c:2212
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "Zeichenkette erwartet, aber »%.*s« gefunden."
 
-#: ../../common/jsonapi.c:2164
+#: ../../common/jsonapi.c:2215
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "Token »%.*s« ist ungültig."
 
-#: ../../common/jsonapi.c:2167
+#: ../../common/jsonapi.c:2218
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 kann nicht in »text« umgewandelt werden."
 
-#: ../../common/jsonapi.c:2169
+#: ../../common/jsonapi.c:2220
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "Nach »\\u« müssen vier Hexadezimalziffern folgen."
 
-#: ../../common/jsonapi.c:2172
+#: ../../common/jsonapi.c:2223
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Unicode-Escape-Werte können nicht für Code-Punkt-Werte über 007F verwendet werden, wenn die Kodierung nicht UTF8 ist."
 
-#: ../../common/jsonapi.c:2181
+#: ../../common/jsonapi.c:2232
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Unicode-Escape-Wert konnte nicht in die Serverkodierung %s umgewandelt werden."
 
-#: ../../common/jsonapi.c:2188
+#: ../../common/jsonapi.c:2239
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicode-High-Surrogate darf nicht auf ein High-Surrogate folgen."
 
-#: ../../common/jsonapi.c:2190
+#: ../../common/jsonapi.c:2241
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicode-Low-Surrogate muss auf ein High-Surrogate folgen."
 
@@ -463,13 +473,13 @@ msgstr "%s: konnte %s nicht finden"
 msgid "%s: %s requires %s"
 msgstr "%s: %s benötigt %s"
 
-#: backup_label.c:162 reconstruct.c:763 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:766 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "konnte Datei »%s« nicht schreiben: %d von %d geschrieben"
 
-#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:723
-#: reconstruct.c:769 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:726
+#: reconstruct.c:772 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "konnte Prüfsumme der Datei »%s« nicht aktualisieren"
@@ -484,7 +494,7 @@ msgstr "konnte nicht in Datei »%s« schreiben: %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "konnte nicht in Datei »%s«, Position %u schreiben: %d von %d geschrieben"
 
-#: copy_file.c:199 reconstruct.c:786
+#: copy_file.c:199 reconstruct.c:789
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "konnte nicht aus Datei »%s« lesen: %m"
@@ -514,7 +524,7 @@ msgstr "Klonen von Dateien wird auf dieser Plattform nicht unterstützt"
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "Fehler beim Kopieren von Dateibereich von »%s« nach »%s«: %m"
 
-#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:726
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:729
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range wird auf dieser Plattform nicht unterstützt"
@@ -898,7 +908,12 @@ msgstr "Datei »%s« hat Truncation-Blocklänge %u, was die Segmentgröße %u ü
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "konnte Datei »%s« nicht lesen: %d von %u gelesen"
 
-#: reconstruct.c:788
+#: reconstruct.c:709
+#, c-format
+msgid "unexpected end of file while copying file range from \"%s\" to \"%s\""
+msgstr "unerwartetes Dateiende beim Kopieren von Dateibereich von »%s« nach »%s«"
+
+#: reconstruct.c:791
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "konnte nicht aus Datei »%s«, Position %llu lesen: %d von %d gelesen"
