@@ -113,6 +113,11 @@ while (0)
 	dump_binary(recv_short_buf.arr, recv_short_buf.len, ind[1]);
 
 	exec sql drop table test;
+
+	/* Test for invalid bytea format */
+	exec sql select ''::text into :recv_buf[0];
+	exec sql select '\\a1234'::text into :recv_buf[0];
+
 	exec sql commit;
 	exec sql disconnect;
 

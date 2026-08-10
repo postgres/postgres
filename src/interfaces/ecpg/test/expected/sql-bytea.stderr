@@ -181,7 +181,29 @@ SQL error: invalid statement name "cursor1" on line 82
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_process_output on line 115: OK: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGtrans on line 116: action "commit"; connection "ecpg1_regression"
+[NO_PID]: ecpg_execute on line 118: query: select '' :: text; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 118: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 118: correctly got 1 tuples with 1 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 118: RESULT:  offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: raising sqlcode -217 on line 118: invalid input syntax for type bytea: "", on line 118
+[NO_PID]: sqlca: code: -217, state: 42804
+SQL error: invalid input syntax for type bytea: "", on line 118
+[NO_PID]: ecpg_execute on line 119: query: select '\\a1234' :: text; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 119: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 119: correctly got 1 tuples with 1 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_get_data on line 119: RESULT: \\a1234 offset: -1; array: no
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: raising sqlcode -217 on line 119: invalid input syntax for type bytea: "\\a1234", on line 119
+[NO_PID]: sqlca: code: -217, state: 42804
+SQL error: invalid input syntax for type bytea: "\\a1234", on line 119
+[NO_PID]: ECPGtrans on line 121: action "commit"; connection "ecpg1_regression"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 0: name sel_stmt
 [NO_PID]: sqlca: code: 0, state: 00000
