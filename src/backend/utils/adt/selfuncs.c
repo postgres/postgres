@@ -604,7 +604,8 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt, bool iseq,
 		 * make an estimate based on comparing the constant to the table size.
 		 */
 		if (vardata->var && IsA(vardata->var, Var) &&
-			((Var *) vardata->var)->varattno == SelfItemPointerAttributeNumber)
+			((Var *) vardata->var)->varattno == SelfItemPointerAttributeNumber &&
+			consttype == TIDOID)
 		{
 			ItemPointer itemptr;
 			double		block;
