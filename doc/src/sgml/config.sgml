@@ -4612,6 +4612,63 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </listitem>
       </varlistentry>
 
+      <varlistentry id="guc-output-plugin-libraries" xreflabel="output_plugin_libraries">
+       <term><varname>output_plugin_libraries</varname> (<type>string</type>)
+       <indexterm>
+        <primary><varname>output_plugin_libraries</varname> configuration parameter</primary>
+       </indexterm>
+       </term>
+       <listitem>
+        <para>
+         Lists the libraries installed in <xref linkend="guc-dynamic-library-path"/>
+         that are also trusted for use as logical output plugins by replication
+         clients. Any <link linkend="logicaldecoding-example">logical decoding</link>
+         or <link linkend="protocol-replication">replication</link> requests for
+         other libraries will be refused. All users are subject to this
+         restriction. The default is <literal>'pgoutput, test_decoding'</literal>,
+         which are the two logical output plugins included in the standard
+         <productname>PostgreSQL</productname> distribution.
+        </para>
+        <para>
+         The format is a comma-separated list of library names, where each name
+         is interpreted as for the <link linkend="sql-load"><command>LOAD</command></link>
+         command (but logical decoding clients must specify a plugin name that
+         <emphasis>exactly</emphasis> matches an entry in the list, without
+         variations in case or path structure). Whitespace between entries is
+         ignored; surround a library name with double quotes if you need to
+         include whitespace or commas in the name.
+        </para>
+        <para>
+         It is the responsibility of the server administrator to ensure that
+         libraries added to this list do not unintentionally give additional
+         privileges to non-superusers when they are loaded into the server.
+        </para>
+        <note>
+         <para>
+          When updating the server from a version that does not have the
+          <literal>output_plugin_libraries</literal> parameter, the following
+          query can help construct the list of plugins that are required by all
+          persistent logical replication slots:
+<programlisting>
+SELECT DISTINCT plugin FROM pg_replication_slots WHERE plugin IS NOT NULL;
+</programlisting>
+          Review the list carefully for safety before adjusting
+          <literal>output_plugin_libraries</literal>.
+         </para>
+         <para>
+          The above query can only display plugins which were successfully
+          added to replication slots at some point in the past. Newly refused
+          requests will appear in the logs with a message similar to
+<programlisting>
+ERROR:  library "..." may not be used as an output plugin
+DETAIL:  The configuration parameter "output_plugin_libraries" (currently 'pgoutput, test_decoding') does not name this library as a trusted output plugin.
+HINT:  If it is safe for all REPLICATION users to use this library as an output plugin, add it to "output_plugin_libraries" and reload the server configuration.
+</programlisting>
+         </para>
+        </note>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="guc-wal-keep-size" xreflabel="wal_keep_size">
        <term><varname>wal_keep_size</varname> (<type>integer</type>)
        <indexterm>

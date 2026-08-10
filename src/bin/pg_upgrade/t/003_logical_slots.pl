@@ -62,7 +62,7 @@ chdir ${PostgreSQL::Test::Utils::tmp_check};
 $oldpub->start;
 $oldpub->safe_psql(
 	'postgres', qq[
-	SELECT pg_create_logical_replication_slot('test_slot1', 'test_decoding');
+	SELECT pg_create_logical_replication_slot('test_slot1', 'pgoutput');
 	SELECT pg_create_logical_replication_slot('test_slot2', 'test_decoding');
 ]);
 $oldpub->stop();
@@ -88,6 +88,48 @@ ok(-d $newpub->data_dir . "/pg_upgrade_output.d",
 # Set 'max_replication_slots' to match the number of slots (2) present on the
 # old cluster. Both slots will be used for subsequent tests.
 $newpub->append_conf('postgresql.conf', "max_replication_slots = 2");
+
+# ------------------------------
+# TEST: Confirm pg_upgrade fails when slot plugins are prohibited by the new cluster
+
+$newpub->append_conf('postgresql.conf',
+	"output_plugin_libraries = 'pgoutput'");
+
+command_checks_all(
+	[@pg_upgrade_cmd],
+	1,
+	[
+		qr/Your installation contains logical replication slots with plugins/,
+		qr/that are not allowed by the new cluster's output_plugin_libraries/,
+	],
+	[qr//],
+	'run of pg_upgrade where the old cluster has untrusted output plugins');
+
+my $slots_filename;
+
+# Find a txt file that contains a list of logical replication slots that cannot
+# be upgraded. We cannot predict the file's path because the output directory
+# contains a milliseconds timestamp. File::Find::find must be used.
+find(
+	sub {
+		if ($File::Find::name =~ m/disallowed_output_plugins\.txt/)
+		{
+			$slots_filename = $File::Find::name;
+		}
+	},
+	$newpub->data_dir . "/pg_upgrade_output.d");
+
+# Check the report.
+my $content = slurp_file($slots_filename);
+like(
+	$content,
+	qr/The slot "test_slot2" uses plugin "test_decoding"/m,
+	'the previous test failed due to prohibited plugins');
+unlike($content, qr/test_slot1/m, 'allowed plugin is not reported');
+
+# Fix things for the next tests.
+$newpub->append_conf('postgresql.conf',
+	"output_plugin_libraries = 'pgoutput, test_decoding'");
 
 
 # ------------------------------
@@ -124,11 +166,6 @@ command_checks_all(
 );
 
 # Verify the reason why the logical replication slot cannot be upgraded
-my $slots_filename;
-
-# Find a txt file that contains a list of logical replication slots that cannot
-# be upgraded. We cannot predict the file's path because the output directory
-# contains a milliseconds timestamp. File::Find::find must be used.
 find(
 	sub {
 		if ($File::Find::name =~ m/invalid_logical_slots\.txt/)

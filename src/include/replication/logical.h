@@ -152,4 +152,7 @@ extern bool LogicalReplicationSlotHasPendingWal(XLogRecPtr end_of_wal);
 extern XLogRecPtr LogicalSlotAdvanceAndCheckSnapState(XLogRecPtr moveto,
 													  bool *found_consistent_snapshot);
 
+/* GUCs */
+extern PGDLLIMPORT char *output_plugin_libraries_string;
+
 #endif

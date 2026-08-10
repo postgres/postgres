@@ -477,13 +477,13 @@ $result =
 is( $result, qq(2|f
 3|t), 'check replicated update on subscriber');
 
-# Test create and immediate drop of replication slot via replication commands
-# (this exposed a memory-management bug in v18)
 my $publisher_host = $node_publisher->host;
 my $publisher_port = $node_publisher->port;
 my $connstr_db =
   "host=$publisher_host port=$publisher_port replication=database dbname=postgres";
 
+# Test create and immediate drop of replication slot via replication commands
+# (this exposed a memory-management bug in v18)
 is( $node_publisher->psql(
 		'postgres',
 		qq[
@@ -494,6 +494,27 @@ is( $node_publisher->psql(
 		extra_params => [ '-d', $connstr_db ]),
 	0,
 	'create and immediate drop of replication slot');
+
+# REPLICATION users should not be able to bypass LOAD restrictions.
+$node_publisher->safe_psql(
+	'postgres', qq(
+	CREATE USER repluser REPLICATION;
+));
+
+my ($ret, $stdout, $stderr) = $node_publisher->psql(
+	'postgres',
+	qq[
+		SET ROLE repluser;
+		CREATE_REPLICATION_SLOT fail_slot LOGICAL regress;',
+	],
+	timeout => $PostgreSQL::Test::Utils::timeout_default,
+	extra_params => [ '-d', $connstr_db ]);
+
+is($ret, 3, 'loading unblessed output plugin fails');
+like(
+	$stderr,
+	qr/ERROR:  library "regress" may not be used as an output plugin/,
+	'loading unblessed output plugin fails: stderr');
 
 $node_publisher->stop('fast');
 $node_subscriber->stop('fast');
@@ -592,7 +613,7 @@ $node_publisher->safe_psql(
 	CREATE SUBSCRIPTION regress_sub1 CONNECTION '$publisher_connstr' PUBLICATION regress_pub WITH (connect=false);
 ));
 
-my ($ret, $stdout, $stderr) =
+($ret, $stdout, $stderr) =
   $node_publisher->psql('postgres', q{DROP SUBSCRIPTION regress_sub1});
 
 isnt($ret, 0, "replication slot does not exist: exit code not 0");
