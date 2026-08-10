@@ -896,6 +896,14 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 						&old_constraints);
 
 	/*
+	 * NB: The defaults and constraints we just inherited are already cooked,
+	 * so they don't get the USAGE checks that AddRelationNewConstraints()
+	 * applies to raw ones.  That's intentional: the parent's own catalog
+	 * entries already depend on those types, so copying them pins nothing
+	 * new, and creating a child requires owning the parent, anyway.
+	 */
+
+	/*
 	 * Create a tuple descriptor from the relation schema.  Note that this
 	 * deals with column names, types, and not-null constraints, but not
 	 * default values or CHECK constraints; we handle those below.
@@ -5338,7 +5346,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 			address =
 				AlterDomainAddConstraint(((AlterDomainStmt *) cmd->def)->typeName,
 										 ((AlterDomainStmt *) cmd->def)->def,
-										 NULL);
+										 NULL, true);
 			break;
 		case AT_ReAddComment:	/* Re-add existing comment */
 			address = CommentObject((CommentStmt *) cmd->def);
@@ -7997,7 +8005,14 @@ ATExecCookedColumnDefault(Relation rel, AttrNumber attnum,
 {
 	ObjectAddress address;
 
-	/* We assume no checking is required */
+	/*
+	 * This is used for a cooked default copied by CREATE TABLE ... LIKE,
+	 * which adds new type dependencies.  Such a default doesn't go through
+	 * AddRelationNewConstraints(), and StoreAttrDefault() leaves the
+	 * privilege checks to its caller, so we must check for USAGE on the types
+	 * here.
+	 */
+	CheckUsageOnTypesInSingleRelExpr(newDefault, RelationGetRelid(rel), GetUserId());
 
 	/*
 	 * Remove any old default for the column.  We use RESTRICT here for

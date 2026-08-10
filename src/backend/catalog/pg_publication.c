@@ -32,6 +32,7 @@
 #include "catalog/pg_type.h"
 #include "commands/publicationcmds.h"
 #include "funcapi.h"
+#include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -446,9 +447,12 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 
 	/* Add dependency on the objects mentioned in the qualifications */
 	if (pri->whereClause)
+	{
+		CheckUsageOnTypesInSingleRelExpr(pri->whereClause, relid, GetUserId());
 		recordDependencyOnSingleRelExpr(&myself, pri->whereClause, relid,
 										DEPENDENCY_NORMAL, DEPENDENCY_NORMAL,
 										false);
+	}
 
 	/* Add dependency on the columns, if any are listed */
 	for (int i = 0; i < natts; i++)

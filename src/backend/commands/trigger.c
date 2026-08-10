@@ -1126,8 +1126,13 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 	 * expression (eg, functions, as well as any columns used).
 	 */
 	if (whenRtable != NIL)
+	{
+		if (!isInternal)
+			CheckUsageOnTypesInExpr(whenClause, whenRtable, GetUserId());
+
 		recordDependencyOnExpr(&myself, whenClause, whenRtable,
 							   DEPENDENCY_NORMAL);
+	}
 
 	/* Post creation hook for new trigger */
 	InvokeObjectPostCreateHookArg(TriggerRelationId, trigoid, 0,
