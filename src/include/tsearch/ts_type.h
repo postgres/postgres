@@ -235,7 +235,8 @@ typedef TSQueryData *TSQuery;
  */
 #define COMPUTESIZE(size, lenofoperand) ( HDRSIZETQ + (size) * sizeof(QueryItem) + (lenofoperand) )
 #define TSQUERY_TOO_BIG(size, lenofoperand) \
-	((size) > (MaxAllocSize - HDRSIZETQ - (lenofoperand)) / sizeof(QueryItem))
+	((size_t) (lenofoperand) > MaxAllocSize - HDRSIZETQ || \
+	 (size) > (MaxAllocSize - HDRSIZETQ - (lenofoperand)) / sizeof(QueryItem))
 
 /* Returns a pointer to the first QueryItem in a TSQuery */
 #define GETQUERY(x)  ((QueryItem*)( (char*)(x)+HDRSIZETQ ))
