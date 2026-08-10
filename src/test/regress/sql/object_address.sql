@@ -46,6 +46,10 @@ ALTER DEFAULT PRIVILEGES FOR ROLE regress_addr_user REVOKE DELETE ON TABLES FROM
 CREATE TRANSFORM FOR int LANGUAGE SQL (
     FROM SQL WITH FUNCTION prsd_lextype(internal),
     TO SQL WITH FUNCTION int4recv(internal));
+-- make a function that uses it too, mainly to exercise pg_dump
+CREATE FUNCTION public.sql_func_with_transform(int) RETURNS int LANGUAGE sql
+AS 'select $1 + 1'
+TRANSFORM FOR TYPE int;
 -- suppress warning that depends on wal_level
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
