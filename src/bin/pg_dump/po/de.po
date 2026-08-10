@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-05-05 10:46+0000\n"
+"POT-Creation-Date: 2026-08-07 09:48+0000\n"
 "PO-Revision-Date: 2023-09-06 08:25+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -109,7 +109,7 @@ msgstr "konnte kein »%s« zum Ausführen finden"
 msgid "could not resolve path \"%s\" to absolute form: %m"
 msgstr "konnte Pfad »%s« nicht in absolute Form auflösen: %m"
 
-#: ../../common/exec.c:412 parallel.c:1609
+#: ../../common/exec.c:412 parallel.c:1611
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() fehlgeschlagen: %m"
@@ -118,16 +118,26 @@ msgstr "%s() fehlgeschlagen: %m"
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu * %zu\n"
 
 #: ../../common/wait_error.c:55
 #, c-format
@@ -528,22 +538,27 @@ msgstr "%s() fehlgeschlagen: Fehlercode %d"
 msgid "could not create communication channels: %m"
 msgstr "konnte Kommunikationskanäle nicht erzeugen: %m"
 
-#: parallel.c:1016
+#: parallel.c:978
+#, c-format
+msgid "could not create worker thread: %m"
+msgstr "konnte Arbeits-Thread nicht erzeugen: %m"
+
+#: parallel.c:1018
 #, c-format
 msgid "could not create worker process: %m"
 msgstr "konnte Arbeitsprozess nicht erzeugen: %m"
 
-#: parallel.c:1146
+#: parallel.c:1148
 #, c-format
 msgid "unrecognized command received from leader: \"%s\""
 msgstr "unbekannter Befehl vom Leader-Prozess empfangen: »%s«"
 
-#: parallel.c:1189 parallel.c:1427
+#: parallel.c:1191 parallel.c:1429
 #, c-format
 msgid "invalid message received from worker: \"%s\""
 msgstr "ungültige Nachricht vom Arbeitsprozess empfangen: »%s«"
 
-#: parallel.c:1321
+#: parallel.c:1323
 #, c-format
 msgid ""
 "could not obtain lock on relation \"%s\"\n"
@@ -552,47 +567,47 @@ msgstr ""
 "konnte Sperre für Relation »%s« nicht setzen\n"
 "Das bedeutet meistens, dass jemand eine ACCESS-EXCLUSIVE-Sperre auf die Tabelle gesetzt hat, nachdem der pg-dump-Elternprozess die anfängliche ACCESS-SHARE-Sperre gesetzt hatte."
 
-#: parallel.c:1410
+#: parallel.c:1412
 #, c-format
 msgid "a worker process died unexpectedly"
 msgstr "ein Arbeitsprozess endete unerwartet"
 
-#: parallel.c:1532 parallel.c:1650
+#: parallel.c:1534 parallel.c:1652
 #, c-format
 msgid "could not write to the communication channel: %m"
 msgstr "konnte nicht in den Kommunikationskanal schreiben: %m"
 
-#: parallel.c:1734
+#: parallel.c:1736
 #, c-format
 msgid "pgpipe: could not create socket: error code %d"
 msgstr "pgpipe: konnte Socket nicht erzeugen: Fehlercode %d"
 
-#: parallel.c:1745
+#: parallel.c:1747
 #, c-format
 msgid "pgpipe: could not bind: error code %d"
 msgstr "pgpipe: konnte nicht binden: Fehlercode %d"
 
-#: parallel.c:1752
+#: parallel.c:1754
 #, c-format
 msgid "pgpipe: could not listen: error code %d"
 msgstr "pgpipe: konnte nicht auf Socket hören: Fehlercode %d"
 
-#: parallel.c:1759
+#: parallel.c:1761
 #, c-format
 msgid "pgpipe: %s() failed: error code %d"
 msgstr "pgpipe: %s() fehlgeschlagen: Fehlercode %d"
 
-#: parallel.c:1770
+#: parallel.c:1772
 #, c-format
 msgid "pgpipe: could not create second socket: error code %d"
 msgstr "pgpipe: konnte zweites Socket nicht erzeugen: Fehlercode %d"
 
-#: parallel.c:1779
+#: parallel.c:1781
 #, c-format
 msgid "pgpipe: could not connect socket: error code %d"
 msgstr "pgpipe: konnte Socket nicht verbinden: Fehlercode %d"
 
-#: parallel.c:1788
+#: parallel.c:1790
 #, c-format
 msgid "pgpipe: could not accept connection: error code %d"
 msgstr "pgpipe: konnte Verbindung nicht annehmen: Fehlercode %d"

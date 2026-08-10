@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-26 12:47+0000\n"
+"POT-Creation-Date: 2026-08-07 09:44+0000\n"
 "PO-Revision-Date: 2023-04-26 15:04+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -35,98 +35,108 @@ msgstr "Detail: "
 msgid "hint: "
 msgstr "Tipp: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
 
-#: ../../common/jsonapi.c:1144
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu * %zu\n"
+
+#: ../../common/jsonapi.c:1147
 #, c-format
 msgid "Escape sequence \"\\%s\" is invalid."
 msgstr "Escape-Sequenz »\\%s« ist nicht gültig."
 
-#: ../../common/jsonapi.c:1147
+#: ../../common/jsonapi.c:1150
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Zeichen mit Wert 0x%02x muss escapt werden."
 
-#: ../../common/jsonapi.c:1150
+#: ../../common/jsonapi.c:1153
 #, c-format
 msgid "Expected end of input, but found \"%s\"."
 msgstr "Ende der Eingabe erwartet, aber »%s« gefunden."
 
-#: ../../common/jsonapi.c:1153
+#: ../../common/jsonapi.c:1156
 #, c-format
 msgid "Expected array element or \"]\", but found \"%s\"."
 msgstr "Array-Element oder »]« erwartet, aber »%s« gefunden."
 
-#: ../../common/jsonapi.c:1156
+#: ../../common/jsonapi.c:1159
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%s\"."
 msgstr "»,« oder »]« erwartet, aber »%s« gefunden."
 
-#: ../../common/jsonapi.c:1159
+#: ../../common/jsonapi.c:1162
 #, c-format
 msgid "Expected \":\", but found \"%s\"."
 msgstr "»:« erwartet, aber »%s« gefunden."
 
-#: ../../common/jsonapi.c:1162
+#: ../../common/jsonapi.c:1165
 #, c-format
 msgid "Expected JSON value, but found \"%s\"."
 msgstr "JSON-Wert erwartet, aber »%s« gefunden."
 
-#: ../../common/jsonapi.c:1165
+#: ../../common/jsonapi.c:1168
 msgid "The input string ended unexpectedly."
 msgstr "Die Eingabezeichenkette endete unerwartet."
 
-#: ../../common/jsonapi.c:1167
+#: ../../common/jsonapi.c:1170
 #, c-format
 msgid "Expected string or \"}\", but found \"%s\"."
 msgstr "Zeichenkette oder »}« erwartet, aber »%s« gefunden."
 
-#: ../../common/jsonapi.c:1170
+#: ../../common/jsonapi.c:1173
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%s\"."
 msgstr "»,« oder »}« erwartet, aber »%s« gefunden."
 
-#: ../../common/jsonapi.c:1173
+#: ../../common/jsonapi.c:1176
 #, c-format
 msgid "Expected string, but found \"%s\"."
 msgstr "Zeichenkette erwartet, aber »%s« gefunden."
 
-#: ../../common/jsonapi.c:1176
+#: ../../common/jsonapi.c:1179
 #, c-format
 msgid "Token \"%s\" is invalid."
 msgstr "Token »%s« ist ungültig."
 
-#: ../../common/jsonapi.c:1179
+#: ../../common/jsonapi.c:1182
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 kann nicht in »text« umgewandelt werden."
 
-#: ../../common/jsonapi.c:1181
+#: ../../common/jsonapi.c:1184
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "Nach »\\u« müssen vier Hexadezimalziffern folgen."
 
-#: ../../common/jsonapi.c:1184
+#: ../../common/jsonapi.c:1187
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Unicode-Escape-Werte können nicht für Code-Punkt-Werte über 007F verwendet werden, wenn die Kodierung nicht UTF8 ist."
 
-#: ../../common/jsonapi.c:1187
+#: ../../common/jsonapi.c:1190
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Unicode-Escape-Wert konnte nicht in die Serverkodierung %s umgewandelt werden."
 
-#: ../../common/jsonapi.c:1190
+#: ../../common/jsonapi.c:1193
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicode-High-Surrogate darf nicht auf ein High-Surrogate folgen."
 
-#: ../../common/jsonapi.c:1192
+#: ../../common/jsonapi.c:1195
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicode-Low-Surrogate muss auf ein High-Surrogate folgen."
 

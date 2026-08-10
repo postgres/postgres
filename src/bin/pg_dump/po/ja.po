@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-01 10:16+0900\n"
-"PO-Revision-Date: 2025-09-01 11:42+0900\n"
+"POT-Creation-Date: 2026-05-12 14:41+0900\n"
+"PO-Revision-Date: 2026-05-14 16:50+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -43,8 +43,8 @@ msgid "hint: "
 msgstr "ヒント: "
 
 #: ../../common/compression.c:132 ../../common/compression.c:141
-#: ../../common/compression.c:150 compress_gzip.c:428 compress_gzip.c:435
-#: compress_io.c:109 compress_lz4.c:801 compress_lz4.c:808 compress_zstd.c:26
+#: ../../common/compression.c:150 compress_gzip.c:441 compress_gzip.c:448
+#: compress_io.c:109 compress_lz4.c:810 compress_lz4.c:817 compress_zstd.c:26
 #: compress_zstd.c:32
 #, c-format
 msgid "this build does not support compression with %s"
@@ -123,16 +123,26 @@ msgstr "%s() が失敗しました: %m"
 msgid "out of memory"
 msgstr "メモリ不足です"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "メモリ不足です\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null ポインタを複製できません（内部エラー）。\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu + %zu が不正です\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu * %zu が不正です\n"
 
 #: ../../common/wait_error.c:55
 #, c-format
@@ -399,43 +409,43 @@ msgstr "数値配列\"%s\"のパースに失敗しました: 要素が多すぎ�
 msgid "could not parse numeric array \"%s\": invalid character in number"
 msgstr "数値配列\"%s\"のパースに失敗しました: 数値に不正な文字が含まれています"
 
-#: compress_gzip.c:69 compress_gzip.c:183
+#: compress_gzip.c:78 compress_gzip.c:192
 #, c-format
 msgid "could not initialize compression library: %s"
 msgstr "圧縮ライブラリを初期化できませんでした: %s"
 
-#: compress_gzip.c:93
+#: compress_gzip.c:102
 #, c-format
 msgid "could not close compression stream: %s"
 msgstr "圧縮ストリームをクローズできませんでした: %s"
 
-#: compress_gzip.c:113 compress_lz4.c:229 compress_zstd.c:110
+#: compress_gzip.c:122 compress_lz4.c:229 compress_zstd.c:110
 #, c-format
 msgid "could not compress data: %s"
 msgstr "データを圧縮できませんでした: %s"
 
-#: compress_gzip.c:199 compress_gzip.c:214
+#: compress_gzip.c:208 compress_gzip.c:223
 #, c-format
 msgid "could not uncompress data: %s"
 msgstr "データを伸張できませんでした: %s"
 
-#: compress_gzip.c:221
+#: compress_gzip.c:230
 #, c-format
 msgid "could not close compression library: %s"
 msgstr "圧縮ライブラリをクローズできませんでした: %s"
 
-#: compress_gzip.c:277 compress_gzip.c:310 compress_lz4.c:514
+#: compress_gzip.c:290 compress_gzip.c:323 compress_lz4.c:514
 #: compress_lz4.c:617 compress_lz4.c:634 compress_none.c:94 compress_none.c:136
 #, c-format
 msgid "could not read from input file: %s"
 msgstr "入力ファイルから読み込めませんでした: %s"
 
-#: compress_gzip.c:294 compress_zstd.c:381
+#: compress_gzip.c:307 compress_zstd.c:381
 #, c-format
 msgid "could not write to file: %s"
 msgstr "ファイルに書き込めませんでした: %s"
 
-#: compress_gzip.c:312 compress_lz4.c:636 compress_none.c:138
+#: compress_gzip.c:325 compress_lz4.c:636 compress_none.c:138
 #: compress_zstd.c:399 pg_backup_custom.c:653 pg_backup_directory.c:535
 #: pg_backup_tar.c:725 pg_backup_tar.c:748
 #, c-format
@@ -457,7 +467,7 @@ msgstr "伸張できませんでした: %s"
 msgid "could not free LZ4 decompression context: %s"
 msgstr "LZ4伸張コンテクストを解放きませんでした: %s"
 
-#: compress_lz4.c:261 compress_lz4.c:268 compress_lz4.c:690 compress_lz4.c:705
+#: compress_lz4.c:261 compress_lz4.c:268 compress_lz4.c:691 compress_lz4.c:709
 #, c-format
 msgid "could not end compression: %s"
 msgstr "圧縮を終了できませんでした: %s"
@@ -487,17 +497,17 @@ msgstr "書き込み中にエラーが発生しました: %s"
 msgid "error during writing: %m"
 msgstr "書き込み中にエラーが発生しました: %m"
 
-#: compress_lz4.c:699
+#: compress_lz4.c:701
 #, c-format
 msgid "could not write to output file: %m"
 msgstr "出力ファイルに書き込めませんでした: %m"
 
-#: compress_lz4.c:712
+#: compress_lz4.c:719
 #, c-format
 msgid "could not end decompression: %s"
 msgstr "展開を終了できませんでした: %s"
 
-#: compress_lz4.c:727 compress_none.c:157
+#: compress_lz4.c:736 compress_none.c:157
 #, c-format
 msgid "could not close file: %m"
 msgstr "ファイルをクローズできませんでした: %m"
@@ -878,12 +888,12 @@ msgstr "標準出力を追記用にオープンできませんでした: %m"
 msgid "unrecognized file format \"%d\""
 msgstr "認識不能のファイル形式\"%d\""
 
-#: pg_backup_archiver.c:2445 pg_backup_archiver.c:4463
+#: pg_backup_archiver.c:2445 pg_backup_archiver.c:4494
 #, c-format
 msgid "finished item %d %s %s"
 msgstr "項目 %d %s %s の処理が完了"
 
-#: pg_backup_archiver.c:2449 pg_backup_archiver.c:4476
+#: pg_backup_archiver.c:2449 pg_backup_archiver.c:4507
 #, c-format
 msgid "worker process failed: exit code %d"
 msgstr "ワーカープロセスの処理失敗: 終了コード %d"
@@ -938,97 +948,97 @@ msgstr "関数\"%s\"が見つかりません"
 msgid "trigger \"%s\" not found"
 msgstr "トリガ\"%s\"が見つかりません"
 
-#: pg_backup_archiver.c:3224
+#: pg_backup_archiver.c:3255
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "セッションユーザーを\"%s\"に設定できませんでした: %s"
 
-#: pg_backup_archiver.c:3366
+#: pg_backup_archiver.c:3397
 #, c-format
 msgid "could not set search_path to \"%s\": %s"
 msgstr "search_pathを\"%s\"に設定できませんでした: %s"
 
-#: pg_backup_archiver.c:3427
+#: pg_backup_archiver.c:3458
 #, c-format
 msgid "could not set default_tablespace to %s: %s"
 msgstr "default_tablespaceを\"%s\"に設定できませんでした: %s"
 
-#: pg_backup_archiver.c:3476
+#: pg_backup_archiver.c:3507
 #, c-format
 msgid "could not set default_table_access_method: %s"
 msgstr "default_table_access_methodを設定できませんでした: %s"
 
-#: pg_backup_archiver.c:3581
+#: pg_backup_archiver.c:3612
 #, c-format
 msgid "don't know how to set owner for object type \"%s\""
 msgstr "オブジェクトタイプ%sに対する所有者の設定方法がわかりません"
 
-#: pg_backup_archiver.c:3767
+#: pg_backup_archiver.c:3798
 #, c-format
 msgid "did not find magic string in file header"
 msgstr "ファイルヘッダにマジック文字列がありませんでした"
 
-#: pg_backup_archiver.c:3781
+#: pg_backup_archiver.c:3812
 #, c-format
 msgid "unsupported version (%d.%d) in file header"
 msgstr "ファイルヘッダ内のバージョン(%d.%d)はサポートされていません"
 
-#: pg_backup_archiver.c:3786
+#: pg_backup_archiver.c:3817
 #, c-format
 msgid "sanity check on integer size (%lu) failed"
 msgstr "整数のサイズ(%lu)に関する健全性検査が失敗しました"
 
-#: pg_backup_archiver.c:3790
+#: pg_backup_archiver.c:3821
 #, c-format
 msgid "archive was made on a machine with larger integers, some operations might fail"
 msgstr "アーカイブはより大きなサイズの整数を持つマシンで作成されました、一部の操作が失敗する可能性があります"
 
-#: pg_backup_archiver.c:3800
+#: pg_backup_archiver.c:3831
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)"
 msgstr "想定した形式(%d)はファイル内にある形式(%d)と異なります"
 
-#: pg_backup_archiver.c:3822
+#: pg_backup_archiver.c:3853
 #, c-format
 msgid "archive is compressed, but this installation does not support compression (%s) -- no data will be available"
 msgstr "アーカイブは圧縮されていますが、このインストールでは圧縮をサポートしていません (%s)-- データは利用できません"
 
-#: pg_backup_archiver.c:3858
+#: pg_backup_archiver.c:3889
 #, c-format
 msgid "invalid creation date in header"
 msgstr "ヘッダ内の作成日付が不正です"
 
-#: pg_backup_archiver.c:3992
+#: pg_backup_archiver.c:4023
 #, c-format
 msgid "processing item %d %s %s"
 msgstr "項目 %d %s %s を処理しています"
 
-#: pg_backup_archiver.c:4067
+#: pg_backup_archiver.c:4098
 #, c-format
 msgid "entering main parallel loop"
 msgstr "メインの並列ループに入ります"
 
-#: pg_backup_archiver.c:4078
+#: pg_backup_archiver.c:4109
 #, c-format
 msgid "skipping item %d %s %s"
 msgstr "項目 %d %s %s をスキップしています"
 
-#: pg_backup_archiver.c:4087
+#: pg_backup_archiver.c:4118
 #, c-format
 msgid "launching item %d %s %s"
 msgstr "項目 %d %s %s に着手します"
 
-#: pg_backup_archiver.c:4141
+#: pg_backup_archiver.c:4172
 #, c-format
 msgid "finished main parallel loop"
 msgstr "メインの並列ループが終了しました"
 
-#: pg_backup_archiver.c:4177
+#: pg_backup_archiver.c:4208
 #, c-format
 msgid "processing missed item %d %s %s"
 msgstr "やり残し項目 %d %s %s を処理しています"
 
-#: pg_backup_archiver.c:4782
+#: pg_backup_archiver.c:4813
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data"
 msgstr "テーブル\"%s\"を作成できませんでした、このテーブルのデータは復元されません"
@@ -1115,12 +1125,12 @@ msgstr "圧縮処理が有効です"
 msgid "could not get server_version from libpq"
 msgstr "libpqからserver_versionを取得できませんでした"
 
-#: pg_backup_db.c:53 pg_dumpall.c:1906
+#: pg_backup_db.c:53 pg_dumpall.c:1917
 #, c-format
 msgid "aborting because of server version mismatch"
 msgstr "サーバーバージョンの不一致のため処理を中断します"
 
-#: pg_backup_db.c:54 pg_dumpall.c:1907
+#: pg_backup_db.c:54 pg_dumpall.c:1918
 #, c-format
 msgid "server version: %s; %s version: %s"
 msgstr "サーバーバージョン: %s、%s バージョン: %s"
@@ -1130,7 +1140,7 @@ msgstr "サーバーバージョン: %s、%s バージョン: %s"
 msgid "already connected to a database"
 msgstr "データベースはすでに接続済みです"
 
-#: pg_backup_db.c:128 pg_backup_db.c:178 pg_dumpall.c:1753 pg_dumpall.c:1855
+#: pg_backup_db.c:128 pg_backup_db.c:178 pg_dumpall.c:1764 pg_dumpall.c:1866
 msgid "Password: "
 msgstr "パスワード: "
 
@@ -1144,18 +1154,18 @@ msgstr "データベースへの接続ができませんでした"
 msgid "reconnection failed: %s"
 msgstr "再接続に失敗しました: %s"
 
-#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:776 pg_dump_sort.c:1503
-#: pg_dump_sort.c:1523 pg_dumpall.c:1780 pg_dumpall.c:1864
+#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:776 pg_dump_sort.c:1504
+#: pg_dump_sort.c:1524 pg_dumpall.c:1791 pg_dumpall.c:1875
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_backup_db.c:271 pg_dumpall.c:1969 pg_dumpall.c:1992
+#: pg_backup_db.c:271 pg_dumpall.c:1980 pg_dumpall.c:2003
 #, c-format
 msgid "query failed: %s"
 msgstr "問い合わせが失敗しました: %s"
 
-#: pg_backup_db.c:273 pg_dumpall.c:1970 pg_dumpall.c:1993
+#: pg_backup_db.c:273 pg_dumpall.c:1981 pg_dumpall.c:2004
 #, c-format
 msgid "Query was: %s"
 msgstr "問い合わせ: %s"
@@ -1925,7 +1935,7 @@ msgstr "スタンバイサーバーからの並列ダンプはこのサーバー
 msgid "invalid output format \"%s\" specified"
 msgstr "不正な出力形式\"%s\"が指定されました"
 
-#: pg_dump.c:1439 pg_dump.c:1495 pg_dump.c:1548 pg_dumpall.c:1543
+#: pg_dump.c:1439 pg_dump.c:1495 pg_dump.c:1548 pg_dumpall.c:1554
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "修飾名が不適切です(ドット区切りの名前が多すぎます): %s"
@@ -2050,8 +2060,8 @@ msgstr "行レベルセキュリティポリシーを読み取ります"
 msgid "unexpected policy command type: %c"
 msgstr "想定外のポリシコマンドタイプ: \"%c\""
 
-#: pg_dump.c:4504 pg_dump.c:4870 pg_dump.c:12135 pg_dump.c:18076
-#: pg_dump.c:18078 pg_dump.c:18699
+#: pg_dump.c:4504 pg_dump.c:4870 pg_dump.c:12135 pg_dump.c:18081
+#: pg_dump.c:18083 pg_dump.c:18704
 #, c-format
 msgid "could not parse %s array"
 msgstr "%s配列をパースできませんでした"
@@ -2319,68 +2329,68 @@ msgstr "想定外のtgtype値: %d"
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
 msgstr "テーブル\"%3$s\"上のトリガ\"%2$s\"の引数文字列(%1$s)が不正です"
 
-#: pg_dump.c:17837
+#: pg_dump.c:17842
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "テーブル\"%2$s\"のルール\"%1$s\"を得るための問い合わせが失敗しました: 間違った行数が返却されました"
 
-#: pg_dump.c:17990
+#: pg_dump.c:17995
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "親の機能拡張%uが見つかりません"
 
-#: pg_dump.c:18080
+#: pg_dump.c:18085
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "機能拡張に対して設定と条件の数が一致しません"
 
-#: pg_dump.c:18212
+#: pg_dump.c:18217
 #, c-format
 msgid "reading dependency data"
 msgstr "データの依存データを読み込んでいます"
 
-#: pg_dump.c:18298
+#: pg_dump.c:18303
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "参照元オブジェクト%u %uがありません"
 
-#: pg_dump.c:18309
+#: pg_dump.c:18314
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "参照先オブジェクト%u %uがありません"
 
-#: pg_dump_sort.c:645
+#: pg_dump_sort.c:646
 #, c-format
 msgid "invalid dumpId %d"
 msgstr "不正なdumpId %d"
 
-#: pg_dump_sort.c:651
+#: pg_dump_sort.c:652
 #, c-format
 msgid "invalid dependency %d"
 msgstr "不正な依存関係 %d"
 
-#: pg_dump_sort.c:884
+#: pg_dump_sort.c:885
 #, c-format
 msgid "could not identify dependency loop"
 msgstr "依存関係のループが見つかりませんでした"
 
-#: pg_dump_sort.c:1499
+#: pg_dump_sort.c:1500
 #, c-format
 msgid "there are circular foreign-key constraints on this table:"
 msgid_plural "there are circular foreign-key constraints among these tables:"
 msgstr[0] "次のテーブルの中で外部キー制約の循環があります: "
 
-#: pg_dump_sort.c:1504
+#: pg_dump_sort.c:1505
 #, c-format
 msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints."
 msgstr "--disable-triggersの使用または一時的な制約の削除を行わずにこのダンプをリストアすることはできないかもしれません。"
 
-#: pg_dump_sort.c:1505
+#: pg_dump_sort.c:1506
 #, c-format
 msgid "Consider using a full dump instead of a --data-only dump to avoid this problem."
 msgstr "この問題を回避するために--data-onlyダンプの代わりに完全なダンプを使用することを検討してください。"
 
-#: pg_dump_sort.c:1517
+#: pg_dump_sort.c:1518
 #, c-format
 msgid "could not resolve dependency loop among these items:"
 msgstr "以下の項目の間の依存関係のループを解決できませんでした:"
@@ -2415,7 +2425,7 @@ msgstr "-g/--globals-onlyと-t/--tablespaces-onlyオプションは同時に使�
 msgid "options -r/--roles-only and -t/--tablespaces-only cannot be used together"
 msgstr "-r/--roles-onlyと-t/--tablespaces-onlyオプションは同時に使用できません"
 
-#: pg_dumpall.c:488 pg_dumpall.c:1847
+#: pg_dumpall.c:488 pg_dumpall.c:1858
 #, c-format
 msgid "could not connect to database \"%s\""
 msgstr "データベース\"%s\"へ接続できませんでした"
@@ -2524,62 +2534,79 @@ msgid "role name starting with \"pg_\" skipped (%s)"
 msgstr "\"pg_\"で始まるロール名はスキップされました(%s)"
 
 #. translator: %s represents a numeric role OID
-#: pg_dumpall.c:1085 pg_dumpall.c:1143 pg_dumpall.c:1152
+#: pg_dumpall.c:1085
 #, c-format
-msgid "found orphaned pg_auth_members entry for role %s"
-msgstr "ロール %s に対する pg_auth_members エントリがありましたが、このロールは存在しません"
+msgid "ignoring role grant for missing role with OID %s"
+msgstr "存在しないOID %s のロールに対するGRANTを無視します"
 
-#: pg_dumpall.c:1118
+#: pg_dumpall.c:1123
 #, c-format
 msgid "could not find a legal dump ordering for memberships in role \"%s\""
 msgstr "ロール\"%s\"のメンバーシップに対して正当なダンプ順序が見つかりませんでした"
 
-#: pg_dumpall.c:1273
+#. translator: %s represents a numeric role OID
+#: pg_dumpall.c:1149
+#, c-format
+msgid "ignoring role grant to missing role with OID %s"
+msgstr "存在しないOID %s のロールへのGRANTを無視します"
+
+#. translator: %s represents a numeric role OID
+#: pg_dumpall.c:1164
+#, c-format
+msgid "grant of role \"%s\" to \"%s\" has invalid grantor OID %s"
+msgstr "ロール \"%s\"から\"%s\"へのGRANTの権限付与者 OID %s が不正です"
+
+#: pg_dumpall.c:1166
+#, c-format
+msgid "This grant will be dumped without GRANTED BY."
+msgstr "このGRANTは GRANTED BY なしでダンプされます。"
+
+#: pg_dumpall.c:1284
 #, c-format
 msgid "could not parse ACL list (%s) for parameter \"%s\""
 msgstr "パラメータ\"%2$s\"のACLリスト(%1$s)をパースできませんでした"
 
-#: pg_dumpall.c:1391
+#: pg_dumpall.c:1402
 #, c-format
 msgid "could not parse ACL list (%s) for tablespace \"%s\""
 msgstr "テーブル空間\"%2$s\"のACLリスト(%1$s)をパースできませんでした"
 
-#: pg_dumpall.c:1605
+#: pg_dumpall.c:1616
 #, c-format
 msgid "excluding database \"%s\""
 msgstr "データベース\"%s\"を除外します"
 
-#: pg_dumpall.c:1609
+#: pg_dumpall.c:1620
 #, c-format
 msgid "dumping database \"%s\""
 msgstr "データベース\"%s\"をダンプしています"
 
-#: pg_dumpall.c:1642
+#: pg_dumpall.c:1653
 #, c-format
 msgid "pg_dump failed on database \"%s\", exiting"
 msgstr "データベース\"%s\"のダンプが失敗しました、終了します"
 
-#: pg_dumpall.c:1648
+#: pg_dumpall.c:1659
 #, c-format
 msgid "could not re-open the output file \"%s\": %m"
 msgstr "出力ファイル\"%s\"を再オープンできませんでした: %m"
 
-#: pg_dumpall.c:1689
+#: pg_dumpall.c:1700
 #, c-format
 msgid "running \"%s\""
 msgstr "\"%s\"を実行しています"
 
-#: pg_dumpall.c:1890
+#: pg_dumpall.c:1901
 #, c-format
 msgid "could not get server version"
 msgstr "サーバーバージョンを取得できませんでした"
 
-#: pg_dumpall.c:1893
+#: pg_dumpall.c:1904
 #, c-format
 msgid "could not parse server version \"%s\""
 msgstr "サーバーバージョン\"%s\"をパースできませんでした"
 
-#: pg_dumpall.c:1963 pg_dumpall.c:1986
+#: pg_dumpall.c:1974 pg_dumpall.c:1997
 #, c-format
 msgid "executing %s"
 msgstr "%s を実行しています"
@@ -2836,6 +2863,9 @@ msgstr ""
 
 #~ msgid "could not write to LOs TOC file: %s"
 #~ msgstr "ラージオブジェクトのTOCファイルに書き出せませんでした: %s"
+
+#~ msgid "found orphaned pg_auth_members entry for role %s"
+#~ msgstr "ロール %s に対する pg_auth_members エントリがありましたが、このロールは存在しません"
 
 #~ msgid "unhandled mode \"%s\""
 #~ msgstr "処理されないモード \"%s\""
