@@ -2700,10 +2700,18 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (tmtcTzn(in))
 				{
-					/* We assume here that timezone names aren't localized */
+					/*
+					 * We assume here that timezone abbreviations aren't
+					 * localized, so ASCII-only downcasing is sufficient.
+					 */
 					char	   *p = asc_tolower_z(tmtcTzn(in));
 
-					strcpy(s, p);
+					if (strlen(p) <= n->key->len * DCH_MAX_ITEM_SIZ)
+						strcpy(s, p);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("time zone format value too long")));
 					pfree(p);
 					s += strlen(s);
 				}
@@ -2712,7 +2720,14 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				INVALID_FOR_INTERVAL;
 				if (tmtcTzn(in))
 				{
-					strcpy(s, tmtcTzn(in));
+					const char *p = tmtcTzn(in);
+
+					if (strlen(p) <= n->key->len * DCH_MAX_ITEM_SIZ)
+						strcpy(s, p);
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+								 errmsg("time zone format value too long")));
 					s += strlen(s);
 				}
 				break;
