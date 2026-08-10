@@ -1498,7 +1498,7 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 
 	/* convert string to pg_wchar form for matching */
 	orig_len = VARSIZE_ANY_EXHDR(orig_str);
-	wide_str = (pg_wchar *) palloc(sizeof(pg_wchar) * (orig_len + 1));
+	wide_str = palloc_array(pg_wchar, orig_len + 1);
 	wide_len = pg_mb2wchar_with_len(VARDATA_ANY(orig_str), wide_str, orig_len);
 
 	/* set up the compiled pattern */
@@ -1634,23 +1634,24 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 
 	if (eml > 1)
 	{
-		int64		maxsiz = eml * (int64) maxlen;
 		int			conv_bufsiz;
 
 		/*
 		 * Make the conversion buffer large enough for any substring of
-		 * interest.
+		 * interest. We can't use the original string's byte length as a
+		 * tighter bound, because that assumes the input is validly encoded;
+		 * but pg_mb2wchar_with_len() can accept strings that are invalid in
+		 * the database encoding, and converting such a character back to
+		 * multibyte form can take more bytes than it did in the input.
 		 *
-		 * Worst case: assume we need the maximum size (maxlen*eml), but take
-		 * advantage of the fact that the original string length in bytes is
-		 * an upper bound on the byte length of any fetched substring (and we
-		 * know that len+1 is safe to allocate because the varlena header is
-		 * longer than 1 byte).
+		 * This can't overflow, nor exceed what palloc will accept: maxlen is
+		 * at most wide_len, which is at most orig_len, and we have already
+		 * successfully allocated (orig_len + 1) * sizeof(pg_wchar) bytes for
+		 * wide_str. That relies on eml being no more than sizeof(pg_wchar),
+		 * which is true of all supported encodings.
 		 */
-		if (maxsiz > orig_len)
-			conv_bufsiz = orig_len + 1;
-		else
-			conv_bufsiz = maxsiz + 1;	/* safe since maxsiz < 2^30 */
+		Assert(eml <= sizeof(pg_wchar));
+		conv_bufsiz = maxlen * eml + 1;
 
 		matchctx->conv_buf = palloc(conv_bufsiz);
 		matchctx->conv_bufsiz = conv_bufsiz;
