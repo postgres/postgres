@@ -1110,6 +1110,17 @@ select \if false \\ (bogus \else \\ 42 \endif \\ forty_two;
 	\echo 'should print #8-1'
 \endif
 
+-- test that begin/end matching ignores to-be-ignored text
+create function silly_function(int) returns int
+begin atomic select $1;
+\if false
+end
+\endif
+;
+end;
+\sf silly_function(int)
+drop function silly_function(int);
+
 -- :{?...} defined variable test
 \set i 1
 \if :{?i}

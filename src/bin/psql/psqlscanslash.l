@@ -705,7 +705,45 @@ psql_scan_slash_command_end(PsqlScanState state)
 }
 
 /*
+ * Save current lexer state
+ *
+ * Relevant parts of the state are returned in a pg_malloc'd struct.
+ * It is caller's responsibility to free the struct eventually.
+ */
+PsqlScanStateSave *
+psql_scan_get_lex_state(PsqlScanState state)
+{
+	PsqlScanStateSave *lex_state = pg_malloc_object(PsqlScanStateSave);
+	StaticAssertDecl(sizeof(lex_state->identifiers) == sizeof(state->identifiers),
+					 "identifiers array lengths must match");
+
+	lex_state->paren_depth = state->paren_depth;
+	lex_state->begin_depth = state->begin_depth;
+	lex_state->identifier_count = state->identifier_count;
+	memcpy(lex_state->identifiers, state->identifiers,
+		   sizeof(lex_state->identifiers));
+	return lex_state;
+}
+
+/*
+ * Restore lexer state to what it was when saved
+ */
+void
+psql_scan_set_lex_state(PsqlScanState state,
+						const PsqlScanStateSave *lex_state)
+{
+	state->paren_depth = lex_state->paren_depth;
+	state->begin_depth = lex_state->begin_depth;
+	state->identifier_count = lex_state->identifier_count;
+	memcpy(state->identifiers, lex_state->identifiers,
+		   sizeof(state->identifiers));
+}
+
+/*
  * Fetch current paren nesting depth
+ *
+ * (These functions are obsolete, and kept around only to avoid API/ABI
+ * breakage in the back branches.)
  */
 int
 psql_scan_get_paren_depth(PsqlScanState state)

@@ -4757,6 +4757,22 @@ invalid command \lo
 	\echo 'should print #8-1'
 should print #8-1
 \endif
+-- test that begin/end matching ignores to-be-ignored text
+create function silly_function(int) returns int
+begin atomic select $1;
+\if false
+end
+\endif
+;
+end;
+\sf silly_function(int)
+CREATE OR REPLACE FUNCTION public.silly_function(integer)
+ RETURNS integer
+ LANGUAGE sql
+BEGIN ATOMIC
+ SELECT $1;
+END
+drop function silly_function(int);
 -- :{?...} defined variable test
 \set i 1
 \if :{?i}
