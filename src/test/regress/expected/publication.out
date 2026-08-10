@@ -1539,7 +1539,7 @@ CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1, pub_test.testpub_nopk;
 RESET client_min_messages;
 -- fail - already added
 ALTER PUBLICATION testpub_fortbl ADD TABLE testpub_tbl1;
-ERROR:  relation "testpub_tbl1" is already member of publication "testpub_fortbl"
+ERROR:  relation "testpub_tbl1" is already a member of publication "testpub_fortbl"
 -- fail - already added
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1;
 ERROR:  publication "testpub_fortbl" already exists
@@ -1876,7 +1876,7 @@ Tables from schemas:
 
 -- add a schema which is already added to the publication
 ALTER PUBLICATION testpub1_forschema ADD TABLES IN SCHEMA pub_test1;
-ERROR:  schema "pub_test1" is already member of publication "testpub1_forschema"
+ERROR:  schema "pub_test1" is already a member of publication "testpub1_forschema"
 \dRp+ testpub1_forschema
                                                         Publication testpub1_forschema
           Owner           | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root | Description 
