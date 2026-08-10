@@ -595,7 +595,7 @@ from keytbl, encdata where keytbl.id=1 and encdata.id=1;
 
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
 from keytbl, encdata where keytbl.id=2 and encdata.id=2;
-ERROR:  Wrong key or corrupt data
+ERROR:  encrypt error: Cipher cannot be initialized ?
 select pgp_pub_decrypt(dearmor(data), dearmor(seckey))
 from keytbl, encdata where keytbl.id=3 and encdata.id=3;
  pgp_pub_decrypt 
