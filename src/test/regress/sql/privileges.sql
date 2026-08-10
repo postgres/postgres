@@ -941,8 +941,11 @@ CREATE CAST (priv_testdomain1 AS priv_testdomain3a) WITH FUNCTION castfunc(int);
 DROP FUNCTION castfunc(int) CASCADE;
 DROP DOMAIN priv_testdomain3a;
 
+CREATE DOMAIN priv_testdomain4a AS int CHECK (VALUE > ('(0,1)'::priv_testtype1).a);
+
 CREATE FUNCTION priv_testfunc5a(a priv_testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
 CREATE FUNCTION priv_testfunc6a(b int) RETURNS priv_testdomain1 LANGUAGE SQL AS $$ SELECT $1::priv_testdomain1 $$;
+CREATE FUNCTION priv_testfunc7a(a int DEFAULT ('(0,1)'::priv_testtype1).a) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
 
 CREATE OPERATOR !+! (PROCEDURE = int4pl, LEFTARG = priv_testdomain1, RIGHTARG = priv_testdomain1);
 
@@ -953,6 +956,7 @@ CREATE TABLE test10a (a int[], b priv_testtype1[]);
 CREATE TABLE test9a (a int, b int);
 ALTER TABLE test9a ADD COLUMN c priv_testdomain1;
 ALTER TABLE test9a ALTER COLUMN b TYPE priv_testdomain1;
+CREATE INDEX ON test9a ((a::priv_testdomain1));
 
 CREATE TYPE test7a AS (a int, b priv_testdomain1);
 
@@ -960,9 +964,18 @@ CREATE TYPE test8a AS (a int, b int);
 ALTER TYPE test8a ADD ATTRIBUTE c priv_testdomain1;
 ALTER TYPE test8a ALTER ATTRIBUTE b TYPE priv_testdomain1;
 
+CREATE DOMAIN priv_testdomain5a AS test8a CHECK ((VALUE).a > 0 AND ('(0,1)'::priv_testtype1).a >= 0);
+
 CREATE TABLE test11a AS (SELECT 1::priv_testdomain1 AS a);
 
+CREATE VIEW test16a AS SELECT ('(0,1)'::priv_testtype1).a;
+CREATE TABLE test17a (a int) PARTITION BY RANGE ((a + ('(0,1)'::priv_testtype1).a));
+CREATE POLICY priv_testpolicy1a ON test9a USING (('(0,1)'::priv_testtype1).a > 0);
+
 REVOKE ALL ON TYPE priv_testtype1 FROM PUBLIC;
+
+CREATE TABLE test12 (c int DEFAULT 0 CHECK (c > 0 AND '(0,1)'::priv_testtype1 IS NOT NULL));
+CREATE TABLE test13 (c int DEFAULT ('(0,1)'::priv_testtype1).a);
 
 SET SESSION AUTHORIZATION regress_priv_user2;
 
@@ -976,8 +989,11 @@ CREATE DOMAIN priv_testdomain3b AS int;
 CREATE FUNCTION castfunc(int) RETURNS priv_testdomain3b AS $$ SELECT $1::priv_testdomain3b $$ LANGUAGE SQL;
 CREATE CAST (priv_testdomain1 AS priv_testdomain3b) WITH FUNCTION castfunc(int);
 
+CREATE DOMAIN priv_testdomain4b AS int CHECK (VALUE > ('(0,1)'::priv_testtype1).a);
+
 CREATE FUNCTION priv_testfunc5b(a priv_testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
 CREATE FUNCTION priv_testfunc6b(b int) RETURNS priv_testdomain1 LANGUAGE SQL AS $$ SELECT $1::priv_testdomain1 $$;
+CREATE FUNCTION priv_testfunc7b(a int DEFAULT ('(0,1)'::priv_testtype1).a) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
 
 CREATE OPERATOR !! (PROCEDURE = priv_testfunc5b, RIGHTARG = priv_testdomain1);
 
@@ -988,6 +1004,7 @@ CREATE TABLE test10b (a int[], b priv_testtype1[]);
 CREATE TABLE test9b (a int, b int);
 ALTER TABLE test9b ADD COLUMN c priv_testdomain1;
 ALTER TABLE test9b ALTER COLUMN b TYPE priv_testdomain1;
+CREATE INDEX ON test9b ((a::priv_testdomain1));
 
 CREATE TYPE test7b AS (a int, b priv_testdomain1);
 
@@ -995,16 +1012,38 @@ CREATE TYPE test8b AS (a int, b int);
 ALTER TYPE test8b ADD ATTRIBUTE c priv_testdomain1;
 ALTER TYPE test8b ALTER ATTRIBUTE b TYPE priv_testdomain1;
 
+CREATE DOMAIN priv_testdomain5b AS test8b CHECK ((VALUE).a > 0 AND ('(0,1)'::priv_testtype1).a >= 0);
+
 CREATE TABLE test11b AS (SELECT 1::priv_testdomain1 AS a);
 
+CREATE VIEW test16b AS SELECT ('(0,1)'::priv_testtype1).a;
+CREATE TABLE test17b (a int) PARTITION BY RANGE ((a + ('(0,1)'::priv_testtype1).a));
+CREATE POLICY priv_testpolicy1b ON test9b USING (('(0,1)'::priv_testtype1).a > 0);
+
 REVOKE ALL ON TYPE priv_testtype1 FROM PUBLIC;
+
+CREATE TABLE test12 (c int DEFAULT 0 CHECK (c > 0 AND '(0,1)'::priv_testtype1 IS NOT NULL));
+CREATE TABLE test13 (c int DEFAULT ('(0,1)'::priv_testtype1).a);
+
+-- new stored expressions require USAGE on types, rebuilds do not
+\c -
+REVOKE USAGE ON TYPE priv_testtype1 FROM regress_priv_user2;
+SET SESSION AUTHORIZATION regress_priv_user2;
+ALTER TABLE test12 ALTER COLUMN c TYPE bigint;
+ALTER TYPE test8b ALTER ATTRIBUTE a TYPE bigint CASCADE;
+ALTER TABLE test12 ALTER COLUMN c SET DEFAULT ('(0,1)'::priv_testtype1).a;
+CREATE TABLE test14 (LIKE test12 INCLUDING CONSTRAINTS);
+CREATE TABLE test15 (LIKE test13 INCLUDING DEFAULTS);
 
 \c -
 DROP AGGREGATE priv_testagg1b(priv_testdomain1);
 DROP DOMAIN priv_testdomain2b;
+DROP DOMAIN priv_testdomain4b;
+DROP DOMAIN priv_testdomain5b;
 DROP OPERATOR !! (NONE, priv_testdomain1);
 DROP FUNCTION priv_testfunc5b(a priv_testdomain1);
 DROP FUNCTION priv_testfunc6b(b int);
+DROP FUNCTION priv_testfunc7b(a int);
 DROP TABLE test5b;
 DROP TABLE test6b;
 DROP TABLE test9b;
@@ -1014,7 +1053,11 @@ DROP TYPE test8b;
 DROP CAST (priv_testdomain1 AS priv_testdomain3b);
 DROP FUNCTION castfunc(int) CASCADE;
 DROP DOMAIN priv_testdomain3b;
+DROP VIEW test16b;
 DROP TABLE test11b;
+DROP TABLE test17b;
+DROP TABLE test12;
+DROP TABLE test13;
 
 DROP TYPE priv_testtype1; -- ok
 DROP DOMAIN priv_testdomain1; -- ok

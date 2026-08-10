@@ -596,11 +596,16 @@ CreateStatistics(List *relids, CreateStatsStmt *stmt, bool check_rights)
 	 * just like we do for index expressions.
 	 */
 	if (stxexprs)
+	{
+		if (check_rights)
+			CheckUsageOnTypesInSingleRelExpr((Node *) stxexprs, relid, GetUserId());
+
 		recordDependencyOnSingleRelExpr(&myself,
 										(Node *) stxexprs,
 										relid,
 										DEPENDENCY_NORMAL,
 										DEPENDENCY_AUTO, false);
+	}
 
 	/*
 	 * Also add dependencies on namespace and owner.  These are required
