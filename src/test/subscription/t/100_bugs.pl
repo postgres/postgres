@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 12;
+use Test::More tests => 14;
 
 # Bug #15114
 
@@ -363,6 +363,37 @@ is( $node_subscriber_d_cols->safe_psql(
 $node_publisher_d_cols->stop('fast');
 $node_subscriber_d_cols->stop('fast');
 
+$node_publisher->rotate_logfile();
+$node_publisher->start();
+
+my $publisher_host = $node_publisher->host;
+my $publisher_port = $node_publisher->port;
+my $connstr_db =
+  "host=$publisher_host port=$publisher_port replication=database dbname=postgres";
+
+# REPLICATION users should not be able to bypass LOAD restrictions.
+$node_publisher->safe_psql(
+	'postgres', qq(
+	CREATE USER repluser REPLICATION;
+));
+
+my ($ret, $stdout, $stderr) = $node_publisher->psql(
+	'postgres',
+	qq[
+		SET ROLE repluser;
+		CREATE_REPLICATION_SLOT fail_slot LOGICAL regress;',
+	],
+	timeout => $PostgreSQL::Test::Utils::timeout_default,
+	extra_params => [ '-d', $connstr_db ]);
+
+is($ret, 3, 'loading unblessed output plugin fails');
+like(
+	$stderr,
+	qr/ERROR:  library "regress" may not be used as an output plugin/,
+	'loading unblessed output plugin fails: stderr');
+
+$node_publisher->stop('fast');
+
 # BUG #18988
 # The bug happened due to a self-deadlock between the DROP SUBSCRIPTION
 # command and the walsender process for accessing pg_subscription. This
@@ -380,7 +411,7 @@ $node_publisher->safe_psql(
 	CREATE SUBSCRIPTION regress_sub1 CONNECTION '$publisher_connstr' PUBLICATION regress_pub WITH (connect=false);
 ));
 
-my ($ret, $stdout, $stderr) =
+($ret, $stdout, $stderr) =
   $node_publisher->psql('postgres', q{DROP SUBSCRIPTION regress_sub1});
 
 isnt($ret, 0, "replication slot does not exist: exit code not 0");
