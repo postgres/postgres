@@ -130,6 +130,13 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 					 ecpg_gettext("inserting an array of variables is not supported on line %d"), line);
 			break;
 
+		case ECPG_BYTEA_FORMAT:
+			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
+			/*------
+			   translator: this string will be truncated at 149 characters expanded.  */
+					 ecpg_gettext("invalid input syntax for type bytea: \"%s\", on line %d"), str, line);
+			break;
+
 		case ECPG_NO_CONN:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 			/*------
