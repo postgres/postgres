@@ -221,8 +221,14 @@ cfb_process(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst,
 	while (len > 0)
 	{
 		unsigned	rlen;
+		int			err;
 
-		px_cipher_encrypt(ctx->ciph, 0, ctx->fr, ctx->block_size, ctx->fre, &rlen);
+		err = px_cipher_encrypt(ctx->ciph, 0, ctx->fr, ctx->block_size, ctx->fre, &rlen);
+		if (err)
+			ereport(ERROR,
+					(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
+					 errmsg("encrypt error: %s", px_strerror(err))));
+
 		if (ctx->block_no < 5)
 			ctx->block_no++;
 
