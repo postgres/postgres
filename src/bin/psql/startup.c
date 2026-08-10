@@ -390,7 +390,7 @@ main(int argc, char *argv[])
 				if (pset.echo == PSQL_ECHO_ALL)
 					puts(cell->val);
 
-				successResult = SendQuery(cell->val)
+				successResult = SendQuery(cell->val, -1)
 					? EXIT_SUCCESS : EXIT_FAILURE;
 			}
 			else if (cell->action == ACT_SINGLE_SLASH)
