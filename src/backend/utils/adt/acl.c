@@ -71,7 +71,7 @@ enum RoleRecurseType
 };
 static Oid	cached_role[] = {InvalidOid, InvalidOid};
 static List *cached_roles[] = {NIL, NIL};
-static uint32 cached_db_hash;
+uint32		cached_db_hash;
 
 
 static const char *getid(const char *s, char *n);
