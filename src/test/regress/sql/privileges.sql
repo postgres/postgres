@@ -951,6 +951,8 @@ CREATE OPERATOR !+! (PROCEDURE = int4pl, LEFTARG = priv_testdomain1, RIGHTARG = 
 
 CREATE TABLE test5a (a int, b priv_testdomain1);
 CREATE TABLE test6a OF priv_testtype1;
+CREATE TABLE test6a2 (a int, b text);
+ALTER TABLE test6a2 OF priv_testtype1;
 CREATE TABLE test10a (a int[], b priv_testtype1[]);
 
 CREATE TABLE test9a (a int, b int);
@@ -999,6 +1001,8 @@ CREATE OPERATOR !! (PROCEDURE = priv_testfunc5b, RIGHTARG = priv_testdomain1);
 
 CREATE TABLE test5b (a int, b priv_testdomain1);
 CREATE TABLE test6b OF priv_testtype1;
+CREATE TABLE test6b2 (a int, b text);
+ALTER TABLE test6b2 OF priv_testtype1;
 CREATE TABLE test10b (a int[], b priv_testtype1[]);
 
 CREATE TABLE test9b (a int, b int);
@@ -1046,6 +1050,7 @@ DROP FUNCTION priv_testfunc6b(b int);
 DROP FUNCTION priv_testfunc7b(a int);
 DROP TABLE test5b;
 DROP TABLE test6b;
+DROP TABLE test6b2;
 DROP TABLE test9b;
 DROP TABLE test10b;
 DROP TYPE test7b;
