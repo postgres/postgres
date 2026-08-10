@@ -1470,6 +1470,10 @@ DefineRange(ParseState *pstate, CreateRangeStmt *stmt)
 				 errmsg("range subtype cannot be %s",
 						format_type_be(rangeSubtype))));
 
+	aclresult = pg_type_aclcheck(rangeSubtype, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error_type(aclresult, rangeSubtype);
+
 	/* Identify subopclass */
 	rangeSubOpclass = findRangeSubOpclass(rangeSubOpclassName, rangeSubtype);
 

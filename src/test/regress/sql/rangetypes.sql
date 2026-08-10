@@ -421,6 +421,20 @@ select '[2010-01-01 01:00:00 -05, 2010-01-01 02:00:00 -08)'::tstzrange;
 select '[2010-01-01 01:00:00 -08, 2010-01-01 02:00:00 -05)'::tstzrange;
 set timezone to default;
 
+-- CREATE TYPE AS RANGE checks for USAGE on subtype
+CREATE ROLE regress_subtype;
+CREATE TYPE mytype AS (a INT, b INT);
+REVOKE USAGE ON TYPE mytype FROM PUBLIC;
+SET ROLE regress_subtype;
+CREATE TYPE myrange AS RANGE (subtype = mytype);
+RESET ROLE;
+GRANT USAGE ON TYPE mytype TO regress_subtype;
+SET ROLE regress_subtype;
+CREATE TYPE myrange AS RANGE (subtype = mytype);
+RESET ROLE;
+DROP TYPE mytype CASCADE;
+DROP ROLE regress_subtype;
+
 --
 -- Test user-defined range of floats
 -- (type float8range was already made in test_setup.sql)
