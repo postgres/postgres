@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-09 07:48+0300\n"
-"PO-Revision-Date: 2024-09-07 11:12+0300\n"
+"POT-Creation-Date: 2026-08-05 06:38+0300\n"
+"PO-Revision-Date: 2026-08-05 07:48+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -32,19 +32,29 @@ msgstr "ошибка: "
 msgid "warning: "
 msgstr "предупреждение: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:168
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:160
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
 
+#: ../../common/fe_memutils.c:210
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:229
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu * %zu\n"
+
 #: ../../common/file_utils.c:86 ../../common/file_utils.c:446
-#: pg_receivewal.c:266 pg_recvlogical.c:339
+#: pg_receivewal.c:266 pg_recvlogical.c:343
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не удалось получить информацию о файле \"%s\": %m"
@@ -578,8 +588,8 @@ msgstr "скорость передачи \"%s\" вне диапазона"
 msgid "could not get COPY data stream: %s"
 msgstr "не удалось получить поток данных COPY: %s"
 
-#: pg_basebackup.c:992 pg_recvlogical.c:434 pg_recvlogical.c:606
-#: receivelog.c:978
+#: pg_basebackup.c:992 pg_recvlogical.c:438 pg_recvlogical.c:610
+#: receivelog.c:984
 #, c-format
 msgid "could not read COPY data: %s"
 msgstr "не удалось прочитать данные COPY: %s"
@@ -614,7 +624,7 @@ msgstr "не удалось создать сжатый файл \"%s\": %s"
 msgid "could not close compressed file \"%s\": %m"
 msgstr "не удалось закрыть сжатый файл \"%s\": %m"
 
-#: pg_basebackup.c:1291 pg_recvlogical.c:631
+#: pg_basebackup.c:1291 pg_recvlogical.c:635
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "не удалось закрыть файл \"%s\": %m"
@@ -667,9 +677,9 @@ msgstr ""
 "начинается базовое резервное копирование, ожидается завершение контрольной "
 "точки"
 
-#: pg_basebackup.c:1920 pg_recvlogical.c:261 receivelog.c:494 receivelog.c:543
-#: receivelog.c:582 streamutil.c:297 streamutil.c:370 streamutil.c:422
-#: streamutil.c:533 streamutil.c:578
+#: pg_basebackup.c:1920 pg_recvlogical.c:265 receivelog.c:491 receivelog.c:542
+#: receivelog.c:588 streamutil.c:297 streamutil.c:370 streamutil.c:422
+#: streamutil.c:535 streamutil.c:580
 #, c-format
 msgid "could not send replication command \"%s\": %s"
 msgstr "не удалось передать команду репликации \"%s\": %s"
@@ -825,7 +835,7 @@ msgstr ""
 "неверный аргумент режима контрольных точек \"%s\"; должен быть \"fast\" или "
 "\"spread\""
 
-#: pg_basebackup.c:2427 pg_receivewal.c:555 pg_recvlogical.c:819
+#: pg_basebackup.c:2427 pg_receivewal.c:555 pg_recvlogical.c:823
 #, c-format
 msgid "invalid status interval \"%s\""
 msgstr "неверный интервал сообщений о состоянии \"%s\""
@@ -836,15 +846,15 @@ msgstr "неверный интервал сообщений о состояни
 #: pg_basebackup.c:2551 pg_basebackup.c:2561 pg_basebackup.c:2579
 #: pg_basebackup.c:2588 pg_basebackup.c:2597 pg_receivewal.c:605
 #: pg_receivewal.c:618 pg_receivewal.c:626 pg_receivewal.c:636
-#: pg_receivewal.c:644 pg_receivewal.c:655 pg_recvlogical.c:845
-#: pg_recvlogical.c:858 pg_recvlogical.c:869 pg_recvlogical.c:877
-#: pg_recvlogical.c:885 pg_recvlogical.c:893 pg_recvlogical.c:901
-#: pg_recvlogical.c:909 pg_recvlogical.c:917
+#: pg_receivewal.c:644 pg_receivewal.c:655 pg_recvlogical.c:849
+#: pg_recvlogical.c:862 pg_recvlogical.c:873 pg_recvlogical.c:881
+#: pg_recvlogical.c:889 pg_recvlogical.c:897 pg_recvlogical.c:905
+#: pg_recvlogical.c:913 pg_recvlogical.c:921
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_basebackup.c:2468 pg_receivewal.c:616 pg_recvlogical.c:856
+#: pg_basebackup.c:2468 pg_receivewal.c:616 pg_recvlogical.c:860
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "слишком много аргументов командной строки (первый: \"%s\")"
@@ -1079,12 +1089,12 @@ msgstr ""
 msgid "starting log streaming at %X/%X (timeline %u)"
 msgstr "начало передачи журнала с позиции %X/%X (линия времени %u)"
 
-#: pg_receivewal.c:537 pg_recvlogical.c:761
+#: pg_receivewal.c:537 pg_recvlogical.c:765
 #, c-format
 msgid "invalid port number \"%s\""
 msgstr "неверный номер порта \"%s\""
 
-#: pg_receivewal.c:565 pg_recvlogical.c:787
+#: pg_receivewal.c:565 pg_recvlogical.c:791
 #, c-format
 msgid "could not parse end position \"%s\""
 msgstr "не удалось разобрать конечную позицию \"%s\""
@@ -1107,23 +1117,23 @@ msgstr ""
 "подключение для репликации через слот \"%s\" оказалось привязано к базе "
 "данных"
 
-#: pg_receivewal.c:734 pg_recvlogical.c:968
+#: pg_receivewal.c:734 pg_recvlogical.c:972
 #, c-format
 msgid "dropping replication slot \"%s\""
 msgstr "удаление слота репликации \"%s\""
 
-#: pg_receivewal.c:745 pg_recvlogical.c:978
+#: pg_receivewal.c:745 pg_recvlogical.c:982
 #, c-format
 msgid "creating replication slot \"%s\""
 msgstr "создание слота репликации \"%s\""
 
-#: pg_receivewal.c:771 pg_recvlogical.c:1003
+#: pg_receivewal.c:771 pg_recvlogical.c:1007
 #, c-format
 msgid "disconnected"
 msgstr "отключение"
 
 #. translator: check source for value for %d
-#: pg_receivewal.c:777 pg_recvlogical.c:1009
+#: pg_receivewal.c:777 pg_recvlogical.c:1013
 #, c-format
 msgid "disconnected; waiting %d seconds to try again"
 msgstr "отключение; через %d сек. последует повторное подключение"
@@ -1225,109 +1235,109 @@ msgstr "не удалось отправить пакет ответа: %s"
 msgid "starting log streaming at %X/%X (slot %s)"
 msgstr "начало передачи журнала с позиции %X/%X (слот %s)"
 
-#: pg_recvlogical.c:270
+#: pg_recvlogical.c:274
 #, c-format
 msgid "streaming initiated"
 msgstr "передача запущена"
 
-#: pg_recvlogical.c:334
+#: pg_recvlogical.c:338
 #, c-format
 msgid "could not open log file \"%s\": %m"
 msgstr "не удалось открыть файл протокола \"%s\": %m"
 
-#: pg_recvlogical.c:360 receivelog.c:886
+#: pg_recvlogical.c:364 receivelog.c:892
 #, c-format
 msgid "invalid socket: %s"
 msgstr "неверный сокет: %s"
 
-#: pg_recvlogical.c:413 receivelog.c:914
+#: pg_recvlogical.c:417 receivelog.c:920
 #, c-format
 msgid "%s() failed: %m"
 msgstr "ошибка в %s(): %m"
 
-#: pg_recvlogical.c:420 receivelog.c:964
+#: pg_recvlogical.c:424 receivelog.c:970
 #, c-format
 msgid "could not receive data from WAL stream: %s"
 msgstr "не удалось получить данные из потока WAL: %s"
 
-#: pg_recvlogical.c:462 pg_recvlogical.c:513 receivelog.c:1008
-#: receivelog.c:1074
+#: pg_recvlogical.c:466 pg_recvlogical.c:517 receivelog.c:1014
+#: receivelog.c:1080
 #, c-format
 msgid "streaming header too small: %d"
 msgstr "заголовок потока слишком мал: %d"
 
-#: pg_recvlogical.c:497 receivelog.c:846
+#: pg_recvlogical.c:501 receivelog.c:852
 #, c-format
 msgid "unrecognized streaming header: \"%c\""
 msgstr "нераспознанный заголовок потока: \"%c\""
 
-#: pg_recvlogical.c:551 pg_recvlogical.c:563
+#: pg_recvlogical.c:555 pg_recvlogical.c:567
 #, c-format
 msgid "could not write %u bytes to log file \"%s\": %m"
 msgstr "не удалось записать %u Б в файл журнала \"%s\": %m"
 
-#: pg_recvlogical.c:617 receivelog.c:642 receivelog.c:679
+#: pg_recvlogical.c:621 receivelog.c:648 receivelog.c:685
 #, c-format
 msgid "unexpected termination of replication stream: %s"
 msgstr "неожиданный конец потока репликации: %s"
 
-#: pg_recvlogical.c:741
+#: pg_recvlogical.c:745
 #, c-format
 msgid "invalid fsync interval \"%s\""
 msgstr "неверный интервал синхронизации с ФС \"%s\""
 
-#: pg_recvlogical.c:779
+#: pg_recvlogical.c:783
 #, c-format
 msgid "could not parse start position \"%s\""
 msgstr "не удалось разобрать начальную позицию \"%s\""
 
-#: pg_recvlogical.c:868
+#: pg_recvlogical.c:872
 #, c-format
 msgid "no slot specified"
 msgstr "слот не указан"
 
-#: pg_recvlogical.c:876
+#: pg_recvlogical.c:880
 #, c-format
 msgid "no target file specified"
 msgstr "целевой файл не задан"
 
-#: pg_recvlogical.c:884
+#: pg_recvlogical.c:888
 #, c-format
 msgid "no database specified"
 msgstr "база данных не задана"
 
-#: pg_recvlogical.c:892
+#: pg_recvlogical.c:896
 #, c-format
 msgid "at least one action needs to be specified"
 msgstr "необходимо задать минимум одно действие"
 
-#: pg_recvlogical.c:900
+#: pg_recvlogical.c:904
 #, c-format
 msgid "cannot use --create-slot or --start together with --drop-slot"
 msgstr "--create-slot или --start нельзя применять вместе с --drop-slot"
 
-#: pg_recvlogical.c:908
+#: pg_recvlogical.c:912
 #, c-format
 msgid "cannot use --create-slot or --drop-slot together with --startpos"
 msgstr "--create-slot или --drop-slot нельзя применять вместе с --startpos"
 
-#: pg_recvlogical.c:916
+#: pg_recvlogical.c:920
 #, c-format
 msgid "--endpos may only be specified with --start"
 msgstr "--endpos можно задать только вместе с --start"
 
-#: pg_recvlogical.c:950
+#: pg_recvlogical.c:954
 #, c-format
 msgid "could not establish database-specific replication connection"
 msgstr ""
 "не удалось установить подключение для репликации к определённой базе данных"
 
-#: pg_recvlogical.c:1049
+#: pg_recvlogical.c:1053
 #, c-format
 msgid "end position %X/%X reached by keepalive"
 msgstr "конечная позиция %X/%X достигнута при обработке keepalive"
 
-#: pg_recvlogical.c:1052
+#: pg_recvlogical.c:1056
 #, c-format
 msgid "end position %X/%X reached by WAL record at %X/%X"
 msgstr "конечная позиция %X/%X достигнута при обработке записи WAL %X/%X"
@@ -1384,7 +1394,7 @@ msgstr "не удалось определить текущую позицию �
 msgid "not renaming \"%s%s\", segment is not complete"
 msgstr "файл сегмента \"%s%s\" не переименовывается, так как он неполный"
 
-#: receivelog.c:228 receivelog.c:313 receivelog.c:688
+#: receivelog.c:228 receivelog.c:313 receivelog.c:694
 #, c-format
 msgid "could not close file \"%s\": %s"
 msgstr "не удалось закрыть файл \"%s\": %s"
@@ -1422,7 +1432,7 @@ msgstr ""
 "несовместимая версия сервера %s; клиент не поддерживает репликацию с "
 "серверов версии выше %s"
 
-#: receivelog.c:501 streamutil.c:430 streamutil.c:467
+#: receivelog.c:498 streamutil.c:430 streamutil.c:467
 #, c-format
 msgid ""
 "could not identify system: got %d rows and %d fields, expected %d rows and "
@@ -1431,7 +1441,7 @@ msgstr ""
 "не удалось идентифицировать систему; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d (или более))"
 
-#: receivelog.c:508
+#: receivelog.c:505
 #, c-format
 msgid ""
 "system identifier does not match between base backup and streaming connection"
@@ -1439,12 +1449,12 @@ msgstr ""
 "системный идентификатор базовой резервной копии отличается от идентификатора "
 "потоковой передачи"
 
-#: receivelog.c:514
+#: receivelog.c:511
 #, c-format
 msgid "starting timeline %u is not present in the server"
 msgstr "на сервере нет начальной линии времени %u"
 
-#: receivelog.c:555
+#: receivelog.c:554
 #, c-format
 msgid ""
 "unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, "
@@ -1453,12 +1463,12 @@ msgstr ""
 "сервер вернул неожиданный ответ на команду TIMELINE_HISTORY; получено строк: "
 "%d, полей: %d, а ожидалось строк: %d, полей: %d"
 
-#: receivelog.c:626
+#: receivelog.c:632
 #, c-format
 msgid "server reported unexpected next timeline %u, following timeline %u"
 msgstr "сервер неожиданно сообщил линию времени %u после линии времени %u"
 
-#: receivelog.c:632
+#: receivelog.c:638
 #, c-format
 msgid ""
 "server stopped streaming timeline %u at %X/%X, but reported next timeline %u "
@@ -1467,12 +1477,12 @@ msgstr ""
 "сервер прекратил передачу линии времени %u в %X/%X, но сообщил, что "
 "следующая линии времени %u начнётся в %X/%X"
 
-#: receivelog.c:672
+#: receivelog.c:678
 #, c-format
 msgid "replication stream was terminated before stop point"
 msgstr "поток репликации закончился до точки остановки"
 
-#: receivelog.c:718
+#: receivelog.c:724
 #, c-format
 msgid ""
 "unexpected result set after end-of-timeline: got %d rows and %d fields, "
@@ -1481,32 +1491,32 @@ msgstr ""
 "сервер вернул неожиданный набор данных после конца линии времени; получено "
 "строк: %d, полей: %d, а ожидалось строк: %d, полей: %d"
 
-#: receivelog.c:727
+#: receivelog.c:733
 #, c-format
 msgid "could not parse next timeline's starting point \"%s\""
 msgstr "не удалось разобрать начальную точку следующей линии времени \"%s\""
 
-#: receivelog.c:776 receivelog.c:1028 walmethods.c:996
+#: receivelog.c:782 receivelog.c:1034 walmethods.c:996
 #, c-format
 msgid "could not fsync file \"%s\": %s"
 msgstr "не удалось синхронизировать с ФС файл \"%s\": %s"
 
-#: receivelog.c:1091
+#: receivelog.c:1097
 #, c-format
 msgid "received write-ahead log record for offset %u with no file open"
 msgstr "получена запись журнала предзаписи по смещению %u, но файл не открыт"
 
-#: receivelog.c:1101
+#: receivelog.c:1107
 #, c-format
 msgid "got WAL data offset %08x, expected %08x"
 msgstr "получено смещение данных WAL %08x, но ожидалось %08x"
 
-#: receivelog.c:1135
+#: receivelog.c:1141
 #, c-format
 msgid "could not write %u bytes to WAL file \"%s\": %s"
 msgstr "не удалось записать %u Б в файл WAL \"%s\": %s"
 
-#: receivelog.c:1160 receivelog.c:1200 receivelog.c:1230
+#: receivelog.c:1166 receivelog.c:1206 receivelog.c:1236
 #, c-format
 msgid "could not send copy-end packet: %s"
 msgstr "не удалось отправить пакет \"конец COPY\": %s"
@@ -1581,7 +1591,7 @@ msgstr ""
 msgid "group access flag could not be parsed: %s"
 msgstr "не удалось разобрать флаг доступа группы: %s"
 
-#: streamutil.c:544
+#: streamutil.c:546
 #, c-format
 msgid ""
 "could not create replication slot \"%s\": got %d rows and %d fields, "
@@ -1590,7 +1600,7 @@ msgstr ""
 "создать слот репликации \"%s\" не удалось; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d)"
 
-#: streamutil.c:588
+#: streamutil.c:590
 #, c-format
 msgid ""
 "could not drop replication slot \"%s\": got %d rows and %d fields, expected "
