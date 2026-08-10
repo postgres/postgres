@@ -41,6 +41,9 @@
  * for this is that the missing value must never be updated after it is set,
  * which can only be when a column is added to the table. Otherwise we would
  * in effect be changing existing tuples.
+ *
+ * NB: Caller is responsible for ensuring the user has USAGE on all types expr
+ * depends on.
  */
 Oid
 StoreAttrDefault(Relation rel, AttrNumber attnum,

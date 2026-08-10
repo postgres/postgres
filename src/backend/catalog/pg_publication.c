@@ -428,9 +428,12 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 
 	/* Add dependency on the objects mentioned in the qualifications */
 	if (pri->whereClause)
+	{
+		CheckUsageOnTypesInSingleRelExpr(pri->whereClause, relid, GetUserId());
 		recordDependencyOnSingleRelExpr(&myself, pri->whereClause, relid,
 										DEPENDENCY_NORMAL, DEPENDENCY_NORMAL,
 										false);
+	}
 
 	/* Add dependency on the columns, if any are listed */
 	for (int i = 0; i < natts; i++)

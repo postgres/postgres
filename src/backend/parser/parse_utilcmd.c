@@ -1342,6 +1342,16 @@ expandTableLikeClause(RangeVar *heapRel, TableLikeClause *table_like_clause)
 								   ccname,
 								   RelationGetRelationName(relation))));
 
+			/*
+			 * Copying a CHECK constraint adds new references.  Since the
+			 * constraint arrives pre-cooked, it bypasses the checks in
+			 * AddRelationNewConstraints(), so we must check for USAGE on
+			 * types here.
+			 */
+			CheckUsageOnTypesInSingleRelExpr(stringToNode(ccbin),
+											 RelationGetRelid(relation),
+											 GetUserId());
+
 			n = makeNode(Constraint);
 			n->contype = CONSTR_CHECK;
 			n->conname = pstrdup(ccname);
