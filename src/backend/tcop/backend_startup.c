@@ -659,8 +659,13 @@ retry:
 		char		GSSok = 'N';
 
 #ifdef ENABLE_GSS
-		/* No GSSAPI encryption when on Unix socket */
-		if (port->laddr.addr.ss_family != AF_UNIX)
+
+		/*
+		 * No GSSAPI encryption when on Unix socket.
+		 *
+		 * Also no GSS negotiation if we already have a direct SSL connection.
+		 */
+		if (port->laddr.addr.ss_family != AF_UNIX && !port->ssl_in_use)
 			GSSok = 'G';
 #endif
 
