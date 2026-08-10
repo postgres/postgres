@@ -216,8 +216,8 @@ tsvectorin(PG_FUNCTION_ARGS)
 		if (cur - tmpbuf > MAXSTRPOS)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("string is too long for tsvector (%ld bytes, max %ld bytes)",
-							(long) (cur - tmpbuf), (long) MAXSTRPOS)));
+					 errmsg("string is too long for tsvector (%zu bytes, max %zu bytes)",
+							(size_t) (cur - tmpbuf), (size_t) MAXSTRPOS)));
 
 		/*
 		 * Enlarge buffers if needed
@@ -266,7 +266,8 @@ tsvectorin(PG_FUNCTION_ARGS)
 	if (buflen > MAXSTRPOS)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("string is too long for tsvector (%d bytes, max %d bytes)", buflen, MAXSTRPOS)));
+				 errmsg("string is too long for tsvector (%zu bytes, max %zu bytes)",
+						(size_t) buflen, (size_t) MAXSTRPOS)));
 
 	totallen = CALCDATASIZE(len, buflen);
 	in = (TSVector) palloc0(totallen);
@@ -310,8 +311,8 @@ tsvectorout(PG_FUNCTION_ARGS)
 	TSVector	out = PG_GETARG_TSVECTOR(0);
 	char	   *outbuf;
 	int32		i,
-				lenbuf = 0,
 				pp;
+	size_t		lenbuf;
 	WordEntry  *ptr = ARRPTR(out);
 	char	   *curin,
 			   *curout;
@@ -320,7 +321,7 @@ tsvectorout(PG_FUNCTION_ARGS)
 	lenbuf = out->size * 2 /* '' */ + out->size - 1 /* space */ + 2 /* \0 */ ;
 	for (i = 0; i < out->size; i++)
 	{
-		lenbuf += ptr[i].len * 2 * pg_database_encoding_max_length() /* for escape */ ;
+		lenbuf += ptr[i].len * 2 /* allow for escapes */ ;
 		if (ptr[i].haspos)
 			lenbuf += 1 /* : */ + 7 /* int2 + , + weight */ * POSDATALEN(out, &(ptr[i]));
 	}
@@ -452,12 +453,14 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 	bool		needSort = false;
 
 	nentries = pq_getmsgint(buf, sizeof(int32));
-	if (nentries < 0 || nentries > (MaxAllocSize / sizeof(WordEntry)))
+
+	/* We disallow empty lexemes, so more than MAXSTRPOS of them can't fit */
+	if (nentries < 0 || nentries > MAXSTRPOS)
 		elog(ERROR, "invalid size of tsvector");
 
 	hdrlen = DATAHDRSIZE + sizeof(WordEntry) * nentries;
 
-	len = hdrlen * 2;			/* times two to make room for lexemes */
+	len = hdrlen * 2;			/* times two to make some room for lexemes */
 	vec = (TSVector) palloc0(len);
 	vec->size = nentries;
 
@@ -474,6 +477,8 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 		/* sanity checks */
 
 		lex_len = strlen(lexeme);
+		if (lex_len == 0)
+			elog(ERROR, "invalid tsvector: empty lexeme");
 		if (lex_len > MAXSTRLEN)
 			elog(ERROR, "invalid tsvector: lexeme too long");
 
@@ -538,6 +543,15 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 			datalen += sizeof(uint16) + npos * sizeof(WordEntryPos);
 		}
 	}
+
+	/*
+	 * Enforce that datalen is still within MAXSTRPOS, ie the last lexeme
+	 * didn't go past that.  We could allow that, since no "pos" field
+	 * overflowed, but tsvectorrecv shouldn't accept values that other
+	 * tsvector-constructing routines wouldn't.
+	 */
+	if (datalen > MAXSTRPOS)
+		elog(ERROR, "invalid tsvector: maximum total lexeme length exceeded");
 
 	SET_VARSIZE(vec, hdrlen + datalen);
 
