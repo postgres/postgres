@@ -94,6 +94,7 @@ amcheck_lock_relation_and_check(Oid indrelid,
 		SetUserIdAndSecContext(heaprel->rd_rel->relowner,
 							   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 		save_nestlevel = NewGUCNestLevel();
+		RestrictSearchPath();
 	}
 	else
 	{
