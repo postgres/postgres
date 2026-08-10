@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Serguei A. Mokhov, <mokhov@cs.concordia.ca>, 2003-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
-# SPDX-FileCopyrightText: 2012-2017, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
+# SPDX-FileCopyrightText: 2012-2017, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-05-03 16:00+0300\n"
-"PO-Revision-Date: 2024-09-05 08:25+0300\n"
+"POT-Creation-Date: 2026-08-05 06:38+0300\n"
+"PO-Revision-Date: 2026-08-05 07:51+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -39,16 +39,26 @@ msgstr "подробности: "
 msgid "hint: "
 msgstr "подсказка: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:168
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:160
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
+
+#: ../../common/fe_memutils.c:210
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:229
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu * %zu\n"
 
 #: ../../common/username.c:43
 #, c-format
@@ -124,24 +134,24 @@ msgstr[0] "(%lu строка)"
 msgstr[1] "(%lu строки)"
 msgstr[2] "(%lu строк)"
 
-#: ../../fe_utils/print.c:3109
+#: ../../fe_utils/print.c:3110
 #, c-format
 msgid "Interrupted\n"
 msgstr "Прервано\n"
 
-#: ../../fe_utils/print.c:3173
+#: ../../fe_utils/print.c:3174
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
 "Ошибка добавления заголовка таблицы: превышен предел числа столбцов (%d).\n"
 
-#: ../../fe_utils/print.c:3213
+#: ../../fe_utils/print.c:3214
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
 "Ошибка добавления ячейки в таблицу: превышен предел числа ячеек (%d).\n"
 
-#: ../../fe_utils/print.c:3471
+#: ../../fe_utils/print.c:3472
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"

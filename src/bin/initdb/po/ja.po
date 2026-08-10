@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-26 11:13+0900\n"
-"PO-Revision-Date: 2022-09-26 14:44+0900\n"
+"POT-Creation-Date: 2026-05-12 14:35+0900\n"
+"PO-Revision-Date: 2026-05-14 16:20+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -78,44 +78,54 @@ msgstr "%s() が失敗しました: %m"
 msgid "out of memory"
 msgstr "メモリ不足です"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:168
 #, c-format
 msgid "out of memory\n"
 msgstr "メモリ不足です\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:160
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null ポインタを複製できません（内部エラー）。\n"
 
-#: ../../common/file_utils.c:87 ../../common/file_utils.c:451
+#: ../../common/fe_memutils.c:210
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu * %zu が不正です\n"
+
+#: ../../common/fe_memutils.c:229
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu * %zu が不正です\n"
+
+#: ../../common/file_utils.c:86 ../../common/file_utils.c:446
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "ファイル\"%s\"のstatに失敗しました: %m"
 
-#: ../../common/file_utils.c:166 ../../common/pgfnames.c:48
+#: ../../common/file_utils.c:161 ../../common/pgfnames.c:48
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
 
-#: ../../common/file_utils.c:200 ../../common/pgfnames.c:69
+#: ../../common/file_utils.c:195 ../../common/pgfnames.c:69
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を読み取れませんでした: %m"
 
-#: ../../common/file_utils.c:232 ../../common/file_utils.c:291
-#: ../../common/file_utils.c:365
+#: ../../common/file_utils.c:227 ../../common/file_utils.c:286
+#: ../../common/file_utils.c:360
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
-#: ../../common/file_utils.c:303 ../../common/file_utils.c:373
+#: ../../common/file_utils.c:298 ../../common/file_utils.c:368
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
 
-#: ../../common/file_utils.c:383
+#: ../../common/file_utils.c:378
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
@@ -219,12 +229,12 @@ msgstr "子プロセスはシグナル%dにより終了しました: %s"
 msgid "child process exited with unrecognized status %d"
 msgstr "子プロセスが未知のステータス%dで終了しました"
 
-#: ../../port/dirmod.c:221
+#: ../../port/dirmod.c:247
 #, c-format
 msgid "could not set junction for \"%s\": %s\n"
 msgstr "\"%s\"のjunctionを設定できませんでした:  %s\n"
 
-#: ../../port/dirmod.c:298
+#: ../../port/dirmod.c:324
 #, c-format
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "\"%s\"のjunctionを入手できませんでした:  %s\n"
@@ -1040,122 +1050,20 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#~ msgid "%s: unrecognized authentication method \"%s\"\n"
-#~ msgstr "%s: \"%s\"は未知の認証方式です\n"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "ディレクトリを\"%s\"に変更できませんでした"
-
-#~ msgid "%s: could not create symbolic link \"%s\": %s\n"
-#~ msgstr "%s: シンボリックリンク\"%s\"を作成できませんでした: %s\n"
-
-#~ msgid "%s: transaction log directory location must be an absolute path\n"
-#~ msgstr "%s: トランザクションログのディレクトリの位置は、絶対パスでなければなりません\n"
+#~ msgid "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
+#~ msgstr "  -X, --xlogdir=XLOGDIR     トランザクションログディレクトリの場所です\n"
 
 #~ msgid "%s: could not access directory \"%s\": %s\n"
 #~ msgstr "%s: ディレクトリ\"%s\"にアクセスできませんでした: %s\n"
 
-#~ msgid "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
-#~ msgstr "  -X, --xlogdir=XLOGDIR     トランザクションログディレクトリの場所です\n"
-
-#~ msgid "%s: could not to allocate SIDs: error code %lu\n"
-#~ msgstr "%s: SIDを割り当てられませんでした: エラーコード %lu\n"
-
-#~ msgid "%s: invalid locale name \"%s\"\n"
-#~ msgstr "%s: ロケール名\"%s\"は無効です。\n"
-
-#~ msgid "%s: failed to restore old locale \"%s\"\n"
-#~ msgstr "%s:古いロケール\"%s\"を戻すことができませんでした。\n"
-
-#~ msgid "copying template1 to postgres ... "
-#~ msgstr "template1からpostgresへコピーしています ... "
-
-#~ msgid "copying template1 to template0 ... "
-#~ msgstr "template1からtemplate0へコピーしています ... "
-
-#~ msgid "vacuuming database template1 ... "
-#~ msgstr "template1データベースをバキュームしています ... "
-
-#~ msgid "loading PL/pgSQL server-side language ... "
-#~ msgstr "PL/pgSQL サーバーサイド言語をロードしています ... "
-
-#~ msgid "creating information schema ... "
-#~ msgstr "情報スキーマを作成しています ... "
-
-#~ msgid "setting privileges on built-in objects ... "
-#~ msgstr "組み込みオブジェクトに権限を設定しています ... "
-
-#~ msgid "creating dictionaries ... "
-#~ msgstr "ディレクトリを作成しています ... "
-
-#~ msgid "creating conversions ... "
-#~ msgstr "変換を作成しています ... "
-
-#~ msgid "not supported on this platform\n"
-#~ msgstr "このプラットフォームではサポートされません\n"
-
-#~ msgid "Use the option \"--debug\" to see details.\n"
-#~ msgstr "詳細を確認するためには\"--debug\"オプションを使用してください。\n"
-
-#~ msgid "No usable system locales were found.\n"
-#~ msgstr "使用できるシステムロケールが見つかりません\n"
-
-#~ msgid "%s: locale name has non-ASCII characters, skipped: \"%s\"\n"
-#~ msgstr "%s: ロケール名に非ASCII文字がありますので飛ばします: \"%s\"\n"
-
-#~ msgid "%s: locale name too long, skipped: \"%s\"\n"
-#~ msgstr "%s: ロケール名が長過ぎますので飛ばします: \"%s\"\n"
-
-#~ msgid "creating collations ... "
-#~ msgstr "照合順序を作成しています ... "
-
-#~ msgid "loading system objects' descriptions ... "
-#~ msgstr "システムオブジェクトの定義をロードしています ... "
-
-#~ msgid "creating system views ... "
-#~ msgstr "システムビューを作成しています ... "
-
-#~ msgid "initializing dependencies ... "
-#~ msgstr "依存関係を初期化しています ... "
-
-#~ msgid "setting password ... "
-#~ msgstr "パスワードを設定しています ... "
-
-#~ msgid "initializing pg_authid ... "
-#~ msgstr "pg_authidを初期化しています ... "
-
-#~ msgid "creating template1 database in %s/base/1 ... "
-#~ msgstr "%s/base/1にtemplate1データベースを作成しています ... "
-
 #~ msgid "%s: could not access file \"%s\": %s\n"
 #~ msgstr "%s: ファイル\"%s\"にアクセスできませんでした: %s\n"
-
-#~ msgid "%s: file \"%s\" does not exist\n"
-#~ msgstr "%s: ファイル\"%s\"がありません\n"
 
 #~ msgid "%s: could not create directory \"%s\": %s\n"
 #~ msgstr "%s: ディレクトリ\"%s\"を作成できませんでした。: %s\n"
 
-#~ msgid "%s: could not get current user name: %s\n"
-#~ msgstr "%s: 現在のユーザー名を得ることができませんでした: %s\n"
-
-#~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s: 現在のユーザーに関する情報を得ることができませんでした: %s\n"
-
-#~ msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
-#~ msgstr "%s: ユーザーが要求したトランザクションログディレクトリ\"%s\"を削除しません\n"
-
-#~ msgid "%s: failed to remove contents of transaction log directory\n"
-#~ msgstr "%s: トランザクションログディレクトリの内容の削除に失敗しました\n"
-
-#~ msgid "%s: removing contents of transaction log directory \"%s\"\n"
-#~ msgstr "%s: トランザクションログディレクトリ\"%s\"の内容を削除しています\n"
-
-#~ msgid "%s: failed to remove transaction log directory\n"
-#~ msgstr "%s: トランザクションログディレクトリの削除に失敗しました\n"
-
-#~ msgid "%s: removing transaction log directory \"%s\"\n"
-#~ msgstr "%s: トランザクションログディレクトリ\"%s\"を削除しています\n"
+#~ msgid "%s: could not create symbolic link \"%s\": %s\n"
+#~ msgstr "%s: シンボリックリンク\"%s\"を作成できませんでした: %s\n"
 
 #~ msgid "%s: could not execute command \"%s\": %s\n"
 #~ msgstr "%s: コマンド\"%s\"の実効に失敗しました: %s\n"
@@ -1163,14 +1071,116 @@ msgstr ""
 #~ msgid "%s: could not fsync file \"%s\": %s\n"
 #~ msgstr "%s: ファイル\"%s\"をfsyncできませんでした: %s\n"
 
+#~ msgid "%s: could not get current user name: %s\n"
+#~ msgstr "%s: 現在のユーザー名を得ることができませんでした: %s\n"
+
+#~ msgid "%s: could not obtain information about current user: %s\n"
+#~ msgstr "%s: 現在のユーザーに関する情報を得ることができませんでした: %s\n"
+
 #~ msgid "%s: could not open file \"%s\": %s\n"
 #~ msgstr "%s: ファイル\"%s\"をオープンできませんでした: %s\n"
+
+#~ msgid "%s: could not to allocate SIDs: error code %lu\n"
+#~ msgstr "%s: SIDを割り当てられませんでした: エラーコード %lu\n"
+
+#~ msgid "%s: failed to remove contents of transaction log directory\n"
+#~ msgstr "%s: トランザクションログディレクトリの内容の削除に失敗しました\n"
+
+#~ msgid "%s: failed to remove transaction log directory\n"
+#~ msgstr "%s: トランザクションログディレクトリの削除に失敗しました\n"
+
+#~ msgid "%s: failed to restore old locale \"%s\"\n"
+#~ msgstr "%s:古いロケール\"%s\"を戻すことができませんでした。\n"
+
+#~ msgid "%s: file \"%s\" does not exist\n"
+#~ msgstr "%s: ファイル\"%s\"がありません\n"
+
+#~ msgid "%s: invalid locale name \"%s\"\n"
+#~ msgstr "%s: ロケール名\"%s\"は無効です。\n"
+
+#~ msgid "%s: locale name has non-ASCII characters, skipped: \"%s\"\n"
+#~ msgstr "%s: ロケール名に非ASCII文字がありますので飛ばします: \"%s\"\n"
+
+#~ msgid "%s: locale name too long, skipped: \"%s\"\n"
+#~ msgstr "%s: ロケール名が長過ぎますので飛ばします: \"%s\"\n"
+
+#~ msgid "%s: removing contents of transaction log directory \"%s\"\n"
+#~ msgstr "%s: トランザクションログディレクトリ\"%s\"の内容を削除しています\n"
+
+#~ msgid "%s: removing transaction log directory \"%s\"\n"
+#~ msgstr "%s: トランザクションログディレクトリ\"%s\"を削除しています\n"
+
+#~ msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
+#~ msgstr "%s: ユーザーが要求したトランザクションログディレクトリ\"%s\"を削除しません\n"
+
+#~ msgid "%s: transaction log directory location must be an absolute path\n"
+#~ msgstr "%s: トランザクションログのディレクトリの位置は、絶対パスでなければなりません\n"
+
+#~ msgid "%s: unrecognized authentication method \"%s\"\n"
+#~ msgstr "%s: \"%s\"は未知の認証方式です\n"
+
+#~ msgid "No usable system locales were found.\n"
+#~ msgstr "使用できるシステムロケールが見つかりません\n"
 
 #~ msgid "Try \"%s --help\" for more information.\n"
 #~ msgstr "詳細は\"%s --help\"で確認してください。\n"
 
-#~ msgid "pclose failed: %m"
-#~ msgstr "pcloseが失敗しました: %m"
+#~ msgid "Use the option \"--debug\" to see details.\n"
+#~ msgstr "詳細を確認するためには\"--debug\"オプションを使用してください。\n"
+
+#~ msgid "copying template1 to postgres ... "
+#~ msgstr "template1からpostgresへコピーしています ... "
+
+#~ msgid "copying template1 to template0 ... "
+#~ msgstr "template1からtemplate0へコピーしています ... "
+
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "ディレクトリを\"%s\"に変更できませんでした"
+
+#~ msgid "creating collations ... "
+#~ msgstr "照合順序を作成しています ... "
+
+#~ msgid "creating conversions ... "
+#~ msgstr "変換を作成しています ... "
+
+#~ msgid "creating dictionaries ... "
+#~ msgstr "ディレクトリを作成しています ... "
+
+#~ msgid "creating information schema ... "
+#~ msgstr "情報スキーマを作成しています ... "
+
+#~ msgid "creating system views ... "
+#~ msgstr "システムビューを作成しています ... "
+
+#~ msgid "creating template1 database in %s/base/1 ... "
+#~ msgstr "%s/base/1にtemplate1データベースを作成しています ... "
 
 #~ msgid "fatal: "
 #~ msgstr "致命的エラー: "
+
+#~ msgid "initializing dependencies ... "
+#~ msgstr "依存関係を初期化しています ... "
+
+#~ msgid "initializing pg_authid ... "
+#~ msgstr "pg_authidを初期化しています ... "
+
+#~ msgid "loading PL/pgSQL server-side language ... "
+#~ msgstr "PL/pgSQL サーバーサイド言語をロードしています ... "
+
+#~ msgid "loading system objects' descriptions ... "
+#~ msgstr "システムオブジェクトの定義をロードしています ... "
+
+#~ msgid "not supported on this platform\n"
+#~ msgstr "このプラットフォームではサポートされません\n"
+
+#~ msgid "pclose failed: %m"
+#~ msgstr "pcloseが失敗しました: %m"
+
+#~ msgid "setting password ... "
+#~ msgstr "パスワードを設定しています ... "
+
+#~ msgid "setting privileges on built-in objects ... "
+#~ msgstr "組み込みオブジェクトに権限を設定しています ... "
+
+#~ msgid "vacuuming database template1 ... "
+#~ msgstr "template1データベースをバキュームしています ... "

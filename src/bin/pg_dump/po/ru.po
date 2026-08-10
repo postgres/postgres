@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-11-09 06:29+0200\n"
-"PO-Revision-Date: 2025-09-04 22:18+0300\n"
+"POT-Creation-Date: 2026-08-05 06:38+0300\n"
+"PO-Revision-Date: 2026-08-05 07:50+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -71,7 +71,7 @@ msgstr "не удалось перейти в каталог \"%s\": %m"
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "не удалось прочитать символическую ссылку \"%s\": %m"
 
-#: ../../common/exec.c:422 parallel.c:1611
+#: ../../common/exec.c:422 parallel.c:1613
 #, c-format
 msgid "%s() failed: %m"
 msgstr "ошибка в %s(): %m"
@@ -80,16 +80,26 @@ msgstr "ошибка в %s(): %m"
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:168
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:160
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
+
+#: ../../common/fe_memutils.c:210
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:229
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu * %zu\n"
 
 #: ../../common/wait_error.c:45
 #, c-format
@@ -415,22 +425,27 @@ msgstr "ошибка в %s() (код ошибки: %d)"
 msgid "could not create communication channels: %m"
 msgstr "не удалось создать каналы межпроцессного взаимодействия: %m"
 
-#: parallel.c:1018
+#: parallel.c:980
+#, c-format
+msgid "could not create worker thread: %m"
+msgstr "не удалось создать рабочий поток: %m"
+
+#: parallel.c:1020
 #, c-format
 msgid "could not create worker process: %m"
 msgstr "не удалось создать рабочий процесс: %m"
 
-#: parallel.c:1148
+#: parallel.c:1150
 #, c-format
 msgid "unrecognized command received from leader: \"%s\""
 msgstr "от ведущего процесса получена нераспознанная команда: \"%s\""
 
-#: parallel.c:1191 parallel.c:1429
+#: parallel.c:1193 parallel.c:1431
 #, c-format
 msgid "invalid message received from worker: \"%s\""
 msgstr "от рабочего процесса получено ошибочное сообщение: \"%s\""
 
-#: parallel.c:1323
+#: parallel.c:1325
 #, c-format
 msgid ""
 "could not obtain lock on relation \"%s\"\n"
@@ -443,47 +458,47 @@ msgstr ""
 "этой таблицы после того, как родительский процесс pg_dump получил для неё "
 "начальную блокировку ACCESS SHARE."
 
-#: parallel.c:1412
+#: parallel.c:1414
 #, c-format
 msgid "a worker process died unexpectedly"
 msgstr "рабочий процесс неожиданно прервался"
 
-#: parallel.c:1534 parallel.c:1652
+#: parallel.c:1536 parallel.c:1654
 #, c-format
 msgid "could not write to the communication channel: %m"
 msgstr "не удалось записать в канал взаимодействия: %m"
 
-#: parallel.c:1736
+#: parallel.c:1738
 #, c-format
 msgid "pgpipe: could not create socket: error code %d"
 msgstr "pgpipe: не удалось создать сокет (код ошибки: %d)"
 
-#: parallel.c:1747
+#: parallel.c:1749
 #, c-format
 msgid "pgpipe: could not bind: error code %d"
 msgstr "pgpipe: не удалось привязаться к сокету (код ошибки: %d)"
 
-#: parallel.c:1754
+#: parallel.c:1756
 #, c-format
 msgid "pgpipe: could not listen: error code %d"
 msgstr "pgpipe: не удалось начать приём (код ошибки: %d)"
 
-#: parallel.c:1761
+#: parallel.c:1763
 #, c-format
 msgid "pgpipe: %s() failed: error code %d"
 msgstr "pgpipe: ошибка в %s() (код ошибки: %d)"
 
-#: parallel.c:1772
+#: parallel.c:1774
 #, c-format
 msgid "pgpipe: could not create second socket: error code %d"
 msgstr "pgpipe: не удалось создать второй сокет (код ошибки: %d)"
 
-#: parallel.c:1781
+#: parallel.c:1783
 #, c-format
 msgid "pgpipe: could not connect socket: error code %d"
 msgstr "pgpipe: не удалось подключить сокет (код ошибки: %d)"
 
-#: parallel.c:1790
+#: parallel.c:1792
 #, c-format
 msgid "pgpipe: could not accept connection: error code %d"
 msgstr "pgpipe: не удалось принять соединение (код ошибки: %d)"

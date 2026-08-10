@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-09 12:00+0900\n"
-"PO-Revision-Date: 2022-08-09 09:47+0900\n"
+"POT-Creation-Date: 2026-05-12 14:36+0900\n"
+"PO-Revision-Date: 2026-05-14 16:38+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -61,17 +61,27 @@ msgstr "%s() が失敗しました: %m"
 msgid "out of memory"
 msgstr "メモリ不足です"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
-#: ../../port/path.c:753 ../../port/path.c:791 ../../port/path.c:808
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:168
+#: ../../port/path.c:847 ../../port/path.c:885 ../../port/path.c:902
 #, c-format
 msgid "out of memory\n"
 msgstr "メモリ不足です\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:160
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null ポインタを複製できません（内部エラー）。\n"
+
+#: ../../common/fe_memutils.c:210
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu + %zu が不正です\n"
+
+#: ../../common/fe_memutils.c:229
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu * %zu が不正です\n"
 
 #: ../../common/wait_error.c:45
 #, c-format
@@ -103,7 +113,7 @@ msgstr "子プロセスはシグナル%dにより終了しました: %s"
 msgid "child process exited with unrecognized status %d"
 msgstr "子プロセスが未知のステータス%dで終了しました"
 
-#: ../../port/path.c:775
+#: ../../port/path.c:869
 #, c-format
 msgid "could not get current working directory: %s\n"
 msgstr "現在の作業ディレクトリを取得できませんでした: %s\n"
@@ -855,8 +865,12 @@ msgstr "%s: 操作モードが指定されていません\n"
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: データベースの指定も、PGDATA環境変数の設定もありません\n"
 
-#~ msgid "pclose failed: %m"
-#~ msgstr "pcloseが失敗しました: %m"
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "不具合は<pgsql-bugs@lists.postgresql.org>まで報告してください。\n"
 
 #~ msgid ""
 #~ "The program \"%s\" is needed by %s but was not found in the\n"
@@ -891,21 +905,17 @@ msgstr "%s: データベースの指定も、PGDATA環境変数の設定もあ�
 #~ msgid "child process was terminated by signal %s"
 #~ msgstr "子プロセスがシグナル%sで終了しました"
 
-#~ msgid "pclose failed: %s"
-#~ msgstr "pcloseが失敗しました: %s"
-
-#~ msgid "could not read symbolic link \"%s\""
-#~ msgstr "シンボリックリンク\"%s\"の読み取りに失敗しました"
-
 #~ msgid "could not change directory to \"%s\": %s"
 #~ msgstr "ディレクトリ\"%s\"に移動できませんでした: %s"
 
 #~ msgid "could not identify current directory: %s"
 #~ msgstr "現在のディレクトリを特定できませんでした: %s"
 
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "不具合は<pgsql-bugs@lists.postgresql.org>まで報告してください。\n"
+#~ msgid "could not read symbolic link \"%s\""
+#~ msgstr "シンボリックリンク\"%s\"の読み取りに失敗しました"
+
+#~ msgid "pclose failed: %m"
+#~ msgstr "pcloseが失敗しました: %m"
+
+#~ msgid "pclose failed: %s"
+#~ msgstr "pcloseが失敗しました: %s"

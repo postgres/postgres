@@ -1,13 +1,13 @@
 # Russian message translation file for plpython
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019.
+# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2026 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-02 11:37+0300\n"
-"PO-Revision-Date: 2023-05-05 06:34+0300\n"
+"POT-Creation-Date: 2026-08-05 06:38+0300\n"
+"PO-Revision-Date: 2026-08-05 07:51+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -27,12 +27,12 @@ msgstr "plpy.cursor ожидает запрос или план"
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.cursor принимает в качестве второго аргумента последовательность"
 
-#: plpy_cursorobject.c:170 plpy_spi.c:204
+#: plpy_cursorobject.c:170 plpy_spi.c:209
 #, c-format
 msgid "could not execute plan"
 msgstr "нельзя выполнить план"
 
-#: plpy_cursorobject.c:173 plpy_spi.c:207
+#: plpy_cursorobject.c:173 plpy_spi.c:212
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
@@ -40,28 +40,34 @@ msgstr[0] "Ожидалась последовательность из %d ар�
 msgstr[1] "Ожидалась последовательность из %d аргументов, получено %d: %s"
 msgstr[2] "Ожидалась последовательность из %d аргументов, получено %d: %s"
 
-#: plpy_cursorobject.c:317
+#: plpy_cursorobject.c:237 plpy_spi.c:96 plpy_spi.c:263 plpy_typeio.c:1211
+#: plpy_typeio.c:1462
+#, c-format
+msgid "could not get element %d from sequence"
+msgstr "не удалось получить элемент %d из последовательности"
+
+#: plpy_cursorobject.c:322
 #, c-format
 msgid "iterating a closed cursor"
 msgstr "перемещение закрытого курсора"
 
-#: plpy_cursorobject.c:325 plpy_cursorobject.c:391
+#: plpy_cursorobject.c:330 plpy_cursorobject.c:396
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "перемещение курсора в прерванной подтранзакции"
 
-#: plpy_cursorobject.c:383
+#: plpy_cursorobject.c:388
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "выборка из закрытого курсора"
 
-#: plpy_cursorobject.c:426 plpy_spi.c:393
+#: plpy_cursorobject.c:431 plpy_spi.c:403
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
 msgstr ""
 "результат запроса содержит слишком много строк для передачи в списке Python"
 
-#: plpy_cursorobject.c:478
+#: plpy_cursorobject.c:483
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "закрытие курсора в прерванной подтранзакции"
@@ -319,27 +325,27 @@ msgstr "команда не выдала результирующий набор
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "вторым аргументом plpy.prepare должна быть последовательность"
 
-#: plpy_spi.c:98
+#: plpy_spi.c:103
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: имя типа с порядковым номером %d не является строкой"
 
-#: plpy_spi.c:170
+#: plpy_spi.c:175
 #, c-format
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute ожидает запрос или план"
 
-#: plpy_spi.c:188
+#: plpy_spi.c:193
 #, c-format
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute принимает в качестве второго аргумента последовательность"
 
-#: plpy_spi.c:289
+#: plpy_spi.c:299
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "ошибка в SPI_execute_plan: %s"
 
-#: plpy_spi.c:331
+#: plpy_spi.c:341
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "ошибка в SPI_execute: %s"
@@ -413,7 +419,7 @@ msgstr ""
 "не удалось определить длину последовательности в возвращаемом функцией "
 "значении"
 
-#: plpy_typeio.c:1222 plpy_typeio.c:1237 plpy_typeio.c:1253
+#: plpy_typeio.c:1226 plpy_typeio.c:1241 plpy_typeio.c:1257
 #, c-format
 msgid ""
 "multidimensional arrays must have array expressions with matching dimensions"
@@ -421,22 +427,22 @@ msgstr ""
 "для многомерных массивов должны задаваться выражения с соответствующими "
 "размерностями"
 
-#: plpy_typeio.c:1227
+#: plpy_typeio.c:1231
 #, c-format
 msgid "number of array dimensions exceeds the maximum allowed (%d)"
 msgstr "число размерностей массива превышает предел (%d)"
 
-#: plpy_typeio.c:1329
+#: plpy_typeio.c:1333
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "ошибка в литерале записи: \"%s\""
 
-#: plpy_typeio.c:1330
+#: plpy_typeio.c:1334
 #, c-format
 msgid "Missing left parenthesis."
 msgstr "Отсутствует левая скобка."
 
-#: plpy_typeio.c:1331 plpy_typeio.c:1532
+#: plpy_typeio.c:1335 plpy_typeio.c:1539
 #, c-format
 msgid ""
 "To return a composite type in an array, return the composite type as a "
@@ -445,12 +451,12 @@ msgstr ""
 "Чтобы возвратить составной тип в массиве, нужно возвратить составное "
 "значение в виде кортежа Python, например: \"[('foo',)]\"."
 
-#: plpy_typeio.c:1378
+#: plpy_typeio.c:1382
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "ключ \"%s\" не найден в сопоставлении"
 
-#: plpy_typeio.c:1379
+#: plpy_typeio.c:1383
 #, c-format
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
@@ -459,17 +465,17 @@ msgstr ""
 "Чтобы присвоить столбцу NULL, добавьте в сопоставление значение None с "
 "ключом-именем столбца."
 
-#: plpy_typeio.c:1432
+#: plpy_typeio.c:1436
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "длина возвращённой последовательности не равна числу столбцов в строке"
 
-#: plpy_typeio.c:1530
+#: plpy_typeio.c:1537
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "в объекте Python не существует атрибут \"%s\""
 
-#: plpy_typeio.c:1533
+#: plpy_typeio.c:1540
 #, c-format
 msgid ""
 "To return null in a column, let the returned object have an attribute named "

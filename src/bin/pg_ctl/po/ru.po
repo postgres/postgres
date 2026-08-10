@@ -6,13 +6,13 @@
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009, 2012.
 # Andrey Sudnik <sudnikand@gmail.com>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
+# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-08 07:45+0200\n"
-"PO-Revision-Date: 2024-09-07 06:47+0300\n"
+"POT-Creation-Date: 2026-08-05 06:38+0300\n"
+"PO-Revision-Date: 2026-08-05 07:49+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -61,17 +61,27 @@ msgstr "ошибка в %s(): %m"
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
-#: ../../port/path.c:830 ../../port/path.c:868 ../../port/path.c:885
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:168
+#: ../../port/path.c:847 ../../port/path.c:885 ../../port/path.c:902
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:160
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
+
+#: ../../common/fe_memutils.c:210
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:229
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu * %zu\n"
 
 #: ../../common/wait_error.c:45
 #, c-format
@@ -103,7 +113,7 @@ msgstr "дочерний процесс завершён по сигналу %d:
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным кодом состояния %d"
 
-#: ../../port/path.c:852
+#: ../../port/path.c:869
 #, c-format
 msgid "could not get current working directory: %s\n"
 msgstr "не удалось определить текущий рабочий каталог: %s\n"

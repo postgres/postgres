@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-23 03:19+0000\n"
+"POT-Creation-Date: 2026-08-04 07:34+0000\n"
 "PO-Revision-Date: 2022-09-23 07:03-0400\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -77,44 +77,54 @@ msgstr "%s() fehlgeschlagen: %m"
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:168
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:160
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
 
-#: ../../common/file_utils.c:87 ../../common/file_utils.c:451
+#: ../../common/fe_memutils.c:210
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:229
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ungültige Speicheranforderungsgröße %zu * %zu\n"
+
+#: ../../common/file_utils.c:86 ../../common/file_utils.c:446
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
 
-#: ../../common/file_utils.c:166 ../../common/pgfnames.c:48
+#: ../../common/file_utils.c:161 ../../common/pgfnames.c:48
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
 
-#: ../../common/file_utils.c:200 ../../common/pgfnames.c:69
+#: ../../common/file_utils.c:195 ../../common/pgfnames.c:69
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
 
-#: ../../common/file_utils.c:232 ../../common/file_utils.c:291
-#: ../../common/file_utils.c:365
+#: ../../common/file_utils.c:227 ../../common/file_utils.c:286
+#: ../../common/file_utils.c:360
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
 
-#: ../../common/file_utils.c:303 ../../common/file_utils.c:373
+#: ../../common/file_utils.c:298 ../../common/file_utils.c:368
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht fsyncen: %m"
 
-#: ../../common/file_utils.c:383
+#: ../../common/file_utils.c:378
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "konnte Datei »%s« nicht in »%s« umbenennen: %m"
@@ -218,12 +228,12 @@ msgstr "Kindprozess wurde von Signal %d beendet: %s"
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"
 
-#: ../../port/dirmod.c:221
+#: ../../port/dirmod.c:247
 #, c-format
 msgid "could not set junction for \"%s\": %s\n"
 msgstr "konnte Junction für »%s« nicht erzeugen: %s\n"
 
-#: ../../port/dirmod.c:298
+#: ../../port/dirmod.c:324
 #, c-format
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "konnte Junction für »%s« nicht ermitteln: %s\n"

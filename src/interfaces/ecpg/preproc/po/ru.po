@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-08 07:45+0200\n"
+"POT-Creation-Date: 2026-08-05 06:38+0300\n"
 "PO-Revision-Date: 2022-09-05 13:32+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -399,7 +399,7 @@ msgstr "имя типа \"string\" в режиме Informix зарезервир
 msgid "type \"%s\" is already defined"
 msgstr "тип \"%s\" уже определён"
 
-#: preproc.y:577 preproc.y:18561 preproc.y:18886 variable.c:619
+#: preproc.y:577 preproc.y:18553 preproc.y:18878 variable.c:619
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "многомерные массивы с простыми типами данных не поддерживаются"
@@ -572,23 +572,23 @@ msgstr "слишком много уровней в определении вл�
 msgid "pointers to varchar are not implemented"
 msgstr "указатели на varchar не реализованы"
 
-#: preproc.y:18527
+#: preproc.y:18519
 #, c-format
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "команда EXEC SQL VAR не может включать инициализатор"
 
-#: preproc.y:18844
+#: preproc.y:18836
 #, c-format
 msgid "arrays of indicators are not allowed on input"
 msgstr "массивы индикаторов на входе недопустимы"
 
-#: preproc.y:19031
+#: preproc.y:19023
 #, c-format
 msgid "operator not allowed in variable definition"
 msgstr "недопустимый оператор в определении переменной"
 
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:19072
+#: preproc.y:19064
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s (примерное положение: \"%s\")"

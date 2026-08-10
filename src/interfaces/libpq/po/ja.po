@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-11-11 13:54+0900\n"
-"PO-Revision-Date: 2025-11-11 15:42+0900\n"
+"POT-Creation-Date: 2026-05-12 14:35+0900\n"
+"PO-Revision-Date: 2026-05-15 12:13+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -74,10 +74,10 @@ msgstr "nonce を生成できませんでした\n"
 #: fe-connect.c:5555 fe-connect.c:5654 fe-connect.c:5910 fe-connect.c:5939
 #: fe-connect.c:6011 fe-connect.c:6035 fe-connect.c:6053 fe-connect.c:6154
 #: fe-connect.c:6163 fe-connect.c:6521 fe-connect.c:6671 fe-connect.c:6939
-#: fe-exec.c:715 fe-exec.c:983 fe-exec.c:1331 fe-exec.c:3170 fe-exec.c:3362
-#: fe-exec.c:4236 fe-exec.c:4430 fe-gssapi-common.c:111 fe-lobj.c:884
-#: fe-protocol3.c:969 fe-protocol3.c:984 fe-protocol3.c:1017
-#: fe-protocol3.c:1738 fe-protocol3.c:2141 fe-secure-common.c:112
+#: fe-exec.c:716 fe-exec.c:984 fe-exec.c:1332 fe-exec.c:3185 fe-exec.c:3377
+#: fe-exec.c:4230 fe-exec.c:4424 fe-gssapi-common.c:111 fe-lobj.c:884
+#: fe-protocol3.c:970 fe-protocol3.c:985 fe-protocol3.c:1018
+#: fe-protocol3.c:1739 fe-protocol3.c:2154 fe-secure-common.c:112
 #: fe-secure-gssapi.c:512 fe-secure-gssapi.c:687 fe-secure-openssl.c:455
 #: fe-secure-openssl.c:1252
 msgid "out of memory\n"
@@ -125,12 +125,12 @@ msgstr "SCRAMメッセージのフォーマット異常 (server-final-message �
 msgid "malformed SCRAM message (invalid server signature)\n"
 msgstr "SCRAMメッセージのフォーマット異常 (不正なサーバー署名)\n"
 
-#: fe-auth-scram.c:935 fe-exec.c:527 fe-protocol3.c:208 fe-protocol3.c:233
-#: fe-protocol3.c:257 fe-protocol3.c:275 fe-protocol3.c:356 fe-protocol3.c:729
+#: fe-auth-scram.c:936 fe-exec.c:528 fe-protocol3.c:209 fe-protocol3.c:234
+#: fe-protocol3.c:258 fe-protocol3.c:276 fe-protocol3.c:357 fe-protocol3.c:730
 msgid "out of memory"
 msgstr "メモリ不足です"
 
-#: fe-auth-scram.c:944
+#: fe-auth-scram.c:945
 msgid "could not generate random salt"
 msgstr "乱数ソルトを生成できませんでした"
 
@@ -651,154 +651,154 @@ msgstr "警告: パスワードファイル \"%s\" がグループメンバも�
 msgid "password retrieved from file \"%s\"\n"
 msgstr "ファイル\"%s\"からパスワードを読み込みました\n"
 
-#: fe-exec.c:466 fe-exec.c:3436
+#: fe-exec.c:467 fe-exec.c:3451
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "行番号%dは0..%dの範囲を超えています"
 
-#: fe-exec.c:528 fe-protocol3.c:1946
+#: fe-exec.c:529 fe-protocol3.c:1947
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: fe-exec.c:841
+#: fe-exec.c:842
 msgid "write to server failed\n"
 msgstr "サーバーへの書き込みに失敗\n"
 
-#: fe-exec.c:882
+#: fe-exec.c:883
 msgid "no error text available\n"
 msgstr "エラーメッセージがありません\n"
 
-#: fe-exec.c:971
+#: fe-exec.c:972
 msgid "NOTICE"
 msgstr "注意"
 
-#: fe-exec.c:1029
+#: fe-exec.c:1030
 msgid "PGresult cannot support more than INT_MAX tuples"
 msgstr "PGresultはINT_MAX個以上のタプルを扱えません"
 
-#: fe-exec.c:1041
+#: fe-exec.c:1042
 msgid "size_t overflow"
 msgstr "size_t オーバーフロー"
 
-#: fe-exec.c:1455 fe-exec.c:1526 fe-exec.c:1575
+#: fe-exec.c:1456 fe-exec.c:1527 fe-exec.c:1576
 msgid "command string is a null pointer\n"
 msgstr "コマンド文字列がヌルポインタです\n"
 
-#: fe-exec.c:1462 fe-exec.c:2913
+#: fe-exec.c:1463 fe-exec.c:2928
 #, c-format
 msgid "%s not allowed in pipeline mode\n"
 msgstr "%sはパイプラインモードでは使用できません\n"
 
-#: fe-exec.c:1532 fe-exec.c:1581 fe-exec.c:1677
+#: fe-exec.c:1533 fe-exec.c:1582 fe-exec.c:1678
 #, c-format
 msgid "number of parameters must be between 0 and %d\n"
 msgstr "パラメータ数は0から%dまでの間でなければなりません\n"
 
-#: fe-exec.c:1569 fe-exec.c:1671
+#: fe-exec.c:1570 fe-exec.c:1672
 msgid "statement name is a null pointer\n"
 msgstr "文の名前がヌルポインタです\n"
 
-#: fe-exec.c:1715 fe-exec.c:3281
+#: fe-exec.c:1716 fe-exec.c:3296
 msgid "no connection to the server\n"
 msgstr "サーバーへの接続がありません\n"
 
-#: fe-exec.c:1724 fe-exec.c:3290
+#: fe-exec.c:1725 fe-exec.c:3305
 msgid "another command is already in progress\n"
 msgstr "他のコマンドを処理しています\n"
 
-#: fe-exec.c:1755
+#: fe-exec.c:1756
 msgid "cannot queue commands during COPY\n"
 msgstr "COPY中はコマンドのキューイングはできません\n"
 
-#: fe-exec.c:1873
+#: fe-exec.c:1874
 msgid "length must be given for binary parameter\n"
 msgstr "バイナリパラメータには長さを指定しなければなりません\n"
 
-#: fe-exec.c:2188
+#: fe-exec.c:2189
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "想定外のasyncStatus: %d\n"
 
-#: fe-exec.c:2346
+#: fe-exec.c:2347
 msgid "synchronous command execution functions are not allowed in pipeline mode\n"
 msgstr "同期的にコマンドを実行する関数はパイプラインモード中は実行できません\n"
 
-#: fe-exec.c:2363
+#: fe-exec.c:2364
 msgid "COPY terminated by new PQexec"
 msgstr "新たなPQexec\"によりCOPYが終了しました"
 
-#: fe-exec.c:2380
+#: fe-exec.c:2381
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "COPY BOTH 実行中の PQexec は許可されていません\n"
 
-#: fe-exec.c:2608 fe-exec.c:2664 fe-exec.c:2733 fe-protocol3.c:1877
+#: fe-exec.c:2609 fe-exec.c:2665 fe-exec.c:2734 fe-protocol3.c:1878
 msgid "no COPY in progress\n"
 msgstr "実行中のCOPYはありません\n"
 
-#: fe-exec.c:2922
+#: fe-exec.c:2937
 msgid "connection in wrong state\n"
 msgstr "接続状態が異常です\n"
 
-#: fe-exec.c:2966
+#: fe-exec.c:2981
 msgid "cannot enter pipeline mode, connection not idle\n"
 msgstr ""
 "パイプラインモードに入れません、接続がアイドル状態ではありません\n"
 "\n"
 
-#: fe-exec.c:3003 fe-exec.c:3027
+#: fe-exec.c:3018 fe-exec.c:3042
 msgid "cannot exit pipeline mode with uncollected results\n"
 msgstr "未回収の結果が残っている状態でパイプラインモードを抜けることはできません\n"
 
-#: fe-exec.c:3008
+#: fe-exec.c:3023
 msgid "cannot exit pipeline mode while busy\n"
 msgstr "ビジー状態でパイプラインモードを抜けることはできません\n"
 
-#: fe-exec.c:3020
+#: fe-exec.c:3035
 msgid "cannot exit pipeline mode while in COPY\n"
 msgstr "COPY実行中にパイプラインモードを抜けることはできません\n"
 
-#: fe-exec.c:3214
+#: fe-exec.c:3229
 msgid "cannot send pipeline when not in pipeline mode\n"
 msgstr "パイプラインモード外でパイプライン送出はできません\n"
 
-#: fe-exec.c:3325
+#: fe-exec.c:3340
 msgid "invalid ExecStatusType code"
 msgstr "ExecStatusTypeコードが不正です"
 
-#: fe-exec.c:3352
+#: fe-exec.c:3367
 msgid "PGresult is not an error result\n"
 msgstr "PGresutがエラー結果ではありません\n"
 
-#: fe-exec.c:3420 fe-exec.c:3443
+#: fe-exec.c:3435 fe-exec.c:3458
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "列番号%dは0..%dの範囲を超えています"
 
-#: fe-exec.c:3458
+#: fe-exec.c:3473
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "パラメータ%dは0..%dの範囲を超えています"
 
-#: fe-exec.c:3769
+#: fe-exec.c:3784
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "サーバーからの結果を解釈できませんでした: %s"
 
-#: fe-exec.c:4049 fe-exec.c:4185
+#: fe-exec.c:4064 fe-exec.c:4179
 msgid "incomplete multibyte character\n"
 msgstr "不完全なマルチバイト文字\n"
 
-#: fe-exec.c:4052 fe-exec.c:4205
+#: fe-exec.c:4067 fe-exec.c:4199
 msgid "invalid multibyte character\n"
 msgstr "不正なマルチバイト文字\n"
 
-#: fe-exec.c:4308
+#: fe-exec.c:4302
 #, c-format
 msgid "escaped string size exceeds the maximum allowed (%zu)\n"
 msgstr "エスケープされた文字列のサイズが上限(%zu)を超えています\n"
 
-#: fe-exec.c:4486
+#: fe-exec.c:4480
 #, c-format
 msgid "escaped bytea size exceeds the maximum allowed (%zu)\n"
 msgstr "エスケープされたbyteaのサイズが上限(%zu)を超えています\n"
@@ -884,133 +884,137 @@ msgstr "不正なソケットです\n"
 msgid "%s() failed: %s\n"
 msgstr "%s() が失敗しました: %s\n"
 
-#: fe-protocol3.c:185
+#: fe-protocol3.c:186
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "待機中にサーバーからメッセージ種類0x%02xが届きました"
 
-#: fe-protocol3.c:389
+#: fe-protocol3.c:390
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
 msgstr "サーバーが事前の行記述(\"T\"メッセージ)なしにデータ(\"D\"メッセージ)を送信しました\"\n"
 
-#: fe-protocol3.c:432
+#: fe-protocol3.c:433
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
 msgstr "サーバーから想定外の応答がありました。受け付けた先頭文字は\"%c\"です\n"
 
-#: fe-protocol3.c:457
+#: fe-protocol3.c:458
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
 msgstr "メッセージの内容がメッセージ種類\"%c\"の長さに合いません\n"
 
-#: fe-protocol3.c:477
+#: fe-protocol3.c:478
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr "サーバーとの同期が失われました。受信したメッセージ種類は\"%c\"、長さは%d\n"
 
-#: fe-protocol3.c:529 fe-protocol3.c:569
+#: fe-protocol3.c:530 fe-protocol3.c:570
 msgid "insufficient data in \"T\" message"
 msgstr "\"T\"メッセージ内のデータが不十分です"
 
-#: fe-protocol3.c:640 fe-protocol3.c:846
+#: fe-protocol3.c:641 fe-protocol3.c:847
 msgid "out of memory for query result"
 msgstr "問い合わせ結果用のメモリが不足しています"
 
-#: fe-protocol3.c:709
+#: fe-protocol3.c:710
 msgid "insufficient data in \"t\" message"
 msgstr "\"t\"メッセージ内のデータが足りません"
 
-#: fe-protocol3.c:768 fe-protocol3.c:800 fe-protocol3.c:818
+#: fe-protocol3.c:769 fe-protocol3.c:801 fe-protocol3.c:819
 msgid "insufficient data in \"D\" message"
 msgstr "\"D\"\"メッセージ内のデータが不十分です"
 
-#: fe-protocol3.c:774
+#: fe-protocol3.c:775
 msgid "unexpected field count in \"D\" message"
 msgstr "\"D\"メッセージ内のフィールド数が想定外です。"
 
-#: fe-protocol3.c:1030
+#: fe-protocol3.c:1031
 msgid "no error message available\n"
 msgstr "エラーメッセージがありません\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1078 fe-protocol3.c:1097
+#: fe-protocol3.c:1079 fe-protocol3.c:1098
 #, c-format
 msgid " at character %s"
 msgstr "(文字位置: %s)"
 
-#: fe-protocol3.c:1110
+#: fe-protocol3.c:1111
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "DETAIL:  %s\n"
 
-#: fe-protocol3.c:1113
+#: fe-protocol3.c:1114
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "HINT:  %s\n"
 
-#: fe-protocol3.c:1116
+#: fe-protocol3.c:1117
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "QUERY:  %s\n"
 
-#: fe-protocol3.c:1123
+#: fe-protocol3.c:1124
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "CONTEXT:  %s\n"
 
-#: fe-protocol3.c:1132
+#: fe-protocol3.c:1133
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "SCHEMA NAME:  %s\n"
 
-#: fe-protocol3.c:1136
+#: fe-protocol3.c:1137
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "TABLE NAME:  %s\n"
 
-#: fe-protocol3.c:1140
+#: fe-protocol3.c:1141
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "COLUMN NAME:  %s\n"
 
-#: fe-protocol3.c:1144
+#: fe-protocol3.c:1145
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "DATATYPE NAME:  %s\n"
 
-#: fe-protocol3.c:1148
+#: fe-protocol3.c:1149
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "CONSTRAINT NAME:  %s\n"
 
-#: fe-protocol3.c:1160
+#: fe-protocol3.c:1161
 msgid "LOCATION:  "
 msgstr "LOCATION:  "
 
-#: fe-protocol3.c:1162
+#: fe-protocol3.c:1163
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1164
+#: fe-protocol3.c:1165
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1372
+#: fe-protocol3.c:1373
 #, c-format
 msgid "LINE %d: "
 msgstr "行 %d: "
 
-#: fe-protocol3.c:1771
+#: fe-protocol3.c:1772
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: テキストのCOPY OUTを行っていません\n"
 
-#: fe-protocol3.c:2148
+#: fe-protocol3.c:2105
+msgid "server returned too much data\n"
+msgstr "サーバーが返却したデータが多すぎます\n"
+
+#: fe-protocol3.c:2161
 msgid "protocol error: no function result\n"
 msgstr "プロトコルエラー: 関数の結果がありません\n"
 
-#: fe-protocol3.c:2160
+#: fe-protocol3.c:2173
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "プロトコルエラー: id=0x%x\n"
