@@ -2049,6 +2049,9 @@ cost_tuplesort(Cost *startup_cost, Cost *run_cost,
  * We estimate the number of groups into which the relation is divided by the
  * leading pathkeys, and then calculate the cost of sorting a single group
  * with tuplesort using cost_tuplesort().
+ *
+ * If num_groups is not NULL, *num_groups gets set to the estimated number of
+ * sort groups.
  */
 void
 cost_incremental_sort(Path *path,
@@ -2056,7 +2059,8 @@ cost_incremental_sort(Path *path,
 					  int input_disabled_nodes,
 					  Cost input_startup_cost, Cost input_total_cost,
 					  double input_tuples, int width, Cost comparison_cost, int sort_mem,
-					  double limit_tuples)
+					  double limit_tuples,
+					  Cardinality *num_groups)
 {
 	Cost		startup_cost,
 				run_cost,
@@ -2184,6 +2188,10 @@ cost_incremental_sort(Path *path,
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
+
+	/* set output parameter values */
+	if (num_groups)
+		*num_groups = input_groups;
 }
 
 /*
@@ -2407,7 +2415,8 @@ cost_append(AppendPath *apath, PlannerInfo *root)
 											  subpath->pathtarget->width,
 											  0.0,
 											  work_mem,
-											  apath->limit_tuples);
+											  apath->limit_tuples,
+											  NULL);
 					}
 					else
 					{
@@ -3850,7 +3859,8 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 								  outer_path->pathtarget->width,
 								  0.0,
 								  work_mem,
-								  -1.0);
+								  -1.0,
+								  NULL);
 		}
 		else
 		{

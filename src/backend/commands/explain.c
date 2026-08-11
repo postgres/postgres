@@ -3306,10 +3306,15 @@ static void
 show_incremental_sort_info(IncrementalSortState *incrsortstate,
 						   ExplainState *es)
 {
+	IncrementalSort *plan = (IncrementalSort *) incrsortstate->ss.ps.plan;
 	IncrementalSortGroupInfo *fullsortGroupInfo;
 	IncrementalSortGroupInfo *prefixsortGroupInfo;
 
 	fullsortGroupInfo = &incrsortstate->incsort_info.fullsortGroupInfo;
+
+	if (es->costs)
+		ExplainPropertyFloat("Estimated Groups", NULL,
+							 plan->numGroups, 0, es);
 
 	if (!es->analyze)
 		return;

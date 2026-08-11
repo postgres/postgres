@@ -2074,6 +2074,7 @@ create_incrementalsort_plan(PlannerInfo *root, IncrementalSortPath *best_path,
 											  best_path->nPresortedCols);
 
 	copy_generic_path_info(&plan->sort.plan, (Path *) best_path);
+	plan->numGroups = best_path->numGroups;
 
 	return plan;
 }
@@ -5469,7 +5470,8 @@ label_incrementalsort_with_costsize(PlannerInfo *root, IncrementalSort *plan,
 						  lefttree->plan_width,
 						  0.0,
 						  work_mem,
-						  limit_tuples);
+						  limit_tuples,
+						  &plan->numGroups);
 	plan->sort.plan.startup_cost = sort_path.startup_cost;
 	plan->sort.plan.total_cost = sort_path.total_cost;
 	plan->sort.plan.plan_rows = lefttree->plan_rows;

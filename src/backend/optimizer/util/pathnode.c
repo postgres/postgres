@@ -1605,7 +1605,8 @@ create_merge_append_path(PlannerInfo *root,
 									  subpath->pathtarget->width,
 									  0.0,
 									  work_mem,
-									  pathnode->limit_tuples);
+									  pathnode->limit_tuples,
+									  NULL);
 			}
 			else
 			{
@@ -2883,7 +2884,8 @@ create_incremental_sort_path(PlannerInfo *root,
 						  subpath->rows,
 						  subpath->pathtarget->width,
 						  0.0,	/* XXX comparison_cost shouldn't be 0? */
-						  work_mem, limit_tuples);
+						  work_mem, limit_tuples,
+						  &sort->numGroups);
 
 	sort->nPresortedCols = presorted_keys;
 

@@ -325,6 +325,7 @@ EXPLAIN SELECT * FROM tenk1 ORDER BY hundred, ten LIMIT 100;
    -&gt;  Incremental Sort  (cost=19.35..2033.39 rows=10000 width=244)
          Sort Key: hundred, ten
          Presorted Key: hundred
+         Estimated Groups: 100
          -&gt;  Index Scan using tenk1_hundred on tenk1  (cost=0.29..1574.20 rows=10000 width=244)
 </screen>
 

@@ -2548,6 +2548,7 @@ typedef struct IncrementalSortPath
 {
 	SortPath	spath;
 	int			nPresortedCols; /* number of presorted columns */
+	Cardinality numGroups;		/* estimated number of groups in input */
 } IncrementalSortPath;
 
 /*
