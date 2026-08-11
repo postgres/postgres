@@ -606,7 +606,7 @@ print_unaligned_vertical(const printTableContent *cont, FILE *fout)
 
 /* draw "line" */
 static void
-_print_horizontal_line(const unsigned int ncolumns, const unsigned int *widths,
+_print_horizontal_line(unsigned int ncolumns, const unsigned int *widths,
 					   unsigned short border, printTextRule pos,
 					   const printTextFormat *format,
 					   FILE *fout)
@@ -3206,8 +3206,8 @@ ClosePager(FILE *pagerpipe)
  * table.
  */
 void
-printTableInit(printTableContent *const content, const printTableOpt *opt,
-			   const char *title, const int ncolumns, const int nrows)
+printTableInit(printTableContent *content, const printTableOpt *opt,
+			   const char *title, int ncolumns, int nrows)
 {
 	uint64		total_cells;
 
@@ -3254,8 +3254,8 @@ printTableInit(printTableContent *const content, const printTableOpt *opt,
  * column.
  */
 void
-printTableAddHeader(printTableContent *const content, char *header,
-					const bool translate, const char align)
+printTableAddHeader(printTableContent *content, char *header,
+					bool translate, char align)
 {
 #ifndef ENABLE_NLS
 	(void) translate;			/* unused parameter */
@@ -3294,8 +3294,8 @@ printTableAddHeader(printTableContent *const content, char *header,
  * Note: Automatic freeing of translatable strings is not supported.
  */
 void
-printTableAddCell(printTableContent *const content, char *cell,
-				  const bool translate, const bool mustfree)
+printTableAddCell(printTableContent *content, char *cell,
+				  bool translate, bool mustfree)
 {
 	uint64		total_cells;
 
@@ -3344,7 +3344,7 @@ printTableAddCell(printTableContent *const content, char *cell,
  * translated as a whole.
  */
 void
-printTableAddFooter(printTableContent *const content, const char *footer)
+printTableAddFooter(printTableContent *content, const char *footer)
 {
 	printTableFooter *f;
 
@@ -3369,7 +3369,7 @@ printTableAddFooter(printTableContent *const content, const char *footer)
  * around.
  */
 void
-printTableSetFooter(printTableContent *const content, const char *footer)
+printTableSetFooter(printTableContent *content, const char *footer)
 {
 	if (content->footers != NULL)
 	{
@@ -3387,7 +3387,7 @@ printTableSetFooter(printTableContent *const content, const char *footer)
  * printTableInit() again.
  */
 void
-printTableCleanup(printTableContent *const content)
+printTableCleanup(printTableContent *content)
 {
 	if (content->cellmustfree)
 	{

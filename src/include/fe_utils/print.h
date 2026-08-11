@@ -212,18 +212,18 @@ extern void ClosePager(FILE *pagerpipe);
 
 extern void html_escaped_print(const char *in, FILE *fout);
 
-extern void printTableInit(printTableContent *const content,
+extern void printTableInit(printTableContent *content,
 						   const printTableOpt *opt, const char *title,
-						   const int ncolumns, const int nrows);
-extern void printTableAddHeader(printTableContent *const content,
-								char *header, const bool translate, const char align);
-extern void printTableAddCell(printTableContent *const content,
-							  char *cell, const bool translate, const bool mustfree);
-extern void printTableAddFooter(printTableContent *const content,
+						   int ncolumns, int nrows);
+extern void printTableAddHeader(printTableContent *content,
+								char *header, bool translate, char align);
+extern void printTableAddCell(printTableContent *content,
+							  char *cell, bool translate, bool mustfree);
+extern void printTableAddFooter(printTableContent *content,
 								const char *footer);
-extern void printTableSetFooter(printTableContent *const content,
+extern void printTableSetFooter(printTableContent *content,
 								const char *footer);
-extern void printTableCleanup(printTableContent *const content);
+extern void printTableCleanup(printTableContent *content);
 extern void printTable(const printTableContent *cont,
 					   FILE *fout, bool is_pager, FILE *flog);
 extern void printQuery(const PGresult *result, const printQueryOpt *opt,

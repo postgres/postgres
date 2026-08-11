@@ -42,9 +42,9 @@ static bool describeOneTableDetails(const char *schemaname,
 									const char *relationname,
 									const char *oid,
 									bool verbose);
-static void add_tablespace_footer(printTableContent *const cont, char relkind,
-								  Oid tablespace, const bool newline);
-static void add_role_attribute(PQExpBuffer buf, const char *const str);
+static void add_tablespace_footer(printTableContent *cont, char relkind,
+								  Oid tablespace, bool newline);
+static void add_role_attribute(PQExpBuffer buf, const char *str);
 static bool listTSParsersVerbose(const char *pattern);
 static bool describeOneTSParser(const char *oid, const char *nspname,
 								const char *prsname);
@@ -3719,8 +3719,8 @@ error_return:
  * footer.
  */
 static void
-add_tablespace_footer(printTableContent *const cont, char relkind,
-					  Oid tablespace, const bool newline)
+add_tablespace_footer(printTableContent *cont, char relkind,
+					  Oid tablespace, bool newline)
 {
 	/* relkinds for which we support tablespaces */
 	if (relkind == RELKIND_RELATION ||
@@ -3917,7 +3917,7 @@ describeRoles(const char *pattern, bool verbose, bool showSystem)
 }
 
 static void
-add_role_attribute(PQExpBuffer buf, const char *const str)
+add_role_attribute(PQExpBuffer buf, const char *str)
 {
 	if (buf->len > 0)
 		appendPQExpBufferStr(buf, ", ");
@@ -6573,7 +6573,7 @@ listPublications(const char *pattern)
  */
 static bool
 addFooterToPublicationDesc(PQExpBuffer buf, const char *footermsg,
-						   bool as_schema, printTableContent *const cont)
+						   bool as_schema, printTableContent *cont)
 {
 	PGresult   *res;
 	int			count = 0;
