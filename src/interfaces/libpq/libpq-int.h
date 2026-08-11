@@ -619,7 +619,6 @@ struct pg_conn
 
 	/* SSL structures */
 	bool		ssl_in_use;
-	bool		ssl_handshake_started;
 	bool		ssl_cert_requested; /* Did the server ask us for a cert? */
 	bool		ssl_cert_sent;	/* Did we send one in reply? */
 	bool		last_read_was_eof;

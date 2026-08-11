@@ -1547,7 +1547,6 @@ pgtls_close(PGconn *conn)
 			SSL_free(conn->ssl);
 			conn->ssl = NULL;
 			conn->ssl_in_use = false;
-			conn->ssl_handshake_started = false;
 		}
 
 		if (conn->peer)
@@ -1794,9 +1793,6 @@ pgconn_bio_read(BIO *h, char *buf, int size)
 				break;
 		}
 	}
-
-	if (res > 0)
-		conn->ssl_handshake_started = true;
 
 	return res;
 }
