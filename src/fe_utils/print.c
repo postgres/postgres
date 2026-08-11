@@ -3218,6 +3218,8 @@ printTableInit(printTableContent *content, const printTableOpt *opt,
 	content->nrows = nrows;
 
 	content->headers = pg_malloc0_array(const char *, (ncolumns + 1));
+	content->headersadded = 0;
+	content->headermustfree = NULL;
 
 	total_cells = (uint64) ncolumns * nrows;
 
@@ -3227,17 +3229,14 @@ printTableInit(printTableContent *content, const printTableOpt *opt,
 				 total_cells, SIZE_MAX / sizeof(*content->cells));
 
 	content->cells = pg_malloc0_array(const char *, (total_cells + 1));
-
+	content->cellsadded = 0;
 	content->cellmustfree = NULL;
+
 	content->footers = NULL;
 
 	content->aligns = pg_malloc0_array(char, (ncolumns + 1));
 
-	content->header = content->headers;
-	content->cell = content->cells;
 	content->footer = content->footers;
-	content->align = content->aligns;
-	content->cellsadded = 0;
 }
 
 /*
@@ -3253,22 +3252,45 @@ printTableInit(printTableContent *content, const printTableOpt *opt,
  * column.
  */
 void
-printTableAddHeader(printTableContent *content, char *header,
+printTableAddHeader(printTableContent *content, const char *header,
 					bool translate, char align)
 {
-	if (content->header >= content->headers + content->ncolumns)
+	bool		mustfree = false;
+
+	if (content->headersadded >= content->ncolumns)
 		pg_fatal("cannot add header to table content: column count of %d exceeded",
 				 content->ncolumns);
 
-	*content->header = (char *) mbvalidate((unsigned char *) header,
-										   content->opt->encoding);
 	if (translate)
-		*content->header = _(*content->header);
+		header = _(header);
 
-	content->header++;
+	/*
+	 * Note: Translated strings are not checked for encoding validity.  These
+	 * are provided by ourselves, so they had better be ok.  And if they were
+	 * not, running mbvalidate on them could overwrite gettext-owned memory.
+	 */
+	if (!translate && !mb_is_valid((unsigned char *) header, content->opt->encoding))
+	{
+		char	   *header2;
 
-	*content->align = align;
-	content->align++;
+		header2 = pg_strdup(header);
+		header = (char *) mbvalidate((unsigned char *) header2, content->opt->encoding);
+		mustfree = true;
+	}
+
+	content->headers[content->headersadded] = header;
+	content->aligns[content->headersadded] = align;
+
+	if (mustfree)
+	{
+		if (content->headermustfree == NULL)
+			content->headermustfree =
+				pg_malloc0_array(bool, (content->ncolumns + 1));
+
+		content->headermustfree[content->headersadded] = true;
+	}
+
+	content->headersadded++;
 }
 
 /*
@@ -3284,7 +3306,7 @@ printTableAddHeader(printTableContent *content, char *header,
  * Note: Automatic freeing of translatable strings is not supported.
  */
 void
-printTableAddCell(printTableContent *content, char *cell,
+printTableAddCell(printTableContent *content, const char *cell,
 				  bool translate, bool mustfree)
 {
 	uint64		total_cells;
@@ -3295,11 +3317,35 @@ printTableAddCell(printTableContent *content, char *cell,
 		pg_fatal("cannot add cell to table content: total cell count of %" PRIu64 " exceeded",
 				 total_cells);
 
-	*content->cell = (char *) mbvalidate((unsigned char *) cell,
-										 content->opt->encoding);
+	Assert(!(translate && mustfree));
 
 	if (translate)
-		*content->cell = _(*content->cell);
+		cell = _(cell);
+
+	/*
+	 * Note: Translated strings are not checked for encoding validity.  These
+	 * are provided by ourselves, so they had better be ok.  And if they were
+	 * not, running mbvalidate on them could overwrite gettext-owned memory.
+	 */
+	if (!translate && !mb_is_valid((unsigned char *) cell, content->opt->encoding))
+	{
+		char	   *cell2;
+
+		/*
+		 * If mustfree is already true, then we own the memory and can have
+		 * mbvalidate() overwrite it directly.
+		 */
+		if (mustfree)
+			cell2 = unconstify(char *, cell);
+		else
+		{
+			cell2 = pg_strdup(cell);
+			mustfree = true;
+		}
+		cell = (char *) mbvalidate((unsigned char *) cell2, content->opt->encoding);
+	}
+
+	content->cells[content->cellsadded] = cell;
 
 	if (mustfree)
 	{
@@ -3309,7 +3355,7 @@ printTableAddCell(printTableContent *content, char *cell,
 
 		content->cellmustfree[content->cellsadded] = true;
 	}
-	content->cell++;
+
 	content->cellsadded++;
 }
 
@@ -3371,6 +3417,16 @@ printTableSetFooter(printTableContent *content, const char *footer)
 void
 printTableCleanup(printTableContent *content)
 {
+	if (content->headermustfree)
+	{
+		for (uint64 i = 0; i < content->ncolumns; i++)
+		{
+			if (content->headermustfree[i])
+				free(unconstify(char *, content->headers[i]));
+		}
+		free(content->headermustfree);
+		content->headermustfree = NULL;
+	}
 	if (content->cellmustfree)
 	{
 		uint64		total_cells;
@@ -3393,9 +3449,8 @@ printTableCleanup(printTableContent *content)
 	content->headers = NULL;
 	content->cells = NULL;
 	content->aligns = NULL;
-	content->header = NULL;
-	content->cell = NULL;
-	content->align = NULL;
+	content->headersadded = 0;
+	content->cellsadded = 0;
 
 	if (content->footers)
 	{

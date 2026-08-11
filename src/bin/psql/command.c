@@ -800,7 +800,7 @@ exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 				password_used,
 				gssapi_used;
 	int			version_num;
-	char	   *paramval;
+	const char *paramval;
 
 	if (!active_branch)
 		return PSQL_CMD_SKIP_LINE;
@@ -905,19 +905,19 @@ exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 	/* SSL Information */
 	if (ssl_in_use)
 	{
-		char	   *library,
+		const char *library,
 				   *protocol,
 				   *key_bits,
 				   *cipher,
 				   *compression,
 				   *alpn;
 
-		library = (char *) PQsslAttribute(pset.db, "library");
-		protocol = (char *) PQsslAttribute(pset.db, "protocol");
-		key_bits = (char *) PQsslAttribute(pset.db, "key_bits");
-		cipher = (char *) PQsslAttribute(pset.db, "cipher");
-		compression = (char *) PQsslAttribute(pset.db, "compression");
-		alpn = (char *) PQsslAttribute(pset.db, "alpn");
+		library = PQsslAttribute(pset.db, "library");
+		protocol = PQsslAttribute(pset.db, "protocol");
+		key_bits = PQsslAttribute(pset.db, "key_bits");
+		cipher = PQsslAttribute(pset.db, "cipher");
+		compression = PQsslAttribute(pset.db, "compression");
+		alpn = PQsslAttribute(pset.db, "alpn");
 
 		printTableAddCell(&cont, _("SSL Library"), false, false);
 		printTableAddCell(&cont, library ? library : _("unknown"), false, false);
@@ -939,11 +939,11 @@ exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 		printTableAddCell(&cont, (alpn && alpn[0] != '\0') ? alpn : _("none"), false, false);
 	}
 
-	paramval = (char *) PQparameterStatus(pset.db, "is_superuser");
+	paramval = PQparameterStatus(pset.db, "is_superuser");
 	printTableAddCell(&cont, "Superuser", false, false);
 	printTableAddCell(&cont, paramval ? paramval : _("unknown"), false, false);
 
-	paramval = (char *) PQparameterStatus(pset.db, "in_hot_standby");
+	paramval = PQparameterStatus(pset.db, "in_hot_standby");
 	printTableAddCell(&cont, "Hot Standby", false, false);
 	printTableAddCell(&cont, paramval ? paramval : _("unknown"), false, false);
 

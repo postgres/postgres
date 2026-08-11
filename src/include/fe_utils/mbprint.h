@@ -20,6 +20,7 @@ struct lineptr
 };
 
 extern unsigned char *mbvalidate(unsigned char *pwcs, int encoding);
+extern bool mb_is_valid(const unsigned char *pwcs, int encoding);
 extern int	pg_wcswidth(const char *pwcs, size_t len, int encoding);
 extern void pg_wcsformat(const unsigned char *pwcs, size_t len, int encoding,
 						 struct lineptr *lines, int count);

@@ -164,6 +164,24 @@ mb_utf_validate(unsigned char *pwcs)
 		*p = '\0';
 }
 
+
+static bool
+mb_utf_is_valid(const unsigned char *pwcs)
+{
+	while (*pwcs)
+	{
+		int			len;
+
+		if ((len = utf_charcheck(pwcs)) > 0)
+			pwcs += len;
+		else
+			return false;
+
+	}
+	return true;
+}
+
+
 /*
  * public functions : wcswidth and mbvalidate
  */
@@ -402,4 +420,19 @@ mbvalidate(unsigned char *pwcs, int encoding)
 	}
 
 	return pwcs;
+}
+
+bool
+mb_is_valid(const unsigned char *pwcs, int encoding)
+{
+	if (encoding == PG_UTF8)
+		return mb_utf_is_valid(pwcs);
+	else
+	{
+		/*
+		 * other encodings needing validation should add their own routines
+		 * here
+		 */
+		return true;
+	}
 }
