@@ -3680,12 +3680,12 @@ include_dir 'conf.d'
         <xref linkend="guc-full-page-writes"/> is on, during a base backup,
         etc.).
         A compressed page image will be decompressed during WAL replay.
-        The supported methods are <literal>pglz</literal>,
-        <literal>lz4</literal> (if <productname>PostgreSQL</productname>
-        was compiled with <option>--with-lz4</option>) and
-        <literal>zstd</literal> (if <productname>PostgreSQL</productname>
-        was compiled with <option>--with-zstd</option>).
-        The value <literal>on</literal> is a historical spelling of <literal>pglz</literal>.
+        The supported methods are <literal>off</literal>, <literal>on</literal>,
+        <literal>zstd</literal> (if <productname>PostgreSQL</productname> was compiled with <option>--with-zstd</option>),
+        <literal>lz4</literal> (if <productname>PostgreSQL</productname> was compiled with <option>--with-lz4</option>), and
+        <literal>pglz</literal>.
+        The value <literal>on</literal> selects the first of <literal>zstd</literal>,
+        <literal>lz4</literal>, <literal>pglz</literal> that is available.
         The default value is <literal>off</literal>.
         Only superusers and users with the appropriate <literal>SET</literal>
         privilege can change this setting.
