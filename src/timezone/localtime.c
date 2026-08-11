@@ -585,17 +585,31 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 int
 tzload(const char *name, char *canonname, struct state *sp, bool doextend)
 {
-	union local_storage *lsp = malloc(sizeof *lsp);
+	/*
+	 * PG: by default, we allocate the "union local_storage" space via malloc,
+	 * since it's about 70kB which seems like a lot of stack space, and we're
+	 * hardly concerned about an extra malloc/free cycle here.  But under
+	 * USE_VALGRIND, put the variable on the stack, to intentionally increase
+	 * the amount of stack space allocated in the postmaster.  This prevents a
+	 * bad interaction between Valgrind and Python 3.14, for reasons that are
+	 * obscure and most likely no fault of ours.
+	 */
+	int			r;
+	union local_storage *lsp;
+#ifdef USE_VALGRIND
+	union local_storage ls;
 
+	lsp = &ls;
+#else
+	lsp = malloc(sizeof *lsp);
 	if (!lsp)
 		return errno;
-	else
-	{
-		int			err = tzloadbody(name, canonname, sp, doextend, lsp);
-
-		free(lsp);
-		return err;
-	}
+#endif
+	r = tzloadbody(name, canonname, sp, doextend, lsp);
+#ifndef USE_VALGRIND
+	free(lsp);
+#endif
+	return r;
 }
 
 static bool
