@@ -1273,11 +1273,64 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 	return collversion;
 }
 
+/* lowercasing/casefolding in C locale */
+static size_t
+strlower_c(char *dst, size_t dstsize, const char *src, size_t srclen)
+{
+	int			i;
+
+	for (i = 0; i < srclen && i < dstsize; i++)
+		dst[i] = pg_ascii_tolower(src[i]);
+	if (i < dstsize)
+		dst[i] = '\0';
+	return srclen;
+}
+
+/* titlecasing in C locale */
+static size_t
+strtitle_c(char *dst, size_t dstsize, const char *src, size_t srclen)
+{
+	bool		wasalnum = false;
+	int			i;
+
+	for (i = 0; i < srclen && i < dstsize; i++)
+	{
+		char		c = src[i];
+
+		if (wasalnum)
+			dst[i] = pg_ascii_tolower(c);
+		else
+			dst[i] = pg_ascii_toupper(c);
+
+		wasalnum = ((c >= '0' && c <= '9') ||
+					(c >= 'A' && c <= 'Z') ||
+					(c >= 'a' && c <= 'z'));
+	}
+	if (i < dstsize)
+		dst[i] = '\0';
+	return srclen;
+}
+
+/* uppercasing in C locale */
+static size_t
+strupper_c(char *dst, size_t dstsize, const char *src, size_t srclen)
+{
+	int			i;
+
+	for (i = 0; i < srclen && i < dstsize; i++)
+		dst[i] = pg_ascii_toupper(src[i]);
+	if (i < dstsize)
+		dst[i] = '\0';
+	return srclen;
+}
+
 size_t
 pg_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
 {
-	if (locale->provider == COLLPROVIDER_BUILTIN)
+	if (locale->ctype_is_c)
+		return strlower_c(dst, dstsize, src, srclen);
+	else if (locale->provider == COLLPROVIDER_BUILTIN)
 		return strlower_builtin(dst, dstsize, src, srclen, locale);
 #ifdef USE_ICU
 	else if (locale->provider == COLLPROVIDER_ICU)
@@ -1296,7 +1349,9 @@ size_t
 pg_strtitle(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
 {
-	if (locale->provider == COLLPROVIDER_BUILTIN)
+	if (locale->ctype_is_c)
+		return strtitle_c(dst, dstsize, src, srclen);
+	else if (locale->provider == COLLPROVIDER_BUILTIN)
 		return strtitle_builtin(dst, dstsize, src, srclen, locale);
 #ifdef USE_ICU
 	else if (locale->provider == COLLPROVIDER_ICU)
@@ -1315,7 +1370,9 @@ size_t
 pg_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
 {
-	if (locale->provider == COLLPROVIDER_BUILTIN)
+	if (locale->ctype_is_c)
+		return strupper_c(dst, dstsize, src, srclen);
+	else if (locale->provider == COLLPROVIDER_BUILTIN)
 		return strupper_builtin(dst, dstsize, src, srclen, locale);
 #ifdef USE_ICU
 	else if (locale->provider == COLLPROVIDER_ICU)
@@ -1334,7 +1391,10 @@ size_t
 pg_strfold(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 		   pg_locale_t locale)
 {
-	if (locale->provider == COLLPROVIDER_BUILTIN)
+	/* in the C locale, casefolding is the same as lowercasing */
+	if (locale->ctype_is_c)
+		return strlower_c(dst, dstsize, src, srclen);
+	else if (locale->provider == COLLPROVIDER_BUILTIN)
 		return strfold_builtin(dst, dstsize, src, srclen, locale);
 #ifdef USE_ICU
 	else if (locale->provider == COLLPROVIDER_ICU)
