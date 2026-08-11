@@ -3257,10 +3257,6 @@ void
 printTableAddHeader(printTableContent *content, char *header,
 					bool translate, char align)
 {
-#ifndef ENABLE_NLS
-	(void) translate;			/* unused parameter */
-#endif
-
 	if (content->header >= content->headers + content->ncolumns)
 	{
 		fprintf(stderr, _("Cannot add header to table content: "
@@ -3271,10 +3267,9 @@ printTableAddHeader(printTableContent *content, char *header,
 
 	*content->header = (char *) mbvalidate((unsigned char *) header,
 										   content->opt->encoding);
-#ifdef ENABLE_NLS
 	if (translate)
 		*content->header = _(*content->header);
-#endif
+
 	content->header++;
 
 	*content->align = align;
@@ -3299,10 +3294,6 @@ printTableAddCell(printTableContent *content, char *cell,
 {
 	uint64		total_cells;
 
-#ifndef ENABLE_NLS
-	(void) translate;			/* unused parameter */
-#endif
-
 	total_cells = (uint64) content->ncolumns * content->nrows;
 	if (content->cellsadded >= total_cells)
 	{
@@ -3314,10 +3305,8 @@ printTableAddCell(printTableContent *content, char *cell,
 	*content->cell = (char *) mbvalidate((unsigned char *) cell,
 										 content->opt->encoding);
 
-#ifdef ENABLE_NLS
 	if (translate)
 		*content->cell = _(*content->cell);
-#endif
 
 	if (mustfree)
 	{
