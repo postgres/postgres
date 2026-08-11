@@ -617,12 +617,32 @@ tzloadbody(char const *name, char *canonname,
 static int
 tzload(char const *name, char *canonname, struct state *sp, char tzloadflags)
 {
-	/* PG: our version of tzloadbody never reallocates *lspp */
+	/*
+	 * PG: by default, we allocate the "union local_storage" space via malloc,
+	 * since it's about 70kB which seems like a lot of stack space, and we're
+	 * hardly concerned about an extra malloc/free cycle here.  But under
+	 * USE_VALGRIND, put the variable on the stack, to intentionally increase
+	 * the amount of stack space allocated in the postmaster.  This prevents a
+	 * bad interaction between Valgrind and Python 3.14, for reasons that are
+	 * obscure and most likely no fault of ours.  Also note that unlike
+	 * upstream tzcode, our version of tzloadbody never reallocates *lspp.
+	 */
+	int			r;
 	union local_storage *lsp;
+#ifdef USE_VALGRIND
 	union local_storage ls;
 
 	lsp = &ls;
-	return tzloadbody(name, canonname, sp, tzloadflags, &lsp);
+#else
+	lsp = malloc(sizeof *lsp);
+	if (!lsp)
+		return errno;
+#endif
+	r = tzloadbody(name, canonname, sp, tzloadflags, &lsp);
+#ifndef USE_VALGRIND
+	free(lsp);
+#endif
+	return r;
 }
 
 static const int mon_lengths[2][MONSPERYEAR] = {
