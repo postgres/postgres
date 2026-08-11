@@ -30,6 +30,7 @@
 #endif
 
 #include "catalog/pg_type_d.h"
+#include "common/logging.h"
 #include "fe_utils/mbprint.h"
 #include "fe_utils/print.h"
 
@@ -3219,14 +3220,12 @@ printTableInit(printTableContent *content, const printTableOpt *opt,
 	content->headers = pg_malloc0_array(const char *, (ncolumns + 1));
 
 	total_cells = (uint64) ncolumns * nrows;
+
 	/* Catch possible overflow.  Using >= here allows adding 1 below */
 	if (total_cells >= SIZE_MAX / sizeof(*content->cells))
-	{
-		fprintf(stderr, _("Cannot print table contents: number of cells %" PRIu64 " is equal to or exceeds maximum %zu.\n"),
-				total_cells,
-				SIZE_MAX / sizeof(*content->cells));
-		exit(EXIT_FAILURE);
-	}
+		pg_fatal("cannot print table contents: number of cells %" PRIu64 " is equal to or exceeds maximum %zu",
+				 total_cells, SIZE_MAX / sizeof(*content->cells));
+
 	content->cells = pg_malloc0_array(const char *, (total_cells + 1));
 
 	content->cellmustfree = NULL;
@@ -3258,12 +3257,8 @@ printTableAddHeader(printTableContent *content, char *header,
 					bool translate, char align)
 {
 	if (content->header >= content->headers + content->ncolumns)
-	{
-		fprintf(stderr, _("Cannot add header to table content: "
-						  "column count of %d exceeded.\n"),
-				content->ncolumns);
-		exit(EXIT_FAILURE);
-	}
+		pg_fatal("cannot add header to table content: column count of %d exceeded",
+				 content->ncolumns);
 
 	*content->header = (char *) mbvalidate((unsigned char *) header,
 										   content->opt->encoding);
@@ -3295,12 +3290,10 @@ printTableAddCell(printTableContent *content, char *cell,
 	uint64		total_cells;
 
 	total_cells = (uint64) content->ncolumns * content->nrows;
+
 	if (content->cellsadded >= total_cells)
-	{
-		fprintf(stderr, _("Cannot add cell to table content: total cell count of %" PRIu64 " exceeded.\n"),
-				total_cells);
-		exit(EXIT_FAILURE);
-	}
+		pg_fatal("cannot add cell to table content: total cell count of %" PRIu64 " exceeded",
+				 total_cells);
 
 	*content->cell = (char *) mbvalidate((unsigned char *) cell,
 										 content->opt->encoding);
@@ -3723,9 +3716,8 @@ printTable(const printTableContent *cont,
 				print_troff_ms_text(cont, fout);
 			break;
 		default:
-			fprintf(stderr, _("invalid output format (internal error): %d"),
-					cont->opt->format);
-			exit(EXIT_FAILURE);
+			pg_fatal_internal("invalid output format (internal error): %d",
+							  cont->opt->format);
 	}
 
 	if (is_local_pager)
