@@ -18,6 +18,7 @@
 #include <ctype.h>
 
 #include "common/keywords.h"
+#include "common/logging.h"
 #include "fe_utils/string_utils.h"
 #include "mb/pg_wchar.h"
 
@@ -580,12 +581,7 @@ void
 appendShellString(PQExpBuffer buf, const char *str)
 {
 	if (!appendShellStringNoError(buf, str))
-	{
-		fprintf(stderr,
-				_("shell command argument contains a newline or carriage return: \"%s\"\n"),
-				str);
-		exit(EXIT_FAILURE);
-	}
+		pg_fatal("shell command argument contains a newline or carriage return: \"%s\"", str);
 }
 
 bool
@@ -753,12 +749,7 @@ appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname)
 	for (s = dbname; *s; s++)
 	{
 		if (*s == '\n' || *s == '\r')
-		{
-			fprintf(stderr,
-					_("database name contains a newline or carriage return: \"%s\"\n"),
-					dbname);
-			exit(EXIT_FAILURE);
-		}
+			pg_fatal("database name contains a newline or carriage return: \"%s\"", dbname);
 
 		if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') ||
 			  (*s >= '0' && *s <= '9') || *s == '_' || *s == '.'))
