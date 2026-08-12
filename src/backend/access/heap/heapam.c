@@ -3265,7 +3265,7 @@ simple_heap_delete(Relation relation, const ItemPointerData *tid)
  */
 TM_Result
 heap_update(Relation relation, const ItemPointerData *otid, HeapTuple newtup,
-			CommandId cid, uint32 options pg_attribute_unused(), Snapshot crosscheck, bool wait,
+			CommandId cid, uint32 options, Snapshot crosscheck, bool wait,
 			TM_FailureData *tmfd, LockTupleMode *lockmode,
 			TU_UpdateIndexes *update_indexes)
 {

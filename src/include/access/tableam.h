@@ -1531,6 +1531,10 @@ table_multi_insert(Relation rel, TupleTableSlot **slots, int nslots,
  *	options - bitmask of options.  Supported values:
  *		TABLE_DELETE_CHANGING_PARTITION: the tuple is being moved to another
  *		partition table due to an update of the partition key.
+ *		TABLE_DELETE_NO_LOGICAL: force-disables the emitting of logical
+ *		decoding information for the tuple.  This should solely be used
+ *		during table rewrites where RelationIsLogicallyLogged(rel) is not
+ *		yet accurate for the new relation.
  *	crosscheck - if not InvalidSnapshot, also check tuple against this
  *	wait - true if should wait for any conflicting update to commit/abort
  *
@@ -1566,12 +1570,12 @@ table_tuple_delete(Relation rel, ItemPointer tid, CommandId cid,
  *	otid - TID of old tuple to be replaced
  *	cid - update command ID (used for visibility test, and stored into
  *		cmax/cmin if successful)
- *	options - bitmask of options.  No values are currently recognized.
+ *	options - bitmask of options.  Supported values:
+ *		TABLE_UPDATE_NO_LOGICAL: force-disables the emitting of logical
+ *		decoding information for the tuple.  This should solely be used
+ *		during table rewrites where RelationIsLogicallyLogged(rel) is not
+ *		yet accurate for the new relation.
  *	crosscheck - if not InvalidSnapshot, also check old tuple against this
- *	options - These allow the caller to specify options that may change the
- *	behavior of the AM. The AM will ignore options that it does not support.
- *		TABLE_UPDATE_NO_LOGICAL -- force-disables the emitting of logical
- *		decoding information for the tuple.
  *
  * Output parameters:
  *	slot - newly constructed tuple data to store
