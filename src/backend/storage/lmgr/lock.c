@@ -913,7 +913,18 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	else
 	{
 		/* Make sure there will be room to remember the lock */
-		if (locallock->numLockOwners >= locallock->maxLockOwners)
+		if (locallock->lockOwners == NULL)
+		{
+			/*
+			 * A prior acquisition may leave the array unallocated after an
+			 * out-of-memory failure.
+			 */
+			locallock->maxLockOwners = 8;
+			locallock->lockOwners = (LOCALLOCKOWNER *)
+				MemoryContextAlloc(TopMemoryContext,
+								   locallock->maxLockOwners * sizeof(LOCALLOCKOWNER));
+		}
+		else if (locallock->numLockOwners >= locallock->maxLockOwners)
 		{
 			int			newsize = locallock->maxLockOwners * 2;
 
