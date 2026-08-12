@@ -2808,8 +2808,10 @@ sub poll_query_until
 
 	# Give up. Print the output from the last attempt, hopefully that's useful
 	# for debugging.
+	my $msg_query = $query;
+	$msg_query = '(connection attempt only)' unless defined $query;
 	diag qq(poll_query_until timed out executing this query:
-$query
+$msg_query
 expecting this output:
 $expected
 last actual query output:
