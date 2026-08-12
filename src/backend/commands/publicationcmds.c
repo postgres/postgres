@@ -1977,9 +1977,6 @@ OpenTableList(List *tables)
 		}
 	}
 
-	list_free(relids);
-	list_free(relids_with_rf);
-
 	return rels;
 }
 
