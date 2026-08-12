@@ -27,6 +27,7 @@
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
+#include "common/pg_parse_lsn.h"
 #include "common/relpath.h"
 #include "getopt_long.h"
 #include "pg_waldump.h"
@@ -928,8 +929,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	uint32		xlogid;
-	uint32		xrecoff;
 	XLogReaderState *xlogreader_state;
 	XLogDumpPrivate private;
 	XLogDumpConfig config;
@@ -1047,13 +1046,12 @@ main(int argc, char **argv)
 				config.filter_by_extended = true;
 				break;
 			case 'e':
-				if (sscanf(optarg, "%X/%08X", &xlogid, &xrecoff) != 2)
+				if (!pg_parse_lsn(optarg, &private.endptr))
 				{
 					pg_log_error("invalid WAL location: \"%s\"",
 								 optarg);
 					goto bad_argument;
 				}
-				private.endptr = (uint64) xlogid << 32 | xrecoff;
 				break;
 			case 'f':
 				config.follow = true;
@@ -1145,14 +1143,12 @@ main(int argc, char **argv)
 				config.filter_by_extended = true;
 				break;
 			case 's':
-				if (sscanf(optarg, "%X/%08X", &xlogid, &xrecoff) != 2)
+				if (!pg_parse_lsn(optarg, &private.startptr))
 				{
 					pg_log_error("invalid WAL location: \"%s\"",
 								 optarg);
 					goto bad_argument;
 				}
-				else
-					private.startptr = (uint64) xlogid << 32 | xrecoff;
 				break;
 			case 't':
 

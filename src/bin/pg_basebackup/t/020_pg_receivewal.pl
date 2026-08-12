@@ -24,6 +24,14 @@ mkdir($stream_dir);
 # Sanity checks for command line options.
 $primary->command_fails(['pg_receivewal'],
 	'pg_receivewal needs target directory specified');
+$primary->command_fails_like(
+	[ 'pg_receivewal', '--endpos' => '123456789/0' ],
+	qr/error: could not parse end position/,
+	'end position with first component wider than 32 bits');
+$primary->command_fails_like(
+	[ 'pg_receivewal', '--endpos' => '1/2/3' ],
+	qr/error: could not parse end position/,
+	'end position with trailing garbage');
 $primary->command_fails(
 	[
 		'pg_receivewal',

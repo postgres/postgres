@@ -43,6 +43,22 @@ $node->command_fails(
 		'--start',
 	],
 	'no destination file');
+$node->command_fails_like(
+	[ 'pg_recvlogical', '--startpos' => '123456789/0' ],
+	qr/error: could not parse start position/,
+	'start position with first component wider than 32 bits');
+$node->command_fails_like(
+	[ 'pg_recvlogical', '--startpos' => '0x1/0' ],
+	qr/error: could not parse start position/,
+	'start position with 0x prefix');
+$node->command_fails_like(
+	[ 'pg_recvlogical', '--endpos' => '0/123456789' ],
+	qr/error: could not parse end position/,
+	'end position with second component wider than 32 bits');
+$node->command_fails_like(
+	[ 'pg_recvlogical', '--endpos' => '1/2/3' ],
+	qr/error: could not parse end position/,
+	'end position with trailing garbage');
 
 $node->command_ok(
 	[

@@ -54,6 +54,22 @@ command_fails_like(
 	[ 'pg_waldump', '--end' => 'bad' ],
 	qr/error: invalid WAL location/,
 	'invalid end LSN');
+command_fails_like(
+	[ 'pg_waldump', '--start' => '123456789/0' ],
+	qr/error: invalid WAL location/,
+	'start LSN with first component wider than 32 bits');
+command_fails_like(
+	[ 'pg_waldump', '--start' => '0/123456789' ],
+	qr/error: invalid WAL location/,
+	'start LSN with second component wider than 32 bits');
+command_fails_like(
+	[ 'pg_waldump', '--end' => '1/2/3' ],
+	qr/error: invalid WAL location/,
+	'end LSN with trailing garbage');
+command_fails_like(
+	[ 'pg_waldump', '--end' => '0x1/0' ],
+	qr/error: invalid WAL location/,
+	'end LSN with 0x prefix');
 
 # rmgr list: If you add one to the list, consider also adding a test
 # case exercising the new rmgr below.

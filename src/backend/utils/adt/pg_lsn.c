@@ -13,13 +13,13 @@
  */
 #include "postgres.h"
 
+#include "common/pg_parse_lsn.h"
 #include "libpq/pqformat.h"
 #include "utils/fmgrprotos.h"
 #include "utils/numeric.h"
 #include "utils/pg_lsn.h"
 
 #define MAXPG_LSNLEN			17
-#define MAXPG_LSNCOMPONENT	8
 
 /*----------------------------------------------------------
  * Formatting and conversion routines.
@@ -31,29 +31,11 @@
 XLogRecPtr
 pg_lsn_in_safe(const char *str, Node *escontext)
 {
-	int			len1,
-				len2;
-	uint32		id,
-				off;
 	XLogRecPtr	result;
 
-	/* Sanity check input format. */
-	len1 = strspn(str, "0123456789abcdefABCDEF");
-	if (len1 < 1 || len1 > MAXPG_LSNCOMPONENT || str[len1] != '/')
-		goto syntax_error;
+	if (pg_parse_lsn(str, &result))
+		return result;
 
-	len2 = strspn(str + len1 + 1, "0123456789abcdefABCDEF");
-	if (len2 < 1 || len2 > MAXPG_LSNCOMPONENT || str[len1 + 1 + len2] != '\0')
-		goto syntax_error;
-
-	/* Decode result. */
-	id = (uint32) strtoul(str, NULL, 16);
-	off = (uint32) strtoul(str + len1 + 1, NULL, 16);
-	result = ((uint64) id << 32) | off;
-
-	return result;
-
-syntax_error:
 	ereturn(escontext, InvalidXLogRecPtr,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",

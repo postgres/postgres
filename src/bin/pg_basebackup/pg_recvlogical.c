@@ -20,6 +20,7 @@
 
 #include "common/file_perm.h"
 #include "common/logging.h"
+#include "common/pg_parse_lsn.h"
 #include "fe_utils/option_utils.h"
 #include "getopt_long.h"
 #include "libpq-fe.h"
@@ -729,8 +730,6 @@ main(int argc, char **argv)
 	};
 	int			c;
 	int			option_index;
-	uint32		hi,
-				lo;
 	char	   *db_name;
 
 	pg_logging_init(argv[0]);
@@ -801,14 +800,12 @@ main(int argc, char **argv)
 				break;
 /* replication options */
 			case 'I':
-				if (sscanf(optarg, "%X/%08X", &hi, &lo) != 2)
+				if (!pg_parse_lsn(optarg, &startpos))
 					pg_fatal("could not parse start position \"%s\"", optarg);
-				startpos = ((uint64) hi) << 32 | lo;
 				break;
 			case 'E':
-				if (sscanf(optarg, "%X/%08X", &hi, &lo) != 2)
+				if (!pg_parse_lsn(optarg, &endpos))
 					pg_fatal("could not parse end position \"%s\"", optarg);
-				endpos = ((uint64) hi) << 32 | lo;
 				break;
 			case 'o':
 				{

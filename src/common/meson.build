@@ -24,6 +24,7 @@ common_sources = files(
   'percentrepl.c',
   'pg_get_line.c',
   'pg_lzcompress.c',
+  'pg_parse_lsn.c',
   'pg_prng.c',
   'pgfnames.c',
   'psprintf.c',
