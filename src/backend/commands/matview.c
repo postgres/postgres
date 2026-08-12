@@ -293,10 +293,11 @@ RefreshMatViewByOid(Oid matviewOid, bool is_create, bool skipData,
 					   "REFRESH MATERIALIZED VIEW");
 
 	/*
-	 * Tentatively mark the matview as populated or not (this will roll back
-	 * if we fail later).
+	 * Tentatively mark the matview as populated or not, if its state is
+	 * changing (this will roll back if we fail later).
 	 */
-	SetMatViewPopulatedState(matviewRel, !skipData);
+	if (RelationIsPopulated(matviewRel) != !skipData)
+		SetMatViewPopulatedState(matviewRel, !skipData);
 
 	/* Concurrent refresh builds new data in temp tablespace, and does diff. */
 	if (concurrent)
