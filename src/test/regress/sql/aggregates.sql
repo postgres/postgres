@@ -149,6 +149,18 @@ SELECT corr(g, 0.09), regr_r2(g, 0.09), regr_slope(g, 0.09), regr_intercept(g, 0
 SELECT corr(1.3 + g * 1e-16, 1.3 + g * 1e-16)
   FROM generate_series(1, 3) g;
 
+-- verify that we handle Inf/NaN the same regardless of position
+with data(x) as (values (1::float8),(2::float8),(3::float8))
+select covar_pop(x, 0::float8) from data;
+with data(x) as (values ('Inf'::float8),(2::float8),(3::float8))
+select covar_pop(x, 0::float8) from data;
+with data(x) as (values (1::float8),('Inf'::float8),(3::float8))
+select covar_pop(x, 0::float8) from data;
+with data(x) as (values ('NaN'::float8),(2::float8),(3::float8))
+select covar_pop(x, 0::float8) from data;
+with data(x) as (values (1::float8),('NaN'::float8),(3::float8))
+select covar_pop(x, 0::float8) from data;
+
 -- check some cases that formerly suffered from internal overflow/underflow
 SELECT corr(1e-100 + g * 1e-105, 1e-100 + g * 1e-105),
        regr_r2(1e-100 + g * 1e-105, 1e-100 + g * 1e-105)
