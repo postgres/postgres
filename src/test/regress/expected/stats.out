@@ -116,18 +116,19 @@ SELECT id, name, fixed_amount,
 ----+--------------+--------------+-----------+---------------
   1 | database     | f            | t         | t
   2 | relation     | f            | f         | t
-  3 | function     | f            | f         | t
-  4 | replslot     | f            | t         | t
-  5 | subscription | f            | t         | t
-  6 | backend      | f            | t         | f
-  7 | archiver     | t            | f         | t
-  8 | bgwriter     | t            | f         | t
-  9 | checkpointer | t            | f         | t
- 10 | io           | t            | f         | t
- 11 | lock         | t            | f         | t
- 12 | slru         | t            | f         | t
- 13 | wal          | t            | f         | t
-(13 rows)
+  3 | index        | f            | f         | t
+  4 | function     | f            | f         | t
+  5 | replslot     | f            | t         | t
+  6 | subscription | f            | t         | t
+  7 | backend      | f            | t         | f
+  8 | archiver     | t            | f         | t
+  9 | bgwriter     | t            | f         | t
+ 10 | checkpointer | t            | f         | t
+ 11 | io           | t            | f         | t
+ 12 | lock         | t            | f         | t
+ 13 | slru         | t            | f         | t
+ 14 | wal          | t            | f         | t
+(14 rows)
 
 -- ensure that both seqscan and indexscan plans are allowed
 SET enable_seqscan TO on;
@@ -900,8 +901,8 @@ SELECT idx_scan, :'test_last_idx' < last_idx_scan AS idx_ok,
 (1 row)
 
 -- check that the stats in pg_stat_all_indexes are reset
-SELECT pg_stat_reset_single_table_counters('test_last_scan_pkey'::regclass);
- pg_stat_reset_single_table_counters 
+SELECT pg_stat_reset_single_index_counters('test_last_scan_pkey'::regclass);
+ pg_stat_reset_single_index_counters 
 -------------------------------------
  
 (1 row)
@@ -1385,21 +1386,21 @@ select a from stats_test_tab1 where a = 3;
  3
 (1 row)
 
-SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
+SELECT pg_stat_have_stats('index', :dboid, :stats_test_idx1_oid);
  pg_stat_have_stats 
 --------------------
  t
 (1 row)
 
 -- pg_stat_have_stats returns false for dropped index with stats
-SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
+SELECT pg_stat_have_stats('index', :dboid, :stats_test_idx1_oid);
  pg_stat_have_stats 
 --------------------
  t
 (1 row)
 
 DROP index stats_test_idx1;
-SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
+SELECT pg_stat_have_stats('index', :dboid, :stats_test_idx1_oid);
  pg_stat_have_stats 
 --------------------
  f
@@ -1415,14 +1416,14 @@ select a from stats_test_tab1 where a = 3;
  3
 (1 row)
 
-SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
+SELECT pg_stat_have_stats('index', :dboid, :stats_test_idx1_oid);
  pg_stat_have_stats 
 --------------------
  t
 (1 row)
 
 ROLLBACK;
-SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
+SELECT pg_stat_have_stats('index', :dboid, :stats_test_idx1_oid);
  pg_stat_have_stats 
 --------------------
  f
@@ -1437,7 +1438,7 @@ select a from stats_test_tab1 where a = 3;
  3
 (1 row)
 
-SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
+SELECT pg_stat_have_stats('index', :dboid, :stats_test_idx1_oid);
  pg_stat_have_stats 
 --------------------
  t
@@ -1445,7 +1446,7 @@ SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
 
 REINDEX index CONCURRENTLY stats_test_idx1;
 -- false for previous oid
-SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
+SELECT pg_stat_have_stats('index', :dboid, :stats_test_idx1_oid);
  pg_stat_have_stats 
 --------------------
  f
@@ -1453,7 +1454,7 @@ SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
 
 -- true for new oid
 SELECT 'stats_test_idx1'::regclass::oid AS stats_test_idx1_oid \gset
-SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
+SELECT pg_stat_have_stats('index', :dboid, :stats_test_idx1_oid);
  pg_stat_have_stats 
 --------------------
  t
@@ -1461,7 +1462,7 @@ SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
 
 -- pg_stat_have_stats returns true for a rolled back drop index with stats
 BEGIN;
-SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
+SELECT pg_stat_have_stats('index', :dboid, :stats_test_idx1_oid);
  pg_stat_have_stats 
 --------------------
  t
@@ -1469,7 +1470,7 @@ SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
 
 DROP index stats_test_idx1;
 ROLLBACK;
-SELECT pg_stat_have_stats('relation', :dboid, :stats_test_idx1_oid);
+SELECT pg_stat_have_stats('index', :dboid, :stats_test_idx1_oid);
  pg_stat_have_stats 
 --------------------
  t

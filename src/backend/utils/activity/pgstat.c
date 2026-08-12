@@ -317,6 +317,22 @@ static const PgStat_KindInfo pgstat_kind_builtin_infos[PGSTAT_KIND_BUILTIN_SIZE]
 		.reset_timestamp_cb = pgstat_relation_reset_timestamp_cb,
 	},
 
+	[PGSTAT_KIND_INDEX] = {
+		.name = "index",
+
+		.fixed_amount = false,
+		.write_to_file = true,
+
+		.shared_size = sizeof(PgStatShared_Index),
+		.shared_data_off = offsetof(PgStatShared_Index, stats),
+		.shared_data_len = sizeof(((PgStatShared_Index *) 0)->stats),
+		.pending_size = sizeof(PgStat_TableStatus),
+
+		.flush_pending_cb = pgstat_index_flush_cb,
+		.delete_pending_cb = pgstat_index_delete_pending_cb,
+		.reset_timestamp_cb = pgstat_index_reset_timestamp_cb,
+	},
+
 	[PGSTAT_KIND_FUNCTION] = {
 		.name = "function",
 

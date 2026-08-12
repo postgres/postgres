@@ -508,6 +508,12 @@ typedef struct PgStatShared_Relation
 	PgStat_StatTabEntry stats;
 } PgStatShared_Relation;
 
+typedef struct PgStatShared_Index
+{
+	PgStatShared_Common header;
+	PgStat_StatIdxEntry stats;
+} PgStatShared_Index;
+
 typedef struct PgStatShared_Function
 {
 	PgStatShared_Common header;
@@ -787,6 +793,15 @@ extern void PostPrepare_PgStat_Relations(PgStat_SubXactStatus *xact_state);
 extern bool pgstat_relation_flush_cb(PgStat_EntryRef *entry_ref, bool nowait);
 extern void pgstat_relation_delete_pending_cb(PgStat_EntryRef *entry_ref);
 extern void pgstat_relation_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts);
+
+
+/*
+ * Functions in pgstat_index.c
+ */
+
+extern bool pgstat_index_flush_cb(PgStat_EntryRef *entry_ref, bool nowait);
+extern void pgstat_index_delete_pending_cb(PgStat_EntryRef *entry_ref);
+extern void pgstat_index_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts);
 
 
 /*

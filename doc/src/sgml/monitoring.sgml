@@ -5880,6 +5880,24 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_stat_reset_single_index_counters</primary>
+        </indexterm>
+        <function>pg_stat_reset_single_index_counters</function> ( <type>oid</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Resets statistics for a single index in the current database
+        or shared across all databases in the cluster to zero.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_stat_get_xact_blocks_fetched</primary>
         </indexterm>
         <function>pg_stat_get_xact_blocks_fetched</function> ( <type>oid</type> )
@@ -6022,7 +6040,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <returnvalue>void</returnvalue>
        </para>
        <para>
-        Resets statistics for a single table or index in the current database
+        Resets statistics for a single table in the current database
         or shared across all databases in the cluster to zero.
         It also resets statistics for a single sequence or materialized view
         in the current database.

@@ -2325,6 +2325,7 @@ PgStatShared_CustomVarEntry
 PgStatShared_Database
 PgStatShared_Function
 PgStatShared_HashEntry
+PgStatShared_Index
 PgStatShared_IO
 PgStatShared_Lock
 PgStatShared_Relation
@@ -2362,6 +2363,7 @@ PgStat_StatCustomFixedEntry
 PgStat_StatCustomVarEntry
 PgStat_StatDBEntry
 PgStat_StatFuncEntry
+PgStat_StatIdxEntry
 PgStat_StatReplSlotEntry
 PgStat_StatSubEntry
 PgStat_StatTabEntry

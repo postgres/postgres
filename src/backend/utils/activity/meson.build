@@ -10,6 +10,7 @@ backend_sources += files(
   'pgstat_checkpointer.c',
   'pgstat_database.c',
   'pgstat_function.c',
+  'pgstat_index.c',
   'pgstat_io.c',
   'pgstat_kind.c',
   'pgstat_lock.c',
