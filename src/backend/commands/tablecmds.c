@@ -19309,6 +19309,8 @@ ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode
 	{
 		int16		attno = indexRel->rd_index->indkey.values[key];
 		Form_pg_attribute attr;
+		HeapTuple	contup;
+		Form_pg_constraint conForm;
 
 		/*
 		 * Reject any other system columns.  (Going forward, we'll disallow
@@ -19328,6 +19330,26 @@ ATExecReplicaIdentity(Relation rel, ReplicaIdentityStmt *stmt, LOCKMODE lockmode
 					 errmsg("index \"%s\" cannot be used as replica identity because column \"%s\" is nullable",
 							RelationGetRelationName(indexRel),
 							NameStr(attr->attname))));
+
+		/*
+		 * Verify that the not-null constraint for the column is valid.
+		 */
+		contup = findNotNullConstraintAttnum(RelationGetRelid(rel), attno);
+		if (!HeapTupleIsValid(contup))
+			elog(ERROR, "cache lookup failed for not-null constraint on column \"%s\" of relation \"%s\"",
+				 NameStr(attr->attname), RelationGetRelationName(rel));
+		conForm = (Form_pg_constraint) GETSTRUCT(contup);
+		if (!conForm->convalidated)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("cannot use index \"%s\" as replica identity",
+						   RelationGetRelationName(indexRel)),
+			/*- translator: third %s is a constraint characteristic such as NOT VALID */
+					errdetail("The constraint \"%s\" on column \"%s\" is marked %s.",
+							  NameStr(conForm->conname), NameStr(attr->attname), "NOT VALID"),
+					errhint("You might need to validate it using %s.",
+							"ALTER TABLE ... VALIDATE CONSTRAINT"));
+		heap_freetuple(contup);
 	}
 
 	/* This index is suitable for use as a replica identity. Mark it. */
