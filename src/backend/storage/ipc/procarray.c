@@ -519,7 +519,7 @@ ProcArrayAdd(PGPROC *proc)
 			&ProcGlobal->statusFlags[index],
 			movecount * sizeof(*ProcGlobal->statusFlags));
 
-	arrayP->pgprocnos[index] = GetNumberFromPGProc(proc);
+	arrayP->pgprocnos[index] = pgprocno;
 	proc->pgxactoff = index;
 	ProcGlobal->xids[index] = proc->xid;
 	ProcGlobal->subxidStates[index] = proc->subxidStatus;
