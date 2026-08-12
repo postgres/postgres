@@ -46,6 +46,7 @@ $node_subscriber->wait_for_subscription_sync($node_publisher, 'test_sub');
 # Start a background session on the subscriber to run a transaction later
 # that will block the logical apply worker on a lock.
 my $sub_session = $node_subscriber->background_psql('postgres');
+$sub_session->set_query_timer_restart();
 
 # Test that when the logical apply worker is blocked on a lock and replication
 # is stalled, shutting down the publisher causes the logical walsender to exit
