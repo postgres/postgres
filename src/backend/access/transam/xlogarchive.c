@@ -398,7 +398,7 @@ KeepFileRestoredFromArchive(const char *path, const char *xlogfname)
 			ereport(FATAL,
 					(errcode_for_file_access(),
 					 errmsg("could not remove file \"%s\": %m",
-							xlogfpath)));
+							oldpath)));
 #endif
 		reload = true;
 	}
