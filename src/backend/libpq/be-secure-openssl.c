@@ -2282,7 +2282,12 @@ be_tls_get_certificate_hash(Port *port, size_t *len)
 {
 	X509	   *server_cert;
 	char	   *cert_hash;
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	EVP_MD	   *algo_type;
+	const char *algo_name;
+#else
 	const EVP_MD *algo_type = NULL;
+#endif
 	unsigned char hash[EVP_MAX_MD_SIZE];	/* size for SHA-512 */
 	unsigned int hash_size;
 	int			algo_nid;
@@ -2311,6 +2316,25 @@ be_tls_get_certificate_hash(Port *port, size_t *len)
 	 * (https://tools.ietf.org/html/rfc5929#section-4.1).  If something else
 	 * is used, the same hash as the signature algorithm is used.
 	 */
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	switch (algo_nid)
+	{
+		case NID_md5:
+		case NID_sha1:
+			algo_name = "SHA256";
+			break;
+		default:
+			algo_name = OBJ_nid2sn(algo_nid);
+			if (algo_name == NULL)
+				elog(ERROR, "could not find digest for NID %s",
+					 OBJ_nid2sn(algo_nid));
+			break;
+	}
+
+	algo_type = EVP_MD_fetch(NULL, algo_name, NULL);
+	if (algo_type == NULL)
+		elog(ERROR, "could not fetch digest \"%s\"", algo_name);
+#else
 	switch (algo_nid)
 	{
 		case NID_md5:
@@ -2324,10 +2348,20 @@ be_tls_get_certificate_hash(Port *port, size_t *len)
 					 OBJ_nid2sn(algo_nid));
 			break;
 	}
+#endif
 
 	/* generate and save the certificate hash */
 	if (!X509_digest(server_cert, algo_type, hash, &hash_size))
+	{
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+		EVP_MD_free(algo_type);
+#endif
 		elog(ERROR, "could not generate server certificate hash");
+	}
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	EVP_MD_free(algo_type);
+#endif
 
 	cert_hash = palloc(hash_size);
 	memcpy(cert_hash, hash, hash_size);
