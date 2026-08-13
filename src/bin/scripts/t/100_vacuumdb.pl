@@ -362,12 +362,16 @@ $node->safe_psql('postgres',
 	  . "INSERT INTO parent_table VALUES (1);\n");
 $node->issues_sql_like(
 	[ 'vacuumdb', '--analyze-only', 'postgres' ],
-	qr/statement: ANALYZE public.parent_table/s,
+	qr/statement: ANALYZE ONLY public.parent_table/s,
 	'--analyze-only updates statistics for partitioned tables');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--analyze-in-stages', 'postgres' ],
-	qr/statement: ANALYZE public.parent_table/s,
+	qr/statement: ANALYZE ONLY public.parent_table/s,
 	'--analyze-in-stages updates statistics for partitioned tables');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--analyze-only', '-t', 'parent_table', 'postgres' ],
+	qr/statement: ANALYZE public.parent_table/s,
+	'--analyze-only with --table keeps normal ANALYZE recursion');
 $node->issues_sql_unlike(
 	[ 'vacuumdb', '--analyze-only', 'postgres' ],
 	qr/statement:\ VACUUM/sx,

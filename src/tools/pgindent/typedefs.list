@@ -2705,6 +2705,8 @@ ResultState
 ResultType
 RetainDeadTuplesData
 RetainDeadTuplesPhase
+RetrievedObject
+RetrievedObjects
 ReturnSetInfo
 ReturnStmt
 ReturningClause
