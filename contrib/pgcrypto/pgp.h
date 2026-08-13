@@ -156,7 +156,6 @@ struct PGP_Context
 	/*
 	 * internal variables
 	 */
-	int			mdc_checked;
 	int			corrupt_prefix; /* prefix failed RFC 4880 "quick check" */
 	int			unsupported_compr;	/* has bzip2 compression */
 	int			unexpected_binary;	/* binary data seen in text_mode */

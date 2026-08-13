@@ -388,7 +388,6 @@ mdc_finish(PGP_Context *ctx, PullFilter *src, int len)
 		px_debug("mdc_finish: mdc failed");
 		return PXE_PGP_CORRUPT_DATA;
 	}
-	ctx->mdc_checked = 1;
 	return 0;
 }
 
