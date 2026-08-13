@@ -1911,7 +1911,7 @@ CallSyscacheCallbacks(SysCacheIdentifier cacheid, uint32 hashvalue)
 }
 
 /*
- * CallSyscacheCallbacks
+ * CallRelSyncCallbacks
  */
 void
 CallRelSyncCallbacks(Oid relid)

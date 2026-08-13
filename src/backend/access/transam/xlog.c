@@ -8785,10 +8785,10 @@ UpdateFullPageWrites(void)
 
 	/*
 	 * It's always safe to take full page images, even when not strictly
-	 * required, but not the other round. So if we're setting full_page_writes
-	 * to true, first set it true and then write the WAL record. If we're
-	 * setting it to false, first write the WAL record and then set the global
-	 * flag.
+	 * required, but not the other way round. So if we're setting
+	 * full_page_writes to true, first set it true and then write the WAL
+	 * record. If we're setting it to false, first write the WAL record and
+	 * then set the global flag.
 	 */
 	if (fullPageWrites)
 	{

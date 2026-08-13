@@ -944,7 +944,7 @@ my_fetch(PG_FUNCTION_ARGS)
     fetched_data = palloc_object(fetched_data_type);
 
     /*
-     * Convert 'fetched_data' into the a Datum of the original datatype.
+     * Convert 'fetched_data' into a Datum of the original datatype.
      */
 
     /* fill *retval from fetched_data. */
