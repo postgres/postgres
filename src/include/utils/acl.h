@@ -216,6 +216,7 @@ extern void check_can_set_role(Oid member, Oid role);
 extern bool is_member_of_role(Oid member, Oid role);
 extern bool is_member_of_role_nosuper(Oid member, Oid role);
 extern bool is_admin_of_role(Oid member, Oid role);
+extern bool has_admin_privs_of_role(Oid member, Oid role);
 extern Oid	select_best_admin(Oid member, Oid role);
 extern Oid	get_role_oid(const char *rolname, bool missing_ok);
 extern Oid	get_role_oid_or_public(const char *rolname);

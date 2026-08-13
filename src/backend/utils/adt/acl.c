@@ -5442,6 +5442,8 @@ is_member_of_role_nosuper(Oid member, Oid role)
  * Is member an admin of role?	That is, is member the role itself (subject to
  * restrictions below), a member (directly or indirectly) WITH ADMIN OPTION,
  * or a superuser?
+ *
+ * See also has_admin_privs_of_role() below.
  */
 bool
 is_admin_of_role(Oid member, Oid role)
@@ -5456,6 +5458,31 @@ is_admin_of_role(Oid member, Oid role)
 		return false;
 
 	(void) roles_is_member_of(member, ROLERECURSE_MEMBERS, role, &admin_role);
+	return OidIsValid(admin_role);
+}
+
+/*
+ * Does member hold ADMIN OPTION on role, either directly or through a role
+ * whose privileges member inherits?
+ *
+ * Unlike is_admin_of_role(), this does not recurse through grants that are not
+ * inherited.  Callers that must go on to record a grantor for the operation
+ * should use this rather than is_admin_of_role(), since select_best_admin()
+ * searches the same way.
+ */
+bool
+has_admin_privs_of_role(Oid member, Oid role)
+{
+	Oid			admin_role;
+
+	if (superuser_arg(member))
+		return true;
+
+	/* By policy, a role cannot have WITH ADMIN OPTION on itself. */
+	if (member == role)
+		return false;
+
+	(void) roles_is_member_of(member, ROLERECURSE_PRIVS, role, &admin_role);
 	return OidIsValid(admin_role);
 }
 

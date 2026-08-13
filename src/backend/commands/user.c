@@ -825,7 +825,7 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	}
 
 	/* To add or drop members, you need ADMIN OPTION. */
-	if (drolemembers && !is_admin_of_role(currentUserId, roleid))
+	if (drolemembers && !has_admin_privs_of_role(currentUserId, roleid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to alter role"),
@@ -2165,7 +2165,7 @@ check_role_membership_authorization(Oid currentUserId, Oid roleid,
 		/*
 		 * Otherwise, must have admin option on the role to be changed.
 		 */
-		if (!is_admin_of_role(currentUserId, roleid))
+		if (!has_admin_privs_of_role(currentUserId, roleid))
 		{
 			if (is_grant)
 				ereport(ERROR,
