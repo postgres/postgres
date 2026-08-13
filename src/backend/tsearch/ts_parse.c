@@ -379,7 +379,7 @@ parsetext(Oid cfgId, ParsedText *prs, char *buf, int buflen)
 										   PointerGetDatum(&lemm),
 										   PointerGetDatum(&lenlemm)));
 
-		if (type > 0 && lenlemm >= MAXSTRLEN)
+		if (type > 0 && lenlemm > MAXSTRLEN)
 		{
 #ifdef IGNORE_LONGLEXEME
 			ereport(NOTICE,
@@ -582,7 +582,7 @@ hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query, char *buf, int bu
 										   PointerGetDatum(&lemm),
 										   PointerGetDatum(&lenlemm)));
 
-		if (type > 0 && lenlemm >= MAXSTRLEN)
+		if (type > 0 && lenlemm > MAXSTRLEN)
 		{
 #ifdef IGNORE_LONGLEXEME
 			ereport(NOTICE,
