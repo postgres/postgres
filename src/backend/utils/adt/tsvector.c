@@ -207,12 +207,12 @@ tsvectorin(PG_FUNCTION_ARGS)
 
 	while (gettoken_tsvector(state, &token, &toklen, &pos, &poslen, NULL))
 	{
-		if (toklen >= MAXSTRLEN)
+		if (toklen > MAXSTRLEN)
 			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("word is too long (%d bytes, max %d bytes)",
 							toklen,
-							MAXSTRLEN - 1)));
+							MAXSTRLEN)));
 
 		if (cur - tmpbuf > MAXSTRPOS)
 			ereturn(escontext, (Datum) 0,

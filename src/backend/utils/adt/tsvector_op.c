@@ -776,12 +776,12 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_ZERO_LENGTH_CHARACTER_STRING),
 					 errmsg("lexeme array may not contain empty strings")));
-		if (toklen >= MAXSTRLEN)
+		if (toklen > MAXSTRLEN)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("word is too long (%d bytes, max %d bytes)",
 							toklen,
-							MAXSTRLEN - 1)));
+							MAXSTRLEN)));
 	}
 
 	/* Sort and de-dup, because this is required for a valid tsvector. */
