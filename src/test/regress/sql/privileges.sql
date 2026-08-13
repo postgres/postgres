@@ -60,6 +60,11 @@ SET ROLE regress_priv_user3;
 GRANT regress_priv_user1 TO regress_priv_user4;
 SELECT grantor::regrole FROM pg_auth_members WHERE roleid = 'regress_priv_user1'::regrole and member = 'regress_priv_user4'::regrole;
 RESET ROLE;
+REVOKE INHERIT OPTION FOR regress_priv_user2 FROM regress_priv_user3;
+SET ROLE regress_priv_user3;
+GRANT regress_priv_user1 TO regress_priv_user5; -- fail
+ALTER GROUP regress_priv_user1 ADD USER regress_priv_user5; -- fail
+RESET ROLE;
 REVOKE regress_priv_user2 FROM regress_priv_user3;
 REVOKE regress_priv_user1 FROM regress_priv_user2 CASCADE;
 
