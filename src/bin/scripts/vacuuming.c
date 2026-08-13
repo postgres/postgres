@@ -23,12 +23,23 @@
 #include "fe_utils/string_utils.h"
 #include "vacuuming.h"
 
+typedef struct RetrievedObject
+{
+	char	   *target;
+	bool		use_only;
+} RetrievedObject;
+
+typedef struct RetrievedObjects
+{
+	int			num_objects;
+	RetrievedObject objects[FLEXIBLE_ARRAY_MEMBER];
+} RetrievedObjects;
 
 static int	vacuum_one_database(ConnParams *cparams,
 								vacuumingOptions *vacopts,
 								int stage,
 								SimpleStringList *objects,
-								SimpleStringList **found_objs,
+								RetrievedObjects **found_objs,
 								int concurrentCons,
 								const char *progname);
 static int	vacuum_all_databases(ConnParams *cparams,
@@ -36,12 +47,13 @@ static int	vacuum_all_databases(ConnParams *cparams,
 								 SimpleStringList *objects,
 								 int concurrentCons,
 								 const char *progname);
-static SimpleStringList *retrieve_objects(PGconn *conn,
+static RetrievedObjects *retrieve_objects(PGconn *conn,
 										  vacuumingOptions *vacopts,
 										  SimpleStringList *objects);
-static void free_retrieved_objects(SimpleStringList *list);
+static void free_retrieved_objects(RetrievedObjects *objs);
 static void prepare_vacuum_command(PGconn *conn, PQExpBuffer sql,
-								   vacuumingOptions *vacopts, const char *table);
+								   vacuumingOptions *vacopts, const char *table,
+								   bool use_only);
 static void run_vacuum_command(ParallelSlot *free_slot,
 							   vacuumingOptions *vacopts, const char *sql,
 							   const char *table);
@@ -89,7 +101,7 @@ vacuuming_main(ConnParams *cparams, const char *dbname,
 
 		if (vacopts->mode == MODE_ANALYZE_IN_STAGES)
 		{
-			SimpleStringList *found_objs = NULL;
+			RetrievedObjects *found_objs = NULL;
 
 			for (int stage = 0; stage < ANALYZE_NUM_STAGES; stage++)
 			{
@@ -127,9 +139,9 @@ vacuuming_main(ConnParams *cparams, const char *dbname,
  *
  * There are two ways to specify the list of objects to process:
  *
- * 1) The "found_objs" parameter is a double pointer to a fully qualified list
- *    of objects to process, as returned by a previous call to
- *    vacuum_one_database().
+ * 1) The "found_objs" parameter is a double pointer to a list of fully
+ *    qualified objects and their command generation metadata, as returned by
+ *    a previous call to vacuum_one_database().
  *
  *     a) If both "found_objs" (the double pointer) and "*found_objs" (the
  *        once-dereferenced double pointer) are not NULL, this list takes
@@ -165,17 +177,16 @@ vacuum_one_database(ConnParams *cparams,
 					vacuumingOptions *vacopts,
 					int stage,
 					SimpleStringList *objects,
-					SimpleStringList **found_objs,
+					RetrievedObjects **found_objs,
 					int concurrentCons,
 					const char *progname)
 {
 	PQExpBufferData sql;
 	PGconn	   *conn;
-	SimpleStringListCell *cell;
 	ParallelSlotArray *sa;
 	int			ntups = 0;
 	const char *initcmd;
-	SimpleStringList *retobjs = NULL;
+	RetrievedObjects *retobjs = NULL;
 	bool		free_retobjs = false;
 	int			ret = EXIT_SUCCESS;
 	const char *stage_commands[] = {
@@ -295,7 +306,7 @@ vacuum_one_database(ConnParams *cparams,
 	/*
 	 * If the caller provided the results of a previous catalog query, just
 	 * use that.  Otherwise, run the catalog query ourselves and set the
-	 * return variable if provided.  (If it is, then freeing the string list
+	 * return variable if provided.  (If it is, then freeing the results
 	 * becomes the caller's responsibility.)
 	 */
 	if (found_objs && *found_objs)
@@ -309,12 +320,7 @@ vacuum_one_database(ConnParams *cparams,
 			free_retobjs = true;
 	}
 
-	/*
-	 * Count the number of objects in the catalog query result.  If there are
-	 * none, we are done.
-	 */
-	for (cell = retobjs->head; cell; cell = cell->next)
-		ntups++;
+	ntups = retobjs->num_objects;
 
 	if (ntups == 0)
 	{
@@ -361,10 +367,10 @@ vacuum_one_database(ConnParams *cparams,
 
 	initPQExpBuffer(&sql);
 
-	cell = retobjs->head;
-	do
+	for (int i = 0; i < ntups; i++)
 	{
-		const char *tabname = cell->val;
+		RetrievedObject *object = &retobjs->objects[i];
+		const char *tabname = object->target;
 		ParallelSlot *free_slot;
 
 		if (CancelRequested)
@@ -381,7 +387,7 @@ vacuum_one_database(ConnParams *cparams,
 		}
 
 		prepare_vacuum_command(free_slot->connection, &sql,
-							   vacopts, tabname);
+							   vacopts, tabname, object->use_only);
 
 		/*
 		 * Execute the vacuum.  All errors are handled in processQueryResult
@@ -390,8 +396,7 @@ vacuum_one_database(ConnParams *cparams,
 		ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
 		run_vacuum_command(free_slot, vacopts, sql.data, tabname);
 
-		cell = cell->next;
-	} while (cell != NULL);
+	}
 
 	if (!ParallelSlotsWaitCompletion(sa))
 	{
@@ -456,10 +461,10 @@ vacuum_all_databases(ConnParams *cparams,
 
 	if (vacopts->mode == MODE_ANALYZE_IN_STAGES)
 	{
-		SimpleStringList **found_objs = NULL;
+		RetrievedObjects **found_objs = NULL;
 
 		if (vacopts->missing_stats_only)
-			found_objs = palloc0(numdbs * sizeof(SimpleStringList *));
+			found_objs = palloc0(numdbs * sizeof(RetrievedObjects *));
 
 		/*
 		 * When analyzing all databases in stages, we analyze them all in the
@@ -526,7 +531,7 @@ vacuum_all_databases(ConnParams *cparams,
  * generated qualified identifiers and to filter for the tables provided via
  * --table.  If a listed table does not exist, the catalog query will fail.
  */
-static SimpleStringList *
+static RetrievedObjects *
 retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 				 SimpleStringList *objects)
 {
@@ -534,8 +539,9 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 	PQExpBufferData catalog_query;
 	PGresult   *res;
 	SimpleStringListCell *cell;
-	SimpleStringList *found_objs = palloc0_object(SimpleStringList);
+	RetrievedObjects *found_objs;
 	bool		objects_listed = false;
+	int			ntups;
 
 	initPQExpBuffer(&catalog_query);
 	for (cell = objects ? objects->head : NULL; cell; cell = cell->next)
@@ -588,7 +594,7 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 	if (objects_listed)
 		appendPQExpBufferStr(&catalog_query, "\n)\n");
 
-	appendPQExpBufferStr(&catalog_query, "SELECT c.relname, ns.nspname");
+	appendPQExpBufferStr(&catalog_query, "SELECT c.relname, ns.nspname, c.relkind");
 
 	if (objects_listed)
 		appendPQExpBufferStr(&catalog_query, ", listed_objects.column_list");
@@ -791,18 +797,39 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 	 * Build qualified identifiers for each table, including the column list
 	 * if given.
 	 */
+	ntups = PQntuples(res);
+	found_objs = palloc0(add_size(offsetof(RetrievedObjects, objects),
+								  mul_size(sizeof(RetrievedObject), ntups)));
+	found_objs->num_objects = ntups;
+
 	initPQExpBuffer(&buf);
-	for (int i = 0; i < PQntuples(res); i++)
+	for (int i = 0; i < found_objs->num_objects; i++)
 	{
+		RetrievedObject *object;
+		bool		use_only;
+
+		/*
+		 * For automatically enumerated partitioned tables, use ONLY to
+		 * collect inherited statistics without recursively updating
+		 * per-partition statistics.  Partitions selected by the current
+		 * filters are processed as separate targets.
+		 */
+		use_only = ((vacopts->mode == MODE_ANALYZE ||
+					 vacopts->mode == MODE_ANALYZE_IN_STAGES) &&
+					(vacopts->objfilter & OBJFILTER_TABLE) == 0 &&
+					PQgetvalue(res, i, 2)[0] == RELKIND_PARTITIONED_TABLE);
+
 		appendPQExpBufferStr(&buf,
 							 fmtQualifiedIdEnc(PQgetvalue(res, i, 1),
 											   PQgetvalue(res, i, 0),
 											   PQclientEncoding(conn)));
 
-		if (objects_listed && !PQgetisnull(res, i, 2))
-			appendPQExpBufferStr(&buf, PQgetvalue(res, i, 2));
+		if (objects_listed && !PQgetisnull(res, i, 3))
+			appendPQExpBufferStr(&buf, PQgetvalue(res, i, 3));
 
-		simple_string_list_append(found_objs, buf.data);
+		object = &found_objs->objects[i];
+		object->target = pg_strdup(buf.data);
+		object->use_only = use_only;
 		resetPQExpBuffer(&buf);
 	}
 	termPQExpBuffer(&buf);
@@ -818,12 +845,14 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
  * although retrieve_objects() will never return that.
  */
 static void
-free_retrieved_objects(SimpleStringList *list)
+free_retrieved_objects(RetrievedObjects *objs)
 {
-	if (list)
+	if (objs)
 	{
-		simple_string_list_destroy(list);
-		pg_free(list);
+		for (int i = 0; i < objs->num_objects; i++)
+			pg_free(objs->objects[i].target);
+
+		pg_free(objs);
 	}
 }
 
@@ -831,17 +860,24 @@ free_retrieved_objects(SimpleStringList *list)
  * Construct a vacuum/analyze command to run based on the given
  * options, in the given string buffer, which may contain previous garbage.
  *
- * The table name used must be already properly quoted.  The command generated
- * depends on the server version involved and it is semicolon-terminated.
+ * The table reference used must be already properly quoted.  It is usually a
+ * table name, but may also include a column list.  The command generated
+ * depends on the server version involved and it is semicolon-terminated.  If
+ * use_only is set, the command targets the table with ANALYZE ONLY.
  */
 static void
 prepare_vacuum_command(PGconn *conn, PQExpBuffer sql,
-					   vacuumingOptions *vacopts, const char *table)
+					   vacuumingOptions *vacopts, const char *table,
+					   bool use_only)
 {
 	int			serverVersion = PQserverVersion(conn);
 	const char *paren = " (";
 	const char *comma = ", ";
 	const char *sep = paren;
+
+	Assert(!use_only ||
+		   vacopts->mode == MODE_ANALYZE ||
+		   vacopts->mode == MODE_ANALYZE_IN_STAGES);
 
 	resetPQExpBuffer(sql);
 
@@ -880,6 +916,10 @@ prepare_vacuum_command(PGconn *conn, PQExpBuffer sql,
 			if (vacopts->verbose)
 				appendPQExpBufferStr(sql, " VERBOSE");
 		}
+
+		/* ANALYZE ONLY is supported since v18 */
+		if (use_only && serverVersion >= 180000)
+			appendPQExpBufferStr(sql, " ONLY");
 	}
 	else
 	{
