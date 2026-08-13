@@ -97,15 +97,16 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
   </para>
 
   <para>
-   Note that adding tables/except tables/schemas to a publication that is
-   already subscribed to will require an
+   Note that adding, dropping, or setting tables or schemas in a publication
+   that is already subscribed to will require an
    <link linkend="sql-altersubscription-params-refresh-publication">
    <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal></link> action
    on the subscribing side in order to become effective. Likewise altering a
-   publication to set <literal>ALL TABLES</literal> or to set or unset
-   <literal>ALL SEQUENCES</literal> also requires the subscriber to refresh the
-   publication. Note also that <literal>DROP TABLES IN SCHEMA</literal> will
-   not drop any schema tables that were specified using
+   publication to set <literal>ALL TABLES</literal>, to change the
+   <literal>EXCEPT</literal> list, or to set <literal>ALL SEQUENCES</literal>
+   also requires the subscriber to refresh the publication. Note also that
+   <literal>DROP TABLES IN SCHEMA</literal> will not drop any schema tables
+   that were specified using
    <link linkend="sql-createpublication-params-for-table"><literal>FOR TABLE</literal></link>/
    <literal>ADD TABLE</literal>.
   </para>
