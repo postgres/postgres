@@ -1182,7 +1182,10 @@ ThereAreNoReadyPortals(void)
 		Portal		portal = hentry->portal;
 
 		if (portal->status == PORTAL_READY)
+		{
+			hash_seq_term(&status);
 			return false;
+		}
 	}
 
 	return true;
