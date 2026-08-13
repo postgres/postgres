@@ -265,7 +265,14 @@ ExecRepack(ParseState *pstate, RepackStmt *stmt, bool isTopLevel)
 			verbose = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "analyze") == 0 ||
 				 strcmp(opt->defname, "analyse") == 0)
+		{
+			if (stmt->command != REPACK_COMMAND_REPACK)
+				ereport(ERROR,
+						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("ANALYZE option not supported for %s",
+							   RepackCommandAsString(stmt->command)));
 			analyze = defGetBoolean(opt);
+		}
 		else if (strcmp(opt->defname, "concurrently") == 0)
 		{
 			if (stmt->command != REPACK_COMMAND_REPACK)
