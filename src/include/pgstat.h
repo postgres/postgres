@@ -125,14 +125,12 @@ typedef struct PgStat_BackendSubEntry
  * of pg_memory_is_all_zeros() to detect whether there are any stats updates
  * to apply.
  *
- * It is a component of PgStat_TableStatus (within-backend state).
+ * It is a component of PgStat_RelationStatus (within-backend state, for
+ * table data).
  *
- * Note: for a table, tuples_returned is the number of tuples successfully
- * fetched by heap_getnext, while tuples_fetched is the number of tuples
- * successfully fetched by heap_fetch under the control of bitmap indexscans.
- * For an index, tuples_returned is the number of index entries returned by
- * the index AM, while tuples_fetched is the number of tuples successfully
- * fetched by heap_fetch under the control of simple indexscans for this index.
+ * Note: tuples_returned is the number of tuples successfully fetched by
+ * heap_getnext, while tuples_fetched is the number of tuples successfully
+ * fetched by heap_fetch under the control of bitmap indexscans.
  *
  * tuples_inserted/updated/deleted/hot_updated/newpage_updated count attempted
  * actions, regardless of whether the transaction committed.  delta_live_tuples,
@@ -163,28 +161,63 @@ typedef struct PgStat_TableCounts
 } PgStat_TableCounts;
 
 /* ----------
- * PgStat_TableStatus			Per-table status within a backend
+ * PgStat_IndexCounts			Per-index pending event counters
+ *
+ * Note: tuples_returned is the number of index entries returned by
+ * the index AM, while tuples_fetched is the number of tuples successfully
+ * fetched by heap_fetch under the control of simple indexscans for this
+ * index.
+ *
+ * It is a component of PgStat_RelationStatus (within-backend state, for
+ * index data).
+ * ----------
+ */
+typedef struct PgStat_IndexCounts
+{
+	PgStat_Counter numscans;
+	PgStat_Counter tuples_returned;
+	PgStat_Counter tuples_fetched;
+	PgStat_Counter blocks_fetched;
+	PgStat_Counter blocks_hit;
+} PgStat_IndexCounts;
+
+/* ----------
+ * PgStat_RelationStatus			Per-relation pending status within a backend
  *
  * Many of the event counters are nontransactional, ie, we count events
  * in committed and aborted transactions alike.  For these, we just count
- * directly in the PgStat_TableStatus.  However, delta_live_tuples,
+ * directly in the PgStat_RelationStatus.  However, delta_live_tuples,
  * delta_dead_tuples, and changed_tuples must be derived from event counts
  * with awareness of whether the transaction or subtransaction committed or
  * aborted.  Hence, we also keep a stack of per-(sub)transaction status
  * records for every table modified in the current transaction.  At commit
  * or abort, we propagate tuples_inserted/updated/deleted up to the
- * parent subtransaction level, or out to the parent PgStat_TableStatus,
+ * parent subtransaction level, or out to the parent PgStat_RelationStatus,
  * as appropriate.
+ *
+ * 'kind' tracks the stats kind we are dealing with, for table or index
+ * pending data.
  * ----------
  */
-typedef struct PgStat_TableStatus
+typedef struct PgStat_RelationStatus
 {
-	Oid			id;				/* table's OID */
-	bool		shared;			/* is it a shared catalog? */
-	struct PgStat_TableXactStatus *trans;	/* lowest subxact's counts */
-	PgStat_TableCounts counts;	/* event counts to be sent */
+	PgStat_Kind kind;			/* PGSTAT_KIND_RELATION or PGSTAT_KIND_INDEX */
 	Relation	relation;		/* rel that is using this entry */
-} PgStat_TableStatus;
+	union
+	{
+		/* table counters */
+		struct
+		{
+			Oid			id;		/* table's OID */
+			bool		shared; /* is it a shared catalog? */
+			struct PgStat_TableXactStatus *trans;	/* lowest subxact's counts */
+			PgStat_TableCounts counts;	/* event counts to be sent */
+		}			tab;
+
+		/* index counters */
+		PgStat_IndexCounts idx;
+	};
+} PgStat_RelationStatus;
 
 /* ----------
  * PgStat_TableXactStatus		Per-table, per-subtransaction status
@@ -204,7 +237,7 @@ typedef struct PgStat_TableXactStatus
 	int			nest_level;		/* subtransaction nest level */
 	/* links to other structs for same relation: */
 	struct PgStat_TableXactStatus *upper;	/* next higher subxact if any */
-	PgStat_TableStatus *parent; /* per-table status */
+	PgStat_RelationStatus *parent;	/* per-table status */
 	/* structs of same subxact level are linked here: */
 	struct PgStat_TableXactStatus *next;	/* next of same subxact */
 } PgStat_TableXactStatus;
@@ -744,37 +777,64 @@ extern void pgstat_report_analyze(Relation rel,
 #define pgstat_count_heap_scan(rel)									\
 	do {															\
 		if (pgstat_should_count_relation(rel))						\
-			(rel)->pgstat_info->counts.numscans++;					\
+		{															\
+			Assert((rel)->pgstat_info->kind == PGSTAT_KIND_RELATION); \
+			(rel)->pgstat_info->tab.counts.numscans++;				\
+		}															\
 	} while (0)
 #define pgstat_count_heap_getnext(rel)								\
 	do {															\
 		if (pgstat_should_count_relation(rel))						\
-			(rel)->pgstat_info->counts.tuples_returned++;			\
+		{															\
+			Assert((rel)->pgstat_info->kind == PGSTAT_KIND_RELATION); \
+			(rel)->pgstat_info->tab.counts.tuples_returned++;		\
+		}															\
 	} while (0)
 #define pgstat_count_heap_fetch(rel)								\
 	do {															\
 		if (pgstat_should_count_relation(rel))						\
-			(rel)->pgstat_info->counts.tuples_fetched++;			\
+		{															\
+			if ((rel)->pgstat_info->kind == PGSTAT_KIND_INDEX)		\
+				(rel)->pgstat_info->idx.tuples_fetched++;			\
+			else													\
+				(rel)->pgstat_info->tab.counts.tuples_fetched++;		\
+		}															\
 	} while (0)
 #define pgstat_count_index_scan(rel)								\
 	do {															\
 		if (pgstat_should_count_relation(rel))						\
-			(rel)->pgstat_info->counts.numscans++;					\
+		{															\
+			Assert((rel)->pgstat_info->kind == PGSTAT_KIND_INDEX);	\
+			(rel)->pgstat_info->idx.numscans++;						\
+		}															\
 	} while (0)
 #define pgstat_count_index_tuples(rel, n)							\
 	do {															\
 		if (pgstat_should_count_relation(rel))						\
-			(rel)->pgstat_info->counts.tuples_returned += (n);		\
+		{															\
+			Assert((rel)->pgstat_info->kind == PGSTAT_KIND_INDEX);	\
+			(rel)->pgstat_info->idx.tuples_returned += (n);			\
+		}															\
 	} while (0)
 #define pgstat_count_buffer_read(rel)								\
 	do {															\
 		if (pgstat_should_count_relation(rel))						\
-			(rel)->pgstat_info->counts.blocks_fetched++;			\
+		{															\
+			if ((rel)->pgstat_info->kind == PGSTAT_KIND_INDEX)		\
+				(rel)->pgstat_info->idx.blocks_fetched++;			\
+			else													\
+				(rel)->pgstat_info->tab.counts.blocks_fetched++;		\
+		}															\
 	} while (0)
 #define pgstat_count_buffer_hit(rel)								\
 	do {															\
 		if (pgstat_should_count_relation(rel))						\
-			(rel)->pgstat_info->counts.blocks_hit++;				\
+		{															\
+			if ((rel)->pgstat_info->kind == PGSTAT_KIND_INDEX)		\
+				(rel)->pgstat_info->idx.blocks_hit++;				\
+			else													\
+				(rel)->pgstat_info->tab.counts.blocks_hit++;			\
+		}															\
 	} while (0)
 
 extern void pgstat_count_heap_insert(Relation rel, PgStat_Counter n);
@@ -792,8 +852,8 @@ extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry(Oid relid);
 extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry_ext(bool shared,
 														   Oid reloid,
 														   bool *may_free);
-extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
-extern PgStat_TableStatus *find_tabstat_entry_kind(PgStat_Kind kind, Oid rel_id);
+extern PgStat_RelationStatus *find_relstat_entry_kind(PgStat_Kind kind,
+													  Oid rel_id);
 
 extern PgStat_StatIdxEntry *pgstat_fetch_stat_idxentry(Oid relid);
 extern PgStat_StatIdxEntry *pgstat_fetch_stat_idxentry_ext(bool shared,

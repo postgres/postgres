@@ -310,7 +310,7 @@ static const PgStat_KindInfo pgstat_kind_builtin_infos[PGSTAT_KIND_BUILTIN_SIZE]
 		.shared_size = sizeof(PgStatShared_Relation),
 		.shared_data_off = offsetof(PgStatShared_Relation, stats),
 		.shared_data_len = sizeof(((PgStatShared_Relation *) 0)->stats),
-		.pending_size = sizeof(PgStat_TableStatus),
+		.pending_size = sizeof(PgStat_RelationStatus),
 
 		.flush_pending_cb = pgstat_relation_flush_cb,
 		.delete_pending_cb = pgstat_relation_delete_pending_cb,
@@ -326,7 +326,7 @@ static const PgStat_KindInfo pgstat_kind_builtin_infos[PGSTAT_KIND_BUILTIN_SIZE]
 		.shared_size = sizeof(PgStatShared_Index),
 		.shared_data_off = offsetof(PgStatShared_Index, stats),
 		.shared_data_len = sizeof(((PgStatShared_Index *) 0)->stats),
-		.pending_size = sizeof(PgStat_TableStatus),
+		.pending_size = sizeof(PgStat_RelationStatus),
 
 		.flush_pending_cb = pgstat_index_flush_cb,
 		.delete_pending_cb = pgstat_index_delete_pending_cb,

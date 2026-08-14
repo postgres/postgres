@@ -1928,12 +1928,13 @@ CppConcat(pg_stat_get_xact_,stat)(PG_FUNCTION_ARGS)		\
 {														\
 	Oid         relid = PG_GETARG_OID(0);				\
 	int64       result;									\
-	PgStat_TableStatus *tabentry;						\
+	PgStat_RelationStatus *tabentry;						\
 														\
-	if ((tabentry = find_tabstat_entry(relid)) == NULL)	\
+	if ((tabentry = find_relstat_entry_kind(PGSTAT_KIND_RELATION, \
+											relid)) == NULL)	\
 		result = 0;										\
 	else												\
-		result = (int64) (tabentry->counts.stat);		\
+		result = (int64) (tabentry->tab.counts.stat);		\
 														\
 	PG_RETURN_INT64(result);							\
 }
@@ -1977,13 +1978,13 @@ CppConcat(pg_stat_get_xact_idx_,stat)(PG_FUNCTION_ARGS) \
 {														\
 	Oid         relid = PG_GETARG_OID(0);				\
 	int64       result;									\
-	PgStat_TableStatus *tabentry;						\
+	PgStat_RelationStatus *tabentry;						\
 														\
-	tabentry = find_tabstat_entry_kind(PGSTAT_KIND_INDEX, relid); \
+	tabentry = find_relstat_entry_kind(PGSTAT_KIND_INDEX, relid); \
 	if (!tabentry)										\
 		result = 0;										\
 	else												\
-		result = (int64) (tabentry->counts.stat);		\
+		result = (int64) (tabentry->idx.stat);		\
 														\
 	PG_RETURN_INT64(result);							\
 }

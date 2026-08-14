@@ -35,21 +35,21 @@ bool
 pgstat_index_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 {
 	Oid			dboid;
-	PgStat_TableStatus *lstats; /* pending stats entry */
+	PgStat_RelationStatus *lstats;	/* pending stats entry */
 	PgStatShared_Index *shidxstats;
 	PgStat_StatIdxEntry *idxentry;	/* index entry of shared stats */
 	PgStat_StatDBEntry *dbentry;	/* pending database entry */
 
 	dboid = entry_ref->shared_entry->key.dboid;
-	lstats = (PgStat_TableStatus *) entry_ref->pending;
+	lstats = (PgStat_RelationStatus *) entry_ref->pending;
 	shidxstats = (PgStatShared_Index *) entry_ref->shared_stats;
 
 	/*
 	 * Ignore entries that didn't accumulate any actual counts, such as
 	 * indexes that were opened by the planner but not used.
 	 */
-	if (pg_memory_is_all_zeros(&lstats->counts,
-							   sizeof(struct PgStat_TableCounts)))
+	if (pg_memory_is_all_zeros(&lstats->idx,
+							   sizeof(struct PgStat_IndexCounts)))
 		return true;
 
 	if (!pgstat_lock_entry(entry_ref, nowait))
@@ -58,27 +58,27 @@ pgstat_index_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 	/* Add the values to the shared entry. */
 	idxentry = &shidxstats->stats;
 
-	idxentry->numscans += lstats->counts.numscans;
-	if (lstats->counts.numscans)
+	idxentry->numscans += lstats->idx.numscans;
+	if (lstats->idx.numscans)
 	{
 		TimestampTz t = GetCurrentTransactionStopTimestamp();
 
 		if (t > idxentry->lastscan)
 			idxentry->lastscan = t;
 	}
-	idxentry->tuples_returned += lstats->counts.tuples_returned;
-	idxentry->tuples_fetched += lstats->counts.tuples_fetched;
-	idxentry->blocks_fetched += lstats->counts.blocks_fetched;
-	idxentry->blocks_hit += lstats->counts.blocks_hit;
+	idxentry->tuples_returned += lstats->idx.tuples_returned;
+	idxentry->tuples_fetched += lstats->idx.tuples_fetched;
+	idxentry->blocks_fetched += lstats->idx.blocks_fetched;
+	idxentry->blocks_hit += lstats->idx.blocks_hit;
 
 	pgstat_unlock_entry(entry_ref);
 
 	/* The entry was successfully flushed, add the same to database stats */
 	dbentry = pgstat_prep_database_pending(dboid);
-	dbentry->tuples_returned += lstats->counts.tuples_returned;
-	dbentry->tuples_fetched += lstats->counts.tuples_fetched;
-	dbentry->blocks_fetched += lstats->counts.blocks_fetched;
-	dbentry->blocks_hit += lstats->counts.blocks_hit;
+	dbentry->tuples_returned += lstats->idx.tuples_returned;
+	dbentry->tuples_fetched += lstats->idx.tuples_fetched;
+	dbentry->blocks_fetched += lstats->idx.blocks_fetched;
+	dbentry->blocks_hit += lstats->idx.blocks_hit;
 
 	return true;
 }
@@ -89,7 +89,7 @@ pgstat_index_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 void
 pgstat_index_delete_pending_cb(PgStat_EntryRef *entry_ref)
 {
-	PgStat_TableStatus *pending = (PgStat_TableStatus *) entry_ref->pending;
+	PgStat_RelationStatus *pending = (PgStat_RelationStatus *) entry_ref->pending;
 
 	if (pending->relation)
 		pgstat_unlink_relation(pending->relation);

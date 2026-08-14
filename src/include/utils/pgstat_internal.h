@@ -215,7 +215,7 @@ typedef struct PgStat_SubXactStatus
 
 	/*
 	 * Tuple insertion/deletion counts for an open transaction can't be
-	 * propagated into PgStat_TableStatus counters until we know if it is
+	 * propagated into PgStat_RelationStatus counters until we know if it is
 	 * going to commit or abort.  Hence, we keep these counts in per-subxact
 	 * structs that live in TopTransactionContext.  This data structure is
 	 * designed on the assumption that subxacts won't usually modify very many

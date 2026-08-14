@@ -2348,6 +2348,7 @@ PgStat_FunctionCallUsage
 PgStat_FunctionCounts
 PgStat_HashKey
 PgStat_IO
+PgStat_IndexCounts
 PgStat_KindInfo
 PgStat_LocalState
 PgStat_Lock
@@ -2355,6 +2356,7 @@ PgStat_LockEntry
 PgStat_PendingDroppedStatsItem
 PgStat_PendingIO
 PgStat_PendingLock
+PgStat_RelationStatus
 PgStat_SLRUStats
 PgStat_ShmemControl
 PgStat_Snapshot
@@ -2370,7 +2372,6 @@ PgStat_StatTabEntry
 PgStat_StatsFileOp
 PgStat_SubXactStatus
 PgStat_TableCounts
-PgStat_TableStatus
 PgStat_TableXactStatus
 PgStat_WalCounters
 PgStat_WalStats

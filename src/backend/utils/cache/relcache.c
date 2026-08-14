@@ -2760,7 +2760,7 @@ RelationRebuildRelation(Relation relation)
 		/* toast OID override must be preserved */
 		SWAPFIELD(Oid, rd_toastoid);
 		/* pgstat_info / enabled must be preserved */
-		SWAPFIELD(struct PgStat_TableStatus *, pgstat_info);
+		SWAPFIELD(struct PgStat_RelationStatus *, pgstat_info);
 		SWAPFIELD(bool, pgstat_enabled);
 		/* preserve old partition key if we have one */
 		if (keep_partkey)
