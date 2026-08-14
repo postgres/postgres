@@ -4626,7 +4626,7 @@ CREATE TABLE simport_table (c1 int, c2 text);
 CREATE FOREIGN TABLE simport_ftable (c1 int, c2 text, cx int)
        SERVER loopback OPTIONS (table_name 'simport_table');
 ALTER FOREIGN TABLE simport_ftable ALTER COLUMN cx OPTIONS (ADD column_name 'c1');
-ALTER FOREIGN TABLE simport_ftable OPTIONS (ADD restore_stats 'true');
+ALTER FOREIGN TABLE simport_ftable OPTIONS (ADD import_stats 'true');
 
 ANALYZE simport_ftable;                   -- should fail
 
@@ -4682,7 +4682,7 @@ ANALYZE simport_ftable (c1, c1);          -- should fail
 CREATE VIEW simport_view AS SELECT * FROM simport_table;
 CREATE FOREIGN TABLE simport_fview (c1 int, c2 text)
        SERVER loopback OPTIONS (table_name 'simport_view');
-ALTER FOREIGN TABLE simport_fview OPTIONS (ADD restore_stats 'true');
+ALTER FOREIGN TABLE simport_fview OPTIONS (ADD import_stats 'true');
 
 ANALYZE simport_fview;                    -- should fail
 
@@ -4690,7 +4690,7 @@ ANALYZE simport_fview;                    -- should fail
 -- single quotes or backslashes
 CREATE TABLE dtest_table ("col'quote" int, "col\backslash" int);
 CREATE FOREIGN TABLE dtest_ftable ("col'quote" int, "col\backslash" int)
-       SERVER loopback OPTIONS (table_name 'dtest_table', restore_stats 'true');
+       SERVER loopback OPTIONS (table_name 'dtest_table', import_stats 'true');
 
 INSERT INTO dtest_table SELECT g, g FROM generate_series(1, 10) g;
 ANALYZE dtest_table;
