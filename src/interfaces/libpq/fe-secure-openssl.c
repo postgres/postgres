@@ -422,8 +422,8 @@ pgtls_get_peer_certificate_hash(PGconn *conn, size_t *len)
 			algo_name = OBJ_nid2sn(algo_nid);
 			if (algo_name == NULL)
 			{
-				libpq_append_conn_error(conn, "could not find digest for NID %s",
-										OBJ_nid2sn(algo_nid));
+				libpq_append_conn_error(conn, "could not find digest for NID %d",
+										algo_nid);
 				return NULL;
 			}
 			break;

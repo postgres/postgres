@@ -2326,8 +2326,8 @@ be_tls_get_certificate_hash(Port *port, size_t *len)
 		default:
 			algo_name = OBJ_nid2sn(algo_nid);
 			if (algo_name == NULL)
-				elog(ERROR, "could not find digest for NID %s",
-					 OBJ_nid2sn(algo_nid));
+				elog(ERROR, "could not find digest for NID %d",
+					 algo_nid);
 			break;
 	}
 
