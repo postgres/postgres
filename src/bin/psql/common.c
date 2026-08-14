@@ -1796,15 +1796,36 @@ ExecQueryAndProcessResults(const char *query,
 		PsqlScanState scan_state;
 		PQExpBuffer query_buf;
 		promptStatus_t prompt_tmp;
+		PsqlScanResult scan_result;
 
 		scan_state = psql_scan_create(&psqlscan_callbacks);
 		psql_scan_setup(scan_state, query, strlen(query),
 						pset.encoding, standard_strings());
 		query_buf = createPQExpBuffer();
 
-		(void) psql_scan(scan_state, query_buf, &prompt_tmp);
+		/*
+		 * A semicolon ends only one sub-command; keep scanning so that COPY
+		 * FROM STDIN commands past the first semicolon are counted too.  The
+		 * count accumulates in scan_state across the psql_scan() calls.
+		 */
+		do
+		{
+			scan_result = psql_scan(scan_state, query_buf, &prompt_tmp);
+		} while (scan_result == PSCAN_SEMICOLON);
 
-		num_copy_from_stdin = psql_scan_count_copy_from_stdin(scan_state);
+		/*
+		 * We expect the result now to be PSCAN_EOL.  If it is PSCAN_BACKSLASH
+		 * or PSCAN_INCOMPLETE, the server will get a parse error and refuse
+		 * to execute any part of the command string, so don't expect any
+		 * PGRES_COPY_IN results.  (This will mean that we don't attempt to
+		 * discard any following data, but this seems consistent with the
+		 * general contract of psql_scan_count_copy_from_stdin, which is that
+		 * it only promises to count syntactically-valid COPY commands.)
+		 */
+		if (scan_result == PSCAN_EOL)
+			num_copy_from_stdin = psql_scan_count_copy_from_stdin(scan_state);
+		else
+			num_copy_from_stdin = 0;
 
 		destroyPQExpBuffer(query_buf);
 		psql_scan_destroy(scan_state);
