@@ -534,7 +534,7 @@ pgss_shmem_init(void *arg)
 	FILE	   *qfile = NULL;
 	uint32		header;
 	int64		num;
-	int32		pgver;
+	uint32		pgver;
 	int			buffer_size;
 	char	   *buffer = NULL;
 
