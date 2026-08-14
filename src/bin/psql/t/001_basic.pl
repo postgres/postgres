@@ -533,6 +533,36 @@ psql_fails_like(
 	qr/COPY in a pipeline is not supported, aborting connection/,
 	'\copy to in pipeline: fails');
 
+# Test execution of COPY FROM STDIN in -c.  This case is a bit weird
+# because it will read from psql's stdin not from the command source.
+# To make it even weirder, try two such commands, to stress psql's logic
+# that counts them.  Also test both \. and EOF termination.
+{
+	$node->safe_psql('postgres', 'CREATE TABLE copy_stdin_count (a int)');
+	my ($stdin, $stdout, $stderr) = ("50\n\\.\n60\n", '', '');
+	my $ret = IPC::Run::run(
+		[
+			'psql', '--no-psqlrc',
+			'--set' => 'ON_ERROR_STOP=1',
+			'--dbname' => $node->connstr('postgres'),
+			'--command' =>
+			  'COPY copy_stdin_count FROM STDIN; COPY copy_stdin_count FROM STDIN',
+		],
+		'<' => \$stdin,
+		'>' => \$stdout,
+		'2>' => \$stderr);
+
+	ok($ret, '-c COPY FROM STDIN: psql exits 0');
+	unlike(
+		$stderr,
+		qr/unexpected COPY_IN result/,
+		'-c COPY FROM STDIN: unexpected COPY_IN result');
+
+	my $data = $node->safe_psql('postgres', 'SELECT * FROM copy_stdin_count');
+	is($data, "50\n60", '-c COPY FROM STDIN: correct data loaded');
+}
+
+# Test \restrict and \unrestrict.
 psql_fails_like(
 	$node,
 	qq{\\restrict test
