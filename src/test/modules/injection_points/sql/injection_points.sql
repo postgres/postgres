@@ -88,6 +88,20 @@ SELECT injection_points_detach('TestConditionError');
 SELECT injection_points_attach('TestConditionLocal1', 'error');
 SELECT injection_points_detach('TestConditionLocal1');
 
+-- String match
+SELECT injection_points_attach('TestConditionString', 'notice', 'MyString');
+SELECT injection_points_run('TestConditionString', 'MyString'); -- notice
+SELECT injection_points_run('TestConditionString', 'WrongString'); -- nothing
+SELECT injection_points_run('TestConditionString', NULL); -- nothing
+SELECT injection_points_detach('TestConditionString');
+-- string too long for attach
+SELECT injection_points_attach('TestConditionTooLong', 'error', repeat('a', 256));
+-- empty condition string
+SELECT injection_points_attach('TestConditionEmpty', 'error', '');
+-- NULL name or action (strictness)
+SELECT injection_points_attach(NULL, 'error', 'MyString');
+SELECT injection_points_attach('TestConditionNull', NULL, 'MyString');
+
 -- Function variant for attach.
 SELECT injection_points_attach(repeat('a', 64), 'injection_points',
   'injection_notice', NULL);

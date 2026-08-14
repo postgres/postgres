@@ -307,6 +307,49 @@ SELECT injection_points_detach('TestConditionLocal1');
  
 (1 row)
 
+-- String match
+SELECT injection_points_attach('TestConditionString', 'notice', 'MyString');
+ injection_points_attach 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_run('TestConditionString', 'MyString'); -- notice
+NOTICE:  notice triggered for injection point TestConditionString (MyString)
+ injection_points_run 
+----------------------
+ 
+(1 row)
+
+SELECT injection_points_run('TestConditionString', 'WrongString'); -- nothing
+ injection_points_run 
+----------------------
+ 
+(1 row)
+
+SELECT injection_points_run('TestConditionString', NULL); -- nothing
+ injection_points_run 
+----------------------
+ 
+(1 row)
+
+SELECT injection_points_detach('TestConditionString');
+ injection_points_detach 
+-------------------------
+ 
+(1 row)
+
+-- string too long for attach
+SELECT injection_points_attach('TestConditionTooLong', 'error', repeat('a', 256));
+ERROR:  injection point condition string too long (maximum of 255 characters)
+-- empty condition string
+SELECT injection_points_attach('TestConditionEmpty', 'error', '');
+ERROR:  injection point condition string must not be empty
+-- NULL name or action (strictness)
+SELECT injection_points_attach(NULL, 'error', 'MyString');
+ERROR:  injection point name must not be null
+SELECT injection_points_attach('TestConditionNull', NULL, 'MyString');
+ERROR:  injection point action must not be null
 -- Function variant for attach.
 SELECT injection_points_attach(repeat('a', 64), 'injection_points',
   'injection_notice', NULL);
