@@ -3953,8 +3953,14 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * the WITH CHECK OPTION, or any parent view specified WITH CASCADED CHECK
 	 * OPTION, add the quals from the view to the query's withCheckOptions
 	 * list.
+	 *
+	 * DELETE FOR PORTION OF needs this too: it inserts temporal leftovers to
+	 * preserve the untouched parts of the deleted row, and those must not
+	 * escape the view either.  For UPDATE, any WCO we add below will apply to
+	 * inserted leftovers as well.
 	 */
-	if (insert_or_update)
+	if (insert_or_update ||
+		(parsetree->commandType == CMD_DELETE && parsetree->forPortionOf != NULL))
 	{
 		bool		has_wco = RelationHasCheckOption(view);
 		bool		cascaded = RelationHasCascadedCheckOption(view);

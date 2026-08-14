@@ -197,11 +197,12 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
       commands on the view will be checked to ensure that new rows satisfy the
       view-defining condition (that is, the new rows are checked to ensure that
       they are visible through the view).  If they are not, the update will be
-      rejected.  If the <literal>CHECK OPTION</literal> is not specified,
-      <command>INSERT</command>, <command>UPDATE</command>, and
-      <command>MERGE</command> commands on the view are
-      allowed to create rows that are not visible through the view.  The
-      following check options are supported:
+      rejected.  The <glossterm linkend="glossary-temporal-leftovers">temporal
+      leftovers</glossterm> inserted by an <command>UPDATE</command> or
+      <command>DELETE</command> with a <literal>FOR PORTION OF</literal> clause
+      are checked in the same way.  If the <literal>CHECK OPTION</literal> is
+      not specified, these commands are allowed to create rows that are not
+      visible through the view.  The following check options are supported:
 
       <variablelist>
        <varlistentry>
@@ -431,10 +432,13 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     potentially insert base-relation rows
     that do not satisfy the <literal>WHERE</literal> condition and thus are not
     visible through the view (<literal>ON CONFLICT DO SELECT/UPDATE</literal> may
-    similarly affect an existing row not visible through the view).
+    similarly affect an existing row not visible through the view).  An
+    <command>UPDATE</command> or <command>DELETE</command> with a
+    <literal>FOR PORTION OF</literal> clause can do so as well, since the
+    temporal leftovers it inserts may fall outside the
+    <literal>WHERE</literal> condition.
     The <literal>CHECK OPTION</literal> may be used to prevent
-    <command>INSERT</command>, <command>UPDATE</command>, and
-    <command>MERGE</command> commands from creating such rows that are not
+    these commands from creating such rows that are not
     visible through the view.
    </para>
 
