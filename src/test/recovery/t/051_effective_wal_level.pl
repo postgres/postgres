@@ -563,13 +563,14 @@ hot_standby_feedback = on
 		"logical decoding got activated on standby5");
 
 	# Start slot synchronization, stopping it after fetching the remote slot
-	# information but before creating the local slot.
+	# information but before creating the local slot.  Note that this point
+	# waits when reaching the creation of slot "sync_slot".
 	my $psql_sync_slot = $standby5->background_psql('postgres');
 	$psql_sync_slot->query_until(
 		qr/sync_slots/,
 		q(\echo sync_slots
 select injection_points_set_local();
-select injection_points_attach('replication-slot-create-begin', 'wait');
+select injection_points_attach('replication-slot-create-begin', 'wait', 'sync_slot');
 select pg_sync_replication_slots();
 ));
 	$standby5->wait_for_event('client backend',
@@ -618,11 +619,13 @@ select pg_sync_replication_slots();
 	# Start creating a logical slot, stopping it before creating the slot.
 	$psql_create_slot =
 	  $standby5->background_psql('postgres', on_error_stop => 0);
+	# Note that this point waits when reaching the creation of slot
+	# "standby5_slot".
 	$psql_create_slot->query_until(
 		qr/create_standby5_slot/,
 		q(\echo create_standby5_slot
 select injection_points_set_local();
-select injection_points_attach('replication-slot-create-begin', 'wait');
+select injection_points_attach('replication-slot-create-begin', 'wait', 'standby5_slot');
 select pg_create_logical_replication_slot('standby5_slot', 'test_decoding');
 ));
 	$standby5->wait_for_event('client backend',
