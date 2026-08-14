@@ -367,6 +367,8 @@ generate_queries_for_path_pattern_recurse(RangeTblEntry *rte, List *pathqueries,
 
 	foreach_ptr(struct path_element, pe, path_elems)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		/* Update current path being built with current element. */
 		cur_path = lappend(cur_path, pe);
 
