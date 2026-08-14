@@ -228,7 +228,7 @@ extern void select_best_grantor(Oid roleId, AclMode privileges,
 								Oid *grantorId, AclMode *grantOptions);
 
 /* DATABASEOID syscache hash value for our own database, set by initialize_acl */
-extern uint32 cached_db_hash;
+extern PGDLLIMPORT uint32 cached_db_hash;
 
 extern void initialize_acl(void);
 
