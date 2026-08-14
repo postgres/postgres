@@ -11,7 +11,9 @@
  *	  src/backend/tcop/fastpath.c
  *
  * NOTES
- *	  This cruft is the server side of PQfn.
+ *	  This cruft is the server side of PQfn.  libpq's PQfn() was retired in
+ *	  v20 and now always errors, but the server code is retained for the
+ *	  benefit of older clients and the frontend LO interface.
  *
  *-------------------------------------------------------------------------
  */

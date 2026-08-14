@@ -1,0 +1,30 @@
+<!-- doc/src/sgml/appendix-obsolete-libpq-fastpath.sgml -->
+<!--
+  See doc/src/sgml/appendix-obsolete.sgml for why this file exists. Do not change the id attribute.
+-->
+
+<sect1 id="libpq-fastpath">
+  <title><application>libpq</application> Fast-Path Interface Removed</title>
+
+   <indexterm zone="libpq-fastpath">
+    <primary>fast path</primary>
+   </indexterm>
+
+   <indexterm zone="libpq-fastpath">
+    <primary>PQfn</primary>
+   </indexterm>
+
+   <para>
+    In <productname>PostgreSQL</productname> 19 and below,
+    <application>libpq</application> supported a fast-path interface to send
+    simple function calls to the server via the <function>PQfn</function>
+    function.  This interface was unsafe and obsolete, and thus was removed in
+    <productname>PostgreSQL</productname> 20.  The <function>PQfn</function>
+    symbol still exists so that applications continue to link, but it now
+    always fails.  One can achieve similar performance and greater
+    functionality by setting up a prepared statement to define the function
+    call.  Then, executing the statement with binary transmission of parameters
+    and results substitutes for a fast-path function call.
+   </para>
+
+</sect1>

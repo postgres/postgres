@@ -2207,7 +2207,7 @@ pqEndcopy3(PGconn *conn)
 
 
 /*
- * PQfn - Send a function call to the POSTGRES backend.
+ * PQnfn - Send a function call to the POSTGRES backend.
  *
  * See fe-exec.c for documentation.
  */
@@ -2224,10 +2224,10 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 	int			avail;
 	int			i;
 
-	/* already validated by PQfn */
+	/* already validated by PnQfn */
 	Assert(conn->pipelineStatus == PQ_PIPELINE_OFF);
 
-	/* PQfn already validated connection state */
+	/* PQnfn already validated connection state */
 
 	if (pqPutMsgStart(PqMsg_FunctionCall, conn) < 0 ||
 		pqPutInt(fnid, 4, conn) < 0 ||	/* function id */

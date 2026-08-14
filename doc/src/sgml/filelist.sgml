@@ -210,3 +210,4 @@
 <!ENTITY obsolete-pgreceivexlog SYSTEM "appendix-obsolete-pgreceivexlog.sgml">
 <!ENTITY obsolete-auth-radius SYSTEM "appendix-obsolete-auth-radius.sgml">
 <!ENTITY obsolete-refint SYSTEM "appendix-obsolete-refint.sgml">
+<!ENTITY obsolete-libpq-fastpath SYSTEM "appendix-obsolete-libpq-fastpath.sgml">

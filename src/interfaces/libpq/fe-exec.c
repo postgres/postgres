@@ -2986,10 +2986,10 @@ PQendcopy(PGconn *conn)
  *		nargs			: # of arguments in args array.
  *
  * RETURNS
- *		PGresult with status = PGRES_COMMAND_OK if successful.
- *			*result_len is > 0 if there is a return value, 0 if not.
- *		PGresult with status = PGRES_FATAL_ERROR if backend returns an error.
- *		NULL on communications failure.  conn->errorMessage will be set.
+ *		This function was unsafe and is no longer supported, so it now always
+ *		sets *result_len to 0 and returns a PGresult with status set to
+ *		PGRES_FATAL_ERROR.  As before, NULL is returned instead when conn is
+ *		NULL or when the connection state doesn't permit a query cycle.
  * ----------------
  */
 
@@ -3002,15 +3002,52 @@ PQfn(PGconn *conn,
 	 const PQArgBlock *args,
 	 int nargs)
 {
-	return PQnfn(conn, fnid, result_buf, -1, result_len,
-				 result_is_int, args, nargs);
+	*result_len = 0;
+
+	if (!conn)
+		return NULL;
+
+	/*
+	 * Since this is the beginning of a query cycle, reset the error state.
+	 * However, in pipeline mode with something already queued, the error
+	 * buffer belongs to that command and we shouldn't clear it.
+	 */
+	if (conn->cmd_queue_head == NULL)
+		pqClearConnErrorState(conn);
+
+	/*
+	 * The following state checks may look pointless for a function that can
+	 * no longer succeed, but they must stay ahead of the pqSaveErrorResult()
+	 * call below, which discards any result that is still being assembled.
+	 */
+	if (conn->pipelineStatus != PQ_PIPELINE_OFF)
+	{
+		libpq_append_conn_error(conn, "%s not allowed in pipeline mode", "PQfn");
+		return NULL;
+	}
+
+	if (conn->sock == PGINVALID_SOCKET || conn->asyncStatus != PGASYNC_IDLE ||
+		pgHavePendingResult(conn))
+	{
+		libpq_append_conn_error(conn, "connection in wrong state");
+		return NULL;
+	}
+
+	libpq_append_conn_error(conn,
+							"PQfn() is no longer supported; use a prepared "
+							"statement or PQexecParams() with binary "
+							"parameters and results instead");
+	pqSaveErrorResult(conn);
+	return pqPrepareAsyncResult(conn);
 }
 
 /*
  * PQnfn
- *		Private version of PQfn() with verification that returned data fits in
- *		result_buf when result_is_int == 0.  Setting buf_size to -1 disables
- *		this verification.
+ *		Private version of the fast-path interface with verification that
+ *		returned data fits in result_buf when result_is_int == 0.  Setting
+ *		buf_size to -1 disables this verification.  This is currently only
+ *		used by the frontend LO interface and will hopefully be removed down
+ *		the road.
  */
 PGresult *
 PQnfn(PGconn *conn, int fnid, int *result_buf, int buf_size, int *result_len,

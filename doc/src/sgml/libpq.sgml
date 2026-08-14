@@ -5887,7 +5887,7 @@ int PQflush(PGconn *conn);
     are permitted, command strings containing multiple SQL commands are
     disallowed, and so is <literal>COPY</literal>.
     Using synchronous command execution functions
-    such as <function>PQfn</function>,
+    such as
     <function>PQexec</function>,
     <function>PQexecParams</function>,
     <function>PQprepare</function>,
@@ -7044,121 +7044,6 @@ int PQrequestCancel(PGconn *conn);
     </varlistentry>
    </variablelist>
   </sect2>
- </sect1>
-
- <sect1 id="libpq-fastpath">
-  <title>The Fast-Path Interface</title>
-
-  <indexterm zone="libpq-fastpath">
-   <primary>fast path</primary>
-  </indexterm>
-
-  <para>
-   <productname>PostgreSQL</productname> provides a fast-path interface
-   to send simple function calls to the server.
-  </para>
-
-  <warning>
-   <para>
-    This interface is unsafe and should not be used.  When
-    <parameter>result_is_int</parameter> is set to <literal>0</literal>,
-    <function>PQfn</function> may write data beyond the end of
-    <parameter>result_buf</parameter>, regardless of whether the buffer has
-    enough space for the requested number of bytes.  Furthermore, it is
-    obsolete, as one can achieve similar
-    performance and greater functionality by setting up a prepared
-    statement to define the function call.  Then, executing the statement
-    with binary transmission of parameters and results substitutes for a
-    fast-path function call.
-   </para>
-  </warning>
-
-  <para>
-   The function <function id="libpq-PQfn">PQfn</function><indexterm><primary>PQfn</primary></indexterm>
-   requests execution of a server function via the fast-path interface:
-<synopsis>
-PGresult *PQfn(PGconn *conn,
-               int fnid,
-               int *result_buf,
-               int *result_len,
-               int result_is_int,
-               const PQArgBlock *args,
-               int nargs);
-
-typedef struct
-{
-    int len;
-    int isint;
-    union
-    {
-        int *ptr;
-        int integer;
-    } u;
-} PQArgBlock;
-</synopsis>
-  </para>
-
-  <para>
-   The <parameter>fnid</parameter> argument is the OID of the function to be
-   executed.  <parameter>args</parameter> and <parameter>nargs</parameter> define the
-   parameters to be passed to the function; they must match the declared
-   function argument list.  When the <parameter>isint</parameter> field of a
-   parameter structure is true, the <parameter>u.integer</parameter> value is sent
-   to the server as an integer of the indicated length (this must be
-   2 or 4 bytes); proper byte-swapping occurs.  When <parameter>isint</parameter>
-   is false, the indicated number of bytes at <parameter>*u.ptr</parameter> are
-   sent with no processing; the data must be in the format expected by
-   the server for binary transmission of the function's argument data
-   type.  (The declaration of <parameter>u.ptr</parameter> as being of
-   type <type>int *</type> is historical; it would be better to consider
-   it <type>void *</type>.)
-   <parameter>result_buf</parameter> points to the buffer in which to place
-   the function's return value.  The caller must have allocated sufficient
-   space to store the return value.  (There is no check!) The actual result
-   length in bytes will be returned in the integer pointed to by
-   <parameter>result_len</parameter>.  If a 2- or 4-byte integer result
-   is expected, set <parameter>result_is_int</parameter> to 1, otherwise
-   set it to 0.  Setting <parameter>result_is_int</parameter> to 1 causes
-   <application>libpq</application> to byte-swap the value if necessary, so that it
-   is delivered as a proper <type>int</type> value for the client machine;
-   note that a 4-byte integer is delivered into <parameter>*result_buf</parameter>
-   for either allowed result size.
-   When <parameter>result_is_int</parameter> is 0, the binary-format byte string
-   sent by the server is returned unmodified. (In this case it's better
-   to consider <parameter>result_buf</parameter> as being of
-   type <type>void *</type>.)
-  </para>
-
-  <para>
-   <function>PQfn</function> always returns a valid
-   <structname>PGresult</structname> pointer, with
-   status <literal>PGRES_COMMAND_OK</literal> for success
-   or <literal>PGRES_FATAL_ERROR</literal> if some problem was encountered.
-   The result status should be
-   checked before the result is used.   The caller is responsible for
-   freeing  the  <structname>PGresult</structname>  with
-   <xref linkend="libpq-PQclear"/> when it is no longer needed.
-  </para>
-
-  <para>
-   To pass a NULL argument to the function, set
-   the <parameter>len</parameter> field of that parameter structure
-   to <literal>-1</literal>; the <parameter>isint</parameter>
-   and <parameter>u</parameter> fields are then irrelevant.
-  </para>
-
-  <para>
-   If the function returns NULL, <parameter>*result_len</parameter> is set
-   to <literal>-1</literal>, and <parameter>*result_buf</parameter> is not
-   modified.
-  </para>
-
-  <para>
-   Note that it is not possible to handle set-valued results when using
-   this interface.  Also, the function must be a plain function, not an
-   aggregate, window function, or procedure.
-  </para>
-
  </sect1>
 
  <sect1 id="libpq-notify">

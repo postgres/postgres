@@ -584,8 +584,7 @@ extern PGPing PQpingParams(const char *const *keywords,
 extern int	PQflush(PGconn *conn);
 
 /*
- * "Fast path" interface --- not really recommended for application
- * use
+ * "Fast path" interface --- no longer supported, always fails
  */
 extern PGresult *PQfn(PGconn *conn,
 					  int fnid,
