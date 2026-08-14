@@ -365,13 +365,13 @@ OPTIONS (ADD password_required 'false');
     </varlistentry>
 
     <varlistentry>
-     <term><literal>restore_stats</literal> (<type>boolean</type>)</term>
+     <term><literal>import_stats</literal> (<type>boolean</type>)</term>
      <listitem>
       <para>
        This option, which can be specified for a foreign table or a foreign
        server, determines if <command>ANALYZE</command> on a foreign table
        will instead attempt to fetch the existing statistics for the foreign
-       table on the remote server, and restore those statistics directly to
+       table on the remote server, and import those statistics directly to
        the local server.  If the attempt failed, statistics are collected by
        row sampling on the foreign table.
        This option is only useful if the remote table is one that can have
@@ -386,7 +386,7 @@ OPTIONS (ADD password_required 'false');
        If the foreign table is a partition of a partitioned table, analyzing
        the partitioned table will still result in row sampling on the foreign
        table regardless of this setting, though direct analysis of the foreign
-       table would have attempted to fetch and restore remote statistics first.
+       table would have attempted to fetch and import remote statistics first.
       </para>
      </listitem>
     </varlistentry>
