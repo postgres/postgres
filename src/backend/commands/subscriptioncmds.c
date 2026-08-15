@@ -871,11 +871,17 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	values[Anum_pg_subscription_subretentionactive - 1] =
 		BoolGetDatum(opts.retaindeadtuples);
 	values[Anum_pg_subscription_subserver - 1] = ObjectIdGetDatum(serverid);
-	if (!OidIsValid(serverid))
+	if (stmt->conninfo)
+	{
+		Assert(stmt->conninfo == conninfo && !OidIsValid(serverid));
 		values[Anum_pg_subscription_subconninfo - 1] =
-			CStringGetTextDatum(conninfo);
+			CStringGetTextDatum(stmt->conninfo);
+	}
 	else
+	{
+		Assert(OidIsValid(serverid));
 		nulls[Anum_pg_subscription_subconninfo - 1] = true;
+	}
 	if (opts.slot_name)
 		values[Anum_pg_subscription_subslotname - 1] =
 			DirectFunctionCall1(namein, CStringGetDatum(opts.slot_name));
