@@ -272,9 +272,9 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 			char	   *plan_name;
 
 			/*
-			 * Generate Paths for the ANY subquery; we'll need all rows.
-			 * Use a distinct prefix for this user-visible name, since this is
-			 * an ANY implementation of the original EXISTS subplan.
+			 * Generate Paths for the ANY subquery; we'll need all rows. Use a
+			 * distinct prefix for this user-visible name, since this is an
+			 * ANY implementation of the original EXISTS subplan.
 			 */
 			plan_name = choose_plan_name(root->glob, "exists_to_any", true);
 			subroot = subquery_planner(root->glob, subquery, plan_name,
