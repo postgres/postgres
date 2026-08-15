@@ -1253,12 +1253,12 @@ rollback;  -- to get rid of the bogus operator
 explain (costs off)
 select count(*) from tenk1 t
 where (exists(select 1 from tenk1 k where k.unique1 = t.unique2) or ten < 0);
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
  Aggregate
    ->  Seq Scan on tenk1 t
-         Filter: ((ANY (unique2 = (hashed SubPlan exists_2).col1)) OR (ten < 0))
-         SubPlan exists_2
+         Filter: ((ANY (unique2 = (hashed SubPlan exists_to_any_1).col1)) OR (ten < 0))
+         SubPlan exists_to_any_1
            ->  Index Only Scan using tenk1_unique1 on tenk1 k
 (5 rows)
 
@@ -1303,8 +1303,8 @@ analyze exists_tbl;
 explain (costs off)
 select * from exists_tbl t1
   where (exists(select 1 from exists_tbl t2 where t1.c1 = t2.c2) or c3 < 0);
-                                QUERY PLAN                                 
----------------------------------------------------------------------------
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
  Append
    ->  Seq Scan on exists_tbl_null t1_1
          Filter: (EXISTS(SubPlan exists_1) OR (c3 < 0))
@@ -1315,8 +1315,8 @@ select * from exists_tbl t1
                  ->  Seq Scan on exists_tbl_def t2_2
                        Filter: (t1_1.c1 = c2)
    ->  Seq Scan on exists_tbl_def t1_2
-         Filter: ((ANY (c1 = (hashed SubPlan exists_2).col1)) OR (c3 < 0))
-         SubPlan exists_2
+         Filter: ((ANY (c1 = (hashed SubPlan exists_to_any_1).col1)) OR (c3 < 0))
+         SubPlan exists_to_any_1
            ->  Append
                  ->  Seq Scan on exists_tbl_null t2_4
                  ->  Seq Scan on exists_tbl_def t2_5
