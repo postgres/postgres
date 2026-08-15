@@ -22,7 +22,7 @@ SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(alt_t2@exists_1)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM alt_t1
 WHERE EXISTS (SELECT 1 FROM alt_t2 WHERE alt_t2.a = alt_t1.a) OR alt_t1.a < 0;
-SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(alt_t2@exists_2)';
+SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(alt_t2@exists_to_any_1)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM alt_t1
 WHERE EXISTS (SELECT 1 FROM alt_t2 WHERE alt_t2.a = alt_t1.a) OR alt_t1.a < 0;

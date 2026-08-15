@@ -12,15 +12,15 @@ VACUUM ANALYZE alt_t2;
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM alt_t1
 WHERE EXISTS (SELECT 1 FROM alt_t2 WHERE alt_t2.a = alt_t1.a) OR alt_t1.a < 0;
-                            QUERY PLAN                             
--------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Seq Scan on alt_t1
-   Filter: ((ANY (a = (hashed SubPlan exists_2).col1)) OR (a < 0))
-   SubPlan exists_2
+   Filter: ((ANY (a = (hashed SubPlan exists_to_any_1).col1)) OR (a < 0))
+   SubPlan exists_to_any_1
      ->  Seq Scan on alt_t2
  Generated Plan Advice:
-   SEQ_SCAN(alt_t1 alt_t2@exists_2)
-   NO_GATHER(alt_t1 alt_t2@exists_2)
+   SEQ_SCAN(alt_t1 alt_t2@exists_to_any_1)
+   NO_GATHER(alt_t1 alt_t2@exists_to_any_1)
    DO_NOT_SCAN(alt_t2@exists_1)
 (8 rows)
 
@@ -31,21 +31,21 @@ SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(alt_t2@exists_1)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM alt_t1
 WHERE EXISTS (SELECT 1 FROM alt_t2 WHERE alt_t2.a = alt_t1.a) OR alt_t1.a < 0;
-                            QUERY PLAN                             
--------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Seq Scan on alt_t1
-   Filter: ((ANY (a = (hashed SubPlan exists_2).col1)) OR (a < 0))
-   SubPlan exists_2
+   Filter: ((ANY (a = (hashed SubPlan exists_to_any_1).col1)) OR (a < 0))
+   SubPlan exists_to_any_1
      ->  Seq Scan on alt_t2
  Supplied Plan Advice:
    DO_NOT_SCAN(alt_t2@exists_1) /* matched */
  Generated Plan Advice:
-   SEQ_SCAN(alt_t1 alt_t2@exists_2)
-   NO_GATHER(alt_t1 alt_t2@exists_2)
+   SEQ_SCAN(alt_t1 alt_t2@exists_to_any_1)
+   NO_GATHER(alt_t1 alt_t2@exists_to_any_1)
    DO_NOT_SCAN(alt_t2@exists_1)
 (10 rows)
 
-SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(alt_t2@exists_2)';
+SET LOCAL pg_plan_advice.advice = 'DO_NOT_SCAN(alt_t2@exists_to_any_1)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM alt_t1
 WHERE EXISTS (SELECT 1 FROM alt_t2 WHERE alt_t2.a = alt_t1.a) OR alt_t1.a < 0;
@@ -57,12 +57,12 @@ WHERE EXISTS (SELECT 1 FROM alt_t2 WHERE alt_t2.a = alt_t1.a) OR alt_t1.a < 0;
      ->  Index Only Scan using alt_t2_a_idx on alt_t2
            Index Cond: (a = alt_t1.a)
  Supplied Plan Advice:
-   DO_NOT_SCAN(alt_t2@exists_2) /* matched */
+   DO_NOT_SCAN(alt_t2@exists_to_any_1) /* matched */
  Generated Plan Advice:
    SEQ_SCAN(alt_t1)
    INDEX_ONLY_SCAN(alt_t2@exists_1 public.alt_t2_a_idx)
    NO_GATHER(alt_t1 alt_t2@exists_1)
-   DO_NOT_SCAN(alt_t2@exists_2)
+   DO_NOT_SCAN(alt_t2@exists_to_any_1)
 (12 rows)
 
 COMMIT;

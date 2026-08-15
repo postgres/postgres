@@ -1967,15 +1967,15 @@ where asptab.id > ss.b::int;
    ->  Seq Scan on int4_tbl touter
    ->  Append
          ->  Index Only Scan using asptab0_pkey on asptab0 asptab_1
-               Index Cond: (id > (EXISTS(SubPlan exists_3))::integer)
-               SubPlan exists_4
+               Index Cond: (id > (EXISTS(SubPlan exists_2))::integer)
+               SubPlan exists_to_any_2
                  ->  Seq Scan on int4_tbl tinner_2
          ->  Index Only Scan using asptab1_pkey on asptab1 asptab_2
-               Index Cond: (id > (EXISTS(SubPlan exists_3))::integer)
-         SubPlan exists_3
+               Index Cond: (id > (EXISTS(SubPlan exists_2))::integer)
+         SubPlan exists_2
            ->  Seq Scan on int4_tbl tinner_1
                  Filter: (f1 = touter.f1)
-   SubPlan exists_2
+   SubPlan exists_to_any_1
      ->  Seq Scan on int4_tbl tinner
 (14 rows)
 
