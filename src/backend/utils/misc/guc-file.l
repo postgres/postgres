@@ -354,7 +354,8 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 	unsigned int save_ConfigFileLineno = ConfigFileLineno;
 	sigjmp_buf *save_GUC_flex_fatal_jmp = GUC_flex_fatal_jmp;
 	sigjmp_buf	flex_fatal_jmp;
-	yyscan_t	scanner;
+	volatile yyscan_t scanner = NULL;
+	yyscan_t scanner_init = NULL;	/* non-volatile for yylex_init() */
 	struct yyguts_t *yyg;		/* needed for yytext macro */
 	volatile YY_BUFFER_STATE lex_buffer = NULL;
 	int			errorcount;
@@ -384,11 +385,20 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 	ConfigFileLineno = 1;
 	errorcount = 0;
 
-	if (yylex_init(&scanner) != 0)
+	if (yylex_init(&scanner_init) != 0)
+	{
 		elog(elevel, "yylex_init() failed: %m");
+		goto cleanup;
+	}
+	scanner = scanner_init;
 	yyg = (struct yyguts_t *) scanner;
 
 	lex_buffer = yy_create_buffer(fp, YY_BUF_SIZE, scanner);
+	if (lex_buffer == NULL)
+	{
+		elog(elevel, "yy_create_buffer() failed");
+		goto cleanup;
+	}
 	yy_switch_to_buffer(lex_buffer, scanner);
 
 	/* This loop iterates once per logical line */
@@ -559,8 +569,11 @@ parse_error:
 	}
 
 cleanup:
-	yy_delete_buffer(lex_buffer, scanner);
-	yylex_destroy(scanner);
+	if (scanner)
+	{
+		yy_delete_buffer(lex_buffer, scanner);
+		yylex_destroy(scanner);
+	}
 	/* Each recursion level must save and restore these static variables. */
 	ConfigFileLineno = save_ConfigFileLineno;
 	GUC_flex_fatal_jmp = save_GUC_flex_fatal_jmp;
