@@ -142,9 +142,7 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		{
 			int			i;
 
-			gfbb->buffersOnLevels =
-				(List **) repalloc(gfbb->buffersOnLevels,
-								   (level + 1) * sizeof(List *));
+			gfbb->buffersOnLevels = repalloc_array(gfbb->buffersOnLevels, List *, level + 1);
 
 			/* initialize the enlarged portion */
 			for (i = gfbb->buffersOnLevelsLen; i <= level; i++)
@@ -203,9 +201,8 @@ gistAddLoadedBuffer(GISTBuildBuffers *gfbb, GISTNodeBuffer *nodeBuffer)
 	if (gfbb->loadedBuffersCount >= gfbb->loadedBuffersLen)
 	{
 		gfbb->loadedBuffersLen *= 2;
-		gfbb->loadedBuffers = (GISTNodeBuffer **)
-			repalloc(gfbb->loadedBuffers,
-					 gfbb->loadedBuffersLen * sizeof(GISTNodeBuffer *));
+		gfbb->loadedBuffers = repalloc_array(gfbb->loadedBuffers,
+											 GISTNodeBuffer *, gfbb->loadedBuffersLen);
 	}
 
 	gfbb->loadedBuffers[gfbb->loadedBuffersCount] = nodeBuffer;
@@ -488,9 +485,8 @@ gistBuffersReleaseBlock(GISTBuildBuffers *gfbb, long blocknum)
 	if (gfbb->nFreeBlocks >= gfbb->freeBlocksLen)
 	{
 		gfbb->freeBlocksLen *= 2;
-		gfbb->freeBlocks = (long *) repalloc(gfbb->freeBlocks,
-											 gfbb->freeBlocksLen *
-											 sizeof(long));
+		gfbb->freeBlocks = repalloc_array(gfbb->freeBlocks,
+										  long, gfbb->freeBlocksLen);
 	}
 
 	/* Add blocknum to array */

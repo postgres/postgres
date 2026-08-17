@@ -163,7 +163,7 @@ policy_role_list_to_array(List *roles, int *num_roles)
 	}
 
 	*num_roles = list_length(roles);
-	role_oids = (Datum *) palloc(*num_roles * sizeof(Datum));
+	role_oids = palloc_array(Datum, *num_roles);
 
 	foreach(cell, roles)
 	{

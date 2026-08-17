@@ -3120,9 +3120,8 @@ _bt_pendingfsm_add(BTVacState *vstate,
 			newbufsize = vstate->maxbufsize;
 
 		vstate->bufsize = newbufsize;
-		vstate->pendingpages =
-			repalloc(vstate->pendingpages,
-					 sizeof(BTPendingFSM) * vstate->bufsize);
+		vstate->pendingpages = repalloc_array(vstate->pendingpages,
+											  BTPendingFSM, vstate->bufsize);
 	}
 
 	/* Save metadata for newly deleted page */

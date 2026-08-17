@@ -173,11 +173,11 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 			if (ishypothetical)
 				numSortCols++;	/* make space for flag column */
 			qstate->numSortCols = numSortCols;
-			qstate->sortColIdx = (AttrNumber *) palloc(numSortCols * sizeof(AttrNumber));
-			qstate->sortOperators = (Oid *) palloc(numSortCols * sizeof(Oid));
-			qstate->eqOperators = (Oid *) palloc(numSortCols * sizeof(Oid));
-			qstate->sortCollations = (Oid *) palloc(numSortCols * sizeof(Oid));
-			qstate->sortNullsFirsts = (bool *) palloc(numSortCols * sizeof(bool));
+			qstate->sortColIdx = palloc_array(AttrNumber, numSortCols);
+			qstate->sortOperators = palloc_array(Oid, numSortCols);
+			qstate->eqOperators = palloc_array(Oid, numSortCols);
+			qstate->sortCollations = palloc_array(Oid, numSortCols);
+			qstate->sortNullsFirsts = palloc_array(bool, numSortCols);
 
 			i = 0;
 			foreach(lc, sortlist)
@@ -669,7 +669,7 @@ setup_pct_info(int num_percentiles,
 	struct pct_info *pct_info;
 	int			i;
 
-	pct_info = (struct pct_info *) palloc(num_percentiles * sizeof(struct pct_info));
+	pct_info = palloc_array(struct pct_info, num_percentiles);
 
 	for (i = 0; i < num_percentiles; i++)
 	{
@@ -775,8 +775,8 @@ percentile_disc_multi_final(PG_FUNCTION_ARGS)
 							  osastate->number_of_rows,
 							  false);
 
-	result_datum = (Datum *) palloc(num_percentiles * sizeof(Datum));
-	result_isnull = (bool *) palloc(num_percentiles * sizeof(bool));
+	result_datum = palloc_array(Datum, num_percentiles);
+	result_isnull = palloc_array(bool, num_percentiles);
 
 	/*
 	 * Start by dealing with any nulls in the param array - those are sorted
@@ -898,8 +898,8 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 							  osastate->number_of_rows,
 							  true);
 
-	result_datum = (Datum *) palloc(num_percentiles * sizeof(Datum));
-	result_isnull = (bool *) palloc(num_percentiles * sizeof(bool));
+	result_datum = palloc_array(Datum, num_percentiles);
+	result_isnull = palloc_array(bool, num_percentiles);
 
 	/*
 	 * Start by dealing with any nulls in the param array - those are sorted

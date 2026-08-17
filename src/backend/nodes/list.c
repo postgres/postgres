@@ -206,8 +206,7 @@ enlarge_list(List *list, int min_size)
 	{
 #ifndef DEBUG_LIST_MEMORY_USAGE
 		/* Normally, let repalloc deal with enlargement */
-		list->elements = (ListCell *) repalloc(list->elements,
-											   new_max_len * sizeof(ListCell));
+		list->elements = repalloc_array(list->elements, ListCell, new_max_len);
 #else
 		/*
 		 * repalloc() might enlarge the space in-place, which we don't want

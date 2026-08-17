@@ -299,7 +299,7 @@ current_schemas(PG_FUNCTION_ARGS)
 	int			i;
 	ArrayType  *array;
 
-	names = (Datum *) palloc(list_length(search_path) * sizeof(Datum));
+	names = palloc_array(Datum, list_length(search_path));
 	i = 0;
 	foreach(l, search_path)
 	{

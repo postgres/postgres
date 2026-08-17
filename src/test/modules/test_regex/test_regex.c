@@ -167,7 +167,7 @@ test_re_compile(text *text_re, int cflags, Oid collation,
 	char		errMsg[100];
 
 	/* Convert pattern string to wide characters */
-	pattern = (pg_wchar *) palloc((text_re_len + 1) * sizeof(pg_wchar));
+	pattern = palloc_array(pg_wchar, text_re_len + 1);
 	pattern_len = pg_mb2wchar_with_len(text_re_val,
 									   pattern,
 									   text_re_len);
@@ -503,8 +503,7 @@ setup_test_matches(text *orig_str,
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("too many regular expression matches")));
-			matchctx->match_locs = (int *) repalloc(matchctx->match_locs,
-													sizeof(int) * array_len);
+			matchctx->match_locs = repalloc_array(matchctx->match_locs, int, array_len);
 		}
 
 		/* save this match's locations */
@@ -552,8 +551,7 @@ setup_test_matches(text *orig_str,
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("too many regular expression matches")));
-			matchctx->match_locs = (int *) repalloc(matchctx->match_locs,
-													sizeof(int) * array_len);
+			matchctx->match_locs = repalloc_array(matchctx->match_locs, int, array_len);
 		}
 
 		matchctx->match_locs[array_idx++] = matchctx->details.rm_extend.rm_so;

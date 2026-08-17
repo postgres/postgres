@@ -3955,7 +3955,7 @@ read_cursor_args(PLpgSQL_var *cursor, int until, YYSTYPE *yylvalp, YYLTYPE *yyll
 	 * Read the arguments, one by one.
 	 */
 	row = (PLpgSQL_row *) plpgsql_Datums[cursor->cursor_explicit_argrow];
-	argv = (char **) palloc0_array(char *, row->nfields);
+	argv = palloc0_array(char *, row->nfields);
 
 	for (argc = 0; argc < row->nfields; argc++)
 	{

@@ -277,10 +277,8 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	 * and/or leaked resources if we try to handle SubPlans the same as
 	 * simpler expressions.)
 	 */
-	scanstate->exprlists = (List **)
-		palloc(scanstate->array_len * sizeof(List *));
-	scanstate->exprstatelists = (List **)
-		palloc0(scanstate->array_len * sizeof(List *));
+	scanstate->exprlists = palloc_array(List *, scanstate->array_len);
+	scanstate->exprstatelists = palloc0_array(List *, scanstate->array_len);
 	i = 0;
 	foreach(vtl, node->values_lists)
 	{

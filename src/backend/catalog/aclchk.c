@@ -1927,7 +1927,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 		 * corresponds to FirstLowInvalidHeapAttributeNumber.
 		 */
 		num_col_privileges = pg_class_tuple->relnatts - FirstLowInvalidHeapAttributeNumber + 1;
-		col_privileges = (AclMode *) palloc0(num_col_privileges * sizeof(AclMode));
+		col_privileges = palloc0_array(AclMode, num_col_privileges);
 		have_col_privileges = false;
 
 		/*

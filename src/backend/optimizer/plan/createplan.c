@@ -1736,8 +1736,8 @@ create_memoize_plan(PlannerInfo *root, MemoizePath *best_path, int flags)
 
 	nkeys = list_length(param_exprs);
 	Assert(nkeys > 0);
-	operators = palloc(nkeys * sizeof(Oid));
-	collations = palloc(nkeys * sizeof(Oid));
+	operators = palloc_array(Oid, nkeys);
+	collations = palloc_array(Oid, nkeys);
 
 	i = 0;
 	forboth(lc, param_exprs, lc2, best_path->hash_operators)
@@ -2279,7 +2279,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 			maxref = gc->tleSortGroupRef;
 	}
 
-	grouping_map = (AttrNumber *) palloc0((maxref + 1) * sizeof(AttrNumber));
+	grouping_map = palloc0_array(AttrNumber, maxref + 1);
 
 	/* Now look up the column numbers in the child's tlist */
 	foreach(lc, root->processed_groupClause)
@@ -2718,9 +2718,9 @@ create_limit_plan(PlannerInfo *root, LimitPath *best_path, int flags)
 		ListCell   *l;
 
 		numUniqkeys = list_length(parse->sortClause);
-		uniqColIdx = (AttrNumber *) palloc(numUniqkeys * sizeof(AttrNumber));
-		uniqOperators = (Oid *) palloc(numUniqkeys * sizeof(Oid));
-		uniqCollations = (Oid *) palloc(numUniqkeys * sizeof(Oid));
+		uniqColIdx = palloc_array(AttrNumber, numUniqkeys);
+		uniqOperators = palloc_array(Oid, numUniqkeys);
+		uniqCollations = palloc_array(Oid, numUniqkeys);
 
 		numUniqkeys = 0;
 		foreach(l, parse->sortClause)
@@ -4547,10 +4547,10 @@ create_mergejoin_plan(PlannerInfo *root,
 	 */
 	nClauses = list_length(mergeclauses);
 	Assert(nClauses == list_length(best_path->path_mergeclauses));
-	mergefamilies = (Oid *) palloc(nClauses * sizeof(Oid));
-	mergecollations = (Oid *) palloc(nClauses * sizeof(Oid));
-	mergereversals = (bool *) palloc(nClauses * sizeof(bool));
-	mergenullsfirst = (bool *) palloc(nClauses * sizeof(bool));
+	mergefamilies = palloc_array(Oid, nClauses);
+	mergecollations = palloc_array(Oid, nClauses);
+	mergereversals = palloc_array(bool, nClauses);
+	mergenullsfirst = palloc_array(bool, nClauses);
 
 	opathkey = NULL;
 	opeclass = NULL;
@@ -5314,7 +5314,7 @@ order_qual_clauses(PlannerInfo *root, List *clauses)
 	 * Collect the items and costs into an array.  This is to avoid repeated
 	 * cost_qual_eval work if the inputs aren't RestrictInfos.
 	 */
-	items = (QualItem *) palloc(nitems * sizeof(QualItem));
+	items = palloc_array(QualItem, nitems);
 	i = 0;
 	foreach(lc, clauses)
 	{
@@ -6201,10 +6201,10 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 	 * We will need at most list_length(pathkeys) sort columns; possibly less
 	 */
 	numsortkeys = list_length(pathkeys);
-	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
-	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
-	collations = (Oid *) palloc(numsortkeys * sizeof(Oid));
-	nullsFirst = (bool *) palloc(numsortkeys * sizeof(bool));
+	sortColIdx = palloc_array(AttrNumber, numsortkeys);
+	sortOperators = palloc_array(Oid, numsortkeys);
+	collations = palloc_array(Oid, numsortkeys);
+	nullsFirst = palloc_array(bool, numsortkeys);
 
 	numsortkeys = 0;
 
@@ -6442,10 +6442,10 @@ make_sort_from_sortclauses(List *sortcls, Plan *lefttree)
 
 	/* Convert list-ish representation to arrays wanted by executor */
 	numsortkeys = list_length(sortcls);
-	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
-	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
-	collations = (Oid *) palloc(numsortkeys * sizeof(Oid));
-	nullsFirst = (bool *) palloc(numsortkeys * sizeof(bool));
+	sortColIdx = palloc_array(AttrNumber, numsortkeys);
+	sortOperators = palloc_array(Oid, numsortkeys);
+	collations = palloc_array(Oid, numsortkeys);
+	nullsFirst = palloc_array(bool, numsortkeys);
 
 	numsortkeys = 0;
 	foreach(l, sortcls)
@@ -6493,10 +6493,10 @@ make_sort_from_groupcols(List *groupcls,
 
 	/* Convert list-ish representation to arrays wanted by executor */
 	numsortkeys = list_length(groupcls);
-	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
-	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
-	collations = (Oid *) palloc(numsortkeys * sizeof(Oid));
-	nullsFirst = (bool *) palloc(numsortkeys * sizeof(bool));
+	sortColIdx = palloc_array(AttrNumber, numsortkeys);
+	sortOperators = palloc_array(Oid, numsortkeys);
+	collations = palloc_array(Oid, numsortkeys);
+	nullsFirst = palloc_array(bool, numsortkeys);
 
 	numsortkeys = 0;
 	foreach(l, groupcls)

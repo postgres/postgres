@@ -341,7 +341,7 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 	numAFormats = pq_getmsgint(msgBuf, 2);
 	if (numAFormats > 0)
 	{
-		aformats = (int16 *) palloc(numAFormats * sizeof(int16));
+		aformats = palloc_array(int16, numAFormats);
 		for (i = 0; i < numAFormats; i++)
 			aformats[i] = pq_getmsgint(msgBuf, 2);
 	}

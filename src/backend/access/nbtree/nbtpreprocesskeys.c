@@ -258,8 +258,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		 * a skip array's scan key
 		 */
 		if (numberOfKeys > scan->numberOfKeys)
-			so->keyData = repalloc(so->keyData,
-								   numberOfKeys * sizeof(ScanKeyData));
+			so->keyData = repalloc_array(so->keyData,
+										 ScanKeyData, numberOfKeys);
 	}
 	else
 		inkeys = scan->keyData;
@@ -1568,7 +1568,7 @@ _bt_unmark_keys(IndexScanDesc scan, int *keyDataMap)
 	 * Any requiredness markings that we might leave on later keys/attributes
 	 * are predicated on there being required = keys on all prior columns.
 	 */
-	unmarkikey = palloc0(so->numberOfKeys * sizeof(bool));
+	unmarkikey = palloc0_array(bool, so->numberOfKeys);
 	nunmark = 0;
 
 	/* Set things up for first key's attribute */
@@ -1653,14 +1653,14 @@ _bt_unmark_keys(IndexScanDesc scan, int *keyDataMap)
 	 * Next, allocate temp arrays: one for required keys that'll remain
 	 * required, the other for all remaining keys
 	 */
-	unmarkKeys = palloc(nunmark * sizeof(ScanKeyData));
-	keepKeys = palloc((so->numberOfKeys - nunmark) * sizeof(ScanKeyData));
+	unmarkKeys = palloc_array(ScanKeyData, nunmark);
+	keepKeys = palloc_array(ScanKeyData, so->numberOfKeys - nunmark);
 	nunmarked = 0;
 	nkept = 0;
 	if (so->numArrayKeys)
 	{
-		unmarkOrderProcs = palloc(nunmark * sizeof(FmgrInfo));
-		keepOrderProcs = palloc((so->numberOfKeys - nunmark) * sizeof(FmgrInfo));
+		unmarkOrderProcs = palloc_array(FmgrInfo, nunmark);
+		keepOrderProcs = palloc_array(FmgrInfo, so->numberOfKeys - nunmark);
 	}
 
 	/*
@@ -1890,13 +1890,13 @@ _bt_preprocess_array_keys(IndexScanDesc scan, int *new_numberOfKeys)
 	oldContext = MemoryContextSwitchTo(so->arrayContext);
 
 	/* Create output scan keys in the workspace context */
-	arrayKeyData = (ScanKey) palloc(numArrayKeyData * sizeof(ScanKeyData));
+	arrayKeyData = palloc_array(ScanKeyData, numArrayKeyData);
 
 	/* Allocate space for per-array data in the workspace context */
-	so->arrayKeys = (BTArrayKeyInfo *) palloc(numArrayKeys * sizeof(BTArrayKeyInfo));
+	so->arrayKeys = palloc_array(BTArrayKeyInfo, numArrayKeys);
 
 	/* Allocate space for ORDER procs used to help _bt_checkkeys */
-	so->orderProcs = (FmgrInfo *) palloc(numArrayKeyData * sizeof(FmgrInfo));
+	so->orderProcs = palloc_array(FmgrInfo, numArrayKeyData);
 
 	numArrayKeys = 0;
 	numArrayKeyData = 0;

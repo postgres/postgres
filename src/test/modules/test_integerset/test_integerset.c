@@ -147,7 +147,7 @@ test_pattern(const test_spec *spec)
 
 	/* Pre-process the pattern, creating an array of integers from it. */
 	patternlen = strlen(spec->pattern_str);
-	pattern_values = palloc(patternlen * sizeof(uint64));
+	pattern_values = palloc_array(uint64, patternlen);
 	pattern_num_values = 0;
 	for (int i = 0; i < patternlen; i++)
 	{

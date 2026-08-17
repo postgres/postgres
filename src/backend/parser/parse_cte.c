@@ -166,7 +166,7 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 
 		cstate.pstate = pstate;
 		cstate.numitems = list_length(withClause->ctes);
-		cstate.items = (CteItem *) palloc0(cstate.numitems * sizeof(CteItem));
+		cstate.items = palloc0_array(CteItem, cstate.numitems);
 		i = 0;
 		foreach(lc, withClause->ctes)
 		{

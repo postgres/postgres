@@ -4948,7 +4948,7 @@ DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 	 * forks.
 	 */
 	block = (BlockNumber (*)[MAX_FORKNUM + 1])
-		palloc(sizeof(BlockNumber) * n * (MAX_FORKNUM + 1));
+		palloc_array(BlockNumber, n * (MAX_FORKNUM + 1));
 
 	/*
 	 * We can avoid scanning the entire buffer pool if we know the exact size

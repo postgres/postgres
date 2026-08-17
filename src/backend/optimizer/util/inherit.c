@@ -360,8 +360,7 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 	 * contain NULL.
 	 */
 	Assert(relinfo->part_rels == NULL);
-	relinfo->part_rels = (RelOptInfo **)
-		palloc0(relinfo->nparts * sizeof(RelOptInfo *));
+	relinfo->part_rels = palloc0_array(RelOptInfo *, relinfo->nparts);
 
 	/*
 	 * Create a child RTE for each live partition.  Note that unlike

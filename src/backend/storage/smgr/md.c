@@ -1668,9 +1668,7 @@ _fdvec_resize(SMgrRelation reln,
 		 * FileClose(), and the memory context internally will sometimes avoid
 		 * doing an actual reallocation.
 		 */
-		reln->md_seg_fds[forknum] =
-			repalloc(reln->md_seg_fds[forknum],
-					 sizeof(MdfdVec) * nseg);
+		reln->md_seg_fds[forknum] = repalloc_array(reln->md_seg_fds[forknum], MdfdVec, nseg);
 	}
 	else
 	{

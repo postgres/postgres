@@ -198,7 +198,7 @@ Datum
 gbt_float4_union(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	void	   *out = palloc(sizeof(float4KEY));
+	void	   *out = palloc_object(float4KEY);
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(float4KEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));

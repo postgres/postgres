@@ -426,7 +426,7 @@ build_distinct_groups(int numrows, SortItem *items, MultiSortSupport mss,
 				j;
 	int			ngroups = count_distinct_groups(numrows, items, mss);
 
-	SortItem   *groups = (SortItem *) palloc(ngroups * sizeof(SortItem));
+	SortItem   *groups = palloc_array(SortItem, ngroups);
 
 	j = 0;
 	groups[0] = items[0];
@@ -1094,7 +1094,7 @@ statext_mcv_deserialize(bytea *data)
 	ptr += (sizeof(Oid) * ndims);
 
 	/* Now it's safe to access the dimension info. */
-	info = palloc(ndims * sizeof(DimensionInfo));
+	info = palloc_array(DimensionInfo, ndims);
 
 	memcpy(info, ptr, ndims * sizeof(DimensionInfo));
 	ptr += (ndims * sizeof(DimensionInfo));

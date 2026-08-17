@@ -228,7 +228,7 @@ parse_params(text *paramstr)
 	pstr = text_to_cstring(paramstr);
 
 	max_params = 20;			/* must be even! */
-	params = (const char **) palloc((max_params + 1) * sizeof(char *));
+	params = palloc_array(const char *, max_params + 1);
 	nparams = 0;
 
 	pos = pstr;
@@ -238,8 +238,7 @@ parse_params(text *paramstr)
 		if (nparams >= max_params)
 		{
 			max_params *= 2;
-			params = (const char **) repalloc(params,
-											  (max_params + 1) * sizeof(char *));
+			params = repalloc_array(params, const char *, max_params + 1);
 		}
 		params[nparams++] = pos;
 		pos = strstr(pos, nvsep);

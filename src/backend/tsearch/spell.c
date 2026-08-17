@@ -493,7 +493,7 @@ NIAddSpell(IspellDict *Conf, const char *word, const char *flag)
 		if (Conf->mspell)
 		{
 			Conf->mspell *= 2;
-			Conf->Spell = (SPELL **) repalloc(Conf->Spell, Conf->mspell * sizeof(SPELL *));
+			Conf->Spell = repalloc_array(Conf->Spell, SPELL *, Conf->mspell);
 		}
 		else
 		{
@@ -687,7 +687,7 @@ NIAddAffix(IspellDict *Conf, const char *flag, char flagflags, const char *mask,
 		if (Conf->maffixes)
 		{
 			Conf->maffixes *= 2;
-			Conf->Affix = (AFFIX *) repalloc(Conf->Affix, Conf->maffixes * sizeof(AFFIX));
+			Conf->Affix = repalloc_array(Conf->Affix, AFFIX, Conf->maffixes);
 		}
 		else
 		{
@@ -1106,9 +1106,9 @@ addCompoundAffixFlagValue(IspellDict *Conf, const char *s, uint32 val)
 		if (Conf->mCompoundAffixFlag)
 		{
 			Conf->mCompoundAffixFlag *= 2;
-			Conf->CompoundAffixFlags = (CompoundAffixFlag *)
-				repalloc(Conf->CompoundAffixFlags,
-						 Conf->mCompoundAffixFlag * sizeof(CompoundAffixFlag));
+			Conf->CompoundAffixFlags = repalloc_array(Conf->CompoundAffixFlags,
+													  CompoundAffixFlag,
+													  Conf->mCompoundAffixFlag);
 		}
 		else
 		{
@@ -1611,8 +1611,7 @@ MergeAffix(IspellDict *Conf, int a1, int a2)
 	if (Conf->nAffixData + 1 >= Conf->lenAffixData)
 	{
 		Conf->lenAffixData *= 2;
-		Conf->AffixData = (const char **) repalloc(Conf->AffixData,
-												   sizeof(char *) * Conf->lenAffixData);
+		Conf->AffixData = repalloc_array(Conf->AffixData, const char *, Conf->lenAffixData);
 	}
 
 	ptr = Conf->AffixData + Conf->nAffixData;
@@ -2042,7 +2041,8 @@ NISortAffixes(IspellDict *Conf)
 		}
 	}
 	ptr->affix = NULL;
-	Conf->CompoundAffix = (CMPDAffix *) repalloc(Conf->CompoundAffix, sizeof(CMPDAffix) * (ptr - Conf->CompoundAffix + 1));
+	Conf->CompoundAffix = repalloc_array(Conf->CompoundAffix,
+										 CMPDAffix, ptr - Conf->CompoundAffix + 1);
 
 	/* Start build a prefix tree */
 	Conf->Prefix = mkANode(Conf, 0, firstsuffix, 0, FF_PREFIX);
@@ -2425,7 +2425,7 @@ AddStem(SplitVar *v, char *word)
 	if (v->nstem >= v->lenstem)
 	{
 		v->lenstem *= 2;
-		v->stem = (char **) repalloc(v->stem, sizeof(char *) * v->lenstem);
+		v->stem = repalloc_array(v->stem, char *, v->lenstem);
 	}
 
 	v->stem[v->nstem] = word;

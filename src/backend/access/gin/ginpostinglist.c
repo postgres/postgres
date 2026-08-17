@@ -308,7 +308,7 @@ ginPostingListDecodeAllSegments(GinPostingList *segment, int len, int *ndecoded_
 	 * Guess an initial size of the array.
 	 */
 	nallocated = segment->nbytes * 2 + 1;
-	result = palloc(nallocated * sizeof(ItemPointerData));
+	result = palloc_array(ItemPointerData, nallocated);
 
 	ndecoded = 0;
 	while ((char *) segment < endseg)
@@ -317,7 +317,7 @@ ginPostingListDecodeAllSegments(GinPostingList *segment, int len, int *ndecoded_
 		if (ndecoded >= nallocated)
 		{
 			nallocated *= 2;
-			result = repalloc(result, nallocated * sizeof(ItemPointerData));
+			result = repalloc_array(result, ItemPointerData, nallocated);
 		}
 
 		/* copy the first item */
@@ -335,7 +335,7 @@ ginPostingListDecodeAllSegments(GinPostingList *segment, int len, int *ndecoded_
 			if (ndecoded >= nallocated)
 			{
 				nallocated *= 2;
-				result = repalloc(result, nallocated * sizeof(ItemPointerData));
+				result = repalloc_array(result, ItemPointerData, nallocated);
 			}
 
 			val += decode_varbyte(&ptr);
@@ -381,7 +381,7 @@ ginMergeItemPointers(ItemPointerData *a, uint32 na,
 {
 	ItemPointerData *dst;
 
-	dst = (ItemPointer) palloc((na + nb) * sizeof(ItemPointerData));
+	dst = palloc_array(ItemPointerData, na + nb);
 
 	/*
 	 * If the argument arrays don't overlap, we can just append them to each

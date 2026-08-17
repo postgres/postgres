@@ -487,7 +487,7 @@ crosstab(PG_FUNCTION_ARGS)
 		char	  **values;
 
 		/* allocate and zero space */
-		values = (char **) palloc0((1 + num_categories) * sizeof(char *));
+		values = palloc0_array(char *, 1 + num_categories);
 
 		/*
 		 * now loop through the sql results and assign each value in sequence
@@ -864,7 +864,7 @@ get_crosstab_tuplestore(char *sql,
 							   result_ncols, tupdesc->natts)));
 
 		/* allocate space and make sure it's clear */
-		values = (char **) palloc0(result_ncols * sizeof(char *));
+		values = palloc0_array(char *, result_ncols);
 
 		for (i = 0; i < proc; i++)
 		{
@@ -1247,9 +1247,9 @@ build_tuplestore_recursively(char *key_fld,
 	}
 
 	if (show_branch)
-		values = (char **) palloc((CONNECTBY_NCOLS + serial_column) * sizeof(char *));
+		values = palloc_array(char *, CONNECTBY_NCOLS + serial_column);
 	else
-		values = (char **) palloc((CONNECTBY_NCOLS_NOBRANCH + serial_column) * sizeof(char *));
+		values = palloc_array(char *, CONNECTBY_NCOLS_NOBRANCH + serial_column);
 
 	/* First time through, do a little setup */
 	if (level == 0)

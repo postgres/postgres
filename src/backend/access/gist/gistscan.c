@@ -97,7 +97,7 @@ gistbeginscan(Relation r, int nkeys, int norderbys)
 	so->queueCxt = giststate->scanCxt;	/* see gistrescan */
 
 	/* workspaces with size dependent on numberOfOrderBys: */
-	so->distances = palloc(sizeof(so->distances[0]) * scan->numberOfOrderBys);
+	so->distances = palloc_array(IndexOrderByDistance, scan->numberOfOrderBys);
 	so->qual_ok = true;			/* in case there are zero keys */
 	if (scan->numberOfOrderBys > 0)
 	{
@@ -229,7 +229,7 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 		 */
 		if (!first_time)
 		{
-			fn_extras = (void **) palloc(scan->numberOfKeys * sizeof(void *));
+			fn_extras = palloc_array(void *, scan->numberOfKeys);
 			for (i = 0; i < scan->numberOfKeys; i++)
 				fn_extras[i] = scan->keyData[i].sk_func.fn_extra;
 		}
@@ -284,14 +284,14 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 		/* As above, preserve fn_extra if not first time through */
 		if (!first_time)
 		{
-			fn_extras = (void **) palloc(scan->numberOfOrderBys * sizeof(void *));
+			fn_extras = palloc_array(void *, scan->numberOfOrderBys);
 			for (i = 0; i < scan->numberOfOrderBys; i++)
 				fn_extras[i] = scan->orderByData[i].sk_func.fn_extra;
 		}
 
 		memcpy(scan->orderByData, orderbys, scan->numberOfOrderBys * sizeof(ScanKeyData));
 
-		so->orderByTypes = (Oid *) palloc(scan->numberOfOrderBys * sizeof(Oid));
+		so->orderByTypes = palloc_array(Oid, scan->numberOfOrderBys);
 
 		/*
 		 * Modify the order-by key so that the Distance method is called for

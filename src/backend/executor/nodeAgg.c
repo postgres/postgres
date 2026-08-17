@@ -1633,10 +1633,8 @@ find_hash_columns(AggState *aggstate)
 		 */
 		maxCols = bms_num_members(colnos) + perhash->numCols;
 
-		perhash->hashGrpColIdxInput =
-			palloc(maxCols * sizeof(AttrNumber));
-		perhash->hashGrpColIdxHash =
-			palloc(perhash->numCols * sizeof(AttrNumber));
+		perhash->hashGrpColIdxInput = palloc_array(AttrNumber, maxCols);
+		perhash->hashGrpColIdxHash = palloc_array(AttrNumber, perhash->numCols);
 
 		/* Add all the grouping columns to colnos */
 		for (i = 0; i < perhash->numCols; i++)
@@ -3560,8 +3558,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 			if (num_sets)
 			{
-				phasedata->gset_lengths = palloc(num_sets * sizeof(int));
-				phasedata->grouped_cols = palloc(num_sets * sizeof(Bitmapset *));
+				phasedata->gset_lengths = palloc_array(int, num_sets);
+				phasedata->grouped_cols = palloc_array(Bitmapset *, num_sets);
 
 				i = 0;
 				foreach(l, aggnode->groupingSets)
@@ -4318,14 +4316,10 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 		}
 
 		/* Extract the sort information for use later */
-		pertrans->sortColIdx =
-			(AttrNumber *) palloc(numSortCols * sizeof(AttrNumber));
-		pertrans->sortOperators =
-			(Oid *) palloc(numSortCols * sizeof(Oid));
-		pertrans->sortCollations =
-			(Oid *) palloc(numSortCols * sizeof(Oid));
-		pertrans->sortNullsFirst =
-			(bool *) palloc(numSortCols * sizeof(bool));
+		pertrans->sortColIdx = palloc_array(AttrNumber, numSortCols);
+		pertrans->sortOperators = palloc_array(Oid, numSortCols);
+		pertrans->sortCollations = palloc_array(Oid, numSortCols);
+		pertrans->sortNullsFirst = palloc_array(bool, numSortCols);
 
 		i = 0;
 		foreach(lc, sortlist)
@@ -4352,7 +4346,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 		Assert(numArguments > 0);
 		Assert(list_length(aggref->aggdistinct) == numDistinctCols);
 
-		ops = palloc(numDistinctCols * sizeof(Oid));
+		ops = palloc_array(Oid, numDistinctCols);
 
 		i = 0;
 		foreach(lc, aggref->aggdistinct)

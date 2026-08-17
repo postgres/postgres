@@ -168,7 +168,7 @@ test_saslprep_ranges(PG_FUNCTION_ARGS)
 		funcctx->tuple_desc = tupdesc;
 
 		/* Allocate context with range setup */
-		ctx = (pg_saslprep_test_context *) palloc(sizeof(pg_saslprep_test_context));
+		ctx = palloc_object(pg_saslprep_test_context);
 		ctx->current_range = 0;
 		ctx->current_codepoint = pg_utf8_test_ranges[0].start_codepoint;
 		funcctx->user_fctx = ctx;

@@ -558,8 +558,7 @@ expand_virtual_generated_columns(PlannerInfo *root, Query *parse,
 		/* this flag will be set below, if needed */
 		rvcontext.wrap_option = REPLACE_WRAP_NONE;
 		/* initialize cache array with indexes 0 .. length(tlist) */
-		rvcontext.rv_cache = palloc0((list_length(tlist) + 1) *
-									 sizeof(Node *));
+		rvcontext.rv_cache = palloc0_array(Node *, list_length(tlist) + 1);
 
 		/*
 		 * If the query uses grouping sets, we need a PlaceHolderVar for each
@@ -1598,8 +1597,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	/* this flag will be set below, if needed */
 	rvcontext.wrap_option = REPLACE_WRAP_NONE;
 	/* initialize cache array with indexes 0 .. length(tlist) */
-	rvcontext.rv_cache = palloc0((list_length(subquery->targetList) + 1) *
-								 sizeof(Node *));
+	rvcontext.rv_cache = palloc0_array(Node *, list_length(subquery->targetList) + 1);
 
 	/*
 	 * If the parent query uses grouping sets, we need a PlaceHolderVar for
@@ -1925,8 +1923,7 @@ make_setop_translation_list(Query *query, int newvarno,
 	/* Initialize reverse-translation array with all entries zero */
 	/* (entries for resjunk columns will stay that way) */
 	appinfo->num_child_cols = list_length(query->targetList);
-	appinfo->parent_colnos = pcolnos =
-		(AttrNumber *) palloc0(appinfo->num_child_cols * sizeof(AttrNumber));
+	appinfo->parent_colnos = pcolnos = palloc0_array(AttrNumber, appinfo->num_child_cols);
 
 	foreach(l, query->targetList)
 	{
@@ -2143,8 +2140,7 @@ pull_up_simple_values(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	rvcontext.varno = varno;
 	rvcontext.wrap_option = REPLACE_WRAP_NONE;
 	/* initialize cache array with indexes 0 .. length(tlist) */
-	rvcontext.rv_cache = palloc0((list_length(tlist) + 1) *
-								 sizeof(Node *));
+	rvcontext.rv_cache = palloc0_array(Node *, list_length(tlist) + 1);
 
 	/*
 	 * Replace all of the top query's references to the RTE's outputs with
@@ -2311,8 +2307,7 @@ pull_up_constant_function(PlannerInfo *root, Node *jtnode,
 	/* this flag will be set below, if needed */
 	rvcontext.wrap_option = REPLACE_WRAP_NONE;
 	/* initialize cache array with indexes 0 .. length(tlist) */
-	rvcontext.rv_cache = palloc0((list_length(rvcontext.targetlist) + 1) *
-								 sizeof(Node *));
+	rvcontext.rv_cache = palloc0_array(Node *, list_length(rvcontext.targetlist) + 1);
 
 	/*
 	 * If the parent query uses grouping sets, we need a PlaceHolderVar for

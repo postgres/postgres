@@ -294,7 +294,7 @@ Datum
 int44in(PG_FUNCTION_ARGS)
 {
 	char	   *input_string = PG_GETARG_CSTRING(0);
-	int32	   *result = (int32 *) palloc(4 * sizeof(int32));
+	int32	   *result = palloc_array(int32, 4);
 	int			i;
 
 	i = sscanf(input_string,
@@ -371,8 +371,8 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 	tuple.t_tableOid = InvalidOid;
 	tuple.t_data = rec;
 
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	values = palloc_array(Datum, ncolumns);
+	nulls = palloc_array(bool, ncolumns);
 
 	heap_deform_tuple(&tuple, tupdesc, values, nulls);
 
@@ -452,7 +452,7 @@ get_environ(PG_FUNCTION_ARGS)
 	for (char **s = environ; *s; s++)
 		nvals++;
 
-	env = palloc(nvals * sizeof(Datum));
+	env = palloc_array(Datum, nvals);
 
 	for (int i = 0; i < nvals; i++)
 		env[i] = CStringGetTextDatum(environ[i]);
@@ -1183,7 +1183,7 @@ test_text_to_wchars(PG_FUNCTION_ARGS)
 	text	   *string = PG_GETARG_TEXT_PP(1);
 	const char *data = VARDATA_ANY(string);
 	size_t		size = VARSIZE_ANY_EXHDR(string);
-	pg_wchar   *wchars = palloc(sizeof(pg_wchar) * (size + 1));
+	pg_wchar   *wchars = palloc_array(pg_wchar, size + 1);
 	Datum	   *datums;
 	int			wlen;
 	int			encoding;
@@ -1194,7 +1194,7 @@ test_text_to_wchars(PG_FUNCTION_ARGS)
 
 	if (size > 0)
 	{
-		datums = palloc(sizeof(Datum) * size);
+		datums = palloc_array(Datum, size);
 		wlen = pg_encoding_mb2wchar_with_len(encoding,
 											 data,
 											 wchars,
@@ -1237,7 +1237,7 @@ test_wchars_to_text(PG_FUNCTION_ARGS)
 
 	if (wlen > 0)
 	{
-		pg_wchar   *wchars = palloc(sizeof(pg_wchar) * wlen);
+		pg_wchar   *wchars = palloc_array(pg_wchar, wlen);
 
 		for (int i = 0; i < wlen; ++i)
 		{

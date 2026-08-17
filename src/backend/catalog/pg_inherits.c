@@ -106,7 +106,7 @@ find_inheritance_children_extended(Oid parentrelId, bool omit_detached,
 	 * Scan pg_inherits and build a working array of subclass OIDs.
 	 */
 	maxoids = 32;
-	oidarr = (Oid *) palloc(maxoids * sizeof(Oid));
+	oidarr = palloc_array(Oid, maxoids);
 	numoids = 0;
 
 	relation = table_open(InheritsRelationId, AccessShareLock);
@@ -183,7 +183,7 @@ find_inheritance_children_extended(Oid parentrelId, bool omit_detached,
 		if (numoids >= maxoids)
 		{
 			maxoids *= 2;
-			oidarr = (Oid *) repalloc(oidarr, maxoids * sizeof(Oid));
+			oidarr = repalloc_array(oidarr, Oid, maxoids);
 		}
 		oidarr[numoids++] = inhrelid;
 	}

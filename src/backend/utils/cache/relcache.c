@@ -881,8 +881,7 @@ RelationBuildRuleLock(Relation relation)
 		if (numlocks >= maxlocks)
 		{
 			maxlocks *= 2;
-			rules = (RewriteRule **)
-				repalloc(rules, sizeof(RewriteRule *) * maxlocks);
+			rules = repalloc_array(rules, RewriteRule *, maxlocks);
 		}
 		rules[numlocks++] = rule;
 	}
@@ -1098,8 +1097,7 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 		int			allocsize;
 
 		allocsize = in_progress_list_maxlen * 2;
-		in_progress_list = repalloc(in_progress_list,
-									allocsize * sizeof(*in_progress_list));
+		in_progress_list = repalloc_array(in_progress_list, InProgressEnt, allocsize);
 		in_progress_list_maxlen = allocsize;
 	}
 	in_progress_offset = in_progress_list_len++;
@@ -3113,7 +3111,7 @@ RememberToFreeTupleDescAtEOX(TupleDesc td)
 
 		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
-		EOXactTupleDescArray = (TupleDesc *) palloc(16 * sizeof(TupleDesc));
+		EOXactTupleDescArray = palloc_array(TupleDesc, 16);
 		EOXactTupleDescArrayLen = 16;
 		NextEOXactTupleDescNum = 0;
 		MemoryContextSwitchTo(oldcxt);
@@ -3124,8 +3122,7 @@ RememberToFreeTupleDescAtEOX(TupleDesc td)
 
 		Assert(EOXactTupleDescArrayLen > 0);
 
-		EOXactTupleDescArray = (TupleDesc *) repalloc(EOXactTupleDescArray,
-													  newlen * sizeof(TupleDesc));
+		EOXactTupleDescArray = repalloc_array(EOXactTupleDescArray, TupleDesc, newlen);
 		EOXactTupleDescArrayLen = newlen;
 	}
 
@@ -3175,7 +3172,7 @@ AssertPendingSyncs_RelationCache(void)
 	 */
 	PushActiveSnapshot(GetTransactionSnapshot());
 	maxrels = 1;
-	rels = palloc(maxrels * sizeof(*rels));
+	rels = palloc_array(Relation, maxrels);
 	nrels = 0;
 	hash_seq_init(&status, GetLockMethodLocalHash());
 	while ((locallock = (LOCALLOCK *) hash_seq_search(&status)) != NULL)
@@ -3195,7 +3192,7 @@ AssertPendingSyncs_RelationCache(void)
 		if (nrels >= maxrels)
 		{
 			maxrels *= 2;
-			rels = repalloc(rels, maxrels * sizeof(*rels));
+			rels = repalloc_array(rels, Relation, maxrels);
 		}
 		rels[nrels++] = r;
 	}
@@ -6229,7 +6226,7 @@ load_relcache_init_file(bool shared)
 	 * helps to guard against broken init files.
 	 */
 	max_rels = 100;
-	rels = (Relation *) palloc(max_rels * sizeof(Relation));
+	rels = palloc_array(Relation, max_rels);
 	num_rels = 0;
 	nailed_rels = nailed_indexes = 0;
 
@@ -6264,7 +6261,7 @@ load_relcache_init_file(bool shared)
 		if (num_rels >= max_rels)
 		{
 			max_rels *= 2;
-			rels = (Relation *) repalloc(rels, max_rels * sizeof(Relation));
+			rels = repalloc_array(rels, Relation, max_rels);
 		}
 
 		rel = rels[num_rels++] = (Relation) palloc(len);

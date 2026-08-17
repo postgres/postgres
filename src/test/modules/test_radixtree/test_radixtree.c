@@ -319,7 +319,7 @@ test_random(void)
 
 	/* add some random values */
 	pg_prng_seed(&state, seed);
-	keys = (TestValueType *) palloc(sizeof(uint64) * num_keys);
+	keys = palloc_array(TestValueType, num_keys);
 	for (int i = 0; i < num_keys; i++)
 	{
 		uint64		key = pg_prng_uint64(&state) & filter;

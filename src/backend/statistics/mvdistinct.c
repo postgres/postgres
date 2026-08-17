@@ -307,8 +307,7 @@ statext_ndistinct_deserialize(bytea *data)
 		tmp += sizeof(int);
 		Assert((item->nattributes >= 2) && (item->nattributes <= STATS_MAX_DIMENSIONS));
 
-		item->attributes
-			= (AttrNumber *) palloc(item->nattributes * sizeof(AttrNumber));
+		item->attributes = palloc_array(AttrNumber, item->nattributes);
 
 		memcpy(item->attributes, tmp, sizeof(AttrNumber) * item->nattributes);
 		tmp += sizeof(AttrNumber) * item->nattributes;

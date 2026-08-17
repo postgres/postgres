@@ -73,7 +73,7 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 	 */
 	nplans = list_length(node->bitmapplans);
 
-	bitmapplanstates = (PlanState **) palloc0(nplans * sizeof(PlanState *));
+	bitmapplanstates = palloc0_array(PlanState *, nplans);
 
 	/*
 	 * create new BitmapOrState for our BitmapOr node

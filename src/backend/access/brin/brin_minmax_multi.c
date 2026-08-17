@@ -1390,7 +1390,7 @@ build_expanded_ranges(FmgrInfo *cmp, Oid colloid, Ranges *ranges,
 	/* both ranges and points are expanded into a separate element */
 	neranges = ranges->nranges + ranges->nvalues;
 
-	eranges = (ExpandedRange *) palloc0(neranges * sizeof(ExpandedRange));
+	eranges = palloc0_array(ExpandedRange, neranges);
 
 	/* fill the expanded ranges */
 	fill_expanded_ranges(eranges, neranges, ranges);
@@ -2783,7 +2783,7 @@ brin_minmax_multi_union(PG_FUNCTION_ARGS)
 	oldctx = MemoryContextSwitchTo(ctx);
 
 	/* allocate and fill */
-	eranges = (ExpandedRange *) palloc0(neranges * sizeof(ExpandedRange));
+	eranges = palloc0_array(ExpandedRange, neranges);
 
 	/* fill the expanded ranges with entries for the first range */
 	fill_expanded_ranges(eranges, ranges_a->nranges + ranges_a->nvalues,

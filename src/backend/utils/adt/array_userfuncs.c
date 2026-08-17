@@ -662,10 +662,8 @@ array_agg_combine(PG_FUNCTION_ARGS)
 		{
 			/* Use a power of 2 size rather than allocating just reqsize */
 			state1->alen = pg_nextpower2_32(reqsize);
-			state1->dvalues = (Datum *) repalloc(state1->dvalues,
-												 state1->alen * sizeof(Datum));
-			state1->dnulls = (bool *) repalloc(state1->dnulls,
-											   state1->alen * sizeof(bool));
+			state1->dvalues = repalloc_array(state1->dvalues, Datum, state1->alen);
+			state1->dnulls = repalloc_array(state1->dnulls, bool, state1->alen);
 		}
 
 		/* Copy in the state2 elements to the end of the state1 arrays */
@@ -1096,7 +1094,7 @@ array_agg_array_combine(PG_FUNCTION_ARGS)
 				 * previous inputs by marking all their items non-null.
 				 */
 				state1->aitems = pg_nextpower2_32(Max(256, newnitems));
-				state1->nullbitmap = (uint8 *) palloc((state1->aitems + 7) / 8);
+				state1->nullbitmap = palloc_array(uint8, (state1->aitems + 7) / 8);
 				array_bitmap_copy(state1->nullbitmap, 0,
 								  NULL, 0,
 								  state1->nitems);
@@ -1104,8 +1102,8 @@ array_agg_array_combine(PG_FUNCTION_ARGS)
 			else if (newnitems > state1->aitems)
 			{
 				state1->aitems = pg_nextpower2_32(newnitems);
-				state1->nullbitmap = (uint8 *)
-					repalloc(state1->nullbitmap, (state1->aitems + 7) / 8);
+				state1->nullbitmap = repalloc_array(state1->nullbitmap,
+													uint8, (state1->aitems + 7) / 8);
 			}
 			/* This will do the right thing if state2->nullbitmap is NULL: */
 			array_bitmap_copy(state1->nullbitmap, state1->nitems,

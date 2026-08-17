@@ -725,7 +725,7 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 	items = palloc0_object(corrupt_items);
 	items->next = 0;
 	items->count = 64;
-	items->tids = palloc(items->count * sizeof(ItemPointerData));
+	items->tids = palloc_array(ItemPointerData, items->count);
 
 	p.current_blocknum = 0;
 	p.last_exclusive = RelationGetNumberOfBlocks(rel);
@@ -882,8 +882,7 @@ record_corrupt_item(corrupt_items *items, ItemPointer tid)
 	if (items->next >= items->count)
 	{
 		items->count *= 2;
-		items->tids = repalloc(items->tids,
-							   items->count * sizeof(ItemPointerData));
+		items->tids = repalloc_array(items->tids, ItemPointerData, items->count);
 	}
 	/* and add the new item */
 	items->tids[items->next++] = *tid;

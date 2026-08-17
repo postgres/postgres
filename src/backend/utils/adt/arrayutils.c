@@ -253,7 +253,7 @@ ArrayGetIntegerTypmods(ArrayType *arr, int *n)
 
 	deconstruct_array_builtin(arr, CSTRINGOID, &elem_values, NULL, n);
 
-	result = (int32 *) palloc(*n * sizeof(int32));
+	result = palloc_array(int32, *n);
 
 	for (i = 0; i < *n; i++)
 		result[i] = pg_strtoint32(DatumGetCString(elem_values[i]));

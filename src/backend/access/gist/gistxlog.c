@@ -228,7 +228,7 @@ decodePageSplitRecord(char *begin, int len, int *n)
 	memcpy(n, begin, sizeof(int));
 	ptr = begin + sizeof(int);
 
-	tuples = palloc(*n * sizeof(IndexTuple));
+	tuples = palloc_array(IndexTuple, *n);
 
 	for (i = 0; i < *n; i++)
 	{

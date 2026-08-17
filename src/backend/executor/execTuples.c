@@ -2389,9 +2389,9 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 	/*
 	 * Gather info needed later to call the "in" function for each attribute
 	 */
-	attinfuncinfo = (FmgrInfo *) palloc0(natts * sizeof(FmgrInfo));
-	attioparams = (Oid *) palloc0(natts * sizeof(Oid));
-	atttypmods = (int32 *) palloc0(natts * sizeof(int32));
+	attinfuncinfo = palloc0_array(FmgrInfo, natts);
+	attioparams = palloc0_array(Oid, natts);
+	atttypmods = palloc0_array(int32, natts);
 
 	for (i = 0; i < natts; i++)
 	{
@@ -2428,8 +2428,8 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	int			i;
 	HeapTuple	tuple;
 
-	dvalues = (Datum *) palloc(natts * sizeof(Datum));
-	nulls = (bool *) palloc(natts * sizeof(bool));
+	dvalues = palloc_array(Datum, natts);
+	nulls = palloc_array(bool, natts);
 
 	/*
 	 * Call the "in" function for each non-dropped attribute, even for nulls,

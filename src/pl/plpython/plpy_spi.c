@@ -240,8 +240,8 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 
 		if (nargs > 0)
 		{
-			values = (Datum *) palloc(nargs * sizeof(Datum));
-			nulls = (char *) palloc(nargs * sizeof(char));
+			values = palloc_array(Datum, nargs);
+			nulls = palloc_array(char, nargs);
 		}
 		else
 		{

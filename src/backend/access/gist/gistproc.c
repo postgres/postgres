@@ -516,8 +516,8 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 	nentries = context.entriesCount = maxoff - FirstOffsetNumber + 1;
 
 	/* Allocate arrays for intervals along axes */
-	intervalsLower = (SplitInterval *) palloc(nentries * sizeof(SplitInterval));
-	intervalsUpper = (SplitInterval *) palloc(nentries * sizeof(SplitInterval));
+	intervalsLower = palloc_array(SplitInterval, nentries);
+	intervalsUpper = palloc_array(SplitInterval, nentries);
 
 	/*
 	 * Calculate the overall minimum bounding box over all the entries.
@@ -693,8 +693,8 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 	 */
 
 	/* Allocate vectors for results */
-	v->spl_left = (OffsetNumber *) palloc(nentries * sizeof(OffsetNumber));
-	v->spl_right = (OffsetNumber *) palloc(nentries * sizeof(OffsetNumber));
+	v->spl_left = palloc_array(OffsetNumber, nentries);
+	v->spl_right = palloc_array(OffsetNumber, nentries);
 	v->spl_nleft = 0;
 	v->spl_nright = 0;
 
@@ -707,7 +707,7 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 	 * either group without affecting overlap along selected axis.
 	 */
 	commonEntriesCount = 0;
-	commonEntries = (CommonEntry *) palloc(nentries * sizeof(CommonEntry));
+	commonEntries = palloc_array(CommonEntry, nentries);
 
 	/* Helper macros to place an entry in the left or right group */
 #define PLACE_LEFT(box, off)					\

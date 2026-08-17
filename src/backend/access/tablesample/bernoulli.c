@@ -126,7 +126,7 @@ bernoulli_samplescangetsamplesize(PlannerInfo *root,
 static void
 bernoulli_initsamplescan(SampleScanState *node, int eflags)
 {
-	node->tsm_state = palloc0(sizeof(BernoulliSamplerData));
+	node->tsm_state = palloc0_object(BernoulliSamplerData);
 }
 
 /*

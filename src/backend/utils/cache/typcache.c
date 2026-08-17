@@ -455,8 +455,7 @@ lookup_type_cache(Oid type_id, int flags)
 		int			allocsize;
 
 		allocsize = in_progress_list_maxlen * 2;
-		in_progress_list = repalloc(in_progress_list,
-									allocsize * sizeof(*in_progress_list));
+		in_progress_list = repalloc_array(in_progress_list, Oid, allocsize);
 		in_progress_list_maxlen = allocsize;
 	}
 
@@ -1236,14 +1235,12 @@ load_domaintype_info(TypeCacheEntry *typentry)
 			if (ccons == NULL)
 			{
 				cconslen = 8;
-				ccons = (DomainConstraintState **)
-					palloc(cconslen * sizeof(DomainConstraintState *));
+				ccons = palloc_array(DomainConstraintState *, cconslen);
 			}
 			else if (nccons >= cconslen)
 			{
 				cconslen *= 2;
-				ccons = (DomainConstraintState **)
-					repalloc(ccons, cconslen * sizeof(DomainConstraintState *));
+				ccons = repalloc_array(ccons, DomainConstraintState *, cconslen);
 			}
 			ccons[nccons++] = r;
 		}
@@ -2828,7 +2825,7 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 		if (numitems >= maxitems)
 		{
 			maxitems *= 2;
-			items = (EnumItem *) repalloc(items, sizeof(EnumItem) * maxitems);
+			items = repalloc_array(items, EnumItem, maxitems);
 		}
 		items[numitems].enum_oid = en->oid;
 		items[numitems].sort_order = en->enumsortorder;

@@ -901,11 +901,11 @@ record_cmp(FunctionCallInfo fcinfo)
 	}
 
 	/* Break down the tuples into fields */
-	values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
-	nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+	values1 = palloc_array(Datum, ncolumns1);
+	nulls1 = palloc_array(bool, ncolumns1);
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
-	values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
-	nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+	values2 = palloc_array(Datum, ncolumns2);
+	nulls2 = palloc_array(bool, ncolumns2);
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*
@@ -1145,11 +1145,11 @@ record_eq(PG_FUNCTION_ARGS)
 	}
 
 	/* Break down the tuples into fields */
-	values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
-	nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+	values1 = palloc_array(Datum, ncolumns1);
+	nulls1 = palloc_array(bool, ncolumns1);
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
-	values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
-	nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+	values2 = palloc_array(Datum, ncolumns2);
+	nulls2 = palloc_array(bool, ncolumns2);
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*
@@ -1425,11 +1425,11 @@ record_image_cmp(FunctionCallInfo fcinfo)
 	}
 
 	/* Break down the tuples into fields */
-	values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
-	nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+	values1 = palloc_array(Datum, ncolumns1);
+	nulls1 = palloc_array(bool, ncolumns1);
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
-	values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
-	nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+	values2 = palloc_array(Datum, ncolumns2);
+	nulls2 = palloc_array(bool, ncolumns2);
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*
@@ -1671,11 +1671,11 @@ record_image_eq(PG_FUNCTION_ARGS)
 	}
 
 	/* Break down the tuples into fields */
-	values1 = (Datum *) palloc(ncolumns1 * sizeof(Datum));
-	nulls1 = (bool *) palloc(ncolumns1 * sizeof(bool));
+	values1 = palloc_array(Datum, ncolumns1);
+	nulls1 = palloc_array(bool, ncolumns1);
 	heap_deform_tuple(&tuple1, tupdesc1, values1, nulls1);
-	values2 = (Datum *) palloc(ncolumns2 * sizeof(Datum));
-	nulls2 = (bool *) palloc(ncolumns2 * sizeof(bool));
+	values2 = palloc_array(Datum, ncolumns2);
+	nulls2 = palloc_array(bool, ncolumns2);
 	heap_deform_tuple(&tuple2, tupdesc2, values2, nulls2);
 
 	/*

@@ -374,7 +374,7 @@ ShmemRequestInternal(ShmemStructOpts *options, ShmemRequestKind kind)
 	}
 
 	/* Request looks valid, remember it */
-	request = palloc(sizeof(ShmemRequest));
+	request = palloc_object(ShmemRequest);
 	request->options = options;
 	request->kind = kind;
 	pending_shmem_requests = lappend(pending_shmem_requests, request);

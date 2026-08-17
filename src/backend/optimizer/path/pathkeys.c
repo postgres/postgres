@@ -1676,8 +1676,8 @@ select_outer_pathkeys_for_merge(PlannerInfo *root,
 	 * Make arrays of the ECs used by the mergeclauses (dropping any
 	 * duplicates) and their "popularity" scores.
 	 */
-	ecs = (EquivalenceClass **) palloc(nClauses * sizeof(EquivalenceClass *));
-	scores = (int *) palloc(nClauses * sizeof(int));
+	ecs = palloc_array(EquivalenceClass *, nClauses);
+	scores = palloc_array(int, nClauses);
 	necs = 0;
 
 	foreach(lc, mergeclauses)

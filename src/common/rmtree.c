@@ -85,8 +85,7 @@ rmtree(const char *path, bool rmtopdir)
 				 */
 				if (dirnames_size == dirnames_capacity)
 				{
-					dirnames = repalloc(dirnames,
-										sizeof(char *) * dirnames_capacity * 2);
+					dirnames = repalloc_array(dirnames, char *, dirnames_capacity * 2);
 					dirnames_capacity *= 2;
 				}
 				dirnames[dirnames_size++] = pstrdup(pathbuf);

@@ -572,7 +572,7 @@ enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 	enum_scan = systable_beginscan_ordered(enum_rel, enum_idx, NULL, 1, &skey);
 
 	max = 64;
-	elems = (Datum *) palloc(max * sizeof(Datum));
+	elems = palloc_array(Datum, max);
 	cnt = 0;
 	left_found = !OidIsValid(lower);
 
@@ -591,7 +591,7 @@ enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 			if (cnt >= max)
 			{
 				max *= 2;
-				elems = (Datum *) repalloc(elems, max * sizeof(Datum));
+				elems = repalloc_array(elems, Datum, max);
 			}
 
 			elems[cnt++] = ObjectIdGetDatum(enum_oid);

@@ -1079,7 +1079,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	parent_rows = 0;
 	parent_size = 0;
 	nattrs = rel->max_attr - rel->min_attr + 1;
-	parent_attrsizes = (double *) palloc0(nattrs * sizeof(double));
+	parent_attrsizes = palloc0_array(double, nattrs);
 
 	foreach(l, root->append_rel_list)
 	{
@@ -2717,8 +2717,8 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * a pushed-down qual.
 	 */
 	memset(&safetyInfo, 0, sizeof(safetyInfo));
-	safetyInfo.unsafeFlags = (unsigned char *)
-		palloc0((list_length(subquery->targetList) + 1) * sizeof(unsigned char));
+	safetyInfo.unsafeFlags = palloc0_array(unsigned char,
+										   list_length(subquery->targetList) + 1);
 
 	/*
 	 * If the subquery has the "security_barrier" flag, it means the subquery
@@ -3971,7 +3971,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 	 * set root->join_rel_level[1] to represent all the single-jointree-item
 	 * relations.
 	 */
-	root->join_rel_level = (List **) palloc0((levels_needed + 1) * sizeof(List *));
+	root->join_rel_level = palloc0_array(List *, levels_needed + 1);
 
 	root->join_rel_level[1] = initial_rels;
 

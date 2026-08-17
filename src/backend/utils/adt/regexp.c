@@ -1570,8 +1570,7 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 					ereport(ERROR,
 							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 							 errmsg("too many regular expression matches")));
-				matchctx->match_locs = (int *) repalloc(matchctx->match_locs,
-														sizeof(int) * array_len);
+				matchctx->match_locs = repalloc_array(matchctx->match_locs, int, array_len);
 			}
 
 			/* save this match's locations */

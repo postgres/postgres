@@ -60,8 +60,7 @@ GetPlannerExtensionId(const char *extension_name)
 	{
 		int			i = pg_nextpower2_32(PlannerExtensionNamesAssigned + 1);
 
-		PlannerExtensionNameArray = (const char **)
-			repalloc(PlannerExtensionNameArray, i * sizeof(char *));
+		PlannerExtensionNameArray = repalloc_array(PlannerExtensionNameArray, const char *, i);
 		PlannerExtensionNamesAllocated = i;
 	}
 

@@ -1039,16 +1039,13 @@ BlockRefTableEntryMarkBlockModified(BlockRefTableEntry *entry,
 		}
 		else
 		{
-			entry->chunk_size = repalloc(entry->chunk_size,
-										 sizeof(uint16) * max_chunks);
+			entry->chunk_size = repalloc_array(entry->chunk_size, uint16, max_chunks);
 			memset(&entry->chunk_size[entry->nchunks], 0,
 				   extra_chunks * sizeof(uint16));
-			entry->chunk_usage = repalloc(entry->chunk_usage,
-										  sizeof(uint16) * max_chunks);
+			entry->chunk_usage = repalloc_array(entry->chunk_usage, uint16, max_chunks);
 			memset(&entry->chunk_usage[entry->nchunks], 0,
 				   extra_chunks * sizeof(uint16));
-			entry->chunk_data = repalloc(entry->chunk_data,
-										 sizeof(BlockRefTableChunk) * max_chunks);
+			entry->chunk_data = repalloc_array(entry->chunk_data, BlockRefTableChunk, max_chunks);
 			memset(&entry->chunk_data[entry->nchunks], 0,
 				   extra_chunks * sizeof(BlockRefTableChunk));
 		}
@@ -1105,7 +1102,7 @@ BlockRefTableEntryMarkBlockModified(BlockRefTableEntry *entry,
 		unsigned	j;
 
 		/* Allocate a new chunk. */
-		newchunk = palloc0(MAX_ENTRIES_PER_CHUNK * sizeof(uint16));
+		newchunk = palloc0_array(uint16, MAX_ENTRIES_PER_CHUNK);
 
 		/* Set the bit for each existing entry. */
 		for (j = 0; j < entry->chunk_usage[chunkno]; ++j)
@@ -1138,8 +1135,7 @@ BlockRefTableEntryMarkBlockModified(BlockRefTableEntry *entry,
 		unsigned	newsize = entry->chunk_size[chunkno] * 2;
 
 		Assert(newsize <= MAX_ENTRIES_PER_CHUNK);
-		entry->chunk_data[chunkno] = repalloc(entry->chunk_data[chunkno],
-											  newsize * sizeof(uint16));
+		entry->chunk_data[chunkno] = repalloc_array(entry->chunk_data[chunkno], uint16, newsize);
 		entry->chunk_size[chunkno] = newsize;
 	}
 

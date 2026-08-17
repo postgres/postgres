@@ -1035,12 +1035,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 		 */
 		Assert(numOrderByKeys == list_length(node->indexorderbyops));
 		Assert(numOrderByKeys == list_length(node->indexorderbyorig));
-		indexstate->iss_SortSupport = (SortSupportData *)
-			palloc0(numOrderByKeys * sizeof(SortSupportData));
-		indexstate->iss_OrderByTypByVals = (bool *)
-			palloc(numOrderByKeys * sizeof(bool));
-		indexstate->iss_OrderByTypLens = (int16 *)
-			palloc(numOrderByKeys * sizeof(int16));
+		indexstate->iss_SortSupport = palloc0_array(SortSupportData, numOrderByKeys);
+		indexstate->iss_OrderByTypByVals = palloc_array(bool, numOrderByKeys);
+		indexstate->iss_OrderByTypLens = palloc_array(int16, numOrderByKeys);
 		i = 0;
 		forboth(lco, node->indexorderbyops, lcx, node->indexorderbyorig)
 		{
@@ -1068,10 +1065,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 		}
 
 		/* allocate arrays to hold the re-calculated distances */
-		indexstate->iss_OrderByValues = (Datum *)
-			palloc(numOrderByKeys * sizeof(Datum));
-		indexstate->iss_OrderByNulls = (bool *)
-			palloc(numOrderByKeys * sizeof(bool));
+		indexstate->iss_OrderByValues = palloc_array(Datum, numOrderByKeys);
+		indexstate->iss_OrderByNulls = palloc_array(bool, numOrderByKeys);
 
 		/* and initialize the reorder queue */
 		indexstate->iss_ReorderQueue = pairingheap_allocate(reorderqueue_cmp,
@@ -1182,7 +1177,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 
 	/* Allocate array for ScanKey structs: one per qual */
 	n_scan_keys = list_length(quals);
-	scan_keys = (ScanKey) palloc(n_scan_keys * sizeof(ScanKeyData));
+	scan_keys = palloc_array(ScanKeyData, n_scan_keys);
 
 	/*
 	 * runtime_keys array is dynamically resized as needed.  We handle it this
@@ -1195,8 +1190,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 	n_runtime_keys = max_runtime_keys = *numRuntimeKeys;
 
 	/* Allocate array_keys as large as it could possibly need to be */
-	array_keys = (IndexArrayKeyInfo *)
-		palloc0(n_scan_keys * sizeof(IndexArrayKeyInfo));
+	array_keys = palloc0_array(IndexArrayKeyInfo, n_scan_keys);
 	n_array_keys = 0;
 
 	/*
@@ -1286,14 +1280,13 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 					if (max_runtime_keys == 0)
 					{
 						max_runtime_keys = 8;
-						runtime_keys = (IndexRuntimeKeyInfo *)
-							palloc(max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+						runtime_keys = palloc_array(IndexRuntimeKeyInfo, max_runtime_keys);
 					}
 					else
 					{
 						max_runtime_keys *= 2;
-						runtime_keys = (IndexRuntimeKeyInfo *)
-							repalloc(runtime_keys, max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+						runtime_keys = repalloc_array(runtime_keys,
+													  IndexRuntimeKeyInfo, max_runtime_keys);
 					}
 				}
 				runtime_keys[n_runtime_keys].scan_key = this_scan_key;
@@ -1330,8 +1323,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 
 			Assert(!isorderby);
 
-			first_sub_key = (ScanKey)
-				palloc(list_length(rc->opnos) * sizeof(ScanKeyData));
+			first_sub_key = palloc_array(ScanKeyData, list_length(rc->opnos));
 			n_sub_key = 0;
 
 			/* Scan RowCompare columns and generate subsidiary ScanKey items */
@@ -1410,14 +1402,13 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 						if (max_runtime_keys == 0)
 						{
 							max_runtime_keys = 8;
-							runtime_keys = (IndexRuntimeKeyInfo *)
-								palloc(max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+							runtime_keys = palloc_array(IndexRuntimeKeyInfo, max_runtime_keys);
 						}
 						else
 						{
 							max_runtime_keys *= 2;
-							runtime_keys = (IndexRuntimeKeyInfo *)
-								repalloc(runtime_keys, max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+							runtime_keys = repalloc_array(runtime_keys,
+														  IndexRuntimeKeyInfo, max_runtime_keys);
 						}
 					}
 					runtime_keys[n_runtime_keys].scan_key = this_sub_key;
@@ -1528,14 +1519,13 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 						if (max_runtime_keys == 0)
 						{
 							max_runtime_keys = 8;
-							runtime_keys = (IndexRuntimeKeyInfo *)
-								palloc(max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+							runtime_keys = palloc_array(IndexRuntimeKeyInfo, max_runtime_keys);
 						}
 						else
 						{
 							max_runtime_keys *= 2;
-							runtime_keys = (IndexRuntimeKeyInfo *)
-								repalloc(runtime_keys, max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+							runtime_keys = repalloc_array(runtime_keys,
+														  IndexRuntimeKeyInfo, max_runtime_keys);
 						}
 					}
 					runtime_keys[n_runtime_keys].scan_key = this_scan_key;

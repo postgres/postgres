@@ -2022,7 +2022,7 @@ get_func_signature(Oid funcid, Oid **argtypes, int *nargs)
 	result = procstruct->prorettype;
 	*nargs = (int) procstruct->pronargs;
 	Assert(*nargs == procstruct->proargtypes.dim1);
-	*argtypes = (Oid *) palloc(*nargs * sizeof(Oid));
+	*argtypes = palloc_array(Oid, *nargs);
 	memcpy(*argtypes, procstruct->proargtypes.values, *nargs * sizeof(Oid));
 
 	ReleaseSysCache(tp);

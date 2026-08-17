@@ -168,7 +168,7 @@ pg_get_logical_snapshot_info(PG_FUNCTION_ARGS)
 	{
 		Datum	   *arrayelems;
 
-		arrayelems = (Datum *) palloc(ondisk.builder.committed.xcnt * sizeof(Datum));
+		arrayelems = palloc_array(Datum, ondisk.builder.committed.xcnt);
 
 		for (size_t j = 0; j < ondisk.builder.committed.xcnt; j++)
 			arrayelems[j] = TransactionIdGetDatum(ondisk.builder.committed.xip[j]);
@@ -185,7 +185,7 @@ pg_get_logical_snapshot_info(PG_FUNCTION_ARGS)
 	{
 		Datum	   *arrayelems;
 
-		arrayelems = (Datum *) palloc(ondisk.builder.catchange.xcnt * sizeof(Datum));
+		arrayelems = palloc_array(Datum, ondisk.builder.catchange.xcnt);
 
 		for (size_t j = 0; j < ondisk.builder.catchange.xcnt; j++)
 			arrayelems[j] = TransactionIdGetDatum(ondisk.builder.catchange.xip[j]);

@@ -329,7 +329,7 @@ Datum
 gbt_ts_union(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	void	   *out = palloc(sizeof(tsKEY));
+	void	   *out = palloc_object(tsKEY);
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(tsKEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));

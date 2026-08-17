@@ -120,9 +120,7 @@ SPI_connect_ext(int options)
 		if (_SPI_stack_depth == _SPI_connected + 1)
 		{
 			newdepth = _SPI_stack_depth * 2;
-			_SPI_stack = (_SPI_connection *)
-				repalloc(_SPI_stack,
-						 newdepth * sizeof(_SPI_connection));
+			_SPI_stack = repalloc_array(_SPI_stack, _SPI_connection, newdepth);
 			_SPI_stack_depth = newdepth;
 		}
 	}

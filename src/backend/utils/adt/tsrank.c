@@ -803,7 +803,7 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 			while (cur + dimt >= len)
 			{
 				len *= 2;
-				doc = (DocRepresentation *) repalloc(doc, sizeof(DocRepresentation) * len);
+				doc = repalloc_array(doc, DocRepresentation, len);
 			}
 
 			/* iterations over entry's positions */

@@ -424,7 +424,7 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 					 * So we can apply trigramsMatchGraph despite uncertainty,
 					 * and that usefully improves the quality of the search.
 					 */
-					check = (bool *) palloc(len * sizeof(bool));
+					check = palloc_array(bool, len);
 					for (k = 0; k < len; k++)
 					{
 						CPTRGM(&tmp, ptr + k);

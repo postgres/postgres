@@ -288,7 +288,7 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			if (num_hist > num_bins)
 				num_hist = num_bins + 1;
 
-			bound_hist_values = (Datum *) palloc(num_hist * sizeof(Datum));
+			bound_hist_values = palloc_array(Datum, num_hist);
 
 			/*
 			 * The object of this loop is to construct ranges from first and
@@ -352,7 +352,7 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			if (num_hist > num_bins)
 				num_hist = num_bins + 1;
 
-			length_hist_values = (Datum *) palloc(num_hist * sizeof(Datum));
+			length_hist_values = palloc_array(Datum, num_hist);
 
 			/*
 			 * The object of this loop is to copy the first and last lengths[]

@@ -848,7 +848,7 @@ rewriteTargetListIU(List *targetList,
 	 * scan, then appended to the reconstructed tlist.
 	 */
 	numattrs = RelationGetNumberOfAttributes(target_relation);
-	new_tles = (TargetEntry **) palloc0(numattrs * sizeof(TargetEntry *));
+	new_tles = palloc0_array(TargetEntry *, numattrs);
 	next_junk_attrno = numattrs + 1;
 
 	foreach(temp, targetList)
@@ -1492,7 +1492,7 @@ rewriteValuesRTE(Query *parsetree, RangeTblEntry *rte, int rti,
 	 * columns), and we complain if such a thing does occur.
 	 */
 	numattrs = list_length(linitial(rte->values_lists));
-	attrnos = (int *) palloc0(numattrs * sizeof(int));
+	attrnos = palloc0_array(int, numattrs);
 
 	foreach(lc, parsetree->targetList)
 	{

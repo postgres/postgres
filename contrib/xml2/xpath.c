@@ -700,8 +700,8 @@ xpath_table(PG_FUNCTION_ARGS)
 
 	attinmeta = TupleDescGetAttInMetadata(rsinfo->setDesc);
 
-	values = (char **) palloc0(rsinfo->setDesc->natts * sizeof(char *));
-	xpaths = (xmlChar **) palloc(rsinfo->setDesc->natts * sizeof(xmlChar *));
+	values = palloc0_array(char *, rsinfo->setDesc->natts);
+	xpaths = palloc_array(xmlChar *, rsinfo->setDesc->natts);
 
 	/*
 	 * Split XPaths. xpathset is a writable CString.

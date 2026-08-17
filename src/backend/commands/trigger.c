@@ -946,7 +946,7 @@ CreateTriggerFiringOn(const CreateTrigStmt *stmt, const char *queryString,
 		ListCell   *cell;
 		int			i = 0;
 
-		columns = (int16 *) palloc(ncolumns * sizeof(int16));
+		columns = palloc_array(int16, ncolumns);
 		foreach(cell, stmt->columns)
 		{
 			char	   *name = strVal(lfirst(cell));
@@ -1908,7 +1908,7 @@ RelationBuildTriggers(Relation relation)
 	 * necessary)
 	 */
 	maxtrigs = 16;
-	triggers = (Trigger *) palloc(maxtrigs * sizeof(Trigger));
+	triggers = palloc_array(Trigger, maxtrigs);
 	numtrigs = 0;
 
 	/*
@@ -1936,7 +1936,7 @@ RelationBuildTriggers(Relation relation)
 		if (numtrigs >= maxtrigs)
 		{
 			maxtrigs *= 2;
-			triggers = (Trigger *) repalloc(triggers, maxtrigs * sizeof(Trigger));
+			triggers = repalloc_array(triggers, Trigger, maxtrigs);
 		}
 		build = &(triggers[numtrigs]);
 
@@ -1958,7 +1958,7 @@ RelationBuildTriggers(Relation relation)
 		build->tgnattr = pg_trigger->tgattr.dim1;
 		if (build->tgnattr > 0)
 		{
-			build->tgattr = (int16 *) palloc(build->tgnattr * sizeof(int16));
+			build->tgattr = palloc_array(int16, build->tgnattr);
 			memcpy(build->tgattr, &(pg_trigger->tgattr.values),
 				   build->tgnattr * sizeof(int16));
 		}
@@ -1976,7 +1976,7 @@ RelationBuildTriggers(Relation relation)
 				elog(ERROR, "tgargs is null in trigger for relation \"%s\"",
 					 RelationGetRelationName(relation));
 			p = (char *) VARDATA_ANY(val);
-			build->tgargs = (char **) palloc(build->tgnargs * sizeof(char *));
+			build->tgargs = palloc_array(char *, build->tgnargs);
 			for (i = 0; i < build->tgnargs; i++)
 			{
 				build->tgargs[i] = pstrdup(p);
@@ -2131,7 +2131,7 @@ CopyTriggerDesc(TriggerDesc *trigdesc)
 	newdesc = palloc_object(TriggerDesc);
 	memcpy(newdesc, trigdesc, sizeof(TriggerDesc));
 
-	trigger = (Trigger *) palloc(trigdesc->numtriggers * sizeof(Trigger));
+	trigger = palloc_array(Trigger, trigdesc->numtriggers);
 	memcpy(trigger, trigdesc->triggers,
 		   trigdesc->numtriggers * sizeof(Trigger));
 	newdesc->triggers = trigger;
@@ -2143,7 +2143,7 @@ CopyTriggerDesc(TriggerDesc *trigdesc)
 		{
 			int16	   *newattr;
 
-			newattr = (int16 *) palloc(trigger->tgnattr * sizeof(int16));
+			newattr = palloc_array(int16, trigger->tgnattr);
 			memcpy(newattr, trigger->tgattr,
 				   trigger->tgnattr * sizeof(int16));
 			trigger->tgattr = newattr;
@@ -2153,7 +2153,7 @@ CopyTriggerDesc(TriggerDesc *trigdesc)
 			char	  **newargs;
 			int16		j;
 
-			newargs = (char **) palloc(trigger->tgnargs * sizeof(char *));
+			newargs = palloc_array(char *, trigger->tgnargs);
 			for (j = 0; j < trigger->tgnargs; j++)
 				newargs[j] = pstrdup(trigger->tgargs[j]);
 			trigger->tgargs = newargs;
@@ -5507,9 +5507,8 @@ AfterTriggerBeginSubXact(void)
 			/* repalloc will keep the stack in the same context */
 			int			new_alloc = afterTriggers.maxtransdepth * 2;
 
-			afterTriggers.trans_stack = (AfterTriggersTransData *)
-				repalloc(afterTriggers.trans_stack,
-						 new_alloc * sizeof(AfterTriggersTransData));
+			afterTriggers.trans_stack = repalloc_array(afterTriggers.trans_stack,
+													   AfterTriggersTransData, new_alloc);
 			afterTriggers.maxtransdepth = new_alloc;
 		}
 	}
@@ -5762,9 +5761,8 @@ AfterTriggerEnlargeQueryState(void)
 		int			new_alloc = Max(afterTriggers.query_depth + 1,
 									old_alloc * 2);
 
-		afterTriggers.query_stack = (AfterTriggersQueryData *)
-			repalloc(afterTriggers.query_stack,
-					 new_alloc * sizeof(AfterTriggersQueryData));
+		afterTriggers.query_stack = repalloc_array(afterTriggers.query_stack,
+												   AfterTriggersQueryData, new_alloc);
 		afterTriggers.maxquerydepth = new_alloc;
 	}
 
@@ -6891,7 +6889,7 @@ RegisterAfterTriggerBatchCallback(AfterTriggerBatchCallback callback,
 	Assert(afterTriggers.firing_depth > 0);
 	Assert(!afterTriggers.firing_batch_callbacks);
 	oldcxt = MemoryContextSwitchTo(TopTransactionContext);
-	item = palloc(sizeof(AfterTriggerCallbackItem));
+	item = palloc_object(AfterTriggerCallbackItem);
 	item->callback = callback;
 	item->arg = arg;
 	if (afterTriggers.query_depth >= 0)

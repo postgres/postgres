@@ -699,7 +699,7 @@ tuplesort_begin_batch(Tuplesortstate *state)
 	}
 	if (state->memtuples == NULL)
 	{
-		state->memtuples = (SortTuple *) palloc(state->memtupsize * sizeof(SortTuple));
+		state->memtuples = palloc_array(SortTuple, state->memtupsize);
 		USEMEM(state, GetMemoryChunkSpace(state->memtuples));
 	}
 
@@ -1795,7 +1795,7 @@ inittapes(Tuplesortstate *state, bool mergeruns)
 	state->nInputTapes = 0;
 	state->nInputRuns = 0;
 
-	state->outputTapes = palloc0(state->maxTapes * sizeof(LogicalTape *));
+	state->outputTapes = palloc0_array(LogicalTape *, state->maxTapes);
 	state->nOutputTapes = 0;
 	state->nOutputRuns = 0;
 
@@ -2020,7 +2020,7 @@ mergeruns(Tuplesortstate *state)
 			 * created as needed, here we only allocate the array to hold
 			 * them.
 			 */
-			state->outputTapes = palloc0(state->nInputTapes * sizeof(LogicalTape *));
+			state->outputTapes = palloc0_array(LogicalTape *, state->nInputTapes);
 			state->nOutputTapes = 0;
 			state->nOutputRuns = 0;
 
@@ -3422,7 +3422,7 @@ leader_takeover_tapes(Tuplesortstate *state)
 	state->nInputTapes = 0;
 	state->nInputRuns = 0;
 
-	state->outputTapes = palloc0(nParticipants * sizeof(LogicalTape *));
+	state->outputTapes = palloc0_array(LogicalTape *, nParticipants);
 	state->nOutputTapes = nParticipants;
 	state->nOutputRuns = nParticipants;
 

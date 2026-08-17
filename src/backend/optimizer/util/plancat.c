@@ -162,10 +162,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	rel->reltablespace = RelationGetForm(relation)->reltablespace;
 
 	Assert(rel->max_attr >= rel->min_attr);
-	rel->attr_needed = (Relids *)
-		palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(Relids));
-	rel->attr_widths = (int32 *)
-		palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(int32));
+	rel->attr_needed = palloc0_array(Relids, rel->max_attr - rel->min_attr + 1);
+	rel->attr_widths = palloc0_array(int32, rel->max_attr - rel->min_attr + 1);
 
 	/*
 	 * Record which columns are defined as NOT NULL.  We leave this

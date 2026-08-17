@@ -182,8 +182,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 		appendstate->as_prune_state = NULL;
 	}
 
-	appendplanstates = (PlanState **) palloc(nplans *
-											 sizeof(PlanState *));
+	appendplanstates = palloc_array(PlanState *, nplans);
 
 	/*
 	 * call ExecInitNode on each of the valid plans to be executed and save
@@ -259,8 +258,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 
 	if (nasyncplans > 0)
 	{
-		appendstate->as_asyncrequests = (AsyncRequest **)
-			palloc0(nplans * sizeof(AsyncRequest *));
+		appendstate->as_asyncrequests = palloc0_array(AsyncRequest *, nplans);
 
 		i = -1;
 		while ((i = bms_next_member(asyncplans, i)) >= 0)
@@ -278,8 +276,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 			appendstate->as_asyncrequests[i] = areq;
 		}
 
-		appendstate->as_asyncresults = (TupleTableSlot **)
-			palloc0(nasyncplans * sizeof(TupleTableSlot *));
+		appendstate->as_asyncresults = palloc0_array(TupleTableSlot *, nasyncplans);
 
 		if (appendstate->as_valid_subplans_identified)
 			classify_matching_subplans(appendstate);

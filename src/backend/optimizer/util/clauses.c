@@ -263,7 +263,7 @@ find_window_functions(Node *clause, Index maxWinRef)
 
 	lists->numWindowFuncs = 0;
 	lists->maxWinRef = maxWinRef;
-	lists->windowFuncs = (List **) palloc0((maxWinRef + 1) * sizeof(List *));
+	lists->windowFuncs = palloc0_array(List *, (maxWinRef + 1));
 	(void) find_window_functions_walker(clause, lists);
 	return lists;
 }
@@ -5576,7 +5576,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	 * substitution of the inputs.  So start building expression with inputs
 	 * substituted.
 	 */
-	usecounts = (int *) palloc0(funcform->pronargs * sizeof(int));
+	usecounts = palloc0_array(int, funcform->pronargs);
 	newexpr = substitute_actual_parameters(newexpr, funcform->pronargs,
 										   args, usecounts);
 

@@ -867,7 +867,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 		/* expansible array of aliases */
 		maxaliases = 100;
-		aliases = (CollAliasData *) palloc(maxaliases * sizeof(CollAliasData));
+		aliases = palloc_array(CollAliasData, maxaliases);
 		naliases = 0;
 
 		locale_a_handle = OpenPipeStream("locale -a", "r");
@@ -911,8 +911,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 				if (naliases >= maxaliases)
 				{
 					maxaliases *= 2;
-					aliases = (CollAliasData *)
-						repalloc(aliases, maxaliases * sizeof(CollAliasData));
+					aliases = repalloc_array(aliases, CollAliasData, maxaliases);
 				}
 				aliases[naliases].localename = pstrdup(localebuf);
 				aliases[naliases].alias = pstrdup(alias);

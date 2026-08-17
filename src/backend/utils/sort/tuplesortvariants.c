@@ -217,7 +217,7 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 	base->arg = tupDesc;		/* assume we need not copy tupDesc */
 
 	/* Prepare SortSupport data for each column */
-	base->sortKeys = (SortSupport) palloc0(nkeys * sizeof(SortSupportData));
+	base->sortKeys = (SortSupport) palloc0_array(SortSupportData, nkeys);
 
 	for (i = 0; i < nkeys; i++)
 	{
@@ -325,8 +325,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 	}
 
 	/* Prepare SortSupport data for each column */
-	base->sortKeys = (SortSupport) palloc0(base->nKeys *
-										   sizeof(SortSupportData));
+	base->sortKeys = (SortSupport) palloc0_array(SortSupportData, base->nKeys);
 
 	for (i = 0; i < base->nKeys; i++)
 	{
@@ -407,8 +406,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 	indexScanKey = _bt_mkscankey(indexRel, NULL);
 
 	/* Prepare SortSupport data for each column */
-	base->sortKeys = (SortSupport) palloc0(base->nKeys *
-										   sizeof(SortSupportData));
+	base->sortKeys = (SortSupport) palloc0_array(SortSupportData, base->nKeys);
 
 	for (i = 0; i < base->nKeys; i++)
 	{
@@ -527,8 +525,7 @@ tuplesort_begin_index_gist(Relation heapRel,
 	arg->uniqueNullsNotDistinct = false;
 
 	/* Prepare SortSupport data for each column */
-	base->sortKeys = (SortSupport) palloc0(base->nKeys *
-										   sizeof(SortSupportData));
+	base->sortKeys = (SortSupport) palloc0_array(SortSupportData, base->nKeys);
 
 	for (i = 0; i < base->nKeys; i++)
 	{
@@ -610,8 +607,7 @@ tuplesort_begin_index_gin(Relation heapRel,
 	base->nKeys = IndexRelationGetNumberOfKeyAttributes(indexRel);
 
 	/* Prepare SortSupport data for each column */
-	base->sortKeys = (SortSupport) palloc0(base->nKeys *
-										   sizeof(SortSupportData));
+	base->sortKeys = (SortSupport) palloc0_array(SortSupportData, base->nKeys);
 
 	for (i = 0; i < base->nKeys; i++)
 	{

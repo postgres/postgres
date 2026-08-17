@@ -291,8 +291,8 @@ PLy_procedure_create(PLyProcedure *proc,
 			}
 
 			/* Allocate arrays for per-input-argument data */
-			proc->argnames = (char **) palloc0_array(char *, proc->nargs);
-			proc->args = (PLyDatumToOb *) palloc0_array(PLyDatumToOb, proc->nargs);
+			proc->argnames = palloc0_array(char *, proc->nargs);
+			proc->args = palloc0_array(PLyDatumToOb, proc->nargs);
 
 			for (i = pos = 0; i < total; i++)
 			{

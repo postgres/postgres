@@ -654,8 +654,7 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	{
 		int			nkeys = node->numCols;
 
-		setopstate->sortKeys = (SortSupport)
-			palloc0(nkeys * sizeof(SortSupportData));
+		setopstate->sortKeys = palloc0_array(SortSupportData, nkeys);
 		for (int i = 0; i < nkeys; i++)
 		{
 			SortSupport sortKey = setopstate->sortKeys + i;

@@ -146,7 +146,7 @@ Datum
 gbt_macad8_union(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	void	   *out = palloc0(sizeof(mac8KEY));
+	void	   *out = palloc0_object(mac8KEY);
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(mac8KEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));

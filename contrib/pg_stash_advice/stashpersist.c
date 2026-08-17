@@ -319,7 +319,7 @@ pgsa_read_from_disk(void)
 
 	/* Initial memory allocations. */
 	saved_stashes = pgsa_saved_stash_table_create(tmpcxt, 64, NULL);
-	entries = palloc(max_entries * sizeof(pgsa_saved_entry));
+	entries = palloc_array(pgsa_saved_entry, max_entries);
 
 	/*
 	 * For memory and CPU efficiency, we parse the file in place. The end of
@@ -454,8 +454,7 @@ pgsa_read_from_disk(void)
 			if (num_entries >= max_entries)
 			{
 				max_entries *= 2;
-				entries = repalloc(entries,
-								   max_entries * sizeof(pgsa_saved_entry));
+				entries = repalloc_array(entries, pgsa_saved_entry, max_entries);
 			}
 			entries[num_entries].stash_name = stash_name;
 			entries[num_entries].queryId = queryId;

@@ -189,8 +189,7 @@ InitJumble(void)
 	jstate->jumble = (unsigned char *) palloc(JUMBLE_SIZE);
 	jstate->jumble_len = 0;
 	jstate->clocations_buf_size = 32;
-	jstate->clocations = (LocationLen *) palloc(jstate->clocations_buf_size *
-												sizeof(LocationLen));
+	jstate->clocations = palloc_array(LocationLen, jstate->clocations_buf_size);
 	jstate->clocations_count = 0;
 	jstate->highest_extern_param_id = 0;
 	jstate->pending_nulls = 0;
@@ -406,10 +405,9 @@ RecordConstLocation(JumbleState *jstate, bool extern_param, int location, int le
 		if (jstate->clocations_count >= jstate->clocations_buf_size)
 		{
 			jstate->clocations_buf_size *= 2;
-			jstate->clocations = (LocationLen *)
-				repalloc(jstate->clocations,
-						 jstate->clocations_buf_size *
-						 sizeof(LocationLen));
+			jstate->clocations = repalloc_array(jstate->clocations,
+												LocationLen,
+												jstate->clocations_buf_size);
 		}
 		jstate->clocations[jstate->clocations_count].location = location;
 

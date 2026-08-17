@@ -309,7 +309,7 @@ regcomp_auth_token(AuthToken *token, char *filename, int line_num,
 		return 0;				/* nothing to compile */
 
 	token->regex = palloc0_object(regex_t);
-	wstr = palloc((strlen(token->string + 1) + 1) * sizeof(pg_wchar));
+	wstr = palloc_array(pg_wchar, strlen(token->string + 1) + 1);
 	wlen = pg_mb2wchar_with_len(token->string + 1,
 								wstr, strlen(token->string + 1));
 
@@ -350,7 +350,7 @@ regexec_auth_token(const char *match, AuthToken *token, size_t nmatch,
 
 	Assert(token->string[0] == '/' && token->regex);
 
-	wmatchstr = palloc((strlen(match) + 1) * sizeof(pg_wchar));
+	wmatchstr = palloc_array(pg_wchar, strlen(match) + 1);
 	wmatchlen = pg_mb2wchar_with_len(match, wmatchstr, strlen(match));
 
 	r = pg_regexec(token->regex, wmatchstr, wmatchlen, 0, NULL, nmatch, pmatch, 0);

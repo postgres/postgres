@@ -142,7 +142,7 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 									 "PL/Sample function",
 									 ALLOCSET_SMALL_SIZES);
 
-	arg_out_func = (FmgrInfo *) palloc0(fcinfo->nargs * sizeof(FmgrInfo));
+	arg_out_func = palloc0_array(FmgrInfo, fcinfo->nargs);
 	numargs = get_func_arg_info(pl_tuple, &argtypes, &argnames, &argmodes);
 
 	/*

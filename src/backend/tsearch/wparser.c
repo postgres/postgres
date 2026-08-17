@@ -190,7 +190,7 @@ prs_setup_firstcall(FuncCallContext *funcctx, FunctionCallInfo fcinfo,
 		if (st->cur >= st->len)
 		{
 			st->len = 2 * st->len;
-			st->list = (LexemeEntry *) repalloc(st->list, sizeof(LexemeEntry) * st->len);
+			st->list = repalloc_array(st->list, LexemeEntry, st->len);
 		}
 		st->list[st->cur].lexeme = palloc(llen + 1);
 		memcpy(st->list[st->cur].lexeme, lex, llen);

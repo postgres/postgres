@@ -53,7 +53,7 @@ gin_extract_hstore(PG_FUNCTION_ARGS)
 
 	*nentries = 2 * count;
 	if (count)
-		entries = (Datum *) palloc(sizeof(Datum) * 2 * count);
+		entries = palloc_array(Datum, 2 * count);
 
 	for (i = 0; i < count; ++i)
 	{
@@ -103,7 +103,7 @@ gin_extract_hstore_query(PG_FUNCTION_ARGS)
 		text	   *item;
 
 		*nentries = 1;
-		entries = (Datum *) palloc(sizeof(Datum));
+		entries = palloc_object(Datum);
 		item = makeitem(VARDATA_ANY(query), VARSIZE_ANY_EXHDR(query), KEYFLAG);
 		entries[0] = PointerGetDatum(item);
 	}
@@ -120,7 +120,7 @@ gin_extract_hstore_query(PG_FUNCTION_ARGS)
 
 		deconstruct_array_builtin(query, TEXTOID, &key_datums, &key_nulls, &key_count);
 
-		entries = (Datum *) palloc(sizeof(Datum) * key_count);
+		entries = palloc_array(Datum, key_count);
 
 		for (i = 0, j = 0; i < key_count; ++i)
 		{

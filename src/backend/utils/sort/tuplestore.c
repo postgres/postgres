@@ -291,15 +291,14 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 							ALLOCSET_SEPARATE_THRESHOLD / sizeof(void *) + 1);
 
 	state->growmemtuples = true;
-	state->memtuples = (void **) palloc(state->memtupsize * sizeof(void *));
+	state->memtuples = palloc_array(void *, state->memtupsize);
 
 	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
 
 	state->activeptr = 0;
 	state->readptrcount = 1;
 	state->readptrsize = 8;		/* arbitrary */
-	state->readptrs = (TSReadPointer *)
-		palloc(state->readptrsize * sizeof(TSReadPointer));
+	state->readptrs = palloc_array(TSReadPointer, state->readptrsize);
 
 	state->readptrs[0].eflags = eflags;
 	state->readptrs[0].eof_reached = false;
@@ -407,8 +406,7 @@ tuplestore_alloc_read_pointer(Tuplestorestate *state, int eflags)
 	{
 		int			newcnt = state->readptrsize * 2;
 
-		state->readptrs = (TSReadPointer *)
-			repalloc(state->readptrs, newcnt * sizeof(TSReadPointer));
+		state->readptrs = repalloc_array(state->readptrs, TSReadPointer, newcnt);
 		state->readptrsize = newcnt;
 	}
 

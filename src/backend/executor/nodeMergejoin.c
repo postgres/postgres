@@ -186,7 +186,7 @@ MJExamineQuals(List *mergeclauses,
 	int			iClause;
 	ListCell   *cl;
 
-	clauses = (MergeJoinClause) palloc0(nClauses * sizeof(MergeJoinClauseData));
+	clauses = palloc0_array(MergeJoinClauseData, nClauses);
 
 	iClause = 0;
 	foreach(cl, mergeclauses)

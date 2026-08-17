@@ -63,7 +63,7 @@ irbt_combine(RBTNode *existing, const RBTNode *newdata, void *arg)
 static RBTNode *
 irbt_alloc(void *arg)
 {
-	return (RBTNode *) palloc(sizeof(IntRBTreeNode));
+	return (RBTNode *) palloc_object(IntRBTreeNode);
 }
 
 /* Node freer */
@@ -96,7 +96,7 @@ GetPermutation(int size)
 	int		   *permutation;
 	int			i;
 
-	permutation = (int *) palloc(size * sizeof(int));
+	permutation = palloc_array(int, size);
 
 	permutation[0] = 0;
 
@@ -417,8 +417,8 @@ testdelete(int size, int delsize)
 	rbt_populate(tree, size, 1);
 
 	/* Choose unique ids to delete */
-	deleteIds = (int *) palloc(delsize * sizeof(int));
-	chosen = (bool *) palloc0(size * sizeof(bool));
+	deleteIds = palloc_array(int, delsize);
+	chosen = palloc0_array(bool, size);
 
 	for (i = 0; i < delsize; i++)
 	{

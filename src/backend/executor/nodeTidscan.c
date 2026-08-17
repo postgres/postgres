@@ -157,8 +157,7 @@ TidListEval(TidScanState *tidstate)
 	 * ScalarArrayOpExprs, we may have to enlarge the array.
 	 */
 	numAllocTids = list_length(tidstate->tss_tidexprs);
-	tidList = (ItemPointerData *)
-		palloc(numAllocTids * sizeof(ItemPointerData));
+	tidList = palloc_array(ItemPointerData, numAllocTids);
 	numTids = 0;
 
 	foreach(l, tidstate->tss_tidexprs)
@@ -189,9 +188,7 @@ TidListEval(TidScanState *tidstate)
 			if (numTids >= numAllocTids)
 			{
 				numAllocTids *= 2;
-				tidList = (ItemPointerData *)
-					repalloc(tidList,
-							 numAllocTids * sizeof(ItemPointerData));
+				tidList = repalloc_array(tidList, ItemPointerData, numAllocTids);
 			}
 			tidList[numTids++] = *itemptr;
 		}
@@ -214,9 +211,7 @@ TidListEval(TidScanState *tidstate)
 			if (numTids + ndatums > numAllocTids)
 			{
 				numAllocTids = numTids + ndatums;
-				tidList = (ItemPointerData *)
-					repalloc(tidList,
-							 numAllocTids * sizeof(ItemPointerData));
+				tidList = repalloc_array(tidList, ItemPointerData, numAllocTids);
 			}
 			for (i = 0; i < ndatums; i++)
 			{
@@ -245,9 +240,7 @@ TidListEval(TidScanState *tidstate)
 				if (numTids >= numAllocTids)
 				{
 					numAllocTids *= 2;
-					tidList = (ItemPointerData *)
-						repalloc(tidList,
-								 numAllocTids * sizeof(ItemPointerData));
+					tidList = repalloc_array(tidList, ItemPointerData, numAllocTids);
 				}
 				tidList[numTids++] = cursor_tid;
 			}

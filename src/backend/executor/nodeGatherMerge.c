@@ -237,8 +237,7 @@ ExecGatherMerge(PlanState *pstate)
 				ExecParallelCreateReaders(node->pei);
 				/* Make a working array showing the active readers */
 				node->nreaders = pcxt->nworkers_launched;
-				node->reader = (TupleQueueReader **)
-					palloc(node->nreaders * sizeof(TupleQueueReader *));
+				node->reader = palloc_array(TupleQueueReader *, node->nreaders);
 				memcpy(node->reader, node->pei->reader,
 					   node->nreaders * sizeof(TupleQueueReader *));
 			}
@@ -408,12 +407,10 @@ gather_merge_setup(GatherMergeState *gm_state)
 	 * scan, we might have fewer than num_workers available workers, in which
 	 * case the extra array entries go unused.
 	 */
-	gm_state->gm_slots = (TupleTableSlot **)
-		palloc0((nreaders + 1) * sizeof(TupleTableSlot *));
+	gm_state->gm_slots = palloc0_array(TupleTableSlot *, nreaders + 1);
 
 	/* Allocate the tuple slot and tuple array for each worker */
-	gm_state->gm_tuple_buffers = (GMReaderTupleBuffer *)
-		palloc0(nreaders * sizeof(GMReaderTupleBuffer));
+	gm_state->gm_tuple_buffers = palloc0_array(GMReaderTupleBuffer, nreaders);
 
 	for (i = 0; i < nreaders; i++)
 	{

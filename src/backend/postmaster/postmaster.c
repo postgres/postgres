@@ -1123,7 +1123,7 @@ PostmasterMain(int argc, char *argv[])
 	 * First set up an on_proc_exit function that's charged with closing the
 	 * sockets again at postmaster shutdown.
 	 */
-	ListenSockets = palloc(MAXLISTEN * sizeof(pgsocket));
+	ListenSockets = palloc_array(pgsocket, MAXLISTEN);
 	on_proc_exit(CloseServerPorts, 0);
 
 	if (ListenAddresses)

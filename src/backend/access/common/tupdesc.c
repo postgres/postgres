@@ -366,7 +366,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 
 		if ((cpy->num_defval = constr->num_defval) > 0)
 		{
-			cpy->defval = (AttrDefault *) palloc(cpy->num_defval * sizeof(AttrDefault));
+			cpy->defval = palloc_array(AttrDefault, cpy->num_defval);
 			memcpy(cpy->defval, constr->defval, cpy->num_defval * sizeof(AttrDefault));
 			for (i = cpy->num_defval - 1; i >= 0; i--)
 				cpy->defval[i].adbin = pstrdup(constr->defval[i].adbin);
@@ -374,7 +374,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 
 		if (constr->missing)
 		{
-			cpy->missing = (AttrMissing *) palloc(tupdesc->natts * sizeof(AttrMissing));
+			cpy->missing = palloc_array(AttrMissing, tupdesc->natts);
 			memcpy(cpy->missing, constr->missing, tupdesc->natts * sizeof(AttrMissing));
 			for (i = tupdesc->natts - 1; i >= 0; i--)
 			{
@@ -391,7 +391,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 
 		if ((cpy->num_check = constr->num_check) > 0)
 		{
-			cpy->check = (ConstrCheck *) palloc(cpy->num_check * sizeof(ConstrCheck));
+			cpy->check = palloc_array(ConstrCheck, cpy->num_check);
 			memcpy(cpy->check, constr->check, cpy->num_check * sizeof(ConstrCheck));
 			for (i = cpy->num_check - 1; i >= 0; i--)
 			{

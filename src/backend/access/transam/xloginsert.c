@@ -200,8 +200,7 @@ XLogEnsureRecordSpace(int max_block_id, int ndatas)
 
 	if (nbuffers > max_registered_buffers)
 	{
-		registered_buffers = (registered_buffer *)
-			repalloc(registered_buffers, sizeof(registered_buffer) * nbuffers);
+		registered_buffers = repalloc_array(registered_buffers, registered_buffer, nbuffers);
 
 		/*
 		 * At least the padding bytes in the structs must be zeroed, because
@@ -214,7 +213,7 @@ XLogEnsureRecordSpace(int max_block_id, int ndatas)
 
 	if (ndatas > max_rdatas)
 	{
-		rdatas = (XLogRecData *) repalloc(rdatas, sizeof(XLogRecData) * ndatas);
+		rdatas = repalloc_array(rdatas, XLogRecData, ndatas);
 		max_rdatas = ndatas;
 	}
 }

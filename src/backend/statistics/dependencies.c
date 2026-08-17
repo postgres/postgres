@@ -136,8 +136,9 @@ generate_dependencies_recurse(DependencyGenerator state, int index,
 			 */
 			if (!match)
 			{
-				state->dependencies = (AttrNumber *) repalloc(state->dependencies,
-															  state->k * (state->ndependencies + 1) * sizeof(AttrNumber));
+				state->dependencies = repalloc_array(state->dependencies,
+													 AttrNumber,
+													 state->k * (state->ndependencies + 1));
 				memcpy(&state->dependencies[(state->k * state->ndependencies)],
 					   current, state->k * sizeof(AttrNumber));
 				state->ndependencies++;

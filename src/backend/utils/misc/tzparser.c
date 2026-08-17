@@ -250,7 +250,7 @@ addToArray(tzEntry **base, int *arraysize, int n,
 	if (n >= *arraysize)
 	{
 		*arraysize *= 2;
-		*base = (tzEntry *) repalloc(*base, *arraysize * sizeof(tzEntry));
+		*base = repalloc_array(*base, tzEntry, *arraysize);
 	}
 
 	arrayptr = *base + low;

@@ -1459,7 +1459,7 @@ AbsorbSyncRequests(void)
 		if (n > 0)
 		{
 			if (!requests)
-				requests = (CheckpointerRequest *) palloc(n * sizeof(CheckpointerRequest));
+				requests = palloc_array(CheckpointerRequest, n);
 
 			for (i = 0; i < n; i++)
 			{

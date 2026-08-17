@@ -603,7 +603,7 @@ make_pathtarget_from_tlist(List *tlist)
 	int			i;
 	ListCell   *lc;
 
-	target->sortgrouprefs = (Index *) palloc(list_length(tlist) * sizeof(Index));
+	target->sortgrouprefs = palloc_array(Index, list_length(tlist));
 
 	i = 0;
 	foreach(lc, tlist)
@@ -711,8 +711,7 @@ add_column_to_pathtarget(PathTarget *target, Expr *expr, Index sortgroupref)
 		int			nexprs = list_length(target->exprs);
 
 		/* This might look inefficient, but actually it's usually cheap */
-		target->sortgrouprefs = (Index *)
-			repalloc(target->sortgrouprefs, nexprs * sizeof(Index));
+		target->sortgrouprefs = repalloc_array(target->sortgrouprefs, Index, nexprs);
 		target->sortgrouprefs[nexprs - 1] = sortgroupref;
 	}
 	else if (sortgroupref)
@@ -720,7 +719,7 @@ add_column_to_pathtarget(PathTarget *target, Expr *expr, Index sortgroupref)
 		/* Adding sortgroupref labeling to a previously unlabeled target */
 		int			nexprs = list_length(target->exprs);
 
-		target->sortgrouprefs = (Index *) palloc0(nexprs * sizeof(Index));
+		target->sortgrouprefs = palloc0_array(Index, nexprs);
 		target->sortgrouprefs[nexprs - 1] = sortgroupref;
 	}
 
@@ -1307,8 +1306,8 @@ add_sp_item_to_pathtarget(PathTarget *target, split_pathtarget_item *item)
 			{
 				if (target->sortgrouprefs == NULL)
 				{
-					target->sortgrouprefs = (Index *)
-						palloc0(list_length(target->exprs) * sizeof(Index));
+					target->sortgrouprefs = palloc0_array(Index,
+														  list_length(target->exprs));
 				}
 				target->sortgrouprefs[lci] = item->sortgroupref;
 			}

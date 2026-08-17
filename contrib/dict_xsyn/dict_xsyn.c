@@ -235,7 +235,7 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 		pos = value;
 		while ((syn = find_word(pos, &end)) != NULL)
 		{
-			res = repalloc(res, sizeof(TSLexeme) * (nsyns + 2));
+			res = repalloc_array(res, TSLexeme, nsyns + 2);
 
 			/* The first word is output only if keeporig=true */
 			if (pos != value || d->keeporig)

@@ -1109,10 +1109,10 @@ like_fixed_prefix_ci(Const *patt_const, Oid collation, Const **prefix_const,
 
 	locale = pg_newlocale_from_collation(collation);
 
-	wpatt = palloc((nbytes + 1) * sizeof(pg_wchar));
+	wpatt = palloc_array(pg_wchar, nbytes + 1);
 	wpattlen = pg_mb2wchar_with_len(VARDATA_ANY(val), wpatt, nbytes);
 
-	wmatch = palloc((nbytes + 1) * sizeof(pg_wchar));
+	wmatch = palloc_array(pg_wchar, nbytes + 1);
 	for (wpos = 0; wpos < wpattlen; wpos++)
 	{
 		/* % and _ are wildcard characters in LIKE */

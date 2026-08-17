@@ -120,7 +120,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 
 	attinmeta = TupleDescGetAttInMetadata(rsinfo->setDesc);
 
-	values = (char **) palloc(rsinfo->setDesc->natts * sizeof(char *));
+	values = palloc_array(char *, rsinfo->setDesc->natts);
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
@@ -145,7 +145,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 			values[Atnum_tid] = DatumGetCString(DirectFunctionCall1(tidout,
 																	PointerGetDatum(&tuple->t_self)));
 
-			values[Atnum_xmax] = palloc(NCHARS * sizeof(char));
+			values[Atnum_xmax] = palloc_array(char, NCHARS);
 			snprintf(values[Atnum_xmax], NCHARS, "%u", xmax);
 			if (infomask & HEAP_XMAX_IS_MULTI)
 			{
@@ -227,7 +227,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 			{
 				values[Atnum_ismulti] = pstrdup("false");
 
-				values[Atnum_xids] = palloc(NCHARS * sizeof(char));
+				values[Atnum_xids] = palloc_array(char, NCHARS);
 				snprintf(values[Atnum_xids], NCHARS, "{%u}", xmax);
 
 				values[Atnum_modes] = palloc(NCHARS);
@@ -257,7 +257,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 						snprintf(values[Atnum_modes], NCHARS, "{No Key Update}");
 				}
 
-				values[Atnum_pids] = palloc(NCHARS * sizeof(char));
+				values[Atnum_pids] = palloc_array(char, NCHARS);
 				snprintf(values[Atnum_pids], NCHARS, "{%d}",
 						 BackendXidGetPid(xmax));
 			}

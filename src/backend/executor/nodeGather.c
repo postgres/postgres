@@ -196,8 +196,7 @@ ExecGather(PlanState *pstate)
 				ExecParallelCreateReaders(node->pei);
 				/* Make a working array showing the active readers */
 				node->nreaders = pcxt->nworkers_launched;
-				node->reader = (TupleQueueReader **)
-					palloc(node->nreaders * sizeof(TupleQueueReader *));
+				node->reader = palloc_array(TupleQueueReader *, node->nreaders);
 				memcpy(node->reader, node->pei->reader,
 					   node->nreaders * sizeof(TupleQueueReader *));
 			}

@@ -31,7 +31,7 @@ gbt_num_compress(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 			Cash		ch;
 		}			v;
 
-		GBT_NUMKEY *r = (GBT_NUMKEY *) palloc0(tinfo->indexsize);
+		GBT_NUMKEY *r = palloc0_array(GBT_NUMKEY, tinfo->indexsize);
 		void	   *leaf = NULL;
 
 		switch (tinfo->t)
@@ -374,12 +374,12 @@ gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 	OffsetNumber i,
 				maxoff = entryvec->n - 1;
 	Nsrt	   *arr;
-	int			nbytes;
+	int			noffsets;
 
-	arr = (Nsrt *) palloc((maxoff + 1) * sizeof(Nsrt));
-	nbytes = (maxoff + 2) * sizeof(OffsetNumber);
-	v->spl_left = (OffsetNumber *) palloc(nbytes);
-	v->spl_right = (OffsetNumber *) palloc(nbytes);
+	arr = palloc_array(Nsrt, maxoff + 1);
+	noffsets = maxoff + 2;
+	v->spl_left = palloc_array(OffsetNumber, noffsets);
+	v->spl_right = palloc_array(OffsetNumber, noffsets);
 	v->spl_ldatum = PointerGetDatum(0);
 	v->spl_rdatum = PointerGetDatum(0);
 	v->spl_nleft = 0;

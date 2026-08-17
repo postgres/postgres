@@ -134,9 +134,9 @@ test_create(PG_FUNCTION_ARGS)
 
 	items.num_tids = 0;
 	items.max_tids = array_init_size / sizeof(ItemPointerData);
-	items.insert_tids = (ItemPointerData *) palloc0(array_init_size);
-	items.lookup_tids = (ItemPointerData *) palloc0(array_init_size);
-	items.iter_tids = (ItemPointerData *) palloc0(array_init_size);
+	items.insert_tids = palloc0_array(ItemPointerData, items.max_tids);
+	items.lookup_tids = palloc0_array(ItemPointerData, items.max_tids);
+	items.iter_tids = palloc0_array(ItemPointerData, items.max_tids);
 
 	MemoryContextSwitchTo(old_ctx);
 
@@ -212,9 +212,9 @@ do_set_block_offsets(PG_FUNCTION_ARGS)
 		if (idx >= items.max_tids)
 		{
 			items.max_tids *= 2;
-			items.insert_tids = repalloc(items.insert_tids, sizeof(ItemPointerData) * items.max_tids);
-			items.lookup_tids = repalloc(items.lookup_tids, sizeof(ItemPointerData) * items.max_tids);
-			items.iter_tids = repalloc(items.iter_tids, sizeof(ItemPointerData) * items.max_tids);
+			items.insert_tids = repalloc_array(items.insert_tids, ItemPointerData, items.max_tids);
+			items.lookup_tids = repalloc_array(items.lookup_tids, ItemPointerData, items.max_tids);
+			items.iter_tids = repalloc_array(items.iter_tids, ItemPointerData, items.max_tids);
 		}
 
 		tid = &(items.insert_tids[idx]);

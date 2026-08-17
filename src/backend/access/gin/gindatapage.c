@@ -168,7 +168,7 @@ GinDataLeafPageGetItems(Page page, int *nitems, ItemPointerData advancePast)
 	{
 		ItemPointer tmp = dataLeafPageGetUncompressed(page, nitems);
 
-		result = palloc((*nitems) * sizeof(ItemPointerData));
+		result = palloc_array(ItemPointerData, *nitems);
 		memcpy(result, tmp, (*nitems) * sizeof(ItemPointerData));
 	}
 
@@ -1418,7 +1418,7 @@ disassembleLeaf(Page page)
 
 			seginfo->action = GIN_SEGMENT_REPLACE;
 			seginfo->seg = NULL;
-			seginfo->items = palloc(nuncompressed * sizeof(ItemPointerData));
+			seginfo->items = palloc_array(ItemPointerData, nuncompressed);
 			memcpy(seginfo->items, uncompressed, nuncompressed * sizeof(ItemPointerData));
 			seginfo->nitems = nuncompressed;
 

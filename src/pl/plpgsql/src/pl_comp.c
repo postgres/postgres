@@ -2242,7 +2242,7 @@ plpgsql_adddatum(PLpgSQL_datum *newdatum)
 	if (plpgsql_nDatums == datums_alloc)
 	{
 		datums_alloc *= 2;
-		plpgsql_Datums = repalloc(plpgsql_Datums, sizeof(PLpgSQL_datum *) * datums_alloc);
+		plpgsql_Datums = repalloc_array(plpgsql_Datums, PLpgSQL_datum *, datums_alloc);
 	}
 
 	newdatum->dno = plpgsql_nDatums;

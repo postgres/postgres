@@ -655,7 +655,7 @@ RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)
 	else
 		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 
-	request = palloc0(sizeof(NamedLWLockTrancheRequest));
+	request = palloc0_object(NamedLWLockTrancheRequest);
 	strlcpy(request->tranche_name, tranche_name, NAMEDATALEN);
 	request->num_lwlocks = num_lwlocks;
 	NamedLWLockTrancheRequests = lappend(NamedLWLockTrancheRequests, request);

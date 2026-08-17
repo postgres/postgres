@@ -822,8 +822,7 @@ ExecInitRangeTable(EState *estate, List *rangeTable, List *permInfos,
 	 * rangetable entry, and initialize entries to NULL.  Relations are opened
 	 * and stored here as needed.
 	 */
-	estate->es_relations = (Relation *)
-		palloc0(estate->es_range_table_size * sizeof(Relation));
+	estate->es_relations = palloc0_array(Relation, estate->es_range_table_size);
 
 	/*
 	 * es_result_relations and es_rowmarks are also parallel to
@@ -916,8 +915,8 @@ ExecInitResultRelation(EState *estate, ResultRelInfo *resultRelInfo,
 					  estate->es_instrument);
 
 	if (estate->es_result_relations == NULL)
-		estate->es_result_relations = (ResultRelInfo **)
-			palloc0(estate->es_range_table_size * sizeof(ResultRelInfo *));
+		estate->es_result_relations = palloc0_array(ResultRelInfo *,
+													estate->es_range_table_size);
 	estate->es_result_relations[rti - 1] = resultRelInfo;
 
 	/*

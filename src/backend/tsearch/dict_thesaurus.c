@@ -306,7 +306,7 @@ addCompiledLexeme(TheLexeme *newwrds, int *nnw, int *tnm, TSLexeme *lexeme, Lexe
 	if (*nnw >= *tnm)
 	{
 		*tnm *= 2;
-		newwrds = (TheLexeme *) repalloc(newwrds, sizeof(TheLexeme) * *tnm);
+		newwrds = repalloc_array(newwrds, TheLexeme, *tnm);
 	}
 
 	newwrds[*nnw].entries = palloc_object(LexemeInfo);
@@ -495,7 +495,7 @@ compileTheLexeme(DictThesaurus *d)
 		}
 
 		d->nwrds = newwrds - d->wrds + 1;
-		d->wrds = (TheLexeme *) repalloc(d->wrds, sizeof(TheLexeme) * d->nwrds);
+		d->wrds = repalloc_array(d->wrds, TheLexeme, d->nwrds);
 	}
 }
 
@@ -547,7 +547,7 @@ compileTheSubstitute(DictThesaurus *d)
 						int			diff = outptr - d->subst[i].res;
 
 						n *= 2;
-						d->subst[i].res = (TSLexeme *) repalloc(d->subst[i].res, sizeof(TSLexeme) * n);
+						d->subst[i].res = repalloc_array(d->subst[i].res, TSLexeme, n);
 						outptr = d->subst[i].res + diff;
 					}
 

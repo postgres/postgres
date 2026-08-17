@@ -2405,7 +2405,7 @@ vac_open_indexes(Relation relation, LOCKMODE lockmode,
 	i = list_length(indexoidlist);
 
 	if (i > 0)
-		*Irel = (Relation *) palloc(i * sizeof(Relation));
+		*Irel = palloc_array(Relation, i);
 	else
 		*Irel = NULL;
 

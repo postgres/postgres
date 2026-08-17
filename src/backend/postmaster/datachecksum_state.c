@@ -1528,7 +1528,7 @@ BuildDatabaseList(void)
 
 		oldctx = MemoryContextSwitchTo(ctx);
 
-		db = (DataChecksumsWorkerDatabase *) palloc0(sizeof(DataChecksumsWorkerDatabase));
+		db = palloc0_object(DataChecksumsWorkerDatabase);
 
 		db->dboid = pgdb->oid;
 		db->dbname = pstrdup(NameStr(pgdb->datname));

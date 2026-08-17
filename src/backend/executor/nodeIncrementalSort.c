@@ -165,9 +165,7 @@ preparePresortedCols(IncrementalSortState *node)
 {
 	IncrementalSort *plannode = castNode(IncrementalSort, node->ss.ps.plan);
 
-	node->presorted_keys =
-		(PresortedKeyData *) palloc(plannode->nPresortedCols *
-									sizeof(PresortedKeyData));
+	node->presorted_keys = palloc_array(PresortedKeyData, plannode->nPresortedCols);
 
 	/* Pre-cache comparison functions for each pre-sorted key. */
 	for (int i = 0; i < plannode->nPresortedCols; i++)

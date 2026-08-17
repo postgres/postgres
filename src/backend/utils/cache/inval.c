@@ -341,9 +341,7 @@ AddInvalidationMessage(InvalidationMsgsGroup *group, int subgroup,
 			/* Enlarge storage array */
 			int			reqsize = 2 * ima->maxmsgs;
 
-			ima->msgs = (SharedInvalidationMessage *)
-				repalloc(ima->msgs,
-						 reqsize * sizeof(SharedInvalidationMessage));
+			ima->msgs = repalloc_array(ima->msgs, SharedInvalidationMessage, reqsize);
 			ima->maxmsgs = reqsize;
 		}
 	}
@@ -1102,8 +1100,7 @@ inplaceGetInvalidationMessages(SharedInvalidationMessage **msgs,
 
 	*RelcacheInitFileInval = inplaceInvalInfo->RelcacheInitFileInval;
 	nummsgs = NumMessagesInGroup(&inplaceInvalInfo->CurrentCmdInvalidMsgs);
-	*msgs = msgarray = (SharedInvalidationMessage *)
-		palloc(nummsgs * sizeof(SharedInvalidationMessage));
+	*msgs = msgarray = palloc_array(SharedInvalidationMessage, nummsgs);
 
 	nmsgs = 0;
 	ProcessMessageSubGroupMulti(&inplaceInvalInfo->CurrentCmdInvalidMsgs,

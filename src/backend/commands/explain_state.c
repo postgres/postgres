@@ -251,8 +251,7 @@ GetExplainExtensionId(const char *extension_name)
 	{
 		int			i = pg_nextpower2_32(ExplainExtensionNamesAssigned + 1);
 
-		ExplainExtensionNameArray = (const char **)
-			repalloc(ExplainExtensionNameArray, i * sizeof(char *));
+		ExplainExtensionNameArray = repalloc_array(ExplainExtensionNameArray, const char *, i);
 		ExplainExtensionNamesAllocated = i;
 	}
 
@@ -295,8 +294,7 @@ SetExplainExtensionState(ExplainState *es, int extension_id, void *opaque)
 	{
 		es->extension_state_allocated =
 			Max(16, pg_nextpower2_32(extension_id + 1));
-		es->extension_state =
-			palloc0(es->extension_state_allocated * sizeof(void *));
+		es->extension_state = palloc0_array(void *, es->extension_state_allocated);
 	}
 
 	/* If there's an array but it's currently full, expand it. */
@@ -367,8 +365,8 @@ RegisterExtensionExplainOption(const char *option_name,
 	{
 		int			i = pg_nextpower2_32(ExplainExtensionOptionsAssigned + 1);
 
-		ExplainExtensionOptionArray = (ExplainExtensionOption *)
-			repalloc(ExplainExtensionOptionArray, i * sizeof(ExplainExtensionOption));
+		ExplainExtensionOptionArray = repalloc_array(ExplainExtensionOptionArray,
+													 ExplainExtensionOption, i);
 		ExplainExtensionOptionsAllocated = i;
 	}
 

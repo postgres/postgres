@@ -144,8 +144,7 @@ GetConfFilesInDir(const char *includedir, const char *calling_file,
 			if (*num_filenames >= size_filenames)
 			{
 				size_filenames += 32;
-				filenames = (char **) repalloc(filenames,
-											   size_filenames * sizeof(char *));
+				filenames = repalloc_array(filenames, char *, size_filenames);
 			}
 			filenames[*num_filenames] = pstrdup(filename);
 			(*num_filenames)++;

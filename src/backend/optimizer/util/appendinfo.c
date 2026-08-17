@@ -94,8 +94,7 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 
 	/* Initialize reverse-translation array with all entries zero */
 	appinfo->num_child_cols = newnatts;
-	appinfo->parent_colnos = pcolnos =
-		(AttrNumber *) palloc0(newnatts * sizeof(AttrNumber));
+	appinfo->parent_colnos = pcolnos = palloc0_array(AttrNumber, newnatts);
 
 	for (old_attno = 0; old_attno < oldnatts; old_attno++)
 	{

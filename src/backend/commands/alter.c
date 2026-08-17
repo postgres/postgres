@@ -318,9 +318,9 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
 	}
 
 	/* Build modified tuple */
-	values = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(Datum));
-	nulls = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(bool));
-	replaces = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(bool));
+	values = palloc0_array(Datum, RelationGetNumberOfAttributes(rel));
+	nulls = palloc0_array(bool, RelationGetNumberOfAttributes(rel));
+	replaces = palloc0_array(bool, RelationGetNumberOfAttributes(rel));
 	namestrcpy(&nameattrdata, new_name);
 	values[Anum_name - 1] = NameGetDatum(&nameattrdata);
 	replaces[Anum_name - 1] = true;
@@ -798,9 +798,9 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 								  nspOid);
 
 	/* Build modified tuple */
-	values = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(Datum));
-	nulls = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(bool));
-	replaces = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(bool));
+	values = palloc0_array(Datum, RelationGetNumberOfAttributes(rel));
+	nulls = palloc0_array(bool, RelationGetNumberOfAttributes(rel));
+	replaces = palloc0_array(bool, RelationGetNumberOfAttributes(rel));
 	values[Anum_namespace - 1] = ObjectIdGetDatum(nspOid);
 	replaces[Anum_namespace - 1] = true;
 	newtup = heap_modify_tuple(tup, RelationGetDescr(rel),
@@ -1024,9 +1024,9 @@ AlterObjectOwner_internal(Oid classId, Oid objectId, Oid new_ownerId)
 
 		/* Build a modified tuple */
 		nattrs = RelationGetNumberOfAttributes(rel);
-		values = palloc0(nattrs * sizeof(Datum));
-		nulls = palloc0(nattrs * sizeof(bool));
-		replaces = palloc0(nattrs * sizeof(bool));
+		values = palloc0_array(Datum, nattrs);
+		nulls = palloc0_array(bool, nattrs);
+		replaces = palloc0_array(bool, nattrs);
 		values[Anum_owner - 1] = ObjectIdGetDatum(new_ownerId);
 		replaces[Anum_owner - 1] = true;
 

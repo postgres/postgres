@@ -1745,7 +1745,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				ExprEvalRowtypeCache *rowcachep;
 
 				/* cache structs must be out-of-line for space reasons */
-				rowcachep = palloc(2 * sizeof(ExprEvalRowtypeCache));
+				rowcachep = palloc_array(ExprEvalRowtypeCache, 2);
 				rowcachep[0].cacheptr = NULL;
 				rowcachep[1].cacheptr = NULL;
 
@@ -2678,8 +2678,7 @@ ExprEvalPushStep(ExprState *es, const ExprEvalStep *s)
 	else if (es->steps_alloc == es->steps_len)
 	{
 		es->steps_alloc *= 2;
-		es->steps = repalloc(es->steps,
-							 sizeof(ExprEvalStep) * es->steps_alloc);
+		es->steps = repalloc_array(es->steps, ExprEvalStep, es->steps_alloc);
 	}
 
 	memcpy(&es->steps[es->steps_len++], s, sizeof(ExprEvalStep));

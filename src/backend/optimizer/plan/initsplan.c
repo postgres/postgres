@@ -490,7 +490,7 @@ remove_useless_groupby_columns(PlannerInfo *root)
 		groupbyattnos[relid] = bms_add_member(groupbyattnos[relid],
 											  var->varattno - FirstLowInvalidHeapAttributeNumber);
 
-		info = palloc(sizeof(GroupByColInfo));
+		info = palloc_object(GroupByColInfo);
 		info->attno = var->varattno;
 		info->eq_opfamilies = get_mergejoin_opfamilies(sgc->eqop);
 		info->coll = var->varcollid;

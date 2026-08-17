@@ -1109,7 +1109,7 @@ pg_listening_channels(PG_FUNCTION_ARGS)
 			MemoryContext oldcontext;
 
 			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-			status = (HASH_SEQ_STATUS *) palloc(sizeof(HASH_SEQ_STATUS));
+			status = palloc_object(HASH_SEQ_STATUS);
 			hash_seq_init(status, localChannelTable);
 			funcctx->user_fctx = status;
 			MemoryContextSwitchTo(oldcontext);

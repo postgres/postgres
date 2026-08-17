@@ -1252,7 +1252,7 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list,
 				var->varno != relid || var->varlevelsup != 0)
 				continue;
 
-			dcinfo = palloc(sizeof(DistinctColInfo));
+			dcinfo = palloc_object(DistinctColInfo);
 			dcinfo->colno = var->varattno;
 			dcinfo->opid = opexpr->opno;
 			dcinfo->collid = opexpr->inputcollid;

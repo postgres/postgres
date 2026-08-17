@@ -245,7 +245,7 @@ pgpa_make_scan(pgpa_plan_walker_context *walker, Plan *plan,
 	pgpa_scan  *scan;
 
 	/* Create the scan object. */
-	scan = palloc(sizeof(pgpa_scan));
+	scan = palloc_object(pgpa_scan);
 	scan->plan = plan;
 	scan->strategy = strategy;
 	scan->relids = relids;

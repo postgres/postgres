@@ -549,8 +549,8 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * through all the values.  We also want the frequency of null
 			 * elements.  Store these three values at the end of mcelem_freqs.
 			 */
-			mcelem_values = (Datum *) palloc(num_mcelem * sizeof(Datum));
-			mcelem_freqs = (float4 *) palloc((num_mcelem + 3) * sizeof(float4));
+			mcelem_values = palloc_array(Datum, num_mcelem);
+			mcelem_freqs = palloc_array(float4, num_mcelem + 3);
 
 			/*
 			 * See comments above about use of nonnull_cnt as the divisor for

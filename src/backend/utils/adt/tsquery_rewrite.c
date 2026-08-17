@@ -92,7 +92,7 @@ findeq(QTNode *node, QTNode *ex, QTNode *subs, bool *isfind)
 				   node->valnode->qoperator.oper == OP_OR);
 
 			/* matched[] will record which children of node matched */
-			matched = (bool *) palloc0(node->nchild * sizeof(bool));
+			matched = palloc0_array(bool, node->nchild);
 			nmatched = 0;
 			i = j = 0;
 			while (i < node->nchild && j < ex->nchild)

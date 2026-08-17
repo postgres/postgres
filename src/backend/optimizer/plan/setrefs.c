@@ -347,10 +347,8 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 	/* If needed, create workspace for processing AlternativeSubPlans */
 	if (root->hasAlternativeSubPlans)
 	{
-		root->isAltSubplan = (bool *)
-			palloc0(list_length(glob->subplans) * sizeof(bool));
-		root->isUsedSubplan = (bool *)
-			palloc0(list_length(glob->subplans) * sizeof(bool));
+		root->isAltSubplan = palloc0_array(bool, list_length(glob->subplans));
+		root->isUsedSubplan = palloc0_array(bool, list_length(glob->subplans));
 	}
 
 	/* Now fix the Plan tree */

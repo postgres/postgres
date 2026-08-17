@@ -760,8 +760,7 @@ heap_vacuum_rel(Relation rel, const VacuumParams *params,
 	/* Allocate/initialize output statistics state */
 	vacrel->new_rel_tuples = 0;
 	vacrel->new_live_tuples = 0;
-	vacrel->indstats = (IndexBulkDeleteResult **)
-		palloc0(vacrel->nindexes * sizeof(IndexBulkDeleteResult *));
+	vacrel->indstats = palloc0_array(IndexBulkDeleteResult *, vacrel->nindexes);
 
 	/* Initialize remaining counters (be tidy) */
 	vacrel->num_index_scans = 0;

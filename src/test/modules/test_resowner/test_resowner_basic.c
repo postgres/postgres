@@ -64,7 +64,7 @@ test_resowner_priorities(PG_FUNCTION_ARGS)
 	parent = ResourceOwnerCreate(CurrentResourceOwner, "test parent");
 	child = ResourceOwnerCreate(parent, "test child");
 
-	before_desc = palloc(nkinds * sizeof(ResourceOwnerDesc));
+	before_desc = palloc_array(ResourceOwnerDesc, nkinds);
 	for (int i = 0; i < nkinds; i++)
 	{
 		before_desc[i].name = psprintf("test resource before locks %d", i);
@@ -73,7 +73,7 @@ test_resowner_priorities(PG_FUNCTION_ARGS)
 		before_desc[i].ReleaseResource = ReleaseString;
 		before_desc[i].DebugPrint = PrintString;
 	}
-	after_desc = palloc(nkinds * sizeof(ResourceOwnerDesc));
+	after_desc = palloc_array(ResourceOwnerDesc, nkinds);
 	for (int i = 0; i < nkinds; i++)
 	{
 		after_desc[i].name = psprintf("test resource after locks %d", i);

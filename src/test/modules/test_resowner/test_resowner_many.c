@@ -226,7 +226,7 @@ test_resowner_many(PG_FUNCTION_ARGS)
 		elog(ERROR, "nforget_al must between 0 and 'nremember_al'");
 
 	/* Initialize all the different resource kinds to use */
-	before_kinds = palloc(nkinds * sizeof(ManyTestResourceKind));
+	before_kinds = palloc_array(ManyTestResourceKind, nkinds);
 	for (int i = 0; i < nkinds; i++)
 	{
 		InitManyTestResourceKind(&before_kinds[i],
@@ -234,7 +234,7 @@ test_resowner_many(PG_FUNCTION_ARGS)
 								 RESOURCE_RELEASE_BEFORE_LOCKS,
 								 RELEASE_PRIO_FIRST + i);
 	}
-	after_kinds = palloc(nkinds * sizeof(ManyTestResourceKind));
+	after_kinds = palloc_array(ManyTestResourceKind, nkinds);
 	for (int i = 0; i < nkinds; i++)
 	{
 		InitManyTestResourceKind(&after_kinds[i],

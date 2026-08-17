@@ -200,7 +200,7 @@ varstr_levenshtein(const char *source, int slen,
 		int			i;
 		const char *cp = source;
 
-		s_char_len = (int *) palloc((m + 1) * sizeof(int));
+		s_char_len = palloc_array(int, m + 1);
 		for (i = 0; i < m; ++i)
 		{
 			s_char_len[i] = pg_mblen_range(cp, send);

@@ -507,8 +507,8 @@ construct_connection_params(ForeignServer *server, UserMapping *user,
 	 * required scram pass-through options.
 	 */
 	n = list_length(server->options) + list_length(user->options) + 4 + 3;
-	keywords = (const char **) palloc(n * sizeof(char *));
-	values = (const char **) palloc(n * sizeof(char *));
+	keywords = palloc_array(const char *, n);
+	values = palloc_array(const char *, n);
 
 	n = 0;
 	n += ExtractConnectionOptions(server->options,

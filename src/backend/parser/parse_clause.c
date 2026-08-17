@@ -1466,9 +1466,8 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		res_colvars = NIL;
 
 		/* this may be larger than needed, but it's not worth being exact */
-		res_nscolumns = (ParseNamespaceColumn *)
-			palloc0((list_length(l_colnames) + list_length(r_colnames)) *
-					sizeof(ParseNamespaceColumn));
+		res_nscolumns = palloc0_array(ParseNamespaceColumn,
+									  list_length(l_colnames) + list_length(r_colnames));
 		res_colindex = 0;
 
 		if (j->usingClause)

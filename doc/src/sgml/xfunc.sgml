@@ -3454,10 +3454,10 @@ retcomposite(PG_FUNCTION_ARGS)
          * This should be an array of C strings which will
          * be processed later by the type input functions.
          */
-        values = (char **) palloc(3 * sizeof(char *));
-        values[0] = (char *) palloc(16 * sizeof(char));
-        values[1] = (char *) palloc(16 * sizeof(char));
-        values[2] = (char *) palloc(16 * sizeof(char));
+        values = palloc_array(char *, 3);
+        values[0] = palloc_array(char, 16);
+        values[1] = palloc_array(char, 16);
+        values[2] = palloc_array(char, 16);
 
         snprintf(values[0], 16, "%d", 1 * PG_GETARG_INT32(1));
         snprintf(values[1], 16, "%d", 2 * PG_GETARG_INT32(1));

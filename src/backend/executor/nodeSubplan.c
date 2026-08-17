@@ -974,14 +974,14 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 
 		lefttlist = righttlist = NIL;
 		sstate->numCols = ncols;
-		sstate->keyColIdx = (AttrNumber *) palloc(ncols * sizeof(AttrNumber));
-		sstate->tab_eq_funcoids = (Oid *) palloc(ncols * sizeof(Oid));
-		sstate->tab_collations = (Oid *) palloc(ncols * sizeof(Oid));
-		sstate->tab_hash_funcs = (FmgrInfo *) palloc(ncols * sizeof(FmgrInfo));
-		lhs_hash_funcs = (FmgrInfo *) palloc(ncols * sizeof(FmgrInfo));
-		sstate->cur_eq_funcs = (FmgrInfo *) palloc(ncols * sizeof(FmgrInfo));
+		sstate->keyColIdx = palloc_array(AttrNumber, ncols);
+		sstate->tab_eq_funcoids = palloc_array(Oid, ncols);
+		sstate->tab_collations = palloc_array(Oid, ncols);
+		sstate->tab_hash_funcs = palloc_array(FmgrInfo, ncols);
+		lhs_hash_funcs = palloc_array(FmgrInfo, ncols);
+		sstate->cur_eq_funcs = palloc_array(FmgrInfo, ncols);
 		/* we'll need the cross-type equality fns below, but not in sstate */
-		cross_eq_funcoids = (Oid *) palloc(ncols * sizeof(Oid));
+		cross_eq_funcoids = palloc_array(Oid, ncols);
 
 		i = 1;
 		foreach(l, oplist)

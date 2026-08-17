@@ -613,7 +613,7 @@ jsonb_object_keys(PG_FUNCTION_ARGS)
 			{
 				char	   *cstr;
 
-				cstr = palloc(v.val.string.len + 1 * sizeof(char));
+				cstr = palloc_array(char, v.val.string.len + 1);
 				memcpy(cstr, v.val.string.val, v.val.string.len);
 				cstr[v.val.string.len] = '\0';
 				state->result[state->result_count++] = cstr;
@@ -798,8 +798,7 @@ okeys_object_field_start(void *state, char *fname, bool isnull)
 	if (_state->result_count >= _state->result_size)
 	{
 		_state->result_size *= 2;
-		_state->result = (char **)
-			repalloc(_state->result, sizeof(char *) * _state->result_size);
+		_state->result = repalloc_array(_state->result, char *, _state->result_size);
 	}
 
 	/* save a copy of the field name */
@@ -3555,8 +3554,8 @@ populate_record(TupleDesc tupdesc,
 		record->ncolumns = ncolumns;
 	}
 
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	values = palloc_array(Datum, ncolumns);
+	nulls = palloc_array(bool, ncolumns);
 
 	if (defaultval)
 	{
@@ -3911,7 +3910,7 @@ hash_object_field_end(void *state, char *fname, bool isnull)
 	if (_state->save_json_start != NULL)
 	{
 		int			len = _state->lex->prev_token_terminator - _state->save_json_start;
-		char	   *val = palloc((len + 1) * sizeof(char));
+		char	   *val = palloc_array(char, len + 1);
 
 		memcpy(val, _state->save_json_start, len);
 		val[len] = '\0';
@@ -4362,7 +4361,7 @@ populate_recordset_object_field_end(void *state, char *fname, bool isnull)
 	if (_state->save_json_start != NULL)
 	{
 		int			len = _state->lex->prev_token_terminator - _state->save_json_start;
-		char	   *val = palloc((len + 1) * sizeof(char));
+		char	   *val = palloc_array(char, len + 1);
 
 		memcpy(val, _state->save_json_start, len);
 		val[len] = '\0';

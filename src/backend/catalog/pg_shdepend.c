@@ -716,8 +716,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 #define MAX_REPORTED_DEPS 100
 
 	allocedobjects = 128;		/* arbitrary initial array size */
-	objects = (ShDependObjectInfo *)
-		palloc(allocedobjects * sizeof(ShDependObjectInfo));
+	objects = palloc_array(ShDependObjectInfo, allocedobjects);
 	numobjects = 0;
 	initStringInfo(&descs);
 	initStringInfo(&alldescs);
@@ -757,9 +756,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 			if (numobjects >= allocedobjects)
 			{
 				allocedobjects *= 2;
-				objects = (ShDependObjectInfo *)
-					repalloc(objects,
-							 allocedobjects * sizeof(ShDependObjectInfo));
+				objects = repalloc_array(objects, ShDependObjectInfo, allocedobjects);
 			}
 			objects[numobjects].object = object;
 			objects[numobjects].deptype = sdepForm->deptype;

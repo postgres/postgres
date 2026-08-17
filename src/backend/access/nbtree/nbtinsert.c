@@ -2876,8 +2876,8 @@ _bt_simpledel_pass(Relation rel, Buffer buffer, Relation heapRel,
 	delstate.bottomup = false;
 	delstate.bottomupfreespace = 0;
 	delstate.ndeltids = 0;
-	delstate.deltids = palloc(MaxTIDsPerBTreePage * sizeof(TM_IndexDelete));
-	delstate.status = palloc(MaxTIDsPerBTreePage * sizeof(TM_IndexStatus));
+	delstate.deltids = palloc_array(TM_IndexDelete, MaxTIDsPerBTreePage);
+	delstate.status = palloc_array(TM_IndexStatus, MaxTIDsPerBTreePage);
 
 	for (offnum = minoff;
 		 offnum <= maxoff;
@@ -3019,8 +3019,7 @@ _bt_deadblocks(Page page, OffsetNumber *deletable, int ndeletable,
 			if (ntids + 1 > spacentids)
 			{
 				spacentids *= 2;
-				tidblocks = (BlockNumber *)
-					repalloc(tidblocks, sizeof(BlockNumber) * spacentids);
+				tidblocks = repalloc_array(tidblocks, BlockNumber, spacentids);
 			}
 
 			tidblocks[ntids++] = ItemPointerGetBlockNumber(&itup->t_tid);
@@ -3032,8 +3031,7 @@ _bt_deadblocks(Page page, OffsetNumber *deletable, int ndeletable,
 			if (ntids + nposting > spacentids)
 			{
 				spacentids = Max(spacentids * 2, ntids + nposting);
-				tidblocks = (BlockNumber *)
-					repalloc(tidblocks, sizeof(BlockNumber) * spacentids);
+				tidblocks = repalloc_array(tidblocks, BlockNumber, spacentids);
 			}
 
 			for (int j = 0; j < nposting; j++)

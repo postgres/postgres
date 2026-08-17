@@ -715,11 +715,11 @@ read_buffers(PG_FUNCTION_ARGS)
 	InitMaterializedSRF(fcinfo, 0);
 
 	/* at worst each block gets its own IO */
-	operations = palloc0(sizeof(ReadBuffersOperation) * nblocks);
-	buffers = palloc0(sizeof(Buffer) * nblocks);
-	buffers_datum = palloc0(sizeof(Datum) * nblocks);
-	io_reqds = palloc0(sizeof(bool) * nblocks);
-	nblocks_per_io = palloc0(sizeof(int) * nblocks);
+	operations = palloc0_array(ReadBuffersOperation, nblocks);
+	buffers = palloc0_array(Buffer, nblocks);
+	buffers_datum = palloc0_array(Datum, nblocks);
+	io_reqds = palloc0_array(bool, nblocks);
+	nblocks_per_io = palloc0_array(int, nblocks);
 
 	rel = relation_open(relid, AccessShareLock);
 	smgr = RelationGetSmgr(rel);

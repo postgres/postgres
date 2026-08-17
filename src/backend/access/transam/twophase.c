@@ -2012,12 +2012,12 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 				if (nxids == 0)
 				{
 					allocsize = 10;
-					xids = palloc(allocsize * sizeof(TransactionId));
+					xids = palloc_array(TransactionId, allocsize);
 				}
 				else
 				{
 					allocsize = allocsize * 2;
-					xids = repalloc(xids, allocsize * sizeof(TransactionId));
+					xids = repalloc_array(xids, TransactionId, allocsize);
 				}
 			}
 			xids[nxids++] = xid;

@@ -49,7 +49,7 @@ get_max_from_heap(binaryheap *heap)
 static int *
 get_permutation(int size)
 {
-	int		   *permutation = (int *) palloc(size * sizeof(int));
+	int		   *permutation = palloc_array(int, size);
 
 	permutation[0] = 0;
 

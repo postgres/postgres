@@ -239,7 +239,7 @@ parse_hstore(HSParser *state)
 			if (state->pcur >= state->plen)
 			{
 				state->plen *= 2;
-				state->pairs = (Pairs *) repalloc(state->pairs, sizeof(Pairs) * state->plen);
+				state->pairs = repalloc_array(state->pairs, Pairs, state->plen);
 			}
 			if (!hstoreCheckKeyLength(state->cur - state->word, state))
 				return false;
@@ -523,7 +523,7 @@ hstore_recv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
 						pcount, (int) (MaxAllocSize / sizeof(Pairs)))));
-	pairs = palloc(pcount * sizeof(Pairs));
+	pairs = palloc_array(Pairs, pcount);
 
 	for (i = 0; i < pcount; ++i)
 	{
@@ -674,7 +674,7 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 		Assert(key_count == value_count);
 	}
 
-	pairs = palloc(key_count * sizeof(Pairs));
+	pairs = palloc_array(Pairs, key_count);
 
 	for (i = 0; i < key_count; ++i)
 	{
@@ -768,7 +768,7 @@ hstore_from_array(PG_FUNCTION_ARGS)
 				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
 						count, (int) (MaxAllocSize / sizeof(Pairs)))));
 
-	pairs = palloc(count * sizeof(Pairs));
+	pairs = palloc_array(Pairs, count);
 
 	for (i = 0; i < count; ++i)
 	{
@@ -909,7 +909,7 @@ hstore_from_record(PG_FUNCTION_ARGS)
 	}
 
 	Assert(ncolumns <= MaxTupleAttributeNumber);	/* thus, no overflow */
-	pairs = palloc(ncolumns * sizeof(Pairs));
+	pairs = palloc_array(Pairs, ncolumns);
 
 	if (rec)
 	{
@@ -919,8 +919,8 @@ hstore_from_record(PG_FUNCTION_ARGS)
 		tuple.t_tableOid = InvalidOid;
 		tuple.t_data = rec;
 
-		values = (Datum *) palloc(ncolumns * sizeof(Datum));
-		nulls = (bool *) palloc(ncolumns * sizeof(bool));
+		values = palloc_array(Datum, ncolumns);
+		nulls = palloc_array(bool, ncolumns);
 
 		/* Break down the tuple into fields */
 		heap_deform_tuple(&tuple, tupdesc, values, nulls);
@@ -1102,8 +1102,8 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		my_extra->ncolumns = ncolumns;
 	}
 
-	values = (Datum *) palloc(ncolumns * sizeof(Datum));
-	nulls = (bool *) palloc(ncolumns * sizeof(bool));
+	values = palloc_array(Datum, ncolumns);
+	nulls = palloc_array(bool, ncolumns);
 
 	if (rec)
 	{

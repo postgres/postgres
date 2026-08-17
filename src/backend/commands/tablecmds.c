@@ -2171,8 +2171,7 @@ ExecuteTruncateGuts(List *explicit_rels,
 	 * ExecGetTriggerResultRel() find them.
 	 */
 	estate = CreateExecutorState();
-	resultRelInfos = (ResultRelInfo *)
-		palloc(list_length(rels) * sizeof(ResultRelInfo));
+	resultRelInfos = palloc_array(ResultRelInfo, list_length(rels));
 	resultRelInfo = resultRelInfos;
 	foreach(cell, rels)
 	{
@@ -2379,7 +2378,7 @@ ExecuteTruncateGuts(List *explicit_rels,
 		/* should only get here if effective_wal_level is 'logical' */
 		Assert(XLogLogicalInfoActive());
 
-		logrelids = palloc(list_length(relids_logged) * sizeof(Oid));
+		logrelids = palloc_array(Oid, list_length(relids_logged));
 		foreach(cell, relids_logged)
 			logrelids[i++] = lfirst_oid(cell);
 
@@ -23678,7 +23677,7 @@ collectPartitionIndexExtDeps(List *partitionOids)
 			if (!OidIsValid(parentIndexOid))
 				continue;
 
-			entry = palloc(sizeof(PartitionIndexExtDepEntry));
+			entry = palloc_object(PartitionIndexExtDepEntry);
 			entry->parentIndexOid = parentIndexOid;
 			entry->indexOid = indexOid;
 			entry->extensionOids = getAutoExtensionsOfObject(RelationRelationId,

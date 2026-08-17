@@ -587,8 +587,8 @@ gistSplitHalf(GIST_SPLITVEC *v, int len)
 	int			i;
 
 	v->spl_nright = v->spl_nleft = 0;
-	v->spl_left = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
-	v->spl_right = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
+	v->spl_left = palloc_array(OffsetNumber, len);
+	v->spl_right = palloc_array(OffsetNumber, len);
 	for (i = 1; i <= len; i++)
 		if (i < len / 2)
 			v->spl_right[v->spl_nright++] = i;
@@ -632,7 +632,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 	/* note that entryvec->vector[0] goes unused in this code */
 	entryvec = palloc(GEVHDRSZ + (len + 1) * sizeof(GISTENTRY));
 	entryvec->n = len + 1;
-	offNullTuples = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
+	offNullTuples = palloc_array(OffsetNumber, len);
 
 	for (i = 1; i <= len; i++)
 	{
@@ -674,7 +674,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 		v->splitVector.spl_nright = nOffNullTuples;
 		v->spl_risnull[attno] = true;
 
-		v->splitVector.spl_left = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
+		v->splitVector.spl_left = palloc_array(OffsetNumber, len);
 		v->splitVector.spl_nleft = 0;
 		for (i = 1; i <= len; i++)
 			if (j < v->splitVector.spl_nright && offNullTuples[j] == i)
@@ -716,8 +716,8 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 				 * Form an array of just the don't-care tuples to pass to a
 				 * recursive invocation of this function for the next column.
 				 */
-				IndexTuple *newitup = (IndexTuple *) palloc(len * sizeof(IndexTuple));
-				OffsetNumber *map = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
+				IndexTuple *newitup = palloc_array(IndexTuple, len);
+				OffsetNumber *map = palloc_array(OffsetNumber, len);
 				int			newlen = 0;
 				GIST_SPLITVEC backupSplit;
 

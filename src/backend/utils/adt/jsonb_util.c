@@ -799,8 +799,8 @@ appendKey(JsonbInState *pstate, JsonbValue *string, bool needCopy)
 					 errmsg("number of jsonb object pairs exceeds the maximum allowed (%zu)",
 							JSONB_MAX_PAIRS)));
 		ppstate->size = Min(ppstate->size * 2, JSONB_MAX_PAIRS);
-		object->val.object.pairs = repalloc(object->val.object.pairs,
-											sizeof(JsonbPair) * ppstate->size);
+		object->val.object.pairs = repalloc_array(object->val.object.pairs,
+												  JsonbPair, ppstate->size);
 	}
 
 	pair = &object->val.object.pairs[object->val.object.nPairs];
@@ -850,8 +850,8 @@ appendElement(JsonbInState *pstate, JsonbValue *scalarVal, bool needCopy)
 					 errmsg("number of jsonb array elements exceeds the maximum allowed (%zu)",
 							JSONB_MAX_ELEMS)));
 		ppstate->size = Min(ppstate->size * 2, JSONB_MAX_ELEMS);
-		array->val.array.elems = repalloc(array->val.array.elems,
-										  sizeof(JsonbValue) * ppstate->size);
+		array->val.array.elems = repalloc_array(array->val.array.elems,
+												JsonbValue, ppstate->size);
 	}
 
 	elem = &array->val.array.elems[array->val.array.nElems];

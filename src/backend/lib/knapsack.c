@@ -64,8 +64,8 @@ DiscreteKnapsack(int max_weight, int num_items,
 	Assert(max_weight >= 0);
 	Assert(num_items > 0 && item_weights);
 
-	values = palloc((1 + max_weight) * sizeof(double));
-	sets = palloc((1 + max_weight) * sizeof(Bitmapset *));
+	values = palloc_array(double, 1 + max_weight);
+	sets = palloc_array(Bitmapset *, 1 + max_weight);
 
 	for (i = 0; i <= max_weight; ++i)
 	{

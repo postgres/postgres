@@ -139,8 +139,7 @@ uniqueentry(WordEntryIN *a, int l, char *buf, int *outbuflen)
 				/* append ptr's positions to res's positions */
 				int			newlen = ptr->poslen + res->poslen;
 
-				res->pos = (WordEntryPos *)
-					repalloc(res->pos, newlen * sizeof(WordEntryPos));
+				res->pos = repalloc_array(res->pos, WordEntryPos, newlen);
 				memcpy(&res->pos[res->poslen], ptr->pos,
 					   ptr->poslen * sizeof(WordEntryPos));
 				res->poslen = newlen;
@@ -226,8 +225,7 @@ tsvectorin(PG_FUNCTION_ARGS)
 		if (len >= arrlen)
 		{
 			arrlen *= 2;
-			arr = (WordEntryIN *)
-				repalloc(arr, sizeof(WordEntryIN) * arrlen);
+			arr = repalloc_array(arr, WordEntryIN, arrlen);
 		}
 		while ((cur - tmpbuf) + toklen >= buflen)
 		{

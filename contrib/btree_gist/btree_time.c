@@ -259,7 +259,7 @@ Datum
 gbt_time_union(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	void	   *out = palloc(sizeof(timeKEY));
+	void	   *out = palloc_object(timeKEY);
 
 	*(int *) PG_GETARG_POINTER(1) = sizeof(timeKEY);
 	PG_RETURN_POINTER(gbt_num_union(out, entryvec, &tinfo, fcinfo->flinfo));

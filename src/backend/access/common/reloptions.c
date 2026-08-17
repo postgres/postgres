@@ -768,13 +768,12 @@ add_reloption(relopt_gen *newoption)
 		if (max_custom_options == 0)
 		{
 			max_custom_options = 8;
-			custom_options = palloc(max_custom_options * sizeof(relopt_gen *));
+			custom_options = palloc_array(relopt_gen *, max_custom_options);
 		}
 		else
 		{
 			max_custom_options *= 2;
-			custom_options = repalloc(custom_options,
-									  max_custom_options * sizeof(relopt_gen *));
+			custom_options = repalloc_array(custom_options, relopt_gen *, max_custom_options);
 		}
 		MemoryContextSwitchTo(oldcxt);
 	}
@@ -1634,7 +1633,7 @@ parseRelOptions(Datum options, bool validate, relopt_kind kind,
 
 	if (numoptions > 0)
 	{
-		reloptions = palloc(numoptions * sizeof(relopt_value));
+		reloptions = palloc_array(relopt_value, numoptions);
 
 		for (i = 0, j = 0; relOpts[i]; i++)
 		{

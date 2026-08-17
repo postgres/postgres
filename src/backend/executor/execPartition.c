@@ -1246,12 +1246,10 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 		else
 		{
 			proute->max_partitions *= 2;
-			proute->partitions = (ResultRelInfo **)
-				repalloc(proute->partitions, sizeof(ResultRelInfo *) *
-						 proute->max_partitions);
-			proute->is_borrowed_rel = (bool *)
-				repalloc(proute->is_borrowed_rel, sizeof(bool) *
-						 proute->max_partitions);
+			proute->partitions = repalloc_array(proute->partitions,
+												ResultRelInfo *, proute->max_partitions);
+			proute->is_borrowed_rel = repalloc_array(proute->is_borrowed_rel,
+													 bool, proute->max_partitions);
 		}
 	}
 
@@ -1362,12 +1360,12 @@ ExecInitPartitionDispatchInfo(EState *estate,
 		else
 		{
 			proute->max_dispatch *= 2;
-			proute->partition_dispatch_info = (PartitionDispatch *)
-				repalloc(proute->partition_dispatch_info,
-						 sizeof(PartitionDispatch) * proute->max_dispatch);
-			proute->nonleaf_partitions = (ResultRelInfo **)
-				repalloc(proute->nonleaf_partitions,
-						 sizeof(ResultRelInfo *) * proute->max_dispatch);
+			proute->partition_dispatch_info = repalloc_array(proute->partition_dispatch_info,
+															 PartitionDispatch,
+															 proute->max_dispatch);
+			proute->nonleaf_partitions = repalloc_array(proute->nonleaf_partitions,
+														ResultRelInfo *,
+														proute->max_dispatch);
 		}
 	}
 	proute->partition_dispatch_info[dispatchidx] = pd;

@@ -310,7 +310,7 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 	 * to the beginning.
 	 */
 	expectedTLEs = readTimeLineHistory(backup_state->starttli);
-	tlep = palloc0(num_wal_ranges * sizeof(TimeLineHistoryEntry *));
+	tlep = palloc0_array(TimeLineHistoryEntry *, num_wal_ranges);
 	for (int i = 0; i < num_wal_ranges; ++i)
 	{
 		backup_wal_range *range = list_nth(ib->manifest_wal_ranges, i);

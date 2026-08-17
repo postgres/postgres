@@ -592,7 +592,7 @@ tsvector_delete_arr(PG_FUNCTION_ARGS)
 	 * here we optimize things for that scenario: iterate through lexarr
 	 * performing binary search of each lexeme from lexarr in tsvector.
 	 */
-	skip_indices = palloc0(nlex * sizeof(int));
+	skip_indices = palloc0_array(int, nlex);
 	for (i = skip_count = 0; i < nlex; i++)
 	{
 		char	   *lex;
@@ -685,8 +685,8 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 			 * that in two separate arrays.
 			 */
 			posv = _POSVECPTR(tsin, arrin + i);
-			positions = palloc(posv->npos * sizeof(Datum));
-			weights = palloc(posv->npos * sizeof(Datum));
+			positions = palloc_array(Datum, posv->npos);
+			weights = palloc_array(Datum, posv->npos);
 			for (j = 0; j < posv->npos; j++)
 			{
 				positions[j] = Int16GetDatum(WEP_GETPOS(posv->pos[j]));
@@ -1542,8 +1542,7 @@ TS_phrase_output(ExecPhraseData *data,
 				/* Store position, first allocating output array if needed */
 				if (data->pos == NULL)
 				{
-					data->pos = (WordEntryPos *)
-						palloc(max_npos * sizeof(WordEntryPos));
+					data->pos = palloc_array(WordEntryPos, max_npos);
 					data->allocated = true;
 				}
 				data->pos[data->npos++] = output_pos;

@@ -1879,7 +1879,7 @@ CopyReadAttributesText(CopyFromState cstate)
 		{
 			cstate->max_fields *= 2;
 			cstate->raw_fields =
-				repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *));
+				repalloc_array(cstate->raw_fields, char *, cstate->max_fields);
 		}
 
 		/* Remember start of field on both input and output sides */
@@ -2135,7 +2135,7 @@ CopyReadAttributesCSV(CopyFromState cstate)
 		{
 			cstate->max_fields *= 2;
 			cstate->raw_fields =
-				repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *));
+				repalloc_array(cstate->raw_fields, char *, cstate->max_fields);
 		}
 
 		/* Remember start of field on both input and output sides */

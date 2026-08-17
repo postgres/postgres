@@ -2492,7 +2492,7 @@ preprocess_grouping_sets(PlannerInfo *root)
 	}
 
 	/* Allocate workspace array for remapping */
-	gd->tleref_to_colnum_map = (int *) palloc((maxref + 1) * sizeof(int));
+	gd->tleref_to_colnum_map = palloc_array(int, maxref + 1);
 
 	/*
 	 * If we have any unsortable sets, we must extract them before trying to
@@ -3246,10 +3246,10 @@ extract_rollup_sets(List *groupingSets)
 	 * to leave 0 free for the NIL node in the graph algorithm.
 	 *----------
 	 */
-	orig_sets = palloc0((num_sets_raw + 1) * sizeof(List *));
-	set_masks = palloc0((num_sets_raw + 1) * sizeof(Bitmapset *));
-	adjacency = palloc0((num_sets_raw + 1) * sizeof(short *));
-	adjacency_buf = palloc((num_sets_raw + 1) * sizeof(short));
+	orig_sets = palloc0_array(List *, num_sets_raw + 1);
+	set_masks = palloc0_array(Bitmapset *, num_sets_raw + 1);
+	adjacency = palloc0_array(short *, num_sets_raw + 1);
+	adjacency_buf = palloc_array(short, num_sets_raw + 1);
 
 	j_size = 0;
 	j = 0;
@@ -3311,7 +3311,7 @@ extract_rollup_sets(List *groupingSets)
 			if (n_adj > 0)
 			{
 				adjacency_buf[0] = n_adj;
-				adjacency[i] = palloc((n_adj + 1) * sizeof(short));
+				adjacency[i] = palloc_array(short, n_adj + 1);
 				memcpy(adjacency[i], adjacency_buf, (n_adj + 1) * sizeof(short));
 			}
 			else
@@ -3334,7 +3334,7 @@ extract_rollup_sets(List *groupingSets)
 	 * pair_vu[v] = u (both will be true, but we check both so that we can do
 	 * it in one pass)
 	 */
-	chains = palloc0((num_sets + 1) * sizeof(int));
+	chains = palloc0_array(int, num_sets + 1);
 
 	for (i = 1; i <= num_sets; ++i)
 	{
@@ -3350,7 +3350,7 @@ extract_rollup_sets(List *groupingSets)
 	}
 
 	/* build result lists. */
-	results = palloc0((num_chains + 1) * sizeof(List *));
+	results = palloc0_array(List *, num_chains + 1);
 
 	for (i = 1; i <= num_sets; ++i)
 	{
@@ -4643,7 +4643,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 			double		scale;
 			int			num_rollups = list_length(gd->rollups);
 			int			k_capacity;
-			int		   *k_weights = palloc(num_rollups * sizeof(int));
+			int		   *k_weights = palloc_array(int, num_rollups);
 			Bitmapset  *hash_items = NULL;
 			int			i;
 
@@ -6697,8 +6697,8 @@ make_sort_input_target(PlannerInfo *root,
 
 	/* Inspect tlist and collect per-column information */
 	ncols = list_length(final_target->exprs);
-	col_is_srf = (bool *) palloc0(ncols * sizeof(bool));
-	postpone_col = (bool *) palloc0(ncols * sizeof(bool));
+	col_is_srf = palloc0_array(bool, ncols);
+	postpone_col = palloc0_array(bool, ncols);
 	have_srf = have_volatile = have_expensive = have_srf_sortcols = false;
 
 	i = 0;

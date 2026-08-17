@@ -445,8 +445,7 @@ ltsGetPreallocBlock(LogicalTapeSet *lts, LogicalTape *lt)
 		lt->prealloc_size *= 2;
 		if (lt->prealloc_size > TAPE_WRITE_PREALLOC_MAX)
 			lt->prealloc_size = TAPE_WRITE_PREALLOC_MAX;
-		lt->prealloc = (int64 *) repalloc(lt->prealloc,
-										  sizeof(int64) * lt->prealloc_size);
+		lt->prealloc = repalloc_array(lt->prealloc, int64, lt->prealloc_size);
 	}
 
 	/* refill preallocation list */
@@ -490,8 +489,7 @@ ltsReleaseBlock(LogicalTapeSet *lts, int64 blocknum)
 			return;
 
 		lts->freeBlocksLen *= 2;
-		lts->freeBlocks = (int64 *) repalloc(lts->freeBlocks,
-											 lts->freeBlocksLen * sizeof(int64));
+		lts->freeBlocks = repalloc_array(lts->freeBlocks, int64, lts->freeBlocksLen);
 	}
 
 	/* create a "hole" at end of minheap array */
@@ -566,7 +564,7 @@ LogicalTapeSetCreate(bool preallocate, SharedFileSet *fileset, int worker)
 	lts->nHoleBlocks = 0L;
 	lts->forgetFreeSpace = false;
 	lts->freeBlocksLen = 32;	/* reasonable initial guess */
-	lts->freeBlocks = (int64 *) palloc(lts->freeBlocksLen * sizeof(int64));
+	lts->freeBlocks = palloc_array(int64, lts->freeBlocksLen);
 	lts->nFreeBlocks = 0;
 	lts->enable_prealloc = preallocate;
 

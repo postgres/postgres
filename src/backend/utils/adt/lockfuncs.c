@@ -477,7 +477,7 @@ pg_blocking_pids(PG_FUNCTION_ARGS)
 	lockData = GetBlockerStatusData(blocked_pid);
 
 	/* We can't need more output entries than there are reported PROCLOCKs */
-	arrayelems = (Datum *) palloc(lockData->nlocks * sizeof(Datum));
+	arrayelems = palloc_array(Datum, lockData->nlocks);
 	narrayelems = 0;
 
 	/* For each blocked proc in the lock group ... */
@@ -579,7 +579,7 @@ pg_safe_snapshot_blocking_pids(PG_FUNCTION_ARGS)
 	Datum	   *blocker_datums;
 
 	/* A buffer big enough for any possible blocker list without truncation */
-	blockers = (int *) palloc(MaxBackends * sizeof(int));
+	blockers = palloc_array(int, MaxBackends);
 
 	/* Collect a snapshot of processes waited for by GetSafeSnapshot */
 	num_blockers =
@@ -590,7 +590,7 @@ pg_safe_snapshot_blocking_pids(PG_FUNCTION_ARGS)
 	{
 		int			i;
 
-		blocker_datums = (Datum *) palloc(num_blockers * sizeof(Datum));
+		blocker_datums = palloc_array(Datum, num_blockers);
 		for (i = 0; i < num_blockers; ++i)
 			blocker_datums[i] = Int32GetDatum(blockers[i]);
 	}

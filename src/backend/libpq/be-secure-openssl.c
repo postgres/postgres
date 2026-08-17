@@ -333,7 +333,7 @@ be_tls_init(bool isServerStart)
 	 */
 	else if (res == HOSTSFILE_DISABLED || res == HOSTSFILE_EMPTY || res == HOSTSFILE_MISSING)
 	{
-		HostsLine  *pgconf = palloc0(sizeof(HostsLine));
+		HostsLine  *pgconf = palloc0_object(HostsLine);
 
 #ifdef USE_ASSERT_CHECKING
 		if (res == HOSTSFILE_DISABLED)

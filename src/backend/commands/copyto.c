@@ -1093,7 +1093,7 @@ BeginCopyTo(ParseState *pstate,
 	num_phys_attrs = tupDesc->natts;
 
 	/* Convert FORCE_QUOTE name list to per-column flags, check validity */
-	cstate->opts.force_quote_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
+	cstate->opts.force_quote_flags = palloc0_array(bool, num_phys_attrs);
 	if (cstate->opts.force_quote_all)
 	{
 		MemSet(cstate->opts.force_quote_flags, true, num_phys_attrs * sizeof(bool));
@@ -1283,7 +1283,7 @@ DoCopyTo(CopyToState cstate)
 	cstate->fe_msgbuf = makeStringInfo();
 
 	/* Get info about the columns we need to process. */
-	cstate->out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
+	cstate->out_functions = palloc_array(FmgrInfo, num_phys_attrs);
 	foreach(cur, cstate->attnumlist)
 	{
 		int			attnum = lfirst_int(cur);
