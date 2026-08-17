@@ -337,7 +337,7 @@ plsample_trigger_handler(PG_FUNCTION_ARGS)
 		 */
 		for (int i = 0; i < trigdata->tg_trigger->tgnargs; i++)
 			ereport(NOTICE,
-					(errmsg("trigger arg[%i]: %s", i,
+					(errmsg("trigger arg[%d]: %s", i,
 							trigdata->tg_trigger->tgargs[i])));
 	}
 	PG_CATCH();

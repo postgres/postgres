@@ -161,7 +161,7 @@ static void psql_end_command(StringInfo buf, const char *database);
  * Convenience macros for printing TAP output with a more shorthand syntax
  * aimed at making the code more readable.
  */
-#define plan(x)				emit_tap_output(PLAN, "1..%i", (x))
+#define plan(x)				emit_tap_output(PLAN, "1..%d", (x))
 #define note(...)			emit_tap_output(NOTE, __VA_ARGS__)
 #define note_detail(...)	emit_tap_output(NOTE_DETAIL, __VA_ARGS__)
 #define diag(...)			emit_tap_output(DIAG, __VA_ARGS__)
