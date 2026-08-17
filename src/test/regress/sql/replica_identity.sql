@@ -77,6 +77,7 @@ SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
 \d+ test_replica_identity
 ALTER TABLE test_replica_identity REPLICA IDENTITY NOTHING;
 SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
+\d+ test_replica_identity
 
 ---
 -- Test that ALTER TABLE rewrite preserves nondefault replica identity
