@@ -4046,24 +4046,24 @@ Parser: "pg_catalog.default"
      <para>The length of each lexeme must be less than 2 kilobytes</para>
     </listitem>
     <listitem>
-     <para>The length of a <type>tsvector</type> (lexemes + positions) must be
-     less than 1 megabyte</para>
+     <para>No more than 256 positions per lexeme</para>
     </listitem>
     <listitem>
      <para>Position values in <type>tsvector</type> must be greater than 0 and
      no more than 16,383</para>
     </listitem>
     <listitem>
+     <para>The length of a <type>tsvector</type>'s data (lexemes + positions)
+     must be less than 1 megabyte</para>
+    </listitem>
+    <listitem>
+     <para>The length of a <type>tsquery</type>'s data (lexemes only)
+     must be less than 1 megabyte</para>
+    </listitem>
+    <listitem>
      <para>The match distance in a <literal>&lt;<replaceable>N</replaceable>&gt;</literal>
      (FOLLOWED BY) <type>tsquery</type> operator cannot be more than
      16,384</para>
-    </listitem>
-    <listitem>
-     <para>No more than 256 positions per lexeme</para>
-    </listitem>
-    <listitem>
-     <para>The number of nodes (lexemes + operators) in a <type>tsquery</type>
-     must be less than 32,768</para>
     </listitem>
    </itemizedlist>
   </para>
