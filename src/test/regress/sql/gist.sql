@@ -198,6 +198,27 @@ select lower(r) = repeat('7', 200)::numeric as lower_ok,
 
 drop table gist_ios_tupdesc;
 
+-- test deletion of LP_DEAD-marked index tuples
+create table gist_prune_tbl (k int, p point);
+create index gist_prune_tbl_p_index on gist_prune_tbl using gist (p);
+
+begin;
+insert into gist_prune_tbl select i, point(1, i) from generate_series(1, 600) i;
+rollback;
+
+set enable_bitmapscan = off;
+set enable_indexonlyscan = off;
+set enable_seqscan = off;
+
+select count(*) from gist_prune_tbl where p <@ box(point(0,0), point(2,1000));
+insert into gist_prune_tbl select i, point(1, i) from generate_series(1, 600) i;
+select count(*) from gist_prune_tbl where p <@ box(point(0,0), point(2,1000));
+
+reset enable_bitmapscan;
+reset enable_indexonlyscan;
+reset enable_seqscan;
+drop table gist_prune_tbl;
+
 -- Force an index build using buffering.
 create index gist_tbl_box_index_forcing_buffering on gist_tbl using gist (p)
   with (buffering=on, fillfactor=50);
