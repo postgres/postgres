@@ -93,6 +93,48 @@ SKIP:
 	test_checksum_state($node, 'off');
 }
 
+# Test interrupting the processing with SIGINT to make sure the launcher and
+# worker are cancelled.  Create a barrier for checksum enablement to block on
+# using the same technique as earlier with a temporary table.
+my $block_session = $node->background_psql('postgres');
+$block_session->query_safe('CREATE TEMPORARY TABLE tt (a integer);');
+
+# In another session, make sure we can see the blocking temp table but
+# start processing anyways and check that we are blocked with a proper
+# wait event.
+$result = $node->safe_psql('postgres',
+	"SELECT relpersistence FROM pg_catalog.pg_class WHERE relname = 'tt';");
+is($result, 't', 'ensure we can see the temporary table');
+
+# Ensure that we reach inprogress-on and the worker is launched and waiting for
+# the temporary table to disappear before we try to interrupt the processing.
+enable_data_checksums($node, wait => 'inprogress-on');
+$result = $node->poll_query_until(
+	'postgres',
+	"SELECT wait_event FROM pg_catalog.pg_stat_activity "
+	  . "WHERE backend_type = 'datachecksums worker';",
+	'ChecksumEnableTemptableWait');
+is($result, '1', 'ensure the correct wait condition is set');
+
+# Terminate launcher and worker with SIGINT
+my $pid = $node->safe_psql('postgres',
+	"SELECT pid FROM pg_catalog.pg_stat_activity WHERE backend_type = 'datachecksums launcher';"
+);
+is(PostgreSQL::Test::Utils::system_log('pg_ctl', 'kill', 'INT', $pid),
+	0, "datachecksums launcher process signalled with INT");
+
+# Wait for all processes to exit and make sure that the data_checksum state
+# was reverted back to off since we didn't finish
+$result = $node->poll_query_until(
+	'postgres',
+	"SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE backend_type LIKE 'datachecksums%';",
+	'0');
+is($result, 1, 'await datachecksums worker/launcher termination');
+wait_for_checksum_state($node, "off");
+$block_session->quit;
+
+# Finish test suite by enabling checksums and make sure all data can be read
+# back and no processes are left over
 enable_data_checksums($node, wait => 'on');
 
 $result = $node->safe_psql('postgres', "SELECT count(*) FROM t WHERE a > 1");
