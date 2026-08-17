@@ -517,6 +517,7 @@ static relopt_real realRelOpts[] =
 /* values from StdRdOptIndexCleanup */
 static relopt_enum_elt_def StdRdOptIndexCleanupValues[] =
 {
+	/* no value for NOT_SET */
 	{"auto", STDRD_OPTION_VACUUM_INDEX_CLEANUP_AUTO},
 	{"on", STDRD_OPTION_VACUUM_INDEX_CLEANUP_ON},
 	{"off", STDRD_OPTION_VACUUM_INDEX_CLEANUP_OFF},
@@ -557,7 +558,7 @@ static relopt_enum enumRelOpts[] =
 			ShareUpdateExclusiveLock
 		},
 		StdRdOptIndexCleanupValues,
-		STDRD_OPTION_VACUUM_INDEX_CLEANUP_AUTO,
+		STDRD_OPTION_VACUUM_INDEX_CLEANUP_NOT_SET,
 		gettext_noop("Valid values are \"on\", \"off\", and \"auto\".")
 	},
 	{
