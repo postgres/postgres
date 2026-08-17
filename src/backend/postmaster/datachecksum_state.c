@@ -383,22 +383,24 @@ static DataChecksumsWorkerOperation operation;
 static void StartDataChecksumsWorkerLauncher(DataChecksumsWorkerOperation op,
 											 int cost_delay,
 											 int cost_limit);
-static void DataChecksumsShmemRequest(void *arg);
-static bool DatabaseExists(Oid dboid);
 static void ErrorOnInvalidDatabases(void);
-static List *BuildDatabaseList(void);
-static List *BuildRelationList(bool temp_relations, bool include_shared);
-static void FreeDatabaseList(List *dblist);
-static DataChecksumsWorkerResult ProcessDatabase(DataChecksumsWorkerDatabase *db);
-static bool ProcessAllDatabases(void);
 static bool ProcessSingleRelationFork(Relation reln, ForkNumber forkNum, BufferAccessStrategy strategy);
 static void ResetDataChecksumsProgressCounters(void);
+static bool ProcessSingleRelationByOid(Oid relationId, BufferAccessStrategy strategy);
 static BgwHandleStatus WaitForDataChecksumsWorkerState(BackgroundWorkerHandle *handle,
 													   bool wait_for_startup,
 													   pid_t *pidp,
 													   uint32 wait_event);
+static DataChecksumsWorkerResult ProcessDatabase(DataChecksumsWorkerDatabase *db);
+static void launcher_exit(int code, Datum arg);
 static void launcher_cancel_handler(SIGNAL_ARGS);
 static void WaitForAllTransactionsToFinish(void);
+static bool ProcessAllDatabases(void);
+static void DataChecksumsShmemRequest(void *arg);
+static bool DatabaseExists(Oid dboid);
+static List *BuildDatabaseList(void);
+static void FreeDatabaseList(List *dblist);
+static List *BuildRelationList(bool temp_relations, bool include_shared);
 
 const ShmemCallbacks DataChecksumsShmemCallbacks = {
 	.request_fn = DataChecksumsShmemRequest,
