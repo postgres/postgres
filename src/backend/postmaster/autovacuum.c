@@ -202,8 +202,7 @@ typedef struct av_relation
 	Oid			ar_toastrelid;	/* hash key - must be first */
 	Oid			ar_relid;
 	bool		ar_hasrelopts;
-	AutoVacOpts ar_reloptions;	/* copy of AutoVacOpts from the main table's
-								 * reloptions, or NULL if none */
+	StdRdOptions ar_reloptions; /* copy of main table's reloptions */
 } av_relation;
 
 /* struct to keep track of tables to vacuum and/or analyze, after rechecking */
@@ -388,8 +387,6 @@ static void relation_needs_vacanalyze(Oid relid, AutoVacOpts *relopts,
 
 static void autovacuum_do_vac_analyze(autovac_table *tab,
 									  BufferAccessStrategy bstrategy);
-static AutoVacOpts *extract_autovac_opts(HeapTuple tup,
-										 TupleDesc pg_class_desc);
 static void perform_work_item(AutoVacuumWorkItem *workitem);
 static void autovac_report_activity(autovac_table *tab);
 static void autovac_report_workitem(AutoVacuumWorkItem *workitem,
@@ -2037,7 +2034,7 @@ do_autovacuum(void)
 	while ((tuple = heap_getnext(relScan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
-		AutoVacOpts *relopts;
+		StdRdOptions *relopts;
 		Oid			relid;
 		bool		dovacuum;
 		bool		doanalyze;
@@ -2076,10 +2073,12 @@ do_autovacuum(void)
 		}
 
 		/* Fetch reloptions and the pgstat entry for this table */
-		relopts = extract_autovac_opts(tuple, pg_class_desc);
+		relopts = (StdRdOptions *) extractRelOptions(tuple, pg_class_desc, NULL);
 
 		/* Check if it needs vacuum or analyze */
-		relation_needs_vacanalyze(relid, relopts, classForm,
+		relation_needs_vacanalyze(relid,
+								  relopts ? &relopts->autovacuum : NULL,
+								  classForm,
 								  effective_multixact_freeze_max_age,
 								  DEBUG3,
 								  &dovacuum, &doanalyze, &wraparound,
@@ -2118,7 +2117,7 @@ do_autovacuum(void)
 				{
 					hentry->ar_hasrelopts = true;
 					memcpy(&hentry->ar_reloptions, relopts,
-						   sizeof(AutoVacOpts));
+						   sizeof(StdRdOptions));
 				}
 			}
 		}
@@ -2141,7 +2140,7 @@ do_autovacuum(void)
 	{
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
 		Oid			relid;
-		AutoVacOpts *relopts;
+		StdRdOptions *relopts;
 		bool		free_relopts = false;
 		bool		dovacuum;
 		bool		doanalyze;
@@ -2160,7 +2159,7 @@ do_autovacuum(void)
 		 * fetch reloptions -- if this toast table does not have them, try the
 		 * main rel
 		 */
-		relopts = extract_autovac_opts(tuple, pg_class_desc);
+		relopts = (StdRdOptions *) extractRelOptions(tuple, pg_class_desc, NULL);
 		if (relopts)
 			free_relopts = true;
 		else
@@ -2173,7 +2172,9 @@ do_autovacuum(void)
 				relopts = &hentry->ar_reloptions;
 		}
 
-		relation_needs_vacanalyze(relid, relopts, classForm,
+		relation_needs_vacanalyze(relid,
+								  relopts ? &relopts->autovacuum : NULL,
+								  classForm,
 								  effective_multixact_freeze_max_age,
 								  DEBUG3,
 								  &dovacuum, &doanalyze, &wraparound,
@@ -2777,39 +2778,6 @@ deleted2:
 }
 
 /*
- * extract_autovac_opts
- *
- * Given a relation's pg_class tuple, return a palloc'd copy of the
- * AutoVacOpts portion of reloptions, if set; otherwise, return NULL.
- *
- * Note: callers do not have a relation lock on the table at this point,
- * so the table could have been dropped, and its catalog rows gone, after
- * we acquired the pg_class row.  If pg_class had a TOAST table, this would
- * be a risk; fortunately, it doesn't.
- */
-static AutoVacOpts *
-extract_autovac_opts(HeapTuple tup, TupleDesc pg_class_desc)
-{
-	bytea	   *relopts;
-	AutoVacOpts *av;
-
-	Assert(((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_RELATION ||
-		   ((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_MATVIEW ||
-		   ((Form_pg_class) GETSTRUCT(tup))->relkind == RELKIND_TOASTVALUE);
-
-	relopts = extractRelOptions(tup, pg_class_desc, NULL);
-	if (relopts == NULL)
-		return NULL;
-
-	av = palloc_object(AutoVacOpts);
-	memcpy(av, &(((StdRdOptions *) relopts)->autovacuum), sizeof(AutoVacOpts));
-	pfree(relopts);
-
-	return av;
-}
-
-
-/*
  * table_recheck_autovac
  *
  * Recheck whether a table still needs vacuum or analyze.  Return value is a
@@ -2829,7 +2797,8 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 	autovac_table *tab = NULL;
 	bool		wraparound;
 	AutoVacOpts *avopts;
-	bool		free_avopts = false;
+	StdRdOptions *relopts;
+	bool		free_relopts = false;
 	AutoVacuumScores scores;
 
 	/* fetch the relation's relcache entry */
@@ -2842,9 +2811,9 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 	 * Get the applicable reloptions.  If it is a TOAST table, try to get the
 	 * main table reloptions if the toast table itself doesn't have.
 	 */
-	avopts = extract_autovac_opts(classTup, pg_class_desc);
-	if (avopts)
-		free_avopts = true;
+	relopts = (StdRdOptions *) extractRelOptions(classTup, pg_class_desc, NULL);
+	if (relopts)
+		free_relopts = true;
 	else if (classForm->relkind == RELKIND_TOASTVALUE &&
 			 table_toast_map != NULL)
 	{
@@ -2853,8 +2822,10 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 
 		hentry = hash_search(table_toast_map, &relid, HASH_FIND, &found);
 		if (found && hentry->ar_hasrelopts)
-			avopts = &hentry->ar_reloptions;
+			relopts = &hentry->ar_reloptions;
 	}
+
+	avopts = relopts ? &relopts->autovacuum : NULL;
 
 	relation_needs_vacanalyze(relid, avopts, classForm,
 							  effective_multixact_freeze_max_age,
@@ -2982,8 +2953,8 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 						 avopts->vacuum_cost_delay >= 0));
 	}
 
-	if (free_avopts)
-		pfree(avopts);
+	if (free_relopts)
+		pfree(relopts);
 	heap_freetuple(classTup);
 	return tab;
 }
@@ -3668,7 +3639,7 @@ pg_stat_get_autovacuum_scores(PG_FUNCTION_ARGS)
 	while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_class form = (Form_pg_class) GETSTRUCT(tup);
-		AutoVacOpts *avopts;
+		StdRdOptions *relopts;
 		bool		dovacuum;
 		bool		doanalyze;
 		bool		wraparound;
@@ -3684,14 +3655,16 @@ pg_stat_get_autovacuum_scores(PG_FUNCTION_ARGS)
 		if (form->relpersistence == RELPERSISTENCE_TEMP)
 			continue;
 
-		avopts = extract_autovac_opts(tup, RelationGetDescr(rel));
-		relation_needs_vacanalyze(form->oid, avopts, form,
+		relopts = (StdRdOptions *) extractRelOptions(tup, RelationGetDescr(rel), NULL);
+		relation_needs_vacanalyze(form->oid,
+								  relopts ? &relopts->autovacuum : NULL,
+								  form,
 								  effective_multixact_freeze_max_age,
 								  LOG_NEVER,
 								  &dovacuum, &doanalyze, &wraparound,
 								  &scores);
-		if (avopts)
-			pfree(avopts);
+		if (relopts)
+			pfree(relopts);
 
 		vals[0] = ObjectIdGetDatum(form->oid);
 		vals[1] = Float8GetDatum(scores.max);
