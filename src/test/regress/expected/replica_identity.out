@@ -187,6 +187,30 @@ SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
  n
 (1 row)
 
+\d+ test_replica_identity
+                                                Table "public.test_replica_identity"
+ Column |  Type   | Collation | Nullable |                      Default                      | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------------------------------------------------+----------+--------------+-------------
+ id     | integer |           | not null | nextval('test_replica_identity_id_seq'::regclass) | plain    |              | 
+ keya   | text    |           | not null |                                                   | extended |              | 
+ keyb   | text    |           | not null |                                                   | extended |              | 
+ nonkey | text    |           |          |                                                   | extended |              | 
+Indexes:
+    "test_replica_identity_pkey" PRIMARY KEY, btree (id)
+    "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
+    "test_replica_identity_hash" hash (nonkey)
+    "test_replica_identity_keyab" btree (keya, keyb)
+    "test_replica_identity_keyab_key" UNIQUE, btree (keya, keyb)
+    "test_replica_identity_nonkey" UNIQUE, btree (keya, nonkey)
+    "test_replica_identity_partial" UNIQUE, btree (keya, keyb) WHERE keyb <> '3'::text
+    "test_replica_identity_unique_defer" UNIQUE CONSTRAINT, btree (keya, keyb) DEFERRABLE
+    "test_replica_identity_unique_nondefer" UNIQUE CONSTRAINT, btree (keya, keyb)
+Not-null constraints:
+    "test_replica_identity_id_not_null" NOT NULL "id"
+    "test_replica_identity_keya_not_null" NOT NULL "keya"
+    "test_replica_identity_keyb_not_null" NOT NULL "keyb"
+Replica Identity: NOTHING
+
 ---
 -- Test that ALTER TABLE rewrite preserves nondefault replica identity
 ---
