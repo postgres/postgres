@@ -117,8 +117,6 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 			data += sizeof(OffsetNumber) * xldata->ntodelete;
 
 			PageIndexMultiDelete(page, todelete, xldata->ntodelete);
-			if (GistPageIsLeaf(page))
-				GistMarkTuplesDeleted(page);
 		}
 
 		/* Add new tuples if any */
@@ -212,7 +210,6 @@ gistRedoDeleteRecord(XLogReaderState *record)
 		}
 
 		GistClearPageHasGarbage(page);
-		GistMarkTuplesDeleted(page);
 
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(buffer);
