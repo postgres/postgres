@@ -135,12 +135,11 @@ static void
 AV_to_JsonbValue(AV *in, JsonbInState *jsonb_state)
 {
 	dTHX;
-	SSize_t		pcount = av_len(in) + 1;
-	SSize_t		i;
+	Size_t		pcount = av_count(in);
 
 	pushJsonbValue(jsonb_state, WJB_BEGIN_ARRAY, NULL);
 
-	for (i = 0; i < pcount; i++)
+	for (Size_t i = 0; i < pcount; i++)
 	{
 		SV		  **value = av_fetch(in, i, FALSE);
 
