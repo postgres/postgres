@@ -1272,6 +1272,9 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 			if (weight > 0xF)
 				elog(ERROR, "invalid tsquery: invalid weight bitmap");
 
+			if (val_len == 0)
+				elog(ERROR, "invalid tsquery: empty operand");
+
 			if (val_len > MAXSTRLEN)
 				elog(ERROR, "invalid tsquery: operand too long");
 
@@ -1311,7 +1314,14 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 
 			item->qoperator.oper = oper;
 			if (oper == OP_PHRASE)
-				item->qoperator.distance = (int16) pq_getmsgint(buf, sizeof(int16));
+			{
+				unsigned int dist = pq_getmsgint(buf, sizeof(int16));
+
+				if (dist > MAXENTRYPOS)
+					elog(ERROR, "invalid tsquery: invalid phrase distance %u",
+						 dist);
+				item->qoperator.distance = (int16) dist;
+			}
 		}
 		else
 			elog(ERROR, "unrecognized tsquery node type: %d", item->type);
