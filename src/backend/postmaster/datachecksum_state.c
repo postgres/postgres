@@ -492,7 +492,7 @@ AbsorbDataChecksumsBarrier(ProcSignalBarrierType barrier)
 			target_state = PG_DATA_CHECKSUM_OFF;
 			break;
 		default:
-			elog(ERROR, "incorrect barrier \"%i\" received", barrier);
+			elog(ERROR, "incorrect barrier \"%d\" received", barrier);
 	}
 
 	/*
@@ -530,7 +530,7 @@ AbsorbDataChecksumsBarrier(ProcSignalBarrierType barrier)
 	if (!found)
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("incorrect data checksum state %i for target state %i",
+				errmsg("incorrect data checksum state %d for target state %d",
 					   current, target_state));
 
 	SetLocalDataChecksumState(target_state);
