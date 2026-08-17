@@ -109,15 +109,6 @@ static relopt_bool boolRelOpts[] =
 	},
 	{
 		{
-			"autovacuum_enabled",
-			"Enables autovacuum in this relation",
-			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
-			ShareUpdateExclusiveLock
-		},
-		true
-	},
-	{
-		{
 			"user_catalog_table",
 			"Declare a table as an additional catalog table, e.g. for the purpose of logical replication",
 			RELOPT_KIND_HEAP,
@@ -168,6 +159,14 @@ static relopt_bool boolRelOpts[] =
 
 static relopt_ternary ternaryRelOpts[] =
 {
+	{
+		{
+			"autovacuum_enabled",
+			"Enables autovacuum in this relation",
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
+			ShareUpdateExclusiveLock
+		}
+	},
 	{
 		{
 			"vacuum_truncate",
@@ -1975,7 +1974,7 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 {
 	static const relopt_parse_elt tab[] = {
 		{"fillfactor", RELOPT_TYPE_INT, offsetof(StdRdOptions, fillfactor)},
-		{"autovacuum_enabled", RELOPT_TYPE_BOOL,
+		{"autovacuum_enabled", RELOPT_TYPE_TERNARY,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, enabled)},
 		{"autovacuum_parallel_workers", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, autovacuum_parallel_workers)},

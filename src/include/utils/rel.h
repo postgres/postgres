@@ -310,7 +310,7 @@ typedef struct ForeignKeyCacheInfo
  /* autovacuum-related reloptions. */
 typedef struct AutoVacOpts
 {
-	bool		enabled;
+	pg_ternary	enabled;
 
 	int			autovacuum_parallel_workers;
 	int			vacuum_threshold;

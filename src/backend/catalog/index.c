@@ -2900,7 +2900,8 @@ index_update_stats(Relation rel,
 		{
 			StdRdOptions *options = (StdRdOptions *) rel->rd_options;
 
-			if (options != NULL && !options->autovacuum.enabled)
+			if (options != NULL &&
+				options->autovacuum.enabled == PG_TERNARY_FALSE)
 				update_stats = false;
 		}
 		else
