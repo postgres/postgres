@@ -26,7 +26,7 @@ my ($fh, $fname) = tempfile(DIR => $dir);
 
 # repeat the input json file 50 times in an array
 
-print $fh, '[', $contents, ",$contents" x 49, ']';
+print $fh '[', $contents, ",$contents" x 49, ']';
 
 close($fh);
 
@@ -34,10 +34,10 @@ close($fh);
 
 my ($result) = run_log([ $exe, "1", $fname ]);
 
-ok($result == 0, "perf test runs with recursive descent parser");
+ok($result, "perf test runs with recursive descent parser");
 
 $result = run_log([ $exe, "-i", "1", $fname ]);
 
-ok($result == 0, "perf test runs with table driven parser");
+ok($result, "perf test runs with table driven parser");
 
 done_testing();
