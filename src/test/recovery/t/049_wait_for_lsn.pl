@@ -1055,6 +1055,91 @@ is($boundary_session->{stdout},
 	'success',
 	"standby_replay: waiter at current + 1 wakes when replay advances");
 
+# 11d. A standby_write waiter removed from the waiters heap by a stale wakeup
+# must re-register if its target has not actually been reached.
+SKIP:
+{
+	skip 'Required test extension is not installed', 2
+	  unless $rcv_primary->check_extension('test_wait_lsn');
+
+	$rcv_primary->safe_psql('postgres', 'CREATE EXTENSION test_wait_lsn');
+	$rcv_primary->wait_for_catchup($rcv_standby);
+
+	# Stop streaming before generating the target.  This keeps both the
+	# walreceiver write position and the replay position below the target.
+	stop_walreceiver($rcv_standby);
+	$rcv_primary->safe_psql('postgres', 'INSERT INTO rcv_test VALUES (300)');
+	my $stale_target = $rcv_primary->safe_psql('postgres',
+		'SELECT pg_current_wal_insert_lsn()');
+
+	# Keep WAIT FOR untimed.  After streaming resumes below, its own timeout
+	# could wake the backend and make the completion check pass even if the
+	# WAL-progress wakeup were lost.
+	my $stale_waiter_name = 'wait_for_lsn_stale_wakeup';
+	my $stale_session = $rcv_standby->background_psql('postgres',
+		connstr => $rcv_standby->connstr('postgres')
+		  . " application_name=$stale_waiter_name");
+
+	$stale_session->set_query_timer_restart();
+
+	my $stale_waiter_pid = $rcv_standby->safe_psql(
+		'postgres',
+		"SELECT pid FROM pg_stat_activity
+		 WHERE application_name = '$stale_waiter_name'");
+	die "could not determine stale waiter PID: '$stale_waiter_pid'"
+	  unless $stale_waiter_pid =~ /^[0-9]+$/;
+
+	$stale_session->query_until(
+		qr/started/, qq[
+		\\echo started
+		WAIT FOR LSN '$stale_target' WITH (MODE 'standby_write');
+		\\echo completed
+	]);
+
+	$rcv_standby->poll_query_until(
+		'postgres', qq[
+		SELECT test_wait_lsn_waiter_is_registered(
+			$stale_waiter_pid, 'standby_write', '$stale_target')
+	]
+	) or die "standby_write waiter did not register";
+
+	# The write position is below the target because the receiver was stopped
+	# before the target was generated.  Verify that replay is below it too.
+	$rcv_standby->safe_psql(
+		'postgres', qq[
+		SELECT pg_wal_lsn_diff(
+			'$stale_target'::pg_lsn, pg_last_wal_replay_lsn()) > 0
+	]) eq 't'
+	  or die "standby replay reached the target before the stale wakeup";
+
+	# Simulate the state left by a wakeup that became stale before the waiter
+	# could recheck its target.  The helper removes the waiter from the heap
+	# and wakes it without changing the actual write or replay positions.  To
+	# the waiter, this is indistinguishable from the position reaching the
+	# target and then decreasing before the recheck.
+	$rcv_standby->safe_psql('postgres',
+		"SELECT test_wait_lsn_wakeup('standby_write', '$stale_target')");
+
+	# The position is still below the target, so the waiter must restore its
+	# heap registration before sleeping again.
+	ok( $rcv_standby->poll_query_until(
+			'postgres', qq[
+		SELECT test_wait_lsn_waiter_is_registered(
+			$stale_waiter_pid, 'standby_write', '$stale_target')
+	]),
+		"standby_write waiter re-registers after a stale wakeup"
+	) or die "standby_write waiter did not re-register";
+
+	# Reach the target for real; WAL progress should wake the re-registered waiter.
+	resume_walreceiver($rcv_standby);
+
+	like(
+		$stale_session->query_until(qr/completed/, ''),
+		qr/^success\r?\ncompleted/m,
+		"standby_write waiter completes once the target is reached");
+	$stale_session->quit;
+}
+
 $rcv_standby->stop;
 $rcv_primary->stop;
 
