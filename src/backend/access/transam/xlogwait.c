@@ -524,9 +524,10 @@ WaitForLSN(WaitLSNType lsnType, XLogRecPtr targetLSN, int64 timeout)
 	}
 
 	/*
-	 * Delete our process from the shared memory heap.  We might already be
-	 * deleted by the startup process.  The 'inHeap' flags prevents us from
-	 * the double deletion.
+	 * A progress waker, such as the startup process during WAL replay, may
+	 * already have removed this waiter through WaitLSNWakeup() before setting
+	 * its latch.  The inHeap flag makes this cleanup safe whether or not the
+	 * entry remains in the heap.
 	 */
 	deleteLSNWaiter(lsnType);
 
