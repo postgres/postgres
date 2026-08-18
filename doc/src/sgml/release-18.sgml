@@ -9680,8 +9680,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <listitem>
       <para>
       Add <xref linkend="guc-log-line-prefix"/> escape
-      <literal>%L</literal> to output the client <acronym>IP</acronym>
-      address (Greg Sabino Mullane)
+      <literal>%L</literal> to output the local <acronym>IP</acronym>
+      address on the server that the client connected to (Greg Sabino Mullane)
       <ulink url="&commit_baseurl;3516ea768">&sect;</ulink>
       </para>
       </listitem>
