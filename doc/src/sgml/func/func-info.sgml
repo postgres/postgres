@@ -3497,6 +3497,11 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
       </row>
 
       <row>
+       <entry><structfield>data_page_checksum_version</structfield></entry>
+       <entry><type>integer</type></entry>
+      </row>
+
+      <row>
        <entry><structfield>checkpoint_time</structfield></entry>
        <entry><type>timestamp with time zone</type></entry>
       </row>

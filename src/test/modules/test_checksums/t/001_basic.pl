@@ -43,6 +43,18 @@ enable_data_checksums($node, wait => 'on');
 $result = $node->safe_psql('postgres', "SELECT count(*) FROM t WHERE a > 1 ");
 is($result, '9999', 'ensure checksummed pages can be read back');
 
+# Ensure the new state is registered properly in pg_control_checkpoint()
+$result =
+  $node->safe_psql('postgres',
+	'SELECT data_page_checksum_version FROM pg_control_checkpoint();');
+is($result, '1', 'ensure pg_control_checkpoint reports enabled state');
+# Regardless of the new state, pg_control_init() should still report checksums
+# as on.
+$result =
+  $node->safe_psql('postgres',
+	'SELECT data_page_checksum_version FROM pg_control_init();');
+is($result, '1', 'ensure pg_control_init reports enabled state');
+
 # Enable data checksums again which should be a no-op so we explicitly don't
 # wait for any state transition as none should happen here.
 enable_data_checksums($node);
@@ -58,6 +70,12 @@ disable_data_checksums($node, wait => 1);
 # Test reading data again
 $result = $node->safe_psql('postgres', "SELECT count(*) FROM t WHERE a > 1");
 is($result, '10000', 'ensure previously checksummed pages can be read back');
+
+# And ensure the disabled state is shown in pg_control_checkpoint()
+$result =
+  $node->safe_psql('postgres',
+	'SELECT data_page_checksum_version FROM pg_control_checkpoint();');
+is($result, '0', 'ensure pg_control_checkpoint reports disabled state');
 
 # Re-enable checksums and make sure that the underlying data has changed to
 # ensure that checksums will be different.

@@ -12432,9 +12432,9 @@
   descr => 'pg_controldata checkpoint state information as a function',
   proname => 'pg_control_checkpoint', provolatile => 'v',
   prorettype => 'record', proargtypes => '',
-  proallargtypes => '{pg_lsn,pg_lsn,text,int4,int4,bool,bool,text,oid,xid,xid,xid,oid,xid,xid,oid,xid,xid,timestamptz}',
-  proargmodes => '{o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o}',
-  proargnames => '{checkpoint_lsn,redo_lsn,redo_wal_file,timeline_id,prev_timeline_id,full_page_writes,logical_decoding,next_xid,next_oid,next_multixact_id,next_multi_offset,oldest_xid,oldest_xid_dbid,oldest_active_xid,oldest_multi_xid,oldest_multi_dbid,oldest_commit_ts_xid,newest_commit_ts_xid,checkpoint_time}',
+  proallargtypes => '{pg_lsn,pg_lsn,text,int4,int4,bool,bool,text,oid,xid,xid,xid,oid,xid,xid,oid,xid,xid,int4,timestamptz}',
+  proargmodes => '{o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o,o}',
+  proargnames => '{checkpoint_lsn,redo_lsn,redo_wal_file,timeline_id,prev_timeline_id,full_page_writes,logical_decoding,next_xid,next_oid,next_multixact_id,next_multi_offset,oldest_xid,oldest_xid_dbid,oldest_active_xid,oldest_multi_xid,oldest_multi_dbid,oldest_commit_ts_xid,newest_commit_ts_xid,data_page_checksum_version,checkpoint_time}',
   prosrc => 'pg_control_checkpoint' },
 
 { oid => '3443',
