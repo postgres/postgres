@@ -33,6 +33,8 @@ tests += {
       't/007_pgbench_standby.pl',
       't/008_pitr.pl',
       't/009_fpi.pl',
+      't/010_backup_straddle.pl',
+      't/011_standby_straddle.pl',
     ],
   },
 }
