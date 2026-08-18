@@ -30,6 +30,11 @@ $node->safe_psql('postgres',
 # Ensure that checksums are disabled
 test_checksum_state($node, 'off');
 
+# Make sure pg_control_init reports the initial disabled state
+$result = $node->safe_psql('postgres',
+	'SELECT data_page_checksum_version FROM pg_control_init();');
+is($result, '0', 'ensure pg_control_init reports disabled state');
+
 SKIP:
 {
 	skip 'Data checksum delay tests not enabled in PG_TEST_EXTRA', 6
@@ -134,8 +139,13 @@ wait_for_checksum_state($node, "off");
 $block_session->quit;
 
 # Finish test suite by enabling checksums and make sure all data can be read
-# back and no processes are left over
+# back, no processes are left over and the initial state is still correctly
+# reported
 enable_data_checksums($node, wait => 'on');
+
+$result = $node->safe_psql('postgres',
+	'SELECT data_page_checksum_version FROM pg_control_init();');
+is($result, '0', 'ensure pg_control_init still reports disabled state');
 
 $result = $node->safe_psql('postgres', "SELECT count(*) FROM t WHERE a > 1");
 is($result, '9999', 'ensure checksummed pages can be read back');
