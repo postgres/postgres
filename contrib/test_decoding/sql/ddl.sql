@@ -467,6 +467,18 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 \pset format aligned
 
+-- check that virtual generated columns are not printed
+CREATE TABLE gtest1 (
+    a int PRIMARY KEY,
+    b int,
+    c int GENERATED ALWAYS AS (a + b) VIRTUAL,
+    d int GENERATED ALWAYS AS (a * 2) STORED,
+    e int
+);
+INSERT INTO gtest1 (a, b) VALUES (1, 10);
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+DROP TABLE gtest1;
+
 SELECT pg_drop_replication_slot('regression_slot');
 
 /* check that the slot is gone */
