@@ -2132,26 +2132,36 @@ ReorderBufferSaveTXNSnapshot(ReorderBuffer *rb, ReorderBufferTXN *txn,
 }
 
 /*
- * Mark the given transaction as streamed if it's a top-level transaction
- * or has changes.
+ * Mark the given transaction as streamed, if appropriate.
+ *
+ * A top-level transaction is always marked.  A subtransaction is marked
+ * only when it has changes and its top-level transaction is already
+ * marked as streamed.
  */
 static void
 ReorderBufferMaybeMarkTXNStreamed(ReorderBuffer *rb, ReorderBufferTXN *txn)
 {
 	/*
-	 * The top-level transaction, is marked as streamed always, even if it
-	 * does not contain any changes (that is, when all the changes are in
-	 * subtransactions).
-	 *
-	 * For subtransactions, we only mark them as streamed when there are
-	 * changes in them.
-	 *
-	 * We do it this way because of aborts - we don't want to send aborts for
-	 * XIDs the downstream is not aware of. And of course, it always knows
-	 * about the top-level xact (we send the XID in all messages), but we
-	 * never stream XIDs of empty subxacts.
+	 * The top-level transaction is marked as streamed always, even if it does
+	 * not contain any changes (that is, when all the changes are in
+	 * subtransactions).  The downstream always knows about it, since we send
+	 * its XID in every message.
 	 */
-	if (rbtxn_is_toptxn(txn) || (txn->nentries_mem != 0))
+	if (rbtxn_is_toptxn(txn))
+	{
+		/* We only reach here when streaming is supported. */
+		Assert(ReorderBufferCanStream(rb));
+		txn->txn_flags |= RBTXN_IS_STREAMED;
+		return;
+	}
+
+	/*
+	 * A subtransaction is marked only when it has changes, and only when its
+	 * top-level transaction has already been marked as streamed.  We never
+	 * stream XIDs of empty subxacts, and we must not send an abort for an XID
+	 * the downstream has never heard of.
+	 */
+	if (txn->nentries_mem != 0 && rbtxn_is_streamed(rbtxn_get_toptxn(txn)))
 		txn->txn_flags |= RBTXN_IS_STREAMED;
 }
 
