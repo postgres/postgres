@@ -462,10 +462,9 @@ strfold_icu(char *dest, size_t destsize, const char *src, ssize_t srclen,
 }
 
 /*
- * strncoll_icu_utf8
+ * strncoll_icu_utf8()
  *
- * Call ucol_strcollUTF8() or ucol_strcoll() as appropriate for the given
- * database encoding. An argument length of -1 means the string is
+ * Wrapper for ucol_strcollUTF8().  An argument length of -1 means the string is
  * NUL-terminated.
  */
 #ifdef HAVE_UCOL_STRCOLLUTF8
@@ -613,13 +612,11 @@ icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 /*
  * Convert a string of UChars into the database encoding.
  *
- * The source string at buff_uchar is of length len_uchar
- * (it needn't be nul-terminated)
+ * The source string at buff_uchar is of length len_uchar (it needn't be
+ * nul-terminated)
  *
- * *result receives a pointer to the palloc'd result string, and the
- * function's result is the number of bytes generated (not counting nul).
- *
- * The result string is nul-terminated.
+ * If the result length is less than destsize, the NUL-terminated result is
+ * stored in dest. Otherwise the contents of dest are undefined.
  */
 static size_t
 icu_from_uchar(char *dest, size_t destsize, const UChar *buff_uchar, int32_t len_uchar)

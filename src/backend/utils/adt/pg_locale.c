@@ -1324,6 +1324,20 @@ strupper_c(char *dst, size_t dstsize, const char *src, size_t srclen)
 	return srclen;
 }
 
+/*
+ * pg_strlower()
+ *
+ * Convert src to lowercase, and return the result length (not including
+ * terminating NUL).
+ *
+ * src must be in the database encoding with no embedded NULs.  If srclen is
+ * -1, src must be NUL-terminated.  If dstsize is zero, dst may be NULL, which
+ * is useful for calculating the required buffer size before allocating.
+ *
+ * If the result length is less than dstsize, the NUL-terminated result is
+ * stored in dst.  Otherwise, the contents of dst are undefined, and the
+ * caller should use the return value to resize the buffer and retry.
+ */
 size_t
 pg_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
@@ -1347,6 +1361,20 @@ pg_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 	return 0;					/* keep compiler quiet */
 }
 
+/*
+ * pg_strtitle()
+ *
+ * Convert src to titlecase, and return the result length (not including
+ * terminating NUL).
+ *
+ * src must be in the database encoding with no embedded NULs.  If srclen is
+ * -1, src must be NUL-terminated.  If dstsize is zero, dst may be NULL, which
+ * is useful for calculating the required buffer size before allocating.
+ *
+ * If the result length is less than dstsize, the NUL-terminated result is
+ * stored in dst.  Otherwise, the contents of dst are undefined, and the
+ * caller should use the return value to resize the buffer and retry.
+ */
 size_t
 pg_strtitle(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
@@ -1370,6 +1398,20 @@ pg_strtitle(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 	return 0;					/* keep compiler quiet */
 }
 
+/*
+ * pg_strupper()
+ *
+ * Convert src to uppercase, and return the result length (not including
+ * terminating NUL).
+ *
+ * src must be in the database encoding with no embedded NULs.  If srclen is
+ * -1, src must be NUL-terminated.  If dstsize is zero, dst may be NULL, which
+ * is useful for calculating the required buffer size before allocating.
+ *
+ * If the result length is less than dstsize, the NUL-terminated result is
+ * stored in dst.  Otherwise, the contents of dst are undefined, and the
+ * caller should use the return value to resize the buffer and retry.
+ */
 size_t
 pg_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
@@ -1393,6 +1435,19 @@ pg_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 	return 0;					/* keep compiler quiet */
 }
 
+/*
+ * pg_strfold()
+ *
+ * Casefold src, and return the result length (not including terminating NUL).
+ *
+ * src must be in the database encoding with no embedded NULs.  If srclen is
+ * -1, src must be NUL-terminated.  If dstsize is zero, dst may be NULL, which
+ * is useful for calculating the required buffer size before allocating.
+ *
+ * If the result length is less than dstsize, the NUL-terminated result is
+ * stored in dst.  Otherwise, the contents of dst are undefined, and the
+ * caller should use the return value to resize the buffer and retry.
+ */
 size_t
 pg_strfold(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 		   pg_locale_t locale)
@@ -1432,12 +1487,10 @@ pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale)
 /*
  * pg_strncoll
  *
- * Call ucol_strcollUTF8(), ucol_strcoll(), strcoll_l() or wcscoll_l() as
- * appropriate for the given locale, platform, and database encoding. If the
- * locale is not specified, use the database collation.
+ * Compare strings according to the given locale.
  *
- * The input strings must be encoded in the database encoding. If an input
- * string is NUL-terminated, its length may be specified as -1.
+ * Strings must be encoded in the database encoding with no embedded NULs.  If
+ * an input string is NUL-terminated, its length may be specified as -1.
  *
  * The caller is responsible for breaking ties if the collation is
  * deterministic; this maintains consistency with pg_strnxfrm(), which cannot
@@ -1451,11 +1504,8 @@ pg_strncoll(const char *arg1, ssize_t len1, const char *arg2, ssize_t len2,
 }
 
 /*
- * Return true if the collation provider supports pg_strxfrm() and
- * pg_strnxfrm(); otherwise false.
- *
- *
- * No similar problem is known for the ICU provider.
+ * Return true if the locale supports pg_strxfrm() and pg_strnxfrm();
+ * otherwise false.
  */
 bool
 pg_strxfrm_enabled(pg_locale_t locale)
@@ -1486,9 +1536,9 @@ pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
  * ordinary strcmp() on transformed strings is equivalent to pg_strcoll() on
  * untransformed strings.
  *
- * The input string must be encoded in the database encoding. If the input
- * string is NUL-terminated, its length may be specified as -1. If 'destsize'
- * is zero, 'dest' may be NULL.
+ * String must be encoded in the database encoding with no embedded NULs.  If
+ * srclen is -1, src must be NUL-terminated.  If 'destsize' is zero, 'dest'
+ * may be NULL.
  *
  * Not all providers support pg_strnxfrm() safely. The caller should check
  * pg_strxfrm_enabled() first, otherwise this function may return wrong
@@ -1506,7 +1556,7 @@ pg_strnxfrm(char *dest, size_t destsize, const char *src, ssize_t srclen,
 }
 
 /*
- * Return true if the collation provider supports pg_strxfrm_prefix() and
+ * Return true if the locale supports pg_strxfrm_prefix() and
  * pg_strnxfrm_prefix(); otherwise false.
  */
 bool
@@ -1534,12 +1584,12 @@ pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
  * memcmp() on the byte sequence is equivalent to pg_strncoll() on
  * untransformed strings. The result is not nul-terminated.
  *
- * The input string must be encoded in the database encoding. If the input
- * string is NUL-terminated, its length may be specified as -1.
+ * String must be encoded in the database encoding with no embedded NULs. If
+ * the input string is NUL-terminated, its length may be specified as -1. If
+ * destsize is zero, dest may be NULL.
  *
- * Not all providers support pg_strnxfrm_prefix() safely. The caller should
- * check pg_strxfrm_prefix_enabled() first, otherwise this function may return
- * wrong results or an error.
+ * Not all providers support pg_strnxfrm_prefix() safely. The caller must
+ * check pg_strxfrm_prefix_enabled() first.
  *
  * If destsize is not large enough to hold the resulting byte sequence, stores
  * only the first destsize bytes in 'dest'. Returns the number of bytes

@@ -69,7 +69,9 @@ extern void cache_locale_time(void);
 struct pg_locale_struct;
 typedef struct pg_locale_struct *pg_locale_t;
 
-/* methods that define collation behavior */
+/*
+ * Collation behavior: string ordering.
+ */
 struct collate_methods
 {
 	/* required */
@@ -89,7 +91,7 @@ struct collate_methods
 
 	/*
 	 * If the strnxfrm method is not trusted to return the correct results,
-	 * set strxfrm_is_safe to false. It set to false, the method will not be
+	 * set strxfrm_is_safe to false. If set to false, the method will not be
 	 * used in most cases, but the planner still expects it to be there for
 	 * estimation purposes (where incorrect results are acceptable).
 	 */
