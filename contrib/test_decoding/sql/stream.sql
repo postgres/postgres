@@ -65,5 +65,22 @@ COMMIT;
 SELECT count(*) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1', 'stream-changes', '1');
 RESET debug_logical_replication_streaming;
 
+-- bug #19616
+--
+-- An aborted top-level transaction that is discarded at eviction must not
+-- leave its subtransactions marked as streamed.  Otherwise, decoding its
+-- abort record invokes the stream abort callback for a subtransaction the
+-- output plugin has never seen, even though streaming was never requested.
+-- The trailing committed transaction is required to flush the ROLLBACK
+-- record; without it decoding would stop before reaching the abort.
+BEGIN;
+SAVEPOINT s;
+INSERT INTO stream_test VALUES ('subxact-change');
+RELEASE SAVEPOINT s;
+INSERT INTO stream_test SELECT 'toplevel-change' || g.i FROM generate_series(1, 5000) g(i);
+ROLLBACK;
+INSERT INTO stream_test VALUES ('after-abort');
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+
 DROP TABLE stream_test;
 SELECT pg_drop_replication_slot('regression_slot');
