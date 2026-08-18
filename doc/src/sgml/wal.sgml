@@ -256,8 +256,51 @@
    The current state of checksums in the cluster can be verified by viewing the
    value of the read-only configuration variable <xref
    linkend="guc-data-checksums" /> by issuing the command <command>SHOW
-   data_checksums</command>.
+   data_checksums</command>.  <link linkend="functions-pg-control-init">
+   <literal>pg_control_init</literal></link> and
+   <link linkend="functions-pg-control-checkpoint">
+   <literal>pg_control_checkpoint</literal></link> can also be used for
+   inspecting the data checksum state at cluster initialization and current
+   checkpoint.  Data checksum states are often referred to as data checksum
+   versions using an integer representation due to how they were originally
+   implemented.  <xref linkend="data-checksums-mapping" /> contains a mapping
+   between state names and versions, which are defined in
+   <filename>src/include/storage/checksum.h</filename>.
   </para>
+
+  <table id="data-checksums-mapping">
+   <title>Data Checksums States and Version Mapping</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>State</entry>
+      <entry>Version</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>off</entry>
+      <entry>0</entry>
+     </row>
+
+     <row>
+      <entry>on</entry>
+      <entry>1</entry>
+     </row>
+
+     <row>
+      <entry>inprogress-off</entry>
+      <entry>2</entry>
+     </row>
+
+     <row>
+      <entry>inprogress-on</entry>
+      <entry>3</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
 
   <para>
    When attempting to recover from page corruptions, it may be necessary to

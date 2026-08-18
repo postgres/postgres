@@ -40,6 +40,18 @@ $node->start;
 # Ensure that checksums are enabled
 test_checksum_state($node, 'on');
 
+# Since offline checksums don't issue a checkpoint like online checksums, the
+# first call to pg_control_checkpoint will show the state as off even though
+# checksums are enabled.  After a CHECKPOINT, pg_control_checkpoint shall
+# return 1.
+$result = $node->safe_psql('postgres',
+	'SELECT data_page_checksum_version FROM pg_control_checkpoint();');
+is($result, '0', 'latest checkpoint will still see off state');
+$node->safe_psql('postgres', 'CHECKPOINT;');
+$result = $node->safe_psql('postgres',
+	'SELECT data_page_checksum_version FROM pg_control_checkpoint();');
+is($result, '1', 'latest checkpoint will now see on state');
+
 # Make sure pg_control_init still reports the initial state as disabled even
 # though the current state has changed.
 $result = $node->safe_psql('postgres',
