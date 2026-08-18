@@ -301,7 +301,7 @@ UPDATE 100
 postgres=# SELECT pg_current_wal_insert_lsn();
  pg_current_wal_insert_lsn
 ---------------------------
- 0/306EE20
+ 0/0306EE20
 (1 row)
 </programlisting>
 
@@ -310,7 +310,7 @@ postgres=# SELECT pg_current_wal_insert_lsn();
    changes made on primary should be guaranteed to be visible on replica.
 
 <programlisting>
-postgres=# WAIT FOR LSN '0/306EE20';
+postgres=# WAIT FOR LSN '0/0306EE20';
  status
 ---------
  success
@@ -326,7 +326,7 @@ postgres=# SELECT * FROM movie WHERE genre = 'Drama';
    Wait for flush (data durable on replica):
 
 <programlisting>
-postgres=# WAIT FOR LSN '0/306EE20' WITH (MODE 'standby_flush');
+postgres=# WAIT FOR LSN '0/0306EE20' WITH (MODE 'standby_flush');
  status
 ---------
  success
@@ -338,7 +338,7 @@ postgres=# WAIT FOR LSN '0/306EE20' WITH (MODE 'standby_flush');
    Wait for write with timeout:
 
 <programlisting>
-postgres=# WAIT FOR LSN '0/306EE20' WITH (MODE 'standby_write', TIMEOUT '100ms', NO_THROW);
+postgres=# WAIT FOR LSN '0/0306EE20' WITH (MODE 'standby_write', TIMEOUT '100ms', NO_THROW);
  status
 ---------
  success
@@ -350,7 +350,7 @@ postgres=# WAIT FOR LSN '0/306EE20' WITH (MODE 'standby_write', TIMEOUT '100ms',
    Wait for flush on primary:
 
 <programlisting>
-postgres=# WAIT FOR LSN '0/306EE20' WITH (MODE 'primary_flush');
+postgres=# WAIT FOR LSN '0/0306EE20' WITH (MODE 'primary_flush');
  status
 ---------
  success
@@ -362,8 +362,8 @@ postgres=# WAIT FOR LSN '0/306EE20' WITH (MODE 'primary_flush');
    If the target LSN is not reached before the timeout, an error is thrown:
 
 <programlisting>
-postgres=# WAIT FOR LSN '0/306EE20' WITH (TIMEOUT '0.1s');
-ERROR:  timed out while waiting for target LSN 0/306EE20 to be replayed; current replay LSN 0/306EA60
+postgres=# WAIT FOR LSN '0/0306EE20' WITH (TIMEOUT '0.1s');
+ERROR:  timed out while waiting for target LSN 0/0306EE20 to be replayed; current standby_replay LSN 0/0306EA60
 </programlisting>
   </para>
 
@@ -372,7 +372,7 @@ ERROR:  timed out while waiting for target LSN 0/306EE20 to be replayed; current
    <parameter>NO_THROW</parameter> option:
 
 <programlisting>
-postgres=# WAIT FOR LSN '0/306EE20' WITH (TIMEOUT '100ms', NO_THROW);
+postgres=# WAIT FOR LSN '0/0306EE20' WITH (TIMEOUT '100ms', NO_THROW);
  status
 ---------
  timeout
