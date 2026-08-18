@@ -1328,6 +1328,8 @@ size_t
 pg_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
 {
+	srclen = (srclen < 0) ? strlen(src) : srclen;
+
 	if (locale->ctype_is_c)
 		return strlower_c(dst, dstsize, src, srclen);
 	else if (locale->provider == COLLPROVIDER_BUILTIN)
@@ -1349,6 +1351,8 @@ size_t
 pg_strtitle(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
 {
+	srclen = (srclen < 0) ? strlen(src) : srclen;
+
 	if (locale->ctype_is_c)
 		return strtitle_c(dst, dstsize, src, srclen);
 	else if (locale->provider == COLLPROVIDER_BUILTIN)
@@ -1370,6 +1374,8 @@ size_t
 pg_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
 {
+	srclen = (srclen < 0) ? strlen(src) : srclen;
+
 	if (locale->ctype_is_c)
 		return strupper_c(dst, dstsize, src, srclen);
 	else if (locale->provider == COLLPROVIDER_BUILTIN)
@@ -1391,6 +1397,8 @@ size_t
 pg_strfold(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 		   pg_locale_t locale)
 {
+	srclen = (srclen < 0) ? strlen(src) : srclen;
+
 	/* in the C locale, casefolding is the same as lowercasing */
 	if (locale->ctype_is_c)
 		return strlower_c(dst, dstsize, src, srclen);
