@@ -62,9 +62,9 @@ gbt_var_key_readable(const GBT_VARKEY *k)
 {
 	GBT_VARKEY_R r;
 
-	r.lower = (bytea *) &(((char *) k)[VARHDRSZ]);
+	r.lower = (const bytea *) &(((const char *) k)[VARHDRSZ]);
 	if (VARSIZE(k) > (VARHDRSZ + (VARSIZE(r.lower))))
-		r.upper = (bytea *) &(((char *) k)[VARHDRSZ + INTALIGN(VARSIZE(r.lower))]);
+		r.upper = (const bytea *) &(((const char *) k)[VARHDRSZ + INTALIGN(VARSIZE(r.lower))]);
 	else
 		r.upper = r.lower;
 	return r;

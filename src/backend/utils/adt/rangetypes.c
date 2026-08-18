@@ -2117,7 +2117,7 @@ range_deserialize(TypeCacheEntry *typcache, const RangeType *range,
 	{
 		/* att_align_pointer cannot be necessary here */
 		lbound = fetch_att(ptr, typbyval, typlen);
-		ptr = (char *) att_addlength_pointer(ptr, typlen, ptr);
+		ptr = att_addlength_pointer(ptr, typlen, ptr);
 	}
 	else
 		lbound = (Datum) 0;

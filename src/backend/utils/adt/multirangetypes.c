@@ -722,11 +722,11 @@ multirange_get_range(TypeCacheEntry *rangetyp,
 	 * exact size.
 	 */
 	if (RANGE_HAS_LBOUND(flags))
-		ptr = (char *) att_addlength_pointer(ptr, typlen, ptr);
+		ptr = att_addlength_pointer(ptr, typlen, ptr);
 	if (RANGE_HAS_UBOUND(flags))
 	{
 		ptr = (char *) att_align_pointer(ptr, typalign, typlen, ptr);
-		ptr = (char *) att_addlength_pointer(ptr, typlen, ptr);
+		ptr = att_addlength_pointer(ptr, typlen, ptr);
 	}
 	len = (ptr - begin) + sizeof(RangeType) + sizeof(uint8);
 
@@ -773,7 +773,7 @@ multirange_get_bounds(TypeCacheEntry *rangetyp,
 	{
 		/* att_align_pointer cannot be necessary here */
 		lbound = fetch_att(ptr, typbyval, typlen);
-		ptr = (char *) att_addlength_pointer(ptr, typlen, ptr);
+		ptr = att_addlength_pointer(ptr, typlen, ptr);
 	}
 	else
 		lbound = (Datum) 0;

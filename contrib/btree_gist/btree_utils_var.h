@@ -26,7 +26,7 @@ typedef bytea GBT_VARKEY;
  */
 typedef struct
 {
-	bytea	   *lower,
+	const bytea *lower,
 			   *upper;
 } GBT_VARKEY_R;
 

@@ -60,7 +60,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	volatile xsltSecurityPrefsPtr xslt_sec_prefs = NULL;
 	volatile xsltTransformContextPtr xslt_ctxt = NULL;
 	volatile int resstat = -1;
-	xmlChar    *volatile resstr = NULL;
+	xmlChar    *volatile resstrv = NULL;
 
 	if (fcinfo->nargs == 3)
 	{
@@ -80,6 +80,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		bool		xslt_sec_prefs_error;
+		xmlChar    *resstr = NULL;
 		int			reslen = 0;
 
 		/* Parse document */
@@ -147,8 +148,8 @@ xslt_process(PG_FUNCTION_ARGS)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_ARGUMENT_FOR_XQUERY,
 						"failed to apply stylesheet");
 
-		resstat = xsltSaveResultToString((xmlChar **) &resstr, &reslen,
-										 restree, stylesheet);
+		resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
+		resstrv = resstr;
 
 		if (resstat >= 0)
 		{
@@ -176,8 +177,8 @@ xslt_process(PG_FUNCTION_ARGS)
 			xmlFreeDoc(ssdoc);
 		if (doctree != NULL)
 			xmlFreeDoc(doctree);
-		if (resstr != NULL)
-			xmlFree(resstr);
+		if (resstrv != NULL)
+			xmlFree(resstrv);
 		xsltCleanupGlobals();
 
 		pg_xml_done(xmlerrcxt, true);
@@ -193,8 +194,8 @@ xslt_process(PG_FUNCTION_ARGS)
 	xmlFreeDoc(doctree);
 	xsltCleanupGlobals();
 
-	if (resstr)
-		xmlFree(resstr);
+	if (resstrv)
+		xmlFree(resstrv);
 
 	pg_xml_done(xmlerrcxt, false);
 

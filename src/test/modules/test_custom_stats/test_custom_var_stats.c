@@ -237,7 +237,7 @@ test_custom_stats_var_to_serialized_data(const PgStat_HashKey *key,
 	 * be cross-checked with the key read from main stats file at loading
 	 * time.
 	 */
-	if (!write_chunk_s(fd_description, (PgStat_HashKey *) key))
+	if (!write_chunk_s(fd_description, key))
 		return false;
 	fd_description_offset += sizeof(PgStat_HashKey);
 

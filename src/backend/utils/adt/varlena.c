@@ -1153,9 +1153,9 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 	int			needle_len = state->len2;
 	int			skiptablemask = state->skiptablemask;
 	const char *haystack = state->str1;
-	const char *needle = state->str2;
+	char	   *needle = state->str2;
 	const char *haystack_end = &haystack[haystack_len];
-	const char *hptr;
+	char	   *hptr;
 
 	Assert(start_ptr >= haystack && start_ptr <= haystack_end);
 	Assert(needle_len > 0);
@@ -1184,7 +1184,7 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 		 * collation would accept an empty match, returning one would send
 		 * callers that search for successive matches into an infinite loop.)
 		 */
-		const char *result_hptr = NULL;
+		char	   *result_hptr = NULL;
 
 		hptr = start_ptr;
 		while (hptr < haystack_end)
@@ -1198,7 +1198,7 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 			if (!state->greedy &&
 				haystack_end - hptr >= needle_len &&
 				pg_strncoll(hptr, needle_len, needle, needle_len, state->locale) == 0)
-				return (char *) hptr;
+				return hptr;
 
 			/*
 			 * Else check if any of the non-empty substrings starting at hptr
@@ -1223,7 +1223,7 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 			hptr += pg_mblen_range(hptr, haystack_end);
 		}
 
-		return (char *) result_hptr;
+		return result_hptr;
 	}
 	else if (needle_len == 1)
 	{
@@ -1234,21 +1234,21 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 		while (hptr < haystack_end)
 		{
 			if (*hptr == nchar)
-				return (char *) hptr;
+				return hptr;
 			hptr++;
 		}
 	}
 	else
 	{
-		const char *needle_last = &needle[needle_len - 1];
+		char	   *needle_last = &needle[needle_len - 1];
 
 		/* Start at startpos plus the length of the needle */
 		hptr = start_ptr + needle_len - 1;
 		while (hptr < haystack_end)
 		{
 			/* Match the needle scanning *backward* */
-			const char *nptr;
-			const char *p;
+			char	   *nptr;
+			char	   *p;
 
 			nptr = needle_last;
 			p = hptr;
@@ -1256,7 +1256,7 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 			{
 				/* Matched it all?	If so, return 1-based position */
 				if (nptr == needle)
-					return (char *) p;
+					return p;
 				nptr--, p--;
 			}
 
@@ -4470,7 +4470,7 @@ string_agg_deserialize(PG_FUNCTION_ARGS)
 	bytea	   *sstate;
 	StringInfo	result;
 	StringInfoData buf;
-	char	   *data;
+	const char *data;
 	int			datalen;
 
 	/* cannot be called directly because of internal-type argument */
@@ -4492,7 +4492,7 @@ string_agg_deserialize(PG_FUNCTION_ARGS)
 
 	/* data */
 	datalen = VARSIZE_ANY_EXHDR(sstate) - 4;
-	data = (char *) pq_getmsgbytes(&buf, datalen);
+	data = pq_getmsgbytes(&buf, datalen);
 	appendBinaryStringInfo(result, data, datalen);
 
 	pq_getmsgend(&buf);

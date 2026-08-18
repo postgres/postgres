@@ -98,7 +98,7 @@ gbt_bitcmp(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
  * descend to that leaf page.
  */
 static bytea *
-gbt_bit_xfrm(VarBit *leaf)
+gbt_bit_xfrm(const VarBit *leaf)
 {
 	bytea	   *out;
 	int			sz = VARBITBYTES(leaf) + VARHDRSZ;
@@ -125,7 +125,7 @@ gbt_bit_l2n(GBT_VARKEY *leaf, FmgrInfo *flinfo)
 	GBT_VARKEY_R r = gbt_var_key_readable(leaf);
 	bytea	   *o;
 
-	o = gbt_bit_xfrm((VarBit *) r.lower);
+	o = gbt_bit_xfrm((const VarBit *) r.lower);
 	r.upper = r.lower = o;
 	out = gbt_var_key_copy(&r);
 	pfree(o);
