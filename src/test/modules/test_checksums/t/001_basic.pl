@@ -136,7 +136,7 @@ enable_data_checksums($node);
 
 $node->poll_query_until(
 	'postgres', qq[
-	SELECT count(*) > 0 FROM pg_stat_activity
+	SELECT count(*) > 0 FROM pg_catalog.pg_stat_activity
 	WHERE backend_type = 'datachecksums worker' AND datname = 'postgres'
 	  AND query LIKE 'Waiting for % temp tables to be removed']
 ) or die "timed out waiting for worker to wait for temporary tables";
@@ -180,7 +180,7 @@ enable_data_checksums($node);
 
 $node->poll_query_until(
 	'postgres', qq[
-	SELECT count(*) > 0 FROM pg_stat_activity
+	SELECT count(*) > 0 FROM pg_catalog.pg_stat_activity
 	WHERE backend_type = 'datachecksums worker' AND datname = 'dropmeforce'
 	  AND query LIKE 'Waiting for % temp tables to be removed']
 ) or die "timed out waiting for worker to wait for temporary tables";

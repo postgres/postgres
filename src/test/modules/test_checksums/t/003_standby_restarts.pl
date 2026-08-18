@@ -95,7 +95,7 @@ is($result, '19998', 'ensure we can safely read all data with checksums');
 
 $result = $node_primary->poll_query_until(
 	'postgres',
-	"SELECT count(*) FROM pg_stat_activity WHERE backend_type LIKE 'datachecksums%';",
+	"SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE backend_type LIKE 'datachecksums%';",
 	'0');
 is($result, 1, 'await datachecksums worker/launcher termination');
 
@@ -145,9 +145,10 @@ $node_primary->wait_for_catchup($node_standby, 'replay',
 
 # Get the relfilenode and database OID so we can inspect the filesystem
 my $unlogged_rfn = $node_primary->safe_psql('postgres',
-	"SELECT relfilenode FROM pg_class WHERE relname = 'unlogged_tbl';");
+	"SELECT relfilenode FROM pg_catalog.pg_class WHERE relname = 'unlogged_tbl';"
+);
 my $db_oid = $node_primary->safe_psql('postgres',
-	"SELECT oid FROM pg_database WHERE datname = 'postgres';");
+	"SELECT oid FROM pg_catalog.pg_database WHERE datname = 'postgres';");
 
 # Verify the standby only has the init fork (no main fork)
 my $standby_datadir = $node_standby->data_dir;
