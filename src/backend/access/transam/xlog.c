@@ -560,6 +560,14 @@ typedef struct XLogCtlData
 	uint32		data_checksum_version;
 
 	slock_t		info_lck;		/* locks shared variables shown above */
+
+	/*
+	 * lastChecksumChangeRecPtr points to the end of the last XLOG2_CHECKSUMS
+	 * record inserted or replayed, i.e. the last change of
+	 * data_checksum_version.  InvalidXLogRecPtr if the state hasn't changed
+	 * since the server started.
+	 */
+	pg_atomic_uint64 lastChecksumChangeRecPtr;
 } XLogCtlData;
 
 /*
@@ -4736,6 +4744,23 @@ DataChecksumsNeedVerify(void)
 }
 
 /*
+ * GetLastChecksumChangeRecPtr
+ *		Returns the location of the last data checksum state change
+ *
+ * Offline state changes by pg_checksums leave no trace here; callers must
+ * also inspect the current state.
+ *
+ * No barrier semantics are needed: pages reach disk under a new checksum
+ * state only after their writer absorbed the procsignal barrier for the
+ * change, which is emitted after the new location became visible.
+ */
+XLogRecPtr
+GetLastChecksumChangeRecPtr(void)
+{
+	return pg_atomic_read_u64(&XLogCtl->lastChecksumChangeRecPtr);
+}
+
+/*
  * SetDataChecksumsOnInProgress
  *		Sets the data checksum state to "inprogress-on" to enable checksums
  *
@@ -4844,6 +4869,8 @@ SetDataChecksumsOn(void)
 
 	MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
 	END_CRIT_SECTION();
+
+	INJECTION_POINT("datachecksums-on-before-checkpoint", NULL);
 
 	RequestCheckpoint(CHECKPOINT_FORCE | CHECKPOINT_WAIT | CHECKPOINT_FAST);
 	WaitForProcSignalBarrier(barrier);
@@ -5435,6 +5462,7 @@ XLOGShmemInit(void *arg)
 	pg_atomic_init_u64(&XLogCtl->logWriteResult, InvalidXLogRecPtr);
 	pg_atomic_init_u64(&XLogCtl->logFlushResult, InvalidXLogRecPtr);
 	pg_atomic_init_u64(&XLogCtl->unloggedLSN, InvalidXLogRecPtr);
+	pg_atomic_init_u64(&XLogCtl->lastChecksumChangeRecPtr, InvalidXLogRecPtr);
 }
 
 /*
@@ -8749,6 +8777,7 @@ XLogChecksums(uint32 new_type)
 	XLogRegisterData((char *) &xlrec, sizeof(xl_checksum_state));
 
 	recptr = XLogInsert(RM_XLOG2_ID, XLOG2_CHECKSUMS);
+	pg_atomic_write_u64(&XLogCtl->lastChecksumChangeRecPtr, recptr);
 	XLogFlush(recptr);
 }
 
@@ -9250,8 +9279,12 @@ xlog2_redo(XLogReaderState *record)
 	if (info == XLOG2_CHECKSUMS)
 	{
 		xl_checksum_state state;
+		XLogRecPtr	lsn = record->EndRecPtr;
 
 		memcpy(&state, XLogRecGetData(record), sizeof(xl_checksum_state));
+
+		/* advertise the location before the new state becomes visible */
+		pg_atomic_write_u64(&XLogCtl->lastChecksumChangeRecPtr, lsn);
 
 		SpinLockAcquire(&XLogCtl->info_lck);
 		XLogCtl->data_checksum_version = state.new_checksum_state;
@@ -9259,6 +9292,31 @@ xlog2_redo(XLogReaderState *record)
 
 		LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 		ControlFile->data_checksum_version = state.new_checksum_state;
+
+		/*
+		 * Update minRecoveryPoint to ensure that if recovery is aborted, we
+		 * recover back up to this point before allowing hot standby again.
+		 * The new state is durable in pg_control while its location is only
+		 * tracked in shared memory; a standby becoming consistent below this
+		 * record would let base backups resume checksum verification with the
+		 * location unknown.  The local copies cannot be updated as long as
+		 * crash recovery is happening and we expect all the WAL to be
+		 * replayed.
+		 */
+		if (InArchiveRecovery)
+		{
+			LocalMinRecoveryPoint = ControlFile->minRecoveryPoint;
+			LocalMinRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
+		}
+		if (XLogRecPtrIsValid(LocalMinRecoveryPoint) && LocalMinRecoveryPoint < lsn)
+		{
+			TimeLineID	replayTLI;
+
+			(void) GetCurrentReplayRecPtr(&replayTLI);
+			ControlFile->minRecoveryPoint = lsn;
+			ControlFile->minRecoveryPointTLI = replayTLI;
+		}
+
 		UpdateControlFile();
 		LWLockRelease(ControlFileLock);
 

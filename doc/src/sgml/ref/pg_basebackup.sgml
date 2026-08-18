@@ -788,6 +788,12 @@ PostgreSQL documentation
         in the <link linkend="monitoring-pg-stat-database-view">
         <structname>pg_stat_database</structname></link> view.
        </para>
+       <para>
+        Checksums must be enabled on the server for the duration of the base
+        backup in order to be verified.  If checksums are in the process of
+        being enabled when the base backup starts then checksum verification is
+        disabled for the base backup.
+       </para>
       </listitem>
      </varlistentry>
     </variablelist>
