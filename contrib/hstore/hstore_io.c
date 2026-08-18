@@ -350,13 +350,28 @@ comparePairs(const void *a, const void *b)
 }
 
 /*
+ * Add the string-data length of a pair to *buflen.
+ *
+ * This is a convenience routine for add_size(), checking if a Pair is null
+ * before adding its size.  Individual keys and values are each limited to
+ * HENTRY_POSMASK bytes.
+ */
+static void
+hstoreAddPairLen(Size *buflen, const Pairs *pair)
+{
+	Size		pairlen = pair->keylen + (pair->isnull ? 0 : pair->vallen);
+
+	*buflen = add_size(*buflen, pairlen);
+}
+
+/*
  * this code still respects pairs.needfree, even though in general
  * it should never be called in a context where anything needs freeing.
  * we keep it because (a) those calls are in a rare code path anyway,
  * and (b) who knows whether they might be needed by some caller.
  */
 int
-hstoreUniquePairs(Pairs *a, int32 l, int32 *buflen)
+hstoreUniquePairs(Pairs *a, int32 l, Size *buflen)
 {
 	Pairs	   *ptr,
 			   *res;
@@ -365,7 +380,7 @@ hstoreUniquePairs(Pairs *a, int32 l, int32 *buflen)
 	if (l < 2)
 	{
 		if (l == 1)
-			*buflen = a->keylen + ((a->isnull) ? 0 : a->vallen);
+			hstoreAddPairLen(buflen, a);
 		return l;
 	}
 
@@ -391,7 +406,7 @@ hstoreUniquePairs(Pairs *a, int32 l, int32 *buflen)
 		}
 		else
 		{
-			*buflen += res->keylen + ((res->isnull) ? 0 : res->vallen);
+			hstoreAddPairLen(buflen, res);
 			res++;
 			if (res != ptr)
 				memcpy(res, ptr, sizeof(Pairs));
@@ -400,7 +415,7 @@ hstoreUniquePairs(Pairs *a, int32 l, int32 *buflen)
 		ptr++;
 	}
 
-	*buflen += res->keylen + ((res->isnull) ? 0 : res->vallen);
+	hstoreAddPairLen(buflen, res);
 	return res + 1 - a;
 }
 
@@ -446,16 +461,17 @@ hstoreCheckValLength(size_t len, HSParser *state)
 
 
 HStore *
-hstorePairs(Pairs *pairs, int32 pcount, int32 buflen)
+hstorePairs(Pairs *pairs, int32 pcount, Size buflen)
 {
 	HStore	   *out;
 	HEntry	   *entry;
 	char	   *ptr;
 	char	   *buf;
-	int32		len;
+	Size		len;
 	int32		i;
 
-	len = CALCDATASIZE(pcount, buflen);
+	len = hstoreCalcDataSize(pcount, buflen);
+
 	out = palloc(len);
 	SET_VARSIZE(out, len);
 	HS_SETCOUNT(out, pcount);
@@ -482,7 +498,7 @@ hstore_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	Node	   *escontext = fcinfo->context;
 	HSParser	state;
-	int32		buflen;
+	Size		buflen;
 	HStore	   *out;
 
 	state.begin = str;
@@ -503,7 +519,7 @@ PG_FUNCTION_INFO_V1(hstore_recv);
 Datum
 hstore_recv(PG_FUNCTION_ARGS)
 {
-	int32		buflen;
+	Size		buflen;
 	HStore	   *out;
 	Pairs	   *pairs;
 	int32		i;
@@ -602,7 +618,7 @@ PG_FUNCTION_INFO_V1(hstore_from_arrays);
 Datum
 hstore_from_arrays(PG_FUNCTION_ARGS)
 {
-	int32		buflen;
+	Size		buflen;
 	HStore	   *out;
 	Pairs	   *pairs;
 	Datum	   *key_datums;
@@ -721,7 +737,7 @@ hstore_from_array(PG_FUNCTION_ARGS)
 	ArrayType  *in_array = PG_GETARG_ARRAYTYPE_P(0);
 	int			ndims = ARR_NDIM(in_array);
 	int			count;
-	int32		buflen;
+	Size		buflen;
 	HStore	   *out;
 	Pairs	   *pairs;
 	Datum	   *in_datums;
@@ -835,7 +851,7 @@ Datum
 hstore_from_record(PG_FUNCTION_ARGS)
 {
 	HeapTupleHeader rec;
-	int32		buflen;
+	Size		buflen;
 	HStore	   *out;
 	Pairs	   *pairs;
 	Oid			tupType;
@@ -1226,8 +1242,8 @@ Datum
 hstore_out(PG_FUNCTION_ARGS)
 {
 	HStore	   *in = PG_GETARG_HSTORE_P(0);
-	int			buflen,
-				i;
+	Size		buflen;
+	int			i;
 	int			count = HS_COUNT(in);
 	char	   *out,
 			   *ptr;
@@ -1249,12 +1265,18 @@ hstore_out(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < count; i++)
 	{
-		/* include "" and => and comma-space */
-		buflen += 6 + 2 * HSTORE_KEYLEN(entries, i);
+		/* include "", => and comma-space */
+		buflen = add_size(buflen, 6);
+		buflen = add_size(buflen, mul_size(2, HSTORE_KEYLEN(entries, i)));
+
 		/* include "" only if nonnull */
-		buflen += 2 + (HSTORE_VALISNULL(entries, i)
-					   ? 2
-					   : 2 * HSTORE_VALLEN(entries, i));
+		if (HSTORE_VALISNULL(entries, i))
+			buflen = add_size(buflen, 4);
+		else
+		{
+			buflen = add_size(buflen, 2);
+			buflen = add_size(buflen, mul_size(2, HSTORE_VALLEN(entries, i)));
+		}
 	}
 
 	out = ptr = palloc(buflen);

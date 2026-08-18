@@ -76,7 +76,7 @@ hstoreArrayToPairs(ArrayType *a, int *npairs)
 	bool	   *key_nulls;
 	int			key_count;
 	Pairs	   *key_pairs;
-	int			bufsiz;
+	Size		bufsiz;
 	int			i,
 				j;
 
@@ -637,7 +637,7 @@ hstore_slice_to_hstore(PG_FUNCTION_ARGS)
 	int			nkeys;
 	Pairs	   *key_pairs = hstoreArrayToPairs(key_array, &nkeys);
 	Pairs	   *out_pairs;
-	int			bufsiz;
+	Size		bufsiz;
 	int			lastidx = 0;
 	int			i;
 	int			out_count = 0;
@@ -1241,8 +1241,8 @@ hstore_hash(PG_FUNCTION_ARGS)
 	 */
 	Assert(VARSIZE(hs) ==
 		   (HS_COUNT(hs) != 0 ?
-			CALCDATASIZE(HS_COUNT(hs),
-						 HSE_ENDPOS(ARRPTR(hs)[2 * HS_COUNT(hs) - 1])) :
+			hstoreCalcDataSize(HS_COUNT(hs),
+							   HSE_ENDPOS(ARRPTR(hs)[2 * HS_COUNT(hs) - 1])) :
 			HSHRDSIZE));
 
 	PG_FREE_IF_COPY(hs, 0);
@@ -1264,8 +1264,8 @@ hstore_hash_extended(PG_FUNCTION_ARGS)
 	/* See comment in hstore_hash */
 	Assert(VARSIZE(hs) ==
 		   (HS_COUNT(hs) != 0 ?
-			CALCDATASIZE(HS_COUNT(hs),
-						 HSE_ENDPOS(ARRPTR(hs)[2 * HS_COUNT(hs) - 1])) :
+			hstoreCalcDataSize(HS_COUNT(hs),
+							   HSE_ENDPOS(ARRPTR(hs)[2 * HS_COUNT(hs) - 1])) :
 			HSHRDSIZE));
 
 	PG_FREE_IF_COPY(hs, 0);

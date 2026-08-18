@@ -62,14 +62,23 @@ typedef struct
 #define HS_SETCOUNT(hsp_,c_) ((hsp_)->size_ = (c_) | HS_FLAG_NEWVERSION)
 
 
-/*
- * "x" comes from an existing HS_COUNT() (as discussed, <= INT_MAX/24) or a
- * Pairs array length (due to MaxAllocSize, <= INT_MAX/40).  "lenstr" is no
- * more than INT_MAX, that extreme case arising in hstore_from_arrays().
- * Therefore, this calculation is limited to about INT_MAX / 5 + INT_MAX.
- */
 #define HSHRDSIZE	(sizeof(HStore))
-#define CALCDATASIZE(x, lenstr) ( (x) * 2 * sizeof(HEntry) + HSHRDSIZE + (lenstr) )
+
+/*
+ * "x" is a pair count, coming from an existing HS_COUNT() (as discussed, <=
+ * INT_MAX/24) or a Pairs array length (due to MaxAllocSize, <= INT_MAX/40).
+ * "lenstr" is no more than INT_MAX, that extreme case arising in
+ * hstore_from_arrays().  Therefore, this calculation should be limited to
+ * about INT_MAX / 5 + INT_MAX.
+ */
+static inline Size
+hstoreCalcDataSize(Size x, Size lenstr)
+{
+	Size		entrysize = mul_size(x, 2 * sizeof(HEntry));
+	Size		total = add_size(HSHRDSIZE, lenstr);
+
+	return add_size(entrysize, total);
+}
 
 /* note multiple evaluations of x */
 #define ARRPTR(x)		( (HEntry*) ( (HStore*)(x) + 1 ) )
@@ -128,7 +137,7 @@ typedef struct
 /* finalize a newly-constructed hstore */
 #define HS_FINALIZE(hsp_,count_,buf_,ptr_)							\
 	do {															\
-		int _buflen = (ptr_) - (buf_);								\
+		Size _buflen = (ptr_) - (buf_);								\
 		if ((count_))												\
 			ARRPTR(hsp_)[0].entry |= HENTRY_ISFIRST;				\
 		if ((count_) != HS_COUNT((hsp_)))							\
@@ -136,14 +145,14 @@ typedef struct
 			HS_SETCOUNT((hsp_),(count_));							\
 			memmove(STRPTR(hsp_), (buf_), _buflen);					\
 		}															\
-		SET_VARSIZE((hsp_), CALCDATASIZE((count_), _buflen));		\
+		SET_VARSIZE((hsp_), hstoreCalcDataSize((count_), _buflen));	\
 	} while (0)
 
 /* ensure the varlena size of an existing hstore is correct */
 #define HS_FIXSIZE(hsp_,count_)											\
 	do {																\
-		int bl = (count_) ? HSE_ENDPOS(ARRPTR(hsp_)[2*(count_)-1]) : 0; \
-		SET_VARSIZE((hsp_), CALCDATASIZE((count_),bl));					\
+		Size bl = (count_) ? HSE_ENDPOS(ARRPTR(hsp_)[2*(count_)-1]) : 0; \
+		SET_VARSIZE((hsp_), hstoreCalcDataSize((count_),bl));				\
 	} while (0)
 
 /* DatumGetHStoreP includes support for reading old-format hstore values */
@@ -168,8 +177,8 @@ typedef struct
 	bool		needfree;		/* need to pfree the value? */
 } Pairs;
 
-extern PGDLLEXPORT int hstoreUniquePairs(Pairs *a, int32 l, int32 *buflen);
-extern PGDLLEXPORT HStore *hstorePairs(Pairs *pairs, int32 pcount, int32 buflen);
+extern PGDLLEXPORT int hstoreUniquePairs(Pairs *a, int32 l, Size *buflen);
+extern PGDLLEXPORT HStore *hstorePairs(Pairs *pairs, int32 pcount, Size buflen);
 
 extern PGDLLEXPORT size_t hstoreCheckKeyLen(size_t len);
 extern PGDLLEXPORT size_t hstoreCheckValLen(size_t len);

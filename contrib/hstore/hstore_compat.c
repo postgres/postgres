@@ -90,8 +90,8 @@
  * This is the structure used for entries in the old contrib/hstore
  * implementation. Notice that this is the same size as the new entry
  * (two 32-bit words per key/value pair) and that the header is the
- * same, so the old and new versions of ARRPTR, STRPTR, CALCDATASIZE
- * etc. are compatible.
+ * same, so the old and new versions of ARRPTR, STRPTR,
+ * hstoreCalcDataSize etc. are compatible.
  *
  * If the above statement isn't true on some bizarre platform, we're
  * a bit hosed.
@@ -123,8 +123,8 @@ hstoreValidNewFormat(HStore *hs)
 {
 	int			count = HS_COUNT(hs);
 	HEntry	   *entries = ARRPTR(hs);
-	int			buflen = (count) ? HSE_ENDPOS(entries[2 * (count) - 1]) : 0;
-	int			vsize = CALCDATASIZE(count, buflen);
+	Size		buflen = (count) ? HSE_ENDPOS(entries[2 * (count) - 1]) : 0;
+	Size		vsize = hstoreCalcDataSize(count, buflen);
 	int			i;
 
 	if (hs->size_ & HS_FLAG_NEWVERSION)
@@ -173,11 +173,11 @@ hstoreValidNewFormat(HStore *hs)
 static int
 hstoreValidOldFormat(HStore *hs)
 {
-	int			count = hs->size_;
+	uint32		count = hs->size_;
 	HOldEntry  *entries = (HOldEntry *) ARRPTR(hs);
-	int			vsize;
-	int			lastpos = 0;
-	int			i;
+	Size		vsize;
+	Size		lastpos = 0;
+	uint32		i;
 
 	if (hs->size_ & HS_FLAG_NEWVERSION)
 		return 0;
@@ -188,7 +188,7 @@ hstoreValidOldFormat(HStore *hs)
 	if (count > 0xFFFFFFF)
 		return 0;
 
-	if (CALCDATASIZE(count, 0) > VARSIZE(hs))
+	if (hstoreCalcDataSize(count, 0) > VARSIZE(hs))
 		return 0;
 
 	if (entries[0].pos != 0)
@@ -212,11 +212,12 @@ hstoreValidOldFormat(HStore *hs)
 	{
 		if (entries[i].pos != lastpos)
 			return 0;
-		lastpos += (entries[i].keylen
-					+ ((entries[i].valisnull) ? 0 : entries[i].vallen));
+		lastpos = add_size(lastpos,
+						   entries[i].keylen
+						   + ((entries[i].valisnull) ? 0 : entries[i].vallen));
 	}
 
-	vsize = CALCDATASIZE(count, lastpos);
+	vsize = hstoreCalcDataSize(count, lastpos);
 
 	if (vsize > VARSIZE(hs))
 		return 0;
@@ -316,10 +317,10 @@ hstoreUpgrade(Datum orig)
 	 * must have an old-style value. Overwrite it in place as a new-style one.
 	 */
 	{
-		int			count = hs->size_;
+		uint32		count = hs->size_;
 		HEntry	   *new_entries = ARRPTR(hs);
 		HOldEntry  *old_entries = (HOldEntry *) ARRPTR(hs);
-		int			i;
+		uint32		i;
 
 		for (i = 0; i < count; ++i)
 		{

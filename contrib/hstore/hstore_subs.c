@@ -192,7 +192,7 @@ hstore_subscript_assign(ExprState *state,
 		HStore	   *hs = DatumGetHStoreP(*op->resvalue);
 		int			s1count = HS_COUNT(hs);
 		int			outcount = 0;
-		int			vsize;
+		Size		vsize;
 		char	   *ps1,
 				   *bufd,
 				   *pd;
@@ -202,7 +202,7 @@ hstore_subscript_assign(ExprState *state,
 		int			s2idx;
 
 		/* Allocate result without considering possibility of duplicate */
-		vsize = CALCDATASIZE(s1count + 1, VARSIZE(hs) + p.keylen + p.vallen);
+		vsize = hstoreCalcDataSize(s1count + 1, VARSIZE(hs) + p.keylen + p.vallen);
 		out = palloc(vsize);
 		SET_VARSIZE(out, vsize);
 		HS_SETCOUNT(out, s1count + 1);
