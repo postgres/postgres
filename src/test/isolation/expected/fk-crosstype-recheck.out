@@ -1,0 +1,37 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1b s1away s1back s2ins s1c s2sel
+step s1b: BEGIN;
+step s1away: UPDATE fkct_pk SET k = '2020-06-01' WHERE payload = 'p1';
+step s1back: UPDATE fkct_pk SET k = '2020-01-01' WHERE payload = 'p1';
+step s2ins: INSERT INTO fkct_fk SELECT g, '2020-01-01'::timestamp FROM generate_series(1,2) g; <waiting ...>
+step s1c: COMMIT;
+step s2ins: <... completed>
+step s2sel: SELECT k FROM fkct_pk;
+         k
+----------
+01-01-2020
+(1 row)
+
+
+starting permutation: s1b s1away s2ins s1c s2sel
+step s1b: BEGIN;
+step s1away: UPDATE fkct_pk SET k = '2020-06-01' WHERE payload = 'p1';
+step s2ins: INSERT INTO fkct_fk SELECT g, '2020-01-01'::timestamp FROM generate_series(1,2) g; <waiting ...>
+step s1c: COMMIT;
+step s2ins: <... completed>
+ERROR:  insert or update on table "fkct_fk" violates foreign key constraint "fkct_fk_t_fkey"
+step s2sel: SELECT k FROM fkct_pk;
+         k
+----------
+06-01-2020
+(1 row)
+
+
+starting permutation: s1b s1aways s1backs s2inss s1c
+step s1b: BEGIN;
+step s1aways: UPDATE fkct_pk_same SET k = '2020-06-01' WHERE payload = 'p1';
+step s1backs: UPDATE fkct_pk_same SET k = '2020-01-01' WHERE payload = 'p1';
+step s2inss: INSERT INTO fkct_fk_same SELECT g, '2020-01-01'::timestamp FROM generate_series(1,2) g; <waiting ...>
+step s1c: COMMIT;
+step s2inss: <... completed>

@@ -3193,10 +3193,18 @@ ri_FastPathFlushArray(RI_FastPathEntry *fpentry, TupleTableSlot *fk_slot,
 	{
 		Datum		found_val;
 		bool		found_null;
-		bool		concurrently_updated;
-		ScanKeyData recheck_skey[1];
 
-		if (!ri_LockPKTuple(pk_rel, pk_slot, snapshot, &concurrently_updated))
+		/*
+		 * No key recheck is needed here, so we have no use for
+		 * concurrently_updated.  Unlike ri_FastPathProbeOne(), which takes
+		 * the index scan's word for it that the tuple matches, this path
+		 * compares the key against every buffered FK value below, and it does
+		 * so using found_val, which is read out of the version we actually
+		 * locked.  A concurrent key update is therefore caught by that
+		 * comparison: the batch item that led us to this tuple is left
+		 * unmatched and reported as a violation.
+		 */
+		if (!ri_LockPKTuple(pk_rel, pk_slot, snapshot, NULL))
 			continue;
 
 		/*
@@ -3212,22 +3220,6 @@ ri_FastPathFlushArray(RI_FastPathEntry *fpentry, TupleTableSlot *fk_slot,
 		found_val = slot_getattr(pk_slot, riinfo->pk_attnums[0], &found_null);
 		if (found_null)
 			continue;
-
-		if (concurrently_updated)
-		{
-			/*
-			 * Build a single-key scankey for recheck.  We need the actual PK
-			 * value that was found, not the FK search value.
-			 */
-			ScanKeyEntryInitialize(&recheck_skey[0], 0, 1,
-								   fpmeta->strats[0],
-								   fpmeta->subtypes[0],
-								   idx_rel->rd_indcollation[0],
-								   fpmeta->regops[0],
-								   found_val);
-			if (!recheck_matched_pk_tuple(idx_rel, recheck_skey, 1, pk_slot))
-				continue;
-		}
 
 		/*
 		 * Linear scan to mark all batch items matching this PK value.
@@ -3296,9 +3288,11 @@ ri_FastPathProbeOne(Relation pk_rel, Relation idx_rel,
  * Calls table_tuple_lock() directly with handling specific to RI checks.
  * Returns true if the tuple was successfully locked.
  *
- * Sets *concurrently_updated to true if the locked tuple was reached
- * by following an update chain (tmfd.traversed), indicating the caller
- * should recheck the key.
+ * If concurrently_updated is not NULL, sets *concurrently_updated to true
+ * if the locked tuple was reached by following an update chain
+ * (tmfd.traversed), indicating the caller should recheck the key.  Callers
+ * that compare the locked tuple's key against the value they were looking
+ * for anyway can pass NULL.
  */
 static bool
 ri_LockPKTuple(Relation pk_rel, TupleTableSlot *slot, Snapshot snap,
@@ -3308,7 +3302,8 @@ ri_LockPKTuple(Relation pk_rel, TupleTableSlot *slot, Snapshot snap,
 	TM_Result	result;
 	int			lockflags = TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS;
 
-	*concurrently_updated = false;
+	if (concurrently_updated)
+		*concurrently_updated = false;
 
 	if (!IsolationUsesXactSnapshot())
 		lockflags |= TUPLE_LOCK_FLAG_FIND_LAST_VERSION;
@@ -3321,7 +3316,7 @@ ri_LockPKTuple(Relation pk_rel, TupleTableSlot *slot, Snapshot snap,
 	switch (result)
 	{
 		case TM_Ok:
-			if (tmfd.traversed)
+			if (tmfd.traversed && concurrently_updated)
 				*concurrently_updated = true;
 			return true;
 
