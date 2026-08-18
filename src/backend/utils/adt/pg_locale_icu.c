@@ -651,8 +651,8 @@ strfold_icu_utf8(char *dest, size_t destsize, const char *src, size_t srclen,
 /*
  * For historical compatibility, behavior is not multibyte-aware.
  *
- * NB: uses libc tolower() for single-byte encodings (also for historical
- * compatibility), and therefore relies on the global LC_CTYPE setting.
+ * NB: uses libc tolower_l() for single-byte encodings (also for historical
+ * compatibility), and therefore relies on the LC_CTYPE setting.
  */
 static size_t
 downcase_ident_icu(char *dst, size_t dstsize, const char *src,
@@ -682,10 +682,9 @@ downcase_ident_icu(char *dst, size_t dstsize, const char *src,
 }
 
 /*
- * strncoll_icu_utf8
+ * strncoll_icu_utf8()
  *
- * Call ucol_strcollUTF8() or ucol_strcoll() as appropriate for the given
- * database encoding.
+ * Wrapper for ucol_strcollUTF8().
  */
 int
 strncoll_icu_utf8(const char *arg1, size_t len1, const char *arg2, size_t len2,
@@ -871,13 +870,11 @@ icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes)
 /*
  * Convert a string of UChars into the database encoding.
  *
- * The source string at buff_uchar is of length len_uchar
- * (it needn't be nul-terminated)
+ * The source string at buff_uchar is of length len_uchar (it needn't be
+ * nul-terminated)
  *
- * *result receives a pointer to the palloc'd result string, and the
- * function's result is the number of bytes generated (not counting nul).
- *
- * The result string is nul-terminated.
+ * If the result length is less than destsize, the NUL-terminated result is
+ * stored in dest. Otherwise the contents of dest are undefined.
  */
 static size_t
 icu_from_uchar(char *dest, size_t destsize, const UChar *buff_uchar, int32_t len_uchar)

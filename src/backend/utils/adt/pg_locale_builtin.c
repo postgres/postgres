@@ -331,8 +331,8 @@ char *
 get_collation_actual_version_builtin(const char *collcollate)
 {
 	/*
-	 * The only two supported locales (C and C.UTF-8) are both based on memcmp
-	 * and are not expected to change, but track the version anyway.
+	 * The supported locales (C, C.UTF-8, and PG_UNICODE_FAST) are all based
+	 * on memcmp and are not expected to change, but track the version anyway.
 	 *
 	 * Note that the character semantics may change for some locales, but the
 	 * collation version only tracks changes to sort order.
