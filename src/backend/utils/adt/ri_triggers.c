@@ -49,6 +49,7 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/hsearch.h"
+#include "utils/injection_point.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -2824,7 +2825,13 @@ ri_FastPathCheck(RI_ConstraintInfo *riinfo,
 	CommandCounterIncrement();
 	snapshot = RegisterSnapshot(GetTransactionSnapshot());
 
+	INJECTION_POINT("ri-before-pk-lock", NULL);
+
 	pk_rel = table_open(riinfo->pk_relid, RowShareLock);
+
+	/* Re-read the constraint under that lock; see ri_FastPathGetEntry(). */
+	riinfo = ri_LoadConstraintInfo(riinfo->constraint_id);
+
 	idx_rel = index_open(riinfo->conindid, AccessShareLock);
 
 	slot = table_slot_create(pk_rel, NULL);
@@ -4421,7 +4428,20 @@ ri_FastPathGetEntry(const RI_ConstraintInfo *riinfo, Relation fk_rel)
 		 * We don't release these locks until end of transaction, matching SPI
 		 * behavior.
 		 */
+
+		INJECTION_POINT("ri-before-pk-lock", NULL);
+
 		entry->pk_rel = table_open(riinfo->pk_relid, RowShareLock);
+
+		/*
+		 * conindid may have been read before we took that lock, and REINDEX
+		 * CONCURRENTLY moves a constraint to a new index.  Re-read it now:
+		 * LockRelationOid() processes invalidation messages after acquiring
+		 * the lock, so we either see the new index, or an old one that cannot
+		 * be marked dead or dropped until this transaction ends.
+		 */
+		riinfo = ri_LoadConstraintInfo(riinfo->constraint_id);
+
 		entry->idx_rel = index_open(riinfo->conindid, AccessShareLock);
 		entry->pk_slot = table_slot_create(entry->pk_rel, NULL);
 
