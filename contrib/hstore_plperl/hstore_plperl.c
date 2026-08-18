@@ -137,7 +137,7 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 	i = 0;
 	while ((he = hv_iternext(hv)))
 	{
-		char	   *key = sv2cstr(HeSVKEY_force(he));
+		char	   *key = hek2cstr(he);
 		SV		   *value = HeVAL(he);
 
 		if (i >= pcount)
@@ -146,7 +146,7 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 			pairs = repalloc_array(pairs, Pairs, pcount);
 		}
 
-		pairs[i].key = pstrdup(key);
+		pairs[i].key = key;
 		pairs[i].keylen = hstoreCheckKeyLen(strlen(pairs[i].key));
 		pairs[i].needfree = true;
 
@@ -158,7 +158,7 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			pairs[i].val = pstrdup(sv2cstr(value));
+			pairs[i].val = sv2cstr(value);
 			pairs[i].vallen = hstoreCheckValLen(strlen(pairs[i].val));
 			pairs[i].isnull = false;
 		}

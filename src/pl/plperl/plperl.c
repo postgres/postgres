@@ -288,7 +288,6 @@ static void plperl_untrusted_init(void);
 static HV  *plperl_spi_execute_fetch_result(SPITupleTable *tuptable,
 											uint64 processed, int status);
 static void plperl_return_next_internal(SV *sv);
-static char *hek2cstr(HE *he);
 static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
 static void plperl_create_sub(plperl_proc_desc *prodesc, const char *s,
@@ -320,60 +319,6 @@ SvREFCNT_dec_current(SV *sv)
 	dTHX;
 
 	SvREFCNT_dec(sv);
-}
-
-/*
- * convert a HE (hash entry) key to a cstr in the current database encoding
- */
-static char *
-hek2cstr(HE *he)
-{
-	dTHX;
-	char	   *ret;
-	SV		   *sv;
-
-	/*
-	 * HeSVKEY_force will return a temporary mortal SV*, so we need to make
-	 * sure to free it with ENTER/SAVE/FREE/LEAVE
-	 */
-	ENTER;
-	SAVETMPS;
-
-	/*-------------------------
-	 * Unfortunately, while HeUTF8 is true for most things > 256, for values
-	 * 128..255 it's not, but perl will treat them as unicode code points if
-	 * the utf8 flag is not set ( see The "Unicode Bug" in perldoc perlunicode
-	 * for more)
-	 *
-	 * So if we did the expected:
-	 *	  if (HeUTF8(he))
-	 *		  utf_u2e(key...);
-	 *	  else // must be ascii
-	 *		  return HePV(he);
-	 * we won't match columns with codepoints from 128..255
-	 *
-	 * For a more concrete example given a column with the name of the unicode
-	 * codepoint U+00ae (registered sign) and a UTF8 database and the perl
-	 * return_next { "\N{U+00ae}=>'text } would always fail as heUTF8 returns
-	 * 0 and HePV() would give us a char * with 1 byte contains the decimal
-	 * value 174
-	 *
-	 * Perl has the brains to know when it should utf8 encode 174 properly, so
-	 * here we force it into an SV so that perl will figure it out and do the
-	 * right thing
-	 *-------------------------
-	 */
-
-	sv = HeSVKEY_force(he);
-	if (HeUTF8(he))
-		SvUTF8_on(sv);
-	ret = sv2cstr(sv);
-
-	/* free sv */
-	FREETMPS;
-	LEAVE;
-
-	return ret;
 }
 
 
@@ -1093,8 +1038,8 @@ plperl_build_tuple_result(HV *perlhash, TupleDesc td)
 	hv_iterinit(perlhash);
 	while ((he = hv_iternext(perlhash)))
 	{
-		SV		   *val = HeVAL(he);
 		char	   *key = hek2cstr(he);
+		SV		   *val = HeVAL(he);
 		int			attn = SPI_fnumber(td, key);
 		Form_pg_attribute attr;
 
@@ -1120,7 +1065,6 @@ plperl_build_tuple_result(HV *perlhash, TupleDesc td)
 
 		pfree(key);
 	}
-	hv_iterinit(perlhash);
 
 	tup = heap_form_tuple(td, values, nulls);
 	pfree(values);
@@ -1857,7 +1801,6 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 
 		pfree(key);
 	}
-	hv_iterinit(hvNew);
 
 	rtup = heap_modify_tuple(otup, tupdesc, modvalues, modnulls, modrepls);
 

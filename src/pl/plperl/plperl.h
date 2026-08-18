@@ -164,6 +164,61 @@ cstr2sv(const char *str)
 }
 
 /*
+ * Convert a HE (hash entry) key to a cstr in the current database encoding.
+ * The result is palloc'd.
+ */
+static inline char *
+hek2cstr(HE *he)
+{
+	dTHX;
+	char	   *ret;
+	SV		   *sv;
+
+	/*
+	 * HeSVKEY_force will return a temporary mortal SV*, so we need to make
+	 * sure to free it with ENTER/SAVE/FREE/LEAVE
+	 */
+	ENTER;
+	SAVETMPS;
+
+	/*-------------------------
+	 * Unfortunately, while HeUTF8 is true for most things > 256, for values
+	 * 128..255 it's not, but perl will treat them as unicode code points if
+	 * the utf8 flag is not set ( see The "Unicode Bug" in perldoc perlunicode
+	 * for more)
+	 *
+	 * So if we did the expected:
+	 *	  if (HeUTF8(he))
+	 *		  utf_u2e(key...);
+	 *	  else // must be ascii
+	 *		  return HePV(he);
+	 * we won't match columns with codepoints from 128..255
+	 *
+	 * For a more concrete example given a column with the name of the unicode
+	 * codepoint U+00ae (registered sign) and a UTF8 database and the perl
+	 * return_next { "\N{U+00ae}=>'text } would always fail as heUTF8 returns
+	 * 0 and HePV() would give us a char * with 1 byte contains the decimal
+	 * value 174
+	 *
+	 * Perl has the brains to know when it should utf8 encode 174 properly, so
+	 * here we force it into an SV so that perl will figure it out and do the
+	 * right thing
+	 *-------------------------
+	 */
+
+	sv = HeSVKEY_force(he);
+	if (HeUTF8(he))
+		SvUTF8_on(sv);
+	ret = sv2cstr(sv);
+
+	/* free sv */
+	FREETMPS;
+	LEAVE;
+
+	return ret;
+}
+
+/*
  * croak() with specified message, which is given in the database encoding.
  *
  * Ideally we'd just write croak("%s", str), but plain croak() does not play
