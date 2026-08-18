@@ -6,7 +6,7 @@
 
  <formalpara>
   <title>Release date:</title>
-  <para>2026-??-??, AS OF 2026-07-18</para>
+  <para>2026-??-??, AS OF 2026-08-18</para>
  </formalpara>
 
   <sect2 id="release-19-highlights">
@@ -829,6 +829,22 @@ Improve <link linkend="sql-notify"><command>NOTIFY</command></link> to only wake
 
 <para>
 Previously most backends were woken by <link linkend="sql-notify"><command>NOTIFY</command></link>.
+</para>
+</listitem>
+
+<!--
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+2026-08-12 [5838806ce] Change wal_compression=on to the
+-->
+
+<listitem>
+<para>
+Change <link linkend="guc-wal-compression"><varname>wal_compression</varname></link> equals <literal>on</literal> to use the best WAL compression method available (wenhui qiu)
+<ulink url="&commit_baseurl;5838806ce">&sect;</ulink>
+</para>
+
+<para>
+Previously this always used <literal>pglz</literal>.
 </para>
 </listitem>
 
@@ -1723,7 +1739,8 @@ When server variable <link linkend="guc-wal-level"><varname>wal_level</varname><
 </para>
 
 <para>
-New server variable <link linkend="guc-effective-wal-level"><varname>effective_wal_level</varname></link> reports the effective <acronym>WAL</acronym> level.
+New server variable <link linkend="guc-effective-wal-level"><varname>effective_wal_level</varname></link>, application <link linkend="app-pgcontroldata"><application>pg_controldata</application></link>,
+and function <link linkend="functions-pg-control-checkpoint"><function>pg_control_checkpoint()</function></link> report the effective <acronym>WAL</acronym> level.
 </para>
 </listitem>
 
@@ -3258,16 +3275,19 @@ Allow pushdown of array comparisons in <link linkend="sql-prepare">prepared stat
 <!--
 Author: Etsuro Fujita <efujita@postgresql.org>
 2026-04-08 [28972b6fc] Add support for importing statistics from remote servers
+Author: Etsuro Fujita <efujita@postgresql.org>
+2026-08-14 [48965e146] postgres_fdw: Rename option "restore_stats" to
 -->
 
 <listitem>
 <para>
 Allow the retrieval of statistics from <link linkend="sql-createforeigndatawrapper">foreign data wrapper servers</link> (Corey Huinker, Etsuro Fujita)
 <ulink url="&commit_baseurl;28972b6fc">&sect;</ulink>
+<ulink url="&commit_baseurl;48965e146">&sect;</ulink>
 </para>
 
 <para>
-This is enabled for <xref linkend="postgres-fdw"/> by using the option <literal>restore_stats</literal>.  The default is for <link linkend="sql-analyze"><command>ANALYZE</command></link> to retrieve rows from the remote server to locally generate statistics.
+This is enabled for <xref linkend="postgres-fdw"/> by using the option <literal>import_stats</literal>.  The default is for <link linkend="sql-analyze"><command>ANALYZE</command></link> to retrieve rows from the remote server to locally generate statistics.
 </para>
 </listitem>
 
