@@ -12,7 +12,8 @@
 EXTRA_INSTALL=contrib/pg_prewarm \
 	contrib/pg_stat_statements \
 	contrib/test_decoding \
-	src/test/modules/injection_points
+	src/test/modules/injection_points \
+	src/test/modules/test_wait_lsn
 
 subdir = src/test/recovery
 top_builddir = ../../..
