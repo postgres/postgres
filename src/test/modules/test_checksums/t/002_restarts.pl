@@ -152,11 +152,9 @@ is($result, '9999', 'ensure checksummed pages can be read back');
 
 $result = $node->poll_query_until(
 	'postgres',
-	"SELECT count(*) FROM pg_stat_activity WHERE backend_type LIKE 'datachecksums%';",
+	"SELECT count(*) FROM pg_catalog.pg_stat_activity WHERE backend_type LIKE 'datachecksums%';",
 	'0');
 is($result, 1, 'await datachecksums worker/launcher termination');
-
-disable_data_checksums($node, wait => 1);
 
 $node->stop;
 done_testing();
