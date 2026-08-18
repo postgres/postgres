@@ -146,7 +146,7 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 		pairs[i].keylen = hstoreCheckKeyLen(strlen(pairs[i].key));
 		pairs[i].needfree = true;
 
-		if (!SvOK(value))
+		if (!value || !SvOK(value))
 		{
 			pairs[i].val = NULL;
 			pairs[i].vallen = 0;
