@@ -1135,12 +1135,12 @@ SlruReportIOError(SlruDesc *ctl, int64 pageno, const void *opaque_data)
 			if (errno)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("Could not write to file \"%s\" at offset %d: %m",
+						 errmsg("could not write to file \"%s\" at offset %d: %m",
 								path, offset),
 						 opaque_data ? ctl->options.errdetail_for_io_error(opaque_data) : 0));
 			else
 				ereport(ERROR,
-						(errmsg("Could not write to file \"%s\" at offset %d: wrote too few bytes.",
+						(errmsg("could not write to file \"%s\" at offset %d: wrote too few bytes",
 								path, offset),
 						 opaque_data ? ctl->options.errdetail_for_io_error(opaque_data) : 0));
 			break;
