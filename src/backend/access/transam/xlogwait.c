@@ -252,6 +252,15 @@ deleteLSNWaiter(WaitLSNType lsnType)
 
 	Assert(i >= 0 && i < WAIT_LSN_TYPE_COUNT);
 
+	/*
+	 * Avoid taking WaitLSNLock if a waker has already removed us.  Only this
+	 * backend can set inHeap; other processes can only clear it.  Therefore
+	 * false is conclusive, while a stale true is harmless because it is
+	 * rechecked under WaitLSNLock below.
+	 */
+	if (!procInfo->inHeap)
+		return;
+
 	LWLockAcquire(WaitLSNLock, LW_EXCLUSIVE);
 
 	Assert(procInfo->lsnType == lsnType);
@@ -370,17 +379,15 @@ WaitLSNWakeup(WaitLSNType lsnType, XLogRecPtr currentLSN)
 void
 WaitLSNCleanup(void)
 {
+	/*
+	 * deleteLSNWaiter() starts with the same lockless inHeap check, so
+	 * calling it unconditionally costs nothing when this process isn't
+	 * waiting.  Its lsnType is then unused, and reading it is harmless in any
+	 * case: an entry that was never used is zeroed, which is a valid
+	 * WaitLSNType.
+	 */
 	if (waitLSNState)
-	{
-		/*
-		 * We do a fast-path check of the inHeap flag without the lock.  This
-		 * flag is set to true only by the process itself.  So, it's only
-		 * possible to get a false positive.  But that will be eliminated by a
-		 * recheck inside deleteLSNWaiter().
-		 */
-		if (waitLSNState->procInfos[MyProcNumber].inHeap)
-			deleteLSNWaiter(waitLSNState->procInfos[MyProcNumber].lsnType);
-	}
+		deleteLSNWaiter(waitLSNState->procInfos[MyProcNumber].lsnType);
 }
 
 /*
