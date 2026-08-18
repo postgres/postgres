@@ -54,6 +54,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "replication/walreceiver.h"
+#include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/proc.h"
 #include "storage/shmem.h"
@@ -69,8 +70,12 @@ static int	waitlsn_cmp(const pairingheap_node *a, const pairingheap_node *b,
 
 struct WaitLSNState *waitLSNState = NULL;
 
+static bool waitLSNShmemExitRegistered = false;
+
 static void WaitLSNShmemRequest(void *arg);
 static void WaitLSNShmemInit(void *arg);
+static void WaitLSNShmemExit(int code, Datum arg);
+static void RegisterWaitLSNShmemExit(void);
 
 const ShmemCallbacks WaitLSNShmemCallbacks = {
 	.request_fn = WaitLSNShmemRequest,
@@ -379,6 +384,31 @@ WaitLSNCleanup(void)
 }
 
 /*
+ * Exit callback to clean up any LSN wait state left behind if this process
+ * exits while waiting.  Transaction abort paths call WaitLSNCleanup()
+ * directly.
+ */
+static void
+WaitLSNShmemExit(int code, Datum arg)
+{
+	WaitLSNCleanup();
+}
+
+/*
+ * Register shared-memory exit cleanup once per process.  A backend may
+ * execute WAIT FOR LSN more than once.
+ */
+static void
+RegisterWaitLSNShmemExit(void)
+{
+	if (!waitLSNShmemExitRegistered)
+	{
+		on_shmem_exit(WaitLSNShmemExit, 0);
+		waitLSNShmemExitRegistered = true;
+	}
+}
+
+/*
  * Check if the given LSN type requires recovery to be in progress.
  * Standby wait types (replay, write, flush) require recovery;
  * primary wait types (flush) do not.
@@ -411,6 +441,14 @@ WaitForLSN(WaitLSNType lsnType, XLogRecPtr targetLSN, int64 timeout)
 
 	/* Should have a valid proc number */
 	Assert(MyProcNumber >= 0 && MyProcNumber < MaxBackends + NUM_AUXILIARY_PROCS);
+
+	/*
+	 * Ensure cleanup is registered before publishing our waiter entry.
+	 * on_shmem_exit callbacks run in reverse registration order, so this
+	 * callback runs before the earlier-registered ProcKill() and removes the
+	 * entry before our PGPROC slot can be reused.
+	 */
+	RegisterWaitLSNShmemExit();
 
 	if (timeout > 0)
 	{
