@@ -14,24 +14,33 @@ use lib $FindBin::RealBin;
 
 use DataChecksums::Utils;
 
-# Initialize node with checksums disabled.
+# Initialize node with checksums enabled to test pg_control_init returning
+# 1 for this cluster, the remaining tests will initialize to off to test the
+# return value for a cluster initialized without checksums
 my $node = PostgreSQL::Test::Cluster->new('basic_node');
-$node->init(no_data_checksums => 1);
+$node->init;
 $node->start;
 
-# Create some content to have un-checksummed data in the cluster
+# Create some content to have data in the cluster
 $node->safe_psql('postgres',
 	"CREATE TABLE t AS SELECT generate_series(1,10000) AS a;");
 
-# Ensure that checksums are turned off
-test_checksum_state($node, 'off');
+# Ensure that checksums are turned on
+test_checksum_state($node, 'on');
+
+# Disable data checksums and wait for the state transition to 'off'
+disable_data_checksums($node, wait => 'off');
+
+# Make sure pg_control_init reports the initial enabled state
+my $result = $node->safe_psql('postgres',
+	'SELECT data_page_checksum_version FROM pg_control_init();');
+is($result, '1', 'ensure pg_control_init reports enabled state');
 
 # Enable data checksums and wait for the state transition to 'on'
 enable_data_checksums($node, wait => 'on');
 
 # Run a dummy query just to make sure we can read back data
-my $result =
-  $node->safe_psql('postgres', "SELECT count(*) FROM t WHERE a > 1 ");
+$result = $node->safe_psql('postgres', "SELECT count(*) FROM t WHERE a > 1 ");
 is($result, '9999', 'ensure checksummed pages can be read back');
 
 # Enable data checksums again which should be a no-op so we explicitly don't

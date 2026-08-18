@@ -4283,6 +4283,7 @@ InitControlFile(uint64 sysidentifier, uint32 data_checksum_version)
 	ControlFile->wal_log_hints = wal_log_hints;
 	ControlFile->track_commit_timestamp = track_commit_timestamp;
 	ControlFile->data_checksum_version = data_checksum_version;
+	ControlFile->data_checksum_version_init = data_checksum_version;
 
 	/*
 	 * Set the data_checksum_version value into XLogCtl, which is where all

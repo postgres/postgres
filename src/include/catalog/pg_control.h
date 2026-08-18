@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	1902
+#define PG_CONTROL_VERSION	1903
 
 /* Nonce key length, see below */
 #define MOCK_AUTH_NONCE_LEN		32
@@ -228,7 +228,13 @@ typedef struct ControlFileData
 
 	bool		float8ByVal;	/* float8, int8, etc pass-by-value? */
 
-	/* Are data pages protected by checksums? Zero if no checksum version */
+	/*
+	 * Data checksum state at cluster initialization. Since the state can be
+	 * changed during runtime, we need to store the initial value for system
+	 * functions which report initdb settings.
+	 */
+	uint32		data_checksum_version_init;
+	/* Current data checksums state */
 	uint32		data_checksum_version;
 
 	/*

@@ -20,6 +20,11 @@ my $node = PostgreSQL::Test::Cluster->new('offline_node');
 $node->init(no_data_checksums => 1);
 $node->start;
 
+# Make sure pg_control_init reports the initial state as disabled
+my $result = $node->safe_psql('postgres',
+	'SELECT data_page_checksum_version FROM pg_control_init();');
+is($result, '0', 'ensure pg_control_init reports disabled state');
+
 # Create some content to have un-checksummed data in the cluster
 $node->safe_psql('postgres',
 	"CREATE TABLE t AS SELECT generate_series(1,10000) AS a;");
@@ -35,9 +40,14 @@ $node->start;
 # Ensure that checksums are enabled
 test_checksum_state($node, 'on');
 
+# Make sure pg_control_init still reports the initial state as disabled even
+# though the current state has changed.
+$result = $node->safe_psql('postgres',
+	'SELECT data_page_checksum_version FROM pg_control_init();');
+is($result, '0', 'ensure pg_control_init still reports disabled state');
+
 # Run a dummy query just to make sure we can read back some data
-my $result =
-  $node->safe_psql('postgres', "SELECT count(*) FROM t WHERE a > 1");
+$result = $node->safe_psql('postgres', "SELECT count(*) FROM t WHERE a > 1");
 is($result, '9999', 'ensure checksummed pages can be read back');
 
 # Disable checksums offline again using pg_checksums
