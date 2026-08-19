@@ -161,6 +161,18 @@ typedef struct FastPathMeta
 	int			strats[RI_MAX_NUMKEYS];
 	AttrNumber	index_attnos[RI_MAX_NUMKEYS];	/* index column positions */
 
+	/*
+	 * fn_mcxt for the cached FmgrInfos above.  Cast and equality functions
+	 * (e.g. record_eq()) use fn_mcxt as scratch space, caching state there
+	 * and keeping a pointer to it in FmgrInfo.fn_extra.  Give them a context
+	 * of their own, created with this struct and destroyed with it in
+	 * AtEOXact_RI().
+	 *
+	 * Note this context must not be reset while the FmgrInfos remain in use,
+	 * since that would free the state fn_extra still points at.
+	 */
+	MemoryContext scratch_cxt;
+
 	/* Link in ri_fpmeta_dead_list while awaiting deferred release */
 	struct FastPathMeta *next_dead;
 } FastPathMeta;
@@ -3602,6 +3614,11 @@ ri_populate_fastpath_metadata(RI_ConstraintInfo *riinfo,
 
 	fpmeta = palloc_object(FastPathMeta);
 	fpmeta->next_dead = NULL;
+
+	/* Scratch context for the cached FmgrInfos' fn_mcxt; see FastPathMeta. */
+	fpmeta->scratch_cxt = AllocSetContextCreate(TopMemoryContext,
+												"RI fast-path finfo scratch",
+												ALLOCSET_SMALL_SIZES);
 	for (int i = 0; i < riinfo->nkeys; i++)
 	{
 		Oid			eq_opr = riinfo->pf_eq_oprs[i];
@@ -3627,9 +3644,9 @@ ri_populate_fastpath_metadata(RI_ConstraintInfo *riinfo,
 		fpmeta->index_attnos[i] = idx_col + 1;
 
 		fmgr_info_copy(&fpmeta->cast_func_finfo[i], &entry->cast_func_finfo,
-					   CurrentMemoryContext);
+					   fpmeta->scratch_cxt);
 		fmgr_info_copy(&fpmeta->eq_opr_finfo[i], &entry->eq_opr_finfo,
-					   CurrentMemoryContext);
+					   fpmeta->scratch_cxt);
 		fpmeta->regops[i] = get_opcode(eq_opr);
 
 		get_op_opfamily_properties(eq_opr,
@@ -4427,6 +4444,7 @@ AtEOXact_RI(bool isCommit)
 		FastPathMeta *dead = ri_fpmeta_dead_list;
 
 		ri_fpmeta_dead_list = dead->next_dead;
+		MemoryContextDelete(dead->scratch_cxt);
 		pfree(dead);
 	}
 }
