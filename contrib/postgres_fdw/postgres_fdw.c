@@ -3129,7 +3129,7 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 			{
 				int			rti = strtol(ptr, &ptr, 10);
 				RangeTblEntry *rte;
-				char	   *relname;
+				char	   *relname = NULL;
 				char	   *refname;
 
 				rti += rtoffset;
