@@ -20247,7 +20247,7 @@ AtEOSubXact_on_commit_actions(bool isCommit, SubTransactionId mySubid,
  * the relation to be locked only if (1) it's a plain or partitioned table,
  * materialized view, or TOAST table and (2) the current user is the owner (or
  * the superuser) or has been granted MAINTAIN.  This meets the
- * permission-checking needs of CLUSTER, REINDEX TABLE, and REFRESH
+ * permission-checking needs of CLUSTER, REPACK, REINDEX TABLE, and REFRESH
  * MATERIALIZED VIEW; we expose it here so that it can be used by all.
  */
 void
