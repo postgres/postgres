@@ -2801,3 +2801,59 @@ INSERT INTO fp_subxact_fk VALUES (999, 'bad'), (0, 'boom'), (1, 'ok');
 DROP TRIGGER fp_subxact_trg ON fp_subxact_fk;
 DROP FUNCTION fp_abort_subxact();
 DROP TABLE fp_subxact_fk, fp_subxact_pk;
+
+--
+-- Cache invalidation arriving in the middle of a fast-path batch flush.
+--
+-- A cross-type foreign key runs the user's cast function once per key per
+-- buffered row, inside ri_FastPathFlushLoop().  A cast that performs DDL
+-- raises an invalidation there, which detaches the constraint's fast-path
+-- metadata while the flush is still using it.
+--
+CREATE TYPE fkint;
+CREATE FUNCTION fkint_in(cstring) RETURNS fkint
+  AS 'int4in' LANGUAGE internal IMMUTABLE STRICT;
+CREATE FUNCTION fkint_out(fkint) RETURNS cstring
+  AS 'int4out' LANGUAGE internal IMMUTABLE STRICT;
+CREATE TYPE fkint (INPUT = fkint_in, OUTPUT = fkint_out, LIKE = int4);
+
+-- Renames the constraint the first time it is called, and so raises an
+-- invalidation partway through the flush.  Guarded on the catalog so the
+-- second and later calls are no-ops.
+CREATE FUNCTION fkint_to_int4(fkint) RETURNS int4 AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_constraint
+                WHERE conrelid = 'fktable_inval'::regclass
+                  AND conname = 'fktable_inval_fk') THEN
+        EXECUTE 'ALTER TABLE fktable_inval'
+                ' RENAME CONSTRAINT fktable_inval_fk TO fktable_inval_fk2';
+    END IF;
+    RETURN format('%s', $1)::int4;
+END $$ LANGUAGE plpgsql;
+
+CREATE CAST (fkint AS int4) WITH FUNCTION fkint_to_int4(fkint) AS IMPLICIT;
+
+CREATE TABLE pktable_inval (a int4, b int4, PRIMARY KEY (a, b));
+INSERT INTO pktable_inval VALUES (1, 1), (2, 2);
+
+-- Multi-column FK, so the flush takes the per-row loop rather than the
+-- array path; cross-type on column a, so the cast above is invoked.
+CREATE TABLE fktable_inval (a fkint, b int4,
+  CONSTRAINT fktable_inval_fk FOREIGN KEY (a, b)
+    REFERENCES pktable_inval (a, b));
+
+-- More than one row, so the flush is still running after the invalidation.
+INSERT INTO fktable_inval VALUES ('1', 1), ('2', 2);
+
+-- Confirms the cast actually ran and raised the invalidation.  Without this
+-- the insert above could pass merely by not exercising the path at all.
+SELECT conname FROM pg_constraint
+  WHERE conrelid = 'fktable_inval'::regclass AND contype = 'f';
+
+SELECT count(*) FROM fktable_inval;
+
+DROP TABLE fktable_inval;
+DROP TABLE pktable_inval;
+DROP CAST (fkint AS int4);
+DROP FUNCTION fkint_to_int4(fkint);
+DROP TYPE fkint CASCADE;
