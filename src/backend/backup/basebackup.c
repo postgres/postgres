@@ -641,12 +641,11 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 
 	if (total_checksum_failures)
 	{
-		if (total_checksum_failures > 1)
-			ereport(WARNING,
-					(errmsg_plural("%lld total checksum verification failure",
-								   "%lld total checksum verification failures",
-								   total_checksum_failures,
-								   total_checksum_failures)));
+		ereport(WARNING,
+				(errmsg_plural("%lld total checksum verification failure",
+							   "%lld total checksum verification failures",
+							   total_checksum_failures,
+							   total_checksum_failures)));
 
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
@@ -1717,7 +1716,7 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 
 	CloseTransientFile(fd);
 
-	if (checksum_failures > 1)
+	if (checksum_failures > 0)
 	{
 		ereport(WARNING,
 				(errmsg_plural("file \"%s\" has a total of %d checksum verification failure",
