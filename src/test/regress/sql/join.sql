@@ -886,7 +886,8 @@ where (hundred, thousand) in (select twothousand, twothousand from onek);
 reset enable_memoize;
 
 --
--- more antijoin recognition tests using NOT NULL constraints
+-- more antijoin recognition tests using various non-null proofs (NOT NULL
+-- constraints, strict join clauses within the RHS subtree)
 --
 
 begin;
@@ -909,6 +910,64 @@ explain (costs off)
 select * from tenk1 t1 left join
   (tbl_anti t2 left join tbl_anti t3 on t2.c = t3.c) on t1.unique1 = t2.b
 where t3.a is null;
+
+-- this is an antijoin: the strict join clause t2.c = t3.c guarantees t3.c is
+-- non-null
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_anti t2 inner join tbl_anti t3 on t2.c = t3.c) on t1.unique1 = t2.b
+where t3.c is null;
+
+-- this is an antijoin: the strict join clause t2.c = t3.c guarantees t2.c is
+-- non-null
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_anti t2 inner join tbl_anti t3 on t2.c = t3.c
+   left join tbl_anti t4 on t3.c = t4.c) on t1.unique1 = t2.b
+where t2.c is null;
+
+-- this is an antijoin: the strict join clause t2.c = t3.c guarantees t3.c is
+-- non-null
+explain (costs off)
+select * from tenk1 t1 left join
+  (select t2.b, t3.c from tbl_anti t2, tbl_anti t3
+   where t2.c = t3.c) ss on t1.unique1 = ss.b
+where ss.c is null;
+
+-- this is an antijoin: the strict join clause t2.c = t3.c guarantees t2.c is
+-- non-null
+explain (costs off)
+select * from tenk1 t1 left join
+  (select t2.c from tbl_anti t2
+   where exists (select 1 from tbl_anti t3 where t2.c = t3.c)) ss on true
+where ss.c is null;
+
+-- this is not an antijoin: the join clause t2.c = t3.c cannot guarantee t3.c
+-- is non-null
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_anti t2 left join tbl_anti t3 on t2.c = t3.c) on t1.unique1 = t2.b
+where t3.c is null;
+
+-- likewise with right join
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_anti t2 right join tbl_anti t3 on t2.c = t3.c) on t1.unique1 = t2.b
+where t3.c is null;
+
+-- likewise with full join
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_anti t2 full join tbl_anti t3 on t2.c = t3.c) on t1.unique1 = t2.b
+where t3.c is null;
+
+-- this is not an antijoin, even though the inner-join clause in the lateral
+-- subquery proves t1.b non-null
+explain (costs off)
+select * from tbl_anti t1
+  left join lateral (select t2.b from tbl_anti t2, tbl_anti t3
+                     where t2.c = t3.c and t3.b = t1.b) ss on true
+where t1.b is null;
 
 rollback;
 

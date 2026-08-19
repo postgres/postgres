@@ -3298,7 +3298,8 @@ where (hundred, thousand) in (select twothousand, twothousand from onek);
 
 reset enable_memoize;
 --
--- more antijoin recognition tests using NOT NULL constraints
+-- more antijoin recognition tests using various non-null proofs (NOT NULL
+-- constraints, strict join clauses within the RHS subtree)
 --
 begin;
 create temp table tbl_anti(a int not null, b int, c int);
@@ -3356,6 +3357,192 @@ where t3.a is null;
                ->  Seq Scan on tbl_anti t3
    ->  Hash
          ->  Seq Scan on tenk1 t1
+(13 rows)
+
+-- this is an antijoin: the strict join clause t2.c = t3.c guarantees t3.c is
+-- non-null
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_anti t2 inner join tbl_anti t3 on t2.c = t3.c) on t1.unique1 = t2.b
+where t3.c is null;
+                QUERY PLAN                 
+-------------------------------------------
+ Hash Right Anti Join
+   Hash Cond: (t2.b = t1.unique1)
+   ->  Merge Join
+         Merge Cond: (t2.c = t3.c)
+         ->  Sort
+               Sort Key: t2.c
+               ->  Seq Scan on tbl_anti t2
+         ->  Sort
+               Sort Key: t3.c
+               ->  Seq Scan on tbl_anti t3
+   ->  Hash
+         ->  Seq Scan on tenk1 t1
+(12 rows)
+
+-- this is an antijoin: the strict join clause t2.c = t3.c guarantees t2.c is
+-- non-null
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_anti t2 inner join tbl_anti t3 on t2.c = t3.c
+   left join tbl_anti t4 on t3.c = t4.c) on t1.unique1 = t2.b
+where t2.c is null;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Hash Right Anti Join
+   Hash Cond: (t2.b = t1.unique1)
+   ->  Merge Right Join
+         Merge Cond: (t4.c = t3.c)
+         ->  Sort
+               Sort Key: t4.c
+               ->  Seq Scan on tbl_anti t4
+         ->  Materialize
+               ->  Merge Join
+                     Merge Cond: (t2.c = t3.c)
+                     ->  Sort
+                           Sort Key: t2.c
+                           ->  Seq Scan on tbl_anti t2
+                     ->  Sort
+                           Sort Key: t3.c
+                           ->  Seq Scan on tbl_anti t3
+   ->  Hash
+         ->  Seq Scan on tenk1 t1
+(18 rows)
+
+-- this is an antijoin: the strict join clause t2.c = t3.c guarantees t3.c is
+-- non-null
+explain (costs off)
+select * from tenk1 t1 left join
+  (select t2.b, t3.c from tbl_anti t2, tbl_anti t3
+   where t2.c = t3.c) ss on t1.unique1 = ss.b
+where ss.c is null;
+                QUERY PLAN                 
+-------------------------------------------
+ Hash Right Anti Join
+   Hash Cond: (t2.b = t1.unique1)
+   ->  Merge Join
+         Merge Cond: (t2.c = t3.c)
+         ->  Sort
+               Sort Key: t2.c
+               ->  Seq Scan on tbl_anti t2
+         ->  Sort
+               Sort Key: t3.c
+               ->  Seq Scan on tbl_anti t3
+   ->  Hash
+         ->  Seq Scan on tenk1 t1
+(12 rows)
+
+-- this is an antijoin: the strict join clause t2.c = t3.c guarantees t2.c is
+-- non-null
+explain (costs off)
+select * from tenk1 t1 left join
+  (select t2.c from tbl_anti t2
+   where exists (select 1 from tbl_anti t3 where t2.c = t3.c)) ss on true
+where ss.c is null;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Nested Loop Anti Join
+   ->  Seq Scan on tenk1 t1
+   ->  Materialize
+         ->  Hash Join
+               Hash Cond: (t2.c = t3.c)
+               ->  Seq Scan on tbl_anti t2
+               ->  Hash
+                     ->  HashAggregate
+                           Group Key: t3.c
+                           ->  Seq Scan on tbl_anti t3
+(10 rows)
+
+-- this is not an antijoin: the join clause t2.c = t3.c cannot guarantee t3.c
+-- is non-null
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_anti t2 left join tbl_anti t3 on t2.c = t3.c) on t1.unique1 = t2.b
+where t3.c is null;
+                QUERY PLAN                 
+-------------------------------------------
+ Hash Right Join
+   Hash Cond: (t2.b = t1.unique1)
+   Filter: (t3.c IS NULL)
+   ->  Merge Left Join
+         Merge Cond: (t2.c = t3.c)
+         ->  Sort
+               Sort Key: t2.c
+               ->  Seq Scan on tbl_anti t2
+         ->  Sort
+               Sort Key: t3.c
+               ->  Seq Scan on tbl_anti t3
+   ->  Hash
+         ->  Seq Scan on tenk1 t1
+(13 rows)
+
+-- likewise with right join
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_anti t2 right join tbl_anti t3 on t2.c = t3.c) on t1.unique1 = t2.b
+where t3.c is null;
+                QUERY PLAN                 
+-------------------------------------------
+ Hash Right Join
+   Hash Cond: (t2.b = t1.unique1)
+   Filter: (t3.c IS NULL)
+   ->  Merge Join
+         Merge Cond: (t2.c = t3.c)
+         ->  Sort
+               Sort Key: t2.c
+               ->  Seq Scan on tbl_anti t2
+         ->  Sort
+               Sort Key: t3.c
+               ->  Seq Scan on tbl_anti t3
+   ->  Hash
+         ->  Seq Scan on tenk1 t1
+(13 rows)
+
+-- likewise with full join
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_anti t2 full join tbl_anti t3 on t2.c = t3.c) on t1.unique1 = t2.b
+where t3.c is null;
+                QUERY PLAN                 
+-------------------------------------------
+ Hash Right Join
+   Hash Cond: (t2.b = t1.unique1)
+   Filter: (t3.c IS NULL)
+   ->  Merge Left Join
+         Merge Cond: (t2.c = t3.c)
+         ->  Sort
+               Sort Key: t2.c
+               ->  Seq Scan on tbl_anti t2
+         ->  Sort
+               Sort Key: t3.c
+               ->  Seq Scan on tbl_anti t3
+   ->  Hash
+         ->  Seq Scan on tenk1 t1
+(13 rows)
+
+-- this is not an antijoin, even though the inner-join clause in the lateral
+-- subquery proves t1.b non-null
+explain (costs off)
+select * from tbl_anti t1
+  left join lateral (select t2.b from tbl_anti t2, tbl_anti t3
+                     where t2.c = t3.c and t3.b = t1.b) ss on true
+where t1.b is null;
+                QUERY PLAN                 
+-------------------------------------------
+ Hash Right Join
+   Hash Cond: (t3.b = t1.b)
+   ->  Merge Join
+         Merge Cond: (t2.c = t3.c)
+         ->  Sort
+               Sort Key: t2.c
+               ->  Seq Scan on tbl_anti t2
+         ->  Sort
+               Sort Key: t3.c
+               ->  Seq Scan on tbl_anti t3
+   ->  Hash
+         ->  Seq Scan on tbl_anti t1
+               Filter: (b IS NULL)
 (13 rows)
 
 rollback;
