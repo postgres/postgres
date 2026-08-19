@@ -399,6 +399,16 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno)
 		{
 			LockBuffer(buffer, GIN_UNLOCK);
 			LockBuffer(buffer, GIN_EXCLUSIVE);
+
+			if (!GinPageIsLeaf(page))
+			{
+				/*
+				 * The root page was a leaf page, but became an internal page
+				 * while no lock was held.  Unlock and reacquire a share lock.
+				 */
+				UnlockReleaseBuffer(buffer);
+				continue;
+			}
 			break;
 		}
 
