@@ -777,7 +777,7 @@ processPendingPage(BuildAccumulator *accum, KeyArray *ka,
  * If stats isn't null, we count deleted pending pages into the counts.
  */
 void
-ginInsertCleanup(GinState *ginstate, bool full_clean,
+ginInsertCleanup(GinState *ginstate, bool must_empty_list,
 				 bool fill_fsm, bool forceCleanup,
 				 IndexBulkDeleteResult *stats)
 {
@@ -808,7 +808,9 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 	{
 		/*
 		 * We are called from [auto]vacuum/analyze or gin_clean_pending_list()
-		 * and we would like to wait concurrent cleanup to finish.
+		 * and we must wait for concurrent cleanup to finish.  In particular,
+		 * VACUUM must have the opportunity to remove any dead TIDs that are
+		 * now in the pending list.
 		 */
 		LockPage(index, GIN_METAPAGE_BLKNO, ExclusiveLock);
 		workMemory =
@@ -880,11 +882,12 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 
 		/*
 		 * Are we walk through the page which as we remember was a tail when
-		 * we start our cleanup?  But if caller asks us to clean up whole
-		 * pending list then ignore old tail, we will work until list becomes
-		 * empty.
+		 * we start our cleanup?  But if caller asks us to fully empty the
+		 * pending list (not just move all items that were in the list when
+		 * blknoFinish was established) then ignore old tail and work until
+		 * the list is fully empty.
 		 */
-		if (blkno == blknoFinish && full_clean == false)
+		if (blkno == blknoFinish && !must_empty_list)
 			cleanupFinish = true;
 
 		/*
