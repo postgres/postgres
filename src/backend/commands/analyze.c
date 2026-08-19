@@ -243,7 +243,7 @@ analyze_rel(Oid relid, RangeVar *relation,
 			if (!ok)
 			{
 				ereport(WARNING,
-						errmsg("skipping \"%s\" -- cannot analyze this foreign table.",
+						errmsg("skipping \"%s\" --- cannot analyze this foreign table",
 							   RelationGetRelationName(onerel)));
 				relation_close(onerel, ShareUpdateExclusiveLock);
 				goto out;
