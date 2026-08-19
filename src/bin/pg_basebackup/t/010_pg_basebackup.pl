@@ -913,6 +913,13 @@ $node->command_checks_all(
 	'pg_basebackup reports checksum mismatch');
 rmtree("$tempdir/backup_corrupt");
 
+# Single failure counted in pg_stat_database.
+ok( $node->poll_query_until(
+		'postgres',
+		'SELECT checksum_failures = 1 FROM pg_stat_database '
+		  . "WHERE datname = 'postgres';"),
+	'checksum failure reported in pg_stat_database');
+
 # induce further corruption in 5 more blocks
 $node->stop;
 for my $i (1 .. 5)
@@ -941,6 +948,13 @@ $node->command_checks_all(
 	[qr/^WARNING.*7 total checksum verification failures/s],
 	'pg_basebackup correctly report the total number of checksum mismatches');
 rmtree("$tempdir/backup_corrupt3");
+
+# Failures across all the backups.
+ok( $node->poll_query_until(
+		'postgres',
+		'SELECT checksum_failures = 14 FROM pg_stat_database '
+		  . "WHERE datname = 'postgres';"),
+	'checksum failures accumulated in pg_stat_database');
 
 # do not verify checksums, should return ok
 $node->command_ok(
