@@ -529,7 +529,8 @@ psql_scan_slash_command(PsqlScanState state)
 
 /*
  * Parse off the next argument for a backslash command, and return it as a
- * malloc'd string.  If there are no more arguments, returns NULL.
+ * malloc'd string.  If there are no more arguments or on out-of-memory,
+ * returns NULL.
  *
  * type tells what processing, if any, to perform on the option string;
  * for example, if it's a SQL identifier, we want to downcase any unquoted
@@ -605,6 +606,16 @@ psql_scan_slash_option(PsqlScanState state,
 	 * quoted string, as indicated by final_state, EOL is an error.
 	 */
 	Assert(lexresult == LEXRES_EOL || lexresult == LEXRES_OK);
+
+	/*
+	 * yylex() appends option text to mybuf, so a buffer enlargement failure
+	 * during lexing can leave mybuf broken even if initialization succeeded.
+	 */
+	if (PQExpBufferDataBroken(mybuf))
+	{
+		pg_log_error("out of memory");
+		return NULL;
+	}
 
 	switch (final_state)
 	{
@@ -816,13 +827,22 @@ static void
 evaluate_backtick(PsqlScanState state)
 {
 	PQExpBuffer output_buf = state->output_buf;
-	char	   *cmd = output_buf->data + backtick_start_offset;
+	char	   *cmd;
 	PQExpBufferData cmd_output;
 	FILE	   *fd;
 	bool		error = false;
 	int			exit_code = 0;
 	char		buf[512];
 	size_t		result;
+
+	/*
+	 * The option buffer is already broken; avoid touching the static
+	 * oom_buffer and let psql_scan_slash_option() return NULL.
+	 */
+	if (PQExpBufferBroken(output_buf))
+		return;
+
+	cmd = output_buf->data + backtick_start_offset;
 
 	initPQExpBuffer(&cmd_output);
 
