@@ -2355,7 +2355,10 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 								elog(ERROR, "could not open relation with OID %u", relid);
 
 							if (!RelationIsLogicallyLogged(relation))
+							{
+								RelationClose(relation);
 								continue;
+							}
 
 							relations[nrelations++] = relation;
 						}
