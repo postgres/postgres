@@ -35,25 +35,27 @@
  * flag any entries because it is possible that the old entry was vacuumed
  * away and the TID was re-used by a completely different heap tuple.
  */
-static void
+void
 gistkillitems(IndexScanDesc scan)
 {
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
+	int			numKilled = so->numKilled;
 	Buffer		buffer;
 	Page		page;
-	OffsetNumber offnum;
-	ItemId		iid;
-	int			i;
 	bool		killedsomething = false;
 
 	Assert(so->curBlkno != InvalidBlockNumber);
 	Assert(XLogRecPtrIsValid(so->curPageLSN));
 	Assert(so->killedItems != NULL);
+	Assert(numKilled > 0);
+
+	/*
+	 * Always reset the scan state, so we don't look for same items on other
+	 * pages
+	 */
+	so->numKilled = 0;
 
 	buffer = ReadBuffer(scan->indexRelation, so->curBlkno);
-	if (!BufferIsValid(buffer))
-		return;
-
 	LockBuffer(buffer, GIST_SHARE);
 	gistcheckpage(scan->indexRelation, buffer);
 	page = BufferGetPage(buffer);
@@ -64,7 +66,10 @@ gistkillitems(IndexScanDesc scan)
 	 * safe.
 	 */
 	if (BufferGetLSNAtomic(buffer) != so->curPageLSN)
-		goto unlock;
+	{
+		UnlockReleaseBuffer(buffer);
+		return;
+	}
 
 	Assert(GistPageIsLeaf(page));
 
@@ -72,8 +77,11 @@ gistkillitems(IndexScanDesc scan)
 	 * Mark all killedItems as dead. We need no additional recheck, because,
 	 * if page was modified, curPageLSN must have changed.
 	 */
-	for (i = 0; i < so->numKilled; i++)
+	for (int i = 0; i < numKilled; i++)
 	{
+		OffsetNumber offnum = so->killedItems[i];
+		ItemId		iid = PageGetItemId(page, offnum);
+
 		if (!killedsomething)
 		{
 			/*
@@ -82,11 +90,12 @@ gistkillitems(IndexScanDesc scan)
 			 * there's no point continuing.
 			 */
 			if (!BufferBeginSetHintBits(buffer))
-				goto unlock;
+			{
+				UnlockReleaseBuffer(buffer);
+				return;
+			}
 		}
 
-		offnum = so->killedItems[i];
-		iid = PageGetItemId(page, offnum);
 		ItemIdMarkDead(iid);
 		killedsomething = true;
 	}
@@ -97,14 +106,7 @@ gistkillitems(IndexScanDesc scan)
 		BufferFinishSetHintBits(buffer, true, true);
 	}
 
-unlock:
 	UnlockReleaseBuffer(buffer);
-
-	/*
-	 * Always reset the scan state, so we don't look for same items on other
-	 * pages.
-	 */
-	so->numKilled = 0;
 }
 
 /*
@@ -414,6 +416,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem,
 	 * to apply the LP_DEAD hints to the page later.  This allows us to drop
 	 * the pin for MVCC scans, which allows vacuum to avoid blocking.
 	 */
+	Assert(so->numKilled == 0);
 	so->curBlkno = pageItem->blkno;
 	so->curPageLSN = BufferGetLSNAtomic(buffer);
 
@@ -434,7 +437,10 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem,
 		 * killed tuple as not passing the qual.
 		 */
 		if (scan->ignore_killed_tuples && ItemIdIsDead(iid))
+		{
+			Assert(GistPageIsLeaf(page));
 			continue;
+		}
 
 		it = (IndexTuple) PageGetItem(page, iid);
 

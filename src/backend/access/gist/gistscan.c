@@ -133,7 +133,13 @@ gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 	int			i;
 	MemoryContext oldCxt;
 
+	/* Before leaving current page, deal with any killed items */
+	if (so->numKilled > 0)
+		gistkillitems(scan);
+
 	/* rescan an existing indexscan --- reset state */
+	so->curBlkno = InvalidBlockNumber;
+	so->curPageLSN = InvalidXLogRecPtr;
 
 	/*
 	 * The first time through, we create the search queue in the scanCxt.
@@ -348,6 +354,10 @@ void
 gistendscan(IndexScanDesc scan)
 {
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
+
+	/* Before leaving current page, deal with any killed items */
+	if (so->numKilled > 0)
+		gistkillitems(scan);
 
 	/*
 	 * freeGISTstate is enough to clean up everything made by gistbeginscan,
