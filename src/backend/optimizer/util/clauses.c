@@ -1955,6 +1955,13 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
  *
  * As with find_nonnullable_vars, we return the varattnos of the identified
  * Vars in a multibitmapset.
+ *
+ * A whole-row Var tested with a row-format IS NULL is reported too, as a
+ * varattno-zero entry.  That test is true when the whole-row value is NULL
+ * or when every column of the row is NULL, so for any row that is not itself
+ * null the entry signifies that all of the relation's columns are forced
+ * null; consumers must interpret it that way rather than as an ordinary
+ * attribute.
  */
 List *
 find_forced_null_vars(Node *node)
@@ -2027,12 +2034,20 @@ find_forced_null_var(Node *node)
 		/* check for var IS NULL */
 		NullTest   *expr = (NullTest *) node;
 
-		if (expr->nulltesttype == IS_NULL && !expr->argisrow)
+		if (expr->nulltesttype == IS_NULL)
 		{
 			Var		   *var = (Var *) expr->arg;
 
+			/*
+			 * A row-format test is accepted only on a whole-row Var, where
+			 * its truth requires every column of the relation to be NULL.  On
+			 * an ordinary composite-type column it is rejected, because the
+			 * test does not force that column null: it is also true when the
+			 * column is a non-null row whose fields are all NULL.
+			 */
 			if (var && IsA(var, Var) &&
-				var->varlevelsup == 0)
+				var->varlevelsup == 0 &&
+				(!expr->argisrow || var->varattno == 0))
 				return var;
 		}
 	}

@@ -1046,6 +1046,66 @@ from ma full join mb using (y) where ma.x is null order by y;
 select y, ma.x as ax, mb.x as bx
 from ma full join mb using (y) where ma.x is null order by y;
 
+-- A whole-row Var IS NULL is true only when every column is NULL, so it
+-- works as an antijoin test whenever any column is provably non-null in
+-- matching rows.
+create temp table tbl_wr (b int, c int);
+
+-- this is an antijoin: t2.a is defined NOT NULL
+explain (costs off)
+select * from tenk1 t1 left join tbl_anti t2 on true
+where t2 is null;
+
+-- this is an antijoin: the strict join clause proves t2.b non-null
+explain (costs off)
+select * from tenk1 t1 left join tbl_wr t2 on t1.unique1 = t2.b
+where t2 is null;
+
+-- this is an antijoin: the strict join clause within the RHS subtree proves
+-- t2.c non-null
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_wr t2 join tbl_anti t3 on t2.c = t3.c) on true
+where t2 is null;
+
+-- this is not an antijoin: nothing proves any column of t2 non-null
+explain (costs off)
+select * from tenk1 t1 left join tbl_wr t2 on true
+where t2 is null;
+
+-- nor is this: the strict record comparison proves only that the whole-row
+-- datum is non-null, but record_eq treats NULL fields as equal, so a
+-- matching row can still have all columns NULL and pass the row-format test
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_wr t2 join tbl_wr t3 on t2 = t3) on true
+where t2 is null;
+
+-- nor is this: the join clause is strict only for t2's ctid, which is not
+-- part of the row value, so a matching row can still have all columns NULL
+explain (costs off)
+select * from tbl_wr t1 left join tbl_wr t2 on t2.ctid = t1.ctid
+where t2 is null;
+
+-- this is not an antijoin: t3 can be nulled by the lower outer join, so its
+-- NOT NULL constraint proves nothing here
+explain (costs off)
+select * from tenk1 t1 left join
+  (tbl_anti t2 left join tbl_anti t3 on t2.c = t3.c) on t1.unique1 = t2.b
+where t3 is null;
+
+-- whole-row tests work for full joins too: t2.a's NOT NULL constraint
+-- reduces this one ...
+explain (costs off)
+select * from tbl_wr t1 full join tbl_anti t2 on t1.b = t2.b
+where t2 is null;
+
+-- ... but nothing proves a column of t1 non-null, since the join clause
+-- cannot serve as the proof here
+explain (costs off)
+select * from tbl_wr t1 full join tbl_anti t2 on t1.b = t2.b
+where t1 is null;
+
 rollback;
 
 --
