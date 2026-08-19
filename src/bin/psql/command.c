@@ -2385,7 +2385,7 @@ exec_command_lo(PsqlScanState scan_state, bool active_branch, const char *cmd)
 
 		if (strcmp(cmd + 3, "export") == 0)
 		{
-			if (!opt2)
+			if (!opt1 || !opt2)
 			{
 				pg_log_error("\\%s: missing required argument", cmd);
 				success = false;
