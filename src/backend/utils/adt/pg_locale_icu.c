@@ -712,7 +712,7 @@ static size_t
 downcase_ident_icu(char *dst, size_t dstsize, const char *src,
 				   size_t srclen, pg_locale_t locale)
 {
-	int			i;
+	size_t		i;
 	bool		libc_lower;
 	locale_t	lt = locale->icu.lt;
 
