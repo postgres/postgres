@@ -423,7 +423,10 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem,
 		 * killed tuple as not passing the qual.
 		 */
 		if (scan->ignore_killed_tuples && ItemIdIsDead(iid))
+		{
+			Assert(GistPageIsLeaf(page));
 			continue;
+		}
 
 		it = (IndexTuple) PageGetItem(page, iid);
 
@@ -720,6 +723,7 @@ gistgettuple(IndexScanDesc scan, ScanDirection dir)
 				CHECK_FOR_INTERRUPTS();
 
 				/* save current item BlockNumber for next gistkillitems() call */
+				Assert(so->numKilled == 0);
 				so->curBlkno = item->blkno;
 
 				/*
