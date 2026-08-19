@@ -474,7 +474,7 @@ other			.
  * has been consumed through the leading backslash.
  *
  * The return value is a malloc'd copy of the command name, as parsed off
- * from the input.
+ * from the input, or NULL on out-of-memory.
  */
 char *
 psql_scan_slash_command(PsqlScanState state)
@@ -505,13 +505,24 @@ psql_scan_slash_command(PsqlScanState state)
 	/* And lex. */
 	yylex(NULL, state->scanner);
 
-	/* There are no possible errors in this lex state... */
+	/* There are no possible syntax errors in this lex state... */
 
 	/*
 	 * In case the caller returns to using the regular SQL lexer, reselect the
 	 * appropriate initial state.
 	 */
 	psql_scan_reselect_sql_lexer(state);
+
+	/*
+	 * yylex() appends command-name text to mybuf, so a buffer enlargement
+	 * failure during lexing can leave mybuf broken even if initialization
+	 * succeeded.
+	 */
+	if (PQExpBufferDataBroken(mybuf))
+	{
+		pg_log_error("out of memory");
+		return NULL;
+	}
 
 	return mybuf.data;
 }
