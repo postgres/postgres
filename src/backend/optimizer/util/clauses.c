@@ -1651,10 +1651,16 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	}
 	else if (IsA(node, NullTest))
 	{
-		/* IS NOT NULL can be considered strict, but only at top level */
+		/*
+		 * IS NOT NULL can be considered strict, but only at top level.  This
+		 * holds for a row-format test too: it returns FALSE, not TRUE, both
+		 * when the composite datum is NULL and when any of its fields is
+		 * NULL, so its truth implies a non-null input just as the plain test
+		 * does.
+		 */
 		NullTest   *expr = (NullTest *) node;
 
-		if (top_level && expr->nulltesttype == IS_NOT_NULL && !expr->argisrow)
+		if (top_level && expr->nulltesttype == IS_NOT_NULL)
 			result = find_nonnullable_rels_walker((Node *) expr->arg, false);
 	}
 	else if (IsA(node, BooleanTest))
@@ -1909,10 +1915,20 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 	}
 	else if (IsA(node, NullTest))
 	{
-		/* IS NOT NULL can be considered strict, but only at top level */
+		/*
+		 * IS NOT NULL can be considered strict, but only at top level.  This
+		 * holds for a row-format test too: it returns FALSE, not TRUE, both
+		 * when the composite datum is NULL and when any of its fields is
+		 * NULL, so its truth implies a non-null input just as the plain test
+		 * does.  (It also implies that all the fields are non-null, but we
+		 * have no way to represent that stronger fact here: a whole-row Var
+		 * reported by this function promises only a non-null datum, since the
+		 * entry can also arise from contexts that are merely strict at the
+		 * datum level, such as record comparisons.)
+		 */
 		NullTest   *expr = (NullTest *) node;
 
-		if (top_level && expr->nulltesttype == IS_NOT_NULL && !expr->argisrow)
+		if (top_level && expr->nulltesttype == IS_NOT_NULL)
 			result = find_nonnullable_vars_walker((Node *) expr->arg, false);
 	}
 	else if (IsA(node, BooleanTest))

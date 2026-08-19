@@ -1106,6 +1106,45 @@ explain (costs off)
 select * from tbl_wr t1 full join tbl_anti t2 on t1.b = t2.b
 where t1 is null;
 
+-- The IS NOT NULL counterpart: a row-format IS NOT NULL test is false both
+-- for a null-extended row and when any column is NULL, so it reduces join
+-- strength like any strict qual.
+
+-- reduced to an inner join
+explain (costs off)
+select * from tenk1 t1 left join tbl_wr t2 on t1.unique1 = t2.b
+where t2 is not null;
+
+-- reduced to a left join
+explain (costs off)
+select * from tbl_wr t1 full join tbl_wr t2 on t1.b = t2.b
+where t1 is not null;
+
+-- composite-type columns: reduced to an inner join
+create temp table tbl_comp (a int, w tbl_wr);
+explain (costs off)
+select * from tenk1 t1 left join tbl_comp t2 on t1.unique1 = t2.a
+where t2.w is not null;
+
+-- composite-type columns: reduced to an antijoin
+explain (costs off)
+select * from tenk1 t1 left join tbl_comp t2 on t2.w is not null
+where t2 is null;
+
+-- For a zero-field row, IS NULL and IS NOT NULL are both true, so the join
+-- clause here proves only that t2's datum is non-null, which must not refute
+-- the whole-row IS NULL above: matched rows pass both tests.
+create temp table tbl_zero ();
+insert into tbl_zero default values;
+
+-- should not be reduced
+explain (costs off)
+select * from (values (1), (2)) v(x) left join tbl_zero t2 on t2 is not null
+where t2 is null;
+-- should return 2 rows
+select * from (values (1), (2)) v(x) left join tbl_zero t2 on t2 is not null
+where t2 is null;
+
 rollback;
 
 --

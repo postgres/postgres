@@ -3937,6 +3937,96 @@ where t1 is null;
          ->  Seq Scan on tbl_wr t1
 (9 rows)
 
+-- The IS NOT NULL counterpart: a row-format IS NOT NULL test is false both
+-- for a null-extended row and when any column is NULL, so it reduces join
+-- strength like any strict qual.
+-- reduced to an inner join
+explain (costs off)
+select * from tenk1 t1 left join tbl_wr t2 on t1.unique1 = t2.b
+where t2 is not null;
+             QUERY PLAN             
+------------------------------------
+ Hash Join
+   Hash Cond: (t2.b = t1.unique1)
+   ->  Seq Scan on tbl_wr t2
+         Filter: (t2.* IS NOT NULL)
+   ->  Hash
+         ->  Seq Scan on tenk1 t1
+(6 rows)
+
+-- reduced to a left join
+explain (costs off)
+select * from tbl_wr t1 full join tbl_wr t2 on t1.b = t2.b
+where t1 is not null;
+                QUERY PLAN                
+------------------------------------------
+ Merge Left Join
+   Merge Cond: (t1.b = t2.b)
+   ->  Sort
+         Sort Key: t1.b
+         ->  Seq Scan on tbl_wr t1
+               Filter: (t1.* IS NOT NULL)
+   ->  Sort
+         Sort Key: t2.b
+         ->  Seq Scan on tbl_wr t2
+(9 rows)
+
+-- composite-type columns: reduced to an inner join
+create temp table tbl_comp (a int, w tbl_wr);
+explain (costs off)
+select * from tenk1 t1 left join tbl_comp t2 on t1.unique1 = t2.a
+where t2.w is not null;
+            QUERY PLAN            
+----------------------------------
+ Hash Join
+   Hash Cond: (t2.a = t1.unique1)
+   ->  Seq Scan on tbl_comp t2
+         Filter: (w IS NOT NULL)
+   ->  Hash
+         ->  Seq Scan on tenk1 t1
+(6 rows)
+
+-- composite-type columns: reduced to an antijoin
+explain (costs off)
+select * from tenk1 t1 left join tbl_comp t2 on t2.w is not null
+where t2 is null;
+              QUERY PLAN               
+---------------------------------------
+ Nested Loop Anti Join
+   ->  Seq Scan on tenk1 t1
+   ->  Materialize
+         ->  Seq Scan on tbl_comp t2
+               Filter: (w IS NOT NULL)
+(5 rows)
+
+-- For a zero-field row, IS NULL and IS NOT NULL are both true, so the join
+-- clause here proves only that t2's datum is non-null, which must not refute
+-- the whole-row IS NULL above: matched rows pass both tests.
+create temp table tbl_zero ();
+insert into tbl_zero default values;
+-- should not be reduced
+explain (costs off)
+select * from (values (1), (2)) v(x) left join tbl_zero t2 on t2 is not null
+where t2 is null;
+                QUERY PLAN                
+------------------------------------------
+ Nested Loop Left Join
+   Filter: (t2.* IS NULL)
+   ->  Values Scan on "*VALUES*"
+   ->  Materialize
+         ->  Seq Scan on tbl_zero t2
+               Filter: (t2.* IS NOT NULL)
+(6 rows)
+
+-- should return 2 rows
+select * from (values (1), (2)) v(x) left join tbl_zero t2 on t2 is not null
+where t2 is null;
+ x 
+---
+ 1
+ 2
+(2 rows)
+
 rollback;
 --
 -- regression test for bogus RTE_GROUP entries
