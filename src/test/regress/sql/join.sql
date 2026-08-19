@@ -969,6 +969,83 @@ select * from tbl_anti t1
                      where t2.c = t3.c and t3.b = t1.b) ss on true
 where t1.b is null;
 
+-- a full join can also reduce to an antijoin: the forced-null Var is defined
+-- not null
+explain (costs off)
+select * from tbl_anti t1 full join tbl_anti t2 on t1.b = t2.b
+where t2.a is null;
+
+-- the symmetric case, with the forced-null Var on the left side
+explain (costs off)
+select * from tbl_anti t1 full join tbl_anti t2 on t1.b = t2.b
+where t1.a is null;
+
+-- this is an antijoin: the forced-null Var is proven not null by the strict
+-- clause within its subtree
+explain (costs off)
+select * from tbl_anti t1 full join
+  (tbl_anti t2 join tbl_anti t3 on t2.c = t3.c) on t1.b = t2.b
+where t3.c is null;
+
+-- the symmetric case, with the forced-null Var on the left side
+explain (costs off)
+select * from (tbl_anti t1 join tbl_anti t4 on t1.c = t4.c)
+  full join tbl_anti t2 on t1.b = t2.b
+where t1.c is null;
+
+-- this is not an antijoin: the join clause cannot prove t2.b non-null in the
+-- full join's right-only rows
+explain (costs off)
+select * from tbl_anti t1 full join tbl_anti t2 on t1.b = t2.b
+where t2.b is null;
+
+-- the symmetric case: the join clause cannot prove t1.b non-null in the full
+-- join's left-only rows
+explain (costs off)
+select * from tbl_anti t1 full join tbl_anti t2 on t1.b = t2.b
+where t1.b is null;
+
+-- this is an antijoin: t2 is not nullable within the full join's right input,
+-- so its NOT NULL column still proves it
+explain (costs off)
+select * from tbl_anti t1 full join
+  (tbl_anti t2 left join tbl_anti t3 on t2.c = t3.c) on t1.b = t2.b
+where t2.a is null;
+
+-- this is not an antijoin: t3 can be nulled by the t2/t3 join, so its NOT NULL
+-- constraint proves nothing here
+explain (costs off)
+select * from tbl_anti t1 full join
+  (tbl_anti t2 left join tbl_anti t3 on t2.c = t3.c) on t1.b = t2.b
+where t3.a is null;
+
+-- once the full join is reduced to an antijoin, its own quals can be passed
+-- down to its inputs, which a full join never allows; here that reduces the
+-- t2/t3 join to an inner join
+explain (costs off)
+select * from tbl_anti t1 full join
+  (tbl_anti t2 left join tbl_anti t3 on t2.c = t3.c) on t1.b = t2.b and t3.c > 0
+where t2.a is null;
+
+-- A USING join column becomes a merged (COALESCE) output, so reducing the
+-- full join also has to fix up its nulling rels.
+create temp table ma (x int not null, y int);
+create temp table mb (x int not null, y int);
+insert into ma values (1, 10), (2, 20);
+insert into mb values (3, 10), (4, 40);
+
+explain (verbose, costs off)
+select y, ma.x as ax, mb.x as bx
+from ma full join mb using (y) where mb.x is null order by y;
+select y, ma.x as ax, mb.x as bx
+from ma full join mb using (y) where mb.x is null order by y;
+
+explain (verbose, costs off)
+select y, ma.x as ax, mb.x as bx
+from ma full join mb using (y) where ma.x is null order by y;
+select y, ma.x as ax, mb.x as bx
+from ma full join mb using (y) where ma.x is null order by y;
+
 rollback;
 
 --

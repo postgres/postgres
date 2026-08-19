@@ -168,8 +168,13 @@ static void reduce_outer_joins_pass2(Node *jtnode,
 									 List *forced_null_vars);
 static void report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
 									 int rtindex, Relids relids);
-static bool has_notnull_forced_var(PlannerInfo *root, List *forced_null_vars,
-								   reduce_outer_joins_pass1_state *right_state);
+static bool forced_null_var_is_attnotnull(PlannerInfo *root,
+										  List *forced_null_vars,
+										  reduce_outer_joins_pass1_state *state);
+static bool forced_null_var_is_nonnullable(PlannerInfo *root,
+										   List *forced_null_vars,
+										   reduce_outer_joins_pass1_state *state,
+										   List *extra_quals);
 static Node *remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
 											Relids baserels,
 											Node **parent_quals,
@@ -3245,6 +3250,12 @@ flatten_simple_union_all(PlannerInfo *root)
  * removed to prevent bogus selectivity calculations, but we leave it to
  * distribute_qual_to_rels to get rid of such clauses.
  *
+ * The same recognition reduces a FULL join to an anti-semijoin when a
+ * forced-null Var on either side is proven non-null: only the other side's
+ * unmatched rows can survive.  If that surviving side is the right-hand
+ * input, we switch the inputs (as we do for JOIN_RIGHT below) so that it
+ * ends up on the left, where JOIN_ANTI requires the surviving side to be.
+ *
  * Also, we get rid of JOIN_RIGHT cases by flipping them around to become
  * JOIN_LEFT.  This saves some code here and in some later planner routines;
  * the main benefit is to reduce the number of jointypes that can appear in
@@ -3555,12 +3566,48 @@ reduce_outer_joins_pass2(Node *jtnode,
 												 right_state->relids);
 					}
 				}
-				else
+				else if (bms_overlap(nonnullable_rels, right_state->relids))
 				{
-					if (bms_overlap(nonnullable_rels, right_state->relids))
+					jointype = JOIN_RIGHT;
+					/* Also report partial reduction in state2 */
+					report_reduced_full_join(state2, rtindex,
+											 left_state->relids);
+				}
+				else if (forced_null_vars != NIL)
+				{
+					/*
+					 * Neither side is forced non-null by a strict upper qual,
+					 * but an upper qual may force a Var on one side to be
+					 * NULL while that Var is non-null in every row that side
+					 * emits (proven by quals within the side's own subtree,
+					 * or a NOT NULL constraint).  Then only rows where that
+					 * side was null-extended can satisfy the upper qual: the
+					 * matched rows and that side's unmatched rows all drop
+					 * out, leaving an anti-join.
+					 *
+					 * Unlike the JOIN_LEFT case below, we must not consult
+					 * the join's own ON quals here: they do not hold for the
+					 * unmatched rows that this proof has to cover.
+					 *
+					 * If the constrained Var is on the RHS the result is a
+					 * plain anti-join; if it is on the LHS it is a right
+					 * anti-join, which the input-switching step below
+					 * normalizes to a plain anti-join (just as it does for
+					 * JOIN_RIGHT).
+					 */
+					if (forced_null_var_is_nonnullable(root,
+													   forced_null_vars,
+													   right_state, NIL))
 					{
-						jointype = JOIN_RIGHT;
-						/* Also report partial reduction in state2 */
+						jointype = JOIN_ANTI;
+						report_reduced_full_join(state2, rtindex,
+												 right_state->relids);
+					}
+					else if (forced_null_var_is_nonnullable(root,
+															forced_null_vars,
+															left_state, NIL))
+					{
+						jointype = JOIN_RIGHT_ANTI;
 						report_reduced_full_join(state2, rtindex,
 												 left_state->relids);
 					}
@@ -3573,7 +3620,9 @@ reduce_outer_joins_pass2(Node *jtnode,
 				 * These could only have been introduced by pull_up_sublinks,
 				 * so there's no way that upper quals could refer to their
 				 * righthand sides, and no point in checking.  We don't expect
-				 * to see JOIN_RIGHT_SEMI or JOIN_RIGHT_ANTI yet.
+				 * a JOIN_RIGHT_SEMI or JOIN_RIGHT_ANTI input here; the
+				 * JOIN_FULL case above produces JOIN_RIGHT_ANTI only as a
+				 * transient, which is converted to JOIN_ANTI below.
 				 */
 				break;
 			default:
@@ -3583,20 +3632,22 @@ reduce_outer_joins_pass2(Node *jtnode,
 		}
 
 		/*
-		 * Convert JOIN_RIGHT to JOIN_LEFT.  Note that in the case where we
-		 * reduced JOIN_FULL to JOIN_RIGHT, this will mean the JoinExpr no
-		 * longer matches the internal ordering of any CoalesceExpr's built to
-		 * represent merged join variables.  We don't care about that at
-		 * present, but be wary of it ...
+		 * Convert JOIN_RIGHT to JOIN_LEFT, and likewise the JOIN_RIGHT_ANTI
+		 * that the JOIN_FULL arm may have produced just above to JOIN_ANTI,
+		 * by switching the inputs.  Note that in the case where we reduced
+		 * JOIN_FULL this way, this will mean the JoinExpr no longer matches
+		 * the internal ordering of any CoalesceExpr's built to represent
+		 * merged join variables.  We don't care about that at present, but be
+		 * wary of it ...
 		 */
-		if (jointype == JOIN_RIGHT)
+		if (jointype == JOIN_RIGHT || jointype == JOIN_RIGHT_ANTI)
 		{
 			Node	   *tmparg;
 
 			tmparg = j->larg;
 			j->larg = j->rarg;
 			j->rarg = tmparg;
-			jointype = JOIN_LEFT;
+			jointype = (jointype == JOIN_RIGHT) ? JOIN_LEFT : JOIN_ANTI;
 			right_state = linitial(state1->sub_states);
 			left_state = lsecond(state1->sub_states);
 		}
@@ -3615,30 +3666,12 @@ reduce_outer_joins_pass2(Node *jtnode,
 		 */
 		if (jointype == JOIN_LEFT && forced_null_vars != NIL)
 		{
-			List	   *nonnullable_vars;
-			List	   *all_quals;
-			Bitmapset  *overlap;
-
 			/*
-			 * Find Vars that must be non-null in matching rows: those made
-			 * non-null by this join's own quals, plus those the RHS subtree
-			 * guarantees non-null in all of its output rows.
+			 * A forced-null RHS Var that is proven non-null can be NULL here
+			 * only by null-extension.  That makes this an anti-join.
 			 */
-			all_quals = list_concat_copy(right_state->safe_quals,
-										 (List *) j->quals);
-			nonnullable_vars = find_nonnullable_vars((Node *) all_quals);
-
-			/*
-			 * It's not sufficient to check whether nonnullable_vars and
-			 * forced_null_vars overlap: we need to know if the overlap
-			 * includes any RHS variables.
-			 *
-			 * Also check if any forced-null var is defined NOT NULL by table
-			 * constraints.
-			 */
-			overlap = mbms_overlap_sets(nonnullable_vars, forced_null_vars);
-			if (bms_overlap(overlap, right_state->relids) ||
-				has_notnull_forced_var(root, forced_null_vars, right_state))
+			if (forced_null_var_is_nonnullable(root, forced_null_vars,
+											   right_state, (List *) j->quals))
 				jointype = JOIN_ANTI;
 		}
 
@@ -3775,10 +3808,10 @@ report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
 }
 
 /*
- * has_notnull_forced_var
+ * forced_null_var_is_attnotnull
  *		Check if "forced_null_vars" contains any Vars belonging to the subtree
- *		indicated by "right_state" that are known to be non-nullable due to
- *		table constraints.
+ *		indicated by "state" that are known to be non-nullable due to table
+ *		constraints.
  *
  * Note that we must also consider the situation where a NOT NULL Var can be
  * nulled by lower-level outer joins.
@@ -3786,8 +3819,8 @@ report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
  * Helper for reduce_outer_joins_pass2.
  */
 static bool
-has_notnull_forced_var(PlannerInfo *root, List *forced_null_vars,
-					   reduce_outer_joins_pass1_state *right_state)
+forced_null_var_is_attnotnull(PlannerInfo *root, List *forced_null_vars,
+							  reduce_outer_joins_pass1_state *state)
 {
 	int			varno = -1;
 
@@ -3805,7 +3838,7 @@ has_notnull_forced_var(PlannerInfo *root, List *forced_null_vars,
 			continue;
 
 		/* Skip Vars that do not belong to the target relations */
-		if (!bms_is_member(varno, right_state->relids))
+		if (!bms_is_member(varno, state->relids))
 			continue;
 
 		/*
@@ -3813,7 +3846,7 @@ has_notnull_forced_var(PlannerInfo *root, List *forced_null_vars,
 		 * given subtree.  These Vars might be NULL even if the schema defines
 		 * them as NOT NULL.
 		 */
-		if (bms_is_member(varno, right_state->nullable_rels))
+		if (bms_is_member(varno, state->nullable_rels))
 			continue;
 
 		/* find the lowest member to check if system columns are present */
@@ -3870,6 +3903,46 @@ has_notnull_forced_var(PlannerInfo *root, List *forced_null_vars,
 	}
 
 	return false;
+}
+
+/*
+ * forced_null_var_is_nonnullable
+ *		Detect whether some Var that "forced_null_vars" requires to be NULL is
+ *		actually non-nullable in every row that the given subtree emits.
+ *
+ * We prove non-nullness from quals that hold for every such row: the subtree's
+ * collected safe_quals, plus any "extra_quals" the caller knows also constrain
+ * the Var, or a NOT NULL table constraint (excluding Vars nullable due to
+ * lower-level outer joins).
+ *
+ * Helper for reduce_outer_joins_pass2.
+ */
+static bool
+forced_null_var_is_nonnullable(PlannerInfo *root, List *forced_null_vars,
+							   reduce_outer_joins_pass1_state *state,
+							   List *extra_quals)
+{
+	List	   *all_quals;
+	List	   *nonnullable_vars;
+	Bitmapset  *overlap;
+
+	all_quals = list_concat_copy(state->safe_quals, extra_quals);
+	nonnullable_vars = find_nonnullable_vars((Node *) all_quals);
+
+	/*
+	 * It's not sufficient to check whether nonnullable_vars and
+	 * forced_null_vars overlap: we need to know if the overlap includes any
+	 * variables of this subtree.
+	 */
+	overlap = mbms_overlap_sets(nonnullable_vars, forced_null_vars);
+	if (bms_overlap(overlap, state->relids))
+		return true;
+
+	/*
+	 * Otherwise, check if any forced-null var is defined NOT NULL by table
+	 * constraints.
+	 */
+	return forced_null_var_is_attnotnull(root, forced_null_vars, state);
 }
 
 
