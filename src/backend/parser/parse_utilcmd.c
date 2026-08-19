@@ -4127,7 +4127,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 					if (list_length(partcmd->partlist) < 2)
 						ereport(ERROR,
 								errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-								errmsg("list of new partitions should contain at least two partitions"));
+								errmsg("list of new partitions must contain at least two partitions"));
 
 					transformPartitionCmdForSplit(&cxt, partcmd);
 					newcmds = lappend(newcmds, cmd);
