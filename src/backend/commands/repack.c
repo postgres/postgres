@@ -173,7 +173,8 @@ static List *get_tables_to_repack_partitioned(RepackStmt *stmt,
 											  Relation rel,
 											  MemoryContext permcxt);
 static bool repack_is_permitted_for_relation(RepackCommand cmd,
-											 Oid relid, Oid userid);
+											 Oid relid, Oid userid,
+											 bool already_locked);
 
 static void apply_concurrent_changes(BufFile *file, ChangeContext *chgcxt);
 static void apply_concurrent_insert(Relation rel, TupleTableSlot *slot,
@@ -681,7 +682,7 @@ cluster_rel_recheck(RepackCommand cmd, Relation OldHeap, Oid indexOid,
 	Assert(CheckRelationLockedByMe(OldHeap, lmode, false));
 
 	/* Check that the user still has privileges for the relation */
-	if (!repack_is_permitted_for_relation(cmd, tableOid, userid))
+	if (!repack_is_permitted_for_relation(cmd, tableOid, userid, true))
 	{
 		relation_close(OldHeap, lmode);
 		return false;
@@ -2155,7 +2156,7 @@ get_tables_to_repack(RepackCommand cmd, bool usingindex, MemoryContext permcxt)
 
 			/* noisily skip rels which the user can't process */
 			if (!repack_is_permitted_for_relation(cmd, index->indrelid,
-												  GetUserId()))
+												  GetUserId(), false))
 				continue;
 
 			/* Use a permanent memory context for the result list */
@@ -2192,7 +2193,7 @@ get_tables_to_repack(RepackCommand cmd, bool usingindex, MemoryContext permcxt)
 
 			/* noisily skip rels which the user can't process */
 			if (!repack_is_permitted_for_relation(cmd, class->oid,
-												  GetUserId()))
+												  GetUserId(), false))
 				continue;
 
 			/* Use a permanent memory context for the result list */
@@ -2321,7 +2322,7 @@ get_tables_to_repack_partitioned(RepackStmt *stmt, Relation rel,
 		 * if so.
 		 */
 		if (!repack_is_permitted_for_relation(stmt->command, table_oid,
-											  GetUserId()))
+											  GetUserId(), false))
 			continue;
 
 		/* Use a permanent memory context for the result list */
@@ -2341,26 +2342,38 @@ get_tables_to_repack_partitioned(RepackStmt *stmt, Relation rel,
 
 
 /*
- * Return whether userid has privileges to execute REPACK on relid.
+ * Return whether userid has privileges to execute REPACK/CLUSTER on relid.
  *
- * Caller may not have a lock on the relation, so it could have been
- * dropped concurrently.  In that case, silently return false.
+ * The relation may already be locked by caller, in which case it cannot
+ * possibly go missing; otherwise it may have been removed recently.  If
+ * it's been removed, silently return false.  If the relation exists but
+ * the user doesn't have the required privs, emit a WARNING and return false.
  *
- * If the relation does exist but the user doesn't have the required
- * privs, emit a WARNING and return false.  Otherwise, return true.
+ * Otherwise the relation exists and user has required perms, so return true.
  */
 static bool
-repack_is_permitted_for_relation(RepackCommand cmd, Oid relid, Oid userid)
+repack_is_permitted_for_relation(RepackCommand cmd, Oid relid, Oid userid,
+								 bool already_locked)
 {
 	bool		is_missing = false;
 	AclResult	result;
 	char	   *relname;
 
 	Assert(cmd == REPACK_COMMAND_CLUSTER || cmd == REPACK_COMMAND_REPACK);
+	Assert(!already_locked ||
+		   CheckRelationOidLockedByMe(relid, AccessShareLock, true));
 
 	result = pg_class_aclcheck_ext(relid, userid, ACL_MAINTAIN, &is_missing);
+
+	/*
+	 * If the relation was concurrently dropped, nothing to do.  This is only
+	 * reachable when the caller doesn't already have a lock on the relation.
+	 */
 	if (is_missing)
+	{
+		Assert(!already_locked);
 		return false;
+	}
 
 	if (result == ACLCHECK_OK)
 		return true;
