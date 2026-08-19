@@ -166,7 +166,7 @@ HV_to_JsonbValue(HV *obj, JsonbInState *jsonb_state)
 	while ((he = hv_iternext(obj)))
 	{
 		char	   *k = hek2cstr(he);
-		SV		   *val = HeVAL(he);
+		SV		   *val = hv_iterval(obj, he);
 
 		key.val.string.val = k;
 		key.val.string.len = strlen(k);
@@ -187,6 +187,7 @@ SV_to_JsonbValue(SV *in, JsonbInState *jsonb_state, bool is_elem)
 	check_stack_depth();
 
 	/* Dereference references recursively. */
+	plperl_materialize_sv(in);
 	while (in && SvROK(in))
 	{
 		/*
@@ -196,6 +197,7 @@ SV_to_JsonbValue(SV *in, JsonbInState *jsonb_state, bool is_elem)
 		 */
 		CHECK_FOR_INTERRUPTS();
 		in = SvRV(in);
+		plperl_materialize_sv(in);
 	}
 
 	if (!in)

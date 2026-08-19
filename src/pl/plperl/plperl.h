@@ -164,6 +164,16 @@ cstr2sv(const char *str)
 }
 
 /*
+ * If the SV has get magic, run FETCH to convert it to the intended value.
+ *
+ * While Perl functions such as SvPV() will handle get magic automatically,
+ * we must run this before primitive checks such as SvOK() or SvROK().
+ * This must be invoked within the scope of a dTHX declaration.
+ */
+#define plperl_materialize_sv(sv) \
+	do { if (sv) SvGETMAGIC(sv); } while(0)
+
+/*
  * Convert a HE (hash entry) key to a cstr in the current database encoding.
  * The result is palloc'd.
  */
