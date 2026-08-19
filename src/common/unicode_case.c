@@ -341,7 +341,7 @@ check_final_sigma(const unsigned char *str, size_t len, size_t offset)
 	int			ulen;
 
 	/* iterate backwards looking for preceding character */
-	for (int i = offset; i > 0;)
+	for (size_t i = offset; i > 0;)
 	{
 		/* skip backwards through continuation bytes */
 		i--;
@@ -369,7 +369,7 @@ check_final_sigma(const unsigned char *str, size_t len, size_t offset)
 	ulen = utf8_mblen((const unsigned char *) str + offset);
 
 	/* iterate forward looking for following character */
-	for (int i = offset + ulen; i < len;)
+	for (size_t i = offset + ulen; i < len;)
 	{
 		ulen = utf8_mblen((const unsigned char *) str + i);
 
