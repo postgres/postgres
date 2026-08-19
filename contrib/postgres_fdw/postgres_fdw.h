@@ -106,6 +106,16 @@ typedef struct PgFdwRelationInfo
 	/* joinclauses contains only JOIN/ON conditions for an outer join */
 	List	   *joinclauses;	/* List of RestrictInfo */
 
+	/*
+	 * If a FUNCTION RTE was absorbed into this join, these point at the stub
+	 * PgFdwRelationInfo for the function side (paired with the
+	 * outerrel/innerrel), so the cost estimator and deparser can find it
+	 * without consulting the function rel's fdw_private.  At most one of
+	 * outer_func_fpinfo/inner_func_fpinfo is set.
+	 */
+	struct PgFdwRelationInfo *outer_func_fpinfo;
+	struct PgFdwRelationInfo *inner_func_fpinfo;
+
 	/* Upper relation information */
 	UpperRelationKind stage;
 
@@ -183,11 +193,13 @@ extern char *pgfdw_application_name;
 /* in deparse.c */
 extern void classifyConditions(PlannerInfo *root,
 							   RelOptInfo *baserel,
+							   PgFdwRelationInfo *fpinfo,
 							   List *input_conds,
 							   List **remote_conds,
 							   List **local_conds);
 extern bool is_foreign_expr(PlannerInfo *root,
 							RelOptInfo *baserel,
+							PgFdwRelationInfo *fpinfo,
 							Expr *expr);
 extern bool is_foreign_param(PlannerInfo *root,
 							 RelOptInfo *baserel,

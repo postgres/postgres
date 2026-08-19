@@ -68,6 +68,7 @@ typedef struct foreign_glob_cxt
 {
 	PlannerInfo *root;			/* global planner state */
 	RelOptInfo *foreignrel;		/* the foreign relation we are planning for */
+	PgFdwRelationInfo *fpinfo;	/* the foreign server info we should rely on */
 	Relids		relids;			/* relids of base relations in the underlying
 								 * scan */
 } foreign_glob_cxt;
@@ -112,6 +113,7 @@ typedef struct deparse_expr_cxt
 		appendStringInfo((buf), "%s%d.", REL_ALIAS_PREFIX, (varno))
 #define SUBQUERY_REL_ALIAS_PREFIX	"s"
 #define SUBQUERY_COL_ALIAS_PREFIX	"c"
+#define FUNCTION_REL_ALIAS_PREFIX	"f"
 
 /*
  * Functions to determine whether an expression can be evaluated safely on
@@ -217,6 +219,7 @@ static void get_relation_column_alias_ids(Var *node, RelOptInfo *foreignrel,
 void
 classifyConditions(PlannerInfo *root,
 				   RelOptInfo *baserel,
+				   PgFdwRelationInfo *fpinfo,
 				   List *input_conds,
 				   List **remote_conds,
 				   List **local_conds)
@@ -230,7 +233,7 @@ classifyConditions(PlannerInfo *root,
 	{
 		RestrictInfo *ri = lfirst_node(RestrictInfo, lc);
 
-		if (is_foreign_expr(root, baserel, ri->clause))
+		if (is_foreign_expr(root, baserel, fpinfo, ri->clause))
 			*remote_conds = lappend(*remote_conds, ri);
 		else
 			*local_conds = lappend(*local_conds, ri);
@@ -243,11 +246,11 @@ classifyConditions(PlannerInfo *root,
 bool
 is_foreign_expr(PlannerInfo *root,
 				RelOptInfo *baserel,
+				PgFdwRelationInfo *fpinfo,
 				Expr *expr)
 {
 	foreign_glob_cxt glob_cxt;
 	foreign_loc_cxt loc_cxt;
-	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) (baserel->fdw_private);
 
 	/*
 	 * Check that the expression consists of nodes that are safe to execute
@@ -255,6 +258,7 @@ is_foreign_expr(PlannerInfo *root,
 	 */
 	glob_cxt.root = root;
 	glob_cxt.foreignrel = baserel;
+	glob_cxt.fpinfo = fpinfo;
 
 	/*
 	 * For an upper relation, use relids from its underneath scan relation,
@@ -324,8 +328,8 @@ foreign_expr_walker(Node *node,
 	if (node == NULL)
 		return true;
 
-	/* May need server info from baserel's fdw_private struct */
-	fpinfo = (PgFdwRelationInfo *) (glob_cxt->foreignrel->fdw_private);
+	/* May need server info from global context */
+	fpinfo = glob_cxt->fpinfo;
 
 	/* Set up inner_cxt for possible recursion to child nodes */
 	inner_cxt.collation = InvalidOid;
@@ -2051,6 +2055,72 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 }
 
 /*
+ * Deparse a FUNCTION RTE absorbed into a foreign join.  The function call(s)
+ * are emitted as a FROM-list item:
+ *
+ *   <funcexpr> AS f<rti>(c1, c2, ..., cN)
+ *
+ * For multi-function RTEs (SQL ROWS FROM (f1(), f2(), ...)), each
+ * function call appears comma-separated inside ROWS FROM(...).  Column
+ * aliases c1..cN cover the union of every function's columns, in the
+ * order they appear; that matches the column ordering of the RTE.
+ */
+static void
+deparseFunctionRangeTblRef(StringInfo buf, PlannerInfo *root,
+						   RelOptInfo *foreignrel, RelOptInfo *scanrel,
+						   List **params_list)
+{
+	RangeTblEntry *rte = planner_rt_fetch(foreignrel->relid, root);
+	deparse_expr_cxt context;
+	ListCell   *lc;
+	bool		multi_func;
+	int			total_cols = 0;
+	int			i;
+
+	Assert(rte->rtekind == RTE_FUNCTION);
+	Assert(!rte->funcordinality);
+	Assert(list_length(rte->functions) >= 1);
+
+	multi_func = list_length(rte->functions) > 1;
+
+	context.buf = buf;
+	context.root = root;
+	context.foreignrel = scanrel;
+	context.scanrel = scanrel;
+	context.params_list = params_list;
+
+	if (multi_func)
+		appendStringInfoString(buf, "ROWS FROM (");
+
+	foreach(lc, rte->functions)
+	{
+		RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
+
+		if (foreach_current_index(lc) > 0)
+			appendStringInfoString(buf, ", ");
+		deparseExpr((Expr *) rtfunc->funcexpr, &context);
+		total_cols += rtfunc->funccolcount;
+	}
+
+	if (multi_func)
+		appendStringInfoChar(buf, ')');
+
+	/* Alias + generated column-name list. */
+	appendStringInfo(buf, " %s%d", FUNCTION_REL_ALIAS_PREFIX, foreignrel->relid);
+	if (total_cols > 0)
+	{
+		appendStringInfoChar(buf, '(');
+		for (i = 1; i <= total_cols; i++)
+		{
+			if (i > 1)
+				appendStringInfoString(buf, ", ");
+			appendStringInfo(buf, "%s%d", SUBQUERY_COL_ALIAS_PREFIX, i);
+		}
+		appendStringInfoChar(buf, ')');
+	}
+}
+
+/*
  * Append FROM clause entry for the given relation into buf.
  * Conditions from lower-level SEMI-JOINs are appended to additional_conds
  * and should be added to upper level WHERE clause.
@@ -2060,7 +2130,22 @@ deparseRangeTblRef(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 				   bool make_subquery, Index ignore_rel, List **ignore_conds,
 				   List **additional_conds, List **params_list)
 {
-	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
+	PgFdwRelationInfo *fpinfo;
+
+	/*
+	 * For a function RTE absorbed into a foreign join, deparse the function
+	 * expression as a FROM-list item and return.  The stub fpinfo set up by
+	 * foreign_join_ok() may or may not be present here.
+	 */
+	if (foreignrel->rtekind == RTE_FUNCTION)
+	{
+		Assert(!make_subquery);
+		deparseFunctionRangeTblRef(buf, root, foreignrel, foreignrel,
+								   params_list);
+		return;
+	}
+
+	fpinfo = (PgFdwRelationInfo *) foreignrel->fdw_private;
 
 	/* Should only be called in these cases. */
 	Assert(IS_SIMPLE_REL(foreignrel) || IS_JOIN_REL(foreignrel));
@@ -2732,6 +2817,68 @@ static void
 deparseColumnRef(StringInfo buf, int varno, int varattno, RangeTblEntry *rte,
 				 bool qualify_col)
 {
+	/*
+	 * Function RTE columns: emit as f<varno>.c<varattno>, matching the
+	 * aliases generated by deparseFunctionRangeTblRef().  A whole-row Var
+	 * (varattno == 0) is rendered as ROW(f<varno>.c1, ..., f<varno>.c<N>)
+	 * where N is the total column count of the function RTE (including all
+	 * ROWS FROM (...) members).  System attributes such as ctid have no
+	 * meaning for function RTEs and are rejected.
+	 */
+	if (rte->rtekind == RTE_FUNCTION)
+	{
+		if (varattno == 0)
+		{
+			int			ncols = list_length(rte->eref->colnames);
+			int			i;
+
+			/*
+			 * The CASE WHEN wrapper distinguishes a NULL-supplied outer-join
+			 * row (whole-row Var is NULL) from a row whose columns all happen
+			 * to be NULL (whole-row Var is ROW(NULL, ..., NULL)).  A bare
+			 * ROW(...) would collapse those two cases to the latter.
+			 *
+			 * Both cases arise already.  Only INNER joins with a function RTE
+			 * are absorbed, but the resulting join may itself end up on the
+			 * nullable side of an outer join that we push down as well, and
+			 * then the remote query supplies NULLs for the whole function
+			 * side.  Without the wrapper such a row would come back as
+			 * ROW(NULL, ..., NULL), that is, as if the function had returned
+			 * a row of NULLs rather than no row at all.
+			 */
+			if (qualify_col)
+			{
+				appendStringInfoString(buf, "CASE WHEN (");
+				appendStringInfo(buf, "%s%d.", FUNCTION_REL_ALIAS_PREFIX, varno);
+				appendStringInfoString(buf, "*)::text IS NOT NULL THEN ");
+			}
+
+			appendStringInfoString(buf, "ROW(");
+			for (i = 1; i <= ncols; i++)
+			{
+				if (i > 1)
+					appendStringInfoString(buf, ", ");
+				appendStringInfo(buf, "%s%d.%s%d",
+								 FUNCTION_REL_ALIAS_PREFIX, varno,
+								 SUBQUERY_COL_ALIAS_PREFIX, i);
+			}
+			appendStringInfoChar(buf, ')');
+
+			if (qualify_col)
+				appendStringInfoString(buf, " END");
+			return;
+		}
+
+		if (varattno < 0)
+			elog(ERROR,
+				 "system attribute reference to a function RTE is not supported in foreign join pushdown");
+
+		if (qualify_col)
+			appendStringInfo(buf, "%s%d.", FUNCTION_REL_ALIAS_PREFIX, varno);
+		appendStringInfo(buf, "%s%d", SUBQUERY_COL_ALIAS_PREFIX, varattno);
+		return;
+	}
+
 	/* We support fetching the remote side's CTID and OID. */
 	if (varattno == SelfItemPointerAttributeNumber)
 	{

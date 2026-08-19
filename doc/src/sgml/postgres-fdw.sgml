@@ -1201,6 +1201,24 @@ CREATE SUBSCRIPTION my_subscription SERVER subscription_server PUBLICATION testp
   </para>
 
   <para>
+   An <literal>INNER JOIN</literal> between a foreign table and a set-returning
+   function appearing as a <literal>FROM</literal>-list item can likewise be
+   pushed down: the function call is absorbed into the remote query so that
+   only rows matching the function's output are fetched.  This is attempted
+   only when the function is <literal>IMMUTABLE</literal> (so evaluating it on
+   the remote server is guaranteed to produce the same result as evaluating
+   it locally), its arguments and any restriction clauses on it are
+   shippable, and none of the following disqualifying conditions applies:
+   the join type is not <literal>INNER</literal>; the function is used with
+   <literal>WITH ORDINALITY</literal>; the function returns a
+   <type>record</type> type without an accompanying column definition list;
+   or the function laterally references another relation at the same query
+   level.  A function argument that is a parameter from an enclosing query
+   level is allowed and is transmitted to the remote server as a query
+   parameter.
+  </para>
+
+  <para>
    The query that is actually sent to the remote server for execution can
    be examined using <command>EXPLAIN VERBOSE</command>.
   </para>

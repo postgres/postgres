@@ -30,6 +30,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/appendinfo.h"
+#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/inherit.h"
 #include "optimizer/optimizer.h"
@@ -90,6 +91,22 @@ enum FdwScanPrivateIndex
 	 * of join, added when the scan is join
 	 */
 	FdwScanPrivateRelations,
+
+	/*
+	 * List of per-RTE function metadata, indexed by base RTI offset.  Each
+	 * element is either NULL (for non-RTE_FUNCTION rels in this scan) or a
+	 * list of three-element lists (funcid, funcrettype, funccollation) -- one
+	 * inner list per function in the RTE.  Allows the executor to rebuild
+	 * TupleDesc entries for whole-row references to function RTEs.
+	 */
+	FdwScanPrivateFunctions,
+
+	/*
+	 * Integer node: minimum base RT index covered by the scan, used to
+	 * translate scan-local indexes to estate-rtable indexes after setrefs.c
+	 * flattens rtables.
+	 */
+	FdwScanPrivateMinRTIndex,
 };
 
 /*
@@ -126,6 +143,11 @@ enum FdwModifyPrivateIndex
  * 2) Boolean flag showing if the remote query has a RETURNING clause
  * 3) Integer list of attribute numbers retrieved by RETURNING, if any
  * 4) Boolean flag showing if we set the command es_processed
+ * 5) Per-RTE function metadata (mirrors FdwScanPrivateFunctions; lets
+ *    the executor rebuild TupleDesc entries for whole-row Vars over
+ *    function RTEs absorbed into a foreign join)
+ * 6) Integer node: minimum base RT index of the scan (mirrors
+ *    FdwScanPrivateMinRTIndex)
  */
 enum FdwDirectModifyPrivateIndex
 {
@@ -137,6 +159,10 @@ enum FdwDirectModifyPrivateIndex
 	FdwDirectModifyPrivateRetrievedAttrs,
 	/* set-processed flag (as a Boolean node) */
 	FdwDirectModifyPrivateSetProcessed,
+	/* Per-RTE function metadata, indexed by base RTI offset */
+	FdwDirectModifyPrivateFunctions,
+	/* Integer node: minimum base RT index in the scan */
+	FdwDirectModifyPrivateMinRTIndex,
 };
 
 /*
@@ -619,6 +645,9 @@ static bool foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 static List *get_useful_pathkeys_for_relation(PlannerInfo *root,
 											  RelOptInfo *rel);
 static List *get_useful_ecs_for_relation(PlannerInfo *root, RelOptInfo *rel);
+static Relids get_base_relids(PlannerInfo *root, RelOptInfo *rel);
+static int	get_min_base_rti(PlannerInfo *root, RelOptInfo *rel);
+static List *get_functions_data(PlannerInfo *root, RelOptInfo *rel);
 static void add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 											Path *epq_path, List *restrictlist);
 static void add_foreign_grouping_paths(PlannerInfo *root,
@@ -772,7 +801,7 @@ postgresGetForeignRelSize(PlannerInfo *root,
 	 * Identify which baserestrictinfo clauses can be sent to the remote
 	 * server and which can't.
 	 */
-	classifyConditions(root, baserel, baserel->baserestrictinfo,
+	classifyConditions(root, baserel, fpinfo, baserel->baserestrictinfo,
 					   &fpinfo->remote_conds, &fpinfo->local_conds);
 
 	/*
@@ -1176,7 +1205,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 			continue;
 
 		/* See if it is safe to send to remote */
-		if (!is_foreign_expr(root, baserel, rinfo->clause))
+		if (!is_foreign_expr(root, baserel, fpinfo, rinfo->clause))
 			continue;
 
 		/* Calculate required outer rels for the resulting path */
@@ -1252,7 +1281,7 @@ postgresGetForeignPaths(PlannerInfo *root,
 					continue;
 
 				/* See if it is safe to send to remote */
-				if (!is_foreign_expr(root, baserel, rinfo->clause))
+				if (!is_foreign_expr(root, baserel, fpinfo, rinfo->clause))
 					continue;
 
 				/* Calculate required outer rels for the resulting path */
@@ -1392,7 +1421,7 @@ postgresGetForeignPlan(PlannerInfo *root,
 				remote_exprs = lappend(remote_exprs, rinfo->clause);
 			else if (list_member_ptr(fpinfo->local_conds, rinfo))
 				local_exprs = lappend(local_exprs, rinfo->clause);
-			else if (is_foreign_expr(root, foreignrel, rinfo->clause))
+			else if (is_foreign_expr(root, foreignrel, fpinfo, rinfo->clause))
 				remote_exprs = lappend(remote_exprs, rinfo->clause);
 			else
 				local_exprs = lappend(local_exprs, rinfo->clause);
@@ -1513,9 +1542,26 @@ postgresGetForeignPlan(PlannerInfo *root,
 	fdw_private = list_make3(makeString(sql.data),
 							 retrieved_attrs,
 							 makeInteger(fpinfo->fetch_size));
+
+	/*
+	 * Position FdwScanPrivateRelations: either the EXPLAIN relation string
+	 * (joins/upper rels) or a NULL placeholder, so that subsequent indexes
+	 * stay valid for the base-rel scan case.
+	 */
 	if (IS_JOIN_REL(foreignrel) || IS_UPPER_REL(foreignrel))
 		fdw_private = lappend(fdw_private,
 							  makeString(fpinfo->relation_name));
+	else
+		fdw_private = lappend(fdw_private, NULL);
+
+	/*
+	 * FdwScanPrivateFunctions / FdwScanPrivateMinRTIndex carry the metadata
+	 * the executor needs to rebuild TupleDesc entries for whole-row Vars
+	 * pointing at RTE_FUNCTION rels absorbed into the foreign scan.
+	 */
+	fdw_private = lappend(fdw_private, get_functions_data(root, foreignrel));
+	fdw_private = lappend(fdw_private,
+						  makeInteger(get_min_base_rti(root, foreignrel)));
 
 	/*
 	 * Create the ForeignScan node for the given relation.
@@ -1536,9 +1582,15 @@ postgresGetForeignPlan(PlannerInfo *root,
 
 /*
  * Construct a tuple descriptor for the scan tuples handled by a foreign join.
+ *
+ * 'rtfuncdata' is the FdwScanPrivateFunctions list saved at plan time, and
+ * 'rtoffset' is the difference between the executor's RT indexes and the
+ * scan-local RT indexes captured in that list.  Both may be 0/NIL when the
+ * scan has no RTE_FUNCTION dependents.
  */
 static TupleDesc
-get_tupdesc_for_join_scan_tuples(ForeignScanState *node)
+get_tupdesc_for_join_scan_tuples(ForeignScanState *node,
+								 List *rtfuncdata, int rtoffset)
 {
 	ForeignScan *fsplan = (ForeignScan *) node->ss.ps.plan;
 	EState	   *estate = node->ss.ps.state;
@@ -1574,13 +1626,67 @@ get_tupdesc_for_join_scan_tuples(ForeignScanState *node)
 		if (!IsA(var, Var) || var->varattno != 0)
 			continue;
 		rte = list_nth(estate->es_range_table, var->varno - 1);
-		if (rte->rtekind != RTE_RELATION)
-			continue;
-		reltype = get_rel_type_id(rte->relid);
-		if (!OidIsValid(reltype))
-			continue;
-		att->atttypid = reltype;
-		/* shouldn't need to change anything else */
+
+		if (rte->rtekind == RTE_RELATION)
+		{
+			reltype = get_rel_type_id(rte->relid);
+			if (!OidIsValid(reltype))
+				continue;
+			att->atttypid = reltype;
+			/* shouldn't need to change anything else */
+		}
+		else if (rte->rtekind == RTE_FUNCTION)
+		{
+			/*
+			 * A whole-row Var points at a FUNCTION RTE absorbed into the
+			 * foreign join.  Synthesize an anonymous composite TupleDesc from
+			 * the per-function return-type metadata we saved at plan time;
+			 * the deparser emits these as ROW(f<rti>.c1, f<rti>.c2, ...).
+			 *
+			 * For an upperrel scan (the only path that reaches here)
+			 * postgresGetForeignPlan always builds rtfuncdata via
+			 * get_functions_data(), so it is never NIL; the per-RTE slot for
+			 * the function RTE referenced by this Var must likewise be
+			 * populated.
+			 */
+			List	   *funcdata;
+			TupleDesc	rte_tupdesc;
+			int			num_funcs;
+			int			attnum;
+			ListCell   *lc1,
+					   *lc2;
+
+			Assert(rtfuncdata != NIL);
+			funcdata = list_nth(rtfuncdata, var->varno - rtoffset);
+			Assert(funcdata != NIL);
+			num_funcs = list_length(funcdata);
+			Assert(num_funcs == list_length(rte->eref->colnames));
+			rte_tupdesc = CreateTemplateTupleDesc(num_funcs);
+
+			attnum = 1;
+			forboth(lc1, funcdata, lc2, rte->eref->colnames)
+			{
+				List	   *fdata = lfirst_node(List, lc1);
+				char	   *colname = strVal(lfirst(lc2));
+				Oid			funcrettype;
+				Oid			funccollation;
+
+				funcrettype = lsecond_node(Integer, fdata)->ival;
+				funccollation = lthird_node(Integer, fdata)->ival;
+
+				/* get_functions_data() already validated the return type. */
+				Assert(OidIsValid(funcrettype) && funcrettype != RECORDOID);
+
+				TupleDescInitEntry(rte_tupdesc, (AttrNumber) attnum, colname,
+								   funcrettype, -1, 0);
+				TupleDescInitEntryCollation(rte_tupdesc, (AttrNumber) attnum,
+											funccollation);
+				attnum++;
+			}
+
+			assign_record_type_typmod(rte_tupdesc);
+			att->atttypmod = rte_tupdesc->tdtypmod;
+		}
 	}
 	return tupdesc;
 }
@@ -1616,14 +1722,30 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 
 	/*
 	 * Identify which user to do the remote access as.  This should match what
-	 * ExecCheckPermissions() does.
+	 * ExecCheckPermissions() does.  For a join, scan the base relids until we
+	 * find an RTE_RELATION (the foreign-table side); ignore any RTE_FUNCTION
+	 * absorbed into the join, which contributes no relation OID to look up.
 	 */
 	userid = OidIsValid(fsplan->checkAsUser) ? fsplan->checkAsUser : GetUserId();
+	rte = NULL;
 	if (fsplan->scan.scanrelid > 0)
+	{
 		rtindex = fsplan->scan.scanrelid;
+		rte = exec_rt_fetch(rtindex, estate);
+	}
 	else
-		rtindex = bms_next_member(fsplan->fs_base_relids, -1);
-	rte = exec_rt_fetch(rtindex, estate);
+	{
+		rtindex = -1;
+		while ((rtindex = bms_next_member(fsplan->fs_base_relids, rtindex)) >= 0)
+		{
+			rte = exec_rt_fetch(rtindex, estate);
+			if (rte != NULL && rte->rtekind == RTE_RELATION)
+				break;
+			rte = NULL;
+		}
+		if (rte == NULL)
+			elog(ERROR, "could not locate a foreign relation RTE in foreign scan");
+	}
 
 	/* Get info about foreign table. */
 	table = GetForeignTable(rte->relid);
@@ -1666,8 +1788,19 @@ postgresBeginForeignScan(ForeignScanState *node, int eflags)
 	}
 	else
 	{
+		List	   *rtfuncdata = (List *) list_nth(fsplan->fdw_private,
+												   FdwScanPrivateFunctions);
+		int			min_base_rti = intVal(list_nth(fsplan->fdw_private,
+												   FdwScanPrivateMinRTIndex));
+		int			rtoffset = bms_next_member(fsplan->fs_base_relids, -1) -
+			min_base_rti;
+
+		Assert(min_base_rti > 0);
+		Assert(rtoffset >= 0);
+
 		fsstate->rel = NULL;
-		fsstate->tupdesc = get_tupdesc_for_join_scan_tuples(node);
+		fsstate->tupdesc = get_tupdesc_for_join_scan_tuples(node, rtfuncdata,
+															rtoffset);
 	}
 
 	fsstate->attinmeta = TupleDescGetAttInMetadata(fsstate->tupdesc);
@@ -2615,7 +2748,7 @@ postgresPlanDirectModify(PlannerInfo *root,
 			if (attno <= InvalidAttrNumber) /* shouldn't happen */
 				elog(ERROR, "system-column update is not supported");
 
-			if (!is_foreign_expr(root, foreignrel, (Expr *) tle->expr))
+			if (!is_foreign_expr(root, foreignrel, fpinfo, (Expr *) tle->expr))
 				return false;
 		}
 	}
@@ -2702,6 +2835,10 @@ postgresPlanDirectModify(PlannerInfo *root,
 									makeBoolean((retrieved_attrs != NIL)),
 									retrieved_attrs,
 									makeBoolean(plan->canSetTag));
+	fscan->fdw_private = lappend(fscan->fdw_private,
+								 get_functions_data(root, foreignrel));
+	fscan->fdw_private = lappend(fscan->fdw_private,
+								 makeInteger(get_min_base_rti(root, foreignrel)));
 
 	/*
 	 * Update the foreign-join-related fields.
@@ -2815,7 +2952,26 @@ postgresBeginDirectModify(ForeignScanState *node, int eflags)
 		TupleDesc	tupdesc;
 
 		if (fsplan->scan.scanrelid == 0)
-			tupdesc = get_tupdesc_for_join_scan_tuples(node);
+		{
+			/*
+			 * DirectModify on a foreign join: use the per-RTE function
+			 * metadata saved at plan time so a whole-row Var pointing at a
+			 * function RTE absorbed into the join can be rebuilt into a
+			 * usable TupleDesc (e.g. RETURNING t for a join with UNNEST(...,
+			 * ...) AS t(bx, i)).
+			 */
+			List	   *rtfuncdata = (List *) list_nth(fsplan->fdw_private,
+													   FdwDirectModifyPrivateFunctions);
+			int			min_base_rti = intVal(list_nth(fsplan->fdw_private,
+													   FdwDirectModifyPrivateMinRTIndex));
+			int			rtoffset = bms_next_member(fsplan->fs_base_relids, -1) -
+				min_base_rti;
+
+			Assert(min_base_rti > 0);
+			Assert(rtoffset >= 0);
+
+			tupdesc = get_tupdesc_for_join_scan_tuples(node, rtfuncdata, rtoffset);
+		}
 		else
 			tupdesc = RelationGetDescr(dmstate->rel);
 
@@ -2928,7 +3084,8 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 	 * We do that here, not when the plan is created, because we can't know
 	 * what aliases ruleutils.c will assign at plan creation time.
 	 */
-	if (list_length(fdw_private) > FdwScanPrivateRelations)
+	if (list_length(fdw_private) > FdwScanPrivateRelations &&
+		list_nth(fdw_private, FdwScanPrivateRelations) != NULL)
 	{
 		StringInfoData relations;
 		char	   *rawrelations;
@@ -2978,25 +3135,90 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 				rti += rtoffset;
 				Assert(bms_is_member(rti, plan->fs_base_relids));
 				rte = rt_fetch(rti, es->rtable);
-				Assert(rte->rtekind == RTE_RELATION);
-				/* This logic should agree with explain.c's ExplainTargetRel */
-				relname = get_rel_name(rte->relid);
-				if (es->verbose)
-				{
-					char	   *namespace;
 
-					namespace = get_namespace_name_or_temp(get_rel_namespace(rte->relid));
-					appendStringInfo(&relations, "%s.%s",
-									 quote_identifier(namespace),
-									 quote_identifier(relname));
+				if (rte->rtekind == RTE_FUNCTION)
+				{
+					List	   *rtfuncdata = list_nth(fdw_private, FdwScanPrivateFunctions);
+					List	   *funcdata;
+					bool		multi_func;
+					bool		first = true;
+					ListCell   *lc;
+
+					funcdata = list_nth(rtfuncdata, rti - rtoffset);
+
+					multi_func = list_length(funcdata) > 1;
+
+					if (multi_func)
+						appendStringInfoString(&relations, "ROWS FROM (");
+
+					foreach(lc, funcdata)
+					{
+						List	   *funcinfo;
+						Oid			funcid;
+
+
+						if (!first)
+							appendStringInfoString(&relations, ", ");
+
+						funcinfo = (List *) lfirst(lc);
+
+						funcid = linitial_node(Integer, funcinfo)->ival;
+						/* Checked by function_rte_pushdown_ok() */
+						Assert(OidIsValid(funcid));
+
+						/* Match RTE_RELATION behavior */
+						relname = get_func_name(funcid);
+						if (relname == NULL)
+							elog(ERROR, "cache lookup failed for function %u", funcid);
+						if (es->verbose)
+						{
+							char	   *namespace;
+							Oid			nsoid = get_func_namespace(funcid);
+
+							namespace = get_namespace_name(nsoid);
+							if (namespace == NULL)
+								elog(ERROR, "cache lookup failed for namespace %u", nsoid);
+
+							appendStringInfo(&relations, "%s.%s()",
+											 quote_identifier(namespace),
+											 quote_identifier(relname));
+						}
+						else
+							appendStringInfo(&relations, "%s()", quote_identifier(relname));
+
+						first = false;
+					}
+					/* Close ROWS FROM */
+					if (multi_func)
+						appendStringInfoChar(&relations, ')');
 				}
 				else
-					appendStringInfoString(&relations,
-										   quote_identifier(relname));
+				{
+					Assert(rte->rtekind == RTE_RELATION);
+
+					/*
+					 * This logic should agree with explain.c's
+					 * ExplainTargetRel
+					 */
+					relname = get_rel_name(rte->relid);
+					if (es->verbose)
+					{
+						char	   *namespace;
+
+						namespace = get_namespace_name_or_temp(get_rel_namespace(rte->relid));
+						appendStringInfo(&relations, "%s.%s",
+										 quote_identifier(namespace),
+										 quote_identifier(relname));
+					}
+					else
+						appendStringInfoString(&relations,
+											   quote_identifier(relname));
+				}
+
 				refname = (char *) list_nth(es->rtable_names, rti - 1);
 				if (refname == NULL)
 					refname = rte->eref->aliasname;
-				if (strcmp(refname, relname) != 0)
+				if (relname == NULL || strcmp(refname, relname) != 0)
 					appendStringInfo(&relations, " %s",
 									 quote_identifier(refname));
 			}
@@ -3220,7 +3442,7 @@ estimate_path_cost_size(PlannerInfo *root,
 		 * param_join_conds might contain both clauses that are safe to send
 		 * across, and clauses that aren't.
 		 */
-		classifyConditions(root, foreignrel, param_join_conds,
+		classifyConditions(root, foreignrel, fpinfo, param_join_conds,
 						   &remote_param_join_conds, &local_param_join_conds);
 
 		/* Build the list of columns to be fetched from the foreign server. */
@@ -3353,8 +3575,17 @@ estimate_path_cost_size(PlannerInfo *root,
 			/* For join we expect inner and outer relations set */
 			Assert(fpinfo->innerrel && fpinfo->outerrel);
 
-			fpinfo_i = (PgFdwRelationInfo *) fpinfo->innerrel->fdw_private;
-			fpinfo_o = (PgFdwRelationInfo *) fpinfo->outerrel->fdw_private;
+			/*
+			 * For a FUNCTION RTE absorbed into the join, use the stub fpinfo
+			 * we built in foreign_join_ok(), since the function rel itself
+			 * has no fdw_private.
+			 */
+			fpinfo_i = fpinfo->inner_func_fpinfo ?
+				fpinfo->inner_func_fpinfo :
+				(PgFdwRelationInfo *) fpinfo->innerrel->fdw_private;
+			fpinfo_o = fpinfo->outer_func_fpinfo ?
+				fpinfo->outer_func_fpinfo :
+				(PgFdwRelationInfo *) fpinfo->outerrel->fdw_private;
 
 			/* Estimate of number of rows in cross product */
 			nrows = fpinfo_i->rows * fpinfo_o->rows;
@@ -6565,6 +6796,257 @@ semijoin_target_ok(PlannerInfo *root, RelOptInfo *joinrel, RelOptInfo *outerrel,
 }
 
 /*
+ * get_base_relids
+ *		Return the set of base relids referenced by a foreign scan rel.
+ *
+ * For an upper rel we use the all-query relids minus the outer joins;
+ * otherwise the rel's own relids minus the outer joins.  The result matches
+ * the relids that create_foreignscan_plan() ultimately uses for
+ * ForeignScan.fs_base_relids, so it is suitable for any tagging we want to
+ * store via plan-private state.
+ */
+static Relids
+get_base_relids(PlannerInfo *root, RelOptInfo *rel)
+{
+	Relids		relids;
+
+	if (rel->reloptkind == RELOPT_UPPER_REL)
+		relids = root->all_query_rels;
+	else
+		relids = rel->relids;
+
+	return bms_difference(relids, root->outer_join_rels);
+}
+
+/*
+ * get_min_base_rti
+ *		Lowest base RT index in the foreign scan rel.
+ *
+ * After setrefs.c flattens the rtable, the scan-local indexes saved in
+ * plan-private data can be translated to estate indexes by adding
+ * (ForeignScan.fs_base_relids min - this value).  Captured at plan time
+ * because create_foreignscan_plan() computes the same value internally.
+ */
+static int
+get_min_base_rti(PlannerInfo *root, RelOptInfo *rel)
+{
+	Relids		relids = get_base_relids(root, rel);
+
+	return bms_next_member(relids, -1);
+}
+
+/*
+ * get_functions_data
+ *		Build the per-RTE function metadata list saved as
+ *		FdwScanPrivateFunctions.
+ *
+ * The result list is indexed by base RT index relative to the lowest base
+ * RT index of the scan.  Each element is either NULL (for non-RTE_FUNCTION
+ * base rels in this scan) or a List of List of two Integer nodes:
+ * (funcrettype, funccollation) -- one inner list per RangeTblFunction.
+ *
+ * Only RTE_FUNCTION relids actually appearing in the foreign scan's
+ * fs_base_relids contribute; others are placeholders so that the consumer
+ * can index into the result by RTI offset.
+ */
+static List *
+get_functions_data(PlannerInfo *root, RelOptInfo *rel)
+{
+	List	   *rtfuncdata = NIL;
+	Relids		fscan_relids = get_base_relids(root, rel);
+	int			i;
+
+	for (i = 0; i < root->simple_rel_array_size; i++)
+	{
+		RangeTblEntry *rte = root->simple_rte_array[i];
+		List	   *funcdata = NIL;
+		ListCell   *lc;
+
+		if (rte == NULL || i == 0 ||
+			!bms_is_member(i, fscan_relids) ||
+			rte->rtekind != RTE_FUNCTION)
+		{
+			rtfuncdata = lappend(rtfuncdata, NULL);
+			continue;
+		}
+
+		foreach(lc, rte->functions)
+		{
+			RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
+			Oid			funcrettype;
+			Oid			funccollation;
+			TupleDesc	tupdesc;
+			Oid			funcid;
+
+			get_expr_result_type(rtfunc->funcexpr, &funcrettype, &tupdesc);
+
+			/*
+			 * function_rte_pushdown_ok() already rejected any function that
+			 * doesn't return a well-defined scalar type, so this is a mere
+			 * cross-check.
+			 */
+			Assert(OidIsValid(funcrettype) && funcrettype != RECORDOID);
+
+			funccollation = exprCollation(rtfunc->funcexpr);
+
+			funcid = ((FuncExpr *) rtfunc->funcexpr)->funcid;
+
+			funcdata = lappend(funcdata,
+							   list_make3(makeInteger(funcid),
+										  makeInteger(funcrettype),
+										  makeInteger(funccollation)));
+		}
+
+		rtfuncdata = lappend(rtfuncdata, funcdata);
+	}
+
+	return rtfuncdata;
+}
+
+/*
+ * init_func_stub_fpinfo
+ *		Build a stub PgFdwRelationInfo for a FUNCTION RTE that is being
+ *		absorbed into a foreign join.
+ *
+ * A function RTE has no fdw_private of its own, but the joinrel-level cost
+ * estimator, deparser and merge_fdw_options() all read server-level options
+ * from the "outer" fpinfo unconditionally.  So the stub must carry the same
+ * server, shippable_extensions, and cost-related options as the real foreign
+ * side of the join; otherwise the pushdown path is judged against zeroed
+ * fdw_startup_cost/fdw_tuple_cost/etc. and looks artificially cheap.
+ *
+ * The stub is meaningful only for the specific (foreign, function) pairing
+ * that produced it; it must live on the joinrel's PgFdwRelationInfo, never
+ * on the function rel's fdw_private, since the same function RTE may pair
+ * with different foreign servers in sibling joinrels.
+ */
+static PgFdwRelationInfo *
+init_func_stub_fpinfo(const PgFdwRelationInfo *fpinfo_foreign,
+					  RelOptInfo *funcrel)
+{
+	PgFdwRelationInfo *stub = palloc0_object(PgFdwRelationInfo);
+
+	stub->pushdown_safe = true;
+
+	/* Server-level options, inherited from the foreign side. */
+	stub->server = fpinfo_foreign->server;
+	stub->shippable_extensions = fpinfo_foreign->shippable_extensions;
+	stub->fdw_startup_cost = fpinfo_foreign->fdw_startup_cost;
+	stub->fdw_tuple_cost = fpinfo_foreign->fdw_tuple_cost;
+	stub->use_remote_estimate = fpinfo_foreign->use_remote_estimate;
+	stub->fetch_size = fpinfo_foreign->fetch_size;
+	stub->async_capable = fpinfo_foreign->async_capable;
+
+	/* Function-side identity and estimates from the local planner. */
+	stub->relation_name = psprintf("%u", funcrel->relid);
+	stub->rows = funcrel->rows;
+	stub->width = funcrel->reltarget->width;
+	stub->retrieved_rows = funcrel->rows;
+
+	/*
+	 * The function is executed on the remote server, so these must carry its
+	 * cost the same way a foreign rel's do: what producing the rows costs the
+	 * far side, before connection setup and data transfer are added.  The
+	 * local path for the same function is our best estimate of that.
+	 */
+	stub->rel_startup_cost = funcrel->cheapest_total_path->startup_cost;
+	stub->rel_total_cost = funcrel->cheapest_total_path->total_cost;
+
+	return stub;
+}
+
+/*
+ * Check if a relation is a FUNCTION RTE that can be absorbed into a remote
+ * join.  Every function in the RTE must
+ *
+ *   - return a well-defined scalar type -- we don't ship records/composite
+ *     since the remote server cannot reconstruct a column definition list
+ *     and our deparser does not emit one;
+ *   - have a shippable expression with no mutable subnodes -- is_foreign_expr()
+ *     rejects volatile/stable functions through contain_mutable_functions(),
+ *     so the IMMUTABLE-only restriction is implicit;
+ *   - not contain SubPlans -- we'd otherwise need to ship sub-results to
+ *     the remote, which we do not implement.
+ *
+ * WITH ORDINALITY is not supported yet.
+ */
+static bool
+function_rte_pushdown_ok(PlannerInfo *root, RelOptInfo *rel,
+						 RelOptInfo *fdwrel)
+{
+	RangeTblEntry *rte;
+	ListCell   *lc;
+
+	if (rel->rtekind != RTE_FUNCTION)
+		return false;
+	rte = planner_rt_fetch(rel->relid, root);
+
+	/*
+	 * build_simple_rel() copies rtekind straight from the RTE, so for a base
+	 * rel rel->rtekind always matches the RTE's; the check above is therefore
+	 * sufficient.
+	 */
+	Assert(rte->rtekind == RTE_FUNCTION);
+
+	if (rte->funcordinality)
+		return false;
+
+	/*
+	 * Reject up-front any function RTE that lateral-references another
+	 * relation: foreign-join push-down would need to parameterise the remote
+	 * query per outer row, which we don't support, and even considering the
+	 * path is expensive on the planner side.  The surrounding lateral_relids
+	 * check in postgresGetForeignJoinPaths() would normally bail out for the
+	 * joinrel, but doing the check here avoids walking the function
+	 * expression entirely.
+	 *
+	 * Note this rejects only lateral references to another relation at the
+	 * same query level.  A function argument referencing an outer query level
+	 * (e.g. f(outer.col) inside a subquery) is a different case: it becomes a
+	 * PARAM_EXEC Param, the function rel's lateral_relids is empty, and
+	 * foreign_expr_walker() intentionally treats PARAM_EXEC as shippable. The
+	 * remote query then carries a parameter placeholder, and postgres_fdw's
+	 * ordinary parameter machinery re-sends it on each rescan -- i.e. it
+	 * works as a normal parameterized foreign scan, which is fine.
+	 */
+	if (!bms_is_empty(rel->lateral_relids))
+		return false;
+
+	Assert(list_length(rte->functions) >= 1);
+
+	foreach(lc, rte->functions)
+	{
+		RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
+		TypeFuncClass functypclass;
+		Oid			funcrettype;
+		TupleDesc	tupdesc;
+
+		/* Refuse to deal with strange funcexprs */
+		if (!IsA(rtfunc->funcexpr, FuncExpr))
+			return false;
+
+		if (!OidIsValid(((FuncExpr *) rtfunc->funcexpr)->funcid))
+			return false;
+
+		functypclass = get_expr_result_type(rtfunc->funcexpr,
+											&funcrettype, &tupdesc);
+		if (functypclass != TYPEFUNC_SCALAR)
+			return false;
+		if (!OidIsValid(funcrettype) ||
+			funcrettype == RECORDOID ||
+			funcrettype == VOIDOID)
+			return false;
+
+		if (contain_subplans(rtfunc->funcexpr))
+			return false;
+		if (!is_foreign_expr(root, fdwrel, fdwrel->fdw_private, (Expr *) rtfunc->funcexpr))
+			return false;
+	}
+
+	return true;
+}
+
+/*
  * Assess whether the join between inner and outer relations can be pushed down
  * to the foreign server. As a side effect, save information we obtain in this
  * function to PgFdwRelationInfo passed in.
@@ -6579,6 +7061,8 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	PgFdwRelationInfo *fpinfo_i;
 	ListCell   *lc;
 	List	   *joinclauses;
+	bool		outer_is_function = false;
+	bool		inner_is_function = false;
 
 	/*
 	 * We support pushing down INNER, LEFT, RIGHT, FULL OUTER and SEMI joins.
@@ -6597,15 +7081,68 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 		return false;
 
 	/*
-	 * If either of the joining relations is marked as unsafe to pushdown, the
-	 * join can not be pushed down.
+	 * Detect mixed (foreign x function-RTE) cases.  Only INNER joins are
+	 * supported initially.  We dispatch on rtekind here so that the same
+	 * function RTE can be absorbed into joins on multiple foreign servers
+	 * (each call gets its own stub fpinfo and rechecks shippability for the
+	 * specific server).
 	 */
 	fpinfo = (PgFdwRelationInfo *) joinrel->fdw_private;
-	fpinfo_o = (PgFdwRelationInfo *) outerrel->fdw_private;
-	fpinfo_i = (PgFdwRelationInfo *) innerrel->fdw_private;
-	if (!fpinfo_o || !fpinfo_o->pushdown_safe ||
-		!fpinfo_i || !fpinfo_i->pushdown_safe)
-		return false;
+	if (jointype == JOIN_INNER && innerrel->rtekind == RTE_FUNCTION &&
+		(fpinfo_o = (PgFdwRelationInfo *) outerrel->fdw_private) &&
+		fpinfo_o->pushdown_safe &&
+		function_rte_pushdown_ok(root, innerrel, outerrel))
+	{
+		inner_is_function = true;
+	}
+	else if (jointype == JOIN_INNER && outerrel->rtekind == RTE_FUNCTION &&
+			 (fpinfo_i = (PgFdwRelationInfo *) innerrel->fdw_private) &&
+			 fpinfo_i->pushdown_safe &&
+			 function_rte_pushdown_ok(root, outerrel, innerrel))
+	{
+		outer_is_function = true;
+	}
+	else
+	{
+		fpinfo_o = (PgFdwRelationInfo *) outerrel->fdw_private;
+		fpinfo_i = (PgFdwRelationInfo *) innerrel->fdw_private;
+		if (!fpinfo_o || !fpinfo_o->pushdown_safe ||
+			!fpinfo_i || !fpinfo_i->pushdown_safe)
+			return false;
+	}
+
+	/*
+	 * If one side is a function RTE, allocate a stub fpinfo so the rest of
+	 * this function and the cost estimator can treat it uniformly.  We hand
+	 * the stub to the joinrel's deparser via the same path the foreign side
+	 * uses, but we never permanently attach it to the function rel's
+	 * fdw_private (different joinrels may pair the same function RTE with
+	 * different foreign servers).
+	 */
+	if (inner_is_function)
+	{
+		fpinfo_i = init_func_stub_fpinfo(fpinfo_o, innerrel);
+
+		/*
+		 * Classify the function rel's own baserestrictinfo now, so that the
+		 * local_conds check below can bail out if any of it is unshippable.
+		 * We classify against the stub, not the joinrel's fpinfo, because the
+		 * latter's server/shippable_extensions aren't populated until
+		 * merge_fdw_options() runs further down.
+		 */
+		classifyConditions(root, innerrel, fpinfo_i, innerrel->baserestrictinfo,
+						   &fpinfo_i->remote_conds, &fpinfo_i->local_conds);
+		fpinfo->inner_func_fpinfo = fpinfo_i;
+	}
+	else if (outer_is_function)
+	{
+		fpinfo_o = init_func_stub_fpinfo(fpinfo_i, outerrel);
+
+		/* See the comment in the inner_is_function branch above. */
+		classifyConditions(root, outerrel, fpinfo_o, outerrel->baserestrictinfo,
+						   &fpinfo_o->remote_conds, &fpinfo_o->local_conds);
+		fpinfo->outer_func_fpinfo = fpinfo_o;
+	}
 
 	/*
 	 * If joining relations have local conditions, those conditions are
@@ -6643,7 +7180,7 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	foreach(lc, extra->restrictlist)
 	{
 		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
-		bool		is_remote_clause = is_foreign_expr(root, joinrel,
+		bool		is_remote_clause = is_foreign_expr(root, joinrel, fpinfo,
 													   rinfo->clause);
 
 		if (IS_OUTER_JOIN(jointype) &&
@@ -7341,7 +7878,7 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			 * If any GROUP BY expression is not shippable, then we cannot
 			 * push down aggregation to the foreign server.
 			 */
-			if (!is_foreign_expr(root, grouped_rel, expr))
+			if (!is_foreign_expr(root, grouped_rel, fpinfo, expr))
 				return false;
 
 			/*
@@ -7369,7 +7906,7 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			 * Non-grouping expression we need to compute.  Can we ship it
 			 * as-is to the foreign server?
 			 */
-			if (is_foreign_expr(root, grouped_rel, expr) &&
+			if (is_foreign_expr(root, grouped_rel, fpinfo, expr) &&
 				!is_foreign_param(root, grouped_rel, expr))
 			{
 				/* Yes, so add to tlist as-is; OK to suppress duplicates */
@@ -7389,7 +7926,7 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 				 * don't have to check is_foreign_param, since that certainly
 				 * won't return true for any such expression.)
 				 */
-				if (!is_foreign_expr(root, grouped_rel, (Expr *) aggvars))
+				if (!is_foreign_expr(root, grouped_rel, fpinfo, (Expr *) aggvars))
 					return false;
 
 				/*
@@ -7441,7 +7978,7 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 									  grouped_rel->relids,
 									  NULL,
 									  NULL);
-			if (is_foreign_expr(root, grouped_rel, expr))
+			if (is_foreign_expr(root, grouped_rel, fpinfo, expr))
 				fpinfo->remote_conds = lappend(fpinfo->remote_conds, rinfo);
 			else
 				fpinfo->local_conds = lappend(fpinfo->local_conds, rinfo);
@@ -7478,7 +8015,7 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 			 */
 			if (IsA(expr, Aggref))
 			{
-				if (!is_foreign_expr(root, grouped_rel, expr))
+				if (!is_foreign_expr(root, grouped_rel, fpinfo, expr))
 					return false;
 
 				tlist = add_to_flat_tlist(tlist, list_make1(expr));
@@ -7991,8 +8528,8 @@ add_foreign_final_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	 * Also, the LIMIT/OFFSET cannot be pushed down, if their expressions are
 	 * not safe to remote.
 	 */
-	if (!is_foreign_expr(root, input_rel, (Expr *) parse->limitOffset) ||
-		!is_foreign_expr(root, input_rel, (Expr *) parse->limitCount))
+	if (!is_foreign_expr(root, input_rel, ifpinfo, (Expr *) parse->limitOffset) ||
+		!is_foreign_expr(root, input_rel, ifpinfo, (Expr *) parse->limitCount))
 		return;
 
 	/* Safe to push down */
@@ -8638,7 +9175,7 @@ find_em_for_rel(PlannerInfo *root, EquivalenceClass *ec, RelOptInfo *rel)
 		if (bms_is_subset(em->em_relids, rel->relids) &&
 			!bms_is_empty(em->em_relids) &&
 			bms_is_empty(bms_intersect(em->em_relids, fpinfo->hidden_subquery_rels)) &&
-			is_foreign_expr(root, rel, em->em_expr))
+			is_foreign_expr(root, rel, fpinfo, em->em_expr))
 			return em;
 	}
 
@@ -8660,6 +9197,7 @@ EquivalenceMember *
 find_em_for_rel_target(PlannerInfo *root, EquivalenceClass *ec,
 					   RelOptInfo *rel)
 {
+	PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) rel->fdw_private;
 	PathTarget *target = rel->reltarget;
 	ListCell   *lc1;
 	int			i;
@@ -8709,7 +9247,7 @@ find_em_for_rel_target(PlannerInfo *root, EquivalenceClass *ec,
 				continue;
 
 			/* Check that expression (including relabels!) is shippable */
-			if (is_foreign_expr(root, rel, em->em_expr))
+			if (is_foreign_expr(root, rel, fpinfo, em->em_expr))
 				return em;
 		}
 
