@@ -1445,7 +1445,10 @@ pg_downcase_ident(char *dst, size_t dstsize, const char *src, size_t srclen)
 int
 pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale)
 {
-	return locale->collate->strcoll(arg1, arg2, locale);
+	if (locale->collate == NULL)
+		return strcmp(arg1, arg2);
+	else
+		return locale->collate->strcoll(arg1, arg2, locale);
 }
 
 /*
@@ -1463,7 +1466,16 @@ int
 pg_strncoll(const char *arg1, size_t len1, const char *arg2, size_t len2,
 			pg_locale_t locale)
 {
-	return locale->collate->strncoll(arg1, len1, arg2, len2, locale);
+	if (locale->collate == NULL)
+	{
+		int			result = memcmp(arg1, arg2, Min(len1, len2));
+
+		if ((result == 0) && (len1 != len2))
+			result = (len1 < len2) ? -1 : 1;
+		return result;
+	}
+	else
+		return locale->collate->strncoll(arg1, len1, arg2, len2, locale);
 }
 
 /*
@@ -1473,6 +1485,9 @@ pg_strncoll(const char *arg1, size_t len1, const char *arg2, size_t len2,
 bool
 pg_strxfrm_enabled(pg_locale_t locale)
 {
+	if (locale->collate == NULL)
+		return true;
+
 	/*
 	 * locale->collate->strnxfrm is still a required method, even if it may
 	 * have the wrong behavior, because the planner uses it for estimates in
@@ -1489,7 +1504,10 @@ pg_strxfrm_enabled(pg_locale_t locale)
 size_t
 pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
 {
-	return locale->collate->strxfrm(dest, destsize, src, locale);
+	if (locale->collate == NULL)
+		return pg_strnxfrm(dest, destsize, src, strlen(src), locale);
+	else
+		return locale->collate->strxfrm(dest, destsize, src, locale);
 }
 
 /*
@@ -1514,6 +1532,16 @@ size_t
 pg_strnxfrm(char *dest, size_t destsize, const char *src, size_t srclen,
 			pg_locale_t locale)
 {
+	if (locale->collate == NULL)
+	{
+		if (destsize > srclen)
+		{
+			memcpy(dest, src, srclen);
+			dest[srclen] = '\0';
+		}
+
+		return srclen;
+	}
 	return locale->collate->strnxfrm(dest, destsize, src, srclen, locale);
 }
 
@@ -1524,7 +1552,10 @@ pg_strnxfrm(char *dest, size_t destsize, const char *src, size_t srclen,
 bool
 pg_strxfrm_prefix_enabled(pg_locale_t locale)
 {
-	return (locale->collate->strnxfrm_prefix != NULL);
+	if (locale->collate == NULL)
+		return true;
+	else
+		return (locale->collate->strnxfrm_prefix != NULL);
 }
 
 /*
@@ -1536,7 +1567,10 @@ size_t
 pg_strxfrm_prefix(char *dest, const char *src, size_t destsize,
 				  pg_locale_t locale)
 {
-	return locale->collate->strxfrm_prefix(dest, destsize, src, locale);
+	if (locale->collate == NULL)
+		return pg_strnxfrm_prefix(dest, destsize, src, strlen(src), locale);
+	else
+		return locale->collate->strxfrm_prefix(dest, destsize, src, locale);
 }
 
 /*
@@ -1560,7 +1594,16 @@ size_t
 pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
 				   size_t srclen, pg_locale_t locale)
 {
-	return locale->collate->strnxfrm_prefix(dest, destsize, src, srclen, locale);
+	if (locale->collate == NULL)
+	{
+		size_t		len = Min(srclen, destsize);
+
+		if (destsize > 0)
+			memcpy(dest, src, len);
+		return len;
+	}
+	else
+		return locale->collate->strnxfrm_prefix(dest, destsize, src, srclen, locale);
 }
 
 /*
