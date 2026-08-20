@@ -432,6 +432,7 @@ static void process_pm_shutdown_request(void);
 static void dummy_handler(SIGNAL_ARGS);
 static void CleanupBackend(PMChild *bp, int exitstatus);
 static void HandleChildCrash(int pid, int exitstatus, const char *procname);
+static void HandleFatalError(QuitSignalReason reason, bool consider_sigabrt);
 static void LogChildExit(int lev, const char *procname,
 						 int pid, int exitstatus);
 static void PostmasterStateMachine(void);
@@ -2333,8 +2334,25 @@ process_pm_child_exit(void)
 				}
 				else
 					StartupStatus = STARTUP_CRASHED;
-				HandleChildCrash(pid, exitstatus,
-								 _("startup process"));
+
+				/*
+				 * If FatalError is already set, we are reinitializing after a
+				 * previous crash, and HandleChildCrash() would do nothing,
+				 * leaving the state machine stuck at PM_STARTUP.  Give up,
+				 * signal the remaining children and head for PM_NO_CHILDREN,
+				 * where STARTUP_CRASHED makes us exit.
+				 */
+				if (StartupStatus == STARTUP_CRASHED &&
+					FatalError && Shutdown != ImmediateShutdown)
+				{
+					LogChildExit(LOG, _("startup process"), pid, exitstatus);
+					ereport(LOG,
+							(errmsg("aborting startup due to startup process failure")));
+					HandleFatalError(PMQUIT_FOR_CRASH, true);
+				}
+				else
+					HandleChildCrash(pid, exitstatus,
+									 _("startup process"));
 				continue;
 			}
 
@@ -2725,15 +2743,13 @@ CleanupBackend(PMChild *bp,
  * happened. Commonly the caller will have logged the reason for entering
  * FatalError state.
  *
- * This should only be called when not already in FatalError or
- * ImmediateShutdown state.
+ * This should only be called when not already in ImmediateShutdown state.
  */
 static void
 HandleFatalError(QuitSignalReason reason, bool consider_sigabrt)
 {
 	int			sigtosend;
 
-	Assert(!FatalError);
 	Assert(Shutdown != ImmediateShutdown);
 
 	SetQuitSignalReason(reason);
