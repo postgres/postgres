@@ -239,7 +239,7 @@ sub test_handle
 		$psql,
 		"handle error recovery in implicit xact",
 		qq(SELECT handle_get_and_error(); SELECT 'ok', handle_get_release()),
-		qr/^|ok$/,
+		qr/^ok\|$/,
 		qr/ERROR.*as you command/);
 
 	# recover after error in implicit xact
@@ -247,8 +247,8 @@ sub test_handle
 		$io_method,
 		$psql,
 		"handle error recovery in explicit xact",
-		qq(BEGIN; SELECT handle_get_and_error(); SELECT handle_get_release(), 'ok'; COMMIT;),
-		qr/^|ok$/,
+		qq(BEGIN; SELECT handle_get_and_error(); ROLLBACK; SELECT 'ok', handle_get_release();),
+		qr/^ok\|$/,
 		qr/ERROR.*as you command/);
 
 	# recover after error in subtrans
@@ -256,8 +256,8 @@ sub test_handle
 		$io_method,
 		$psql,
 		"handle error recovery in explicit subxact",
-		qq(BEGIN; SAVEPOINT foo; SELECT handle_get_and_error(); ROLLBACK TO SAVEPOINT foo; SELECT handle_get_release(); ROLLBACK;),
-		qr/^|ok$/,
+		qq(BEGIN; SAVEPOINT foo; SELECT handle_get_and_error(); ROLLBACK TO SAVEPOINT foo; SELECT 'ok', handle_get_release(); ROLLBACK;),
+		qr/^ok\|$/,
 		qr/ERROR.*as you command/);
 
 	$psql->quit();
