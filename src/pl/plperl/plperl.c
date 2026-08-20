@@ -1095,7 +1095,7 @@ get_perl_array_ref(SV *sv)
 {
 	dTHX;
 
-	if (sv && SvOK(sv) && SvROK(sv))
+	if (sv && SvROK(sv))
 	{
 		if (SvTYPE(SvRV(sv)) == SVt_PVAV)
 			return sv;
@@ -1107,8 +1107,7 @@ get_perl_array_ref(SV *sv)
 			if (sav && *sav)
 			{
 				plperl_materialize_sv(*sav);
-				if (SvOK(*sav) && SvROK(*sav) &&
-					SvTYPE(SvRV(*sav)) == SVt_PVAV)
+				if (SvROK(*sav) && SvTYPE(SvRV(*sav)) == SVt_PVAV)
 					return *sav;
 			}
 
@@ -1767,7 +1766,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("$_TD->{new} does not exist")));
 	plperl_materialize_sv(*svp);
-	if (!SvOK(*svp) || !SvROK(*svp) || SvTYPE(SvRV(*svp)) != SVt_PVHV)
+	if (!(*svp) || !SvROK(*svp) || SvTYPE(SvRV(*svp)) != SVt_PVHV)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("$_TD->{new} is not a hash reference")));
@@ -2469,7 +2468,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 					plperl_return_next_internal(*svp);
 			}
 		}
-		else if (SvOK(perlret))
+		else if (perlret && SvOK(perlret))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -3357,7 +3356,7 @@ plperl_return_next_internal(SV *sv)
 		HeapTuple	tuple;
 
 		plperl_materialize_sv(sv);
-		if (!(SvOK(sv) && SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV))
+		if (!(SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("SETOF-composite-returning PL/Perl function "
