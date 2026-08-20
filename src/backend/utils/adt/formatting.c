@@ -1021,7 +1021,6 @@ static const int NUM_index[KeyWord_INDEX_SIZE] = {
  */
 typedef struct NUMProc
 {
-	bool		is_to_char;
 	NUMDesc    *Num;			/* number description		*/
 
 	int			sign,			/* '-' or '+'			*/
@@ -1029,16 +1028,24 @@ typedef struct NUMProc
 				num_count,		/* number of write digits	*/
 				num_in,			/* is inside number		*/
 				num_curr,		/* current position in number	*/
-				out_pre_spaces, /* spaces before first digit	*/
+				out_pre_spaces, /* to_char: spaces needed before first digit */
 
 				read_dec,		/* to_number - was read dec. point	*/
 				read_post,		/* to_number - number of dec. digit */
 				read_pre;		/* to_number - number non-dec. digit */
 
-	char	   *number,			/* string with number	*/
-			   *number_p,		/* pointer to current number position */
-			   *inout,			/* in / out buffer	*/
-			   *inout_p;		/* pointer to current inout position */
+	/*
+	 * Both TO_NUMBER and TO_CHAR cases read the "input" string and write to
+	 * the "output" buffer, but their semantics are a bit different.  Notably,
+	 * in TO_NUMBER the input string is not null-terminated, so we need
+	 * input_end to identify where to stop.
+	 */
+	const char *input,			/* data input string */
+			   *input_p,		/* pointer to current input position */
+			   *input_end;		/* end+1 of "input" */
+
+	char	   *output,			/* data output buffer */
+			   *output_p;		/* pointer to current output position */
 
 	const char *last_relevant,	/* last relevant number after decimal point */
 
@@ -1055,12 +1062,12 @@ typedef struct NUMProc
 #define DCH_ZONED	0x04
 
 /*
- * These macros are used in NUM_processor() and its subsidiary routines.
+ * These macros are used in NUM_processor_from_char() and its subsidiary routines.
  * OVERLOAD_TEST: true if we've reached end of input string
  * AMOUNT_TEST(s): true if at least s bytes remain in string
  */
-#define OVERLOAD_TEST	(Np->inout_p >= Np->inout + input_len)
-#define AMOUNT_TEST(s)	(Np->inout_p <= Np->inout + (input_len - (s)))
+#define OVERLOAD_TEST	(Np->input_p >= Np->input_end)
+#define AMOUNT_TEST(s)	(Np->input_p <= Np->input_end - (s))
 
 
 /*
@@ -1109,15 +1116,19 @@ static bool do_to_timestamp(const text *date_txt, const text *fmt, Oid collid, b
 static void fill_str(char *str, int c, int max);
 static FormatNode *NUM_cache(int len, NUMDesc *Num, const text *pars_str, bool *shouldFree);
 static char *int_to_roman(int number);
-static int	roman_to_int(NUMProc *Np, size_t input_len);
+static int	roman_to_int(NUMProc *Np);
 static void NUM_prepare_locale(NUMProc *Np);
 static const char *get_last_relevant_decnum(const char *num);
-static void NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len);
+static void NUM_numpart_from_char(NUMProc *Np, int id);
 static void NUM_numpart_to_char(NUMProc *Np, int id);
 static void NUM_add_locale_symbol(NUMProc *Np, const char *pattern);
-static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
-						   char *number, size_t input_len, int to_char_out_pre_spaces,
-						   int sign, bool is_to_char, Oid collid);
+static void NUM_processor_from_char(const FormatNode *node, NUMDesc *Num,
+									const char *input, size_t input_len,
+									char *output,
+									Oid collid);
+static void NUM_processor_to_char(const FormatNode *node, NUMDesc *Num,
+								  const char *input, char *output,
+								  int out_pre_spaces, int sign, Oid collid);
 static DCHCacheEntry *DCH_cache_getnew(const char *str, bool std);
 static DCHCacheEntry *DCH_cache_search(const char *str, bool std);
 static DCHCacheEntry *DCH_cache_fetch(const char *str, bool std);
@@ -5033,12 +5044,12 @@ int_to_roman(int number)
 /*
  * Convert a roman numeral (standard form) to an integer.
  * Result is an integer between 1 and 3999.
- * Np->inout_p is advanced past the characters consumed.
+ * Np->input_p is advanced past the characters consumed.
  *
  * If input is invalid, return -1.
  */
 static int
-roman_to_int(NUMProc *Np, size_t input_len)
+roman_to_int(NUMProc *Np)
 {
 	int			result = 0;
 	size_t		len;
@@ -5055,8 +5066,8 @@ roman_to_int(NUMProc *Np, size_t input_len)
 	 * Skip any leading whitespace.  Perhaps we should limit the amount of
 	 * space skipped to MAX_ROMAN_LEN, but that seems unnecessarily picky.
 	 */
-	while (!OVERLOAD_TEST && isspace((unsigned char) *Np->inout_p))
-		Np->inout_p++;
+	while (!OVERLOAD_TEST && isspace((unsigned char) *Np->input_p))
+		Np->input_p++;
 
 	/*
 	 * Collect and decode valid roman numerals, consuming at most
@@ -5066,14 +5077,14 @@ roman_to_int(NUMProc *Np, size_t input_len)
 	 */
 	for (len = 0; len < MAX_ROMAN_LEN && !OVERLOAD_TEST; len++)
 	{
-		char		currChar = pg_ascii_toupper(*Np->inout_p);
+		char		currChar = pg_ascii_toupper(*Np->input_p);
 		int			currValue = ROMAN_VAL(currChar);
 
 		if (currValue == 0)
 			break;				/* Not a valid roman numeral. */
 		romanChars[len] = currChar;
 		romanValues[len] = currValue;
-		Np->inout_p++;
+		Np->input_p++;
 	}
 
 	if (len == 0)
@@ -5295,7 +5306,7 @@ get_last_relevant_decnum(const char *num)
  * Number extraction for TO_NUMBER()
  */
 static void
-NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len)
+NUM_numpart_from_char(NUMProc *Np, int id)
 {
 	bool		isread = false;
 
@@ -5307,8 +5318,8 @@ NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len)
 	if (OVERLOAD_TEST)
 		return;
 
-	if (*Np->inout_p == ' ')
-		Np->inout_p++;
+	if (*Np->input_p == ' ')
+		Np->input_p++;
 
 	if (OVERLOAD_TEST)
 		return;
@@ -5316,12 +5327,12 @@ NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len)
 	/*
 	 * read sign before number
 	 */
-	if (*Np->number == ' ' && (id == NUM_0 || id == NUM_9) &&
+	if (*Np->output == ' ' && (id == NUM_0 || id == NUM_9) &&
 		(Np->read_pre + Np->read_post) == 0)
 	{
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "Try read sign (%c), locale positive: %s, negative: %s",
-			 *Np->inout_p, Np->L_positive_sign, Np->L_negative_sign);
+			 *Np->input_p, Np->L_positive_sign, Np->L_negative_sign);
 #endif
 
 		/*
@@ -5332,42 +5343,42 @@ NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len)
 			size_t		x = 0;
 
 #ifdef DEBUG_TO_FROM_CHAR
-			elog(DEBUG_elog_output, "Try read locale pre-sign (%c)", *Np->inout_p);
+			elog(DEBUG_elog_output, "Try read locale pre-sign (%c)", *Np->input_p);
 #endif
 			if ((x = strlen(Np->L_negative_sign)) &&
 				AMOUNT_TEST(x) &&
-				strncmp(Np->inout_p, Np->L_negative_sign, x) == 0)
+				strncmp(Np->input_p, Np->L_negative_sign, x) == 0)
 			{
-				Np->inout_p += x;
-				*Np->number = '-';
+				Np->input_p += x;
+				*Np->output = '-';
 			}
 			else if ((x = strlen(Np->L_positive_sign)) &&
 					 AMOUNT_TEST(x) &&
-					 strncmp(Np->inout_p, Np->L_positive_sign, x) == 0)
+					 strncmp(Np->input_p, Np->L_positive_sign, x) == 0)
 			{
-				Np->inout_p += x;
-				*Np->number = '+';
+				Np->input_p += x;
+				*Np->output = '+';
 			}
 		}
 		else
 		{
 #ifdef DEBUG_TO_FROM_CHAR
-			elog(DEBUG_elog_output, "Try read simple sign (%c)", *Np->inout_p);
+			elog(DEBUG_elog_output, "Try read simple sign (%c)", *Np->input_p);
 #endif
 
 			/*
 			 * simple + - < >
 			 */
-			if (*Np->inout_p == '-' || (IS_BRACKET(Np->Num) &&
-										*Np->inout_p == '<'))
+			if (*Np->input_p == '-' || (IS_BRACKET(Np->Num) &&
+										*Np->input_p == '<'))
 			{
-				*Np->number = '-';	/* set - */
-				Np->inout_p++;
+				*Np->output = '-';	/* set - */
+				Np->input_p++;
 			}
-			else if (*Np->inout_p == '+')
+			else if (*Np->input_p == '+')
 			{
-				*Np->number = '+';	/* set + */
-				Np->inout_p++;
+				*Np->output = '+';	/* set + */
+				Np->input_p++;
 			}
 		}
 	}
@@ -5376,19 +5387,19 @@ NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len)
 		return;
 
 #ifdef DEBUG_TO_FROM_CHAR
-	elog(DEBUG_elog_output, "Scan for numbers (%c), current number: '%s'", *Np->inout_p, Np->number);
+	elog(DEBUG_elog_output, "Scan for numbers (%c), current output: '%s'", *Np->input_p, Np->output);
 #endif
 
 	/*
 	 * read digit or decimal point
 	 */
-	if (isdigit((unsigned char) *Np->inout_p))
+	if (isdigit((unsigned char) *Np->input_p))
 	{
 		if (Np->read_dec && Np->read_post == Np->Num->post)
 			return;
 
-		*Np->number_p = *Np->inout_p;
-		Np->number_p++;
+		*Np->output_p = *Np->input_p;
+		Np->output_p++;
 
 		if (Np->read_dec)
 			Np->read_post++;
@@ -5398,7 +5409,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len)
 		isread = true;
 
 #ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "Read digit (%c)", *Np->inout_p);
+		elog(DEBUG_elog_output, "Read digit (%c)", *Np->input_p);
 #endif
 	}
 	else if (IS_DECIMAL(Np->Num) && Np->read_dec == false)
@@ -5412,13 +5423,13 @@ NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len)
 
 #ifdef DEBUG_TO_FROM_CHAR
 		elog(DEBUG_elog_output, "Try read decimal point (%c)",
-			 *Np->inout_p);
+			 *Np->input_p);
 #endif
-		if (x && AMOUNT_TEST(x) && strncmp(Np->inout_p, Np->decimal, x) == 0)
+		if (x && AMOUNT_TEST(x) && strncmp(Np->input_p, Np->decimal, x) == 0)
 		{
-			Np->inout_p += x - 1;
-			*Np->number_p = '.';
-			Np->number_p++;
+			Np->input_p += x - 1;
+			*Np->output_p = '.';
+			Np->output_p++;
 			Np->read_dec = true;
 			isread = true;
 		}
@@ -5436,7 +5447,7 @@ NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len)
 	 * FM9999.9999999S	   -> 123.001- 9.9S			   -> .5- FM9.999999MI ->
 	 * 5.01-
 	 */
-	if (*Np->number == ' ' && Np->read_pre + Np->read_post > 0)
+	if (*Np->output == ' ' && Np->read_pre + Np->read_post > 0)
 	{
 		/*
 		 * locale sign (NUM_S) is always anchored behind a last number, if: -
@@ -5444,32 +5455,34 @@ NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len)
 		 * next char is not digit
 		 */
 		if (IS_LSIGN(Np->Num) && isread &&
-			(Np->inout_p + 1) < Np->inout + input_len &&
-			!isdigit((unsigned char) *(Np->inout_p + 1)))
+			(Np->input_p + 1) < Np->input_end &&
+			!isdigit((unsigned char) *(Np->input_p + 1)))
 		{
 			size_t		x;
-			char	   *tmp = Np->inout_p++;
+			const char *tmp = Np->input_p++;
 
 #ifdef DEBUG_TO_FROM_CHAR
-			elog(DEBUG_elog_output, "Try read locale post-sign (%c)", *Np->inout_p);
+			elog(DEBUG_elog_output, "Try read locale post-sign (%c)", *Np->input_p);
 #endif
 			if ((x = strlen(Np->L_negative_sign)) &&
 				AMOUNT_TEST(x) &&
-				strncmp(Np->inout_p, Np->L_negative_sign, x) == 0)
+				strncmp(Np->input_p, Np->L_negative_sign, x) == 0)
 			{
-				Np->inout_p += x - 1;	/* -1 .. NUM_processor() do inout_p++ */
-				*Np->number = '-';
+				Np->input_p += x - 1;
+				/* NUM_processor_from_char() will do input_p++ */
+				*Np->output = '-';
 			}
 			else if ((x = strlen(Np->L_positive_sign)) &&
 					 AMOUNT_TEST(x) &&
-					 strncmp(Np->inout_p, Np->L_positive_sign, x) == 0)
+					 strncmp(Np->input_p, Np->L_positive_sign, x) == 0)
 			{
-				Np->inout_p += x - 1;	/* -1 .. NUM_processor() do inout_p++ */
-				*Np->number = '+';
+				Np->input_p += x - 1;
+				/* NUM_processor_from_char() will do input_p++ */
+				*Np->output = '+';
 			}
-			if (*Np->number == ' ')
+			if (*Np->output == ' ')
 				/* no sign read */
-				Np->inout_p = tmp;
+				Np->input_p = tmp;
 		}
 
 		/*
@@ -5486,23 +5499,25 @@ NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len)
 				 (IS_PLUS(Np->Num) || IS_MINUS(Np->Num)))
 		{
 #ifdef DEBUG_TO_FROM_CHAR
-			elog(DEBUG_elog_output, "Try read simple post-sign (%c)", *Np->inout_p);
+			elog(DEBUG_elog_output, "Try read simple post-sign (%c)", *Np->input_p);
 #endif
 
 			/*
 			 * simple + -
 			 */
-			if (*Np->inout_p == '-' || *Np->inout_p == '+')
-				/* NUM_processor() do inout_p++ */
-				*Np->number = *Np->inout_p;
+			if (*Np->input_p == '-' || *Np->input_p == '+')
+			{
+				*Np->output = *Np->input_p;
+				/* NUM_processor_from_char() will do input_p++ */
+			}
 		}
 	}
 }
 
 #define IS_PREDEC_SPACE(_n) \
 		(IS_ZERO((_n)->Num)==false && \
-		 (_n)->number == (_n)->number_p && \
-		 *(_n)->number == '0' && \
+		 (_n)->input == (_n)->input_p && \
+		 *(_n)->input == '0' && \
 				 (_n)->Num->post != 0)
 
 /*
@@ -5516,20 +5531,20 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 	if (IS_ROMAN(Np->Num))
 		return;
 
-	/* Note: in this elog() output not set '\0' in 'inout' */
+	/* Note: in this elog() output not set '\0' in 'output' */
 
 #ifdef DEBUG_TO_FROM_CHAR
 
 	/*
 	 * Np->num_curr is number of current item in format-picture, it is not
-	 * current position in inout!
+	 * current position in output!
 	 */
 	elog(DEBUG_elog_output,
-		 "SIGN_WROTE: %d, CURRENT: %d, NUMBER_P: \"%s\", INOUT: \"%s\"",
+		 "SIGN_WROTE: %d, CURRENT: %d, INPUT_P: \"%s\", OUTPUT: \"%s\"",
 		 Np->sign_wrote,
 		 Np->num_curr,
-		 Np->number_p,
-		 Np->inout);
+		 Np->input_p,
+		 Np->output);
 #endif
 	Np->num_in = false;
 
@@ -5553,23 +5568,23 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 		}
 		else if (IS_BRACKET(Np->Num))
 		{
-			*Np->inout_p = Np->sign == '+' ? ' ' : '<';
-			++Np->inout_p;
+			*Np->output_p = Np->sign == '+' ? ' ' : '<';
+			++Np->output_p;
 			Np->sign_wrote = true;
 		}
 		else if (Np->sign == '+')
 		{
 			if (!IS_FILLMODE(Np->Num))
 			{
-				*Np->inout_p = ' '; /* Write + */
-				++Np->inout_p;
+				*Np->output_p = ' ';	/* Write + */
+				++Np->output_p;
 			}
 			Np->sign_wrote = true;
 		}
 		else if (Np->sign == '-')
 		{						/* Write - */
-			*Np->inout_p = '-';
-			++Np->inout_p;
+			*Np->output_p = '-';
+			++Np->output_p;
 			Np->sign_wrote = true;
 		}
 	}
@@ -5588,8 +5603,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			 */
 			if (!IS_FILLMODE(Np->Num))
 			{
-				*Np->inout_p = ' '; /* Write ' ' */
-				++Np->inout_p;
+				*Np->output_p = ' ';	/* Write ' ' */
+				++Np->output_p;
 			}
 		}
 		else if (IS_ZERO(Np->Num) &&
@@ -5599,8 +5614,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			/*
 			 * Write ZERO
 			 */
-			*Np->inout_p = '0'; /* Write '0' */
-			++Np->inout_p;
+			*Np->output_p = '0';	/* Write '0' */
+			++Np->output_p;
 			Np->num_in = true;
 		}
 		else
@@ -5608,7 +5623,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			/*
 			 * Write Decimal point
 			 */
-			if (*Np->number_p == '.')
+			if (*Np->input_p == '.')
 			{
 				if (!Np->last_relevant || *Np->last_relevant != '.')
 				{
@@ -5629,7 +5644,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				/*
 				 * Write Digits
 				 */
-				if (Np->last_relevant && Np->number_p > Np->last_relevant &&
+				if (Np->last_relevant && Np->input_p > Np->last_relevant &&
 					id != NUM_0)
 					;
 
@@ -5640,8 +5655,8 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 				{
 					if (!IS_FILLMODE(Np->Num))
 					{
-						*Np->inout_p = ' ';
-						++Np->inout_p;
+						*Np->output_p = ' ';
+						++Np->output_p;
 					}
 
 					/*
@@ -5649,33 +5664,33 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 					 */
 					else if (Np->last_relevant && *Np->last_relevant == '.')
 					{
-						*Np->inout_p = '0';
-						++Np->inout_p;
+						*Np->output_p = '0';
+						++Np->output_p;
 					}
 				}
 				else
 				{
-					*Np->inout_p = *Np->number_p;	/* Write DIGIT */
-					++Np->inout_p;
+					*Np->output_p = *Np->input_p;	/* Write DIGIT */
+					++Np->output_p;
 					Np->num_in = true;
 				}
 			}
 			/* do no exceed string length */
-			if (*Np->number_p)
-				++Np->number_p;
+			if (*Np->input_p)
+				++Np->input_p;
 		}
 
 		end = Np->num_count + (Np->out_pre_spaces ? 1 : 0) + (IS_DECIMAL(Np->Num) ? 1 : 0);
 
-		if (Np->last_relevant && Np->last_relevant == Np->number_p)
+		if (Np->last_relevant && Np->last_relevant == Np->input_p)
 			end = Np->num_curr;
 
 		if (Np->num_curr + 1 == end)
 		{
 			if (Np->sign_wrote == true && IS_BRACKET(Np->Num))
 			{
-				*Np->inout_p = Np->sign == '+' ? ' ' : '>';
-				++Np->inout_p;
+				*Np->output_p = Np->sign == '+' ? ' ' : '>';
+				++Np->output_p;
 			}
 			else if (IS_LSIGN(Np->Num) && Np->Num->lsign == NUM_LSIGN_POST)
 			{
@@ -5690,7 +5705,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 }
 
 /*
- * Append locale-specific symbol to Np->inout.
+ * Append locale-specific symbol to Np->output.
  * Note we don't null-terminate the output
  */
 static void
@@ -5702,34 +5717,48 @@ NUM_add_locale_symbol(NUMProc *Np, const char *pattern)
 	if (unlikely(pattern_len > NUM_MAX_ITEM_SIZ))
 		pattern_len = pg_mbcliplen(pattern, pattern_len,
 								   NUM_MAX_ITEM_SIZ);
-	memcpy(Np->inout_p, pattern, pattern_len);
-	Np->inout_p += pattern_len;
+	memcpy(Np->output_p, pattern, pattern_len);
+	Np->output_p += pattern_len;
 }
 
 /*
  * Skip over "n" input characters, but only if they aren't numeric data
  */
 static void
-NUM_eat_non_data_chars(NUMProc *Np, int n, size_t input_len)
+NUM_eat_non_data_chars(NUMProc *Np, int n)
 {
-	const char *end = Np->inout + input_len;
+	const char *end = Np->input_end;
 
 	while (n-- > 0)
 	{
 		if (OVERLOAD_TEST)
 			break;				/* end of input */
-		if (strchr("0123456789.,+-", *Np->inout_p) != NULL)
+		if (strchr("0123456789.,+-", *Np->input_p) != NULL)
 			break;				/* it's a data character */
-		Np->inout_p += pg_mblen_range(Np->inout_p, end);
+		Np->input_p += pg_mblen_range(Np->input_p, end);
 	}
 }
 
-static char *
-NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
-			  char *number, size_t input_len, int to_char_out_pre_spaces,
-			  int sign, bool is_to_char, Oid collid)
+/*
+ * Numeric format processing for TO_NUMBER.
+ *
+ * We parse the string in "input" according to the format, and build a
+ * standard-format representation of the number in "output" (which will
+ * be fed to numeric_in()).
+ *
+ * node: array of FormatNodes representing the parsed format string
+ * Num: input/output argument holding additional format flags and state
+ * input: input string (not null-terminated!)
+ * input_len: length of input string
+ * output: output buffer
+ * collid: active collation
+ */
+static void
+NUM_processor_from_char(const FormatNode *node, NUMDesc *Num,
+						const char *input, size_t input_len,
+						char *output,
+						Oid collid)
 {
-	FormatNode *n;
 	NUMProc		_Np,
 			   *Np = &_Np;
 	const char *pattern;
@@ -5738,9 +5767,9 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 	MemSet(Np, 0, sizeof(NUMProc));
 
 	Np->Num = Num;
-	Np->is_to_char = is_to_char;
-	Np->number = number;
-	Np->inout = inout;
+	Np->input = input;
+	Np->input_end = input + input_len;
+	Np->output = output;
 	Np->last_relevant = NULL;
 	Np->read_post = 0;
 	Np->read_pre = 0;
@@ -5750,92 +5779,22 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 		--Np->Num->zero_start;
 
 	if (IS_EEEE(Np->Num))
-	{
-		if (!Np->is_to_char)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("\"EEEE\" not supported for input")));
-		return strcpy(inout, number);
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("\"EEEE\" not supported for input")));
 
 	/*
 	 * Sign
 	 */
-	if (is_to_char)
-	{
-		Np->sign = sign;
-
-		/* MI/PL/SG - write sign itself and not in number */
-		if (IS_PLUS(Np->Num) || IS_MINUS(Np->Num))
-		{
-			if (IS_PLUS(Np->Num) && IS_MINUS(Np->Num) == false)
-				Np->sign_wrote = false; /* need sign */
-			else
-				Np->sign_wrote = true;	/* needn't sign */
-		}
-		else
-		{
-			if (Np->sign != '-')
-			{
-				if (IS_FILLMODE(Np->Num))
-					Np->Num->flag &= ~NUM_F_BRACKET;
-			}
-
-			if (Np->sign == '+' && IS_FILLMODE(Np->Num) && IS_LSIGN(Np->Num) == false)
-				Np->sign_wrote = true;	/* needn't sign */
-			else
-				Np->sign_wrote = false; /* need sign */
-
-			if (Np->Num->lsign == NUM_LSIGN_PRE && Np->Num->pre == Np->Num->pre_lsign_num)
-				Np->Num->lsign = NUM_LSIGN_POST;
-		}
-	}
-	else
-		Np->sign = false;
+	Np->sign = false;
 
 	/*
 	 * Count
 	 */
 	Np->num_count = Np->Num->post + Np->Num->pre - 1;
 
-	if (is_to_char)
-	{
-		Np->out_pre_spaces = to_char_out_pre_spaces;
-
-		if (IS_FILLMODE(Np->Num) && IS_DECIMAL(Np->Num))
-		{
-			Np->last_relevant = get_last_relevant_decnum(Np->number);
-
-			/*
-			 * If any '0' specifiers are present, make sure we don't strip
-			 * those digits.  But don't advance last_relevant beyond the last
-			 * character of the Np->number string, which is a hazard if the
-			 * number got shortened due to precision limitations.
-			 */
-			if (Np->last_relevant && Np->Num->zero_end > Np->out_pre_spaces)
-			{
-				size_t		last_zero_pos;
-				char	   *last_zero;
-
-				/* note that Np->number cannot be zero-length here */
-				last_zero_pos = strlen(Np->number) - 1;
-				last_zero_pos = Min(last_zero_pos,
-									Np->Num->zero_end - Np->out_pre_spaces);
-				last_zero = Np->number + last_zero_pos;
-				if (Np->last_relevant < last_zero)
-					Np->last_relevant = last_zero;
-			}
-		}
-
-		if (Np->sign_wrote == false && Np->out_pre_spaces == 0)
-			++Np->num_count;
-	}
-	else
-	{
-		Np->out_pre_spaces = 0;
-		*Np->number = ' ';		/* sign space */
-		*(Np->number + 1) = '\0';
-	}
+	*Np->output = ' ';			/* sign space */
+	*(Np->output + 1) = '\0';
 
 	Np->num_in = 0;
 	Np->num_curr = 0;
@@ -5844,7 +5803,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 	elog(DEBUG_elog_output,
 		 "\n\tSIGN: '%c'\n\tNUM: '%s'\n\tPRE: %d\n\tPOST: %d\n\tNUM_COUNT: %d\n\tNUM_PRE: %d\n\tSIGN_WROTE: %s\n\tZERO: %s\n\tZERO_START: %d\n\tZERO_END: %d\n\tLAST_RELEVANT: %s\n\tBRACKET: %s\n\tPLUS: %s\n\tMINUS: %s\n\tFILLMODE: %s\n\tROMAN: %s\n\tEEEE: %s",
 		 Np->sign,
-		 Np->number,
+		 Np->output,
 		 Np->Num->pre,
 		 Np->Num->post,
 		 Np->num_count,
@@ -5871,23 +5830,17 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 	/*
 	 * Processor direct cycle
 	 */
-	if (Np->is_to_char)
-		Np->number_p = Np->number;
-	else
-		Np->number_p = Np->number + 1;	/* first char is space for sign */
+	Np->output_p = Np->output + 1;	/* first char is space for sign */
+	Np->input_p = Np->input;
 
-	for (n = node, Np->inout_p = Np->inout; n->type != NODE_TYPE_END; n++)
+	for (const FormatNode *n = node; n->type != NODE_TYPE_END; n++)
 	{
-		if (!Np->is_to_char)
-		{
-			/*
-			 * Check at least one byte remains to be scanned.  (In actions
-			 * below, must use AMOUNT_TEST if we want to read more bytes than
-			 * that.)
-			 */
-			if (OVERLOAD_TEST)
-				break;
-		}
+		/*
+		 * Check at least one byte remains to be scanned.  (In actions below,
+		 * must use AMOUNT_TEST if we want to read more bytes than that.)
+		 */
+		if (OVERLOAD_TEST)
+			break;
 
 		/*
 		 * Format pictures actions
@@ -5897,12 +5850,12 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 			/*
 			 * Create/read digit/zero/blank/sign/special-case
 			 *
-			 * 'NUM_S' note: The locale sign is anchored to number and we
+			 * 'NUM_S' note: The locale sign is anchored to output and we
 			 * read/write it when we work with first or last number
 			 * (NUM_0/NUM_9).  This is why NUM_S is missing in switch().
 			 *
-			 * Notice the "Np->inout_p++" at the bottom of the loop.  This is
-			 * why most of the actions advance inout_p one less than you might
+			 * Notice the "Np->input_p++" at the bottom of the loop.  This is
+			 * why most of the actions advance input_p one less than you might
 			 * expect.  In cases where we don't want that increment to happen,
 			 * a switch case ends with "continue" not "break".
 			 */
@@ -5912,241 +5865,108 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 				case NUM_0:
 				case NUM_DEC:
 				case NUM_D:
-					if (Np->is_to_char)
-					{
-						NUM_numpart_to_char(Np, n->key->id);
-						continue;	/* for() */
-					}
-					else
-					{
-						NUM_numpart_from_char(Np, n->key->id, input_len);
-						break;	/* switch() case: */
-					}
+					NUM_numpart_from_char(Np, n->key->id);
+					break;		/* switch() case: */
 
 				case NUM_COMMA:
-					if (Np->is_to_char)
+					if (!Np->num_in)
 					{
-						if (!Np->num_in)
-						{
-							if (IS_FILLMODE(Np->Num))
-								continue;
-							else
-								*Np->inout_p = ' ';
-						}
-						else
-							*Np->inout_p = ',';
-					}
-					else
-					{
-						if (!Np->num_in)
-						{
-							if (IS_FILLMODE(Np->Num))
-								continue;
-						}
-						if (*Np->inout_p != ',')
+						if (IS_FILLMODE(Np->Num))
 							continue;
 					}
+					if (*Np->input_p != ',')
+						continue;
 					break;
 
 				case NUM_G:
 					pattern = Np->L_thousands_sep;
 					pattern_len = strlen(pattern);
-					if (Np->is_to_char)
+					if (!Np->num_in)
 					{
-						/* Truncate symbol if it's potentially too long */
-						if (unlikely(pattern_len > NUM_MAX_ITEM_SIZ))
-							pattern_len = pg_mbcliplen(pattern, pattern_len,
-													   NUM_MAX_ITEM_SIZ);
-						if (!Np->num_in)
-						{
-							if (IS_FILLMODE(Np->Num))
-								continue;
-							else
-							{
-								/* just in case there are MB chars */
-								pattern_len = pg_mbstrlen_with_len(pattern,
-																   pattern_len);
-								memset(Np->inout_p, ' ', pattern_len);
-								Np->inout_p += pattern_len - 1;
-							}
-						}
-						else
-						{
-							memcpy(Np->inout_p, pattern, pattern_len);
-							Np->inout_p += pattern_len - 1;
-						}
-					}
-					else
-					{
-						/* Here we do not truncate the symbol ... */
-						if (!Np->num_in)
-						{
-							if (IS_FILLMODE(Np->Num))
-								continue;
-						}
-
-						/*
-						 * Because L_thousands_sep typically contains data
-						 * characters (either '.' or ','), we can't use
-						 * NUM_eat_non_data_chars here.  Instead skip only if
-						 * the input matches L_thousands_sep.
-						 */
-						if (AMOUNT_TEST(pattern_len) &&
-							strncmp(Np->inout_p, pattern, pattern_len) == 0)
-							Np->inout_p += pattern_len - 1;
-						else
+						if (IS_FILLMODE(Np->Num))
 							continue;
 					}
+
+					/*
+					 * Because L_thousands_sep typically contains data
+					 * characters (either '.' or ','), we can't use
+					 * NUM_eat_non_data_chars here.  Instead skip only if the
+					 * input matches L_thousands_sep.
+					 */
+					if (AMOUNT_TEST(pattern_len) &&
+						strncmp(Np->input_p, pattern, pattern_len) == 0)
+						Np->input_p += pattern_len - 1;
+					else
+						continue;
 					break;
 
 				case NUM_L:
 					pattern = Np->L_currency_symbol;
-					if (Np->is_to_char)
-					{
-						/* Truncate symbol if it's potentially too long */
-						pattern_len = strlen(pattern);
-						if (unlikely(pattern_len > NUM_MAX_ITEM_SIZ))
-							pattern_len = pg_mbcliplen(pattern, pattern_len,
-													   NUM_MAX_ITEM_SIZ);
-
-						memcpy(Np->inout_p, pattern, pattern_len);
-						Np->inout_p += pattern_len - 1;
-					}
-					else
-					{
-						/* Here we do not truncate the symbol ... */
-						NUM_eat_non_data_chars(Np, pg_mbstrlen(pattern), input_len);
-						continue;
-					}
-					break;
+					NUM_eat_non_data_chars(Np, pg_mbstrlen(pattern));
+					continue;
 
 				case NUM_RN:
 				case NUM_rn:
-					if (Np->is_to_char)
 					{
-						const char *number_p;
-
-						if (n->key->id == NUM_rn)
-							number_p = asc_tolower_z(Np->number_p);
-						else
-							number_p = Np->number_p;
-						if (IS_FILLMODE(Np->Num))
-							strcpy(Np->inout_p, number_p);
-						else
-							sprintf(Np->inout_p, "%15s", number_p);
-						Np->inout_p += strlen(Np->inout_p) - 1;
-					}
-					else
-					{
-						int			roman_result = roman_to_int(Np, input_len);
+						int			roman_result = roman_to_int(Np);
 						int			numlen;
 
 						if (roman_result < 0)
 							ereport(ERROR,
 									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 									 errmsg("invalid Roman numeral")));
-						numlen = sprintf(Np->number_p, "%d", roman_result);
-						Np->number_p += numlen;
+						numlen = sprintf(Np->output_p, "%d", roman_result);
+						Np->output_p += numlen;
 						Np->Num->pre = numlen;
 						Np->Num->post = 0;
 						continue;	/* roman_to_int ate all the chars */
 					}
-					break;
 
 				case NUM_th:
-					if (IS_ROMAN(Np->Num) || *Np->number == '#' ||
+					if (IS_ROMAN(Np->Num) || *Np->output == '#' ||
 						Np->sign == '-' || IS_DECIMAL(Np->Num))
 						continue;
-
-					if (Np->is_to_char)
-					{
-						strcpy(Np->inout_p, get_th(Np->number, TH_LOWER));
-						Np->inout_p += 1;
-					}
-					else
-					{
-						/* All variants of 'th' occupy 2 characters */
-						NUM_eat_non_data_chars(Np, 2, input_len);
-						continue;
-					}
-					break;
+					/* All variants of 'th' occupy 2 characters */
+					NUM_eat_non_data_chars(Np, 2);
+					continue;
 
 				case NUM_TH:
-					if (IS_ROMAN(Np->Num) || *Np->number == '#' ||
+					if (IS_ROMAN(Np->Num) || *Np->output == '#' ||
 						Np->sign == '-' || IS_DECIMAL(Np->Num))
 						continue;
-
-					if (Np->is_to_char)
-					{
-						strcpy(Np->inout_p, get_th(Np->number, TH_UPPER));
-						Np->inout_p += 1;
-					}
-					else
-					{
-						/* All variants of 'TH' occupy 2 characters */
-						NUM_eat_non_data_chars(Np, 2, input_len);
-						continue;
-					}
-					break;
+					/* All variants of 'TH' occupy 2 characters */
+					NUM_eat_non_data_chars(Np, 2);
+					continue;
 
 				case NUM_MI:
-					if (Np->is_to_char)
-					{
-						if (Np->sign == '-')
-							*Np->inout_p = '-';
-						else if (IS_FILLMODE(Np->Num))
-							continue;
-						else
-							*Np->inout_p = ' ';
-					}
+					if (*Np->input_p == '-')
+						*Np->output = '-';
 					else
 					{
-						if (*Np->inout_p == '-')
-							*Np->number = '-';
-						else
-						{
-							NUM_eat_non_data_chars(Np, 1, input_len);
-							continue;
-						}
+						NUM_eat_non_data_chars(Np, 1);
+						continue;
 					}
 					break;
 
 				case NUM_PL:
-					if (Np->is_to_char)
-					{
-						if (Np->sign == '+')
-							*Np->inout_p = '+';
-						else if (IS_FILLMODE(Np->Num))
-							continue;
-						else
-							*Np->inout_p = ' ';
-					}
+					if (*Np->input_p == '+')
+						*Np->output = '+';
 					else
 					{
-						if (*Np->inout_p == '+')
-							*Np->number = '+';
-						else
-						{
-							NUM_eat_non_data_chars(Np, 1, input_len);
-							continue;
-						}
+						NUM_eat_non_data_chars(Np, 1);
+						continue;
 					}
 					break;
 
 				case NUM_SG:
-					if (Np->is_to_char)
-						*Np->inout_p = Np->sign;
+					if (*Np->input_p == '-')
+						*Np->output = '-';
+					else if (*Np->input_p == '+')
+						*Np->output = '+';
 					else
 					{
-						if (*Np->inout_p == '-')
-							*Np->number = '-';
-						else if (*Np->inout_p == '+')
-							*Np->number = '+';
-						else
-						{
-							NUM_eat_non_data_chars(Np, 1, input_len);
-							continue;
-						}
+						NUM_eat_non_data_chars(Np, 1);
+						continue;
 					}
 					break;
 
@@ -6158,47 +5978,333 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 		else
 		{
 			/*
-			 * In TO_CHAR, non-pattern characters in the format are copied to
-			 * the output.  In TO_NUMBER, we skip one input character for each
-			 * non-pattern format character, whether or not it matches the
-			 * format character.
+			 * In TO_NUMBER, we skip one input character for each non-pattern
+			 * format character, whether or not it matches the format
+			 * character.
 			 */
-			if (Np->is_to_char)
-			{
-				strcpy(Np->inout_p, n->character);
-				Np->inout_p += strlen(Np->inout_p);
-			}
-			else
-			{
-				Np->inout_p += pg_mblen_range(Np->inout_p, Np->inout + input_len);
-			}
+			Np->input_p += pg_mblen_range(Np->input_p, Np->input_end);
 			continue;
 		}
-		Np->inout_p++;
+		Np->input_p++;
 	}
 
-	if (Np->is_to_char)
+	if (*(Np->output_p - 1) == '.')
+		*(Np->output_p - 1) = '\0';
+	else
+		*Np->output_p = '\0';
+
+	/*
+	 * Correction - precision of dec. number
+	 */
+	Np->Num->post = Np->read_post;
+
+#ifdef DEBUG_TO_FROM_CHAR
+	elog(DEBUG_elog_output, "TO_NUMBER (output): '%s'", Np->output);
+#endif
+}
+
+/*
+ * Numeric format processing for TO_CHAR.
+ *
+ * We generate a string in "output" according to the format, working from
+ * the datatype-independent representation of the number in "input".
+ *
+ * node: array of FormatNodes representing the parsed format string
+ * Num: input/output argument holding additional format flags and state
+ * input: the value to be formatted
+ * output: output buffer (will be null-terminated)
+ * out_pre_spaces: number of spaces needed before first digit
+ * sign: '+' or '-'
+ * collid: active collation
+ *
+ * DOCUMENTME: "input" is mostly in standard format, but the caller is
+ * expected to have made some adjustments to it to simplify the logic here.
+ * Should reverse-engineer and document the rules.
+ */
+static void
+NUM_processor_to_char(const FormatNode *node, NUMDesc *Num,
+					  const char *input, char *output,
+					  int out_pre_spaces, int sign, Oid collid)
+{
+	NUMProc		_Np,
+			   *Np = &_Np;
+	const char *pattern;
+	size_t		pattern_len;
+
+	MemSet(Np, 0, sizeof(NUMProc));
+
+	Np->Num = Num;
+	Np->input = input;
+	Np->output = output;
+	Np->last_relevant = NULL;
+	Np->out_pre_spaces = out_pre_spaces;
+	Np->read_post = 0;
+	Np->read_pre = 0;
+	Np->read_dec = false;
+
+	if (Np->Num->zero_start)
+		--Np->Num->zero_start;
+
+	if (IS_EEEE(Np->Num))
 	{
-		*Np->inout_p = '\0';
-		return Np->inout;
+		/* In EEEE mode, we just regurgitate input as-is */
+		strcpy(output, input);
+		return;
+	}
+
+	/*
+	 * Sign
+	 */
+	Np->sign = sign;
+
+	/* MI/PL/SG - write sign itself and not in number */
+	if (IS_PLUS(Np->Num) || IS_MINUS(Np->Num))
+	{
+		if (IS_PLUS(Np->Num) && IS_MINUS(Np->Num) == false)
+			Np->sign_wrote = false; /* need sign */
+		else
+			Np->sign_wrote = true;	/* needn't sign */
 	}
 	else
 	{
-		if (*(Np->number_p - 1) == '.')
-			*(Np->number_p - 1) = '\0';
+		if (Np->sign != '-')
+		{
+			if (IS_FILLMODE(Np->Num))
+				Np->Num->flag &= ~NUM_F_BRACKET;
+		}
+
+		if (Np->sign == '+' && IS_FILLMODE(Np->Num) && IS_LSIGN(Np->Num) == false)
+			Np->sign_wrote = true;	/* needn't sign */
 		else
-			*Np->number_p = '\0';
+			Np->sign_wrote = false; /* need sign */
+
+		if (Np->Num->lsign == NUM_LSIGN_PRE && Np->Num->pre == Np->Num->pre_lsign_num)
+			Np->Num->lsign = NUM_LSIGN_POST;
+	}
+
+	/*
+	 * Count
+	 */
+	Np->num_count = Np->Num->post + Np->Num->pre - 1;
+
+	if (IS_FILLMODE(Np->Num) && IS_DECIMAL(Np->Num))
+	{
+		Np->last_relevant = get_last_relevant_decnum(Np->input);
 
 		/*
-		 * Correction - precision of dec. number
+		 * If any '0' specifiers are present, make sure we don't strip those
+		 * digits.  But don't advance last_relevant beyond the last character
+		 * of the Np->input string, which is a hazard if the number got
+		 * shortened due to precision limitations.
 		 */
-		Np->Num->post = Np->read_post;
+		if (Np->last_relevant && Np->Num->zero_end > Np->out_pre_spaces)
+		{
+			size_t		last_zero_pos;
+			const char *last_zero;
+
+			/* note that Np->input cannot be zero-length here */
+			last_zero_pos = strlen(Np->input) - 1;
+			last_zero_pos = Min(last_zero_pos,
+								Np->Num->zero_end - Np->out_pre_spaces);
+			last_zero = Np->input + last_zero_pos;
+			if (Np->last_relevant < last_zero)
+				Np->last_relevant = last_zero;
+		}
+	}
+
+	if (Np->sign_wrote == false && Np->out_pre_spaces == 0)
+		++Np->num_count;
+
+	Np->num_in = 0;
+	Np->num_curr = 0;
 
 #ifdef DEBUG_TO_FROM_CHAR
-		elog(DEBUG_elog_output, "TO_NUMBER (number): '%s'", Np->number);
+	elog(DEBUG_elog_output,
+		 "\n\tSIGN: '%c'\n\tNUM: '%s'\n\tPRE: %d\n\tPOST: %d\n\tNUM_COUNT: %d\n\tNUM_PRE: %d\n\tSIGN_WROTE: %s\n\tZERO: %s\n\tZERO_START: %d\n\tZERO_END: %d\n\tLAST_RELEVANT: %s\n\tBRACKET: %s\n\tPLUS: %s\n\tMINUS: %s\n\tFILLMODE: %s\n\tROMAN: %s\n\tEEEE: %s",
+		 Np->sign,
+		 Np->input,
+		 Np->Num->pre,
+		 Np->Num->post,
+		 Np->num_count,
+		 Np->out_pre_spaces,
+		 Np->sign_wrote ? "Yes" : "No",
+		 IS_ZERO(Np->Num) ? "Yes" : "No",
+		 Np->Num->zero_start,
+		 Np->Num->zero_end,
+		 Np->last_relevant ? Np->last_relevant : "<not set>",
+		 IS_BRACKET(Np->Num) ? "Yes" : "No",
+		 IS_PLUS(Np->Num) ? "Yes" : "No",
+		 IS_MINUS(Np->Num) ? "Yes" : "No",
+		 IS_FILLMODE(Np->Num) ? "Yes" : "No",
+		 IS_ROMAN(Np->Num) ? "Yes" : "No",
+		 IS_EEEE(Np->Num) ? "Yes" : "No"
+		);
 #endif
-		return Np->number;
+
+	/*
+	 * Locale
+	 */
+	NUM_prepare_locale(Np);
+
+	/*
+	 * Processor direct cycle
+	 */
+	Np->input_p = Np->input;
+	Np->output_p = Np->output;
+
+	for (const FormatNode *n = node; n->type != NODE_TYPE_END; n++)
+	{
+		/*
+		 * Format pictures actions
+		 */
+		if (n->type == NODE_TYPE_ACTION)
+		{
+			/*
+			 * Create/read digit/zero/blank/sign/special-case
+			 *
+			 * 'NUM_S' note: The locale sign is anchored to input and we
+			 * read/write it when we work with first or last number
+			 * (NUM_0/NUM_9).  This is why NUM_S is missing in switch().
+			 *
+			 * Notice the "Np->output_p++" at the bottom of the loop.  This is
+			 * why most of the actions advance output_p one less than you
+			 * might expect.  In cases where we don't want that increment to
+			 * happen, a switch case ends with "continue" not "break".
+			 */
+			switch (n->key->id)
+			{
+				case NUM_9:
+				case NUM_0:
+				case NUM_DEC:
+				case NUM_D:
+					NUM_numpart_to_char(Np, n->key->id);
+					continue;	/* for() */
+
+				case NUM_COMMA:
+					if (!Np->num_in)
+					{
+						if (IS_FILLMODE(Np->Num))
+							continue;
+						else
+							*Np->output_p = ' ';
+					}
+					else
+						*Np->output_p = ',';
+					break;
+
+				case NUM_G:
+					pattern = Np->L_thousands_sep;
+					pattern_len = strlen(pattern);
+					/* Truncate symbol if it's potentially too long */
+					if (unlikely(pattern_len > NUM_MAX_ITEM_SIZ))
+						pattern_len = pg_mbcliplen(pattern, pattern_len,
+												   NUM_MAX_ITEM_SIZ);
+					if (!Np->num_in)
+					{
+						if (IS_FILLMODE(Np->Num))
+							continue;
+						else
+						{
+							/* just in case there are MB chars */
+							pattern_len = pg_mbstrlen_with_len(pattern,
+															   pattern_len);
+							memset(Np->output_p, ' ', pattern_len);
+							Np->output_p += pattern_len - 1;
+						}
+					}
+					else
+					{
+						memcpy(Np->output_p, pattern, pattern_len);
+						Np->output_p += pattern_len - 1;
+					}
+					break;
+
+				case NUM_L:
+					pattern = Np->L_currency_symbol;
+					/* Truncate symbol if it's potentially too long */
+					pattern_len = strlen(pattern);
+					if (unlikely(pattern_len > NUM_MAX_ITEM_SIZ))
+						pattern_len = pg_mbcliplen(pattern, pattern_len,
+												   NUM_MAX_ITEM_SIZ);
+
+					memcpy(Np->output_p, pattern, pattern_len);
+					Np->output_p += pattern_len - 1;
+					break;
+
+				case NUM_RN:
+				case NUM_rn:
+					{
+						const char *input_p;
+
+						if (n->key->id == NUM_rn)
+							input_p = asc_tolower_z(Np->input_p);
+						else
+							input_p = Np->input_p;
+						if (IS_FILLMODE(Np->Num))
+							strcpy(Np->output_p, input_p);
+						else
+							sprintf(Np->output_p, "%15s", input_p);
+						Np->output_p += strlen(Np->output_p) - 1;
+					}
+					break;
+
+				case NUM_th:
+					if (IS_ROMAN(Np->Num) || *Np->input == '#' ||
+						Np->sign == '-' || IS_DECIMAL(Np->Num))
+						continue;
+					strcpy(Np->output_p, get_th(Np->input, TH_LOWER));
+					Np->output_p += 1;
+					break;
+
+				case NUM_TH:
+					if (IS_ROMAN(Np->Num) || *Np->input == '#' ||
+						Np->sign == '-' || IS_DECIMAL(Np->Num))
+						continue;
+					strcpy(Np->output_p, get_th(Np->input, TH_UPPER));
+					Np->output_p += 1;
+					break;
+
+				case NUM_MI:
+					if (Np->sign == '-')
+						*Np->output_p = '-';
+					else if (IS_FILLMODE(Np->Num))
+						continue;
+					else
+						*Np->output_p = ' ';
+					break;
+
+				case NUM_PL:
+					if (Np->sign == '+')
+						*Np->output_p = '+';
+					else if (IS_FILLMODE(Np->Num))
+						continue;
+					else
+						*Np->output_p = ' ';
+					break;
+
+				case NUM_SG:
+					*Np->output_p = Np->sign;
+					break;
+
+				default:
+					continue;
+					break;
+			}
+		}
+		else
+		{
+			/*
+			 * In TO_CHAR, non-pattern characters in the format are copied to
+			 * the output.
+			 */
+			strcpy(Np->output_p, n->character);
+			Np->output_p += strlen(Np->output_p);
+			continue;
+		}
+		Np->output_p++;
 	}
+
+	*Np->output_p = '\0';
 }
 
 /*
@@ -6221,7 +6327,8 @@ do { \
 do { \
 	size_t	len; \
 									\
-	NUM_processor(format, &Num, VARDATA(result), numstr, 0, out_pre_spaces, sign, true, PG_GET_COLLATION()); \
+	NUM_processor_to_char(format, &Num, numstr, VARDATA(result), \
+						  out_pre_spaces, sign, PG_GET_COLLATION()); \
 									\
 	if (shouldFree)					\
 		pfree(format);				\
@@ -6261,8 +6368,10 @@ numeric_to_number(PG_FUNCTION_ARGS)
 
 	numstr = (char *) palloc((len * NUM_MAX_ITEM_SIZ) + 1);
 
-	NUM_processor(format, &Num, VARDATA_ANY(value), numstr,
-				  VARSIZE_ANY_EXHDR(value), 0, 0, false, PG_GET_COLLATION());
+	NUM_processor_from_char(format, &Num,
+							VARDATA_ANY(value), VARSIZE_ANY_EXHDR(value),
+							numstr,
+							PG_GET_COLLATION());
 
 	scale = Num.post;
 	precision = Num.pre + Num.multi + scale;
