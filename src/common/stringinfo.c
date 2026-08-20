@@ -152,16 +152,16 @@ appendStringInfo(StringInfo str, const char *fmt, ...)
 		int			needed;
 
 		/* Try to format the data. */
-		errno = save_errno;
 		va_start(args, fmt);
 		needed = appendStringInfoVA(str, fmt, args);
 		va_end(args);
 
-		if (needed == 0)
+		if (likely(needed == 0))
 			break;				/* success */
 
 		/* Increase the buffer size and try again. */
 		enlargeStringInfo(str, needed);
+		errno = save_errno;
 	}
 }
 
@@ -183,13 +183,11 @@ appendStringInfo(StringInfo str, const char *fmt, ...)
  * to redo va_start before you can rescan the argument list, and we can't do
  * that from here.
  */
-int
+inline int
 appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 {
 	int			avail;
-	size_t		nprinted;
-
-	Assert(str != NULL);
+	int			nprinted;
 
 	/*
 	 * If there's hardly any space, don't bother trying, just fail to make the
@@ -200,12 +198,24 @@ appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 	if (avail < 16)
 		return 32;
 
-	nprinted = pvsnprintf(str->data + str->len, (size_t) avail, fmt, args);
+	nprinted = vsnprintf(str->data + str->len, (size_t) avail, fmt, args);
 
-	if (nprinted < (size_t) avail)
+	/* We assume failure means the fmt is bogus, hence hard failure is OK */
+	if (unlikely(nprinted < 0))
+	{
+#ifndef FRONTEND
+		elog(ERROR, "vsnprintf failed: %m with format string \"%s\"", fmt);
+#else
+		fprintf(stderr, "vsnprintf failed: %m with format string \"%s\"\n",
+				fmt);
+		exit(EXIT_FAILURE);
+#endif
+	}
+
+	if (likely(nprinted < avail))
 	{
 		/* Success.  Note nprinted does not include trailing null. */
-		str->len += (int) nprinted;
+		str->len += nprinted;
 		return 0;
 	}
 
@@ -213,11 +223,14 @@ appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 	str->data[str->len] = '\0';
 
 	/*
-	 * Return pvsnprintf's estimate of the space needed.  (Although this is
-	 * given as a size_t, we know it will fit in int because it's not more
-	 * than MaxAllocSize.)
+	 * We assume a C99-compliant vsnprintf, so believe its estimate of the
+	 * required space.  (If it's wrong, the logic will still work, but we may
+	 * loop multiple times.)
+	 *
+	 * Unlike pvsnprintf(), we don't check for overrunning MaxAllocSize,
+	 * preferring to leave that to enlargeStringInfo().
 	 */
-	return (int) nprinted;
+	return nprinted;
 }
 
 /*
