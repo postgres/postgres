@@ -200,8 +200,6 @@ typedef struct avw_dbase
 typedef struct av_relation
 {
 	Oid			ar_toastrelid;	/* hash key - must be first */
-	Oid			ar_relid;
-	bool		ar_hasrelopts;
 	StdRdOptions ar_reloptions; /* copy of main table's reloptions */
 } av_relation;
 
@@ -2099,7 +2097,7 @@ do_autovacuum(void)
 		 * this whether or not the table is going to be vacuumed, because we
 		 * don't automatically vacuum toast tables along the parent table.
 		 */
-		if (OidIsValid(classForm->reltoastrelid))
+		if (OidIsValid(classForm->reltoastrelid) && relopts)
 		{
 			av_relation *hentry;
 			bool		found;
@@ -2107,19 +2105,10 @@ do_autovacuum(void)
 			hentry = hash_search(table_toast_map,
 								 &classForm->reltoastrelid,
 								 HASH_ENTER, &found);
+			Assert(!found);		/* rels cannot share a TOAST table */
 
-			if (!found)
-			{
-				/* hash_search already filled in the key */
-				hentry->ar_relid = relid;
-				hentry->ar_hasrelopts = false;
-				if (relopts != NULL)
-				{
-					hentry->ar_hasrelopts = true;
-					memcpy(&hentry->ar_reloptions, relopts,
-						   sizeof(StdRdOptions));
-				}
-			}
+			/* hash_search already filled in the key */
+			memcpy(&hentry->ar_reloptions, relopts, sizeof(StdRdOptions));
 		}
 
 		/* Release stuff to avoid per-relation leakage */
@@ -2165,10 +2154,9 @@ do_autovacuum(void)
 		else
 		{
 			av_relation *hentry;
-			bool		found;
 
-			hentry = hash_search(table_toast_map, &relid, HASH_FIND, &found);
-			if (found && hentry->ar_hasrelopts)
+			hentry = hash_search(table_toast_map, &relid, HASH_FIND, NULL);
+			if (hentry)
 				relopts = &hentry->ar_reloptions;
 		}
 
@@ -2814,14 +2802,12 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 	relopts = (StdRdOptions *) extractRelOptions(classTup, pg_class_desc, NULL);
 	if (relopts)
 		free_relopts = true;
-	else if (classForm->relkind == RELKIND_TOASTVALUE &&
-			 table_toast_map != NULL)
+	else if (classForm->relkind == RELKIND_TOASTVALUE)
 	{
 		av_relation *hentry;
-		bool		found;
 
-		hentry = hash_search(table_toast_map, &relid, HASH_FIND, &found);
-		if (found && hentry->ar_hasrelopts)
+		hentry = hash_search(table_toast_map, &relid, HASH_FIND, NULL);
+		if (hentry)
 			relopts = &hentry->ar_reloptions;
 	}
 
