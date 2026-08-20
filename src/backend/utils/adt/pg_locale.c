@@ -1524,9 +1524,11 @@ pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
  * pg_strxfrm_enabled() first, otherwise this function may return wrong
  * results or an error.
  *
- * Returns the number of bytes needed (or more) to store the transformed
- * string, excluding the terminating nul byte. If the value returned is
- * 'destsize' or greater, the resulting contents of 'dest' are undefined.
+ * Returns the number of bytes needed (NB: or more; see comments above
+ * strnxfrm_libc()) to store the transformed string, excluding the terminating
+ * nul byte. If the value returned is 'destsize' or greater, the resulting
+ * contents of 'dest' are undefined, and the caller should use the return
+ * value to resize the buffer.
  */
 size_t
 pg_strnxfrm(char *dest, size_t destsize, const char *src, size_t srclen,

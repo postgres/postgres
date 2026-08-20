@@ -971,6 +971,11 @@ strcoll_libc(const char *arg1, const char *arg2, pg_locale_t locale)
  * strnxfrm_libc
  *
  * NUL-terminate src and pass to strxfrm_l().
+ *
+ * NB: it's possible for this function to return a different size needed for
+ * two calls with the same input string. If destsize is too small to hold the
+ * result, strxfrm() may return the upper bound of the size needed rather than
+ * the exact size needed.
  */
 static size_t
 strnxfrm_libc(char *dest, size_t destsize, const char *src, size_t srclen,
@@ -1001,6 +1006,11 @@ strnxfrm_libc(char *dest, size_t destsize, const char *src, size_t srclen,
 
 /*
  * strxfrm_libc
+ *
+ * NB: it's possible for this function to return a different size needed for
+ * two calls with the same input string. If destsize is too small to hold the
+ * result, strxfrm() may return the upper bound of the size needed rather than
+ * the exact size needed.
  */
 static size_t
 strxfrm_libc(char *dest, size_t destsize, const char *src, pg_locale_t locale)
