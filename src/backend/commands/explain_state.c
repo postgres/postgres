@@ -422,7 +422,7 @@ GUCCheckExplainExtensionOption(const char *option_name,
 	}
 
 	/* Unrecognized option name. */
-	GUC_check_errmsg("unrecognized EXPLAIN option \"%s\"", option_name);
+	GUC_check_errmsg("unrecognized %s option \"%s\"", "EXPLAIN", option_name);
 	return false;
 }
 
@@ -487,8 +487,8 @@ GUCCheckBooleanExplainOption(const char *option_name,
 
 	if (!valid)
 	{
-		GUC_check_errmsg("EXPLAIN option \"%s\" requires a Boolean value",
-						 option_name);
+		GUC_check_errmsg("%s option \"%s\" requires a Boolean value",
+						 "EXPLAIN", option_name);
 		return false;
 	}
 

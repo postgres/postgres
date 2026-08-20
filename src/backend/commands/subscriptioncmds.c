@@ -371,7 +371,7 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 			if (opts->maxretention < 0)
 				ereport(ERROR,
 						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("max_retention_duration cannot be negative"));
+						errmsg("option \"%s\" cannot be negative", "max_retention_duration"));
 		}
 		else if (IsSet(supported_opts, SUBOPT_ORIGIN) &&
 				 strcmp(defel->defname, "origin") == 0)
@@ -2020,7 +2020,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					if (logicalrep_workers_find(subid, true, true))
 						ereport(ERROR,
 								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-								 errmsg("cannot alter retain_dead_tuples when logical replication worker is still running"),
+								 errmsg("cannot alter option \"%s\" when logical replication worker is still running",
+										"retain_dead_tuples"),
 								 errhint("Try again after some time.")));
 
 					/*

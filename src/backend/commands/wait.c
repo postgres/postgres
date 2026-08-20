@@ -302,21 +302,21 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 							ereport(ERROR,
 									errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 									errmsg("recovery is not in progress"),
-									errhint("Waiting for the standby_replay LSN can only be executed during recovery."));
+									errhint("Waiting for the %s LSN can only be executed during recovery.", "standby_replay"));
 							break;
 
 						case WAIT_LSN_TYPE_STANDBY_WRITE:
 							ereport(ERROR,
 									errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 									errmsg("recovery is not in progress"),
-									errhint("Waiting for the standby_write LSN can only be executed during recovery."));
+									errhint("Waiting for the %s LSN can only be executed during recovery.", "standby_write"));
 							break;
 
 						case WAIT_LSN_TYPE_STANDBY_FLUSH:
 							ereport(ERROR,
 									errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 									errmsg("recovery is not in progress"),
-									errhint("Waiting for the standby_flush LSN can only be executed during recovery."));
+									errhint("Waiting for the %s LSN can only be executed during recovery.", "standby_flush"));
 							break;
 
 						default:
