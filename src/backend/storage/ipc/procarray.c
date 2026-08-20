@@ -2487,8 +2487,13 @@ ProcArrayInstallImportedXmin(TransactionId xmin,
 	if (!sourcevxid)
 		return false;
 
-	/* Get lock so source xact can't end while we're doing this */
-	LWLockAcquire(ProcArrayLock, LW_SHARED);
+	/*
+	 * Take the lock in exclusive mode to ensure that installing xmin is
+	 * atomic with our check that the source transaction is still running.
+	 * (Using shared mode risks a concurrent VACUUM whose ComputeXidHorizons()
+	 * call fails to observe the xmin in either the source proc or our own.)
+	 */
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
 	/*
 	 * Find the PGPROC entry of the source transaction. (This could use
