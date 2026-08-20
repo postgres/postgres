@@ -289,6 +289,11 @@ EXPLAIN (verbose, costs off)
 DELETE FROM foo WHERE f1 = 4 RETURNING old.*,new.*, *;
 DELETE FROM foo WHERE f1 = 4 RETURNING old.*,new.*, *;
 
+-- system columns are not available when the query is rewritten by a rule
+DELETE FROM foo WHERE f1 = 4 RETURNING tableoid;
+DELETE FROM foo WHERE f1 = 4 RETURNING old.ctid;
+DELETE FROM foo WHERE f1 = 4 RETURNING new.xmin;
+
 -- UPDATE on view with rule
 EXPLAIN (verbose, costs off)
 UPDATE joinview SET f3 = f3 + 1 WHERE f3 = 57

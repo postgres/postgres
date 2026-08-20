@@ -1851,6 +1851,19 @@ ReplaceVarFromTargetList(const Var *var,
 		switch (nomatch_option)
 		{
 			case REPLACEVARS_REPORT_ERROR:
+
+				/*
+				 * A system column can never match a targetlist entry, since
+				 * those all have positive resnos, so throw a suitable
+				 * user-facing error.
+				 */
+				if (var->varattno < 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot use system column \"%s\" in RETURNING list of a query that is rewritten by a rule",
+									get_rte_attribute_name(target_rte,
+														   var->varattno))));
+
 				/* fall through, throw error below */
 				break;
 

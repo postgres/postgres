@@ -702,6 +702,13 @@ DELETE FROM foo WHERE f1 = 4 RETURNING old.*,new.*, *;
   4 | conflicted | -1 | 99 |  4 | conflicted (deleted) | -1 | -1 |  4 | conflicted (deleted) | -1 | -1
 (1 row)
 
+-- system columns are not available when the query is rewritten by a rule
+DELETE FROM foo WHERE f1 = 4 RETURNING tableoid;
+ERROR:  cannot use system column "tableoid" in RETURNING list of a query that is rewritten by a rule
+DELETE FROM foo WHERE f1 = 4 RETURNING old.ctid;
+ERROR:  cannot use system column "ctid" in RETURNING list of a query that is rewritten by a rule
+DELETE FROM foo WHERE f1 = 4 RETURNING new.xmin;
+ERROR:  cannot use system column "xmin" in RETURNING list of a query that is rewritten by a rule
 -- UPDATE on view with rule
 EXPLAIN (verbose, costs off)
 UPDATE joinview SET f3 = f3 + 1 WHERE f3 = 57
