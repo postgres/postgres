@@ -622,6 +622,11 @@ strncoll_libc(const char *arg1, ssize_t len1, const char *arg2, ssize_t len2,
  * NUL-terminate src, if necessary, and pass to strxfrm_l().
  *
  * A source length of -1 means that it's already NUL-terminated.
+ *
+ * NB: it's possible for this function to return a different size needed for
+ * two calls with the same input string. If destsize is too small to hold the
+ * result, strxfrm() may return the upper bound of the size needed rather than
+ * the exact size needed.
  */
 size_t
 strnxfrm_libc(char *dest, size_t destsize, const char *src, ssize_t srclen,
