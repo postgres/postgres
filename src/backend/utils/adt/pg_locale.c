@@ -2098,6 +2098,14 @@ pg_strncoll(const char *arg1, size_t len1, const char *arg2, size_t len2,
 }
 
 
+/*
+ * pg_strxfrm_libc()
+ *
+ * NB: it's possible for this function to return a different size needed for
+ * two calls with the same input string. If destsize is too small to hold the
+ * result, strxfrm() may return the upper bound of the size needed rather than
+ * the exact size needed.
+ */
 static size_t
 pg_strxfrm_libc(char *dest, const char *src, size_t destsize,
 				pg_locale_t locale)
@@ -2118,6 +2126,14 @@ pg_strxfrm_libc(char *dest, const char *src, size_t destsize,
 #endif
 }
 
+/*
+ * pg_strnxfrm_libc()
+ *
+ * NB: it's possible for this function to return a different size needed for
+ * two calls with the same input string. If destsize is too small to hold the
+ * result, strxfrm() may return the upper bound of the size needed rather than
+ * the exact size needed.
+ */
 static size_t
 pg_strnxfrm_libc(char *dest, const char *src, size_t srclen, size_t destsize,
 				 pg_locale_t locale)
@@ -2347,9 +2363,11 @@ pg_strxfrm(char *dest, const char *src, size_t destsize, pg_locale_t locale)
  * 'src' does not need to be nul-terminated. If 'destsize' is zero, 'dest' may
  * be NULL.
  *
- * Returns the number of bytes needed (or more) to store the transformed
- * string, excluding the terminating nul byte. If the value returned is
- * 'destsize' or greater, the resulting contents of 'dest' are undefined.
+ * Returns the number of bytes needed (NB: or more; see comments above
+ * pg_strnxfrm_libc()) to store the transformed string, excluding the
+ * terminating nul byte. If the value returned is 'destsize' or greater, the
+ * resulting contents of 'dest' are undefined, and the caller should use the
+ * return value to resize the buffer.
  *
  * This function may need to nul-terminate the argument for libc functions;
  * so if the caller already has a nul-terminated string, it should call
