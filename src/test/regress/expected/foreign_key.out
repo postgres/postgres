@@ -3910,3 +3910,44 @@ DROP TYPE fkint CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to function fkint_in(cstring)
 drop cascades to function fkint_out(fkint)
+-- Stranded firing state must not misroute ALTER TABLE ... ADD FOREIGN KEY
+-- validation into the batched fast path.  A caught FK-check error inside a
+-- subtransaction leaves firing_depth set (its decrement is skipped); a
+-- following ALTER whose validation runs per-row (forced here by RLS on the
+-- referenced table, so RI_Initial_Check() bails) would then be wrongly treated
+-- as running inside trigger firing, batched, and never flushed (a utility
+-- command has no AfterTriggerEndQuery), silently validating a violating row.
+CREATE ROLE regress_fpav_role;
+CREATE TABLE fpav_pk (id int PRIMARY KEY);
+INSERT INTO fpav_pk VALUES (1);
+ALTER TABLE fpav_pk ENABLE ROW LEVEL SECURITY;
+CREATE POLICY fpav_pk_all ON fpav_pk FOR ALL USING (true) WITH CHECK (true);
+GRANT REFERENCES, SELECT ON fpav_pk TO regress_fpav_role;
+CREATE TABLE fpav_fk (a int);
+INSERT INTO fpav_fk VALUES (1), (99);
+ALTER TABLE fpav_fk OWNER TO regress_fpav_role;
+CREATE TABLE fpav_cv_pk (id int PRIMARY KEY);
+INSERT INTO fpav_cv_pk VALUES (1);
+CREATE TABLE fpav_cv_fk (a int REFERENCES fpav_cv_pk(id));
+GRANT INSERT ON fpav_cv_fk TO regress_fpav_role;
+GRANT SELECT, INSERT ON fpav_cv_pk TO regress_fpav_role;
+SET ROLE regress_fpav_role;
+BEGIN;
+-- Caught FK violation: leaves firing_depth set if it is not restored.
+DO $$
+BEGIN
+    BEGIN
+        INSERT INTO fpav_cv_fk VALUES (999);
+    EXCEPTION WHEN foreign_key_violation THEN
+        NULL;
+    END;
+END$$;
+-- Must ERROR on the violating row (99), not silently validate it.
+ALTER TABLE fpav_fk ADD CONSTRAINT fpav_fk_fkey
+    FOREIGN KEY (a) REFERENCES fpav_pk (id);
+ERROR:  insert or update on table "fpav_fk" violates foreign key constraint "fpav_fk_fkey"
+DETAIL:  Key (a)=(99) is not present in table "fpav_pk".
+ROLLBACK;
+RESET ROLE;
+DROP TABLE fpav_fk, fpav_pk, fpav_cv_fk, fpav_cv_pk;
+DROP ROLE regress_fpav_role;

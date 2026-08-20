@@ -3958,6 +3958,8 @@ struct AfterTriggersTransData
 	SetConstraintState state;	/* saved S C state, or NULL if not yet saved */
 	AfterTriggerEventList events;	/* saved list pointer */
 	int			query_depth;	/* saved query_depth */
+	int			firing_depth;	/* saved firing_depth */
+	bool		firing_batch_callbacks; /* saved firing_batch_callbacks */
 	CommandId	firing_counter; /* saved firing_counter */
 };
 
@@ -5528,6 +5530,9 @@ AfterTriggerBeginSubXact(void)
 	afterTriggers.trans_stack[my_level].state = NULL;
 	afterTriggers.trans_stack[my_level].events = afterTriggers.events;
 	afterTriggers.trans_stack[my_level].query_depth = afterTriggers.query_depth;
+	afterTriggers.trans_stack[my_level].firing_depth = afterTriggers.firing_depth;
+	afterTriggers.trans_stack[my_level].firing_batch_callbacks =
+		afterTriggers.firing_batch_callbacks;
 	afterTriggers.trans_stack[my_level].firing_counter = afterTriggers.firing_counter;
 }
 
@@ -5628,8 +5633,28 @@ AfterTriggerEndSubXact(bool isCommit)
 		}
 	}
 
-	/* Reset in case a callback threw an error while firing. */
-	afterTriggers.firing_batch_callbacks = false;
+	/*
+	 * Restore firing_depth and firing_batch_callbacks to their values at
+	 * subtransaction start.  The matching decrement of firing_depth in
+	 * AfterTriggerEndQuery()/AfterTriggerFireDeferred(), and the clearing of
+	 * firing_batch_callbacks in FireAfterTriggerBatchCallbacks(), run after
+	 * their loops and are not protected by PG_FINALLY.  A trigger or batch
+	 * callback error caught by this subtransaction can therefore leave either
+	 * one set; restoring the saved values unwinds only this subtransaction's
+	 * firing.
+	 *
+	 * Restoring (rather than zeroing/clearing) matters because a
+	 * subtransaction can begin and end while an outer query's triggers are
+	 * firing -- for instance a batch callback whose user-supplied cast or
+	 * equality function runs DML in a BEGIN ... EXCEPTION block.  There
+	 * firing_depth is positive and firing_batch_callbacks is true; forcing
+	 * them to 0/false would corrupt the outer firing
+	 * (FireAfterTriggerBatchCallbacks() asserts firing_depth > 0, and
+	 * clearing the guard would defeat its re-entrancy check).
+	 */
+	afterTriggers.firing_depth = afterTriggers.trans_stack[my_level].firing_depth;
+	afterTriggers.firing_batch_callbacks =
+		afterTriggers.trans_stack[my_level].firing_batch_callbacks;
 }
 
 /*
