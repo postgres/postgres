@@ -1038,7 +1038,7 @@ hashbpchar(PG_FUNCTION_ARGS)
 		 * character in the hash, but it was done before and the behavior must
 		 * be preserved.
 		 */
-		result = hash_any((uint8_t *) buf, bsize + 1);
+		result = hash_any((uint8_t *) buf, rsize + 1);
 
 		pfree(buf);
 	}
@@ -1096,7 +1096,7 @@ hashbpcharextended(PG_FUNCTION_ARGS)
 		 * character in the hash, but it was done before and the behavior must
 		 * be preserved.
 		 */
-		result = hash_any_extended((uint8_t *) buf, bsize + 1,
+		result = hash_any_extended((uint8_t *) buf, rsize + 1,
 								   PG_GETARG_INT64(1));
 
 		pfree(buf);
