@@ -100,7 +100,6 @@
 /*
  * Maximal length of one node
  */
-#define DCH_MAX_ITEM_SIZ	   12	/* max localized day name		*/
 #define NUM_MAX_ITEM_SIZ		8	/* roman number (RN has 15 chars)	*/
 
 #define MAX_L10N_DATA			80	/* max localized day or month name */
@@ -1075,8 +1074,8 @@ static void NUMDesc_prepare(NUMDesc *num, FormatNode *n);
 static void parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 						 const KeySuffix *suf, const int *index, uint32 flags, NUMDesc *Num);
 
-static void DCH_to_char(FormatNode *node, bool is_interval,
-						TmToChar *in, char *out, Oid collid);
+static void DCH_to_char(const FormatNode *node, bool is_interval, Oid collid,
+						const TmToChar *in, StringInfo out);
 static void DCH_from_char(FormatNode *node, const char *in, TmFromChar *out,
 						  Oid collid, bool std, Node *escontext);
 
@@ -1086,7 +1085,7 @@ static void dump_node(FormatNode *node, int max);
 #endif
 
 static const char *get_th(const char *num, enum TH_Case type);
-static char *str_numth(char *dest, const char *num, enum TH_Case type);
+static void str_numth(StringInfo dest, int start, enum TH_Case type);
 static int	adjust_partial_year_to_2020(int year);
 static size_t strspace_len(const char *str);
 static bool from_char_set_mode(TmFromChar *tmfc, const FromCharDateMode mode,
@@ -1551,7 +1550,7 @@ dump_node(FormatNode *node, int max)
  *****************************************************************************/
 
 /*
- * Return ST/ND/RD/TH for simple (1..9) numbers
+ * Return ST/ND/RD/TH for simple (1..99) numbers
  */
 static const char *
 get_th(const char *num, enum TH_Case type)
@@ -1597,14 +1596,14 @@ get_th(const char *num, enum TH_Case type)
 
 /*
  * Convert string-number to ordinal string-number
+ *
+ * The number we are considering starts at offset "start" in dest.
  */
-static char *
-str_numth(char *dest, const char *num, enum TH_Case type)
+static void
+str_numth(StringInfo dest, int start, enum TH_Case type)
 {
-	if (dest != num)
-		strcpy(dest, num);
-	strcat(dest, get_th(num, type));
-	return dest;
+	Assert(start < dest->len);
+	appendStringInfoString(dest, get_th(dest->data + start, type));
 }
 
 /*****************************************************************************
@@ -2179,7 +2178,7 @@ from_char_parse_int_len(int *dest, const char **src, const size_t len, FormatNod
 						Node *escontext)
 {
 	long		result;
-	char		copy[DCH_MAX_ITEM_SIZ + 1];
+	char		copy[16];
 	const char *init = *src;
 	size_t		used;
 
@@ -2188,7 +2187,12 @@ from_char_parse_int_len(int *dest, const char **src, const size_t len, FormatNod
 	 */
 	*src += strspace_len(*src);
 
-	Assert(len <= DCH_MAX_ITEM_SIZ);
+	/*
+	 * Copy just the data to be parsed into copy[].  An Assert() is sufficient
+	 * protection here because "len" is a constant property of the FormatNode
+	 * and not dependent on the input string.
+	 */
+	Assert(len < sizeof(copy));
 	used = strlcpy(copy, *src, len + 1);
 
 	if (IS_SUFFIX_FM(node->suffix) || is_next_separator(node))
@@ -2575,53 +2579,60 @@ from_char_seq_search(int *dest, const char **src, const char *const *array,
 
 /*
  * Process a TmToChar struct as denoted by a list of FormatNodes.
- * The formatted data is written to the string pointed to by 'out'.
+ * The formatted data is appended to 'out'.
  */
 static void
-DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid collid)
+DCH_to_char(const FormatNode *node, bool is_interval, Oid collid,
+			const TmToChar *in, StringInfo out)
 {
-	char	   *s;
-	struct fmt_tm *tm = &in->tm;
+	const struct fmt_tm *tm = &in->tm;
 	int			i;
+
+#define DCH_EMITF(...) appendStringInfo(out, __VA_ARGS__)
+#define DCH_EMITS(str) appendStringInfoString(out, str)
+#define DCH_EMITC(chr) appendStringInfoCharMacro(out, chr)
 
 	/* cache localized days and months */
 	cache_locale_time();
 
-	s = out;
-	for (FormatNode *n = node; n->type != NODE_TYPE_END; n++)
+	for (const FormatNode *n = node; n->type != NODE_TYPE_END; n++)
 	{
+		int			field_start;
+
 		if (n->type != NODE_TYPE_ACTION)
 		{
-			strcpy(s, n->character);
-			s += strlen(s);
+			/* Optimize the common single-byte-string case */
+			if (n->character[1] == '\0')
+				DCH_EMITC(n->character[0]);
+			else
+				DCH_EMITS(n->character);
 			continue;
 		}
+
+		/* Remember start of this field in case we need to call str_numth */
+		field_start = out->len;
 
 		switch (n->key->id)
 		{
 			case DCH_A_M:
 			case DCH_P_M:
-				strcpy(s, (tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
-					   ? P_M_STR : A_M_STR);
-				s += strlen(s);
+				DCH_EMITS((tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
+						  ? P_M_STR : A_M_STR);
 				break;
 			case DCH_AM:
 			case DCH_PM:
-				strcpy(s, (tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
-					   ? PM_STR : AM_STR);
-				s += strlen(s);
+				DCH_EMITS((tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
+						  ? PM_STR : AM_STR);
 				break;
 			case DCH_a_m:
 			case DCH_p_m:
-				strcpy(s, (tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
-					   ? p_m_STR : a_m_STR);
-				s += strlen(s);
+				DCH_EMITS((tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
+						  ? p_m_STR : a_m_STR);
 				break;
 			case DCH_am:
 			case DCH_pm:
-				strcpy(s, (tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
-					   ? pm_STR : am_STR);
-				s += strlen(s);
+				DCH_EMITS((tm->tm_hour % HOURS_PER_DAY >= HOURS_PER_DAY / 2)
+						  ? pm_STR : am_STR);
 				break;
 			case DCH_HH:
 			case DCH_HH12:
@@ -2630,41 +2641,36 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				 * display time as shown on a 12-hour clock, even for
 				 * intervals
 				 */
-				sprintf(s, "%0*lld", IS_SUFFIX_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
-						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ?
-						(long long) (HOURS_PER_DAY / 2) :
-						(long long) (tm->tm_hour % (HOURS_PER_DAY / 2)));
+				DCH_EMITF("%0*lld", IS_SUFFIX_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
+						  tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ?
+						  (long long) (HOURS_PER_DAY / 2) :
+						  (long long) (tm->tm_hour % (HOURS_PER_DAY / 2)));
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_HH24:
-				sprintf(s, "%0*lld", IS_SUFFIX_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
-						(long long) tm->tm_hour);
+				DCH_EMITF("%0*lld", IS_SUFFIX_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
+						  (long long) tm->tm_hour);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_MI:
-				sprintf(s, "%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : (tm->tm_min >= 0) ? 2 : 3,
-						tm->tm_min);
+				DCH_EMITF("%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : (tm->tm_min >= 0) ? 2 : 3,
+						  tm->tm_min);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_SS:
-				sprintf(s, "%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : (tm->tm_sec >= 0) ? 2 : 3,
-						tm->tm_sec);
+				DCH_EMITF("%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : (tm->tm_sec >= 0) ? 2 : 3,
+						  tm->tm_sec);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 
 #define DCH_to_char_fsec(frac_fmt, frac_val) \
-				sprintf(s, frac_fmt, (int) (frac_val)); \
+				DCH_EMITF(frac_fmt, (int) (frac_val)); \
 				if (IS_SUFFIX_THth(n->suffix)) \
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix)); \
-				s += strlen(s)
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 
 			case DCH_FF1:		/* tenth of second */
 				DCH_to_char_fsec("%01d", in->fsec / 100000);
@@ -2688,13 +2694,12 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				break;
 #undef DCH_to_char_fsec
 			case DCH_SSSS:
-				sprintf(s, "%lld",
-						(long long) (tm->tm_hour * SECS_PER_HOUR +
-									 tm->tm_min * SECS_PER_MINUTE +
-									 tm->tm_sec));
+				DCH_EMITF("%lld",
+						  (long long) (tm->tm_hour * SECS_PER_HOUR +
+									   tm->tm_min * SECS_PER_MINUTE +
+									   tm->tm_sec));
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_tz:
 				INVALID_FOR_INTERVAL;
@@ -2706,362 +2711,208 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					 */
 					char	   *p = asc_tolower_z(tmtcTzn(in));
 
-					if (strlen(p) <= n->key->len * DCH_MAX_ITEM_SIZ)
-						strcpy(s, p);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("time zone format value too long")));
+					DCH_EMITS(p);
 					pfree(p);
-					s += strlen(s);
 				}
 				break;
 			case DCH_TZ:
 				INVALID_FOR_INTERVAL;
 				if (tmtcTzn(in))
-				{
-					const char *p = tmtcTzn(in);
-
-					if (strlen(p) <= n->key->len * DCH_MAX_ITEM_SIZ)
-						strcpy(s, p);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("time zone format value too long")));
-					s += strlen(s);
-				}
+					DCH_EMITS(tmtcTzn(in));
 				break;
 			case DCH_TZH:
 				INVALID_FOR_INTERVAL;
-				sprintf(s, "%c%02d",
-						(tm->tm_gmtoff >= 0) ? '+' : '-',
-						abs((int) tm->tm_gmtoff) / SECS_PER_HOUR);
-				s += strlen(s);
+				DCH_EMITF("%c%02d",
+						  (tm->tm_gmtoff >= 0) ? '+' : '-',
+						  abs((int) tm->tm_gmtoff) / SECS_PER_HOUR);
 				break;
 			case DCH_TZM:
 				INVALID_FOR_INTERVAL;
-				sprintf(s, "%02d",
-						(abs((int) tm->tm_gmtoff) % SECS_PER_HOUR) / SECS_PER_MINUTE);
-				s += strlen(s);
+				DCH_EMITF("%02d",
+						  (abs((int) tm->tm_gmtoff) % SECS_PER_HOUR) / SECS_PER_MINUTE);
 				break;
 			case DCH_OF:
 				INVALID_FOR_INTERVAL;
-				sprintf(s, "%c%0*d",
-						(tm->tm_gmtoff >= 0) ? '+' : '-',
-						IS_SUFFIX_FM(n->suffix) ? 0 : 2,
-						abs((int) tm->tm_gmtoff) / SECS_PER_HOUR);
-				s += strlen(s);
+				DCH_EMITF("%c%0*d",
+						  (tm->tm_gmtoff >= 0) ? '+' : '-',
+						  IS_SUFFIX_FM(n->suffix) ? 0 : 2,
+						  abs((int) tm->tm_gmtoff) / SECS_PER_HOUR);
 				if (abs((int) tm->tm_gmtoff) % SECS_PER_HOUR != 0)
-				{
-					sprintf(s, ":%02d",
-							(abs((int) tm->tm_gmtoff) % SECS_PER_HOUR) / SECS_PER_MINUTE);
-					s += strlen(s);
-				}
+					DCH_EMITF(":%02d",
+							  (abs((int) tm->tm_gmtoff) % SECS_PER_HOUR) / SECS_PER_MINUTE);
 				break;
 			case DCH_A_D:
 			case DCH_B_C:
 				INVALID_FOR_INTERVAL;
-				strcpy(s, (tm->tm_year <= 0 ? B_C_STR : A_D_STR));
-				s += strlen(s);
+				DCH_EMITS((tm->tm_year <= 0 ? B_C_STR : A_D_STR));
 				break;
 			case DCH_AD:
 			case DCH_BC:
 				INVALID_FOR_INTERVAL;
-				strcpy(s, (tm->tm_year <= 0 ? BC_STR : AD_STR));
-				s += strlen(s);
+				DCH_EMITS((tm->tm_year <= 0 ? BC_STR : AD_STR));
 				break;
 			case DCH_a_d:
 			case DCH_b_c:
 				INVALID_FOR_INTERVAL;
-				strcpy(s, (tm->tm_year <= 0 ? b_c_STR : a_d_STR));
-				s += strlen(s);
+				DCH_EMITS((tm->tm_year <= 0 ? b_c_STR : a_d_STR));
 				break;
 			case DCH_ad:
 			case DCH_bc:
 				INVALID_FOR_INTERVAL;
-				strcpy(s, (tm->tm_year <= 0 ? bc_STR : ad_STR));
-				s += strlen(s);
+				DCH_EMITS((tm->tm_year <= 0 ? bc_STR : ad_STR));
 				break;
 			case DCH_MONTH:
 				INVALID_FOR_INTERVAL;
 				if (!tm->tm_mon)
 					break;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_toupper_z(localized_full_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_toupper_z(localized_full_months[tm->tm_mon - 1], collid));
 				else
-					sprintf(s, "%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
-							asc_toupper_z(months_full[tm->tm_mon - 1]));
-				s += strlen(s);
+					DCH_EMITF("%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
+							  asc_toupper_z(months_full[tm->tm_mon - 1]));
 				break;
 			case DCH_Month:
 				INVALID_FOR_INTERVAL;
 				if (!tm->tm_mon)
 					break;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_initcap_z(localized_full_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_initcap_z(localized_full_months[tm->tm_mon - 1], collid));
 				else
-					sprintf(s, "%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
-							months_full[tm->tm_mon - 1]);
-				s += strlen(s);
+					DCH_EMITF("%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
+							  months_full[tm->tm_mon - 1]);
 				break;
 			case DCH_month:
 				INVALID_FOR_INTERVAL;
 				if (!tm->tm_mon)
 					break;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_tolower_z(localized_full_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_tolower_z(localized_full_months[tm->tm_mon - 1], collid));
 				else
-					sprintf(s, "%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
-							asc_tolower_z(months_full[tm->tm_mon - 1]));
-				s += strlen(s);
+					DCH_EMITF("%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
+							  asc_tolower_z(months_full[tm->tm_mon - 1]));
 				break;
 			case DCH_MON:
 				INVALID_FOR_INTERVAL;
 				if (!tm->tm_mon)
 					break;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_toupper_z(localized_abbrev_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_toupper_z(localized_abbrev_months[tm->tm_mon - 1], collid));
 				else
-					strcpy(s, asc_toupper_z(months[tm->tm_mon - 1]));
-				s += strlen(s);
+					DCH_EMITS(asc_toupper_z(months[tm->tm_mon - 1]));
 				break;
 			case DCH_Mon:
 				INVALID_FOR_INTERVAL;
 				if (!tm->tm_mon)
 					break;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_initcap_z(localized_abbrev_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_initcap_z(localized_abbrev_months[tm->tm_mon - 1], collid));
 				else
-					strcpy(s, months[tm->tm_mon - 1]);
-				s += strlen(s);
+					DCH_EMITS(months[tm->tm_mon - 1]);
 				break;
 			case DCH_mon:
 				INVALID_FOR_INTERVAL;
 				if (!tm->tm_mon)
 					break;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_tolower_z(localized_abbrev_months[tm->tm_mon - 1], collid));
 				else
-					strcpy(s, asc_tolower_z(months[tm->tm_mon - 1]));
-				s += strlen(s);
+					DCH_EMITS(asc_tolower_z(months[tm->tm_mon - 1]));
 				break;
 			case DCH_MM:
-				sprintf(s, "%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : (tm->tm_mon >= 0) ? 2 : 3,
-						tm->tm_mon);
+				DCH_EMITF("%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : (tm->tm_mon >= 0) ? 2 : 3,
+						  tm->tm_mon);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_DAY:
 				INVALID_FOR_INTERVAL;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_toupper_z(localized_full_days[tm->tm_wday], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_toupper_z(localized_full_days[tm->tm_wday], collid));
 				else
-					sprintf(s, "%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
-							asc_toupper_z(days[tm->tm_wday]));
-				s += strlen(s);
+					DCH_EMITF("%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
+							  asc_toupper_z(days[tm->tm_wday]));
 				break;
 			case DCH_Day:
 				INVALID_FOR_INTERVAL;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_initcap_z(localized_full_days[tm->tm_wday], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_initcap_z(localized_full_days[tm->tm_wday], collid));
 				else
-					sprintf(s, "%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
-							days[tm->tm_wday]);
-				s += strlen(s);
+					DCH_EMITF("%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
+							  days[tm->tm_wday]);
 				break;
 			case DCH_day:
 				INVALID_FOR_INTERVAL;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_tolower_z(localized_full_days[tm->tm_wday], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_tolower_z(localized_full_days[tm->tm_wday], collid));
 				else
-					sprintf(s, "%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
-							asc_tolower_z(days[tm->tm_wday]));
-				s += strlen(s);
+					DCH_EMITF("%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -9,
+							  asc_tolower_z(days[tm->tm_wday]));
 				break;
 			case DCH_DY:
 				INVALID_FOR_INTERVAL;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_toupper_z(localized_abbrev_days[tm->tm_wday], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_toupper_z(localized_abbrev_days[tm->tm_wday], collid));
 				else
-					strcpy(s, asc_toupper_z(days_short[tm->tm_wday]));
-				s += strlen(s);
+					DCH_EMITS(asc_toupper_z(days_short[tm->tm_wday]));
 				break;
 			case DCH_Dy:
 				INVALID_FOR_INTERVAL;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_initcap_z(localized_abbrev_days[tm->tm_wday], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_initcap_z(localized_abbrev_days[tm->tm_wday], collid));
 				else
-					strcpy(s, days_short[tm->tm_wday]);
-				s += strlen(s);
+					DCH_EMITS(days_short[tm->tm_wday]);
 				break;
 			case DCH_dy:
 				INVALID_FOR_INTERVAL;
 				if (IS_SUFFIX_TM(n->suffix))
-				{
-					char	   *str = str_tolower_z(localized_abbrev_days[tm->tm_wday], collid);
-
-					if (strlen(str) <= (n->key->len + TM_SUFFIX_LEN) * DCH_MAX_ITEM_SIZ)
-						strcpy(s, str);
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("localized string format value too long")));
-				}
+					DCH_EMITS(str_tolower_z(localized_abbrev_days[tm->tm_wday], collid));
 				else
-					strcpy(s, asc_tolower_z(days_short[tm->tm_wday]));
-				s += strlen(s);
+					DCH_EMITS(asc_tolower_z(days_short[tm->tm_wday]));
 				break;
 			case DCH_DDD:
 			case DCH_IDDD:
-				sprintf(s, "%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : 3,
-						(n->key->id == DCH_DDD) ?
-						tm->tm_yday :
-						date2isoyearday(tm->tm_year, tm->tm_mon, tm->tm_mday));
+				DCH_EMITF("%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : 3,
+						  (n->key->id == DCH_DDD) ?
+						  tm->tm_yday :
+						  date2isoyearday(tm->tm_year, tm->tm_mon, tm->tm_mday));
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_DD:
-				sprintf(s, "%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : 2, tm->tm_mday);
+				DCH_EMITF("%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : 2, tm->tm_mday);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_D:
 				INVALID_FOR_INTERVAL;
-				sprintf(s, "%d", tm->tm_wday + 1);
+				DCH_EMITF("%d", tm->tm_wday + 1);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_ID:
 				INVALID_FOR_INTERVAL;
-				sprintf(s, "%d", (tm->tm_wday == 0) ? 7 : tm->tm_wday);
+				DCH_EMITF("%d", (tm->tm_wday == 0) ? 7 : tm->tm_wday);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_WW:
-				sprintf(s, "%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : 2,
-						(tm->tm_yday - 1) / 7 + 1);
+				DCH_EMITF("%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : 2,
+						  (tm->tm_yday - 1) / 7 + 1);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_IW:
-				sprintf(s, "%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : 2,
-						date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday));
+				DCH_EMITF("%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : 2,
+						  date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday));
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_Q:
 				if (!tm->tm_mon)
 					break;
-				sprintf(s, "%d", (tm->tm_mon - 1) / 3 + 1);
+				DCH_EMITF("%d", (tm->tm_mon - 1) / 3 + 1);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_CC:
 				if (is_interval)	/* straight calculation */
@@ -3076,78 +2927,72 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 						i = tm->tm_year / 100 - 1;
 				}
 				if (i <= 99 && i >= -99)
-					sprintf(s, "%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : (i >= 0) ? 2 : 3, i);
+					DCH_EMITF("%0*d", IS_SUFFIX_FM(n->suffix) ? 0 : (i >= 0) ? 2 : 3, i);
 				else
-					sprintf(s, "%d", i);
+					DCH_EMITF("%d", i);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_Y_YYY:
 				i = ADJUST_YEAR(tm->tm_year, is_interval) / 1000;
-				sprintf(s, "%d,%03d", i,
-						ADJUST_YEAR(tm->tm_year, is_interval) - (i * 1000));
+				DCH_EMITF("%d,%03d", i,
+						  ADJUST_YEAR(tm->tm_year, is_interval) - (i * 1000));
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_YYYY:
 			case DCH_IYYY:
-				sprintf(s, "%0*d",
-						IS_SUFFIX_FM(n->suffix) ? 0 :
-						(ADJUST_YEAR(tm->tm_year, is_interval) >= 0) ? 4 : 5,
-						(n->key->id == DCH_YYYY ?
-						 ADJUST_YEAR(tm->tm_year, is_interval) :
-						 ADJUST_YEAR(date2isoyear(tm->tm_year,
-												  tm->tm_mon,
-												  tm->tm_mday),
-									 is_interval)));
+				DCH_EMITF("%0*d",
+						  IS_SUFFIX_FM(n->suffix) ? 0 :
+						  (ADJUST_YEAR(tm->tm_year, is_interval) >= 0) ? 4 : 5,
+						  (n->key->id == DCH_YYYY ?
+						   ADJUST_YEAR(tm->tm_year, is_interval) :
+						   ADJUST_YEAR(date2isoyear(tm->tm_year,
+													tm->tm_mon,
+													tm->tm_mday),
+									   is_interval)));
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_YYY:
 			case DCH_IYY:
-				sprintf(s, "%0*d",
-						IS_SUFFIX_FM(n->suffix) ? 0 :
-						(ADJUST_YEAR(tm->tm_year, is_interval) >= 0) ? 3 : 4,
-						(n->key->id == DCH_YYY ?
-						 ADJUST_YEAR(tm->tm_year, is_interval) :
-						 ADJUST_YEAR(date2isoyear(tm->tm_year,
-												  tm->tm_mon,
-												  tm->tm_mday),
-									 is_interval)) % 1000);
+				DCH_EMITF("%0*d",
+						  IS_SUFFIX_FM(n->suffix) ? 0 :
+						  (ADJUST_YEAR(tm->tm_year, is_interval) >= 0) ? 3 : 4,
+						  (n->key->id == DCH_YYY ?
+						   ADJUST_YEAR(tm->tm_year, is_interval) :
+						   ADJUST_YEAR(date2isoyear(tm->tm_year,
+													tm->tm_mon,
+													tm->tm_mday),
+									   is_interval)) % 1000);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_YY:
 			case DCH_IY:
-				sprintf(s, "%0*d",
-						IS_SUFFIX_FM(n->suffix) ? 0 :
-						(ADJUST_YEAR(tm->tm_year, is_interval) >= 0) ? 2 : 3,
-						(n->key->id == DCH_YY ?
-						 ADJUST_YEAR(tm->tm_year, is_interval) :
-						 ADJUST_YEAR(date2isoyear(tm->tm_year,
-												  tm->tm_mon,
-												  tm->tm_mday),
-									 is_interval)) % 100);
+				DCH_EMITF("%0*d",
+						  IS_SUFFIX_FM(n->suffix) ? 0 :
+						  (ADJUST_YEAR(tm->tm_year, is_interval) >= 0) ? 2 : 3,
+						  (n->key->id == DCH_YY ?
+						   ADJUST_YEAR(tm->tm_year, is_interval) :
+						   ADJUST_YEAR(date2isoyear(tm->tm_year,
+													tm->tm_mon,
+													tm->tm_mday),
+									   is_interval)) % 100);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_Y:
 			case DCH_I:
-				sprintf(s, "%1d",
-						(n->key->id == DCH_Y ?
-						 ADJUST_YEAR(tm->tm_year, is_interval) :
-						 ADJUST_YEAR(date2isoyear(tm->tm_year,
-												  tm->tm_mon,
-												  tm->tm_mday),
-									 is_interval)) % 10);
+				DCH_EMITF("%1d",
+						  (n->key->id == DCH_Y ?
+						   ADJUST_YEAR(tm->tm_year, is_interval) :
+						   ADJUST_YEAR(date2isoyear(tm->tm_year,
+													tm->tm_mon,
+													tm->tm_mday),
+									   is_interval)) % 10);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_RM:
 				pg_fallthrough;
@@ -3201,27 +3046,26 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 						mon = MONTHS_PER_YEAR - tm->tm_mon;
 					}
 
-					sprintf(s, "%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -4,
-							months[mon]);
-					s += strlen(s);
+					DCH_EMITF("%*s", IS_SUFFIX_FM(n->suffix) ? 0 : -4,
+							  months[mon]);
 				}
 				break;
 			case DCH_W:
-				sprintf(s, "%d", (tm->tm_mday - 1) / 7 + 1);
+				DCH_EMITF("%d", (tm->tm_mday - 1) / 7 + 1);
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 			case DCH_J:
-				sprintf(s, "%d", date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
+				DCH_EMITF("%d", date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
 				if (IS_SUFFIX_THth(n->suffix))
-					str_numth(s, s, SUFFIX_TH_TYPE(n->suffix));
-				s += strlen(s);
+					str_numth(out, field_start, SUFFIX_TH_TYPE(n->suffix));
 				break;
 		}
 	}
 
-	*s = '\0';
+#undef DCH_EMITF
+#undef DCH_EMITS
+#undef DCH_EMITC
 }
 
 /*
@@ -4013,14 +3857,14 @@ DCH_cache_fetch(const char *str, bool std)
  * for formatting.
  */
 static text *
-datetime_to_char_body(TmToChar *tmtc, const text *fmt, bool is_interval, Oid collid)
+datetime_to_char_body(const TmToChar *tmtc, const text *fmt,
+					  bool is_interval, Oid collid)
 {
 	FormatNode *format;
-	char	   *fmt_str,
-			   *result;
-	bool		incache;
+	char	   *fmt_str;
 	size_t		fmt_len;
-	text	   *res;
+	bool		incache;
+	StringInfoData result;
 
 	/*
 	 * Convert fmt to C string
@@ -4029,10 +3873,16 @@ datetime_to_char_body(TmToChar *tmtc, const text *fmt, bool is_interval, Oid col
 	fmt_len = strlen(fmt_str);
 
 	/*
-	 * Allocate workspace for result as C string
+	 * Create workspace to hold result.  We'll use result.data directly as the
+	 * returned TEXT datum, so leave enough room for the varlena header.
+	 * Temporarily fill that area with spaces; that's not really necessary but
+	 * it eases debugging by ensuring the result string is always printable.
 	 */
-	result = palloc(mul_size(fmt_len, DCH_MAX_ITEM_SIZ) + 1);
-	*result = '\0';
+	initStringInfo(&result);
+	enlargeStringInfo(&result, VARHDRSZ);	/* just pro-forma */
+	memset(result.data, ' ', VARHDRSZ);
+	result.len = VARHDRSZ;
+	result.data[VARHDRSZ] = '\0';	/* maintain StringInfo's invariant */
 
 	if (fmt_len > DCH_CACHE_SIZE)
 	{
@@ -4059,18 +3909,17 @@ datetime_to_char_body(TmToChar *tmtc, const text *fmt, bool is_interval, Oid col
 	}
 
 	/* The real work is here */
-	DCH_to_char(format, is_interval, tmtc, result, collid);
+	DCH_to_char(format, is_interval, collid, tmtc, &result);
 
 	if (!incache)
 		pfree(format);
 
 	pfree(fmt_str);
 
-	/* convert C-string result to TEXT format */
-	res = cstring_to_text(result);
+	/* Insert the varlena header needed to make result a valid TEXT datum */
+	SET_VARSIZE(result.data, result.len);
 
-	pfree(result);
-	return res;
+	return (text *) result.data;
 }
 
 /****************************************************************************
