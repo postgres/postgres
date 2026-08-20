@@ -5989,7 +5989,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode,
 		 * constraints, so it's not necessary/appropriate to enforce them just
 		 * during ALTER.)
 		 */
-		if (tab->newvals != NIL || tab->rewrite > 0)
+		if (tab->newvals != NIL || (tab->rewrite > 0 && tab->relkind != RELKIND_SEQUENCE))
 		{
 			Relation	rel;
 
@@ -7089,6 +7089,8 @@ find_composite_type_dependencies(Oid typeOid, Relation origRelation,
 	ScanKeyData key[2];
 	SysScanDesc depScan;
 	HeapTuple	depTup;
+
+	Assert(OidIsValid(typeOid));
 
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
