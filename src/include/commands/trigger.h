@@ -309,6 +309,7 @@ typedef void (*AfterTriggerBatchCallback) (void *arg);
 extern void RegisterAfterTriggerBatchCallback(AfterTriggerBatchCallback callback,
 											  void *arg);
 extern bool AfterTriggerIsActive(void);
+extern int	AfterTriggerCurrentQueryDepth(void);
 
 extern void AtEOXact_RI(bool isCommit);
 
