@@ -736,7 +736,7 @@ include_dir 'conf.d'
        <para>
         When running a standby server, you must set this parameter to the
         same or higher value than on the primary server. Otherwise, queries
-        will not be allowed in the standby server.
+        will not be allowed on the standby server.
        </para>
       </listitem>
      </varlistentry>
@@ -1994,7 +1994,7 @@ include_dir 'conf.d'
        <para>
         When running a standby server, you must set this parameter to the
         same or higher value than on the primary server. Otherwise, queries
-        will not be allowed in the standby server.
+        will not be allowed on the standby server.
        </para>
       </listitem>
      </varlistentry>
@@ -3094,7 +3094,7 @@ include_dir 'conf.d'
         <para>
          When running a standby server, you must set this parameter to the
          same or higher value than on the primary server. Otherwise, queries
-         will not be allowed in the standby server.
+         will not be allowed on the standby server.
         </para>
 
         <para>
@@ -4817,7 +4817,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
          When running a standby server, you must set this parameter to the
          same or higher value than on the primary server. Otherwise, queries
-         will not be allowed in the standby server.
+         will not be allowed on the standby server.
         </para>
        </listitem>
       </varlistentry>
@@ -11862,7 +11862,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
        <para>
         When running a standby server, you must set this parameter to have the
         same or higher value as on the primary server. Otherwise, queries
-        will not be allowed in the standby server.
+        will not be allowed on the standby server.
        </para>
       </listitem>
      </varlistentry>
