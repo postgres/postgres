@@ -966,22 +966,10 @@ tsqueryin(PG_FUNCTION_ARGS)
  */
 typedef struct
 {
-	QueryItem  *curpol;
-	char	   *buf;
-	char	   *cur;
-	char	   *op;
-	int			buflen;
+	QueryItem  *curpol;			/* current query item */
+	char	   *op;				/* start of tsquery's operand strings */
+	StringInfoData buf;			/* output is accumulated here */
 } INFIX;
-
-/* Makes sure inf->buf is large enough for adding 'addsize' bytes */
-#define RESIZEBUF(inf, addsize) \
-while( ( (inf)->cur - (inf)->buf ) + (addsize) + 1 >= (inf)->buflen ) \
-{ \
-	int len = (inf)->cur - (inf)->buf; \
-	(inf)->buflen *= 2; \
-	(inf)->buf = (char*) repalloc( (void*)(inf)->buf, (inf)->buflen ); \
-	(inf)->cur = (inf)->buf + len; \
-}
 
 /*
  * recursively traverse the tree and
@@ -997,61 +985,34 @@ infix(INFIX *in, int parentPriority, bool rightPhraseOp)
 	{
 		QueryOperand *curpol = &in->curpol->qoperand;
 		char	   *op = in->op + curpol->distance;
-		int			clen;
 
-		RESIZEBUF(in, curpol->length * (pg_database_encoding_max_length() + 1) + 2 + 6);
-		*(in->cur) = '\'';
-		in->cur++;
+		appendStringInfoChar(&in->buf, '\'');
 		while (*op)
 		{
-			if (t_iseq(op, '\''))
-			{
-				*(in->cur) = '\'';
-				in->cur++;
-			}
-			else if (t_iseq(op, '\\'))
-			{
-				*(in->cur) = '\\';
-				in->cur++;
-			}
+			int			clen = pg_mblen_cstr(op);
 
-			clen = ts_copychar_cstr(in->cur, op);
+			if (t_iseq(op, '\''))
+				appendStringInfoChar(&in->buf, '\'');
+			else if (t_iseq(op, '\\'))
+				appendStringInfoChar(&in->buf, '\\');
+			appendBinaryStringInfo(&in->buf, op, clen);
 			op += clen;
-			in->cur += clen;
 		}
-		*(in->cur) = '\'';
-		in->cur++;
+		appendStringInfoChar(&in->buf, '\'');
 		if (curpol->weight || curpol->prefix)
 		{
-			*(in->cur) = ':';
-			in->cur++;
+			appendStringInfoChar(&in->buf, ':');
 			if (curpol->prefix)
-			{
-				*(in->cur) = '*';
-				in->cur++;
-			}
+				appendStringInfoChar(&in->buf, '*');
 			if (curpol->weight & (1 << 3))
-			{
-				*(in->cur) = 'A';
-				in->cur++;
-			}
+				appendStringInfoChar(&in->buf, 'A');
 			if (curpol->weight & (1 << 2))
-			{
-				*(in->cur) = 'B';
-				in->cur++;
-			}
+				appendStringInfoChar(&in->buf, 'B');
 			if (curpol->weight & (1 << 1))
-			{
-				*(in->cur) = 'C';
-				in->cur++;
-			}
+				appendStringInfoChar(&in->buf, 'C');
 			if (curpol->weight & 1)
-			{
-				*(in->cur) = 'D';
-				in->cur++;
-			}
+				appendStringInfoChar(&in->buf, 'D');
 		}
-		*(in->cur) = '\0';
 		in->curpol++;
 	}
 	else if (in->curpol->qoperator.oper == OP_NOT)
@@ -1059,85 +1020,67 @@ infix(INFIX *in, int parentPriority, bool rightPhraseOp)
 		int			priority = QO_PRIORITY(in->curpol);
 
 		if (priority < parentPriority)
-		{
-			RESIZEBUF(in, 2);
-			sprintf(in->cur, "( ");
-			in->cur = strchr(in->cur, '\0');
-		}
-		RESIZEBUF(in, 1);
-		*(in->cur) = '!';
-		in->cur++;
-		*(in->cur) = '\0';
+			appendStringInfoString(&in->buf, "( ");
+		appendStringInfoChar(&in->buf, '!');
 		in->curpol++;
-
 		infix(in, priority, false);
 		if (priority < parentPriority)
-		{
-			RESIZEBUF(in, 2);
-			sprintf(in->cur, " )");
-			in->cur = strchr(in->cur, '\0');
-		}
+			appendStringInfoString(&in->buf, " )");
 	}
 	else
 	{
 		int8		op = in->curpol->qoperator.oper;
 		int			priority = QO_PRIORITY(in->curpol);
 		int16		distance = in->curpol->qoperator.distance;
-		INFIX		nrm;
+		QueryItem  *leftop = in->curpol + in->curpol->qoperator.left;
+		QueryItem  *rightop = in->curpol + 1;
+		QueryItem  *leftend;
 		bool		needParenthesis = false;
 
-		in->curpol++;
 		if (priority < parentPriority ||
 		/* phrase operator depends on order */
 			(op == OP_PHRASE && rightPhraseOp))
 		{
 			needParenthesis = true;
-			RESIZEBUF(in, 2);
-			sprintf(in->cur, "( ");
-			in->cur = strchr(in->cur, '\0');
+			appendStringInfoString(&in->buf, "( ");
 		}
 
-		nrm.curpol = in->curpol;
-		nrm.op = in->op;
-		nrm.buflen = 16;
-		nrm.cur = nrm.buf = palloc_array(char, nrm.buflen);
-
-		/* get right operand */
-		infix(&nrm, priority, (op == OP_PHRASE));
-
-		/* get & print left operand */
-		in->curpol = nrm.curpol;
+		/* print left operand */
+		in->curpol = leftop;
 		infix(in, priority, false);
+		/* remember end+1 of left operand */
+		leftend = in->curpol;
 
-		/* print operator & right operand */
-		RESIZEBUF(in, 3 + (2 + 10 /* distance */ ) + (nrm.cur - nrm.buf));
+		/* print operator */
 		switch (op)
 		{
 			case OP_OR:
-				sprintf(in->cur, " | %s", nrm.buf);
+				appendStringInfoString(&in->buf, " | ");
 				break;
 			case OP_AND:
-				sprintf(in->cur, " & %s", nrm.buf);
+				appendStringInfoString(&in->buf, " & ");
 				break;
 			case OP_PHRASE:
 				if (distance != 1)
-					sprintf(in->cur, " <%d> %s", distance, nrm.buf);
+					appendStringInfo(&in->buf, " <%d> ", distance);
 				else
-					sprintf(in->cur, " <-> %s", nrm.buf);
+					appendStringInfoString(&in->buf, " <-> ");
 				break;
 			default:
 				/* OP_NOT is handled in above if-branch */
 				elog(ERROR, "unrecognized operator type: %d", op);
 		}
-		in->cur = strchr(in->cur, '\0');
-		pfree(nrm.buf);
+
+		/* print right operand */
+		in->curpol = rightop;
+		infix(in, priority, (op == OP_PHRASE));
+
+		/* re-advance over left operand */
+		Assert(in->curpol == leftop);
+		in->curpol = leftend;
 
 		if (needParenthesis)
-		{
-			RESIZEBUF(in, 2);
-			sprintf(in->cur, " )");
-			in->cur = strchr(in->cur, '\0');
-		}
+			appendStringInfoString(&in->buf, " )");
 	}
 }
 
@@ -1155,14 +1098,12 @@ tsqueryout(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(b);
 	}
 	nrm.curpol = GETQUERY(query);
-	nrm.buflen = 32;
-	nrm.cur = nrm.buf = palloc_array(char, nrm.buflen);
-	*(nrm.cur) = '\0';
 	nrm.op = GETOPERAND(query);
+	initStringInfo(&nrm.buf);
 	infix(&nrm, -1 /* lowest priority */ , false);
 
 	PG_FREE_IF_COPY(query, 0);
-	PG_RETURN_CSTRING(nrm.buf);
+	PG_RETURN_CSTRING(nrm.buf.data);
 }
 
 /*
@@ -1392,12 +1333,10 @@ tsquerytree(PG_FUNCTION_ARGS)
 	else
 	{
 		nrm.curpol = q;
-		nrm.buflen = 32;
-		nrm.cur = nrm.buf = palloc_array(char, nrm.buflen);
-		*(nrm.cur) = '\0';
 		nrm.op = GETOPERAND(query);
+		initStringInfo(&nrm.buf);
 		infix(&nrm, -1, false);
-		res = cstring_to_text_with_len(nrm.buf, nrm.cur - nrm.buf);
+		res = cstring_to_text_with_len(nrm.buf.data, nrm.buf.len);
 		pfree(q);
 	}
 
