@@ -2897,3 +2897,81 @@ ROLLBACK;
 RESET ROLE;
 DROP TABLE fpav_fk, fpav_pk, fpav_cv_fk, fpav_cv_pk;
 DROP ROLE regress_fpav_role;
+
+-- An AFTER trigger runs a query of its own, and that query inserts into a
+-- second table with a fast-path foreign key.  The entry the nested INSERT
+-- creates belongs to the cursor's portal, which is gone by the time the
+-- entry is torn down at the end of the outer statement.  Every key stored
+-- below is present in its referenced table, so the INSERT must just succeed.
+CREATE TABLE fp_customer (id int PRIMARY KEY);
+INSERT INTO fp_customer VALUES (1);
+CREATE TABLE fp_product (id int PRIMARY KEY);
+INSERT INTO fp_product SELECT generate_series(1, 4);
+CREATE TABLE fp_kit_component (kit_product_id int, component_product_id int);
+INSERT INTO fp_kit_component VALUES (1, 2), (1, 3), (1, 4);
+CREATE TABLE fp_order (id int, customer_id int REFERENCES fp_customer,
+    product_id int);
+CREATE TABLE fp_order_item (order_id int, product_id int
+    REFERENCES fp_product);
+CREATE FUNCTION fp_add_order_item(order_id int, product_id int) RETURNS int
+    LANGUAGE plpgsql AS $$
+BEGIN
+    INSERT INTO fp_order_item VALUES (order_id, product_id);
+    RETURN product_id;
+END$$;
+CREATE FUNCTION fp_expand_kit() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+    component_id int;
+    ncomponents int := 0;
+BEGIN
+    FOR component_id IN
+        SELECT fp_add_order_item(NEW.id, component_product_id)
+            FROM fp_kit_component WHERE kit_product_id = NEW.product_id
+    LOOP
+        ncomponents := ncomponents + 1;
+    END LOOP;
+    RAISE NOTICE 'order % expanded into % order items', NEW.id, ncomponents;
+    RETURN NULL;
+END$$;
+CREATE TRIGGER fp_expand_kit_trg AFTER INSERT ON fp_order
+    FOR EACH ROW EXECUTE FUNCTION fp_expand_kit();
+INSERT INTO fp_order VALUES (1, 1, 1);
+SELECT count(*) FROM fp_order_item;
+DROP TABLE fp_order, fp_order_item, fp_kit_component, fp_product, fp_customer;
+DROP FUNCTION fp_expand_kit(), fp_add_order_item(int, int);
+
+-- Nested firing of the same constraint must use an entry for its own query
+-- depth.  The RAISE is reached if the nested violation remains buffered for
+-- the outer cycle's callback.
+CREATE TABLE fp_depth_pk (id int PRIMARY KEY);
+INSERT INTO fp_depth_pk VALUES (1);
+CREATE TABLE fp_depth_fk (a int REFERENCES fp_depth_pk);
+CREATE FUNCTION fp_depth_reentry() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF NEW.a = 1 THEN
+        INSERT INTO fp_depth_fk VALUES (999);
+        RAISE EXCEPTION 'nested FK check was not flushed';
+    END IF;
+    RETURN NEW;
+END$$;
+-- Sort after the RI trigger, so the outer row has already been batched.
+CREATE TRIGGER zz_fp_depth_reentry AFTER INSERT ON fp_depth_fk
+    FOR EACH ROW EXECUTE FUNCTION fp_depth_reentry();
+
+INSERT INTO fp_depth_fk VALUES (1);
+SELECT * FROM fp_depth_fk;
+
+DROP TABLE fp_depth_fk, fp_depth_pk;
+DROP FUNCTION fp_depth_reentry();
+
+-- Deferred FK check fires at commit (query depth -1); its batch must still get
+-- a callback registered and flushed.
+CREATE TABLE fp_deferred_pk (id int PRIMARY KEY);
+CREATE TABLE fp_deferred_fk (a int REFERENCES fp_deferred_pk (id)
+    DEFERRABLE INITIALLY DEFERRED);
+BEGIN;
+INSERT INTO fp_deferred_fk VALUES (1);
+INSERT INTO fp_deferred_pk VALUES (1);
+COMMIT;
+SELECT count(*) AS deferred_rows FROM fp_deferred_fk;  -- 1, check passed at commit
+DROP TABLE fp_deferred_fk, fp_deferred_pk;

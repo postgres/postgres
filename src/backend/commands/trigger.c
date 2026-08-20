@@ -6974,3 +6974,17 @@ AfterTriggerIsActive(void)
 {
 	return afterTriggers.firing_depth > 0;
 }
+
+/*
+ * AfterTriggerCurrentQueryDepth
+ *		Return the current after-trigger query nesting depth.
+ *
+ * Lets a batch-callback registrant (e.g. the RI fast path) associate cached
+ * state with the firing cycle that created it, so a nested cycle's callback
+ * acts only on its own entries.  Returns -1 outside any query level.
+ */
+int
+AfterTriggerCurrentQueryDepth(void)
+{
+	return afterTriggers.query_depth;
+}

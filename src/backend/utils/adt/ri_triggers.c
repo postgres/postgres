@@ -232,12 +232,26 @@ typedef struct RI_CompareHashEntry
 #define RI_FASTPATH_BATCH_SIZE	64
 
 /*
- * RI_FastPathEntry
- *		Per-constraint cache of resources needed by ri_FastPathBatchFlush().
+ * RI_FastPathKey
+ *		Hash key for an RI_FastPathEntry.
  *
- * One entry per constraint, keyed by pg_constraint OID.  Created lazily
- * by ri_FastPathGetEntry() on first use within a trigger-firing batch
- * and torn down by ri_FastPathTeardown() at batch end.
+ * A constraint can be checked in nested trigger-firing cycles.  Each cycle
+ * must have a separate entry so that its rows are checked with that cycle's
+ * snapshot and its resources are released by that cycle's callback.
+ */
+typedef struct RI_FastPathKey
+{
+	Oid			conoid;			/* pg_constraint OID */
+	int			query_depth;	/* after-trigger query depth */
+} RI_FastPathKey;
+
+/*
+ * RI_FastPathEntry
+ *		Per-constraint, per-firing-cycle cache of resources needed by
+ *		ri_FastPathBatchFlush().
+ *
+ * Created lazily by ri_FastPathGetEntry() on first use within a
+ * trigger-firing batch and torn down by ri_FastPathTeardown() at batch end.
  *
  * FK tuples are buffered in batch[] across trigger invocations and
  * flushed when the buffer fills or the batch ends.
@@ -251,7 +265,7 @@ typedef struct RI_CompareHashEntry
  */
 typedef struct RI_FastPathEntry
 {
-	Oid			conoid;			/* hash key: pg_constraint OID */
+	RI_FastPathKey key;			/* hash key */
 	Oid			fk_relid;		/* for ri_FastPathEndBatch() */
 	Relation	pk_rel;
 	Relation	idx_rel;
@@ -284,7 +298,6 @@ static HTAB *ri_compare_cache = NULL;
 static dclist_head ri_constraint_cache_valid_list;
 
 static HTAB *ri_fastpath_cache = NULL;
-static bool ri_fastpath_callback_registered = false;
 static bool ri_fastpath_flushing = false;
 
 /*
@@ -382,7 +395,7 @@ pg_noreturn static void ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 static RI_FastPathEntry *ri_FastPathGetEntry(const RI_ConstraintInfo *riinfo,
 											 Relation fk_rel);
 static void ri_FastPathEndBatch(void *arg);
-static void ri_FastPathTeardown(void);
+static void ri_FastPathTeardown(int depth);
 
 
 /*
@@ -4302,6 +4315,7 @@ ri_FastPathEndBatch(void *arg)
 {
 	HASH_SEQ_STATUS status;
 	RI_FastPathEntry *entry;
+	int			my_depth = (int) (intptr_t) arg;
 
 	if (ri_fastpath_cache == NULL)
 		return;
@@ -4326,10 +4340,13 @@ ri_FastPathEndBatch(void *arg)
 		hash_seq_init(&status, ri_fastpath_cache);
 		while ((entry = hash_seq_search(&status)) != NULL)
 		{
-			if (entry->batch_count > 0)
+			/* Flush only entries created in the cycle now ending. */
+			if (entry->key.query_depth == my_depth && entry->batch_count > 0)
 			{
 				Relation	fk_rel = table_open(entry->fk_relid, AccessShareLock);
-				RI_ConstraintInfo *riinfo = ri_LoadConstraintInfo(entry->conoid);
+				RI_ConstraintInfo *riinfo;
+
+				riinfo = ri_LoadConstraintInfo(entry->key.conoid);
 
 				ri_FastPathBatchFlush(entry, fk_rel, riinfo);
 				table_close(fk_rel, NoLock);
@@ -4342,17 +4359,26 @@ ri_FastPathEndBatch(void *arg)
 	}
 	PG_END_TRY();
 
-	ri_FastPathTeardown();
+	/*
+	 * Release this cycle's entries and remove them from the cache; leave
+	 * outer cycles' entries for their own callbacks.  Destroy the cache once
+	 * empty.
+	 */
+	ri_FastPathTeardown(my_depth);
 }
 
 /*
  * ri_FastPathTeardown
- *		Tear down all cached fast-path state.
+ *		Release and remove the cached entries of one firing cycle, and drop
+ *		the cache once it holds no more entries.
  *
- * Called from ri_FastPathEndBatch() after flushing any remaining rows.
+ * Called from ri_FastPathEndBatch() with the depth of the cycle that is
+ * ending: it releases only that cycle's entries, leaving an outer cycle's
+ * still-live entries for their own callbacks.  The cache (and its static
+ * pointer) go away once the last entry is removed.
  */
 static void
-ri_FastPathTeardown(void)
+ri_FastPathTeardown(int depth)
 {
 	HASH_SEQ_STATUS status;
 	RI_FastPathEntry *entry;
@@ -4363,6 +4389,8 @@ ri_FastPathTeardown(void)
 	hash_seq_init(&status, ri_fastpath_cache);
 	while ((entry = hash_seq_search(&status)) != NULL)
 	{
+		if (entry->key.query_depth != depth)
+			continue;
 		if (entry->idx_rel)
 			index_close(entry->idx_rel, NoLock);
 		if (entry->pk_rel)
@@ -4373,11 +4401,15 @@ ri_FastPathTeardown(void)
 			ExecDropSingleTupleTableSlot(entry->fk_slot);
 		if (entry->flush_cxt)
 			MemoryContextDelete(entry->flush_cxt);
+		hash_search(ri_fastpath_cache, &entry->key, HASH_REMOVE, NULL);
 	}
 
-	hash_destroy(ri_fastpath_cache);
-	ri_fastpath_cache = NULL;
-	ri_fastpath_callback_registered = false;
+	if (hash_get_num_entries(ri_fastpath_cache) == 0)
+	{
+		hash_destroy(ri_fastpath_cache);
+		ri_fastpath_cache = NULL;
+		ri_fastpath_flushing = false;
+	}
 }
 
 /*
@@ -4423,7 +4455,6 @@ AtEOXact_RI(bool isCommit)
 	 * memory-context reset; here we only drop the references to it.
 	 */
 	ri_fastpath_cache = NULL;
-	ri_fastpath_callback_registered = false;
 
 	/*
 	 * Also clear the in-flush flag.  ri_FastPathEndBatch() already clears it
@@ -4462,15 +4493,20 @@ AtEOXact_RI(bool isCommit)
 static RI_FastPathEntry *
 ri_FastPathGetEntry(const RI_ConstraintInfo *riinfo, Relation fk_rel)
 {
+	RI_FastPathKey key;
 	RI_FastPathEntry *entry;
 	bool		found;
+	int			cur_depth = AfterTriggerCurrentQueryDepth();
+
+	key.conoid = riinfo->constraint_id;
+	key.query_depth = cur_depth;
 
 	/* Create hash table on first use in this batch */
 	if (ri_fastpath_cache == NULL)
 	{
 		HASHCTL		ctl;
 
-		ctl.keysize = sizeof(Oid);
+		ctl.keysize = sizeof(RI_FastPathKey);
 		ctl.entrysize = sizeof(RI_FastPathEntry);
 		ctl.hcxt = TopTransactionContext;
 		ri_fastpath_cache = hash_create("RI fast-path cache",
@@ -4479,7 +4515,7 @@ ri_FastPathGetEntry(const RI_ConstraintInfo *riinfo, Relation fk_rel)
 										HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	}
 
-	entry = hash_search(ri_fastpath_cache, &riinfo->constraint_id,
+	entry = hash_search(ri_fastpath_cache, &key,
 						HASH_ENTER, &found);
 
 	if (!found)
@@ -4536,11 +4572,35 @@ ri_FastPathGetEntry(const RI_ConstraintInfo *riinfo, Relation fk_rel)
 												 ALLOCSET_SMALL_SIZES);
 		MemoryContextSwitchTo(oldcxt);
 
-		/* Ensure cleanup at end of this trigger-firing batch */
-		if (!ri_fastpath_callback_registered)
+		/*
+		 * Register an end-of-batch callback once per firing cycle, passing
+		 * the query depth so the callback flushes only entries belonging to
+		 * that cycle.
+		 */
 		{
-			RegisterAfterTriggerBatchCallback(ri_FastPathEndBatch, NULL);
-			ri_fastpath_callback_registered = true;
+			bool		depth_registered = false;
+			HASH_SEQ_STATUS reg_status;
+			RI_FastPathEntry *other;
+
+			/*
+			 * An existing entry at this depth means its callback is already
+			 * registered.  Ignore the just-created entry, which is already in
+			 * the hash.
+			 */
+			hash_seq_init(&reg_status, ri_fastpath_cache);
+			while ((other = hash_seq_search(&reg_status)) != NULL)
+			{
+				if (other != entry && other->key.query_depth == cur_depth)
+				{
+					depth_registered = true;
+					hash_seq_term(&reg_status);
+					break;
+				}
+			}
+
+			if (!depth_registered)
+				RegisterAfterTriggerBatchCallback(ri_FastPathEndBatch,
+												  (void *) (intptr_t) cur_depth);
 		}
 
 		entry->flushing = false;
