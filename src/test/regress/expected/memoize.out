@@ -237,11 +237,11 @@ SET hash_mem_multiplier TO 1.0;
 -- here as the number of entries that fit in the cache at once will vary
 -- between different machines.
 SELECT explain_memoize('
-SELECT COUNT(*),AVG(t1.unique1) FROM tenk1 t1
+SELECT COUNT(*),AVG(t1.unique1),SUM(t1.ten) FROM tenk1 t1
 INNER JOIN tenk1 t2 ON t1.unique1 = t2.thousand
 WHERE t2.unique1 < 1200;', true);
-                                       explain_memoize                                        
-----------------------------------------------------------------------------------------------
+                                     explain_memoize                                     
+-----------------------------------------------------------------------------------------
  Aggregate (actual rows=1.00 loops=N)
    ->  Nested Loop (actual rows=1200.00 loops=N)
          ->  Seq Scan on tenk1 t2 (actual rows=1200.00 loops=N)
@@ -251,11 +251,10 @@ WHERE t2.unique1 < 1200;', true);
                Cache Key: t2.thousand
                Cache Mode: logical
                Hits: N  Misses: N  Evictions: N  Overflows: 0  Memory Usage: NkB
-               ->  Index Only Scan using tenk1_unique1 on tenk1 t1 (actual rows=1.00 loops=N)
+               ->  Index Scan using tenk1_unique1 on tenk1 t1 (actual rows=1.00 loops=N)
                      Index Cond: (unique1 = t2.thousand)
-                     Heap Fetches: N
                      Index Searches: N
-(13 rows)
+(12 rows)
 
 CREATE TABLE flt (f float);
 CREATE INDEX flt_f_idx ON flt (f);

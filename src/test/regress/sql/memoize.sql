@@ -129,7 +129,7 @@ SET hash_mem_multiplier TO 1.0;
 -- here as the number of entries that fit in the cache at once will vary
 -- between different machines.
 SELECT explain_memoize('
-SELECT COUNT(*),AVG(t1.unique1) FROM tenk1 t1
+SELECT COUNT(*),AVG(t1.unique1),SUM(t1.ten) FROM tenk1 t1
 INNER JOIN tenk1 t2 ON t1.unique1 = t2.thousand
 WHERE t2.unique1 < 1200;', true);
 
