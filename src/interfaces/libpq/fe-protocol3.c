@@ -2224,7 +2224,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 	int			avail;
 	int			i;
 
-	/* already validated by PnQfn */
+	/* already validated by PQnfn */
 	Assert(conn->pipelineStatus == PQ_PIPELINE_OFF);
 
 	/* PQnfn already validated connection state */
