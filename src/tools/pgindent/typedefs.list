@@ -1761,7 +1761,6 @@ MemoizeInstrumentation
 MemoizeKey
 MemoizePath
 MemoizeState
-MemoizeTuple
 MemoryChunk
 MemoryContext
 MemoryContextCallback
