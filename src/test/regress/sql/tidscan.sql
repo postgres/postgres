@@ -86,12 +86,20 @@ ROLLBACK;
 -- (these plans don't use TID scans, but this still seems like an
 -- appropriate place for these tests)
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM tenk1 t1 JOIN tenk1 t2 ON t1.ctid = t2.ctid;
-SELECT count(*) FROM tenk1 t1 JOIN tenk1 t2 ON t1.ctid = t2.ctid;
+SELECT count(*) FROM tenk1 t1 JOIN tenk1 t2 ON t1.ctid = t2.ctid
+WHERE t2.ten = 0;
+
+SELECT count(*) FROM tenk1 t1 JOIN tenk1 t2 ON t1.ctid = t2.ctid
+WHERE t2.ten = 0;
+
 SET enable_hashjoin TO off;
+
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM tenk1 t1 JOIN tenk1 t2 ON t1.ctid = t2.ctid;
-SELECT count(*) FROM tenk1 t1 JOIN tenk1 t2 ON t1.ctid = t2.ctid;
+SELECT count(*) FROM tenk1 t1 JOIN tenk1 t2 ON t1.ctid = t2.ctid
+WHERE t2.ten = 0;
+
+SELECT count(*) FROM tenk1 t1 JOIN tenk1 t2 ON t1.ctid = t2.ctid
+WHERE t2.ten = 0;
 RESET enable_hashjoin;
 
 -- check predicate lock on CTID
