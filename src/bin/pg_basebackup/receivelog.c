@@ -20,6 +20,7 @@
 
 #include "access/xlog_internal.h"
 #include "common/logging.h"
+#include "common/pg_parse_lsn.h"
 #include "libpq-fe.h"
 #include "libpq/protocol.h"
 #include "receivelog.h"
@@ -704,9 +705,6 @@ error:
 static bool
 ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos, uint32 *timeline)
 {
-	uint32		startpos_xlogid,
-				startpos_xrecoff;
-
 	/*----------
 	 * The result set consists of one row and two columns, e.g:
 	 *
@@ -727,14 +725,12 @@ ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos, uint32 *timeline)
 	}
 
 	*timeline = atoi(PQgetvalue(res, 0, 0));
-	if (sscanf(PQgetvalue(res, 0, 1), "%X/%08X", &startpos_xlogid,
-			   &startpos_xrecoff) != 2)
+	if (!pg_parse_lsn(PQgetvalue(res, 0, 1), startpos))
 	{
 		pg_log_error("could not parse next timeline's starting point \"%s\"",
 					 PQgetvalue(res, 0, 1));
 		return false;
 	}
-	*startpos = ((uint64) startpos_xlogid << 32) | startpos_xrecoff;
 
 	return true;
 }

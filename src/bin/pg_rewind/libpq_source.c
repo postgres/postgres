@@ -11,6 +11,7 @@
 
 #include "catalog/pg_type_d.h"
 #include "common/connect.h"
+#include "common/pg_parse_lsn.h"
 #include "file_ops.h"
 #include "filemap.h"
 #include "lib/stringinfo.h"
@@ -209,16 +210,12 @@ libpq_get_current_wal_insert_lsn(rewind_source *source)
 {
 	PGconn	   *conn = ((libpq_source *) source)->conn;
 	XLogRecPtr	result;
-	uint32		hi;
-	uint32		lo;
 	char	   *val;
 
 	val = run_simple_query(conn, "SELECT pg_current_wal_insert_lsn()");
 
-	if (sscanf(val, "%X/%08X", &hi, &lo) != 2)
+	if (!pg_parse_lsn(val, &result))
 		pg_fatal("unrecognized result \"%s\" for current WAL insert location", val);
-
-	result = ((uint64) hi) << 32 | lo;
 
 	pg_free(val);
 

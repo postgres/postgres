@@ -21,6 +21,7 @@
 #include "common/connect.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
+#include "common/pg_parse_lsn.h"
 #include "common/string.h"
 #include "datatype/timestamp.h"
 #include "port/pg_bswap.h"
@@ -410,8 +411,6 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 				  XLogRecPtr *startpos, char **db_name)
 {
 	PGresult   *res;
-	uint32		hi,
-				lo;
 
 	/* Check connection existence */
 	Assert(conn != NULL);
@@ -445,7 +444,7 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 	/* Get LSN start position if necessary */
 	if (startpos != NULL)
 	{
-		if (sscanf(PQgetvalue(res, 0, 2), "%X/%08X", &hi, &lo) != 2)
+		if (!pg_parse_lsn(PQgetvalue(res, 0, 2), startpos))
 		{
 			pg_log_error("could not parse write-ahead log location \"%s\"",
 						 PQgetvalue(res, 0, 2));
@@ -453,7 +452,6 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
 			PQclear(res);
 			return false;
 		}
-		*startpos = ((uint64) hi) << 32 | lo;
 	}
 
 	/* Get database name, only available in 9.4 and newer versions */
@@ -549,17 +547,13 @@ GetSlotInformation(PGconn *conn, const char *slot_name,
 	/* restart LSN */
 	if (!PQgetisnull(res, 0, 1))
 	{
-		uint32		hi,
-					lo;
-
-		if (sscanf(PQgetvalue(res, 0, 1), "%X/%08X", &hi, &lo) != 2)
+		if (!pg_parse_lsn(PQgetvalue(res, 0, 1), &lsn_loc))
 		{
 			pg_log_error("could not parse restart_lsn \"%s\" for replication slot \"%s\"",
 						 PQgetvalue(res, 0, 1), slot_name);
 			PQclear(res);
 			return false;
 		}
-		lsn_loc = ((uint64) hi) << 32 | lo;
 	}
 
 	/* current TLI */

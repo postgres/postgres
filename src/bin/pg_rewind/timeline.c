@@ -10,6 +10,7 @@
 #include "postgres_fe.h"
 
 #include "access/timeline.h"
+#include "common/pg_parse_lsn.h"
 #include "pg_rewind.h"
 
 /*
@@ -44,10 +45,13 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 	while (!lastline)
 	{
 		char	   *ptr;
+		char	   *token_end;
+		char		save;
 		TimeLineID	tli;
-		uint32		switchpoint_hi;
-		uint32		switchpoint_lo;
-		int			nfields;
+		XLogRecPtr	switchpoint;
+		bool		valid_switchpoint = false;
+		int			nchars;
+		size_t		nspaces;
 
 		fline = bufptr;
 		while (*bufptr && *bufptr != '\n')
@@ -66,16 +70,33 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 		if (*ptr == '\0' || *ptr == '#')
 			continue;
 
-		nfields = sscanf(fline, "%u\t%X/%08X", &tli, &switchpoint_hi, &switchpoint_lo);
-
-		if (nfields < 1)
+		if (sscanf(fline, "%u%n", &tli, &nchars) != 1)
 		{
 			/* expect a numeric timeline ID as first field of line */
 			pg_log_error("syntax error in history file: %s", fline);
 			pg_log_error_detail("Expected a numeric timeline ID.");
 			exit(1);
 		}
-		if (nfields != 3)
+
+		/* the switchpoint location follows, separated by whitespace */
+		ptr = fline + nchars;
+		nspaces = strspn(ptr, " \t\n\r\f\v");
+		if (nspaces > 0)
+		{
+			ptr += nspaces;
+
+			/*
+			 * isolate the location from the rest of the line before parsing
+			 * it
+			 */
+			token_end = ptr + strcspn(ptr, " \t\n\r\f\v");
+			save = *token_end;
+			*token_end = '\0';
+			valid_switchpoint = pg_parse_lsn(ptr, &switchpoint);
+			*token_end = save;
+		}
+
+		if (!valid_switchpoint)
 		{
 			pg_log_error("syntax error in history file: %s", fline);
 			pg_log_error_detail("Expected a write-ahead log switchpoint location.");
@@ -96,7 +117,7 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 		entry = &entries[nlines - 1];
 		entry->tli = tli;
 		entry->begin = prevend;
-		entry->end = ((uint64) (switchpoint_hi)) << 32 | (uint64) switchpoint_lo;
+		entry->end = switchpoint;
 		prevend = entry->end;
 
 		/* we ignore the remainder of each line */

@@ -32,6 +32,7 @@
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
+#include "common/pg_parse_lsn.h"
 #include "fe_utils/option_utils.h"
 #include "fe_utils/recovery_gen.h"
 #include "getopt_long.h"
@@ -482,17 +483,14 @@ reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 		{
 			ssize_t		nread;
 			char		xlogend[64] = {0};
-			uint32		hi,
-						lo;
 
 			nread = read(bgpipe[0], xlogend, sizeof(xlogend) - 1);
 			if (nread < 0)
 				pg_fatal("could not read from ready pipe: %m");
 
-			if (sscanf(xlogend, "%X/%08X", &hi, &lo) != 2)
+			if (!pg_parse_lsn(xlogend, &xlogendptr))
 				pg_fatal("could not parse write-ahead log location \"%s\"",
 						 xlogend);
-			xlogendptr = ((uint64) hi) << 32 | lo;
 			has_xlogendptr = 1;
 
 			/*
@@ -620,8 +618,6 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 				 int wal_compress_level)
 {
 	logstreamer_param *param;
-	uint32		hi,
-				lo;
 	char		statusdir[MAXPGPATH];
 
 	param = pg_malloc0_object(logstreamer_param);
@@ -631,10 +627,9 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 	param->wal_compress_level = wal_compress_level;
 
 	/* Convert the starting position */
-	if (sscanf(startpos, "%X/%08X", &hi, &lo) != 2)
+	if (!pg_parse_lsn(startpos, &param->startptr))
 		pg_fatal("could not parse write-ahead log location \"%s\"",
 				 startpos);
-	param->startptr = ((uint64) hi) << 32 | lo;
 	/* Round off to even segment position */
 	param->startptr -= XLogSegmentOffset(param->startptr, WalSegSz);
 
@@ -2216,8 +2211,6 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		 * casting to a different size on WIN64.
 		 */
 		intptr_t	bgchild_handle = bgchild;
-		uint32		hi,
-					lo;
 #endif
 
 		if (verbose)
@@ -2243,10 +2236,9 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		 * value directly in the variable, and then set the flag that says
 		 * it's there.
 		 */
-		if (sscanf(xlogend, "%X/%08X", &hi, &lo) != 2)
+		if (!pg_parse_lsn(xlogend, &xlogendptr))
 			pg_fatal("could not parse write-ahead log location \"%s\"",
 					 xlogend);
-		xlogendptr = ((uint64) hi) << 32 | lo;
 		InterlockedIncrement(&has_xlogendptr);
 
 		/* First wait for the thread to exit */
