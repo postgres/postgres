@@ -348,7 +348,7 @@ static relopt_int intRelOpts[] =
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
 			ShareUpdateExclusiveLock
 		},
-		-1, -1, INT_MAX
+		-2, -1, INT_MAX
 	},
 	{
 		{
@@ -613,6 +613,76 @@ static void parse_one_reloption(relopt_value *option, char *text_str,
 	((option).isset ? strlen((option).string_val) : \
 	 ((relopt_string *) (option).gen)->default_len)
 
+#ifdef USE_ASSERT_CHECKING
+/*
+ * Verify that every option a TOAST table accepts defaults to a value the user
+ * cannot set.  That way, we can tell whether a reloption is set on the TOAST
+ * table or if we should pull the value from its main table.
+ */
+static void
+assert_toast_defaults_unsettable(void)
+{
+	for (int i = 0; relOpts[i]; i++)
+	{
+		relopt_gen *gen = relOpts[i];
+
+		if ((gen->kinds & RELOPT_KIND_TOAST) == 0)
+			continue;
+
+		/*
+		 * A TOAST table's value is filled in from its main table's at the
+		 * same offset in the same struct, so the option must be settable on a
+		 * heap too.
+		 */
+		Assert((gen->kinds & RELOPT_KIND_HEAP) != 0);
+
+		switch (gen->type)
+		{
+			case RELOPT_TYPE_TERNARY:
+
+				/*
+				 * Ternaries carry no default, and parse_one_reloption() can
+				 * only produce true or false, so PG_TERNARY_UNSET is already
+				 * beyond a user's reach.
+				 */
+				break;
+
+			case RELOPT_TYPE_INT:
+				{
+					relopt_int *optint = (relopt_int *) gen;
+
+					Assert(optint->default_val < optint->min ||
+						   optint->default_val > optint->max);
+					break;
+				}
+
+			case RELOPT_TYPE_REAL:
+				{
+					relopt_real *optreal = (relopt_real *) gen;
+
+					Assert(optreal->default_val < optreal->min ||
+						   optreal->default_val > optreal->max);
+					break;
+				}
+
+			case RELOPT_TYPE_ENUM:
+				{
+					relopt_enum *optenum = (relopt_enum *) gen;
+
+					for (relopt_enum_elt_def *elt = optenum->members;
+						 elt->string_val; elt++)
+						Assert(elt->symbol_val != optenum->default_val);
+					break;
+				}
+
+			default:
+				/* Neither bools nor strings can express "unset". */
+				Assert(false);
+		}
+	}
+}
+#endif							/* USE_ASSERT_CHECKING */
+
 /*
  * initialize_reloptions
  *		initialization routine, must be called before parsing
@@ -730,6 +800,10 @@ initialize_reloptions(void)
 
 	/* flag the work is complete */
 	need_initialization = false;
+
+#ifdef USE_ASSERT_CHECKING
+	assert_toast_defaults_unsettable();
+#endif
 }
 
 /*

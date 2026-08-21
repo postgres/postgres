@@ -2836,7 +2836,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		 * defaults, autovacuum's own first and plain vacuum second.
 		 */
 
-		/* -1 in autovac setting means use log_autovacuum_min_duration */
+		/* a negative setting means use log_autovacuum_min_duration */
 		log_vacuum_min_duration = (avopts && avopts->log_vacuum_min_duration >= 0)
 			? avopts->log_vacuum_min_duration
 			: Log_autovacuum_min_duration;
