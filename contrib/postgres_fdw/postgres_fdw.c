@@ -5867,10 +5867,10 @@ fetch_remote_statistics(Relation relation,
 	}
 
 	/*
-	 * If the reltuples value > 0, then then we can expect to find attribute
-	 * stats for the remote table.
+	 * If the reltuples value > 0, then we can expect to find attribute stats
+	 * for the remote table.
 	 *
-	 * In v14 or latter, if a reltuples value is -1, it means the table has
+	 * In v14 or later, if a reltuples value is -1, it means the table has
 	 * never been analyzed, so we wouldn't expect to find the stats for the
 	 * table; fallback to sampling in that case.  If the value is 0, it means
 	 * it was empty; in which case skip the stats and import relation stats
@@ -6023,7 +6023,7 @@ fetch_attstats(PGconn *conn, int server_version_num,
 }
 
 /*
- * Build the mapping of local columns to remote columns and create a column
+ * Build the mappings of local columns to remote columns and create a column
  * list used for constructing the fetch_attstats query.
  */
 static RemoteAttributeMapping *
@@ -6079,7 +6079,7 @@ build_remattrmap(Relation relation, List *va_cols,
 	}
 	appendStringInfoChar(column_list, ']');
 
-	/* Sort mapping by remote attribute name if needed. */
+	/* Sort mappings by remote attribute name if needed. */
 	if (attrcnt > 1)
 		qsort(remattrmap, attrcnt, sizeof(RemoteAttributeMapping), remattrmap_cmp);
 
