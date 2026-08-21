@@ -1751,7 +1751,7 @@ ROLLBACK TO s;
     on one or more of the rows.  Once the <literal>SELECT</literal> unblocks, some
     of the ordering column values might have been modified, leading to those
     rows appearing to be out of order (though they are in order in terms
-    of the original column values).  This can be worked around at need by
+    of the original column values).  This can be worked around as needed by
     placing the <literal>FOR UPDATE/SHARE</literal> clause in a sub-query,
     for example
 <programlisting>
