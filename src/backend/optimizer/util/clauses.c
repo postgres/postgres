@@ -126,7 +126,6 @@ static bool contain_context_dependent_node_walker(Node *node, int *flags);
 static bool contain_leaked_vars_walker(Node *node, void *context);
 static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
 static List *find_nonnullable_vars_walker(Node *node, bool top_level);
-static void find_subquery_safe_quals(Node *jtnode, List **safe_quals);
 static bool is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK);
 static bool convert_saop_to_hashed_saop_walker(Node *node, void *context);
 static bool grouping_conflict_walker(Node *node, grouping_walker_ctx *ctx);
@@ -2165,9 +2164,9 @@ query_outputs_are_not_nullable(Query *query)
 		 * can wrap join alias Vars.
 		 *
 		 * We must also apply flatten_join_alias_vars to the quals extracted
-		 * by find_subquery_safe_quals.  We do not need to apply
-		 * flatten_group_exprs to these quals, though, because grouping Vars
-		 * cannot appear in jointree quals.
+		 * by find_safe_quals.  We do not need to apply flatten_group_exprs to
+		 * these quals, though, because grouping Vars cannot appear in
+		 * jointree quals.
 		 */
 
 		/*
@@ -2208,7 +2207,7 @@ query_outputs_are_not_nullable(Query *query)
 			 */
 			if (!computed_nonnullable_vars)
 			{
-				find_subquery_safe_quals((Node *) query->jointree, &safe_quals);
+				find_safe_quals((Node *) query->jointree, &safe_quals);
 				safe_quals = (List *)
 					flatten_join_alias_vars(NULL, query, (Node *) safe_quals);
 				nonnullable_vars = find_nonnullable_vars((Node *) safe_quals);
@@ -2231,18 +2230,24 @@ query_outputs_are_not_nullable(Query *query)
 }
 
 /*
- * find_subquery_safe_quals
+ * find_safe_quals
  *		Traverse jointree to locate quals on non-outerjoined-rels.
  *
  * We locate all WHERE and JOIN/ON quals that constrain the rels that are not
  * below the nullable side of any outer join, and add them to the *safe_quals
- * list (forming a list with implicit-AND semantics).  These quals can be used
- * to prove non-nullability of the subquery's outputs.
+ * list (forming a list with implicit-AND semantics).  These quals hold for
+ * every row the jointree emits, so they can be used to prove non-nullability
+ * of its outputs.
+ *
+ * The caller may pass a whole jointree or any subtree of one, with quals
+ * either raw or already preprocessed into implicit-AND lists.  The result
+ * therefore may contain both bare expressions and nested lists, which
+ * find_nonnullable_vars() reads as implicit-AND in either case.
  *
  * Top-level caller must initialize *safe_quals to NIL.
  */
-static void
-find_subquery_safe_quals(Node *jtnode, List **safe_quals)
+void
+find_safe_quals(Node *jtnode, List **safe_quals)
 {
 	if (jtnode == NULL)
 		return;
@@ -2257,7 +2262,7 @@ find_subquery_safe_quals(Node *jtnode, List **safe_quals)
 
 		/* All elements of the FROM list are allowable */
 		foreach_ptr(Node, child_node, f->fromlist)
-			find_subquery_safe_quals(child_node, safe_quals);
+			find_safe_quals(child_node, safe_quals);
 		/* ... and its WHERE quals are too */
 		if (f->quals)
 			*safe_quals = lappend(*safe_quals, f->quals);
@@ -2269,30 +2274,35 @@ find_subquery_safe_quals(Node *jtnode, List **safe_quals)
 		switch (j->jointype)
 		{
 			case JOIN_INNER:
-				/* visit both children */
-				find_subquery_safe_quals(j->larg, safe_quals);
-				find_subquery_safe_quals(j->rarg, safe_quals);
-				/* and grab the ON quals too */
+			case JOIN_SEMI:
+
+				/*
+				 * Visit both children, and grab the ON quals too.  A semijoin
+				 * emits only matched left-hand rows, so its quals hold for
+				 * every output row as well.  (Its right-hand side's quals are
+				 * collected too; that's harmless, since nothing above can
+				 * reference that side's Vars.)
+				 */
+				find_safe_quals(j->larg, safe_quals);
+				find_safe_quals(j->rarg, safe_quals);
 				if (j->quals)
 					*safe_quals = lappend(*safe_quals, j->quals);
 				break;
 
 			case JOIN_LEFT:
-			case JOIN_SEMI:
 			case JOIN_ANTI:
 
 				/*
 				 * Only the left input is possibly non-nullable; furthermore,
-				 * the quals of this join don't constrain the left input.
-				 * Note: we probably can't see SEMI or ANTI joins at this
-				 * point, but if we do, we can treat them like LEFT joins.
+				 * the quals of this join don't constrain the left input,
+				 * since unmatched rows are emitted null-extended.
 				 */
-				find_subquery_safe_quals(j->larg, safe_quals);
+				find_safe_quals(j->larg, safe_quals);
 				break;
 
 			case JOIN_RIGHT:
-				/* Reverse of the above case */
-				find_subquery_safe_quals(j->rarg, safe_quals);
+				/* Reverse of the JOIN_LEFT case */
+				find_safe_quals(j->rarg, safe_quals);
 				break;
 
 			case JOIN_FULL:

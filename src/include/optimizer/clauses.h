@@ -52,6 +52,7 @@ extern Relids find_nonnullable_rels(Node *clause);
 extern List *find_nonnullable_vars(Node *clause);
 extern List *find_forced_null_vars(Node *node);
 extern Var *find_forced_null_var(Node *node);
+extern void find_safe_quals(Node *jtnode, List **safe_quals);
 extern bool query_outputs_are_not_nullable(Query *query);
 
 extern bool is_pseudo_constant_clause(Node *clause);
