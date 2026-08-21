@@ -628,6 +628,27 @@ Pipeline aborted, command did not run
 \getresults -1
 \getresults: invalid number of requested results
 \endpipeline
+-- After an invalid \getresults argument, the next SQL command in the
+-- pipeline should still be sent and returned normally.
+\startpipeline
+SELECT 1;
+\flushrequest
+\getresults -1
+\getresults: invalid number of requested results
+SELECT 99;
+\flushrequest
+\getresults
+ ?column? 
+----------
+        1
+(1 row)
+
+ ?column? 
+----------
+       99
+(1 row)
+
+\endpipeline
 -- \getresults when there is no result should not impact the next
 -- query executed.
 \getresults 1

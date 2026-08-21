@@ -354,6 +354,17 @@ SELECT $1 \bind \sendpipeline
 \getresults -1
 \endpipeline
 
+-- After an invalid \getresults argument, the next SQL command in the
+-- pipeline should still be sent and returned normally.
+\startpipeline
+SELECT 1;
+\flushrequest
+\getresults -1
+SELECT 99;
+\flushrequest
+\getresults
+\endpipeline
+
 -- \getresults when there is no result should not impact the next
 -- query executed.
 \getresults 1
