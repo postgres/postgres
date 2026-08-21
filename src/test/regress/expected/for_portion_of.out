@@ -407,7 +407,7 @@ UPDATE for_portion_of_test
   FOR PORTION OF valid_at (NULL)
   SET name = 'one^3'
   WHERE id = '[1,2)';
-ERROR:  FOR PORTION OF target was null
+ERROR:  FOR PORTION OF target must not be null
 LINE 2:   FOR PORTION OF valid_at (NULL)
                                    ^
 -- Updating with a direct target of empty does nothing
@@ -884,7 +884,7 @@ LINE 2:   FOR PORTION OF valid_at (4)
 DELETE FROM for_portion_of_test
   FOR PORTION OF valid_at (NULL)
   WHERE id = '[1,2)';
-ERROR:  FOR PORTION OF target was null
+ERROR:  FOR PORTION OF target must not be null
 LINE 2:   FOR PORTION OF valid_at (NULL)
                                    ^
 -- Deleting with a direct target of empty does nothing
@@ -1971,7 +1971,7 @@ UPDATE for_portion_of_test2
   FOR PORTION OF valid_at (NULL)
   SET name = 'one^3'
   WHERE id = '[1,2)';
-ERROR:  FOR PORTION OF target was null
+ERROR:  FOR PORTION OF target must not be null
 LINE 2:   FOR PORTION OF valid_at (NULL)
                                    ^
 -- Updating with empty does nothing
@@ -2035,7 +2035,7 @@ LINE 2:   FOR PORTION OF valid_at (4)
 DELETE FROM for_portion_of_test2
   FOR PORTION OF valid_at (NULL)
   WHERE id = '[2,3)';
-ERROR:  FOR PORTION OF target was null
+ERROR:  FOR PORTION OF target must not be null
 LINE 2:   FOR PORTION OF valid_at (NULL)
                                    ^
 -- Deleting with empty does nothing

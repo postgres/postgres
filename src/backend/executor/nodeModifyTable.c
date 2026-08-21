@@ -5645,8 +5645,9 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 */
 		if (isNull)
 			ereport(ERROR,
-					(errmsg("FOR PORTION OF target was null")),
-					executor_errposition(estate, forPortionOf->targetLocation));
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("FOR PORTION OF target must not be null"),
+					 executor_errposition(estate, forPortionOf->targetLocation)));
 
 		/* Create state for FOR PORTION OF operation */
 
