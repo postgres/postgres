@@ -66,9 +66,11 @@ select * from test_regex('[[:ascii:]]+',  E'x\u1500\u1237', 'L');
 select * from test_regex('[[:blank:]]+',  E'x \t\u1500\u1237', 'L');
 select * from test_regex('[[:cntrl:]]+',  E'x\u1500\u1237', 'L');
 select * from test_regex('[[:digit:]]+',  E'x9\u1500\u1237', 'L');
-select * from test_regex('[[:graph:]]+',  E'x\u1500\u1237', 'L');
+-- graph and print depend on the ctype and not just the encoding, so pin them
+-- to a Unicode-aware collation rather than the database's
+select * from test_regex('[[:graph:]]+',  E'x\u1500\u1237' COLLATE pg_c_utf8, 'L');
 select * from test_regex('[[:lower:]]+',  E'x\u1500\u1237', 'L');
-select * from test_regex('[[:print:]]+',  E'x\u1500\u1237', 'L');
+select * from test_regex('[[:print:]]+',  E'x\u1500\u1237' COLLATE pg_c_utf8, 'L');
 select * from test_regex('[[:punct:]]+',  E'x.\u1500\u1237', 'L');
 select * from test_regex('[[:space:]]+',  E'x \t\u1500\u1237', 'L');
 select * from test_regex('[[:upper:]]+',  E'xX\u1500\u1237', 'L');
