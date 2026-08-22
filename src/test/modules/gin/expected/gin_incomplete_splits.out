@@ -19,7 +19,6 @@ SELECT injection_points_set_local();
  
 (1 row)
 
--- Use the index for all the queries
 set enable_seqscan=off;
 -- Print a NOTICE whenever an incomplete split gets fixed
 SELECT injection_points_attach('gin-finish-incomplete-split', 'notice');
@@ -192,4 +191,112 @@ SELECT injection_points_detach('gin-finish-incomplete-split');
  
 (1 row)
 
+--
+-- Test that VACUUM does not delete the right sibling of an incompletely
+-- split posting tree leaf page
+--
+create extension pageinspect;
+-- Create a GIN index with a posting tree that has several leaf pages
+create temp table gin_posting_tree(id int4, i int4[]);
+insert into gin_posting_tree select g, '{1}' from generate_series(1, 55000) g;
+create index gin_posting_tree_idx on gin_posting_tree using gin (i) with (fastupdate = off);
+-- Free space in the middle of the index key space/heap.  The later inserts
+-- will get TIDs in the middle of the posting tree's key space, splitting a
+-- leaf page that is neither the leftmost nor rightmost of the posting tree.
+delete from gin_posting_tree where id between 10001 and 27500;
+vacuum (index_cleanup on) gin_posting_tree;
+-- Insert rows until a leaf page split fails, leaving the split incomplete
+SELECT injection_points_attach('gin-leave-leaf-split-incomplete', 'error');
+ injection_points_attach 
+-------------------------
+ 
+(1 row)
+
+do $$
+begin
+  for n in 1..200000 loop
+    begin
+      insert into gin_posting_tree values (n, '{1}');
+    exception when others then
+      return;
+    end;
+  end loop;
+  raise 'no leaf split after 200000 inserts';
+end;
+$$;
+SELECT injection_points_detach('gin-leave-leaf-split-incomplete');
+ injection_points_detach 
+-------------------------
+ 
+(1 row)
+
+-- Locate the incompletely split page's new right half (reachable only
+-- through its left sibling's rightlink), and the leaf to the right of
+-- that (the page that VACUUM will delete).  Errors out unless there is
+-- exactly one incomplete split.
+select o.rightlink::int as righthalf,
+       (gin_page_opaque_info(get_raw_page('gin_posting_tree_idx',
+                                          o.rightlink::int))).rightlink::int
+         as nextleaf
+  from generate_series(0, pg_relation_size('gin_posting_tree_idx') /
+                          current_setting('block_size')::int - 1) blkno,
+       lateral gin_page_opaque_info(get_raw_page('gin_posting_tree_idx',
+                                                 blkno::int)) o
+ where o.flags @> '{incomplete_split}'
+\gset
+-- Sanity check: scan will miss nothing if the right half held no live rows,
+-- and VACUUM never deletes the rightmost page
+select exists (select from gin_posting_tree
+               where ctid in (select unnest(tids) from gin_leafpage_items(
+                                get_raw_page('gin_posting_tree_idx', :righthalf))))
+         as righthalf_has_live_rows,
+       (gin_page_opaque_info(get_raw_page('gin_posting_tree_idx',
+                                          :nextleaf))).rightlink <> 4294967295
+         as nextleaf_is_not_rightmost;
+ righthalf_has_live_rows | nextleaf_is_not_rightmost 
+-------------------------+---------------------------
+ t                       | t
+(1 row)
+
+-- Empty the page to the right of the right half, and have VACUUM consider
+-- deleting it
+delete from gin_posting_tree
+ where ctid in (select unnest(tids) from gin_leafpage_items(
+                  get_raw_page('gin_posting_tree_idx', :nextleaf)));
+vacuum (index_cleanup on) gin_posting_tree;
+-- Count the remaining rows through a bitmap scan
+explain (costs off)
+select count(*) as bitmapscan_count from gin_posting_tree where i @> '{1}';
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on gin_posting_tree
+         Recheck Cond: (i @> '{1}'::integer[])
+         ->  Bitmap Index Scan on gin_posting_tree_idx
+               Index Cond: (i @> '{1}'::integer[])
+(5 rows)
+
+select count(*) as bitmapscan_count from gin_posting_tree where i @> '{1}'
+\gset
+-- Verify that a sequential scan finds the same rows
+set enable_seqscan=on;
+set enable_bitmapscan=off;
+explain (costs off)
+select count(*) from gin_posting_tree where i @> '{1}';
+               QUERY PLAN                
+-----------------------------------------
+ Aggregate
+   ->  Seq Scan on gin_posting_tree
+         Filter: (i @> '{1}'::integer[])
+(3 rows)
+
+select count(*) = :bitmapscan_count as seqscan_agrees
+  from gin_posting_tree where i @> '{1}';
+ seqscan_agrees 
+----------------
+ t
+(1 row)
+
+drop table gin_posting_tree;
+drop extension pageinspect;
 drop extension injection_points;
