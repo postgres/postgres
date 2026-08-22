@@ -724,7 +724,7 @@ HINT:  Execute a database-wide VACUUM in that database.
      </listitem>
      <listitem>
       <simpara>Execute <command>VACUUM</command> in the target database. A database-wide
-       <literal>VACUUM</literal> is simplest; to reduce the time required, it as also possible
+       <literal>VACUUM</literal> is simplest; to reduce the time required, it is also possible
        to issue manual <command>VACUUM</command> commands on the tables where
        <structfield>relminxid</structfield> is oldest. Do not use <literal>VACUUM FULL</literal>
        in this scenario, because it requires an XID and will therefore fail, except in super-user
