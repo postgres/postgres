@@ -312,5 +312,7 @@ extern bool AfterTriggerIsActive(void);
 extern int	AfterTriggerCurrentQueryDepth(void);
 
 extern void AtEOXact_RI(bool isCommit);
+extern void AtEOSubXact_RI(bool isCommit, SubTransactionId mySubid,
+						   SubTransactionId parentSubid);
 
 #endif							/* TRIGGER_H */

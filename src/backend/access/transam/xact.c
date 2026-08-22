@@ -5244,6 +5244,7 @@ CommitSubTransaction(void)
 					  s->parent->subTransactionId);
 	AtEOSubXact_HashTables(true, s->nestingLevel);
 	AtEOSubXact_PgStat(true, s->nestingLevel);
+	AtEOSubXact_RI(true, s->subTransactionId, s->parent->subTransactionId);
 	AtSubCommit_Snapshot(s->nestingLevel);
 
 	/*
@@ -5418,6 +5419,7 @@ AbortSubTransaction(void)
 						  s->parent->subTransactionId);
 		AtEOSubXact_HashTables(false, s->nestingLevel);
 		AtEOSubXact_PgStat(false, s->nestingLevel);
+		AtEOSubXact_RI(false, s->subTransactionId, s->parent->subTransactionId);
 		AtSubAbort_Snapshot(s->nestingLevel);
 	}
 

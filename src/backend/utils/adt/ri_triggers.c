@@ -287,6 +287,14 @@ typedef struct RI_FastPathEntry
 	 * re-entrant ri_FastPathBatchAdd from user code run during the flush.
 	 */
 	bool		flushing;
+
+	/*
+	 * Subtransaction whose resource owner opened this entry's relations.
+	 * AtEOSubXact_RI() drops only entries matching an aborting subxact, so a
+	 * subxact abort during outer-level trigger firing leaves the outer batch
+	 * intact.
+	 */
+	SubTransactionId subid;
 } RI_FastPathEntry;
 
 /*
@@ -512,9 +520,7 @@ RI_FKey_check(TriggerData *trigdata)
 	 */
 	if (ri_fastpath_is_applicable(riinfo))
 	{
-		if (AfterTriggerIsActive() &&
-			GetCurrentTransactionNestLevel() == 1 &&
-			!ri_fastpath_flushing)
+		if (AfterTriggerIsActive() && !ri_fastpath_flushing)
 		{
 			/* Batched path: buffer and probe in groups */
 			ri_FastPathBatchAdd(riinfo, fk_rel, newslot);
@@ -522,14 +528,10 @@ RI_FKey_check(TriggerData *trigdata)
 		else
 		{
 			/*
-			 * Per-row path, used when batching is not safe or not applicable:
+			 * Per-row path, used when batching is not applicable:
 			 *
 			 * - ALTER TABLE validation, where no after-trigger firing is
 			 * active;
-			 *
-			 * - any FK check inside a subtransaction, since the batch cache
-			 * is confined to the top transaction level (it cannot be cleanly
-			 * unwound on subxact abort);
 			 *
 			 * - a re-entrant check from user cast/operator code running
 			 * during a batch flush, since adding a cache entry while
@@ -2970,6 +2972,14 @@ ri_FastPathBatchAdd(RI_ConstraintInfo *riinfo,
 	}
 
 	/*
+	 * A batch is filled and flushed within a single trigger-firing cycle, so
+	 * every row added to an entry comes from the subtransaction that created
+	 * it.  AtEOSubXact_RI() relies on this to identify an aborting
+	 * subtransaction's entries by the subid stamped at entry creation.
+	 */
+	Assert(fpentry->subid == GetCurrentSubTransactionId());
+
+	/*
 	 * Buffer the row.  A full batch is flushed below and re-entry is handled
 	 * above, so there is always room here; the bounds check just guards the
 	 * array write.
@@ -4481,6 +4491,73 @@ AtEOXact_RI(bool isCommit)
 }
 
 /*
+ * AtEOSubXact_RI
+ *		Reset fast-path batching state at subtransaction end.
+ *
+ * Called from CommitSubTransaction() with isCommit true and from
+ * AbortSubTransaction() with isCommit false, in both cases after the
+ * subtransaction's ResourceOwnerRelease().
+ *
+ * Fast-path cache entries are normally flushed and removed at the end of
+ * their trigger-firing cycle, and the cache is destroyed when its last entry
+ * is removed.  Thus, at a normal subtransaction boundary this is a no-op.
+ *
+ * The exception is a batch flush that errors out partway and is caught by this
+ * subtransaction (e.g. a PL/pgSQL EXCEPTION block): ri_FastPathEndBatch()'s
+ * teardown was skipped, so the cache still contains entries whose relations
+ * were opened under this subtransaction's resource owner.  That owner has
+ * just released those relations, making the entries stale.  Remove those
+ * entries so a later firing cycle cannot reuse them.  Entries belonging to
+ * outer subtransactions remain valid and are preserved.
+ *
+ * The remaining slot storage and per-entry flush contexts are reclaimed when
+ * TopTransactionContext is reset at top-level transaction end.
+ */
+void
+AtEOSubXact_RI(bool isCommit, SubTransactionId mySubid,
+			   SubTransactionId parentSubid)
+{
+	HASH_SEQ_STATUS status;
+	RI_FastPathEntry *entry;
+	long		remaining;
+
+	if (ri_fastpath_cache == NULL)
+		return;
+
+	/* Process only entries belonging to the ending subtransaction. */
+	hash_seq_init(&status, ri_fastpath_cache);
+	while ((entry = hash_seq_search(&status)) != NULL)
+	{
+		if (entry->subid != mySubid)
+			continue;
+
+		if (isCommit)
+		{
+			/*
+			 * A committing subxact's entry should already have been flushed
+			 * and torn down at its statement's end (ri_FastPathEndBatch()),
+			 * so we don't expect to find one here.  If we do, reassign it to
+			 * the parent so it's still cleaned up rather than left under a
+			 * subxact id that no longer exists.
+			 */
+			Assert(false);
+			entry->subid = parentSubid;
+		}
+		else
+			hash_search(ri_fastpath_cache, &entry->key, HASH_REMOVE, NULL);
+	}
+
+	/* If that emptied the cache, drop it so the next batch starts clean. */
+	remaining = hash_get_num_entries(ri_fastpath_cache);
+	if (remaining == 0)
+	{
+		hash_destroy(ri_fastpath_cache);
+		ri_fastpath_cache = NULL;
+		ri_fastpath_flushing = false;
+	}
+}
+
+/*
  * ri_FastPathGetEntry
  *		Look up or create a per-batch cache entry for the given constraint.
  *
@@ -4605,6 +4682,7 @@ ri_FastPathGetEntry(const RI_ConstraintInfo *riinfo, Relation fk_rel)
 
 		entry->flushing = false;
 		entry->batch_count = 0;
+		entry->subid = GetCurrentSubTransactionId();
 	}
 
 	return entry;
