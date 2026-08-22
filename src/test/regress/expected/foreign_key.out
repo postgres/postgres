@@ -3951,6 +3951,76 @@ ROLLBACK;
 RESET ROLE;
 DROP TABLE fpav_fk, fpav_pk, fpav_cv_fk, fpav_cv_pk;
 DROP ROLE regress_fpav_role;
+-- Re-entrant fast-path check inside a committing subtransaction.  An AFTER
+-- trigger on one FK table runs FK DML on a second FK table inside a PL/pgSQL
+-- BEGIN ... EXCEPTION block, so the inner check batches in its own
+-- trigger-firing cycle nested in the outer check's.  The inner cycle must
+-- register its own end-of-batch callback and flush -- otherwise its FK check
+-- is skipped (an orphan commits) and its relations leak.
+CREATE TABLE fp_inner_pk (id int PRIMARY KEY);
+INSERT INTO fp_inner_pk VALUES (1);
+CREATE TABLE fp_inner_fk (a int REFERENCES fp_inner_pk (id));
+CREATE TABLE fp_outer_pk (id int PRIMARY KEY);
+INSERT INTO fp_outer_pk SELECT g FROM generate_series(1, 64) g;
+CREATE FUNCTION fp_reentry_subxact() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF NEW.a = 32 THEN
+        BEGIN
+            INSERT INTO fp_inner_fk VALUES (999);  -- violates; must be caught
+        EXCEPTION WHEN foreign_key_violation THEN
+            NULL;
+        END;
+    END IF;
+    RETURN NEW;
+END$$;
+CREATE TABLE fp_outer_fk (a int REFERENCES fp_outer_pk (id));
+CREATE TRIGGER fp_reentry_subxact_trg AFTER INSERT ON fp_outer_fk
+    FOR EACH ROW EXECUTE FUNCTION fp_reentry_subxact();
+INSERT INTO fp_outer_fk SELECT g FROM generate_series(1, 64) g;
+SELECT count(*) AS outer_rows FROM fp_outer_fk;   -- 64, outer batch intact
+ outer_rows 
+------------
+         64
+(1 row)
+
+SELECT count(*) AS inner_rows FROM fp_inner_fk;   -- 0, inner check caught
+ inner_rows 
+------------
+          0
+(1 row)
+
+DROP TRIGGER fp_reentry_subxact_trg ON fp_outer_fk;
+DROP FUNCTION fp_reentry_subxact();
+DROP TABLE fp_outer_fk, fp_outer_pk, fp_inner_fk, fp_inner_pk;
+-- A nested trigger-firing cycle that checks the same constraint must use a
+-- separate cache entry.  The inner violation is caught by its subtransaction,
+-- while the valid outer row remains buffered and is checked normally.
+CREATE TABLE fp_same_pk (id int PRIMARY KEY);
+INSERT INTO fp_same_pk VALUES (1);
+CREATE TABLE fp_same_fk (a int REFERENCES fp_same_pk (id));
+CREATE FUNCTION fp_reentry_same_constraint() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF NEW.a = 1 THEN
+        BEGIN
+            INSERT INTO fp_same_fk VALUES (999);
+        EXCEPTION WHEN foreign_key_violation THEN
+            NULL;
+        END;
+    END IF;
+    RETURN NEW;
+END$$;
+CREATE TRIGGER fp_reentry_same_constraint_trg AFTER INSERT ON fp_same_fk
+    FOR EACH ROW EXECUTE FUNCTION fp_reentry_same_constraint();
+INSERT INTO fp_same_fk VALUES (1);
+SELECT * FROM fp_same_fk;
+ a 
+---
+ 1
+(1 row)
+
+DROP TRIGGER fp_reentry_same_constraint_trg ON fp_same_fk;
+DROP FUNCTION fp_reentry_same_constraint();
+DROP TABLE fp_same_fk, fp_same_pk;
 -- An AFTER trigger runs a query of its own, and that query inserts into a
 -- second table with a fast-path foreign key.  The entry the nested INSERT
 -- creates belongs to the cursor's portal, which is gone by the time the
