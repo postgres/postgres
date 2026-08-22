@@ -78,7 +78,7 @@
 
 #include "postgres.h"
 
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeIncrementalSort.h"
 #include "miscadmin.h"
 #include "utils/lsyscache.h"
@@ -328,8 +328,6 @@ switchToPresortedPrefixMode(PlanState *pstate)
 	 */
 	if (node->bounded)
 	{
-		SO1_printf("Setting bound on presorted prefix tuplesort to: " INT64_FORMAT "\n",
-				   node->bound - node->bound_Done);
 		tuplesort_set_bound(node->prefixsort_state,
 							node->bound - node->bound_Done);
 	}
@@ -397,9 +395,7 @@ switchToPresortedPrefixMode(PlanState *pstate)
 	 * remaining in the large single prefix key group we think we've
 	 * encountered.
 	 */
-	SO1_printf("Moving " INT64_FORMAT " tuples to presorted prefix tuplesort\n", nTuples);
 	node->n_fullsort_remaining -= nTuples;
-	SO1_printf("Setting n_fullsort_remaining to " INT64_FORMAT "\n", node->n_fullsort_remaining);
 
 	if (node->n_fullsort_remaining == 0)
 	{
@@ -412,7 +408,6 @@ switchToPresortedPrefixMode(PlanState *pstate)
 		 * execution node to load into the presorted prefix tuplesort.
 		 */
 		ExecCopySlot(node->group_pivot, node->transfer_tuple);
-		SO_printf("Setting execution_status to INCSORT_LOADPREFIXSORT (switchToPresortedPrefixMode)\n");
 		node->execution_status = INCSORT_LOADPREFIXSORT;
 
 		/*
@@ -430,7 +425,6 @@ switchToPresortedPrefixMode(PlanState *pstate)
 		 * out all of those tuples, and then come back around to find another
 		 * batch.
 		 */
-		SO1_printf("Sorting presorted prefix tuplesort with " INT64_FORMAT " tuples\n", nTuples);
 		tuplesort_performsort(node->prefixsort_state);
 
 		INSTRUMENT_SORT_GROUP(node, prefixsort);
@@ -443,12 +437,9 @@ switchToPresortedPrefixMode(PlanState *pstate)
 			 * - n), so store the current number of processed tuples for use
 			 * in configuring sorting bound.
 			 */
-			SO2_printf("Changing bound_Done from " INT64_FORMAT " to " INT64_FORMAT "\n",
-					   Min(node->bound, node->bound_Done + nTuples), node->bound_Done);
 			node->bound_Done = Min(node->bound, node->bound_Done + nTuples);
 		}
 
-		SO_printf("Setting execution_status to INCSORT_READPREFIXSORT  (switchToPresortedPrefixMode)\n");
 		node->execution_status = INCSORT_READPREFIXSORT;
 	}
 }
@@ -555,8 +546,6 @@ ExecIncrementalSort(PlanState *pstate)
 			 * need to re-execute the prefix mode transition function to pull
 			 * out the next prefix key group.
 			 */
-			SO1_printf("Re-calling switchToPresortedPrefixMode() because n_fullsort_remaining is > 0 (" INT64_FORMAT ")\n",
-					   node->n_fullsort_remaining);
 			switchToPresortedPrefixMode(pstate);
 		}
 		else
@@ -567,7 +556,6 @@ ExecIncrementalSort(PlanState *pstate)
 			 * it's time to start the process all over again by building a new
 			 * group in the full sort state.
 			 */
-			SO_printf("Setting execution_status to INCSORT_LOADFULLSORT (n_fullsort_remaining > 0)\n");
 			node->execution_status = INCSORT_LOADFULLSORT;
 		}
 	}
@@ -690,12 +678,10 @@ ExecIncrementalSort(PlanState *pstate)
 				 */
 				node->outerNodeDone = true;
 
-				SO1_printf("Sorting fullsort with " INT64_FORMAT " tuples\n", nTuples);
 				tuplesort_performsort(fullsort_state);
 
 				INSTRUMENT_SORT_GROUP(node, fullsort);
 
-				SO_printf("Setting execution_status to INCSORT_READFULLSORT (final tuple)\n");
 				node->execution_status = INCSORT_READFULLSORT;
 				break;
 			}
@@ -759,9 +745,6 @@ ExecIncrementalSort(PlanState *pstate)
 						 * current number of processed tuples for later use
 						 * configuring the sort state's bound.
 						 */
-						SO2_printf("Changing bound_Done from " INT64_FORMAT " to " INT64_FORMAT "\n",
-								   node->bound_Done,
-								   Min(node->bound, node->bound_Done + nTuples));
 						node->bound_Done = Min(node->bound, node->bound_Done + nTuples);
 					}
 
@@ -770,13 +753,10 @@ ExecIncrementalSort(PlanState *pstate)
 					 * sort and transition modes to reading out the sorted
 					 * tuples.
 					 */
-					SO1_printf("Sorting fullsort tuplesort with " INT64_FORMAT " tuples\n",
-							   nTuples);
 					tuplesort_performsort(fullsort_state);
 
 					INSTRUMENT_SORT_GROUP(node, fullsort);
 
-					SO_printf("Setting execution_status to INCSORT_READFULLSORT (found end of group)\n");
 					node->execution_status = INCSORT_READFULLSORT;
 					break;
 				}
@@ -811,7 +791,6 @@ ExecIncrementalSort(PlanState *pstate)
 				 * on FIFO retrieval semantics when transferring them to the
 				 * presorted prefix tuplesort.
 				 */
-				SO1_printf("Sorting fullsort tuplesort with " INT64_FORMAT " tuples\n", nTuples);
 				tuplesort_performsort(fullsort_state);
 
 				INSTRUMENT_SORT_GROUP(node, fullsort);
@@ -830,13 +809,8 @@ ExecIncrementalSort(PlanState *pstate)
 				{
 					int64		currentBound = node->bound - node->bound_Done;
 
-					SO2_printf("Read " INT64_FORMAT " tuples, but setting to " INT64_FORMAT " because we used bounded sort\n",
-							   nTuples, Min(currentBound, nTuples));
 					nTuples = Min(currentBound, nTuples);
 				}
-
-				SO1_printf("Setting n_fullsort_remaining to " INT64_FORMAT " and calling switchToPresortedPrefixMode()\n",
-						   nTuples);
 
 				/*
 				 * We might have multiple prefix key groups in the full sort
@@ -925,12 +899,10 @@ ExecIncrementalSort(PlanState *pstate)
 		 * Perform the sort and begin returning the tuples to the parent plan
 		 * node.
 		 */
-		SO1_printf("Sorting presorted prefix tuplesort with " INT64_FORMAT " tuples\n", nTuples);
 		tuplesort_performsort(node->prefixsort_state);
 
 		INSTRUMENT_SORT_GROUP(node, prefixsort);
 
-		SO_printf("Setting execution_status to INCSORT_READPREFIXSORT (found end of group)\n");
 		node->execution_status = INCSORT_READPREFIXSORT;
 
 		if (node->bounded)
@@ -941,9 +913,6 @@ ExecIncrementalSort(PlanState *pstate)
 			 * - n), so store the current number of processed tuples for use
 			 * in configuring sorting bound.
 			 */
-			SO2_printf("Changing bound_Done from " INT64_FORMAT " to " INT64_FORMAT "\n",
-					   node->bound_Done,
-					   Min(node->bound, node->bound_Done + nTuples));
 			node->bound_Done = Min(node->bound, node->bound_Done + nTuples);
 		}
 	}
@@ -974,8 +943,6 @@ IncrementalSortState *
 ExecInitIncrementalSort(IncrementalSort *node, EState *estate, int eflags)
 {
 	IncrementalSortState *incrsortstate;
-
-	SO_printf("ExecInitIncrementalSort: initializing sort node\n");
 
 	/*
 	 * Incremental sort can't be used with EXEC_FLAG_BACKWARD or
@@ -1062,8 +1029,6 @@ ExecInitIncrementalSort(IncrementalSort *node, EState *estate, int eflags)
 		MakeSingleTupleTableSlot(ExecGetResultType(outerPlanState(incrsortstate)),
 								 &TTSOpsMinimalTuple);
 
-	SO_printf("ExecInitIncrementalSort: sort node initialized\n");
-
 	return incrsortstate;
 }
 
@@ -1074,8 +1039,6 @@ ExecInitIncrementalSort(IncrementalSort *node, EState *estate, int eflags)
 void
 ExecEndIncrementalSort(IncrementalSortState *node)
 {
-	SO_printf("ExecEndIncrementalSort: shutting down sort node\n");
-
 	ExecDropSingleTupleTableSlot(node->group_pivot);
 	ExecDropSingleTupleTableSlot(node->transfer_tuple);
 
@@ -1097,8 +1060,6 @@ ExecEndIncrementalSort(IncrementalSortState *node)
 	 * Shut down the subplan.
 	 */
 	ExecEndNode(outerPlanState(node));
-
-	SO_printf("ExecEndIncrementalSort: sort node shutdown\n");
 }
 
 void

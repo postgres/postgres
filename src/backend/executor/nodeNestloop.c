@@ -21,7 +21,7 @@
 
 #include "postgres.h"
 
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/instrument.h"
 #include "executor/nodeNestloop.h"
 #include "miscadmin.h"
@@ -76,8 +76,6 @@ ExecNestLoop(PlanState *pstate)
 	/*
 	 * get information from the node
 	 */
-	ENL1_printf("getting info from node");
-
 	nl = (NestLoop *) node->js.ps.plan;
 	joinqual = node->js.joinqual;
 	otherqual = node->js.ps.qual;
@@ -95,8 +93,6 @@ ExecNestLoop(PlanState *pstate)
 	 * Ok, everything is setup for the join so now loop until we return a
 	 * qualifying join tuple.
 	 */
-	ENL1_printf("entering main loop");
-
 	for (;;)
 	{
 		/*
@@ -105,19 +101,14 @@ ExecNestLoop(PlanState *pstate)
 		 */
 		if (node->nl_NeedNewOuter)
 		{
-			ENL1_printf("getting new outer tuple");
 			outerTupleSlot = ExecProcNode(outerPlan);
 
 			/*
 			 * if there are no more outer tuples, then the join is complete..
 			 */
 			if (TupIsNull(outerTupleSlot))
-			{
-				ENL1_printf("no outer tuple, ending join");
 				return NULL;
-			}
 
-			ENL1_printf("saving new outer tuple information");
 			econtext->ecxt_outertuple = outerTupleSlot;
 			node->nl_NeedNewOuter = false;
 			node->nl_MatchedOuter = false;
@@ -148,22 +139,17 @@ ExecNestLoop(PlanState *pstate)
 			/*
 			 * now rescan the inner plan
 			 */
-			ENL1_printf("rescanning inner plan");
 			ExecReScan(innerPlan);
 		}
 
 		/*
 		 * we have an outerTuple, try to get the next inner tuple.
 		 */
-		ENL1_printf("getting new inner tuple");
-
 		innerTupleSlot = ExecProcNode(innerPlan);
 		econtext->ecxt_innertuple = innerTupleSlot;
 
 		if (TupIsNull(innerTupleSlot))
 		{
-			ENL1_printf("no inner tuple, need new outer tuple");
-
 			node->nl_NeedNewOuter = true;
 
 			if (!node->nl_MatchedOuter &&
@@ -178,8 +164,6 @@ ExecNestLoop(PlanState *pstate)
 				 */
 				econtext->ecxt_innertuple = node->nl_NullInnerTupleSlot;
 
-				ENL1_printf("testing qualification for outer-join tuple");
-
 				if (otherqual == NULL || ExecQual(otherqual, econtext))
 				{
 					/*
@@ -187,8 +171,6 @@ ExecNestLoop(PlanState *pstate)
 					 * the slot containing the result tuple using
 					 * ExecProject().
 					 */
-					ENL1_printf("qualification succeeded, projecting tuple");
-
 					return ExecProject(node->js.ps.ps_ProjInfo);
 				}
 				else
@@ -209,8 +191,6 @@ ExecNestLoop(PlanState *pstate)
 		 * Only the joinquals determine MatchedOuter status, but all quals
 		 * must pass to actually return the tuple.
 		 */
-		ENL1_printf("testing qualification");
-
 		if (ExecQual(joinqual, econtext))
 		{
 			node->nl_MatchedOuter = true;
@@ -236,8 +216,6 @@ ExecNestLoop(PlanState *pstate)
 				 * qualification was satisfied so we project and return the
 				 * slot containing the result tuple using ExecProject().
 				 */
-				ENL1_printf("qualification succeeded, projecting tuple");
-
 				return ExecProject(node->js.ps.ps_ProjInfo);
 			}
 			else
@@ -250,8 +228,6 @@ ExecNestLoop(PlanState *pstate)
 		 * Tuple fails qual, so free per-tuple memory and try again.
 		 */
 		ResetExprContext(econtext);
-
-		ENL1_printf("qualification failed, looping");
 	}
 }
 
@@ -266,9 +242,6 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
-
-	NL1_printf("ExecInitNestLoop: %s\n",
-			   "initializing node");
 
 	/*
 	 * create state structure
@@ -346,9 +319,6 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	nlstate->nl_NeedNewOuter = true;
 	nlstate->nl_MatchedOuter = false;
 
-	NL1_printf("ExecInitNestLoop: %s\n",
-			   "node initialized");
-
 	return nlstate;
 }
 
@@ -361,17 +331,11 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 void
 ExecEndNestLoop(NestLoopState *node)
 {
-	NL1_printf("ExecEndNestLoop: %s\n",
-			   "ending node processing");
-
 	/*
 	 * close down subplans
 	 */
 	ExecEndNode(outerPlanState(node));
 	ExecEndNode(innerPlanState(node));
-
-	NL1_printf("ExecEndNestLoop: %s\n",
-			   "node processing ended");
 }
 
 /* ----------------------------------------------------------------

@@ -16,7 +16,7 @@
 #include "postgres.h"
 
 #include "access/parallel.h"
-#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeSort.h"
 #include "miscadmin.h"
 #include "utils/tuplesort.h"
@@ -60,9 +60,6 @@ ExecSort(PlanState *pstate)
 	/*
 	 * get state info from node
 	 */
-	SO1_printf("ExecSort: %s\n",
-			   "entering routine");
-
 	estate = node->ss.ps.state;
 	dir = estate->es_direction;
 	tuplesortstate = (Tuplesortstate *) node->tuplesortstate;
@@ -79,9 +76,6 @@ ExecSort(PlanState *pstate)
 		TupleDesc	tupDesc;
 		int			tuplesortopts = TUPLESORT_NONE;
 
-		SO1_printf("ExecSort: %s\n",
-				   "sorting subplan");
-
 		/*
 		 * Want to scan subplan in the forward direction while creating the
 		 * sorted data.
@@ -91,9 +85,6 @@ ExecSort(PlanState *pstate)
 		/*
 		 * Initialize tuplesort module.
 		 */
-		SO1_printf("ExecSort: %s\n",
-				   "calling tuplesort_begin");
-
 		outerNode = outerPlanState(node);
 		tupDesc = ExecGetResultType(outerNode);
 
@@ -179,11 +170,7 @@ ExecSort(PlanState *pstate)
 			si = &node->shared_info->sinstrument[ParallelWorkerNumber];
 			tuplesort_get_stats(tuplesortstate, si);
 		}
-		SO1_printf("ExecSort: %s\n", "sorting done");
 	}
-
-	SO1_printf("ExecSort: %s\n",
-			   "retrieving tuple from tuplesort");
 
 	slot = node->ss.ps.ps_ResultTupleSlot;
 
@@ -222,9 +209,6 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 {
 	SortState  *sortstate;
 	TupleDesc	outerTupDesc;
-
-	SO1_printf("ExecInitSort: %s\n",
-			   "initializing sort node");
 
 	/*
 	 * create state structure
@@ -287,9 +271,6 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	else
 		sortstate->datumSort = false;
 
-	SO1_printf("ExecInitSort: %s\n",
-			   "sort node initialized");
-
 	return sortstate;
 }
 
@@ -300,9 +281,6 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 void
 ExecEndSort(SortState *node)
 {
-	SO1_printf("ExecEndSort: %s\n",
-			   "shutting down sort node");
-
 	/*
 	 * Release tuplesort resources
 	 */
@@ -314,9 +292,6 @@ ExecEndSort(SortState *node)
 	 * shut down the subplan
 	 */
 	ExecEndNode(outerPlanState(node));
-
-	SO1_printf("ExecEndSort: %s\n",
-			   "sort node shutdown");
 }
 
 /* ----------------------------------------------------------------

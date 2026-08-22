@@ -23,7 +23,6 @@
 #include "catalog/objectaccess.h"
 #include "catalog/pg_type.h"
 #include "executor/execExpr.h"
-#include "executor/execdebug.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeSubplan.h"
 #include "funcapi.h"
