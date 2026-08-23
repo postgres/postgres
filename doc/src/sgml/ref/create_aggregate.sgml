@@ -41,6 +41,7 @@ CREATE [ OR REPLACE ] AGGREGATE <replaceable class="parameter">name</replaceable
     [ , MFINALFUNC_MODIFY = { READ_ONLY | SHAREABLE | READ_WRITE } ]
     [ , MINITCOND = <replaceable class="parameter">minitial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="parameter">sort_operator</replaceable> ]
+    [ , SUPPORT = <replaceable class="parameter">psfunc</replaceable> ]
     [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
 )
 
@@ -53,6 +54,7 @@ CREATE [ OR REPLACE ] AGGREGATE <replaceable class="parameter">name</replaceable
     [ , FINALFUNC_EXTRA ]
     [ , FINALFUNC_MODIFY = { READ_ONLY | SHAREABLE | READ_WRITE } ]
     [ , INITCOND = <replaceable class="parameter">initial_condition</replaceable> ]
+    [ , SUPPORT = <replaceable class="parameter">psfunc</replaceable> ]
     [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
     [ , HYPOTHETICAL ]
 )
@@ -80,6 +82,7 @@ CREATE [ OR REPLACE ] AGGREGATE <replaceable class="parameter">name</replaceable
     [ , MFINALFUNC_MODIFY = { READ_ONLY | SHAREABLE | READ_WRITE } ]
     [ , MINITCOND = <replaceable class="parameter">minitial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="parameter">sort_operator</replaceable> ]
+    [ , SUPPORT = <replaceable class="parameter">psfunc</replaceable> ]
 )
 </synopsis>
  </refsynopsisdiv>
@@ -624,6 +627,18 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       This is just an operator name (possibly schema-qualified).
       The operator is assumed to have the same input data types as
       the aggregate (which must be a single-argument normal aggregate).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">psfunc</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of a <firstterm>planner support
+      function</firstterm> to use for this aggregate.  See
+      <xref linkend="xfunc-optimization"/> for details.
+      You must be superuser to use this option.
      </para>
     </listitem>
    </varlistentry>

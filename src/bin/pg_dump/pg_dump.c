@@ -15365,6 +15365,7 @@ dumpAgg(Archive *fout, const AggInfo *agginfo)
 	const char *agginitval;
 	const char *aggminitval;
 	const char *proparallel;
+	const char *prosupport;
 	char		defaultfinalmodify;
 
 	/* Do nothing if not dumping schema */
@@ -15413,11 +15414,18 @@ dumpAgg(Archive *fout, const AggInfo *agginfo)
 		if (fout->remoteVersion >= 110000)
 			appendPQExpBufferStr(query,
 								 "aggfinalmodify,\n"
-								 "aggmfinalmodify\n");
+								 "aggmfinalmodify,\n");
 		else
 			appendPQExpBufferStr(query,
 								 "'0' AS aggfinalmodify,\n"
-								 "'0' AS aggmfinalmodify\n");
+								 "'0' AS aggmfinalmodify,\n");
+
+		if (fout->remoteVersion >= 120000)
+			appendPQExpBufferStr(query,
+								 "prosupport\n");
+		else
+			appendPQExpBufferStr(query,
+								 "'-' AS prosupport\n");
 
 		appendPQExpBufferStr(query,
 							 "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
@@ -15459,6 +15467,7 @@ dumpAgg(Archive *fout, const AggInfo *agginfo)
 	agginitval = PQgetvalue(res, 0, i_agginitval);
 	aggminitval = PQgetvalue(res, 0, i_aggminitval);
 	proparallel = PQgetvalue(res, 0, PQfnumber(res, "proparallel"));
+	prosupport = PQgetvalue(res, 0, PQfnumber(res, "prosupport"));
 
 	{
 		char	   *funcargs;
@@ -15585,6 +15594,11 @@ dumpAgg(Archive *fout, const AggInfo *agginfo)
 		appendPQExpBuffer(details, ",\n    SORTOP = %s",
 						  aggsortconvop);
 		free(aggsortconvop);
+	}
+
+	if (strcmp(prosupport, "-") != 0)
+	{
+		appendPQExpBuffer(details, ",\n    SUPPORT = %s", prosupport);
 	}
 
 	if (aggkind == AGGKIND_HYPOTHETICAL)

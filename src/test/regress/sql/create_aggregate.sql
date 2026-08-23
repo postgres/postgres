@@ -35,12 +35,20 @@ CREATE AGGREGATE oldcnt (
 -- aggregate that only cares about null/nonnull input
 CREATE AGGREGATE newcnt ("any") (
    sfunc = int8inc_any, stype = int8,
+   support = int8inc_support,
    initcond = '0'
 );
 
 COMMENT ON AGGREGATE nosuchagg (*) IS 'should fail';
 COMMENT ON AGGREGATE newcnt (*) IS 'an agg(*) comment';
 COMMENT ON AGGREGATE newcnt ("any") IS 'an agg(any) comment';
+
+-- verify that newcnt's support function enables run-condition optimization
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT newcnt(ten) OVER (RANGE BETWEEN CURRENT ROW AND CURRENT ROW) c
+   FROM tenk1) t
+WHERE c = 1;
 
 -- multi-argument aggregate
 create function sum3(int8,int8,int8) returns int8 as
