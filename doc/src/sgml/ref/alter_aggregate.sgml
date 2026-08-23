@@ -149,6 +149,13 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signatu
     if <literal>VARIADIC "any"</literal> was used in both the direct and
     aggregated argument lists, write <literal>VARIADIC "any"</literal> only once.
    </para>
+
+   <para>
+    <command>ALTER AGGREGATE</command> deals only with generic properties of
+    an aggregate, such as its name.  To change the aggregate-specific
+    properties of an aggregate such as its support functions, replace its
+    definition entirely with <command>CREATE OR REPLACE AGGREGATE</command>.
+   </para>
  </refsect1>
 
  <refsect1>
