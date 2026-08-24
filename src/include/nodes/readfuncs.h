@@ -34,5 +34,11 @@ extern void *nodeRead(const char *token, int tok_len);
  * prototypes for functions in readfuncs.c
  */
 extern Node *parseNodeString(void);
+extern struct Bitmapset *readBitmapset(void);
+extern Datum readDatum(bool typbyval);
+extern bool *readBoolCols(int numCols);
+extern int *readIntCols(int numCols);
+extern Oid *readOidCols(int numCols);
+extern int16 *readAttrNumberCols(int numCols);
 
 #endif							/* READFUNCS_H */

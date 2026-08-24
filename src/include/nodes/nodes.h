@@ -205,18 +205,12 @@ extern char *nodeToStringWithLocations(const void *obj);
 extern char *bmsToString(const struct Bitmapset *bms);
 
 /*
- * nodes/{readfuncs.c,read.c}
+ * nodes/read.c
  */
 extern void *stringToNode(const char *str);
 #ifdef DEBUG_NODE_TESTS_ENABLED
 extern void *stringToNodeWithLocations(const char *str);
 #endif
-extern struct Bitmapset *readBitmapset(void);
-extern Datum readDatum(bool typbyval);
-extern bool *readBoolCols(int numCols);
-extern int *readIntCols(int numCols);
-extern Oid *readOidCols(int numCols);
-extern int16 *readAttrNumberCols(int numCols);
 
 /*
  * nodes/copyfuncs.c
