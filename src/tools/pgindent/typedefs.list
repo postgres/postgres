@@ -2568,6 +2568,7 @@ ReadBytePtrType
 ReadExtraTocPtrType
 ReadFunc
 ReadLocalXLogPageNoWaitPrivate
+ReadNodeContext
 ReadReplicationSlotCmd
 ReadStream
 ReadStreamBlockNumberCB

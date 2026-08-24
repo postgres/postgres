@@ -909,7 +909,7 @@ foreach my $n (@node_types)
 
 	print $rfs "\tif (MATCH(\"$N\", "
 	  . length($N) . "))\n"
-	  . "\t\treturn (Node *) _read${n}();\n"
+	  . "\t\treturn (Node *) _read${n}(ctx);\n"
 	  unless $no_read;
 
 	next if elem $n, @custom_read_write;
@@ -930,7 +930,7 @@ _out${n}(StringInfo str, const $n *node)
 		  : 'READ_LOCALS_NO_FIELDS';
 		print $rff "
 static $n *
-_read${n}(void)
+_read${n}(ReadNodeContext *ctx)
 {
 \t$macro($n);
 
@@ -1192,8 +1192,8 @@ _read${n}(void)
 		/* Lookup CustomScanMethods by CustomName */
 		char	   *custom_name;
 		const CustomScanMethods *methods;
-		token = pg_strtok(&length); /* skip methods: */
-		token = pg_strtok(&length); /* CustomName */
+		token = pg_strtok(ctx, &length); /* skip methods: */
+		token = pg_strtok(ctx, &length); /* CustomName */
 		custom_name = nullable_string(token, length);
 		methods = GetCustomScanMethods(custom_name, false);
 		local_node->methods = methods;

@@ -17,28 +17,36 @@
 #include "nodes/nodes.h"
 
 /*
- * variable in read.c that needs to be accessible to readfuncs.c
+ * ReadNodeContext - Context data for node deserialization
+ *
+ * This struct holds the state and some configuration of the deserializer.
  */
+typedef struct ReadNodeContext
+{
+	/* the string that's being parsed */
+	const char *str;
 #ifdef DEBUG_NODE_TESTS_ENABLED
-extern PGDLLIMPORT bool restore_location_fields;
+	/* state flag determining how readfuncs.c should treat location fields */
+	bool		restore_location_fields;
 #endif
+} ReadNodeContext;
 
 /*
  * prototypes for functions in read.c (the lisp token parser)
  */
-extern const char *pg_strtok(int *length);
+extern const char *pg_strtok(ReadNodeContext *ctx, int *length);
 extern char *debackslash(const char *token, int length);
-extern void *nodeRead(const char *token, int tok_len);
+extern void *nodeRead(ReadNodeContext *ctx, const char *token, int tok_len);
 
 /*
  * prototypes for functions in readfuncs.c
  */
-extern Node *parseNodeString(void);
-extern struct Bitmapset *readBitmapset(void);
-extern Datum readDatum(bool typbyval);
-extern bool *readBoolCols(int numCols);
-extern int *readIntCols(int numCols);
-extern Oid *readOidCols(int numCols);
-extern int16 *readAttrNumberCols(int numCols);
+extern Node *parseNodeString(ReadNodeContext *ctx);
+extern struct Bitmapset *readBitmapset(ReadNodeContext *ctx);
+extern Datum readDatum(ReadNodeContext *ctx, bool typbyval);
+extern bool *readBoolCols(ReadNodeContext *ctx, int numCols);
+extern int *readIntCols(ReadNodeContext *ctx, int numCols);
+extern Oid *readOidCols(ReadNodeContext *ctx, int numCols);
+extern int16 *readAttrNumberCols(ReadNodeContext *ctx, int numCols);
 
 #endif							/* READFUNCS_H */

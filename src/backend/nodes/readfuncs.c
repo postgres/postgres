@@ -56,116 +56,116 @@
 
 /* Read an integer field (anything written as ":fldname %d") */
 #define READ_INT_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
 	local_node->fldname = atoi(token)
 
 /* Read an unsigned integer field (anything written as ":fldname %u") */
 #define READ_UINT_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
 	local_node->fldname = atoui(token)
 
 /* Read a signed integer field (anything written using INT64_FORMAT) */
 #define READ_INT64_FIELD(fldname) \
-	token = pg_strtok(&length); /* skip :fldname */ \
-	token = pg_strtok(&length); /* get field value */ \
+	token = pg_strtok(ctx, &length); /* skip :fldname */ \
+	token = pg_strtok(ctx, &length); /* get field value */ \
 	local_node->fldname = strtoi64(token, NULL, 10)
 
 /* Read an unsigned integer field (anything written using UINT64_FORMAT) */
 #define READ_UINT64_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
 	local_node->fldname = strtou64(token, NULL, 10)
 
 /* Read a long integer field (anything written as ":fldname %ld") */
 #define READ_LONG_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
 	local_node->fldname = atol(token)
 
 /* Read an OID field (don't hard-wire assumption that OID is same as uint) */
 #define READ_OID_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
 	local_node->fldname = atooid(token)
 
 /* Read a char field (ie, one ascii character) */
 #define READ_CHAR_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
 	/* avoid overhead of calling debackslash() for one char */ \
 	local_node->fldname = (length == 0) ? '\0' : (token[0] == '\\' ? token[1] : token[0])
 
 /* Read an enumerated-type field that was written as an integer code */
 #define READ_ENUM_FIELD(fldname, enumtype) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
 	local_node->fldname = (enumtype) atoi(token)
 
 /* Read a float field */
 #define READ_FLOAT_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
 	local_node->fldname = atof(token)
 
 /* Read a boolean field */
 #define READ_BOOL_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
 	local_node->fldname = strtobool(token)
 
 /* Read a character-string field */
 #define READ_STRING_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
 	local_node->fldname = nullable_string(token, length)
 
 /* Read a parse location field (and possibly throw away the value) */
 #ifdef DEBUG_NODE_TESTS_ENABLED
 #define READ_LOCATION_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
-	local_node->fldname = restore_location_fields ? atoi(token) : -1
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
+	local_node->fldname = ctx->restore_location_fields ? atoi(token) : -1
 #else
 #define READ_LOCATION_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	token = pg_strtok(&length);		/* get field value */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* get field value */ \
 	(void) token;				/* in case not used elsewhere */ \
 	local_node->fldname = -1	/* set field to "unknown" */
 #endif
 
 /* Read a Node field */
 #define READ_NODE_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
 	(void) token;				/* in case not used elsewhere */ \
-	local_node->fldname = nodeRead(NULL, 0)
+	local_node->fldname = nodeRead(ctx, NULL, 0)
 
 /* Read a bitmapset field */
 #define READ_BITMAPSET_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
 	(void) token;				/* in case not used elsewhere */ \
-	local_node->fldname = _readBitmapset()
+	local_node->fldname = _readBitmapset(ctx)
 
 /* Read an attribute number array */
 #define READ_ATTRNUMBER_ARRAY(fldname, len) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	local_node->fldname = readAttrNumberCols(len)
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	local_node->fldname = readAttrNumberCols(ctx, len)
 
 /* Read an oid array */
 #define READ_OID_ARRAY(fldname, len) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	local_node->fldname = readOidCols(len)
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	local_node->fldname = readOidCols(ctx, len)
 
 /* Read an int array */
 #define READ_INT_ARRAY(fldname, len) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	local_node->fldname = readIntCols(len)
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	local_node->fldname = readIntCols(ctx, len)
 
 /* Read a bool array */
 #define READ_BOOL_ARRAY(fldname, len) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	local_node->fldname = readBoolCols(len)
+	token = pg_strtok(ctx, &length);		/* skip :fldname */ \
+	local_node->fldname = readBoolCols(ctx, len)
 
 /* Routine exit */
 #define READ_DONE() \
@@ -204,19 +204,19 @@ nullable_string(const char *token, int length)
  * Bitmapset when we come across one in other contexts.
  */
 static Bitmapset *
-_readBitmapset(void)
+_readBitmapset(ReadNodeContext *ctx)
 {
 	Bitmapset  *result = NULL;
 
 	READ_TEMP_LOCALS();
 
-	token = pg_strtok(&length);
+	token = pg_strtok(ctx, &length);
 	if (token == NULL)
 		elog(ERROR, "incomplete Bitmapset structure");
 	if (length != 1 || token[0] != '(')
 		elog(ERROR, "unrecognized token: \"%.*s\"", length, token);
 
-	token = pg_strtok(&length);
+	token = pg_strtok(ctx, &length);
 	if (token == NULL)
 		elog(ERROR, "incomplete Bitmapset structure");
 	if (length != 1 || token[0] != 'b')
@@ -227,7 +227,7 @@ _readBitmapset(void)
 		int			val;
 		char	   *endptr;
 
-		token = pg_strtok(&length);
+		token = pg_strtok(ctx, &length);
 		if (token == NULL)
 			elog(ERROR, "unterminated Bitmapset structure");
 		if (length == 1 && token[0] == ')')
@@ -246,9 +246,9 @@ _readBitmapset(void)
  * That's somewhat historical, though, because calling nodeRead() will work.
  */
 Bitmapset *
-readBitmapset(void)
+readBitmapset(ReadNodeContext *ctx)
 {
-	return _readBitmapset();
+	return _readBitmapset(ctx);
 }
 
 #include "readfuncs.funcs.c"
@@ -260,7 +260,7 @@ readBitmapset(void)
  */
 
 static Const *
-_readConst(void)
+_readConst(ReadNodeContext *ctx)
 {
 	READ_LOCALS(Const);
 
@@ -272,23 +272,23 @@ _readConst(void)
 	READ_BOOL_FIELD(constisnull);
 	READ_LOCATION_FIELD(location);
 
-	token = pg_strtok(&length); /* skip :constvalue */
+	token = pg_strtok(ctx, &length);	/* skip :constvalue */
 	if (local_node->constisnull)
-		token = pg_strtok(&length); /* skip "<>" */
+		token = pg_strtok(ctx, &length);	/* skip "<>" */
 	else
-		local_node->constvalue = readDatum(local_node->constbyval);
+		local_node->constvalue = readDatum(ctx, local_node->constbyval);
 
 	READ_DONE();
 }
 
 static BoolExpr *
-_readBoolExpr(void)
+_readBoolExpr(ReadNodeContext *ctx)
 {
 	READ_LOCALS(BoolExpr);
 
 	/* do-it-yourself enum representation */
-	token = pg_strtok(&length); /* skip :boolop */
-	token = pg_strtok(&length); /* get field value */
+	token = pg_strtok(ctx, &length);	/* skip :boolop */
+	token = pg_strtok(ctx, &length);	/* get field value */
 	if (length == 3 && strncmp(token, "and", 3) == 0)
 		local_node->boolop = AND_EXPR;
 	else if (length == 2 && strncmp(token, "or", 2) == 0)
@@ -305,17 +305,17 @@ _readBoolExpr(void)
 }
 
 static A_Const *
-_readA_Const(void)
+_readA_Const(ReadNodeContext *ctx)
 {
 	READ_LOCALS(A_Const);
 
 	/* We expect either NULL or :val here */
-	token = pg_strtok(&length);
+	token = pg_strtok(ctx, &length);
 	if (length == 4 && strncmp(token, "NULL", 4) == 0)
 		local_node->isnull = true;
 	else
 	{
-		union ValUnion *tmp = nodeRead(NULL, 0);
+		union ValUnion *tmp = nodeRead(ctx, NULL, 0);
 
 		/* To forestall valgrind complaints, copy only the valid data */
 		switch (nodeTag(tmp))
@@ -348,7 +348,7 @@ _readA_Const(void)
 }
 
 static RangeTblEntry *
-_readRangeTblEntry(void)
+_readRangeTblEntry(ReadNodeContext *ctx)
 {
 	READ_LOCALS(RangeTblEntry);
 
@@ -452,11 +452,11 @@ _readRangeTblEntry(void)
 }
 
 static A_Expr *
-_readA_Expr(void)
+_readA_Expr(ReadNodeContext *ctx)
 {
 	READ_LOCALS(A_Expr);
 
-	token = pg_strtok(&length);
+	token = pg_strtok(ctx, &length);
 
 	if (length == 3 && strncmp(token, "ANY", 3) == 0)
 	{
@@ -526,7 +526,7 @@ _readA_Expr(void)
 	else if (length == 5 && strncmp(token, ":name", 5) == 0)
 	{
 		local_node->kind = AEXPR_OP;
-		local_node->name = nodeRead(NULL, 0);
+		local_node->name = nodeRead(ctx, NULL, 0);
 	}
 	else
 		elog(ERROR, "unrecognized A_Expr kind: \"%.*s\"", length, token);
@@ -541,7 +541,7 @@ _readA_Expr(void)
 }
 
 static ExtensibleNode *
-_readExtensibleNode(void)
+_readExtensibleNode(ReadNodeContext *ctx)
 {
 	const ExtensibleNodeMethods *methods;
 	ExtensibleNode *local_node;
@@ -549,8 +549,8 @@ _readExtensibleNode(void)
 
 	READ_TEMP_LOCALS();
 
-	token = pg_strtok(&length); /* skip :extnodename */
-	token = pg_strtok(&length); /* get extnodename */
+	token = pg_strtok(ctx, &length);	/* skip :extnodename */
+	token = pg_strtok(ctx, &length);	/* get extnodename */
 
 	extnodename = nullable_string(token, length);
 	if (!extnodename)
@@ -562,7 +562,7 @@ _readExtensibleNode(void)
 	local_node->extnodename = extnodename;
 
 	/* deserialize the private fields */
-	methods->nodeRead(local_node);
+	methods->nodeRead(ctx, local_node);
 
 	READ_DONE();
 }
@@ -573,18 +573,16 @@ _readExtensibleNode(void)
  *
  * Given a character string representing a node tree, parseNodeString creates
  * the internal node structure.
- *
- * The string to be read must already have been loaded into pg_strtok().
  */
 Node *
-parseNodeString(void)
+parseNodeString(ReadNodeContext *ctx)
 {
 	READ_TEMP_LOCALS();
 
 	/* Guard against stack overflow due to overly complex expressions */
 	check_stack_depth();
 
-	token = pg_strtok(&length);
+	token = pg_strtok(ctx, &length);
 
 #define MATCH(tokname, namelen) \
 	(length == namelen && memcmp(token, tokname, namelen) == 0)
@@ -604,7 +602,7 @@ parseNodeString(void)
  * so we must be told that.
  */
 Datum
-readDatum(bool typbyval)
+readDatum(ReadNodeContext *ctx, bool typbyval)
 {
 	Size		length;
 	int			tokenLength;
@@ -615,10 +613,10 @@ readDatum(bool typbyval)
 	/*
 	 * read the actual length of the value
 	 */
-	token = pg_strtok(&tokenLength);
+	token = pg_strtok(ctx, &tokenLength);
 	length = atoui(token);
 
-	token = pg_strtok(&tokenLength);	/* read the '[' */
+	token = pg_strtok(ctx, &tokenLength);	/* read the '[' */
 	if (token == NULL || token[0] != '[')
 		elog(ERROR, "expected \"[\" to start datum, but got \"%s\"; length = %zu",
 			 token ? token : "[NULL]", length);
@@ -631,7 +629,7 @@ readDatum(bool typbyval)
 		s = (char *) (&res);
 		for (Size i = 0; i < (Size) sizeof(Datum); i++)
 		{
-			token = pg_strtok(&tokenLength);
+			token = pg_strtok(ctx, &tokenLength);
 			s[i] = (char) atoi(token);
 		}
 	}
@@ -642,13 +640,13 @@ readDatum(bool typbyval)
 		s = (char *) palloc(length);
 		for (Size i = 0; i < length; i++)
 		{
-			token = pg_strtok(&tokenLength);
+			token = pg_strtok(ctx, &tokenLength);
 			s[i] = (char) atoi(token);
 		}
 		res = PointerGetDatum(s);
 	}
 
-	token = pg_strtok(&tokenLength);	/* read the ']' */
+	token = pg_strtok(ctx, &tokenLength);	/* read the ']' */
 	if (token == NULL || token[0] != ']')
 		elog(ERROR, "expected \"]\" to end datum, but got \"%s\"; length = %zu",
 			 token ? token : "[NULL]", length);
@@ -666,11 +664,11 @@ readDatum(bool typbyval)
  */
 #define READ_SCALAR_ARRAY(fnname, datatype, convfunc) \
 datatype * \
-fnname(int numCols) \
+fnname(ReadNodeContext *ctx, int numCols) \
 { \
 	datatype   *vals; \
 	READ_TEMP_LOCALS(); \
-	token = pg_strtok(&length); \
+	token = pg_strtok(ctx, &length); \
 	if (token == NULL) \
 		elog(ERROR, "incomplete scalar array"); \
 	if (length == 0) \
@@ -680,12 +678,12 @@ fnname(int numCols) \
 	vals = palloc_array(datatype, numCols); \
 	for (int i = 0; i < numCols; i++) \
 	{ \
-		token = pg_strtok(&length); \
+		token = pg_strtok(ctx, &length); \
 		if (token == NULL || token[0] == ')') \
 			elog(ERROR, "incomplete scalar array"); \
 		vals[i] = convfunc(token); \
 	} \
-	token = pg_strtok(&length); \
+	token = pg_strtok(ctx, &length); \
 	if (token == NULL || length != 1 || token[0] != ')') \
 		elog(ERROR, "incomplete scalar array"); \
 	return vals; \
