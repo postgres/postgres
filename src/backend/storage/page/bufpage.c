@@ -160,9 +160,11 @@ PageIsVerified(PageData *page, BlockNumber blkno, int flags, bool *checksum_fail
 		if ((flags & (PIV_LOG_WARNING | PIV_LOG_LOG)) != 0)
 			ereport(flags & PIV_LOG_WARNING ? WARNING : LOG,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("page verification failed, calculated checksum %u but expected %u%s",
-							checksum, p->pd_checksum,
-							(flags & PIV_ZERO_BUFFERS_ON_ERROR ? ", buffer will be zeroed" : ""))));
+					 (flags & PIV_ZERO_BUFFERS_ON_ERROR) ?
+					 errmsg("page verification failed, calculated checksum %u but expected %u, buffer will be zeroed",
+							checksum, p->pd_checksum) :
+					 errmsg("page verification failed, calculated checksum %u but expected %u",
+							checksum, p->pd_checksum)));
 
 		if (header_sane && (flags & PIV_IGNORE_CHECKSUM_FAILURE))
 			return true;
