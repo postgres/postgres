@@ -1333,15 +1333,22 @@ strupper_c(char *dst, size_t dstsize, const char *src, size_t srclen)
  * If the result length is less than dstsize, the NUL-terminated result is
  * stored in dst.  Otherwise, the contents of dst are undefined, and the
  * caller should use the return value to resize the buffer and retry.
+ *
+ * See pg_locale.h for limits on string expansion.
  */
 size_t
 pg_strlower(char *dst, size_t dstsize, const char *src, size_t srclen,
 			pg_locale_t locale)
 {
+	size_t		result;
+
 	if (locale->ctype == NULL)
-		return strlower_c(dst, dstsize, src, srclen);
+		result = strlower_c(dst, dstsize, src, srclen);
 	else
-		return locale->ctype->strlower(dst, dstsize, src, srclen, locale);
+		result = locale->ctype->strlower(dst, dstsize, src, srclen, locale);
+
+	Assert(result <= (uint64) srclen * PG_MAX_CASEMAP_EXPANSION);
+	return result;
 }
 
 /*
@@ -1362,15 +1369,22 @@ pg_strlower(char *dst, size_t dstsize, const char *src, size_t srclen,
  * If the result length is less than dstsize, the NUL-terminated result is
  * stored in dst.  Otherwise, the contents of dst are undefined, and the
  * caller should use the return value to resize the buffer and retry.
+ *
+ * See pg_locale.h for limits on string expansion.
  */
 size_t
 pg_strtitle(char *dst, size_t dstsize, const char *src, size_t srclen,
 			pg_locale_t locale)
 {
+	size_t		result;
+
 	if (locale->ctype == NULL)
-		return strtitle_c(dst, dstsize, src, srclen);
+		result = strtitle_c(dst, dstsize, src, srclen);
 	else
-		return locale->ctype->strtitle(dst, dstsize, src, srclen, locale);
+		result = locale->ctype->strtitle(dst, dstsize, src, srclen, locale);
+
+	Assert(result <= (uint64) srclen * PG_MAX_CASEMAP_EXPANSION);
+	return result;
 }
 
 /*
@@ -1389,15 +1403,22 @@ pg_strtitle(char *dst, size_t dstsize, const char *src, size_t srclen,
  * If the result length is less than dstsize, the NUL-terminated result is
  * stored in dst.  Otherwise, the contents of dst are undefined, and the
  * caller should use the return value to resize the buffer and retry.
+ *
+ * See pg_locale.h for limits on string expansion.
  */
 size_t
 pg_strupper(char *dst, size_t dstsize, const char *src, size_t srclen,
 			pg_locale_t locale)
 {
+	size_t		result;
+
 	if (locale->ctype == NULL)
-		return strupper_c(dst, dstsize, src, srclen);
+		result = strupper_c(dst, dstsize, src, srclen);
 	else
-		return locale->ctype->strupper(dst, dstsize, src, srclen, locale);
+		result = locale->ctype->strupper(dst, dstsize, src, srclen, locale);
+
+	Assert(result <= (uint64) srclen * PG_MAX_CASEMAP_EXPANSION);
+	return result;
 }
 
 /*
@@ -1422,16 +1443,23 @@ pg_strupper(char *dst, size_t dstsize, const char *src, size_t srclen,
  * If the result length is less than dstsize, the NUL-terminated result is
  * stored in dst.  Otherwise, the contents of dst are undefined, and the
  * caller should use the return value to resize the buffer and retry.
+ *
+ * See pg_locale.h for limits on string expansion.
  */
 size_t
 pg_strfold(char *dst, size_t dstsize, const char *src, size_t srclen,
 		   pg_locale_t locale)
 {
+	size_t		result;
+
 	/* in the C locale, casefolding is the same as lowercasing */
 	if (locale->ctype == NULL)
-		return strlower_c(dst, dstsize, src, srclen);
+		result = strlower_c(dst, dstsize, src, srclen);
 	else
-		return locale->ctype->strfold(dst, dstsize, src, srclen, locale);
+		result = locale->ctype->strfold(dst, dstsize, src, srclen, locale);
+
+	Assert(result <= (uint64) srclen * PG_MAX_CASEMAP_EXPANSION);
+	return result;
 }
 
 /*

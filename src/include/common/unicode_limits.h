@@ -32,8 +32,8 @@
 
 /*
  * The maximum number of UTF8 bytes needed to store the result of case
- * mapping a single code point.
+ * mapping a single code point, including terminating NUL.
  */
-#define UTF8_CASEMAP_BUFSZ 6
+#define UTF8_CASEMAP_BUFSZ (6 + 1)
 
 #endif
