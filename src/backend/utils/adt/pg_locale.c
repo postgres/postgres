@@ -1330,6 +1330,9 @@ strupper_c(char *dst, size_t dstsize, const char *src, size_t srclen)
  * Convert src to lowercase, and return the result length (not including
  * terminating NUL).
  *
+ * Lowercasing is intended for human-readable display.  If the goal is to
+ * convert to a canonical caseless form, see pg_strfold().
+ *
  * src must be in the database encoding with no embedded NULs.  If srclen is
  * -1, src must be NUL-terminated.  If dstsize is zero, dst may be NULL, which
  * is useful for calculating the required buffer size before allocating.
@@ -1366,6 +1369,11 @@ pg_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen,
  *
  * Convert src to titlecase, and return the result length (not including
  * terminating NUL).
+ *
+ * Titlecasing is intended for human-readable display.  A titlecase string has
+ * the initial letter of each word uppercased (or changed to a special
+ * titlecase form, if available), and all other characters lowercased.  Used
+ * to implement the SQL INITCAP() function.
  *
  * src must be in the database encoding with no embedded NULs.  If srclen is
  * -1, src must be NUL-terminated.  If dstsize is zero, dst may be NULL, which
@@ -1404,6 +1412,9 @@ pg_strtitle(char *dst, size_t dstsize, const char *src, ssize_t srclen,
  * Convert src to uppercase, and return the result length (not including
  * terminating NUL).
  *
+ * Uppercasing is intended for human-readable display.  If the goal is to
+ * convert to a canonical caseless form, see pg_strfold().
+ *
  * src must be in the database encoding with no embedded NULs.  If srclen is
  * -1, src must be NUL-terminated.  If dstsize is zero, dst may be NULL, which
  * is useful for calculating the required buffer size before allocating.
@@ -1438,7 +1449,17 @@ pg_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 /*
  * pg_strfold()
  *
- * Casefold src, and return the result length (not including terminating NUL).
+ * Casefold src, and return the result length (not including terminating
+ * NUL).
+ *
+ * Casefolding produces a canonical string such that, iff the casefolded
+ * strings are equal, the original strings are a case-insensitive match (the
+ * strength of this guarantee depends on normalization, provider and locale).
+ * In practice the result is similar to lowercasing, but the purpose is
+ * different: lowercasing is for human-readable display; whereas casefolding
+ * is meant to canonicalize complex mappings reliably without regard for
+ * display.  Unicode guarantees that casefolding is stable across versions if
+ * the original string consists only of assigned code points.
  *
  * src must be in the database encoding with no embedded NULs.  If srclen is
  * -1, src must be NUL-terminated.  If dstsize is zero, dst may be NULL, which
