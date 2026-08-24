@@ -44,6 +44,7 @@
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
 #include "utils/memutils.h"
+#include "utils/pg_locale.h"
 #include "utils/rel.h"
 #include "utils/typcache.h"
 
@@ -1232,4 +1233,153 @@ test_pglz_decompress(PG_FUNCTION_ARGS)
 
 	SET_VARSIZE(result, dlen + VARHDRSZ);
 	PG_RETURN_BYTEA_P(result);
+}
+
+static void
+test_case_mapping(pg_locale_t locale)
+{
+	char		buf[32];
+	size_t		n;
+
+	n = pg_strlower(NULL, 0, "AbC", 3, locale);
+	if (n != 3)
+		elog(ERROR, "pg_strlower() size probe returned %zu, expected 3", n);
+	n = pg_strlower(buf, 4, "AbC", 3, locale);
+	if (n != 3 || strcmp(buf, "abc") != 0)
+		elog(ERROR, "pg_strlower() produced \"%s\"", buf);
+
+	n = pg_strupper(NULL, 0, "AbC", 3, locale);
+	if (n != 3)
+		elog(ERROR, "pg_strupper() size probe returned %zu, expected 3", n);
+	n = pg_strupper(buf, 4, "AbC", 3, locale);
+	if (n != 3 || strcmp(buf, "ABC") != 0)
+		elog(ERROR, "pg_strupper() produced \"%s\"", buf);
+
+	n = pg_strfold(buf, 4, "AbC", 3, locale);
+	if (n != 3 || strcmp(buf, "abc") != 0)
+		elog(ERROR, "pg_strfold() produced \"%s\"", buf);
+
+	buf[0] = '\0';
+	n = pg_strtitle(buf, sizeof(buf), "hello-world", 11, locale);
+	if (n != 11)
+		elog(ERROR, "pg_strtitle() returned %zu, expected 11", n);
+	if (locale->ctype_is_c && strcmp(buf, "Hello-World") != 0)
+		elog(ERROR, "pg_strtitle() produced \"%s\"", buf);
+
+	n = pg_strlower(buf, sizeof(buf), "AbC", -1, locale);
+	if (n != 3 || strcmp(buf, "abc") != 0)
+		elog(ERROR, "pg_strlower() with srclen -1 produced \"%s\"", buf);
+}
+
+static void
+test_collate(pg_locale_t locale)
+{
+	char		buf[32];
+	char		pfx[8];
+	char		x1[8];
+	char		x2[8];
+	size_t		n;
+
+	if (pg_strcoll("abc", "abc", locale) != 0 ||
+		pg_strncoll("abc", 3, "abc", 3, locale) != 0 ||
+		pg_strcoll("", "", locale) != 0)
+		elog(ERROR, "equal strings did not compare equal");
+
+	if (locale->collate_is_c)
+	{
+		if (locale->collate != NULL)
+			elog(ERROR, "collate_is_c but collate methods are set");
+		if (pg_strcoll("abc", "abd", locale) >= 0 ||
+			pg_strcoll("abd", "abc", locale) <= 0 ||
+			pg_strncoll("ab", 2, "abc", 3, locale) >= 0 ||
+			pg_strncoll("abc", 3, "ab", 2, locale) <= 0 ||
+			pg_strncoll("xyz", 3, "abc", 2, locale) <= 0)
+			elog(ERROR, "C-locale comparison result is wrong");
+
+		if (!pg_strxfrm_enabled(locale))
+			elog(ERROR, "pg_strxfrm_enabled() is false for C locale");
+		n = pg_strnxfrm(NULL, 0, "abc", 3, locale);
+		if (n != 3)
+			elog(ERROR, "pg_strnxfrm() size probe returned %zu, expected 3", n);
+		n = pg_strnxfrm(buf, 4, "abc", 3, locale);
+		if (n != 3 || strcmp(buf, "abc") != 0)
+			elog(ERROR, "pg_strnxfrm() produced \"%s\"", buf);
+		n = pg_strxfrm(buf, "abc", 4, locale);
+		if (n != 3 || strcmp(buf, "abc") != 0)
+			elog(ERROR, "pg_strxfrm() produced \"%s\"", buf);
+		n = pg_strnxfrm(buf, 3, "abc", 3, locale);
+		if (n != 3)
+			elog(ERROR, "pg_strnxfrm() destsize==srclen returned %zu", n);
+		n = pg_strnxfrm(buf, 2, "abc", 3, locale);
+		if (n != 3)
+			elog(ERROR, "pg_strnxfrm() short dest returned %zu", n);
+
+		if (!pg_strxfrm_prefix_enabled(locale))
+			elog(ERROR, "pg_strxfrm_prefix_enabled() is false for C locale");
+		n = pg_strnxfrm_prefix(NULL, 0, "abcdef", 6, locale);
+		if (n != 0)
+			elog(ERROR, "pg_strnxfrm_prefix() destsize 0 returned %zu", n);
+		n = pg_strnxfrm_prefix(pfx, 2, "abcdef", 6, locale);
+		if (n != 2 || memcmp(pfx, "ab", 2) != 0)
+			elog(ERROR, "pg_strnxfrm_prefix() produced a wrong prefix");
+		n = pg_strnxfrm_prefix(pfx, sizeof(pfx), "abc", 3, locale);
+		if (n != 3 || memcmp(pfx, "abc", 3) != 0)
+			elog(ERROR, "pg_strnxfrm_prefix() destsize>=srclen produced a wrong result");
+		n = pg_strxfrm_prefix(pfx, "abcdef", 2, locale);
+		if (n != 2 || memcmp(pfx, "ab", 2) != 0)
+			elog(ERROR, "pg_strxfrm_prefix() produced a wrong prefix");
+
+		if (pg_strxfrm(x1, "abc", sizeof(x1), locale) >= sizeof(x1) ||
+			pg_strxfrm(x2, "abd", sizeof(x2), locale) >= sizeof(x2) ||
+			(strcmp(x1, x2) < 0) != (pg_strcoll("abc", "abd", locale) < 0))
+			elog(ERROR, "pg_strxfrm() disagrees with pg_strcoll()");
+	}
+	else
+	{
+		char	   *tmp;
+
+		if (locale->collate == NULL)
+			elog(ERROR, "collate methods missing for non-C locale");
+
+		n = pg_strnxfrm(NULL, 0, "abc", 3, locale);
+		tmp = palloc(n + 1);
+		if (pg_strnxfrm(tmp, n + 1, "abc", 3, locale) > n)
+			elog(ERROR, "pg_strnxfrm() grew on the second call");
+		pfree(tmp);
+
+		if (pg_strxfrm_prefix_enabled(locale) &&
+			pg_strnxfrm_prefix(pfx, sizeof(pfx), "abc", 3, locale) > sizeof(pfx))
+			elog(ERROR, "pg_strnxfrm_prefix() exceeded destsize");
+	}
+
+	if (pg_strncoll("abc", -1, "abc", -1, locale) != 0)
+		elog(ERROR, "pg_strncoll() with length -1 failed");
+	if (locale->collate_is_c)
+	{
+		n = pg_strnxfrm(buf, sizeof(buf), "abc", -1, locale);
+		if (n != 3 || strcmp(buf, "abc") != 0)
+			elog(ERROR, "pg_strnxfrm() with srclen -1 produced \"%s\"", buf);
+		n = pg_strnxfrm_prefix(pfx, sizeof(pfx), "abc", -1, locale);
+		if (n != 3 || memcmp(pfx, "abc", 3) != 0)
+			elog(ERROR, "pg_strnxfrm_prefix() with srclen -1 produced a wrong result");
+	}
+}
+
+/*
+ * Test pg_locale.h APIs directly, to cover cases not easily reachable by SQL.
+ */
+PG_FUNCTION_INFO_V1(test_pg_locale_apis);
+Datum
+test_pg_locale_apis(PG_FUNCTION_ARGS)
+{
+	pg_locale_t locale;
+
+	locale = pg_newlocale_from_collation(PG_GETARG_OID(0));
+	if (locale == NULL)
+		elog(ERROR, "pg_newlocale_from_collation() returned NULL");
+
+	test_collate(locale);
+	test_case_mapping(locale);
+
+	PG_RETURN_VOID();
 }
