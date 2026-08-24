@@ -883,13 +883,13 @@ EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1
 FROM ft1 t1, ft6 t2, unnest(ARRAY[3, 6, 9, 12, 15, 18]::int[]) AS u(id)
 WHERE t1.c1 = u.id AND t2.c1 = u.id;
--- Selective predicate on ft1.c3 (not in the eqclass) shrinks ft1 to a
--- handful of remote rows; now ft6 is effectively the bigger side and the
--- function is absorbed into ft6 instead.
+-- Equality on ft1.c3 (not in the eqclass) restricts ft1 to a single remote row;
+-- now ft6 is effectively the bigger side and the function is absorbed into
+-- ft6 instead.
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1
 FROM ft1 t1, ft6 t2, unnest(ARRAY[3, 6, 9, 12, 15, 18]::int[]) AS u(id)
-WHERE t1.c1 = u.id AND t2.c1 = u.id AND t1.c3 < '00010';
+WHERE t1.c1 = u.id AND t2.c1 = u.id AND t1.c3 = '00009';
 
 -- The remaining scenarios reuse a dedicated foreign table to cover the
 -- corner cases of FUNCTION RTE push-down: function-first FROM, record

@@ -3128,28 +3128,26 @@ WHERE t1.c1 = u.id AND t2.c1 = u.id;
                Remote SQL: SELECT c1 FROM "S 1"."T 4"
 (12 rows)
 
--- Selective predicate on ft1.c3 (not in the eqclass) shrinks ft1 to a
--- handful of remote rows; now ft6 is effectively the bigger side and the
--- function is absorbed into ft6 instead.
+-- Equality on ft1.c3 (not in the eqclass) restricts ft1 to a single remote row;
+-- now ft6 is effectively the bigger side and the function is absorbed into
+-- ft6 instead.
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT t1.c1, t2.c1
 FROM ft1 t1, ft6 t2, unnest(ARRAY[3, 6, 9, 12, 15, 18]::int[]) AS u(id)
-WHERE t1.c1 = u.id AND t2.c1 = u.id AND t1.c3 < '00010';
-                                                                     QUERY PLAN                                                                     
-----------------------------------------------------------------------------------------------------------------------------------------------------
+WHERE t1.c1 = u.id AND t2.c1 = u.id AND t1.c3 = '00009';
+                                                                  QUERY PLAN                                                                  
+----------------------------------------------------------------------------------------------------------------------------------------------
  Nested Loop
    Output: t1.c1, t2.c1
    Join Filter: (t1.c1 = u.id)
    ->  Foreign Scan on public.ft1 t1
          Output: t1.c1
-         Remote SQL: SELECT "C 1" FROM "S 1"."T 1" WHERE ((c3 < '00010'))
-   ->  Materialize
+         Remote SQL: SELECT "C 1" FROM "S 1"."T 1" WHERE ((c3 = '00009'))
+   ->  Foreign Scan
          Output: t2.c1, u.id
-         ->  Foreign Scan
-               Output: t2.c1, u.id
-               Relations: (public.ft6 t2) INNER JOIN (pg_catalog.unnest() u)
-               Remote SQL: SELECT r2.c1, f3.c1 FROM ("S 1"."T 4" r2 INNER JOIN unnest('{3,6,9,12,15,18}'::integer[]) f3(c1) ON (((r2.c1 = f3.c1))))
-(12 rows)
+         Relations: (public.ft6 t2) INNER JOIN (pg_catalog.unnest() u)
+         Remote SQL: SELECT r2.c1, f3.c1 FROM ("S 1"."T 4" r2 INNER JOIN unnest('{3,6,9,12,15,18}'::integer[]) f3(c1) ON (((r2.c1 = f3.c1))))
+(10 rows)
 
 -- The remaining scenarios reuse a dedicated foreign table to cover the
 -- corner cases of FUNCTION RTE push-down: function-first FROM, record
