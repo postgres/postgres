@@ -46,13 +46,14 @@ ltree_crc32_sz(const char *buf, int size)
 	{
 		while (size > 0)
 		{
-			char		foldstr[UNICODE_CASEMAP_BUFSZ];
+			/* max space required to map single codepoint, including NUL */
+			char		foldstr[UNICODE_CASEMAP_BUFSZ + 1];
 			int			srclen = pg_mblen_range(p, end);
 			size_t		foldlen;
 
 			/* fold one codepoint at a time */
-			foldlen = pg_strfold(foldstr, UNICODE_CASEMAP_BUFSZ, p, srclen,
-								 locale);
+			foldlen = pg_strfold(foldstr, sizeof(foldstr), p, srclen, locale);
+			Assert(foldlen < sizeof(foldstr));
 
 			COMP_TRADITIONAL_CRC32(crc, foldstr, foldlen);
 
