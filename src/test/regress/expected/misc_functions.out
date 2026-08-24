@@ -861,3 +861,43 @@ SELECT test_instr_time();
  t
 (1 row)
 
+--
+-- C tests for pg_locale.h APIs. No interesting output; tests will
+-- ERROR upon failure.
+--
+-- The test function is STRICT, so tests will be skipped if the
+-- collation is unavailable in the current database encoding
+-- (to_regcollation() will return NULL).
+--
+CREATE FUNCTION test_pg_locale_apis(oid)
+    RETURNS void
+    AS :'regresslib'
+    LANGUAGE C STRICT;
+-- Libc C.  Available in every database.
+SELECT test_pg_locale_apis(to_regcollation('"C"'));
+ test_pg_locale_apis 
+---------------------
+ 
+(1 row)
+
+-- Builtin C (collate and ctype).  Usable only in UTF8 databases.
+SELECT test_pg_locale_apis(to_regcollation('ucs_basic'));
+ test_pg_locale_apis 
+---------------------
+ 
+(1 row)
+
+-- Builtin C.UTF-8 (C collate, Unicode ctype).  Same encoding restriction.
+SELECT test_pg_locale_apis(to_regcollation('pg_c_utf8'));
+ test_pg_locale_apis 
+---------------------
+ 
+(1 row)
+
+-- en-x-icu is present when ICU collations were imported at initdb.
+SELECT test_pg_locale_apis(to_regcollation('en-x-icu'));
+ test_pg_locale_apis 
+---------------------
+ 
+(1 row)
+
