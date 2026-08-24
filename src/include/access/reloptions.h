@@ -247,6 +247,8 @@ extern void *build_local_reloptions(local_relopts *relopts, Datum options,
 
 extern bytea *default_reloptions(Datum reloptions, bool validate,
 								 relopt_kind kind);
+extern struct StdRdOptions *merge_toast_reloptions(const struct StdRdOptions *toast_opts,
+												   const struct StdRdOptions *main_opts);
 extern bytea *heap_reloptions(char relkind, Datum reloptions, bool validate);
 extern bytea *view_reloptions(Datum reloptions, bool validate);
 extern bytea *partitioned_table_reloptions(Datum reloptions, bool validate);

@@ -2895,6 +2895,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 		tab->at_params.log_vacuum_min_duration = log_vacuum_min_duration;
 		tab->at_params.log_analyze_min_duration = log_analyze_min_duration;
 		tab->at_params.toast_parent = InvalidOid;
+		tab->at_params.main_relopts = NULL;
 
 		/* Determine the number of parallel vacuum workers to use */
 		tab->at_params.nworkers = 0;

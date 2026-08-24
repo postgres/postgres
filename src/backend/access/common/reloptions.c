@@ -2111,6 +2111,110 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 }
 
 /*
+ * find_reloption
+ *		Look up a reloption of the given kind by name.
+ *
+ * Returns NULL if no such option can be set on relations of that kind.  Note
+ * that names are unique only within a kind; "fillfactor", for example, is
+ * declared separately for heaps and for several index access methods.
+ */
+static relopt_gen *
+find_reloption(const char *name, relopt_kind kind)
+{
+	if (need_initialization)
+		initialize_reloptions();
+
+	for (int i = 0; relOpts[i]; i++)
+	{
+		if ((relOpts[i]->kinds & kind) != 0 &&
+			strcmp(relOpts[i]->name, name) == 0)
+			return relOpts[i];
+	}
+
+	return NULL;
+}
+
+/*
+ * merge_toast_reloptions
+ *		Fill in a TOAST table's unset options from its main table's.
+ *
+ * Any option that may be set on a TOAST table but was not is taken from
+ * main_opts.  Either argument may be NULL; if both are, NULL is returned.
+ * Otherwise, the options to use are returned.
+ *
+ * An option counts as unset while it still holds the default declared for it
+ * above, which works because nothing a TOAST table accepts has a default the
+ * user could also set (see assert_toast_defaults_unsettable()).
+ *
+ * If the return value is not NULL, it is palloc'd.
+ */
+StdRdOptions *
+merge_toast_reloptions(const StdRdOptions *toast_opts,
+					   const StdRdOptions *main_opts)
+{
+	StdRdOptions *ret;
+
+	/* if both arguments are NULL, return NULL */
+	if (toast_opts == NULL && main_opts == NULL)
+		return NULL;
+
+	/* if one argument is NULL, return the non-NULL one */
+	ret = palloc_object(StdRdOptions);
+	if (toast_opts == NULL || main_opts == NULL)
+	{
+		memcpy(ret, main_opts ? main_opts : toast_opts, sizeof(StdRdOptions));
+		return ret;
+	}
+
+	/* replace unset TOAST relopts with the main table's */
+	memcpy(ret, toast_opts, sizeof(StdRdOptions));
+	for (int i = 0; i < lengthof(stdRdOptionsTab); i++)
+	{
+		const relopt_parse_elt *elem = &stdRdOptionsTab[i];
+		relopt_gen *gen;
+		char	   *toast_val;
+		const char *main_val;
+
+		/* skip anything that cannot be set on a TOAST table */
+		gen = find_reloption(elem->optname, RELOPT_KIND_TOAST);
+		if (gen == NULL)
+			continue;
+
+		toast_val = (char *) ret + elem->offset;
+		main_val = (const char *) main_opts + elem->offset;
+
+		switch (gen->type)
+		{
+			case RELOPT_TYPE_TERNARY:
+				if (*(pg_ternary *) toast_val == PG_TERNARY_UNSET)
+					*(pg_ternary *) toast_val = *(const pg_ternary *) main_val;
+				break;
+
+			case RELOPT_TYPE_INT:
+				if (*(int *) toast_val == ((relopt_int *) gen)->default_val)
+					*(int *) toast_val = *(const int *) main_val;
+				break;
+
+			case RELOPT_TYPE_REAL:
+				if (*(double *) toast_val == ((relopt_real *) gen)->default_val)
+					*(double *) toast_val = *(const double *) main_val;
+				break;
+
+			case RELOPT_TYPE_ENUM:
+				if (*(int *) toast_val == ((relopt_enum *) gen)->default_val)
+					*(int *) toast_val = *(const int *) main_val;
+				break;
+
+			default:
+				elog(ERROR, "reloption \"%s\" has a type a TOAST table cannot inherit",
+					 elem->optname);
+		}
+	}
+
+	return ret;
+}
+
+/*
  * build_reloptions
  *
  * Parses "reloptions" provided by the caller, returning them in a

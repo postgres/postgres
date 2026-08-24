@@ -248,6 +248,14 @@ typedef struct VacuumParams
 	 * disabled.
 	 */
 	int			nworkers;
+
+	/*
+	 * When vacuuming a TOAST table, this holds the main table's storage
+	 * parameters (or NULL if it doesn't have any).  If a storage parameter is
+	 * unset on the TOAST table but _is_ set on the main table, we use the
+	 * main table's setting.
+	 */
+	const struct StdRdOptions *main_relopts;
 } VacuumParams;
 
 /*

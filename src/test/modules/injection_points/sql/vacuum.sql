@@ -33,9 +33,17 @@ SET vacuum_truncate = true;
 VACUUM vac_tab_auto;
 RESET vacuum_truncate;
 
+-- A TOAST table inherits what it does not set from its main table.
+CREATE TABLE vac_tab_toast_inherit(i int, j text) WITH
+  (autovacuum_enabled=false,
+   vacuum_index_cleanup=false,
+   vacuum_truncate=false, toast.vacuum_truncate=true);
+VACUUM vac_tab_toast_inherit;
+
 DROP TABLE vac_tab_auto;
 DROP TABLE vac_tab_on_toast_off;
 DROP TABLE vac_tab_off_toast_on;
+DROP TABLE vac_tab_toast_inherit;
 
 -- Cleanup
 SELECT injection_points_detach('vacuum-index-cleanup-auto');
