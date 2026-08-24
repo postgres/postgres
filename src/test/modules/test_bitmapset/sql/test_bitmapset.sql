@@ -424,6 +424,6 @@ SELECT test_bms_nonempty_difference('(b 1 2)', '(b 50 100)') AS result;
 SELECT test_random_operations(NULL, 10000, 81920, 0) > 0 AS result;
 
 -- perform some random tests on bms_offset_members()
-SELECT test_random_offset_operations(NULL, 1000, 1024, 0) AS result;
+SELECT test_random_offset_operations(NULL, 1000, 0, 1024) AS result;
 
 DROP EXTENSION test_bitmapset;

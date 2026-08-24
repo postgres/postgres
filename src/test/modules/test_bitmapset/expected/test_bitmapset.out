@@ -1650,7 +1650,7 @@ SELECT test_random_operations(NULL, 10000, 81920, 0) > 0 AS result;
 (1 row)
 
 -- perform some random tests on bms_offset_members()
-SELECT test_random_offset_operations(NULL, 1000, 1024, 0) AS result;
+SELECT test_random_offset_operations(NULL, 1000, 0, 1024) AS result;
  result 
 --------
    1000
