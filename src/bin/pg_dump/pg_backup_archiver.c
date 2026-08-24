@@ -2253,7 +2253,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 
 	AH->readHeader = 0;
 	AH->lookaheadSize = 512;
-	AH->lookahead = pg_malloc0(512);
+	AH->lookahead = pg_malloc0(AH->lookaheadSize);
 	AH->lookaheadLen = 0;
 	AH->lookaheadPos = 0;
 
@@ -2324,9 +2324,10 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	{
 		/*
 		 * *Maybe* we have a tar archive format file or a text dump ... So,
-		 * read first 512 byte header...
+		 * fill the lookahead buffer and inspect its header...
 		 */
-		cnt = fread(&AH->lookahead[AH->lookaheadLen], 1, 512 - AH->lookaheadLen, fh);
+		cnt = fread(&AH->lookahead[AH->lookaheadLen], 1,
+					AH->lookaheadSize - AH->lookaheadLen, fh);
 		/* read failure is checked below */
 		AH->lookaheadLen += cnt;
 
@@ -2341,7 +2342,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 			pg_fatal("input file appears to be a text format dump. Please use psql.");
 		}
 
-		if (AH->lookaheadLen != 512)
+		if (AH->lookaheadLen != AH->lookaheadSize)
 		{
 			if (feof(fh))
 				pg_fatal("input file does not appear to be a valid archive (too short?)");
