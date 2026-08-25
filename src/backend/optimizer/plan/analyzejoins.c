@@ -1280,8 +1280,9 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list,
 bool
 query_supports_distinctness(Query *query)
 {
-	/* SRFs break distinctness except with DISTINCT, see below */
-	if (query->hasTargetSRFs && query->distinctClause == NIL)
+	/* SRFs break distinctness except with plain DISTINCT, see below */
+	if (query->hasTargetSRFs &&
+		(query->distinctClause == NIL || query->hasDistinctOn))
 		return false;
 
 	/* check for features we can prove distinctness with */
@@ -1333,10 +1334,15 @@ query_is_distinct_for(Query *query, List *distinct_cols)
 	/*
 	 * DISTINCT (including DISTINCT ON) guarantees uniqueness if all the
 	 * columns in the DISTINCT clause appear in colnos and operator semantics
-	 * match.  This is true even if there are SRFs in the DISTINCT columns or
-	 * elsewhere in the tlist.
+	 * match.  With plain DISTINCT this is true even if there are SRFs in the
+	 * tlist, since they are all DISTINCT columns and hence get expanded
+	 * before the Unique step.  But with DISTINCT ON, the planner may postpone
+	 * SRFs that are not DISTINCT ON or ORDER BY columns until after the
+	 * Unique step, which can produce duplicates of the DISTINCT ON columns;
+	 * so we can't rely on DISTINCT ON if there are any tlist SRFs.
 	 */
-	if (query->distinctClause)
+	if (query->distinctClause &&
+		!(query->hasTargetSRFs && query->hasDistinctOn))
 	{
 		foreach(l, query->distinctClause)
 		{
