@@ -6438,7 +6438,7 @@ set_floatarr_arg(NullableDatum *arg, const char *s)
 		Datum		val;
 
 		fmgr_info(F_ARRAY_IN, &flinfo);
-		val = InputFunctionCall(&flinfo, (char *) s, FLOAT4OID, -1);
+		val = InputFunctionCall(&flinfo, s, FLOAT4OID, -1);
 
 		arg->value = val;
 		arg->isnull = false;
@@ -8941,7 +8941,7 @@ make_tuple_from_result_row(PGresult *res,
 	foreach(lc, retrieved_attrs)
 	{
 		int			i = lfirst_int(lc);
-		char	   *valstr;
+		const char *valstr;
 
 		/* fetch next column's textual value */
 		if (PQgetisnull(res, row, j))

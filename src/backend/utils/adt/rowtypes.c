@@ -167,7 +167,7 @@ record_in(PG_FUNCTION_ARGS)
 		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		ColumnIOData *column_info = &my_extra->columns[i];
 		Oid			column_type = att->atttypid;
-		char	   *column_data;
+		const char *column_data;
 
 		/* Ignore dropped columns in datatype, but fill with nulls */
 		if (att->attisdropped)

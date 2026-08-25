@@ -651,7 +651,7 @@ typeTypeCollation(Type typ)
  * (which might result in failure, if the input function rejects NULLs).
  */
 Datum
-stringTypeDatum(Type tp, char *string, int32 atttypmod)
+stringTypeDatum(Type tp, const char *string, int32 atttypmod)
 {
 	Form_pg_type typform = (Form_pg_type) GETSTRUCT(tp);
 	Oid			typinput = typform->typinput;

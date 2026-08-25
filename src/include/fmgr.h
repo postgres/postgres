@@ -744,17 +744,17 @@ extern Datum OidFunctionCall9Coll(Oid functionId, Oid collation,
 
 
 /* Special cases for convenient invocation of datatype I/O functions. */
-extern Datum InputFunctionCall(FmgrInfo *flinfo, char *str,
+extern Datum InputFunctionCall(FmgrInfo *flinfo, const char *str,
 							   Oid typioparam, int32 typmod);
-extern bool InputFunctionCallSafe(FmgrInfo *flinfo, char *str,
+extern bool InputFunctionCallSafe(FmgrInfo *flinfo, const char *str,
 								  Oid typioparam, int32 typmod,
 								  Node *escontext,
 								  Datum *result);
-extern bool DirectInputFunctionCallSafe(PGFunction func, char *str,
+extern bool DirectInputFunctionCallSafe(PGFunction func, const char *str,
 										Oid typioparam, int32 typmod,
 										Node *escontext,
 										Datum *result);
-extern Datum OidInputFunctionCall(Oid functionId, char *str,
+extern Datum OidInputFunctionCall(Oid functionId, const char *str,
 								  Oid typioparam, int32 typmod);
 extern char *OutputFunctionCall(FmgrInfo *flinfo, Datum val);
 extern char *OidOutputFunctionCall(Oid functionId, Datum val);

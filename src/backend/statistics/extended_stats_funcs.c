@@ -1059,7 +1059,7 @@ array_in_safe(FmgrInfo *array_in, const char *s, Oid typid, int32 typmod,
 	 * Overwriting the existing hint (if any) is not ideal, and an error
 	 * context would only work for level >= ERROR.
 	 */
-	if (!InputFunctionCallSafe(array_in, (char *) s, typid, typmod,
+	if (!InputFunctionCallSafe(array_in, s, typid, typmod,
 							   (Node *) &escontext, &result))
 	{
 		StringInfoData hint_str;

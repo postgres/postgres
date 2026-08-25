@@ -51,7 +51,7 @@
 static void CheckerModeMain(void);
 static void bootstrap_signals(void);
 static Form_pg_attribute AllocateAttribute(void);
-static void InsertOneProargdefaultsValue(char *value);
+static void InsertOneProargdefaultsValue(const char *value);
 static void populate_typ_list(void);
 static Oid	gettype(char *type);
 static void cleanup(void);
@@ -698,7 +698,7 @@ InsertOneTuple(void)
  * ----------------
  */
 void
-InsertOneValue(char *value, int i)
+InsertOneValue(const char *value, int i)
 {
 	Form_pg_attribute attr;
 	Oid			typoid;
@@ -765,7 +765,7 @@ InsertOneValue(char *value, int i)
  * ----------------
  */
 static void
-InsertOneProargdefaultsValue(char *value)
+InsertOneProargdefaultsValue(const char *value)
 {
 	int			pronargs;
 	oidvector  *proargtypes;

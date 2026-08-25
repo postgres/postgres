@@ -226,7 +226,7 @@ fail:
 Datum
 domain_in(PG_FUNCTION_ARGS)
 {
-	char	   *string;
+	const char *string;
 	Oid			domainType;
 	Node	   *escontext = fcinfo->context;
 	DomainIOData *my_extra;

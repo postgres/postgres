@@ -41,7 +41,7 @@ extern void boot_openrel(char *relname);
 
 extern void DefineAttr(char *name, char *type, int attnum, int nullness);
 extern void InsertOneTuple(void);
-extern void InsertOneValue(char *value, int i);
+extern void InsertOneValue(const char *value, int i);
 extern void InsertOneNull(int i);
 
 extern void index_register(Oid heap, Oid ind, const IndexInfo *indexInfo);
