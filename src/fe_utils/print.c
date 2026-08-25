@@ -3269,7 +3269,7 @@ printTableAddHeader(printTableContent *content, const char *header,
 	 * are provided by ourselves, so they had better be ok.  And if they were
 	 * not, running mbvalidate on them could overwrite gettext-owned memory.
 	 */
-	if (!translate && !mb_is_valid((unsigned char *) header, content->opt->encoding))
+	if (!translate && !mb_is_valid((const unsigned char *) header, content->opt->encoding))
 	{
 		char	   *header2;
 
@@ -3327,7 +3327,7 @@ printTableAddCell(printTableContent *content, const char *cell,
 	 * are provided by ourselves, so they had better be ok.  And if they were
 	 * not, running mbvalidate on them could overwrite gettext-owned memory.
 	 */
-	if (!translate && !mb_is_valid((unsigned char *) cell, content->opt->encoding))
+	if (!translate && !mb_is_valid((const unsigned char *) cell, content->opt->encoding))
 	{
 		char	   *cell2;
 
