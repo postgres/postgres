@@ -2057,6 +2057,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        planner.  It is updated by <link linkend="sql-vacuum"><command>VACUUM</command></link>,
        <link linkend="sql-analyze"><command>ANALYZE</command></link>, and a few DDL commands such as
        <link linkend="sql-createindex"><command>CREATE INDEX</command></link>.
+      </para>
+      <para>
+       This is effectively an unsigned 32-bit integer; values larger than
+       2<superscript>31</superscript>−1 are stored as negative values.
       </para></entry>
      </row>
 
@@ -2086,6 +2090,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        planner.  It is updated by <link linkend="sql-vacuum"><command>VACUUM</command></link>,
        <link linkend="sql-analyze"><command>ANALYZE</command></link>, and a few DDL commands such as
        <link linkend="sql-createindex"><command>CREATE INDEX</command></link>.
+      </para>
+      <para>
+       This is effectively an unsigned 32-bit integer; values larger than
+       2<superscript>31</superscript>−1 are stored as negative values.
       </para></entry>
      </row>
 
@@ -2106,6 +2114,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <link linkend="sql-analyze"><command>ANALYZE</command></link>,
        and a few DDL commands such as
        <link linkend="sql-createindex"><command>CREATE INDEX</command></link>.
+      </para>
+      <para>
+       This is effectively an unsigned 32-bit integer; values larger than
+       2<superscript>31</superscript>−1 are stored as negative values.
       </para></entry>
      </row>
 
