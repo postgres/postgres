@@ -68,9 +68,9 @@ void
 _PG_init(void)
 {
 	DefineCustomEnumVariable("pgcrypto.builtin_crypto_enabled",
-							 "Sets if builtin crypto functions are enabled.",
-							 "\"on\" enables builtin crypto, \"off\" unconditionally disables and \"fips\" "
-							 "will disable builtin crypto if OpenSSL is in FIPS mode",
+							 "Sets if built-in crypto functions are enabled.",
+							 "\"on\" enables built-in crypto, \"off\" unconditionally disables and \"fips\" "
+							 "will disable built-in crypto if OpenSSL is in FIPS mode",
 							 &builtin_crypto_enabled,
 							 BC_ON,
 							 builtin_crypto_options,

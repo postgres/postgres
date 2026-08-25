@@ -1268,7 +1268,7 @@ fips_mode() returns boolean
     <listitem>
      <para>
       <varname>pgcrypto.builtin_crypto_enabled</varname> determines if the
-      built in crypto functions <function>gen_salt()</function>, and
+      built-in crypto functions <function>gen_salt()</function>, and
       <function>crypt()</function> are available for use. Setting this to
       <literal>off</literal> disables these functions. <literal>on</literal>
       (the default) enables these functions to work normally.
@@ -1277,7 +1277,7 @@ fips_mode() returns boolean
      </para>
      <para>
       <function>pgp_sym_encrypt()</function> and
-      <function>pgp_pub_encrypt()</function> do not use built in crypto so
+      <function>pgp_pub_encrypt()</function> do not use built-in crypto so
       they are not affected.
      </para>
     </listitem>
