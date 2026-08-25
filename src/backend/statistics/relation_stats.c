@@ -99,13 +99,13 @@ relation_statistics_update(FunctionCallInfo fcinfo)
 static bool
 relation_statistics_update_internal(Oid reloid, FunctionCallInfo fcinfo)
 {
-	BlockNumber relpages = 0;
+	int32		relpages = 0;
 	bool		update_relpages = false;
-	float		reltuples = 0;
+	float4		reltuples = 0;
 	bool		update_reltuples = false;
-	BlockNumber relallvisible = 0;
+	int32		relallvisible = 0;
 	bool		update_relallvisible = false;
-	BlockNumber relallfrozen = 0;
+	int32		relallfrozen = 0;
 	bool		update_relallfrozen = false;
 	Relation	crel;
 	HeapTuple	ctup;
@@ -118,7 +118,7 @@ relation_statistics_update_internal(Oid reloid, FunctionCallInfo fcinfo)
 
 	if (!PG_ARGISNULL(RELPAGES_ARG))
 	{
-		relpages = PG_GETARG_UINT32(RELPAGES_ARG);
+		relpages = PG_GETARG_INT32(RELPAGES_ARG);
 		update_relpages = true;
 	}
 
@@ -145,13 +145,13 @@ relation_statistics_update_internal(Oid reloid, FunctionCallInfo fcinfo)
 
 	if (!PG_ARGISNULL(RELALLVISIBLE_ARG))
 	{
-		relallvisible = PG_GETARG_UINT32(RELALLVISIBLE_ARG);
+		relallvisible = PG_GETARG_INT32(RELALLVISIBLE_ARG);
 		update_relallvisible = true;
 	}
 
 	if (!PG_ARGISNULL(RELALLFROZEN_ARG))
 	{
-		relallfrozen = PG_GETARG_UINT32(RELALLFROZEN_ARG);
+		relallfrozen = PG_GETARG_INT32(RELALLFROZEN_ARG);
 		update_relallfrozen = true;
 	}
 
@@ -170,7 +170,7 @@ relation_statistics_update_internal(Oid reloid, FunctionCallInfo fcinfo)
 	if (update_relpages && relpages != pgcform->relpages)
 	{
 		replaces[nreplaces] = Anum_pg_class_relpages;
-		values[nreplaces] = UInt32GetDatum(relpages);
+		values[nreplaces] = Int32GetDatum(relpages);
 		nreplaces++;
 	}
 
@@ -184,14 +184,14 @@ relation_statistics_update_internal(Oid reloid, FunctionCallInfo fcinfo)
 	if (update_relallvisible && relallvisible != pgcform->relallvisible)
 	{
 		replaces[nreplaces] = Anum_pg_class_relallvisible;
-		values[nreplaces] = UInt32GetDatum(relallvisible);
+		values[nreplaces] = Int32GetDatum(relallvisible);
 		nreplaces++;
 	}
 
 	if (update_relallfrozen && relallfrozen != pgcform->relallfrozen)
 	{
 		replaces[nreplaces] = Anum_pg_class_relallfrozen;
-		values[nreplaces] = UInt32GetDatum(relallfrozen);
+		values[nreplaces] = Int32GetDatum(relallfrozen);
 		nreplaces++;
 	}
 
@@ -231,13 +231,13 @@ pg_clear_relation_stats(PG_FUNCTION_ARGS)
 	newfcinfo->args[0].isnull = PG_ARGISNULL(0);
 	newfcinfo->args[1].value = PG_GETARG_DATUM(1);
 	newfcinfo->args[1].isnull = PG_ARGISNULL(1);
-	newfcinfo->args[2].value = UInt32GetDatum(0);
+	newfcinfo->args[2].value = Int32GetDatum(0);
 	newfcinfo->args[2].isnull = false;
 	newfcinfo->args[3].value = Float4GetDatum(-1.0);
 	newfcinfo->args[3].isnull = false;
-	newfcinfo->args[4].value = UInt32GetDatum(0);
+	newfcinfo->args[4].value = Int32GetDatum(0);
 	newfcinfo->args[4].isnull = false;
-	newfcinfo->args[5].value = UInt32GetDatum(0);
+	newfcinfo->args[5].value = Int32GetDatum(0);
 	newfcinfo->args[5].isnull = false;
 
 	relation_statistics_update(newfcinfo);

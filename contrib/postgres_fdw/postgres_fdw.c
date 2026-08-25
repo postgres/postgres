@@ -623,7 +623,6 @@ static bool import_fetched_statistics(Relation relation,
 static char *get_opt_value(PGresult *res, int row, int col);
 static void set_text_arg(NullableDatum *arg, const char *s);
 static void set_int32_arg(NullableDatum *arg, const char *s);
-static void set_uint32_arg(NullableDatum *arg, const char *s);
 static void set_float_arg(NullableDatum *arg, const char *s);
 static void set_floatarr_arg(NullableDatum *arg, const char *s);
 static void produce_tuple_asynchronously(AsyncRequest *areq, bool fetch);
@@ -6336,7 +6335,7 @@ import_fetched_statistics(Relation relation,
 	Assert(PQntuples(res) == 1);
 
 	/* Set the remaining parameters. */
-	set_uint32_arg(&args[1], get_opt_value(res, 0, RELSTATS_RELPAGES));
+	set_int32_arg(&args[1], get_opt_value(res, 0, RELSTATS_RELPAGES));
 	Assert(!args[1].isnull);
 	set_float_arg(&args[2], get_opt_value(res, 0, RELSTATS_RELTUPLES));
 	Assert(!args[2].isnull);
@@ -6398,26 +6397,6 @@ set_int32_arg(NullableDatum *arg, const char *s)
 		int32		val = pg_strtoint32(s);
 
 		arg->value = Int32GetDatum(val);
-		arg->isnull = false;
-	}
-	else
-	{
-		arg->value = (Datum) 0;
-		arg->isnull = true;
-	}
-}
-
-/*
- * Convenience routine for setting optional uint32 arguments
- */
-static void
-set_uint32_arg(NullableDatum *arg, const char *s)
-{
-	if (s)
-	{
-		uint32		val = uint32in_subr(s, NULL, "uint32", NULL);
-
-		arg->value = UInt32GetDatum(val);
 		arg->isnull = false;
 	}
 	else
