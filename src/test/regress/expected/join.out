@@ -1909,19 +1909,19 @@ select * from tenk1 a, tenk1 b
 where exists(select * from tenk1 c
              where b.twothousand = c.twothousand and b.fivethous <> c.fivethous)
       and a.tenthous = b.tenthous and a.tenthous < 5000;
-                  QUERY PLAN                   
------------------------------------------------
- Hash Semi Join
-   Hash Cond: (b.twothousand = c.twothousand)
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Hash Right Semi Join
+   Hash Cond: (c.twothousand = b.twothousand)
    Join Filter: (b.fivethous <> c.fivethous)
-   ->  Hash Join
-         Hash Cond: (b.tenthous = a.tenthous)
-         ->  Seq Scan on tenk1 b
-         ->  Hash
-               ->  Seq Scan on tenk1 a
-                     Filter: (tenthous < 5000)
+   ->  Seq Scan on tenk1 c
    ->  Hash
-         ->  Seq Scan on tenk1 c
+         ->  Hash Join
+               Hash Cond: (b.tenthous = a.tenthous)
+               ->  Seq Scan on tenk1 b
+               ->  Hash
+                     ->  Seq Scan on tenk1 a
+                           Filter: (tenthous < 5000)
 (11 rows)
 
 --
@@ -3105,6 +3105,84 @@ and t1.fivethous < 5;
          ->  Parallel Hash
                ->  Parallel Seq Scan on tenk1 t2
 (8 rows)
+
+rollback;
+--
+-- Check that for hash right semi and right anti joins we charge cpu_tuple_cost
+-- and qual costs on the rows from the inner side, except that a right anti
+-- join charges the non-hashed joinquals on the candidate pairs passing the
+-- hash clauses.
+--
+begin;
+create temp table hj_small(id int primary key);
+create temp table hj_large(v int);
+insert into hj_small select i from generate_series(1,200)i;
+insert into hj_large select (i % 500) + 11 from generate_series(1,1000)i;
+analyze hj_small, hj_large;
+-- ensure we hash the small side and scan the large one, not the reverse
+explain (costs off)
+select count(*) from hj_small s where exists
+  (select 1 from hj_large r where r.v = s.id);
+                QUERY PLAN                
+------------------------------------------
+ Aggregate
+   ->  Hash Right Semi Join
+         Hash Cond: (r.v = s.id)
+         ->  Seq Scan on hj_large r
+         ->  Hash
+               ->  Seq Scan on hj_small s
+(6 rows)
+
+-- and check we get the expected results
+select count(*) from hj_small s where exists
+  (select 1 from hj_large r where r.v = s.id);
+ count 
+-------
+   190
+(1 row)
+
+-- likewise for a right anti join
+explain (costs off)
+select count(*) from hj_small s where not exists
+  (select 1 from hj_large r where r.v = s.id);
+                QUERY PLAN                
+------------------------------------------
+ Aggregate
+   ->  Hash Right Anti Join
+         Hash Cond: (r.v = s.id)
+         ->  Seq Scan on hj_large r
+         ->  Hash
+               ->  Seq Scan on hj_small s
+(6 rows)
+
+select count(*) from hj_small s where not exists
+  (select 1 from hj_large r where r.v = s.id);
+ count 
+-------
+    10
+(1 row)
+
+-- also check the case with a non-hashed joinqual
+explain (costs off)
+select count(*) from hj_small s where not exists
+  (select 1 from hj_large r where r.v = s.id and r.v > s.id - 1);
+                QUERY PLAN                
+------------------------------------------
+ Aggregate
+   ->  Hash Right Anti Join
+         Hash Cond: (r.v = s.id)
+         Join Filter: (r.v > (s.id - 1))
+         ->  Seq Scan on hj_large r
+         ->  Hash
+               ->  Seq Scan on hj_small s
+(7 rows)
+
+select count(*) from hj_small s where not exists
+  (select 1 from hj_large r where r.v = s.id and r.v > s.id - 1);
+ count 
+-------
+    10
+(1 row)
 
 rollback;
 --

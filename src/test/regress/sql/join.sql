@@ -780,6 +780,48 @@ and t1.fivethous < 5;
 rollback;
 
 --
+-- Check that for hash right semi and right anti joins we charge cpu_tuple_cost
+-- and qual costs on the rows from the inner side, except that a right anti
+-- join charges the non-hashed joinquals on the candidate pairs passing the
+-- hash clauses.
+--
+
+begin;
+
+create temp table hj_small(id int primary key);
+create temp table hj_large(v int);
+insert into hj_small select i from generate_series(1,200)i;
+insert into hj_large select (i % 500) + 11 from generate_series(1,1000)i;
+analyze hj_small, hj_large;
+
+-- ensure we hash the small side and scan the large one, not the reverse
+explain (costs off)
+select count(*) from hj_small s where exists
+  (select 1 from hj_large r where r.v = s.id);
+
+-- and check we get the expected results
+select count(*) from hj_small s where exists
+  (select 1 from hj_large r where r.v = s.id);
+
+-- likewise for a right anti join
+explain (costs off)
+select count(*) from hj_small s where not exists
+  (select 1 from hj_large r where r.v = s.id);
+
+select count(*) from hj_small s where not exists
+  (select 1 from hj_large r where r.v = s.id);
+
+-- also check the case with a non-hashed joinqual
+explain (costs off)
+select count(*) from hj_small s where not exists
+  (select 1 from hj_large r where r.v = s.id and r.v > s.id - 1);
+
+select count(*) from hj_small s where not exists
+  (select 1 from hj_large r where r.v = s.id and r.v > s.id - 1);
+
+rollback;
+
+--
 -- regression test for bug #13908 (hash join with skew tuples & nbatch increase)
 --
 

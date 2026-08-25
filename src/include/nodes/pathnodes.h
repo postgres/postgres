@@ -3581,20 +3581,23 @@ typedef struct PlannerParamItem
 } PlannerParamItem;
 
 /*
- * When making cost estimates for a SEMI/ANTI/inner_unique join, there are
- * some correction factors that are needed in both nestloop and hash joins
- * to account for the fact that the executor can stop scanning inner rows
- * as soon as it finds a match to the current outer row.  These numbers
- * depend only on the selected outer and inner join relations, not on the
- * particular paths used for them, so it's worthwhile to calculate them
- * just once per relation pair not once per considered path.  This struct
- * is filled by compute_semi_anti_join_factors and must be passed along
- * to the join cost estimation functions.
+ * When making cost estimates for a SEMI/ANTI/RIGHT_SEMI/RIGHT_ANTI/
+ * inner_unique join, there are some correction factors that are needed in
+ * both nestloop and hash joins to account for the fact that the executor
+ * can stop scanning inner rows as soon as it finds a match to the current
+ * outer row.  These numbers depend only on the selected outer and inner
+ * join relations, not on the particular paths used for them, so it's
+ * worthwhile to calculate them just once per relation pair not once per
+ * considered path.  This struct is filled by
+ * compute_semi_anti_join_factors and must be passed along to the join
+ * cost estimation functions.
  *
- * outer_match_frac is the fraction of the outer tuples that are
- *		expected to have at least one match.
+ * outer_match_frac is the fraction of the semijoin's LHS tuples (the
+ *		physically inner side for RIGHT_SEMI/RIGHT_ANTI, the outer side
+ *		otherwise) that are expected to have at least one match.
  * match_count is the average number of matches expected for
- *		outer tuples that have at least one match.
+ *		outer tuples that have at least one match (not meaningful for
+ *		RIGHT_SEMI/RIGHT_ANTI).
  */
 typedef struct SemiAntiJoinFactors
 {
@@ -3612,7 +3615,8 @@ typedef struct SemiAntiJoinFactors
  * inner_unique is true if each outer tuple provably matches no more
  *		than one inner tuple
  * sjinfo is extra info about special joins for selectivity estimation
- * semifactors is as shown above (only valid for SEMI/ANTI/inner_unique joins)
+ * semifactors is as shown above (only valid for SEMI/ANTI/RIGHT_SEMI/
+ *		RIGHT_ANTI/inner_unique joins)
  * param_source_rels are OK targets for parameterization of result paths
  * pgs_mask is a bitmask of PGS_* constants to limit the join strategy
  */

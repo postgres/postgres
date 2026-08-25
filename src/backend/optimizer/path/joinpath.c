@@ -249,10 +249,13 @@ add_paths_to_joinrel(PlannerInfo *root,
 														  &mergejoin_allowed);
 
 	/*
-	 * If it's SEMI, ANTI, or inner_unique join, compute correction factors
-	 * for cost estimation.  These will be the same for all paths.
+	 * If it's SEMI, ANTI, RIGHT_SEMI, RIGHT_ANTI, or inner_unique join,
+	 * compute correction factors for cost estimation.  These will be the same
+	 * for all paths.
 	 */
-	if (jointype == JOIN_SEMI || jointype == JOIN_ANTI || extra.inner_unique)
+	if (jointype == JOIN_SEMI || jointype == JOIN_ANTI ||
+		jointype == JOIN_RIGHT_SEMI || jointype == JOIN_RIGHT_ANTI ||
+		extra.inner_unique)
 		compute_semi_anti_join_factors(root, joinrel, outerrel, innerrel,
 									   jointype, sjinfo, restrictlist,
 									   &extra.semifactors);

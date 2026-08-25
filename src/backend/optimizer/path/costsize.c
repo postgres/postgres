@@ -4463,6 +4463,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	Cost		cpu_per_tuple;
 	QualCost	hash_qual_cost;
 	QualCost	qp_qual_cost;
+	double		outer_matched_rows = 0;
 	double		hashjointuples;
 	double		virtualbuckets;
 	Selectivity innerbucketsize;
@@ -4611,7 +4612,6 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 		path->jpath.jointype == JOIN_ANTI ||
 		extra->inner_unique)
 	{
-		double		outer_matched_rows;
 		Selectivity inner_scan_frac;
 
 		/*
@@ -4625,9 +4625,29 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 		 * 2.0 to that fraction.  (If we used a larger fuzz factor, we'd have
 		 * to clamp inner_scan_frac to at most 1.0; but since match_count is
 		 * at least 1, no such clamp is needed now.)
+		 *
+		 * For RIGHT_SEMI or RIGHT_ANTI, we cannot compute outer_matched_rows
+		 * from the semifactors: outer_match_frac describes the semijoin's
+		 * LHS, which is the inner rel in these orientations.  Instead, count
+		 * the matching pairs with approx_tuple_count().  These join types
+		 * reach here only when the innerrel is known unique, so each outer
+		 * row matches at most one inner row and the number of pairs equals
+		 * the number of matched outer rows.  Uniqueness also fixes
+		 * match_count at 1, making inner_scan_frac 1.0.
 		 */
-		outer_matched_rows = rint(outer_path_rows * extra->semifactors.outer_match_frac);
-		inner_scan_frac = 2.0 / (extra->semifactors.match_count + 1.0);
+		if (path->jpath.jointype == JOIN_RIGHT_SEMI ||
+			path->jpath.jointype == JOIN_RIGHT_ANTI)
+		{
+			outer_matched_rows = Min(approx_tuple_count(root, &path->jpath,
+														hashclauses),
+									 outer_path_rows);
+			inner_scan_frac = 1.0;
+		}
+		else
+		{
+			outer_matched_rows = rint(outer_path_rows * extra->semifactors.outer_match_frac);
+			inner_scan_frac = 2.0 / (extra->semifactors.match_count + 1.0);
+		}
 
 		startup_cost += hash_qual_cost.startup;
 		run_cost += hash_qual_cost.per_tuple * outer_matched_rows *
@@ -4649,12 +4669,6 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 		run_cost += hash_qual_cost.per_tuple *
 			(outer_path_rows - outer_matched_rows) *
 			clamp_row_est(inner_path_rows / virtualbuckets) * 0.05;
-
-		/* Get # of tuples that will pass the basic join */
-		if (path->jpath.jointype == JOIN_ANTI)
-			hashjointuples = outer_path_rows - outer_matched_rows;
-		else
-			hashjointuples = outer_matched_rows;
 	}
 	else
 	{
@@ -4671,24 +4685,75 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 		startup_cost += hash_qual_cost.startup;
 		run_cost += hash_qual_cost.per_tuple * outer_path_rows *
 			clamp_row_est(inner_path_rows * innerbucketsize) * 0.5;
-
-		/*
-		 * Get approx # tuples passing the hashquals.  We use
-		 * approx_tuple_count here because we need an estimate done with
-		 * JOIN_INNER semantics.
-		 */
-		hashjointuples = approx_tuple_count(root, &path->jpath, hashclauses);
 	}
+
+	/*
+	 * Get # of tuples that will pass the basic join.
+	 *
+	 * A RIGHT_SEMI or RIGHT_ANTI join produces rows from the inner side: one
+	 * for each inner row that has a match, or that lacks one.  The fraction
+	 * we need is outer_match_frac, which always describes the semijoin's LHS,
+	 * ie, the inner side for these two join types.
+	 *
+	 * Everything else produces rows from the outer side.  For SEMI and
+	 * inner_unique joins that is the matched outer rows, and for ANTI the
+	 * unmatched ones, both available from outer_matched_rows computed above.
+	 * For plain joins, use approx_tuple_count(), which gives an estimate done
+	 * with JOIN_INNER semantics.
+	 */
+	if (path->jpath.jointype == JOIN_RIGHT_SEMI)
+		hashjointuples = clamp_row_est(inner_path_rows *
+									   extra->semifactors.outer_match_frac);
+	else if (path->jpath.jointype == JOIN_RIGHT_ANTI)
+		hashjointuples = clamp_row_est(inner_path_rows *
+									   (1.0 - extra->semifactors.outer_match_frac));
+	else if (path->jpath.jointype == JOIN_ANTI)
+		hashjointuples = outer_path_rows - outer_matched_rows;
+	else if (path->jpath.jointype == JOIN_SEMI || extra->inner_unique)
+		hashjointuples = outer_matched_rows;
+	else
+		hashjointuples = approx_tuple_count(root, &path->jpath, hashclauses);
 
 	/*
 	 * For each tuple that gets through the hashjoin proper, we charge
 	 * cpu_tuple_cost plus the cost of evaluating additional restriction
-	 * clauses that are to be applied at the join.  (This is pessimistic since
-	 * not all of the quals may get evaluated at each tuple.)
+	 * clauses that are to be applied at the join.
+	 *
+	 * For plain joins, all these quals are charged at each hashjointuples
+	 * tuple.  (This is pessimistic since not all of the quals may get
+	 * evaluated at each tuple.)
+	 *
+	 * For the SEMI/ANTI family this is right for the pushed-down quals, which
+	 * are indeed evaluated once per hashjointuples tuple, but the non-hashed
+	 * joinquals are really evaluated once per tuple passing the hash quals.
+	 * For SEMI, RIGHT_SEMI, and ANTI joins a short-circuit at the first match
+	 * limits the evaluations, and we accept the imprecision.
+	 *
+	 * A RIGHT_ANTI join has no such short-circuit, so its non-hashed
+	 * joinquals are evaluated for every tuple passing the hash quals.  Charge
+	 * them on that count, and only cpu_tuple_cost on hashjointuples.  (This
+	 * overcharges any pushed-down clauses, which are evaluated just once per
+	 * emitted row, but such clauses are rare at a right anti join.)
 	 */
 	startup_cost += qp_qual_cost.startup;
-	cpu_per_tuple = cpu_tuple_cost + qp_qual_cost.per_tuple;
-	run_cost += cpu_per_tuple * hashjointuples;
+	if (path->jpath.jointype == JOIN_RIGHT_ANTI &&
+		qp_qual_cost.per_tuple > 0)
+	{
+		double		joinqual_tuples;
+
+		if (extra->inner_unique)
+			joinqual_tuples = outer_matched_rows;
+		else
+			joinqual_tuples = approx_tuple_count(root, &path->jpath,
+												 hashclauses);
+		run_cost += qp_qual_cost.per_tuple * joinqual_tuples;
+		run_cost += cpu_tuple_cost * hashjointuples;
+	}
+	else
+	{
+		cpu_per_tuple = cpu_tuple_cost + qp_qual_cost.per_tuple;
+		run_cost += cpu_per_tuple * hashjointuples;
+	}
 
 	/* tlist eval costs are paid per output row, not per tuple scanned */
 	startup_cost += path->jpath.path.pathtarget->cost.startup;
@@ -5265,13 +5330,18 @@ get_restriction_qual_cost(PlannerInfo *root, RelOptInfo *baserel,
 
 /*
  * compute_semi_anti_join_factors
- *	  Estimate how much of the inner input a SEMI, ANTI, or inner_unique join
- *	  can be expected to scan.
+ *	  Estimate correction factors for costing SEMI, ANTI, RIGHT_SEMI,
+ *	  RIGHT_ANTI, and inner_unique joins.
  *
  * In a hash or nestloop SEMI/ANTI join, the executor will stop scanning
  * inner rows as soon as it finds a match to the current outer row.
  * The same happens if we have detected the inner rel is unique.
  * We should therefore adjust some of the cost components for this effect.
+ *
+ * A RIGHT_SEMI or RIGHT_ANTI join instead needs the match fraction of the
+ * semijoin's LHS, which is its physical inner side, to determine how many
+ * rows it emits.
+ *
  * This function computes some estimates needed for these adjustments.
  * These estimates will be the same regardless of the particular paths used
  * for the outer and inner relation, so we compute these once and then pass
@@ -5281,7 +5351,8 @@ get_restriction_qual_cost(PlannerInfo *root, RelOptInfo *baserel,
  *	joinrel: join relation under consideration
  *	outerrel: outer relation under consideration
  *	innerrel: inner relation under consideration
- *	jointype: if not JOIN_SEMI or JOIN_ANTI, we assume it's inner_unique
+ *	jointype: if not JOIN_SEMI, JOIN_ANTI, JOIN_RIGHT_SEMI or JOIN_RIGHT_ANTI,
+ *			  we assume it's inner_unique
  *	sjinfo: SpecialJoinInfo relevant to this join
  *	restrictlist: join quals
  * Output parameters:
@@ -5331,44 +5402,54 @@ compute_semi_anti_join_factors(PlannerInfo *root,
 	jselec = clauselist_selectivity(root,
 									joinquals,
 									0,
-									(jointype == JOIN_ANTI) ? JOIN_ANTI : JOIN_SEMI,
+									(jointype == JOIN_ANTI ||
+									 jointype == JOIN_RIGHT_ANTI) ?
+									JOIN_ANTI : JOIN_SEMI,
 									sjinfo);
 
 	/*
-	 * Also get the normal inner-join selectivity of the join clauses.
+	 * Also get the normal inner-join selectivity of the join clauses, to
+	 * compute the average number of matches per outer-rel row.  This number
+	 * is not meaningful for JOIN_RIGHT_SEMI and JOIN_RIGHT_ANTI, and nothing
+	 * uses it for them, so just store 1.0.
 	 */
-	init_dummy_sjinfo(&norm_sjinfo, outerrel->relids, innerrel->relids);
+	if (jointype == JOIN_RIGHT_SEMI || jointype == JOIN_RIGHT_ANTI)
+		avgmatch = 1.0;
+	else
+	{
+		init_dummy_sjinfo(&norm_sjinfo, outerrel->relids, innerrel->relids);
 
-	nselec = clauselist_selectivity(root,
-									joinquals,
-									0,
-									JOIN_INNER,
-									&norm_sjinfo);
+		nselec = clauselist_selectivity(root,
+										joinquals,
+										0,
+										JOIN_INNER,
+										&norm_sjinfo);
+
+		/*
+		 * jselec can be interpreted as the fraction of outer-rel rows that
+		 * have any matches (this is true for both SEMI and ANTI cases).  And
+		 * nselec is the fraction of the Cartesian product that matches.  So,
+		 * the average number of matches for each outer-rel row that has at
+		 * least one match is nselec * inner_rows / jselec.
+		 *
+		 * Note: it is correct to use the inner rel's "rows" count here, even
+		 * though we might later be considering a parameterized inner path
+		 * with fewer rows.  This is because we have included all the join
+		 * clauses in the selectivity estimate.
+		 */
+		if (jselec > 0)			/* protect against zero divide */
+		{
+			avgmatch = nselec * innerrel->rows / jselec;
+			/* Clamp to sane range */
+			avgmatch = Max(1.0, avgmatch);
+		}
+		else
+			avgmatch = 1.0;
+	}
 
 	/* Avoid leaking a lot of ListCells */
 	if (IS_OUTER_JOIN(jointype))
 		list_free(joinquals);
-
-	/*
-	 * jselec can be interpreted as the fraction of outer-rel rows that have
-	 * any matches (this is true for both SEMI and ANTI cases).  And nselec is
-	 * the fraction of the Cartesian product that matches.  So, the average
-	 * number of matches for each outer-rel row that has at least one match is
-	 * nselec * inner_rows / jselec.
-	 *
-	 * Note: it is correct to use the inner rel's "rows" count here, even
-	 * though we might later be considering a parameterized inner path with
-	 * fewer rows.  This is because we have included all the join clauses in
-	 * the selectivity estimate.
-	 */
-	if (jselec > 0)				/* protect against zero divide */
-	{
-		avgmatch = nselec * innerrel->rows / jselec;
-		/* Clamp to sane range */
-		avgmatch = Max(1.0, avgmatch);
-	}
-	else
-		avgmatch = 1.0;
 
 	semifactors->outer_match_frac = jselec;
 	semifactors->match_count = avgmatch;
