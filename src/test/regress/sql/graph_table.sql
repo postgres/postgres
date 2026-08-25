@@ -564,6 +564,19 @@ ALTER PROPERTY GRAPH myshop ALTER VERTEX TABLE products
 -- ruleutils reverse parsing
 SELECT pg_get_viewdef('customers_us'::regclass);
 
+-- l1 is shared by all vertex tables and edge tables.  Dropping it
+-- only from all vertex tables renders a view unusable.  It would
+-- probably be more correct that the DROP LABEL operations enforce
+-- RESTRICT or CASCADE.
+CREATE VIEW v_shared_label AS SELECT * FROM GRAPH_TABLE (g1 MATCH (v IS l1) COLUMNS (v.elname));
+BEGIN;
+ALTER PROPERTY GRAPH g1 ALTER VERTEX TABLE v1 DROP LABEL l1;
+ALTER PROPERTY GRAPH g1 ALTER VERTEX TABLE v2 DROP LABEL l1;
+ALTER PROPERTY GRAPH g1 ALTER VERTEX TABLE v3 DROP LABEL l1;
+SELECT * FROM v_shared_label;
+ROLLBACK;
+SELECT pg_get_viewdef('v_shared_label'::regclass);
+
 -- test view/graph nesting
 
 CREATE VIEW customers_view AS SELECT customer_id, 'redacted' || customer_id AS name_redacted, address FROM customers;
