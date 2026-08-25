@@ -63,7 +63,7 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 		{
 			if (!pg_strong_random(p, 1))
 			{
-				px_memset(buf, 0, res_len);
+				explicit_bzero(buf, res_len);
 				pfree(buf);
 				return PXE_NO_RANDOM;
 			}
@@ -117,10 +117,10 @@ create_secmsg(PGP_Context *ctx, PGP_MPI **msg_p, int full_bytes)
 
 	if (padded)
 	{
-		px_memset(padded, 0, full_bytes);
+		explicit_bzero(padded, full_bytes);
 		pfree(padded);
 	}
-	px_memset(secmsg, 0, klen + 3);
+	explicit_bzero(secmsg, klen + 3);
 	pfree(secmsg);
 
 	if (res >= 0)

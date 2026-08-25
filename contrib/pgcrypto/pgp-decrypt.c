@@ -210,7 +210,7 @@ pktreader_free(void *priv)
 {
 	struct PktData *pkt = priv;
 
-	px_memset(pkt, 0, sizeof(*pkt));
+	explicit_bzero(pkt, sizeof(*pkt));
 	pfree(pkt);
 }
 
@@ -260,7 +260,7 @@ prefix_init(void **priv_p, void *arg, PullFilter *src)
 	if (res != len + 2)
 	{
 		px_debug("prefix_init: short read");
-		px_memset(tmpbuf, 0, sizeof(tmpbuf));
+		explicit_bzero(tmpbuf, sizeof(tmpbuf));
 		return PXE_PGP_CORRUPT_DATA;
 	}
 
@@ -270,7 +270,7 @@ prefix_init(void **priv_p, void *arg, PullFilter *src)
 		/* report error in pgp_decrypt() */
 		ctx->corrupt_prefix = 1;
 	}
-	px_memset(tmpbuf, 0, sizeof(tmpbuf));
+	explicit_bzero(tmpbuf, sizeof(tmpbuf));
 	return 0;
 }
 
@@ -381,8 +381,8 @@ mdc_finish(PGP_Context *ctx, PullFilter *src, int len)
 	 */
 	px_md_finish(ctx->mdc_ctx, hash);
 	res = memcmp(hash, data, 20);
-	px_memset(hash, 0, 20);
-	px_memset(tmpbuf, 0, sizeof(tmpbuf));
+	explicit_bzero(hash, 20);
+	explicit_bzero(tmpbuf, sizeof(tmpbuf));
 	if (res != 0)
 	{
 		px_debug("mdc_finish: mdc failed");
@@ -474,7 +474,7 @@ mdcbuf_finish(struct MDCBufData *st)
 	px_md_update(st->ctx->mdc_ctx, st->mdc_buf, 2);
 	px_md_finish(st->ctx->mdc_ctx, hash);
 	res = memcmp(hash, st->mdc_buf + 2, 20);
-	px_memset(hash, 0, 20);
+	explicit_bzero(hash, 20);
 	if (res)
 	{
 		px_debug("mdcbuf_finish: MDC does not match");
@@ -574,7 +574,7 @@ mdcbuf_free(void *priv)
 
 	px_md_free(st->ctx->mdc_ctx);
 	st->ctx->mdc_ctx = NULL;
-	px_memset(st, 0, sizeof(*st));
+	explicit_bzero(st, sizeof(*st));
 	pfree(st);
 }
 
@@ -686,7 +686,7 @@ parse_symenc_sesskey(PGP_Context *ctx, PullFilter *src)
 		res = decrypt_key(ctx, p, res);
 	}
 
-	px_memset(tmpbuf, 0, sizeof(tmpbuf));
+	explicit_bzero(tmpbuf, sizeof(tmpbuf));
 	return res;
 }
 
@@ -736,7 +736,7 @@ copy_crlf(MBuf *dst, uint8 *data, int len, int *got_cr)
 		if (res < 0)
 			return res;
 	}
-	px_memset(tmpbuf, 0, sizeof(tmpbuf));
+	explicit_bzero(tmpbuf, sizeof(tmpbuf));
 	return 0;
 }
 
@@ -776,7 +776,7 @@ parse_literal_data(PGP_Context *ctx, MBuf *dst, PullFilter *pkt)
 		px_debug("parse_literal_data: unexpected eof");
 		return PXE_PGP_CORRUPT_DATA;
 	}
-	px_memset(tmpbuf, 0, 4);
+	explicit_bzero(tmpbuf, 4);
 
 	/*
 	 * If called from an SQL function that returns text, pgp_decrypt() rejects

@@ -96,7 +96,7 @@ convert_to_utf8(text *src)
 static void
 clear_and_pfree(text *p)
 {
-	px_memset(p, 0, VARSIZE_ANY(p));
+	explicit_bzero(p, VARSIZE_ANY(p));
 	pfree(p);
 }
 

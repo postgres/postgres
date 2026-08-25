@@ -76,7 +76,7 @@ pgp_key_free(PGP_PubKey *pk)
 			pgp_mpi_free(pk->sec.dsa.x);
 			break;
 	}
-	px_memset(pk, 0, sizeof(*pk));
+	explicit_bzero(pk, sizeof(*pk));
 	pfree(pk);
 }
 
@@ -149,7 +149,7 @@ calc_key_id(PGP_PubKey *pk)
 	px_md_free(md);
 
 	memcpy(pk->key_id, hash + 12, 8);
-	px_memset(hash, 0, 20);
+	explicit_bzero(hash, 20);
 
 	return 0;
 }
@@ -290,8 +290,8 @@ check_key_sha1(PullFilter *src, PGP_PubKey *pk)
 		res = PXE_PGP_KEYPKT_CORRUPT;
 	}
 err:
-	px_memset(got_sha1, 0, 20);
-	px_memset(my_sha1, 0, 20);
+	explicit_bzero(got_sha1, 20);
+	explicit_bzero(my_sha1, 20);
 	return res;
 }
 

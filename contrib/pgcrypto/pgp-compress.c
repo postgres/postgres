@@ -172,7 +172,7 @@ compress_free(void *priv)
 	struct ZipStat *st = priv;
 
 	deflateEnd(&st->stream);
-	px_memset(st, 0, sizeof(*st));
+	explicit_bzero(st, sizeof(*st));
 	pfree(st);
 }
 
@@ -315,7 +315,7 @@ decompress_free(void *priv)
 	struct DecomprData *dec = priv;
 
 	inflateEnd(&dec->stream);
-	px_memset(dec, 0, sizeof(*dec));
+	explicit_bzero(dec, sizeof(*dec));
 	pfree(dec);
 }
 

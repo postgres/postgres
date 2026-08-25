@@ -216,7 +216,7 @@ pgp_free(PGP_Context *ctx)
 {
 	if (ctx->pub_key)
 		pgp_key_free(ctx->pub_key);
-	px_memset(ctx, 0, sizeof *ctx);
+	explicit_bzero(ctx, sizeof *ctx);
 	pfree(ctx);
 	return 0;
 }

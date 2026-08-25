@@ -633,7 +633,7 @@ _crypt_blowfish_rn(const char *key, const char *setting,
 	count = (BF_word) 1 << ((setting[4] - '0') * 10 + (setting[5] - '0'));
 	if (count < 16 || BF_decode(data.binary.salt, &setting[7], 16))
 	{
-		px_memset(data.binary.salt, 0, sizeof(data.binary.salt));
+		explicit_bzero(data.binary.salt, sizeof(data.binary.salt));
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid salt")));
@@ -754,7 +754,7 @@ _crypt_blowfish_rn(const char *key, const char *setting,
  * that this does not guarantee there's no sensitive data left on the
  * stack and/or in registers; I'm not aware of portable code that does.
  */
-	px_memset(&data, 0, sizeof(data));
+	explicit_bzero(&data, sizeof(data));
 
 	return output;
 }
