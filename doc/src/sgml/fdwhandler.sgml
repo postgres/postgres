@@ -1430,7 +1430,7 @@ ImportForeignStatistics(Relation relation,
      If the function imports the statistics successfully, it should return
      <literal>true</literal>.  Otherwise, return <literal>false</literal>, in
      which case <function>AnalyzeForeignTable</function> callback function is
-     called on the foreign table to collect statistics locally, if supported.
+     called on the foreign table to generate statistics locally, if supported.
     </para>
 
     <para>
