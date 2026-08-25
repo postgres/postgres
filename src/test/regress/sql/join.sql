@@ -1622,6 +1622,18 @@ explain (costs off)
 select d.* from d left join (select distinct * from b) s
   on d.a = s.id;
 
+-- join removal is not possible when the subquery has DISTINCT ON and a
+-- set-returning function that is not a DISTINCT ON column
+explain (costs off)
+select d.* from d left join
+  (select distinct on (id) id, generate_series(1, 2) as g from b order by id) s
+  on d.a = s.id
+  order by 1, 2;
+select d.* from d left join
+  (select distinct on (id) id, generate_series(1, 2) as g from b order by id) s
+  on d.a = s.id
+  order by 1, 2;
+
 -- check join removal works when uniqueness of the join condition is enforced
 -- by a UNION
 explain (costs off)

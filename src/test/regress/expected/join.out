@@ -4678,6 +4678,39 @@ select d.* from d left join (select distinct * from b) s
          ->  Seq Scan on d
 (9 rows)
 
+-- join removal is not possible when the subquery has DISTINCT ON and a
+-- set-returning function that is not a DISTINCT ON column
+explain (costs off)
+select d.* from d left join
+  (select distinct on (id) id, generate_series(1, 2) as g from b order by id) s
+  on d.a = s.id
+  order by 1, 2;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ Sort
+   Sort Key: d.a, d.b
+   ->  Hash Left Join
+         Hash Cond: (d.a = s.id)
+         ->  Seq Scan on d
+         ->  Hash
+               ->  Subquery Scan on s
+                     ->  ProjectSet
+                           ->  Unique
+                                 ->  Index Only Scan using b_pkey on b
+(10 rows)
+
+select d.* from d left join
+  (select distinct on (id) id, generate_series(1, 2) as g from b order by id) s
+  on d.a = s.id
+  order by 1, 2;
+ a | b 
+---+---
+ 1 | 3
+ 1 | 3
+ 2 | 2
+ 3 | 1
+(4 rows)
+
 -- check join removal works when uniqueness of the join condition is enforced
 -- by a UNION
 explain (costs off)
