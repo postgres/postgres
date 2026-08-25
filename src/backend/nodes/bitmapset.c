@@ -1500,7 +1500,7 @@ bms_prev_member(const Bitmapset *a, int prevbit)
 		return -2;
 
 	/* Validate callers didn't give us something out of range */
-	Assert(prevbit < 0 || prevbit <= (unsigned int) (a->nwords * BITS_PER_BITMAPWORD));
+	Assert(prevbit < 0 || prevbit <= (unsigned int) a->nwords * BITS_PER_BITMAPWORD);
 
 	/*
 	 * Transform -1 (or any negative number) to the highest possible bit we
