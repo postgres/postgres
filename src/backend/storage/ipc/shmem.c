@@ -872,23 +872,29 @@ ShmemAddrIsValid(const void *addr)
 void
 RegisterShmemCallbacks(const ShmemCallbacks *callbacks)
 {
-	if (shmem_request_state == SRS_DONE && IsUnderPostmaster)
+	if (shmem_request_state == SRS_DONE)
 	{
 		/*
 		 * After-startup initialization or attachment.  Call the appropriate
 		 * callbacks immediately.
+		 *
+		 * This is not allowed from the postmaster, because the postmaster
+		 * cannot acquire locks.
 		 */
 		if ((callbacks->flags & SHMEM_CALLBACKS_ALLOW_AFTER_STARTUP) == 0)
 			elog(ERROR, "cannot request shared memory at this time");
+		Assert(IsUnderPostmaster || !IsPostmasterEnvironment);
 
 		CallShmemCallbacksAfterStartup(callbacks);
 	}
-	else
+	else if (shmem_request_state == SRS_INITIAL)
 	{
 		/* Remember the callbacks for later */
 		registered_shmem_callbacks = lappend(registered_shmem_callbacks,
 											 (void *) callbacks);
 	}
+	else
+		elog(ERROR, "cannot request shared memory at this time");
 }
 
 /*
