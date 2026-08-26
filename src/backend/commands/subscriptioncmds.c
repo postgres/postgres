@@ -54,6 +54,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/injection_point.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_lsn.h"
@@ -1165,6 +1166,9 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 		/* Get local relation list. */
 		subrel_states = GetSubscriptionRelations(sub->oid, true, true, false);
 		subrel_count = list_length(subrel_states);
+
+		/* Allow a test to drop a subscribed relation before the origin check. */
+		INJECTION_POINT("subscription-refresh-before-origin-check", NULL);
 
 		/*
 		 * Build qsorted arrays of local table oids and sequence oids for
@@ -3188,10 +3192,22 @@ check_publications_origin_tables(WalReceiverConn *wrconn, List *publications,
 		for (i = 0; i < subrel_count; i++)
 		{
 			Oid			relid = subrel_local_oids[i];
-			char	   *schemaname = get_namespace_name(get_rel_namespace(relid));
-			char	   *tablename = get_rel_name(relid);
-			char	   *schemaname_lit = quote_literal_cstr(schemaname);
-			char	   *tablename_lit = quote_literal_cstr(tablename);
+			char	   *schemaname;
+			char	   *tablename;
+			char	   *schemaname_lit;
+			char	   *tablename_lit;
+
+			/* The table may have been dropped concurrently; skip if gone. */
+			tablename = get_rel_name(relid);
+			if (tablename == NULL)
+				continue;
+
+			schemaname = get_namespace_name(get_rel_namespace(relid));
+			if (schemaname == NULL)
+				continue;
+
+			schemaname_lit = quote_literal_cstr(schemaname);
+			tablename_lit = quote_literal_cstr(tablename);
 
 			appendStringInfo(&cmd, "AND NOT (N.nspname = %s AND C.relname = %s)\n",
 							 schemaname_lit, tablename_lit);
@@ -3315,10 +3331,22 @@ check_publications_origin_sequences(WalReceiverConn *wrconn, List *publications,
 	for (int i = 0; i < subrel_count; i++)
 	{
 		Oid			relid = subrel_local_oids[i];
-		char	   *schemaname = get_namespace_name(get_rel_namespace(relid));
-		char	   *seqname = get_rel_name(relid);
-		char	   *schemaname_lit = quote_literal_cstr(schemaname);
-		char	   *seqname_lit = quote_literal_cstr(seqname);
+		char	   *schemaname;
+		char	   *seqname;
+		char	   *schemaname_lit;
+		char	   *seqname_lit;
+
+		/* The sequence may have been dropped concurrently; skip if gone. */
+		seqname = get_rel_name(relid);
+		if (seqname == NULL)
+			continue;
+
+		schemaname = get_namespace_name(get_rel_namespace(relid));
+		if (schemaname == NULL)
+			continue;
+
+		schemaname_lit = quote_literal_cstr(schemaname);
+		seqname_lit = quote_literal_cstr(seqname);
 
 		appendStringInfo(&cmd,
 						 "AND NOT (N.nspname = %s AND C.relname = %s)\n",

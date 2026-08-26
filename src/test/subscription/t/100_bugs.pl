@@ -673,4 +673,90 @@ $node_publisher->safe_psql('postgres', "DROP TABLE tab_upsert");
 
 $node_publisher->stop('fast');
 
+$node_publisher->start;
+$node_subscriber->start;
+
+SKIP:
+{
+	skip "injection points not supported by this build", 1
+	  if $node_subscriber->check_extension('injection_points') == 0;
+
+	# Test that ALTER SUBSCRIPTION ... REFRESH PUBLICATION skips a subscribed
+	# relation that is dropped concurrently during the refresh.
+
+	$node_publisher->rotate_logfile();
+	$node_subscriber->rotate_logfile();
+
+	# Subscribe to a table and a sequence.
+	$node_publisher->safe_psql(
+		'postgres', qq{
+CREATE TABLE tab_drop_refresh (a int);
+CREATE SEQUENCE seq_drop_refresh;
+CREATE PUBLICATION pub_drop_refresh FOR TABLE tab_drop_refresh;
+CREATE PUBLICATION pub_seq_drop_refresh FOR ALL SEQUENCES;
+	});
+
+	$publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
+	$node_subscriber->safe_psql(
+		'postgres', qq{
+CREATE EXTENSION IF NOT EXISTS injection_points;
+CREATE TABLE tab_drop_refresh (a int);
+CREATE SEQUENCE seq_drop_refresh;
+CREATE SUBSCRIPTION sub_drop_refresh
+  CONNECTION '$publisher_connstr'
+  PUBLICATION pub_drop_refresh, pub_seq_drop_refresh
+  WITH (copy_data = false, origin = none);
+	});
+	$node_subscriber->wait_for_subscription_sync($node_publisher,
+		'sub_drop_refresh');
+
+	$node_publisher->safe_psql(
+		'postgres',
+		qq{
+ALTER PUBLICATION pub_drop_refresh DROP TABLE tab_drop_refresh;
+DROP SEQUENCE seq_drop_refresh;
+	});
+
+	# Pause the refresh after it collects the relation list, drop the table
+	# and the sequence, then wake it.
+	$node_subscriber->safe_psql('postgres',
+		qq{SELECT injection_points_attach('subscription-refresh-before-origin-check', 'wait');}
+	);
+
+	my $psql = $node_subscriber->background_psql('postgres');
+	$psql->query_until(
+		qr/starting_refresh/, q{
+		\echo starting_refresh
+		ALTER SUBSCRIPTION sub_drop_refresh REFRESH PUBLICATION;
+	});
+
+	$node_subscriber->wait_for_event('client backend',
+		'subscription-refresh-before-origin-check');
+
+	$node_subscriber->safe_psql(
+		'postgres', qq{
+DROP TABLE tab_drop_refresh;
+DROP SEQUENCE seq_drop_refresh;
+	});
+
+	$node_subscriber->safe_psql('postgres',
+		qq{SELECT injection_points_wakeup('subscription-refresh-before-origin-check');}
+	);
+
+	# quit() returns false unless psql exited cleanly, which it does not if the
+	# refresh errored out or the backend crashed.
+	ok($psql->quit, 'refresh completed without crashing the server');
+
+	$node_subscriber->safe_psql(
+		'postgres', qq{
+SELECT injection_points_detach('subscription-refresh-before-origin-check');
+DROP SUBSCRIPTION sub_drop_refresh;
+	});
+	$node_publisher->safe_psql('postgres',
+		qq{DROP PUBLICATION pub_drop_refresh, pub_seq_drop_refresh;});
+}
+
+$node_publisher->stop('fast');
+$node_subscriber->stop('fast');
+
 done_testing();
