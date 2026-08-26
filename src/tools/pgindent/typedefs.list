@@ -2211,7 +2211,6 @@ PartitionDirectoryEntry
 PartitionDispatch
 PartitionElem
 PartitionHashBound
-PartitionIndexExtDepEntry
 PartitionKey
 PartitionListValue
 PartitionMap
@@ -2924,7 +2923,6 @@ SimpleStats
 SimpleStringList
 SimpleStringListCell
 SingleBoundSortItem
-SinglePartitionSpec
 Size
 SkipPages
 SkipSupport
@@ -2996,7 +2994,6 @@ SpinDelayStatus
 SplitInterval
 SplitLR
 SplitPageLayout
-SplitPartitionContext
 SplitPoint
 SplitTextOutputData
 SplitVar
