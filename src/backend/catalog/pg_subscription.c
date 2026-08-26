@@ -684,19 +684,32 @@ GetSubscriptionRelations(Oid subid, bool tables, bool sequences,
 
 		subrel = (Form_pg_subscription_rel) GETSTRUCT(tup);
 
-		/* Relation is either a sequence or a table */
 		relkind = get_rel_relkind(subrel->srrelid);
-		Assert(relkind == RELKIND_SEQUENCE || relkind == RELKIND_RELATION ||
-			   relkind == RELKIND_PARTITIONED_TABLE);
 
-		/* Skip sequences if they were not requested */
-		if ((relkind == RELKIND_SEQUENCE) && !sequences)
+		/* The relation may have been dropped concurrently. */
+		if (relkind == '\0')
 			continue;
 
-		/* Skip tables if they were not requested */
-		if ((relkind == RELKIND_RELATION ||
-			 relkind == RELKIND_PARTITIONED_TABLE) && !tables)
-			continue;
+		/*
+		 * The relation must be either a sequence or a table. Anything else
+		 * indicates an unexpected relation kind for a subscription relation.
+		 */
+		if (relkind == RELKIND_SEQUENCE)
+		{
+			/* Skip sequences if they were not requested */
+			if (!sequences)
+				continue;
+		}
+		else if (relkind == RELKIND_RELATION ||
+				 relkind == RELKIND_PARTITIONED_TABLE)
+		{
+			/* Skip tables if they were not requested */
+			if (!tables)
+				continue;
+		}
+		else
+			elog(ERROR, "unexpected relkind \"%c\" for relation %u in subscription %u",
+				 relkind, subrel->srrelid, subid);
 
 		relstate = palloc_object(SubscriptionRelState);
 		relstate->relid = subrel->srrelid;
