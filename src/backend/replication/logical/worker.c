@@ -731,12 +731,16 @@ finish_edata(ApplyExecutionData *edata)
 		ExecCleanupTupleRouting(edata->mtstate, edata->proute);
 
 	/*
-	 * Cleanup.  It might seem that we should call ExecCloseResultRelations()
-	 * here, but we intentionally don't.  It would close the rel we added to
+	 * Close relations opened specifically for trigger targets.  It might seem
+	 * that we should call ExecCloseResultRelations() here, but we
+	 * intentionally don't as that would close the rel we added to
 	 * es_opened_result_relations above, which is wrong because we took no
-	 * corresponding refcount.  We rely on ExecCleanupTupleRouting() to close
-	 * any other relations opened during execution.
+	 * corresponding refcount.  ExecCleanupTupleRouting() closes relations
+	 * opened for tuple routing, while ExecCloseTrigTargetRelations() closes
+	 * any relations we opened for AFTER triggers.
 	 */
+	ExecCloseTrigTargetRelations(estate);
+
 	ExecResetTupleTable(estate->es_tupleTable, false);
 	FreeExecutorState(estate);
 	pfree(edata);
