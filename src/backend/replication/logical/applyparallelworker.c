@@ -309,8 +309,9 @@ pa_can_start(void)
 	 * For streaming transactions that are being applied using a parallel
 	 * apply worker, we cannot decide whether to apply the change for a
 	 * relation that is not in the READY state (see
-	 * should_apply_changes_for_rel) as we won't know remote_final_lsn by that
-	 * time. So, we don't start the new parallel apply worker in this case.
+	 * should_apply_changes_for_rel) as we won't know the finish LSN of the
+	 * transaction by that time. So, we don't start the new parallel apply
+	 * worker in this case.
 	 */
 	if (!AllTablesyncsReady())
 		return false;

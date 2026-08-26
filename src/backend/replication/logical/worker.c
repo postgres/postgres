@@ -324,8 +324,19 @@ typedef struct ApplyExecutionData
 	PartitionTupleRouting *proute;	/* partition routing info */
 } ApplyExecutionData;
 
-/* Struct for saving and restoring apply errcontext information */
-typedef struct ApplyErrorCallbackArg
+/*
+ * Context describing the remote transaction whose changes are currently
+ * being applied, and the change within it.
+ *
+ * The remote transaction information (remote_xid and finish_lsn) is set when
+ * the transaction's changes begin to be applied. finish_lsn is invalid when
+ * the final LSN of the remote transaction is not yet known (e.g. while
+ * streaming an in-progress transaction).
+ *
+ * The remaining fields describe the individual change being applied and are
+ * used only for error context reporting.
+ */
+typedef struct ApplyRemoteCtx
 {
 	LogicalRepMsgType command;	/* 0 if invalid */
 	LogicalRepRelMapEntry *rel;
@@ -335,7 +346,7 @@ typedef struct ApplyErrorCallbackArg
 	TransactionId remote_xid;
 	XLogRecPtr	finish_lsn;
 	char	   *origin_name;
-} ApplyErrorCallbackArg;
+} ApplyRemoteCtx;
 
 /*
  * The action to be taken for the changes in the transaction.
@@ -460,8 +471,8 @@ typedef struct RetainDeadTuplesData
 #define MIN_XID_ADVANCE_INTERVAL 100
 #define MAX_XID_ADVANCE_INTERVAL 180000
 
-/* errcontext tracker */
-static ApplyErrorCallbackArg apply_error_callback_arg =
+/* Context of the remote transaction being applied */
+static ApplyRemoteCtx remote_ctx =
 {
 	.command = 0,
 	.rel = NULL,
@@ -488,7 +499,6 @@ static bool MySubscriptionValid = false;
 static List *on_commit_wakeup_workers_subids = NIL;
 
 bool		in_remote_transaction = false;
-static XLogRecPtr remote_final_lsn = InvalidXLogRecPtr;
 
 /* fields valid only when processing streamed transaction */
 static bool in_streamed_transaction = false;
@@ -626,9 +636,9 @@ static void maybe_start_skipping_changes(XLogRecPtr finish_lsn);
 static void stop_skipping_changes(void);
 static void clear_subscription_skip_lsn(XLogRecPtr finish_lsn);
 
-/* Functions for apply error callback */
-static inline void set_apply_error_context_xact(TransactionId xid, XLogRecPtr lsn);
-static inline void reset_apply_error_context_info(void);
+/* Functions to maintain the context of the remote transaction being applied */
+static inline void set_remote_transaction_info(TransactionId xid, XLogRecPtr lsn);
+static inline void reset_apply_remote_context(void);
 
 static TransApplyAction get_transaction_apply_action(TransactionId xid,
 													 ParallelApplyWorkerInfo **winfo);
@@ -671,13 +681,14 @@ ReplicationOriginNameForLogicalRep(Oid suboid, Oid relid,
  * Note we need to do smaller or equals comparison for SYNCDONE state because
  * it might hold position of end of initial slot consistent point WAL
  * record + 1 (ie start of next record) and next record can be COMMIT of
- * transaction we are now processing (which is what we set remote_final_lsn
- * to in apply_handle_begin).
+ * transaction we are now processing (which is what we set the finish LSN of
+ * the remote transaction context to in apply_handle_begin).
  *
  * Note that for streaming transactions that are being applied in the parallel
  * apply worker, we disallow applying changes if the target table in the
  * subscription is not in the READY state, because we cannot decide whether to
- * apply the change as we won't know remote_final_lsn by that time.
+ * apply the change as we won't know the finish LSN of the transaction by
+ * that time.
  *
  * We already checked this in pa_can_start() before assigning the
  * streaming transaction to the parallel worker, but it also needs to be
@@ -708,7 +719,7 @@ should_apply_changes_for_rel(LogicalRepRelMapEntry *rel)
 		case WORKERTYPE_APPLY:
 			return (rel->state == SUBREL_STATE_READY ||
 					(rel->state == SUBREL_STATE_SYNCDONE &&
-					 rel->statelsn <= remote_final_lsn));
+					 rel->statelsn <= remote_ctx.finish_lsn));
 
 		case WORKERTYPE_SEQUENCESYNC:
 			/* Should never happen. */
@@ -1050,7 +1061,7 @@ slot_store_data(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 			colvalue = &tupleData->colvalues[remoteattnum];
 
 			/* Set attnum for error callback */
-			apply_error_callback_arg.remote_attnum = remoteattnum;
+			remote_ctx.remote_attnum = remoteattnum;
 
 			if (tupleData->colstatus[remoteattnum] == LOGICALREP_COLUMN_TEXT)
 			{
@@ -1099,7 +1110,7 @@ slot_store_data(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 			}
 
 			/* Reset attnum for error callback */
-			apply_error_callback_arg.remote_attnum = -1;
+			remote_ctx.remote_attnum = -1;
 		}
 		else
 		{
@@ -1169,7 +1180,7 @@ slot_modify_data(TupleTableSlot *slot, TupleTableSlot *srcslot,
 			StringInfo	colvalue = &tupleData->colvalues[remoteattnum];
 
 			/* Set attnum for error callback */
-			apply_error_callback_arg.remote_attnum = remoteattnum;
+			remote_ctx.remote_attnum = remoteattnum;
 
 			if (tupleData->colstatus[remoteattnum] == LOGICALREP_COLUMN_TEXT)
 			{
@@ -1214,7 +1225,7 @@ slot_modify_data(TupleTableSlot *slot, TupleTableSlot *srcslot,
 			}
 
 			/* Reset attnum for error callback */
-			apply_error_callback_arg.remote_attnum = -1;
+			remote_ctx.remote_attnum = -1;
 		}
 	}
 
@@ -1234,9 +1245,7 @@ apply_handle_begin(StringInfo s)
 	Assert(!TransactionIdIsValid(stream_xid));
 
 	logicalrep_read_begin(s, &begin_data);
-	set_apply_error_context_xact(begin_data.xid, begin_data.final_lsn);
-
-	remote_final_lsn = begin_data.final_lsn;
+	set_remote_transaction_info(begin_data.xid, begin_data.final_lsn);
 
 	maybe_start_skipping_changes(begin_data.final_lsn);
 
@@ -1257,12 +1266,12 @@ apply_handle_commit(StringInfo s)
 
 	logicalrep_read_commit(s, &commit_data);
 
-	if (commit_data.commit_lsn != remote_final_lsn)
+	if (commit_data.commit_lsn != remote_ctx.finish_lsn)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg_internal("incorrect commit LSN %X/%08X in commit message (expected %X/%08X)",
 								 LSN_FORMAT_ARGS(commit_data.commit_lsn),
-								 LSN_FORMAT_ARGS(remote_final_lsn))));
+								 LSN_FORMAT_ARGS(remote_ctx.finish_lsn))));
 
 	apply_handle_commit_internal(&commit_data);
 
@@ -1273,7 +1282,7 @@ apply_handle_commit(StringInfo s)
 	ProcessSyncingRelations(commit_data.end_lsn);
 
 	pgstat_report_activity(STATE_IDLE, NULL);
-	reset_apply_error_context_info();
+	reset_apply_remote_context();
 }
 
 /*
@@ -1294,9 +1303,7 @@ apply_handle_begin_prepare(StringInfo s)
 	Assert(!TransactionIdIsValid(stream_xid));
 
 	logicalrep_read_begin_prepare(s, &begin_data);
-	set_apply_error_context_xact(begin_data.xid, begin_data.prepare_lsn);
-
-	remote_final_lsn = begin_data.prepare_lsn;
+	set_remote_transaction_info(begin_data.xid, begin_data.prepare_lsn);
 
 	maybe_start_skipping_changes(begin_data.prepare_lsn);
 
@@ -1352,12 +1359,12 @@ apply_handle_prepare(StringInfo s)
 
 	logicalrep_read_prepare(s, &prepare_data);
 
-	if (prepare_data.prepare_lsn != remote_final_lsn)
+	if (prepare_data.prepare_lsn != remote_ctx.finish_lsn)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg_internal("incorrect prepare LSN %X/%08X in prepare message (expected %X/%08X)",
 								 LSN_FORMAT_ARGS(prepare_data.prepare_lsn),
-								 LSN_FORMAT_ARGS(remote_final_lsn))));
+								 LSN_FORMAT_ARGS(remote_ctx.finish_lsn))));
 
 	/*
 	 * Unlike commit, here, we always prepare the transaction even though no
@@ -1407,7 +1414,7 @@ apply_handle_prepare(StringInfo s)
 	clear_subscription_skip_lsn(prepare_data.prepare_lsn);
 
 	pgstat_report_activity(STATE_IDLE, NULL);
-	reset_apply_error_context_info();
+	reset_apply_remote_context();
 }
 
 /*
@@ -1426,7 +1433,7 @@ apply_handle_commit_prepared(StringInfo s)
 	char		gid[GIDSIZE];
 
 	logicalrep_read_commit_prepared(s, &prepare_data);
-	set_apply_error_context_xact(prepare_data.xid, prepare_data.commit_lsn);
+	set_remote_transaction_info(prepare_data.xid, prepare_data.commit_lsn);
 
 	/* Compute GID for two_phase transactions. */
 	TwoPhaseTransactionGid(MySubscription->oid, prepare_data.xid,
@@ -1459,7 +1466,7 @@ apply_handle_commit_prepared(StringInfo s)
 	clear_subscription_skip_lsn(prepare_data.end_lsn);
 
 	pgstat_report_activity(STATE_IDLE, NULL);
-	reset_apply_error_context_info();
+	reset_apply_remote_context();
 }
 
 /*
@@ -1478,7 +1485,7 @@ apply_handle_rollback_prepared(StringInfo s)
 	char		gid[GIDSIZE];
 
 	logicalrep_read_rollback_prepared(s, &rollback_data);
-	set_apply_error_context_xact(rollback_data.xid, rollback_data.rollback_end_lsn);
+	set_remote_transaction_info(rollback_data.xid, rollback_data.rollback_end_lsn);
 
 	/* Compute GID for two_phase transactions. */
 	TwoPhaseTransactionGid(MySubscription->oid, rollback_data.xid,
@@ -1526,7 +1533,7 @@ apply_handle_rollback_prepared(StringInfo s)
 	ProcessSyncingRelations(rollback_data.rollback_end_lsn);
 
 	pgstat_report_activity(STATE_IDLE, NULL);
-	reset_apply_error_context_info();
+	reset_apply_remote_context();
 }
 
 /*
@@ -1554,7 +1561,7 @@ apply_handle_stream_prepare(StringInfo s)
 				 errmsg_internal("tablesync worker received a STREAM PREPARE message")));
 
 	logicalrep_read_stream_prepare(s, &prepare_data);
-	set_apply_error_context_xact(prepare_data.xid, prepare_data.prepare_lsn);
+	set_remote_transaction_info(prepare_data.xid, prepare_data.prepare_lsn);
 
 	apply_action = get_transaction_apply_action(prepare_data.xid, &winfo);
 
@@ -1672,7 +1679,7 @@ apply_handle_stream_prepare(StringInfo s)
 
 	pgstat_report_activity(STATE_IDLE, NULL);
 
-	reset_apply_error_context_info();
+	reset_apply_remote_context();
 }
 
 /*
@@ -1768,7 +1775,11 @@ apply_handle_stream_start(StringInfo s)
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg_internal("invalid transaction ID in streamed replication transaction")));
 
-	set_apply_error_context_xact(stream_xid, InvalidXLogRecPtr);
+	/*
+	 * The final LSN of the streamed transaction is known only when its commit
+	 * record arrives.
+	 */
+	set_remote_transaction_info(stream_xid, InvalidXLogRecPtr);
 
 	/* Try to allocate a worker for the streaming transaction. */
 	if (first_segment)
@@ -1995,7 +2006,7 @@ apply_handle_stream_stop(StringInfo s)
 	else
 		pgstat_report_activity(STATE_IDLE, NULL);
 
-	reset_apply_error_context_info();
+	reset_apply_remote_context();
 }
 
 /*
@@ -2111,7 +2122,13 @@ apply_handle_stream_abort(StringInfo s)
 	subxid = abort_data.subxid;
 	toplevel_xact = (xid == subxid);
 
-	set_apply_error_context_xact(subxid, abort_data.abort_lsn);
+	/*
+	 * Record the xid of the (sub)transaction being aborted, so that the error
+	 * context names whatever failed. Note this is the top-level xid itself
+	 * when a top-level transaction aborts, and a subxid only when a
+	 * subtransaction rolls back. See set_remote_transaction_info().
+	 */
+	set_remote_transaction_info(subxid, abort_data.abort_lsn);
 
 	apply_action = get_transaction_apply_action(xid, &winfo);
 
@@ -2236,7 +2253,7 @@ apply_handle_stream_abort(StringInfo s)
 			break;
 	}
 
-	reset_apply_error_context_info();
+	reset_apply_remote_context();
 }
 
 /*
@@ -2317,8 +2334,6 @@ apply_spooled_messages(FileSet *stream_fileset, TransactionId xid,
 	buffer = palloc(BLCKSZ);
 
 	MemoryContextSwitchTo(oldcxt);
-
-	remote_final_lsn = lsn;
 
 	/*
 	 * Make sure the handle apply_dispatch methods are aware we're in a remote
@@ -2421,7 +2436,7 @@ apply_handle_stream_commit(StringInfo s)
 				 errmsg_internal("STREAM COMMIT message without STREAM STOP")));
 
 	xid = logicalrep_read_stream_commit(s, &commit_data);
-	set_apply_error_context_xact(xid, commit_data.commit_lsn);
+	set_remote_transaction_info(xid, commit_data.commit_lsn);
 
 	apply_action = get_transaction_apply_action(xid, &winfo);
 
@@ -2511,7 +2526,7 @@ apply_handle_stream_commit(StringInfo s)
 
 	pgstat_report_activity(STATE_IDLE, NULL);
 
-	reset_apply_error_context_info();
+	reset_apply_remote_context();
 }
 
 /*
@@ -2692,7 +2707,7 @@ apply_handle_insert(StringInfo s)
 		SwitchToUntrustedUser(rel->localrel->rd_rel->relowner, &ucxt);
 
 	/* Set relation for error callback */
-	apply_error_callback_arg.rel = rel;
+	remote_ctx.rel = rel;
 
 	/* Initialize the executor state. */
 	edata = create_edata_for_relation(rel);
@@ -2723,7 +2738,7 @@ apply_handle_insert(StringInfo s)
 	finish_edata(edata);
 
 	/* Reset relation for error callback */
-	apply_error_callback_arg.rel = NULL;
+	remote_ctx.rel = NULL;
 
 	if (!run_as_owner)
 		RestoreUserContext(&ucxt);
@@ -2845,7 +2860,7 @@ apply_handle_update(StringInfo s)
 	}
 
 	/* Set relation for error callback */
-	apply_error_callback_arg.rel = rel;
+	remote_ctx.rel = rel;
 
 	/* Check if we can do the update. */
 	check_relation_updatable(rel);
@@ -2911,7 +2926,7 @@ apply_handle_update(StringInfo s)
 	finish_edata(edata);
 
 	/* Reset relation for error callback */
-	apply_error_callback_arg.rel = NULL;
+	remote_ctx.rel = NULL;
 
 	if (!run_as_owner)
 		RestoreUserContext(&ucxt);
@@ -3068,7 +3083,7 @@ apply_handle_delete(StringInfo s)
 	}
 
 	/* Set relation for error callback */
-	apply_error_callback_arg.rel = rel;
+	remote_ctx.rel = rel;
 
 	/* Check if we can do the delete. */
 	check_relation_updatable(rel);
@@ -3110,7 +3125,7 @@ apply_handle_delete(StringInfo s)
 	finish_edata(edata);
 
 	/* Reset relation for error callback */
-	apply_error_callback_arg.rel = NULL;
+	remote_ctx.rel = NULL;
 
 	if (!run_as_owner)
 		RestoreUserContext(&ucxt);
@@ -3805,8 +3820,8 @@ apply_dispatch(StringInfo s)
 	 * called recursively when applying spooled changes, save the current
 	 * command.
 	 */
-	saved_command = apply_error_callback_arg.command;
-	apply_error_callback_arg.command = action;
+	saved_command = remote_ctx.command;
+	remote_ctx.command = action;
 
 	switch (action)
 	{
@@ -3898,7 +3913,7 @@ apply_dispatch(StringInfo s)
 	}
 
 	/* Reset the current command */
-	apply_error_callback_arg.command = saved_command;
+	remote_ctx.command = saved_command;
 }
 
 /*
@@ -6290,90 +6305,107 @@ clear_subscription_skip_lsn(XLogRecPtr finish_lsn)
 void
 apply_error_callback(void *arg)
 {
-	ApplyErrorCallbackArg *errarg = &apply_error_callback_arg;
+	ApplyRemoteCtx *ctx = &remote_ctx;
 
-	if (apply_error_callback_arg.command == 0)
+	if (ctx->command == 0)
 		return;
 
-	Assert(errarg->origin_name);
+	Assert(ctx->origin_name);
 
-	if (errarg->rel == NULL)
+	if (ctx->rel == NULL)
 	{
-		if (!TransactionIdIsValid(errarg->remote_xid))
+		if (!TransactionIdIsValid(ctx->remote_xid))
 			errcontext("processing remote data for replication origin \"%s\" during message type \"%s\"",
-					   errarg->origin_name,
-					   logicalrep_message_type(errarg->command));
-		else if (!XLogRecPtrIsValid(errarg->finish_lsn))
+					   ctx->origin_name,
+					   logicalrep_message_type(ctx->command));
+		else if (!XLogRecPtrIsValid(ctx->finish_lsn))
 			errcontext("processing remote data for replication origin \"%s\" during message type \"%s\" in transaction %u",
-					   errarg->origin_name,
-					   logicalrep_message_type(errarg->command),
-					   errarg->remote_xid);
+					   ctx->origin_name,
+					   logicalrep_message_type(ctx->command),
+					   ctx->remote_xid);
 		else
 			errcontext("processing remote data for replication origin \"%s\" during message type \"%s\" in transaction %u, finished at %X/%08X",
-					   errarg->origin_name,
-					   logicalrep_message_type(errarg->command),
-					   errarg->remote_xid,
-					   LSN_FORMAT_ARGS(errarg->finish_lsn));
+					   ctx->origin_name,
+					   logicalrep_message_type(ctx->command),
+					   ctx->remote_xid,
+					   LSN_FORMAT_ARGS(ctx->finish_lsn));
 	}
 	else
 	{
-		if (errarg->remote_attnum < 0)
+		if (ctx->remote_attnum < 0)
 		{
-			if (!XLogRecPtrIsValid(errarg->finish_lsn))
+			if (!XLogRecPtrIsValid(ctx->finish_lsn))
 				errcontext("processing remote data for replication origin \"%s\" during message type \"%s\" for replication target relation \"%s.%s\" in transaction %u",
-						   errarg->origin_name,
-						   logicalrep_message_type(errarg->command),
-						   errarg->rel->remoterel.nspname,
-						   errarg->rel->remoterel.relname,
-						   errarg->remote_xid);
+						   ctx->origin_name,
+						   logicalrep_message_type(ctx->command),
+						   ctx->rel->remoterel.nspname,
+						   ctx->rel->remoterel.relname,
+						   ctx->remote_xid);
 			else
 				errcontext("processing remote data for replication origin \"%s\" during message type \"%s\" for replication target relation \"%s.%s\" in transaction %u, finished at %X/%08X",
-						   errarg->origin_name,
-						   logicalrep_message_type(errarg->command),
-						   errarg->rel->remoterel.nspname,
-						   errarg->rel->remoterel.relname,
-						   errarg->remote_xid,
-						   LSN_FORMAT_ARGS(errarg->finish_lsn));
+						   ctx->origin_name,
+						   logicalrep_message_type(ctx->command),
+						   ctx->rel->remoterel.nspname,
+						   ctx->rel->remoterel.relname,
+						   ctx->remote_xid,
+						   LSN_FORMAT_ARGS(ctx->finish_lsn));
 		}
 		else
 		{
-			if (!XLogRecPtrIsValid(errarg->finish_lsn))
+			if (!XLogRecPtrIsValid(ctx->finish_lsn))
 				errcontext("processing remote data for replication origin \"%s\" during message type \"%s\" for replication target relation \"%s.%s\" column \"%s\" in transaction %u",
-						   errarg->origin_name,
-						   logicalrep_message_type(errarg->command),
-						   errarg->rel->remoterel.nspname,
-						   errarg->rel->remoterel.relname,
-						   errarg->rel->remoterel.attnames[errarg->remote_attnum],
-						   errarg->remote_xid);
+						   ctx->origin_name,
+						   logicalrep_message_type(ctx->command),
+						   ctx->rel->remoterel.nspname,
+						   ctx->rel->remoterel.relname,
+						   ctx->rel->remoterel.attnames[ctx->remote_attnum],
+						   ctx->remote_xid);
 			else
 				errcontext("processing remote data for replication origin \"%s\" during message type \"%s\" for replication target relation \"%s.%s\" column \"%s\" in transaction %u, finished at %X/%08X",
-						   errarg->origin_name,
-						   logicalrep_message_type(errarg->command),
-						   errarg->rel->remoterel.nspname,
-						   errarg->rel->remoterel.relname,
-						   errarg->rel->remoterel.attnames[errarg->remote_attnum],
-						   errarg->remote_xid,
-						   LSN_FORMAT_ARGS(errarg->finish_lsn));
+						   ctx->origin_name,
+						   logicalrep_message_type(ctx->command),
+						   ctx->rel->remoterel.nspname,
+						   ctx->rel->remoterel.relname,
+						   ctx->rel->remoterel.attnames[ctx->remote_attnum],
+						   ctx->remote_xid,
+						   LSN_FORMAT_ARGS(ctx->finish_lsn));
 		}
 	}
 }
 
-/* Set transaction information of apply error callback */
+/*
+ * Set information identifying the remote transaction currently being
+ * applied, kept for the duration of that transaction.
+ *
+ * This must be called for every message type that begins or resumes applying
+ * a remote transaction's changes (BEGIN, BEGIN PREPARE, STREAM START, STREAM
+ * COMMIT, STREAM PREPARE), since interleaved transactions (possible only for
+ * streaming) would otherwise leave stale values from whichever transaction
+ * last called this.
+ *
+ * Callers normally pass the top-level transaction's xid. The exception is a
+ * STREAM ABORT, which passes the xid of the (sub)transaction being aborted so
+ * that the error context names whatever failed; that is a subxid only when a
+ * subtransaction rolls back, and the top-level xid otherwise. Nothing else
+ * observes a subxid recorded this way, because no change is applied between a
+ * STREAM ABORT and the STREAM START or STREAM COMMIT/PREPARE that follows it,
+ * and each of those calls this again with the transaction's own values.
+ */
 static inline void
-set_apply_error_context_xact(TransactionId xid, XLogRecPtr lsn)
+set_remote_transaction_info(TransactionId xid, XLogRecPtr lsn)
 {
-	apply_error_callback_arg.remote_xid = xid;
-	apply_error_callback_arg.finish_lsn = lsn;
+	remote_ctx.remote_xid = xid;
+	remote_ctx.finish_lsn = lsn;
 }
 
-/* Reset all information of apply error callback */
+/* Reset all information of the remote transaction context */
 static inline void
-reset_apply_error_context_info(void)
+reset_apply_remote_context(void)
 {
-	apply_error_callback_arg.command = 0;
-	apply_error_callback_arg.rel = NULL;
-	apply_error_callback_arg.remote_attnum = -1;
-	set_apply_error_context_xact(InvalidTransactionId, InvalidXLogRecPtr);
+	remote_ctx.command = 0;
+	remote_ctx.rel = NULL;
+	remote_ctx.remote_attnum = -1;
+	set_remote_transaction_info(InvalidTransactionId, InvalidXLogRecPtr);
 }
 
 /*
@@ -6432,8 +6464,7 @@ AtEOXact_LogicalRepWorkers(bool isCommit)
 void
 set_apply_error_context_origin(char *originname)
 {
-	apply_error_callback_arg.origin_name = MemoryContextStrdup(ApplyContext,
-															   originname);
+	remote_ctx.origin_name = MemoryContextStrdup(ApplyContext, originname);
 }
 
 /*

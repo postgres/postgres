@@ -132,8 +132,8 @@ AppendPath
 AppendPathInput
 AppendRelInfo
 AppendState
-ApplyErrorCallbackArg
 ApplyExecutionData
+ApplyRemoteCtx
 ApplySubXactData
 Archive
 ArchiveCheckConfiguredCB
