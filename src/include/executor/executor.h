@@ -703,6 +703,7 @@ extern void ExecInitRangeTable(EState *estate, List *rangeTable, List *permInfos
 							   Bitmapset *unpruned_relids);
 extern void ExecCloseRangeTableRelations(EState *estate);
 extern void ExecCloseResultRelations(EState *estate);
+extern void ExecCloseTrigTargetRelations(EState *estate);
 
 static inline RangeTblEntry *
 exec_rt_fetch(Index rti, EState *estate)
