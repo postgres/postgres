@@ -417,7 +417,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_progress_repack</structname><indexterm><primary>pg_stat_progress_repack</primary></indexterm></entry>
       <entry>One row for each backend running <command>REPACK</command>,
        <command>CLUSTER</command> or <command>VACUUM FULL</command>, showing current progress.
-       <xref linkend="repack-progress-reporting"/>.
+       See <xref linkend="repack-progress-reporting"/>.
       </entry>
      </row>
 
@@ -6726,7 +6726,8 @@ FROM pg_stat_get_backend_idset() AS backendid;
    <command>VACUUM FULL</command> is running,
    the backwards-compatibility <structname>pg_stat_progress_cluster</structname>
    view will
-   contain a row for each backend that is currently running either command.
+   contain a row for each backend that is currently running one of these
+   commands.
    The tables below describe the information that will be reported and
    provide information about how to interpret it.
   </para>
@@ -7400,10 +7401,11 @@ FROM pg_stat_get_backend_idset() AS backendid;
   </indexterm>
 
   <para>
-   Whenever <command>REPACK</command> is running,
+   Whenever <command>REPACK</command>, <command>CLUSTER</command>, or
+   <command>VACUUM FULL</command> is running,
    the <structname>pg_stat_progress_repack</structname> view will contain a
-   row for each backend that is currently running the command.  The tables
-   below describe the information that will be reported and provide
+   row for each backend that is currently running one of these commands.
+   The tables below describe the information that will be reported and provide
    information about how to interpret it.
   </para>
 
@@ -7454,7 +7456,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
        <structfield>relid</structfield> <type>oid</type>
       </para>
       <para>
-       OID of the table being repacked.
+       OID of the table being processed.
       </para></entry>
      </row>
 
@@ -7463,8 +7465,8 @@ FROM pg_stat_get_backend_idset() AS backendid;
        <structfield>command</structfield> <type>text</type>
       </para>
       <para>
-       The command that is running. Either <command>REPACK</command> or
-       <command>VACUUM FULL</command>, or <command>CLUSTER</command>.
+       The command that is running. One of <command>CLUSTER</command>,
+       <command>REPACK</command>, or <command>VACUUM FULL</command>.
       </para></entry>
      </row>
 
@@ -7657,10 +7659,12 @@ FROM pg_stat_get_backend_idset() AS backendid;
    currently vacuuming.  The tables below describe the information
    that will be reported and provide information about how to interpret it.
    Progress for <command>VACUUM FULL</command> commands is reported via
-   <structname>pg_stat_progress_cluster</structname>
+   <structname>pg_stat_progress_repack</structname>, and is also visible via
+   the backwards-compatibility <structname>pg_stat_progress_cluster</structname>
    because both <command>VACUUM FULL</command> and <command>CLUSTER</command>
    rewrite the table, while regular <command>VACUUM</command> only modifies it
-   in place. See <xref linkend="cluster-progress-reporting"/>.
+   in place. See <xref linkend="repack-progress-reporting"/> and
+   <xref linkend="cluster-progress-reporting"/>.
   </para>
 
   <table id="pg-stat-progress-vacuum-view" xreflabel="pg_stat_progress_vacuum">

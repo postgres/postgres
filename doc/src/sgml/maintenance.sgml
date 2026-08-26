@@ -171,11 +171,13 @@
     future reuse.  However, it will not return the space to the operating
     system, except in the special case where one or more pages at the
     end of a table become entirely free and an exclusive table lock can be
-    easily obtained.  In contrast, <command>VACUUM FULL</command> actively compacts
-    tables by writing a complete new version of the table file with no dead
-    space.  This minimizes the size of the table, but can take a long time.
-    It also requires extra disk space for the new copy of the table, until
-    the operation completes.
+    easily obtained.  In contrast, table-rewriting commands such as
+    <command>VACUUM FULL</command>, <command>CLUSTER</command>, and
+    <command>REPACK</command> actively compact tables by writing a complete
+    new version of the table file without the dead space left by old row
+    versions.  This minimizes the size of the table, but can take a long time.
+    It also requires extra disk space for the new copy of the table, until the
+    operation completes.
    </para>
 
    <para>
@@ -186,12 +188,14 @@
     is not to keep tables at their minimum size, but to maintain steady-state
     usage of disk space: each table occupies space equivalent to its
     minimum size plus however much space gets used up between vacuum runs.
-    Although <command>VACUUM FULL</command> can be used to shrink a table back
-    to its minimum size and return the disk space to the operating system,
-    there is not much point in this if the table will just grow again in the
-    future.  Thus, moderately-frequent standard <command>VACUUM</command> runs are a
-    better approach than infrequent <command>VACUUM FULL</command> runs for
-    maintaining heavily-updated tables.
+    Although table-rewriting compaction operations such as
+    <command>VACUUM FULL</command>, <command>CLUSTER</command>, and
+    <command>REPACK</command> can be used to shrink a table back to its
+    minimum size and return the disk space to the operating system, there is
+    not much point in this if the table will just grow again in the future.
+    Thus, moderately-frequent standard <command>VACUUM</command> runs are a
+    better approach than infrequent use of such operations for maintaining
+    heavily-updated tables.
    </para>
 
    <para>
@@ -199,7 +203,8 @@
     doing all the work at night when load is low.
     The difficulty with doing vacuuming according to a fixed schedule
     is that if a table has an unexpected spike in update activity, it may
-    get bloated to the point that <command>VACUUM FULL</command> is really necessary
+    get bloated to the point that a table-rewriting compaction operation such
+    as <command>VACUUM FULL</command> or <command>REPACK</command> may be needed
     to reclaim space.  Using the autovacuum daemon alleviates this problem,
     since the daemon schedules vacuuming dynamically in response to update
     activity.  It is unwise to disable the daemon completely unless you
@@ -227,16 +232,20 @@
     a table contains large numbers of dead row versions as a result of
     massive update or delete activity.  If you have such a table and
     you need to reclaim the excess disk space it occupies, you will need
-    to use <command>VACUUM FULL</command>, or alternatively
-    <link linkend="sql-cluster"><command>CLUSTER</command></link>
+    to use <command>VACUUM FULL</command>,
+    <link linkend="sql-cluster"><command>CLUSTER</command></link>,
+    <link linkend="sql-repack"><command>REPACK</command></link>,
     or one of the table-rewriting variants of
     <link linkend="sql-altertable"><command>ALTER TABLE</command></link>.
     These commands rewrite an entire new copy of the table and build
     new indexes for it.  All these options require an
-    <literal>ACCESS EXCLUSIVE</literal> lock.  Note that
-    they also temporarily use extra disk space approximately equal to the size
-    of the table, since the old copies of the table and indexes can't be
-    released until the new ones are complete.
+    <literal>ACCESS EXCLUSIVE</literal> lock, except that
+    <command>REPACK</command> can be run with <literal>CONCURRENTLY</literal>,
+    in which case the <literal>ACCESS EXCLUSIVE</literal> lock is held only
+    while swapping the table and index files.  Note that they also
+    temporarily use extra disk space approximately equal to the size of the
+    table, since the old copies of the table and indexes can't be released
+    until the new ones are complete.
    </para>
    </tip>
 

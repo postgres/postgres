@@ -1095,10 +1095,14 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <para>
          Acquired by the <command>DROP TABLE</command>,
          <command>TRUNCATE</command>, <command>REINDEX</command>,
-         <command>CLUSTER</command>, <command>VACUUM FULL</command>,
-         and <command>REFRESH MATERIALIZED VIEW</command> (without
-         <option>CONCURRENTLY</option>)
-         commands. Many forms of <command>ALTER INDEX</command> and <command>ALTER TABLE</command> also acquire
+         <command>CLUSTER</command>, <command>VACUUM FULL</command>, and
+         <command>REFRESH MATERIALIZED VIEW</command> (without
+         <option>CONCURRENTLY</option>) commands.
+         <command>REPACK</command> also acquires this lock mode.  When run
+         with <option>CONCURRENTLY</option>, <command>REPACK</command> acquires
+         it only while swapping the table and index files.
+         Many forms of <command>ALTER INDEX</command> and
+         <command>ALTER TABLE</command> also acquire
          a lock at this level. This is also the default lock mode for
          <command>LOCK TABLE</command> statements that do not specify
          a mode explicitly.
