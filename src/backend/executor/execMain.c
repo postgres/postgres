@@ -1670,6 +1670,22 @@ ExecCloseResultRelations(EState *estate)
 		}
 	}
 
+	/*
+	 * Now close any relations that we opened for trigger target
+	 * ResultRelInfos.
+	 */
+	ExecCloseTrigTargetRelations(estate);
+}
+
+/*
+ * Close any relations that have been opened for ResultRelInfos opened
+ * specifically for trigger target relations.
+ */
+void
+ExecCloseTrigTargetRelations(EState *estate)
+{
+	ListCell   *l;
+
 	/* Close any relations that have been opened by ExecGetTriggerResultRel(). */
 	foreach(l, estate->es_trig_target_relations)
 	{
