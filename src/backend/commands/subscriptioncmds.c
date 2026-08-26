@@ -2164,10 +2164,22 @@ check_publications_origin(WalReceiverConn *wrconn, List *publications,
 	for (i = 0; i < subrel_count; i++)
 	{
 		Oid			relid = subrel_local_oids[i];
-		char	   *schemaname = get_namespace_name(get_rel_namespace(relid));
-		char	   *tablename = get_rel_name(relid);
-		char	   *schemaname_lit = quote_literal_cstr(schemaname);
-		char	   *tablename_lit = quote_literal_cstr(tablename);
+		char	   *schemaname;
+		char	   *tablename;
+		char	   *schemaname_lit;
+		char	   *tablename_lit;
+
+		/* The table may have been dropped concurrently; skip if gone. */
+		tablename = get_rel_name(relid);
+		if (tablename == NULL)
+			continue;
+
+		schemaname = get_namespace_name(get_rel_namespace(relid));
+		if (schemaname == NULL)
+			continue;
+
+		schemaname_lit = quote_literal_cstr(schemaname);
+		tablename_lit = quote_literal_cstr(tablename);
 
 		appendStringInfo(&cmd, "AND NOT (N.nspname = %s AND C.relname = %s)\n",
 						 schemaname_lit, tablename_lit);
