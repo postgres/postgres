@@ -895,7 +895,7 @@ RelationGetNotNullConstraints(Oid relid, bool cooked, bool include_noinh)
 															 false)));
 			constr->is_enforced = true;
 			constr->skip_validation = !conForm->convalidated;
-			constr->initially_valid = conForm->convalidated;
+			constr->initially_valid = true;
 			constr->is_no_inherit = conForm->connoinherit;
 			notnulls = lappend(notnulls, constr);
 		}
