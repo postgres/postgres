@@ -130,7 +130,7 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 	values[9] = TransactionIdGetDatum(ControlFile->checkPointCopy.nextMulti);
 	nulls[9] = false;
 
-	values[10] = TransactionIdGetDatum(ControlFile->checkPointCopy.nextMultiOffset);
+	values[10] = Int64GetDatum(ControlFile->checkPointCopy.nextMultiOffset);
 	nulls[10] = false;
 
 	values[11] = TransactionIdGetDatum(ControlFile->checkPointCopy.oldestXid);
