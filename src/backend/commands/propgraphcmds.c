@@ -342,7 +342,8 @@ propgraph_element_get_key(ParseState *pstate, const List *key_clause, Relation e
 			Relation	indexDesc;
 
 			indexDesc = index_open(pkidx, AccessShareLock);
-			a = array_from_attnums(indexDesc->rd_index->indkey.dim1, indexDesc->rd_index->indkey.values);
+			a = array_from_attnums(IndexRelationGetNumberOfKeyAttributes(indexDesc),
+								   indexDesc->rd_index->indkey.values);
 			index_close(indexDesc, NoLock);
 		}
 	}
