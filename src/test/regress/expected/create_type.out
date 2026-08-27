@@ -244,12 +244,26 @@ NOTICE:  return type myvarchar is only a shell
 -- fail, it's still a shell:
 ALTER TYPE myvarchar SET (storage = extended);
 ERROR:  type "myvarchar" is only a shell
+-- fail: typmods not allowed for a shell type
+CREATE FUNCTION myvarchar_lower(text) RETURNS myvarchar(100)
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'lower';
+ERROR:  type modifier cannot be specified for shell type "myvarchar"
+CREATE FUNCTION myvarchar_lower(myvarchar(100)) RETURNS text
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'lower';
+ERROR:  type modifier cannot be specified for shell type "myvarchar"
 CREATE TYPE myvarchar (
     input = myvarcharin,
     output = myvarcharout,
     alignment = integer,
     storage = main
 );
+-- fail: typmods not allowed because 'typmod_in' / 'typmod_out' were not specified.
+CREATE FUNCTION myvarchar_lower(text) RETURNS myvarchar(100)
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'lower';
+ERROR:  type modifier is not allowed for type "myvarchar"
+CREATE FUNCTION myvarchar_lower(myvarchar(100)) RETURNS text
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'lower';
+ERROR:  type modifier is not allowed for type "myvarchar"
 -- want to check updating of a domain over the target type, too
 CREATE DOMAIN myvarchardom AS myvarchar;
 ALTER TYPE myvarchar SET (storage = plain);  -- not allowed
@@ -296,6 +310,9 @@ FROM pg_type WHERE typname = '_myvarchardom';
  array_in | array_out | array_recv | array_send | -        | -         | array_typanalyze | array_subscript_handler | x
 (1 row)
 
+-- typmods are now accepted in CREATE FUNCTION, although they are not stored
+CREATE FUNCTION myvarchar_lower(myvarchar(100)) RETURNS myvarchar(100)
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'lower';
 -- ensure dependencies are straight
 DROP FUNCTION myvarcharsend(myvarchar);  -- fail
 ERROR:  cannot drop function myvarcharsend(myvarchar) because other objects depend on it
@@ -303,6 +320,7 @@ DETAIL:  type myvarchar depends on function myvarcharsend(myvarchar)
 function myvarcharin(cstring,oid,integer) depends on type myvarchar
 function myvarcharout(myvarchar) depends on type myvarchar
 function myvarcharrecv(internal,oid,integer) depends on type myvarchar
+function myvarchar_lower(myvarchar) depends on type myvarchar
 type myvarchardom depends on function myvarcharsend(myvarchar)
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP TYPE myvarchar;  -- fail
@@ -312,11 +330,13 @@ function myvarcharout(myvarchar) depends on type myvarchar
 function myvarcharsend(myvarchar) depends on type myvarchar
 function myvarcharrecv(internal,oid,integer) depends on type myvarchar
 type myvarchardom depends on type myvarchar
+function myvarchar_lower(myvarchar) depends on type myvarchar
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP TYPE myvarchar CASCADE;
-NOTICE:  drop cascades to 5 other objects
+NOTICE:  drop cascades to 6 other objects
 DETAIL:  drop cascades to function myvarcharin(cstring,oid,integer)
 drop cascades to function myvarcharout(myvarchar)
 drop cascades to function myvarcharsend(myvarchar)
 drop cascades to function myvarcharrecv(internal,oid,integer)
 drop cascades to type myvarchardom
+drop cascades to function myvarchar_lower(myvarchar)

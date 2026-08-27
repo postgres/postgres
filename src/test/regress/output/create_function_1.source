@@ -24,3 +24,27 @@ CREATE FUNCTION int44out(city_budget)
    AS '@libdir@/regress@DLSUFFIX@'
    LANGUAGE C STRICT IMMUTABLE;
 NOTICE:  argument type city_budget is only a shell
+-- If the specified type includes typmods or array syntax, don't create a shell type
+CREATE FUNCTION bogus_in(cstring)
+   RETURNS bogus_shell(123)
+   AS '@libdir@/regress@DLSUFFIX@', 'widget_in'
+   LANGUAGE C STRICT IMMUTABLE;
+ERROR:  type "bogus_shell" does not exist
+CREATE FUNCTION bogus_in(cstring)
+   RETURNS bogus_shell[]
+   AS '@libdir@/regress@DLSUFFIX@', 'widget_in'
+   LANGUAGE C STRICT IMMUTABLE;
+ERROR:  type "bogus_shell[]" does not exist
+-- If the column specified with %TYPE does not exist, don't try to create a shell type
+CREATE TEMP TABLE bogus_tbl (col int);
+CREATE FUNCTION bogus_in(cstring)
+   RETURNS bogus_tbl.nonexistent_col%TYPE
+   AS '@libdir@/regress@DLSUFFIX@', 'widget_in'
+   LANGUAGE C STRICT IMMUTABLE;
+ERROR:  column "nonexistent_col" of relation "bogus_tbl" does not exist
+-- If the schema does not exist, don't try to create a shell type
+CREATE FUNCTION bogus_in(cstring)
+   RETURNS nonexistent_schema.bogus_shell
+   AS '@libdir@/regress@DLSUFFIX@', 'widget_in'
+   LANGUAGE C STRICT IMMUTABLE;
+ERROR:  schema "nonexistent_schema" does not exist

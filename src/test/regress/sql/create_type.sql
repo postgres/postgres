@@ -188,12 +188,24 @@ LANGUAGE internal STABLE PARALLEL SAFE STRICT AS 'varcharrecv';
 -- fail, it's still a shell:
 ALTER TYPE myvarchar SET (storage = extended);
 
+-- fail: typmods not allowed for a shell type
+CREATE FUNCTION myvarchar_lower(text) RETURNS myvarchar(100)
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'lower';
+CREATE FUNCTION myvarchar_lower(myvarchar(100)) RETURNS text
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'lower';
+
 CREATE TYPE myvarchar (
     input = myvarcharin,
     output = myvarcharout,
     alignment = integer,
     storage = main
 );
+
+-- fail: typmods not allowed because 'typmod_in' / 'typmod_out' were not specified.
+CREATE FUNCTION myvarchar_lower(text) RETURNS myvarchar(100)
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'lower';
+CREATE FUNCTION myvarchar_lower(myvarchar(100)) RETURNS text
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'lower';
 
 -- want to check updating of a domain over the target type, too
 CREATE DOMAIN myvarchardom AS myvarchar;
@@ -227,6 +239,10 @@ FROM pg_type WHERE typname = 'myvarchardom';
 SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
        typanalyze, typsubscript, typstorage
 FROM pg_type WHERE typname = '_myvarchardom';
+
+-- typmods are now accepted in CREATE FUNCTION, although they are not stored
+CREATE FUNCTION myvarchar_lower(myvarchar(100)) RETURNS myvarchar(100)
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'lower';
 
 -- ensure dependencies are straight
 DROP FUNCTION myvarcharsend(myvarchar);  -- fail
