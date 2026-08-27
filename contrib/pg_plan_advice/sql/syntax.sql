@@ -73,6 +73,7 @@ SET pg_plan_advice.advice = '/*/* stuff */*/';
 -- Foreign join requires multiple relation identifiers.
 SET pg_plan_advice.advice = 'FOREIGN_JOIN(a)';
 SET pg_plan_advice.advice = 'FOREIGN_JOIN((a))';
+SET pg_plan_advice.advice = 'FOREIGN_JOIN(())';
 
 -- Tag keywords used as alias names work fine, because the 'identifier'
 -- nonterminal accepts all token types.

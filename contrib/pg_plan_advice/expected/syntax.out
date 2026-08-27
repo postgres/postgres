@@ -209,6 +209,9 @@ DETAIL:  Could not parse advice: FOREIGN_JOIN targets must contain more than one
 SET pg_plan_advice.advice = 'FOREIGN_JOIN((a))';
 ERROR:  invalid value for parameter "pg_plan_advice.advice": "FOREIGN_JOIN((a))"
 DETAIL:  Could not parse advice: FOREIGN_JOIN targets must contain more than one relation identifier at or near ")"
+SET pg_plan_advice.advice = 'FOREIGN_JOIN(())';
+ERROR:  invalid value for parameter "pg_plan_advice.advice": "FOREIGN_JOIN(())"
+DETAIL:  Could not parse advice: FOREIGN_JOIN targets must contain more than one relation identifier at or near ")"
 -- Tag keywords used as alias names work fine, because the 'identifier'
 -- nonterminal accepts all token types.
 SET pg_plan_advice.advice = 'SEQ_SCAN(hash_join)';
