@@ -289,7 +289,7 @@ get_control_data(ClusterInfo *cluster)
 				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
-			cluster->controldata.chkpnt_nxtmxoff = str2uint(p);
+			cluster->controldata.chkpnt_nxtmxoff = str2uint64(p);
 			got_mxoff = true;
 		}
 		else if ((p = strstr(bufin, "First log segment after reset:")) != NULL)
