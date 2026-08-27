@@ -370,8 +370,9 @@ stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 
 	if (nargs % 2 != 0)
 		ereport(ERROR,
-				errmsg("variadic arguments must be name/value pairs"),
-				errhint("Provide an even number of variadic arguments that can be divided into pairs."));
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("variadic arguments must be name/value pairs"),
+				 errhint("Provide an even number of variadic arguments that can be divided into pairs.")));
 
 	/*
 	 * For each argument name/value pair, find corresponding positional
@@ -385,11 +386,13 @@ stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 
 		if (argnulls[i])
 			ereport(ERROR,
-					(errmsg("name at variadic position %d is null", i + 1)));
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("name at variadic position %d is null", i + 1)));
 
 		if (types[i] != TEXTOID)
 			ereport(ERROR,
-					(errmsg("name at variadic position %d has type %s, expected type %s",
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("name at variadic position %d has type %s, expected type %s",
 							i + 1, format_type_be(types[i]),
 							format_type_be(TEXTOID))));
 
@@ -654,7 +657,8 @@ statatt_set_slot(Datum *values, bool *nulls, bool *replaces,
 
 	if (slotidx >= STATISTIC_NUM_SLOTS)
 		ereport(ERROR,
-				(errmsg("maximum number of statistics slots exceeded: %d",
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("maximum number of statistics slots exceeded: %d",
 						slotidx + 1)));
 
 	stakind_attnum = Anum_pg_statistic_stakind1 - 1 + slotidx;
