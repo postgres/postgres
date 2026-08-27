@@ -17,7 +17,8 @@ CREATE TABLE t1 (a int, b text);
 CREATE TABLE t2 (i int PRIMARY KEY, j int, k int);
 CREATE TABLE t3 (x int, y text, z text);
 
-CREATE TABLE e1 (a int, i int, t text, PRIMARY KEY (a, i));
+-- INCLUDE column must not become part of the inferred element key
+CREATE TABLE e1 (a int, i int, t text, PRIMARY KEY (a, i) INCLUDE (t));
 CREATE TABLE e2 (a int, x int, t text);
 
 CREATE PROPERTY GRAPH g2
