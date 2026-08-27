@@ -353,3 +353,14 @@ str2uint(const char *str)
 {
 	return strtoul(str, NULL, 10);
 }
+
+/*
+ *	str2uint64()
+ *
+ *	convert string to uint64
+ */
+uint64
+str2uint64(const char *str)
+{
+	return strtou64(str, NULL, 10);
+}
