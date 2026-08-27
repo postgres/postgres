@@ -791,7 +791,17 @@ FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
 		Relation	idxRel;
 
 		idxRel = index_open(idxoid, AccessShareLock);
-		isUsableIdx = IsIndexUsableForReplicaIdentityFull(idxRel, attrmap);
+
+		/*
+		 * indisvalid is checked here, not in
+		 * IsIndexUsableForReplicaIdentityFull(), since that function's other
+		 * caller (an assertion) must tolerate an index made transiently
+		 * invalid by a concurrent DROP INDEX CONCURRENTLY, whereas a
+		 * permanently invalid leftover of a failed CREATE INDEX CONCURRENTLY
+		 * must never be chosen here.
+		 */
+		isUsableIdx = idxRel->rd_index->indisvalid &&
+			IsIndexUsableForReplicaIdentityFull(idxRel, attrmap);
 		index_close(idxRel, AccessShareLock);
 
 		/* Return the first eligible index found */
@@ -813,6 +823,10 @@ FindUsableIndexForReplicaIdentityFull(Relation localrel, AttrMap *attrmap)
  * attrmap is a map of local attributes to remote ones. We can consult this
  * map to check whether the local index attribute has a corresponding remote
  * attribute.
+ *
+ * Note that this function does not check indisvalid. Callers that are
+ * selecting an index to use for future lookups must check indisvalid
+ * themselves and reject invalid indexes.
  *
  * Note that the limitations of index scans for replica identity full only
  * adheres to a subset of the limitations of PK/RI. For example, we support
