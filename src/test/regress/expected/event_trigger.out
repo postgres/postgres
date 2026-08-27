@@ -173,7 +173,8 @@ NOTICE:  test_event_trigger: ddl_command_end CREATE USER MAPPING
 alter default privileges for role regress_evt_user
  revoke delete on tables from regress_evt_user;
 NOTICE:  test_event_trigger: ddl_command_end ALTER DEFAULT PRIVILEGES
--- DROP PROPERTY GRAPH should work with event trigger in place
+-- property graph DDL should work with event trigger in place; these
+-- objects are dropped further down, under the sql_drop trigger
 CREATE TABLE tv1 (a int PRIMARY KEY, b text);
 NOTICE:  test_event_trigger: ddl_command_start CREATE TABLE
 NOTICE:  test_event_trigger: ddl_command_end CREATE TABLE
@@ -191,10 +192,6 @@ CREATE PROPERTY GRAPH gx
 NOTICE:  test_event_trigger: ddl_command_end CREATE PROPERTY GRAPH
 ALTER PROPERTY GRAPH gx ALTER EDGE TABLE te1 ALTER LABEL e1 DROP PROPERTIES (p1);
 NOTICE:  test_event_trigger: ddl_command_end ALTER PROPERTY GRAPH
-DROP PROPERTY GRAPH gx;
-NOTICE:  test_event_trigger: ddl_command_end DROP PROPERTY GRAPH
-DROP TABLE tv1, tv2, te1;
-NOTICE:  test_event_trigger: ddl_command_end DROP TABLE
 -- alter owner to non-superuser should fail
 alter event trigger regress_event_trigger owner to regress_evt_user;
 ERROR:  permission denied to change owner of event trigger "regress_event_trigger"
@@ -434,6 +431,20 @@ BEGIN
 END; $$;
 CREATE EVENT TRIGGER regress_event_trigger_report_end ON ddl_command_end
   EXECUTE PROCEDURE event_trigger_report_end();
+-- GRANT/REVOKE ON PROPERTY GRAPH with pg_event_trigger_ddl_commands()
+GRANT SELECT ON PROPERTY GRAPH gx TO public;
+NOTICE:  END: command_tag=GRANT type=PROPERTY GRAPH identity=<NULL>
+REVOKE SELECT ON PROPERTY GRAPH gx FROM public;
+NOTICE:  END: command_tag=REVOKE type=PROPERTY GRAPH identity=<NULL>
+DROP PROPERTY GRAPH gx;
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=property graph identity=public.gx schema=public name=gx addr={public,gx} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=property graph element identity=te1 of property graph public.gx schema=<NULL> name=<NULL> addr={public,gx,te1} args={}
+DROP TABLE tv1, tv2, te1;
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=table identity=public.te1 schema=public name=te1 addr={public,te1} args={}
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=table identity=public.tv2 schema=public name=tv2 addr={public,tv2} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table constraint identity=te1_b_fkey on public.te1 schema=public name=<NULL> addr={public,te1,te1_b_fkey} args={}
+NOTICE:  NORMAL: orig=t normal=f istemp=f type=table identity=public.tv1 schema=public name=tv1 addr={public,tv1} args={}
+NOTICE:  NORMAL: orig=f normal=t istemp=f type=table constraint identity=te1_a_fkey on public.te1 schema=public name=<NULL> addr={public,te1,te1_a_fkey} args={}
 CREATE SCHEMA evttrig
 	CREATE TABLE one (col_a SERIAL PRIMARY KEY, col_b text DEFAULT 'forty two', col_c SERIAL)
 	CREATE INDEX one_idx ON one (col_b)
