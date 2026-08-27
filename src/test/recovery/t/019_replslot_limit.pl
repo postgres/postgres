@@ -309,8 +309,6 @@ my $node_primary3 = PostgreSQL::Test::Cluster->new('primary3');
 $node_primary3->init(allows_streaming => 1, extra => ['--wal-segsize=1']);
 $node_primary3->append_conf(
 	'postgresql.conf', qq(
-	min_wal_size = 2MB
-	max_wal_size = 2MB
 	log_checkpoints = yes
 	max_slot_wal_keep_size = 1MB
 	));
@@ -378,6 +376,16 @@ $logstart = get_log_size($node_primary3);
 kill 'STOP', $senderpid, $receiverpid;
 advance_wal($node_primary3, 2);
 
+# Run CHECKPOINT in the background.  It is expected to reach slot
+# invalidation, signal the stopped walsender, and then wait until the
+# walsender releases the slot.
+my $checkpoint = $node_primary3->background_psql('postgres');
+$checkpoint->query_until(
+	qr/starting_checkpoint/, q(
+	\echo starting_checkpoint
+	CHECKPOINT;
+));
+
 my $max_attempts = $PostgreSQL::Test::Utils::timeout_default;
 while ($max_attempts-- >= 0)
 {
@@ -399,6 +407,7 @@ $node_primary3->poll_query_until('postgres',
 	"SELECT wal_status FROM pg_replication_slots WHERE slot_name = 'rep3'",
 	"lost")
   or die "timed out waiting for slot to be lost";
+$checkpoint->quit;
 
 $max_attempts = $PostgreSQL::Test::Utils::timeout_default;
 while ($max_attempts-- >= 0)
