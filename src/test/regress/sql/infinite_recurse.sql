@@ -13,7 +13,7 @@ create function infinite_recurse() returns int as
 -- (We still create the function, so as not to have a cross-platform
 -- difference in the end state of the regression database.)
 
-SELECT version() ~ 'powerpc64[^,]*-linux-gnu'
+SELECT version() ~ 'p(ower)?pc64[^,]*-linux'
        AS skip_test \gset
 \if :skip_test
 \quit
