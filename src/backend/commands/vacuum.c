@@ -2620,6 +2620,9 @@ vacuum_delay_point(bool is_analyze)
 		 */
 		AutoVacuumUpdateCostLimit();
 
+		if (AmAutoVacuumWorkerProcess())
+			parallel_vacuum_propagate_shared_delay_params();
+
 		/* Might have gotten an interrupt while sleeping */
 		CHECK_FOR_INTERRUPTS();
 	}
