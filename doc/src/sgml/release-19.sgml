@@ -1570,37 +1570,6 @@ By default, senders still wait forever for synchronization.
 </para>
 </listitem>
 
-<!--
-Author: Fujii Masao <fujii@postgresql.org>
-2026-02-20 [8a6af3ad0] Make GUC wal_receiver_timeout user-settable.
-Author: Fujii Masao <fujii@postgresql.org>
-2026-02-20 [fb80f388f] Add per-subscription wal_receiver_timeout setting.
--->
-
-<listitem>
-<para>
-Allow <link linkend="guc-wal-receiver-timeout"><varname>wal_receiver_timeout</varname></link> to be set per-subscription and user (Fujii Masao)
-<ulink url="&commit_baseurl;8a6af3ad0">&sect;</ulink>
-<ulink url="&commit_baseurl;fb80f388f">&sect;</ulink>
-</para>
-
-<para>
-This allows subscribers to use different <link linkend="guc-wal-receiver-timeout"><varname>wal_receiver_timeout</varname></link> values.
-</para>
-</listitem>
-
-<!--
-Author: Amit Kapila <akapila@postgresql.org>
-2025-09-19 [5b148706c] Add optional pid parameter to pg_replication_origin_sess
--->
-
-<listitem>
-<para>
-Add optional pid parameter to <link linkend="pg-replication-origin-session-setup"><function>pg_replication_origin_session_setup()</function></link> to allow parallelization of <acronym>SQL</acronym>-level replication solutions (Doruk Yilmaz, Hayato Kuroda)
-<ulink url="&commit_baseurl;5b148706c">&sect;</ulink>
-</para>
-</listitem>
-
      </itemizedlist>
 
     </sect4>
@@ -1741,6 +1710,37 @@ When server variable <link linkend="guc-wal-level"><varname>wal_level</varname><
 <para>
 New server variable <link linkend="guc-effective-wal-level"><varname>effective_wal_level</varname></link>, application <link linkend="app-pgcontroldata"><application>pg_controldata</application></link>,
 and function <link linkend="functions-pg-control-checkpoint"><function>pg_control_checkpoint()</function></link> report the effective <acronym>WAL</acronym> level.
+</para>
+</listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2026-02-20 [8a6af3ad0] Make GUC wal_receiver_timeout user-settable.
+Author: Fujii Masao <fujii@postgresql.org>
+2026-02-20 [fb80f388f] Add per-subscription wal_receiver_timeout setting.
+-->
+
+<listitem>
+<para>
+Allow <link linkend="guc-wal-receiver-timeout"><varname>wal_receiver_timeout</varname></link> to be set per-subscription and user (Fujii Masao)
+<ulink url="&commit_baseurl;8a6af3ad0">&sect;</ulink>
+<ulink url="&commit_baseurl;fb80f388f">&sect;</ulink>
+</para>
+
+<para>
+This allows subscribers to use different <link linkend="guc-wal-receiver-timeout"><varname>wal_receiver_timeout</varname></link> values.
+</para>
+</listitem>
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2025-09-19 [5b148706c] Add optional pid parameter to pg_replication_origin_sess
+-->
+
+<listitem>
+<para>
+Add optional pid parameter to <link linkend="pg-replication-origin-session-setup"><function>pg_replication_origin_session_setup()</function></link> to allow parallelization of <acronym>SQL</acronym>-level replication solutions (Doruk Yilmaz, Hayato Kuroda)
+<ulink url="&commit_baseurl;5b148706c">&sect;</ulink>
 </para>
 </listitem>
 
