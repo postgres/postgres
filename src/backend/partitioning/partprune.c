@@ -3154,12 +3154,15 @@ get_matching_range_bounds(PartitionPruneContext *context,
 					 * of smallest such bound) or find the smallest one that's
 					 * greater than the lookup values and set minoff to that.
 					 */
-					while (off >= 1 && off < boundinfo->ndatums - 1)
+					while (true)
 					{
 						int32		cmpval;
 						int			nextoff;
 
 						nextoff = inclusive ? off - 1 : off + 1;
+
+						if (nextoff < 0 || nextoff >= boundinfo->ndatums)
+							break;
 						cmpval =
 							partition_rbound_datum_cmp(partsupfunc,
 													   partcollation,
@@ -3213,16 +3216,21 @@ get_matching_range_bounds(PartitionPruneContext *context,
 			if (off >= 0)
 			{
 				/*
-				 * See the comment above.
+				 * As above, check adjacent bounds to see if the bound is
+				 * equal to the lookup value.
 				 */
 				if (is_equal && nvalues < partnatts)
 				{
-					while (off >= 1 && off < boundinfo->ndatums - 1)
+					while (true)
 					{
 						int32		cmpval;
 						int			nextoff;
 
 						nextoff = inclusive ? off + 1 : off - 1;
+
+						if (nextoff < 0 || nextoff >= boundinfo->ndatums)
+							break;
+
 						cmpval = partition_rbound_datum_cmp(partsupfunc,
 															partcollation,
 															boundinfo->datums[nextoff],
