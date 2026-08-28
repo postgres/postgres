@@ -2,6 +2,9 @@
 
 PGFILEDESC = "test_shmem - test code for shmem allocations"
 
+EXTRA_INSTALL = src/test/modules/injection_points
+export enable_injection_points
+
 MODULE_big = test_shmem
 OBJS = \
 	$(WIN32RES) \

@@ -3740,7 +3740,10 @@ my_shmem_init(void *arg)
       on whether the requested memory areas were already initialized by
       another backend. The callbacks will be called while holding an internal
       lock (ShmemIndexLock), which prevents the race condition of two backends
-      trying to initialize the memory area at the same time.
+      trying to initialize the memory area at the same time.  If the
+      allocation or initialization fails for any reason, the shared memory
+      areas are left in an abandoned state and any attempt to attach or
+      re-initialize them will fail until the server is restarted.
      </para>
     </sect3>
 
