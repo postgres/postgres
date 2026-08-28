@@ -307,6 +307,10 @@ SELECT * FROM document NATURAL JOIN category WHERE f_leak(dtitle) ORDER BY did;
 SELECT * FROM document TABLESAMPLE BERNOULLI(50) REPEATABLE(0)
   WHERE f_leak(dtitle) ORDER BY did;
 
+-- a rel with RLS quals can still be removed by outer-join removal
+EXPLAIN (COSTS OFF)
+SELECT c.cid FROM category c LEFT JOIN document d ON c.cid = d.did;
+
 -- viewpoint from regress_rls_carol
 SET SESSION AUTHORIZATION regress_rls_carol;
 SELECT * FROM document WHERE f_leak(dtitle) ORDER BY did;

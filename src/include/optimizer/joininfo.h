@@ -23,8 +23,5 @@ extern bool have_relevant_joinclause(PlannerInfo *root,
 extern void add_join_clause_to_rels(PlannerInfo *root,
 									RestrictInfo *restrictinfo,
 									Relids join_relids);
-extern void remove_join_clause_from_rels(PlannerInfo *root,
-										 RestrictInfo *restrictinfo,
-										 Relids join_relids);
 
 #endif							/* JOININFO_H */

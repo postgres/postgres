@@ -217,6 +217,9 @@ typedef struct Expr
  * row identity information during UPDATE/DELETE/MERGE.  This value should
  * never be seen outside the planner.
  *
+ * INVALID_VAR should never appear as anything's varno.  We use it in a
+ * few APIs to denote removal of an RTE.
+ *
  * varnullingrels is the set of RT indexes of outer joins that can force
  * the Var's value to null (at the point where it appears in the query).
  * See optimizer/README for discussion of that.
@@ -244,6 +247,7 @@ typedef struct Expr
 #define    OUTER_VAR		(-2)	/* reference to outer subplan */
 #define    INDEX_VAR		(-3)	/* reference to index column */
 #define    ROWID_VAR		(-4)	/* row identity column during planning */
+#define    INVALID_VAR		(-5)	/* this is not a valid varno! */
 
 #define IS_SPECIAL_VARNO(varno)		((int) (varno) < 0)
 

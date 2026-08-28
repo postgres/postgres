@@ -536,6 +536,17 @@ NOTICE:  f_leak => awesome science fiction
    9 |  22 |      1 | regress_rls_dave  | awesome science fiction
 (4 rows)
 
+-- a rel with RLS quals can still be removed by outer-join removal
+EXPLAIN (COSTS OFF)
+SELECT c.cid FROM category c LEFT JOIN document d ON c.cid = d.did;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Seq Scan on category c
+   InitPlan expr_1
+     ->  Index Scan using uaccount_pkey on uaccount
+           Index Cond: (pguser = CURRENT_USER)
+(4 rows)
+
 -- viewpoint from regress_rls_carol
 SET SESSION AUTHORIZATION regress_rls_carol;
 SELECT * FROM document WHERE f_leak(dtitle) ORDER BY did;

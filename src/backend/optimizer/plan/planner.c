@@ -803,9 +803,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 	root->eq_classes = NIL;
 	root->ec_merging_done = false;
 	root->last_rinfo_serial = 0;
-	root->all_result_relids =
-		parse->resultRelation ? bms_make_singleton(parse->resultRelation) : NULL;
-	root->leaf_result_relids = NULL;	/* we'll find out leaf-ness later */
+	root->all_result_relids = NULL;
+	root->leaf_result_relids = NULL;
 	root->append_rel_list = NIL;
 	root->row_identity_vars = NIL;
 	root->rowMarks = NIL;
@@ -976,19 +975,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 		if (rte->securityQuals)
 			root->qual_security_level = Max(root->qual_security_level,
 											list_length(rte->securityQuals));
-	}
-
-	/*
-	 * If we have now verified that the query target relation is
-	 * non-inheriting, mark it as a leaf target.
-	 */
-	if (parse->resultRelation)
-	{
-		RangeTblEntry *rte = rt_fetch(parse->resultRelation, parse->rtable);
-
-		if (!rte->inh)
-			root->leaf_result_relids =
-				bms_make_singleton(parse->resultRelation);
 	}
 
 	/*

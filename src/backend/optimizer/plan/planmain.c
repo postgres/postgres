@@ -54,33 +54,71 @@ RelOptInfo *
 query_planner(PlannerInfo *root,
 			  query_pathkeys_callback qp_callback, void *qp_extra)
 {
-	Query	   *parse = root->parse;
+	Query	   *parse;
 	List	   *joinlist;
 	RelOptInfo *final_rel;
 
 	/*
-	 * Init planner lists to empty.
+	 * The join simplification steps below work by modifying parse->jointree,
+	 * and they make no attempt to update the information we derive from it.
+	 * So whenever one of them succeeds, we must throw away all that derived
+	 * information and recompute it from scratch, which we do by looping back
+	 * to "restart".  We cannot loop indefinitely, because each successful
+	 * simplification either deletes a base relation from the jointree or
+	 * turns a semijoin into an inner join, and neither of those can be undone
+	 * by a later pass.
 	 *
-	 * NOTE: append_rel_list was set up by subquery_planner, so do not touch
-	 * here.
+	 * These initial Asserts check that the state at entry is not too complex
+	 * for the code below to restore.  There mustn't be any EquivalenceClasses
+	 * yet, and we should have only the top-level JoinDomain.
 	 */
+	Assert(root->eq_classes == NIL);
+	Assert(list_length(root->join_domains) == 1);
+
+restart:
+	parse = root->parse;
+
+	/*
+	 * Initialize information derived from the jointree to empty.
+	 *
+	 * It's critical that this reset every field that the steps below will
+	 * fill in, since we may be going around this loop more than once.
+	 *
+	 * NOTE: append_rel_list was created earlier, so do not clear it here;
+	 * rowMarks ditto.  Join simplification must update those if necessary.
+	 */
+	root->all_baserels = NULL;
+	root->outer_join_rels = NULL;
+	root->all_query_rels = NULL;
 	root->join_rel_list = NIL;
 	root->join_rel_hash = NULL;
 	root->join_rel_level = NULL;
 	root->join_cur_level = 0;
+	root->eq_classes = NIL;
+	root->ec_merging_done = false;
 	root->canon_pathkeys = NIL;
 	root->left_join_clauses = NIL;
 	root->right_join_clauses = NIL;
 	root->full_join_clauses = NIL;
 	root->join_info_list = NIL;
+	root->last_rinfo_serial = 0;
 	root->placeholder_list = NIL;
 	root->placeholder_array = NULL;
 	root->placeholder_array_size = 0;
+	root->placeholdersFrozen = false;
 	root->agg_clause_list = NIL;
 	root->group_expr_list = NIL;
 	root->tlist_vars = NIL;
 	root->fkey_list = NIL;
 	root->initial_rels = NIL;
+	root->hasPseudoConstantQuals = false;
+
+	/*
+	 * We don't want to delete the top-level join domain, but get rid of other
+	 * ones so as to reset the list to initial state.  deconstruct_jointree
+	 * will take care of (re)computing the top level's jd_relids.
+	 */
+	root->join_domains = list_truncate(root->join_domains, 1);
 
 	/*
 	 * Set up arrays for accessing base relations and AppendRelInfos.
@@ -143,6 +181,21 @@ query_planner(PlannerInfo *root,
 
 				/* Select cheapest path (pretty easy in this case...) */
 				set_cheapest(final_rel);
+
+				/*
+				 * Fill in all_result_relids and leaf_result_relids, just in
+				 * case something looks at them (at this writing, the core
+				 * code won't).  This must match the similar stanza below.
+				 */
+				if (parse->resultRelation)
+				{
+					int			rti = parse->resultRelation;
+					RangeTblEntry *res_rte = root->simple_rte_array[rti];
+
+					root->all_result_relids = bms_make_singleton(rti);
+					if (!res_rte->inh)
+						root->leaf_result_relids = bms_make_singleton(rti);
+				}
 
 				/*
 				 * We don't need to run generate_base_implied_equalities, but
@@ -227,19 +280,30 @@ query_planner(PlannerInfo *root,
 	 * Remove any useless outer joins.  Ideally this would be done during
 	 * jointree preprocessing, but the necessary information isn't available
 	 * until we've built baserel data structures and classified qual clauses.
+	 * If we remove a join, loop back to the top and redo what we did so far.
 	 */
-	joinlist = remove_useless_joins(root, joinlist);
+	if (remove_useless_outer_joins(root))
+		goto restart;
 
 	/*
 	 * Also, reduce any semijoins with unique inner rels to plain inner joins.
-	 * Likewise, this can't be done until now for lack of needed info.
+	 * Likewise, this can't be done until now for lack of needed info, and we
+	 * must loop around if we find any simplifications.
 	 */
-	reduce_unique_semijoins(root);
+	if (reduce_unique_semijoins(root))
+		goto restart;
 
 	/*
-	 * Remove self joins on a unique column.
+	 * Remove self joins on a unique column.  Again, this couldn't be done any
+	 * earlier, and we must loop around if we find anything to remove.
 	 */
-	joinlist = remove_useless_self_joins(root, joinlist);
+	if (remove_useless_self_joins(root, joinlist))
+		goto restart;
+
+	/*
+	 * No more join simplifications apply, so we're done looping.  Code below
+	 * this point does not need to be able to restart.
+	 */
 
 	/*
 	 * Now distribute "placeholders" to base rels as needed.  This has to be
@@ -273,6 +337,22 @@ query_planner(PlannerInfo *root,
 	 * root->agg_clause_list and root->group_expr_list.
 	 */
 	setup_eager_aggregation(root);
+
+	/*
+	 * If there's a result relation, initialize all_result_relids to include
+	 * it; and if we've verified that it is non-inheriting, mark it as a leaf
+	 * target.  add_other_rels_to_query() will expand these sets if the result
+	 * relation has children.
+	 */
+	if (parse->resultRelation)
+	{
+		int			rti = parse->resultRelation;
+		RangeTblEntry *rte = root->simple_rte_array[rti];
+
+		root->all_result_relids = bms_make_singleton(rti);
+		if (!rte->inh)
+			root->leaf_result_relids = bms_make_singleton(rti);
+	}
 
 	/*
 	 * Now expand appendrels by adding "otherrels" for their children.  We

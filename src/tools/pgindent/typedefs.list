@@ -430,7 +430,6 @@ CatalogId
 CatalogIdMapEntry
 CatalogIndexState
 ChangeContext
-ChangeVarNodes_callback
 ChangeVarNodes_context
 ChannelName
 CheckPoint
