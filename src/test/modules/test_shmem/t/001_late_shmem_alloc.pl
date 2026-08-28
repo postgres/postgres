@@ -7,16 +7,19 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+# Initialize a cluster with the extension installed.  The tests will
+# call the function that comes with the extension to load it.
+my $node = PostgreSQL::Test::Cluster->new('main');
+$node->init;
+$node->start;
+$node->safe_psql("postgres", "CREATE EXTENSION test_shmem");
+$node->stop;
+
 ###
 # Test allocating memory after startup, i.e. when the library is not
 # in shared_preload_libraries
 ###
-my $node = PostgreSQL::Test::Cluster->new('main');
-$node->init;
 $node->start;
-
-
-$node->safe_psql("postgres", "CREATE EXTENSION test_shmem;");
 
 # Check that the attach counter is incremented on a new connection
 my $attach_count1 =
@@ -25,6 +28,7 @@ my $attach_count2 =
   $node->safe_psql("postgres", "SELECT get_test_shmem_attach_count();");
 cmp_ok($attach_count2, '>', $attach_count1,
 	"attach callback is called in each backend");
+
 $node->stop;
 
 ###
@@ -81,6 +85,42 @@ else
 # clean up
 $node->stop;
 $node->adjust_conf('postgresql.conf', "shared_preload_libraries", undef);
+
+###
+# Test a failure in initializing the shared memory area
+###
+SKIP:
+{
+	skip "injection points not supported by this build",
+	  if $ENV{enable_injection_points} ne 'yes';
+	$node->start;
+	$node->safe_psql("postgres", "CREATE EXTENSION injection_points;");
+	$node->safe_psql("postgres",
+		"SELECT injection_points_attach('test-shmem-init', 'error');");
+
+	# Try to load the extension library. It will hit the injected
+	# error in the init callback.
+	my (undef, undef, $stderr) =
+	  $node->psql("postgres", "SELECT get_test_shmem_attach_count();");
+	like(
+		$stderr,
+		qr/error triggered for injection point test-shmem-init/,
+		"failure in initialization is reported");
+	$node->safe_psql("postgres",
+		"SELECT injection_points_detach('test-shmem-init');");
+
+	# The error leaves the shared memory area in a broken state.
+	# Attempting to initialize or attach it again will fail, until the
+	# server is restarted.
+	(undef, undef, $stderr) =
+	  $node->psql("postgres", "SELECT get_test_shmem_attach_count();");
+	like(
+		$stderr,
+		qr/cannot attach to shared memory/,
+		"post-init extension creation fails");
+
+	$node->stop;
+}
 
 ###
 # Test "out of shared memory" in an after-startup request

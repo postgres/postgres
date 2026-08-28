@@ -68,6 +68,9 @@ static void
 test_shmem_init(void *arg)
 {
 	elog(LOG, "init callback called");
+
+	INJECTION_POINT("test-shmem-init", NULL);
+
 	if (TestShmem->initialized)
 		elog(ERROR, "shmem area already initialized");
 	TestShmem->initialized = true;
