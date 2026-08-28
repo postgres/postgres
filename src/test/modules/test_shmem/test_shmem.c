@@ -20,20 +20,28 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "storage/shmem.h"
+#include "utils/guc.h"
+#include "utils/injection_point.h"
 
 
 PG_MODULE_MAGIC;
 
 typedef struct TestShmemData
 {
-	int			value;
 	bool		initialized;
 	int			attach_count;
+	char		dummy_data[FLEXIBLE_ARRAY_MEMBER];
 } TestShmemData;
 
 static TestShmemData *TestShmem;
 
+#define MIN_TEST_AREA_BYTES sizeof(TestShmemData)
+#define DEFAULT_TEST_AREA_BYTES MIN_TEST_AREA_BYTES
+#define MAX_TEST_AREA_BYTES 1000000
+
 static bool attached_or_initialized = false;
+static int	test_shmem_area_size = MIN_TEST_AREA_BYTES;
+static bool test_shmem_guc_defined = false;
 
 static void test_shmem_request(void *arg);
 static void test_shmem_init(void *arg);
@@ -52,7 +60,7 @@ test_shmem_request(void *arg)
 	elog(LOG, "test_shmem_request callback called");
 
 	ShmemRequestStruct(.name = "test_shmem area",
-					   .size = sizeof(TestShmemData),
+					   .size = test_shmem_area_size,
 					   .ptr = (void **) &TestShmem);
 }
 
@@ -86,6 +94,22 @@ void
 _PG_init(void)
 {
 	elog(LOG, "test_shmem module's _PG_init called");
+
+	if (!test_shmem_guc_defined)
+	{
+		DefineCustomIntVariable("test_shmem.area_size",
+								"Size of the shmem area to request.",
+								NULL,
+								&test_shmem_area_size,
+								DEFAULT_TEST_AREA_BYTES,
+								MIN_TEST_AREA_BYTES,
+								MAX_TEST_AREA_BYTES,
+								PGC_USERSET,
+								GUC_UNIT_BYTE,
+								NULL, NULL, NULL);
+		MarkGUCPrefixReserved("test_shmem");
+		test_shmem_guc_defined = true;
+	}
 	RegisterShmemCallbacks(&TestShmemCallbacks);
 }
 
