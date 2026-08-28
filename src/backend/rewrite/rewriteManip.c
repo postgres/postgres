@@ -546,8 +546,14 @@ offset_relid_set(Relids relids, int offset)
  *
  * Find all Var nodes in the given tree belonging to a specific relation
  * (identified by sublevels_up and rt_index), and change their varno fields
- * to 'new_index'.  The varnosyn fields are changed too.  Also, adjust other
- * nodes that contain rangetable indexes, such as RangeTblRef and JoinExpr.
+ * to 'new_index', and update varnosyn and varnullingrels fields similarly.
+ * Also adjust other nodes that contain rangetable indexes, such as
+ * RangeTblRef and JoinExpr.
+ *
+ * Also, new_index can be INVALID_VAR to indicate that we are deleting the
+ * given relid from the tree.  In this case we expect to find rt_index only
+ * in Relids fields (varnullingrels, phnullingrels, phrels), never in any
+ * field that identifies a single relation.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.  The given expression tree should have been copied
@@ -573,12 +579,18 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 		if (var->varlevelsup == context->sublevels_up)
 		{
 			if (var->varno == context->rt_index)
+			{
+				Assert(context->new_index != INVALID_VAR);
 				var->varno = context->new_index;
+			}
 			var->varnullingrels = adjust_relid_set(var->varnullingrels,
 												   context->rt_index,
 												   context->new_index);
 			if (var->varnosyn == context->rt_index)
+			{
+				Assert(context->new_index != INVALID_VAR);
 				var->varnosyn = context->new_index;
+			}
 		}
 		return false;
 	}
@@ -588,7 +600,10 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 
 		if (context->sublevels_up == 0 &&
 			cexpr->cvarno == context->rt_index)
+		{
+			Assert(context->new_index != INVALID_VAR);
 			cexpr->cvarno = context->new_index;
+		}
 		return false;
 	}
 	if (IsA(node, RangeTblRef))
@@ -597,7 +612,10 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 
 		if (context->sublevels_up == 0 &&
 			rtr->rtindex == context->rt_index)
+		{
+			Assert(context->new_index != INVALID_VAR);
 			rtr->rtindex = context->new_index;
+		}
 		/* the subquery itself is visited separately */
 		return false;
 	}
@@ -607,7 +625,10 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 
 		if (context->sublevels_up == 0 &&
 			j->rtindex == context->rt_index)
+		{
+			Assert(context->new_index != INVALID_VAR);
 			j->rtindex = context->new_index;
+		}
 		/* fall through to examine children */
 	}
 	if (IsA(node, PlaceHolderVar))
@@ -632,9 +653,15 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 		if (context->sublevels_up == 0)
 		{
 			if (rowmark->rti == context->rt_index)
+			{
+				Assert(context->new_index != INVALID_VAR);
 				rowmark->rti = context->new_index;
+			}
 			if (rowmark->prti == context->rt_index)
+			{
+				Assert(context->new_index != INVALID_VAR);
 				rowmark->prti = context->new_index;
+			}
 		}
 		return false;
 	}
@@ -645,9 +672,15 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 		if (context->sublevels_up == 0)
 		{
 			if (appinfo->parent_relid == context->rt_index)
+			{
+				Assert(context->new_index != INVALID_VAR);
 				appinfo->parent_relid = context->new_index;
+			}
 			if (appinfo->child_relid == context->rt_index)
+			{
+				Assert(context->new_index != INVALID_VAR);
 				appinfo->child_relid = context->new_index;
+			}
 		}
 		/* fall through to examine children */
 	}
@@ -702,21 +735,33 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 			ListCell   *l;
 
 			if (qry->resultRelation == rt_index)
+			{
+				Assert(new_index != INVALID_VAR);
 				qry->resultRelation = new_index;
+			}
 
 			if (qry->mergeTargetRelation == rt_index)
+			{
+				Assert(new_index != INVALID_VAR);
 				qry->mergeTargetRelation = new_index;
+			}
 
 			/* this is unlikely to ever be used, but ... */
 			if (qry->onConflict && qry->onConflict->exclRelIndex == rt_index)
+			{
+				Assert(new_index != INVALID_VAR);
 				qry->onConflict->exclRelIndex = new_index;
+			}
 
 			foreach(l, qry->rowMarks)
 			{
 				RowMarkClause *rc = (RowMarkClause *) lfirst(l);
 
 				if (rc->rti == rt_index)
+				{
+					Assert(new_index != INVALID_VAR);
 					rc->rti = new_index;
+				}
 			}
 		}
 		query_tree_walker(qry, ChangeVarNodes_walker,
@@ -727,12 +772,13 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 }
 
 /*
- * Substitute newrelid for oldrelid in a Relid set
+ * adjust_relid_set - substitute newrelid for oldrelid in a Relid set
  *
- * Note: some extensions may pass a special varno such as INDEX_VAR for
- * oldrelid.  bms_is_member won't like that, but we should tolerate it.
- * (Perhaps newrelid could also be a special varno, but there had better
- * not be a reason to inject that into a nullingrels or phrels set.)
+ * Attempt to remove oldrelid from a Relid set (as long as it's not a special
+ * varno).  If oldrelid was found and removed, insert newrelid into a Relid
+ * set (as long as it's not a special varno).  Therefore, when oldrelid is
+ * a special varno, this function does nothing.  When newrelid is a special
+ * varno, this function behaves as delete.
  */
 static Relids
 adjust_relid_set(Relids relids, int oldrelid, int newrelid)
@@ -743,7 +789,8 @@ adjust_relid_set(Relids relids, int oldrelid, int newrelid)
 		relids = bms_copy(relids);
 		/* Remove old, add new */
 		relids = bms_del_member(relids, oldrelid);
-		relids = bms_add_member(relids, newrelid);
+		if (!IS_SPECIAL_VARNO(newrelid))
+			relids = bms_add_member(relids, newrelid);
 	}
 	return relids;
 }
