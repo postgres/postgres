@@ -2898,6 +2898,31 @@ where t1.a = s.c;
 
 rollback;
 
+-- join removal bug #19560: removing a join can leave an EquivalenceClass that
+-- now yields a base restriction clause, so we must redo equivalence
+-- processing from scratch
+begin;
+
+create temp table items (id text, owner text);
+create temp table follows (item_id text, user_id text,
+                           unique (user_id, item_id));
+insert into items values ('item1', 'alice');
+
+explain (costs off)
+with viewer as (select 'bob' as id)
+select count(*) from items
+  left join follows on follows.item_id = items.id and follows.user_id = 'bob'
+  left join viewer on true
+where items.owner = viewer.id;
+
+with viewer as (select 'bob' as id)
+select count(*) from items
+  left join follows on follows.item_id = items.id and follows.user_id = 'bob'
+  left join viewer on true
+where items.owner = viewer.id;
+
+rollback;
+
 -- check handling of semijoins after join removal: we must suppress
 -- unique-ification of known-constant values
 begin;
@@ -3164,6 +3189,24 @@ explain (verbose, costs off)
 select t1.a from sj t1 where t1.b in (
   select t2.b from sj t2 join sj t3 on t2.c=t3.c);
 
+-- Check that quals get hoisted to the appropriate join level after SJE removal
+explain (verbose, costs off)
+select a2.a
+from sj b1
+  join sj a1 on b1.b = a1.a
+  join sj a2 on a2.a = a1.a and a2.b = a1.b;
+
+-- Same, when a semijoin removal happens first
+explain (verbose, costs off)
+select a1.a from sj b1 join sj a1 on a1.a = b1.b
+  where exists (select 1 from sj s where s.a = a1.a);
+
+-- A different case, where modified qual is on a lower join level
+explain (verbose, costs off)
+select a2.a
+from ((sj b1 join sj a1 on true) join sj c1 on c1.b = a1.a)
+  join sj a2 on a2.a = a1.a and a2.b = a1.b;
+
 --
 -- SJE corner case: uniqueness of an inner is [partially] derived from
 -- baserestrictinfo clauses.
@@ -3312,8 +3355,7 @@ select 1 from (select y.* from sj x, sj y where x.a = y.a) q,
 explain (costs off) select * from sj p join sj q on p.a = q.a
   left join sj r on p.a + q.a = r.a;
 
--- FIXME this constant false filter doesn't look good. Should we merge
--- equivalence classes?
+-- Check that we detect constant-false condition after merging ECs.
 explain (costs off)
 select * from sj p, sj q where p.a = q.a and p.b = 1 and q.b = 2;
 
@@ -3510,6 +3552,18 @@ ALTER TABLE sl ADD COLUMN bool_col boolean;
 EXPLAIN (COSTS OFF)
 SELECT 1 AS c1 FROM sl sl1 LEFT JOIN (sl AS sl2 NATURAL JOIN sl AS sl3)
   ON sl2.bool_col LEFT JOIN sl AS sl4 ON sl2.bool_col;
+
+-- Check that quals of a jointree node that becomes empty when the self-join
+-- is removed are not lost, and that they don't migrate above an outer join
+EXPLAIN (COSTS OFF)
+SELECT s.a FROM (SELECT * FROM sl WHERE c IS NOT NULL) s, sl t
+WHERE t.a = s.a AND t.b = s.b;
+
+EXPLAIN (COSTS OFF)
+SELECT t1.a, ss.a FROM sl t1
+  LEFT JOIN (SELECT s.a FROM (SELECT * FROM sl WHERE c IS NOT NULL) s
+                             JOIN sl t ON t.a = s.a AND t.b = s.b) ss
+    ON ss.a = t1.a;
 
 -- Check optimization disabling if it will violate special join conditions.
 -- Two identical joined relations satisfies self join removal conditions but

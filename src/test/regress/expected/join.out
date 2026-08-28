@@ -7682,6 +7682,38 @@ where t1.a = s.c;
 (0 rows)
 
 rollback;
+-- join removal bug #19560: removing a join can leave an EquivalenceClass that
+-- now yields a base restriction clause, so we must redo equivalence
+-- processing from scratch
+begin;
+create temp table items (id text, owner text);
+create temp table follows (item_id text, user_id text,
+                           unique (user_id, item_id));
+insert into items values ('item1', 'alice');
+explain (costs off)
+with viewer as (select 'bob' as id)
+select count(*) from items
+  left join follows on follows.item_id = items.id and follows.user_id = 'bob'
+  left join viewer on true
+where items.owner = viewer.id;
+              QUERY PLAN               
+---------------------------------------
+ Aggregate
+   ->  Seq Scan on items
+         Filter: (owner = 'bob'::text)
+(3 rows)
+
+with viewer as (select 'bob' as id)
+select count(*) from items
+  left join follows on follows.item_id = items.id and follows.user_id = 'bob'
+  left join viewer on true
+where items.owner = viewer.id;
+ count 
+-------
+     0
+(1 row)
+
+rollback;
 -- check handling of semijoins after join removal: we must suppress
 -- unique-ification of known-constant values
 begin;
@@ -7706,17 +7738,17 @@ where exists (select 1 from t t4
                Output: t1.a
                Index Cond: (t1.a = 1)
          ->  HashAggregate
-               Output: t5.a
+               Output: t4.a, t5.a
                Group Key: t5.a
                ->  Hash Join
-                     Output: t5.a
+                     Output: t4.a, t5.a
                      Hash Cond: (t6.b = t4.b)
                      ->  Seq Scan on pg_temp.t t6
                            Output: t6.a, t6.b
                      ->  Hash
-                           Output: t4.b, t5.b, t5.a
+                           Output: t4.b, t4.a, t5.b, t5.a
                            ->  Hash Join
-                                 Output: t4.b, t5.b, t5.a
+                                 Output: t4.b, t4.a, t5.b, t5.a
                                  Inner Unique: true
                                  Hash Cond: (t5.b = t4.b)
                                  ->  Seq Scan on pg_temp.t t5
@@ -8148,7 +8180,7 @@ on q1.ax = q2.a;
  Nested Loop Left Join
    Join Filter: (t2.a = t4.a)
    ->  Seq Scan on sj t2
-         Filter: ((b IS NULL) AND (a IS NOT NULL) AND ((c * c) = (c + 2)))
+         Filter: ((a IS NOT NULL) AND (b IS NULL) AND ((c * c) = (c + 2)))
    ->  Seq Scan on sj t4
          Filter: (c IS NOT NULL)
 (6 rows)
@@ -8231,11 +8263,69 @@ select t1.a from sj t1 where t1.b in (
    ->  Seq Scan on public.sj t1
          Output: t1.a, t1.b, t1.c
    ->  Materialize
-         Output: t3.c, t3.b
+         Output: t3.b
          ->  Seq Scan on public.sj t3
-               Output: t3.c, t3.b
+               Output: t3.b
                Filter: (t3.c IS NOT NULL)
 (10 rows)
+
+-- Check that quals get hoisted to the appropriate join level after SJE removal
+explain (verbose, costs off)
+select a2.a
+from sj b1
+  join sj a1 on b1.b = a1.a
+  join sj a2 on a2.a = a1.a and a2.b = a1.b;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Nested Loop
+   Output: a2.a
+   Join Filter: (b1.b = a2.a)
+   ->  Seq Scan on public.sj a2
+         Output: a2.a, a2.b, a2.c
+         Filter: ((a2.a IS NOT NULL) AND (a2.b IS NOT NULL))
+   ->  Seq Scan on public.sj b1
+         Output: b1.a, b1.b, b1.c
+(8 rows)
+
+-- Same, when a semijoin removal happens first
+explain (verbose, costs off)
+select a1.a from sj b1 join sj a1 on a1.a = b1.b
+  where exists (select 1 from sj s where s.a = a1.a);
+               QUERY PLAN                
+-----------------------------------------
+ Nested Loop
+   Output: s.a
+   Inner Unique: true
+   Join Filter: (b1.b = s.a)
+   ->  Seq Scan on public.sj b1
+         Output: b1.a, b1.b, b1.c
+   ->  Materialize
+         Output: s.a
+         ->  Seq Scan on public.sj s
+               Output: s.a
+               Filter: (s.a IS NOT NULL)
+(11 rows)
+
+-- A different case, where modified qual is on a lower join level
+explain (verbose, costs off)
+select a2.a
+from ((sj b1 join sj a1 on true) join sj c1 on c1.b = a1.a)
+  join sj a2 on a2.a = a1.a and a2.b = a1.b;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Nested Loop
+   Output: a2.a
+   ->  Nested Loop
+         Output: a2.a
+         Join Filter: (c1.b = a2.a)
+         ->  Seq Scan on public.sj a2
+               Output: a2.a, a2.b, a2.c
+               Filter: ((a2.a IS NOT NULL) AND (a2.b IS NOT NULL))
+         ->  Seq Scan on public.sj c1
+               Output: c1.a, c1.b, c1.c
+   ->  Seq Scan on public.sj b1
+         Output: b1.a, b1.b, b1.c
+(12 rows)
 
 --
 -- SJE corner case: uniqueness of an inner is [partially] derived from
@@ -8567,15 +8657,15 @@ explain (costs off) select * from sj p join sj q on p.a = q.a
          ->  Seq Scan on sj r
 (6 rows)
 
--- FIXME this constant false filter doesn't look good. Should we merge
--- equivalence classes?
+-- Check that we detect constant-false condition after merging ECs.
 explain (costs off)
 select * from sj p, sj q where p.a = q.a and p.b = 1 and q.b = 2;
-                     QUERY PLAN                      
------------------------------------------------------
- Seq Scan on sj q
-   Filter: ((a IS NOT NULL) AND (b = 2) AND (b = 1))
-(2 rows)
+        QUERY PLAN        
+--------------------------
+ Result
+   Replaces: Scan on q
+   One-Time Filter: false
+(3 rows)
 
 -- Check that attr_needed is updated correctly after self-join removal. In this
 -- test, the join of j1 with j2 is removed. k1.b is required at either j1 or j2.
@@ -8711,11 +8801,9 @@ where s1.x = 1;
    ->  Seq Scan on public.emp1 t1
          Output: t1.id, t1.code
    ->  Materialize
-         Output: t3.id
          ->  Seq Scan on public.emp1 t3
-               Output: t3.id
                Filter: (1 = 1)
-(9 rows)
+(7 rows)
 
 -- Check that PHVs do not impose any constraints on removing self joins
 explain (verbose, costs off)
@@ -8765,14 +8853,14 @@ SELECT 1 FROM tbl_phv t1 LEFT JOIN
     (SELECT y FROM tbl_phv tr) t4
   ON t4.y = t3.y
 ON true WHERE t3.extra IS NOT NULL AND t3.x = t1.x % 2;
-                       QUERY PLAN                        
----------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Nested Loop
    Output: 1
    ->  Seq Scan on public.tbl_phv t1
          Output: t1.x, t1.y
-   ->  Index Scan using tbl_phv_idx on public.tbl_phv tr
-         Output: tr.x, tr.y
+   ->  Index Only Scan using tbl_phv_idx on public.tbl_phv tr
+         Output: tr.x
          Index Cond: (tr.x = (t1.x % 2))
          Filter: (1 IS NOT NULL)
 (8 rows)
@@ -8953,7 +9041,7 @@ where t1.b = t2.b and t2.a = 3 and t1.a = 3
 ---------------------------------------------------------------------------------------------
  Seq Scan on public.sl t2
    Output: t2.a, t2.b, t2.c, t2.a, t2.b, t2.c
-   Filter: ((t2.c IS NOT NULL) AND (t2.b IS NOT NULL) AND (t2.a IS NOT NULL) AND (t2.a = 3))
+   Filter: ((t2.b IS NOT NULL) AND (t2.c IS NOT NULL) AND (t2.a IS NOT NULL) AND (t2.a = 3))
 (3 rows)
 
 -- Join qual isn't mergejoinable, but inner is unique.
@@ -8995,9 +9083,34 @@ SELECT 1 AS c1 FROM sl sl1 LEFT JOIN (sl AS sl2 NATURAL JOIN sl AS sl3)
    ->  Nested Loop Left Join
          Join Filter: sl3.bool_col
          ->  Seq Scan on sl sl3
-               Filter: (bool_col AND (a IS NOT NULL) AND (b IS NOT NULL) AND (c IS NOT NULL) AND (bool_col IS NOT NULL))
+               Filter: ((a IS NOT NULL) AND (b IS NOT NULL) AND (c IS NOT NULL) AND (bool_col IS NOT NULL) AND bool_col)
          ->  Seq Scan on sl sl4
 (7 rows)
+
+-- Check that quals of a jointree node that becomes empty when the self-join
+-- is removed are not lost, and that they don't migrate above an outer join
+EXPLAIN (COSTS OFF)
+SELECT s.a FROM (SELECT * FROM sl WHERE c IS NOT NULL) s, sl t
+WHERE t.a = s.a AND t.b = s.b;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Seq Scan on sl
+   Filter: ((c IS NOT NULL) AND (a IS NOT NULL) AND (b IS NOT NULL))
+(2 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT t1.a, ss.a FROM sl t1
+  LEFT JOIN (SELECT s.a FROM (SELECT * FROM sl WHERE c IS NOT NULL) s
+                             JOIN sl t ON t.a = s.a AND t.b = s.b) ss
+    ON ss.a = t1.a;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Nested Loop Left Join
+   Join Filter: (sl.a = t1.a)
+   ->  Seq Scan on sl t1
+   ->  Seq Scan on sl
+         Filter: ((c IS NOT NULL) AND (a IS NOT NULL) AND (b IS NOT NULL))
+(5 rows)
 
 -- Check optimization disabling if it will violate special join conditions.
 -- Two identical joined relations satisfies self join removal conditions but

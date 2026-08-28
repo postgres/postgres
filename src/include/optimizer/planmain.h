@@ -73,12 +73,9 @@ extern void add_other_rels_to_query(PlannerInfo *root);
 extern void build_base_rel_tlists(PlannerInfo *root, List *final_tlist);
 extern void add_vars_to_targetlist(PlannerInfo *root, List *vars,
 								   Relids where_needed);
-extern void add_vars_to_attr_needed(PlannerInfo *root, List *vars,
-									Relids where_needed);
 extern void remove_useless_groupby_columns(PlannerInfo *root);
 extern void setup_eager_aggregation(PlannerInfo *root);
 extern void find_lateral_references(PlannerInfo *root);
-extern void rebuild_lateral_attr_needed(PlannerInfo *root);
 extern void create_lateral_join_info(PlannerInfo *root);
 extern List *deconstruct_jointree(PlannerInfo *root);
 extern bool restriction_is_always_true(PlannerInfo *root,
@@ -102,24 +99,19 @@ extern RestrictInfo *build_implied_join_equality(PlannerInfo *root,
 												 Expr *item2,
 												 Relids qualscope,
 												 Index security_level);
-extern void rebuild_joinclause_attr_needed(PlannerInfo *root);
 extern void match_foreign_keys_to_quals(PlannerInfo *root);
 
 /*
  * prototypes for plan/analyzejoins.c
  */
-extern List *remove_useless_joins(PlannerInfo *root, List *joinlist);
-extern void reduce_unique_semijoins(PlannerInfo *root);
+extern bool remove_useless_outer_joins(PlannerInfo *root);
+extern bool reduce_unique_semijoins(PlannerInfo *root);
 extern bool query_supports_distinctness(Query *query);
 extern bool query_is_distinct_for(Query *query, List *distinct_cols);
 extern bool innerrel_is_unique(PlannerInfo *root,
 							   Relids joinrelids, Relids outerrelids, RelOptInfo *innerrel,
 							   JoinType jointype, List *restrictlist, bool force_cache);
-extern bool innerrel_is_unique_ext(PlannerInfo *root, Relids joinrelids,
-								   Relids outerrelids, RelOptInfo *innerrel,
-								   JoinType jointype, List *restrictlist,
-								   bool force_cache, List **extra_clauses);
-extern List *remove_useless_self_joins(PlannerInfo *root, List *joinlist);
+extern bool remove_useless_self_joins(PlannerInfo *root, List *joinlist);
 
 /*
  * prototypes for plan/setrefs.c
