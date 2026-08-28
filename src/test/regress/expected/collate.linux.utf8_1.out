@@ -5,7 +5,7 @@
  */
 SELECT getdatabaseencoding() <> 'UTF8' OR
        (SELECT count(*) FROM pg_collation WHERE collname IN ('de_DE', 'en_US', 'sv_SE', 'tr_TR') AND collencoding = pg_char_to_encoding('UTF8')) <> 4 OR
-       version() !~ 'linux-gnu'
+       version() !~ '-linux[-,]'
        AS skip_test \gset
 \if :skip_test
 \quit
