@@ -6227,6 +6227,38 @@ where t1.a = s.c;
 (0 rows)
 
 rollback;
+-- join removal bug #19560: removing a join can leave an EquivalenceClass that
+-- now yields a base restriction clause, so we must redo equivalence
+-- processing from scratch
+begin;
+create temp table items (id text, owner text);
+create temp table follows (item_id text, user_id text,
+                           unique (user_id, item_id));
+insert into items values ('item1', 'alice');
+explain (costs off)
+with viewer as (select 'bob' as id)
+select count(*) from items
+  left join follows on follows.item_id = items.id and follows.user_id = 'bob'
+  left join viewer on true
+where items.owner = viewer.id;
+              QUERY PLAN               
+---------------------------------------
+ Aggregate
+   ->  Seq Scan on items
+         Filter: (owner = 'bob'::text)
+(3 rows)
+
+with viewer as (select 'bob' as id)
+select count(*) from items
+  left join follows on follows.item_id = items.id and follows.user_id = 'bob'
+  left join viewer on true
+where items.owner = viewer.id;
+ count 
+-------
+     0
+(1 row)
+
+rollback;
 -- test cases where we can remove a join, but not a PHV computed at it
 begin;
 create temp table t (a int unique, b int);
