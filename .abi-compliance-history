@@ -18,6 +18,17 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+9f25197bf27c4c4a02d754842bc4055d83be735b
+#
+# Perform join removal by editing the query's jointree.
+# 2026-08-28 15:12:26 -0400
+#
+# remove_useless_joins (now remove_useless_outer_joins),
+# reduce_unique_semijoins, and remove_useless_self_joins have changed
+# behavior and return types.  I am unaware of any impacted third-party
+# code; if there is any, it is probably vulnerable to the same bugs this
+# patch is fixing.
+
 2780538433fc3b40b4e1e7bc7cbd350e37b6d550
 #
 # Check for USAGE privilege on types used by stored expressions.
