@@ -2485,6 +2485,7 @@ do_autovacuum(void)
 		 */
 		VacuumUpdateCosts();
 
+		INJECTION_POINT("autovacuum-worker-cost-balanced", NULL);
 
 		/* clean up memory before each iteration */
 		MemoryContextReset(PortalContext);
