@@ -107,8 +107,8 @@ extern void match_foreign_keys_to_quals(PlannerInfo *root);
 /*
  * prototypes for plan/analyzejoins.c
  */
-extern List *remove_useless_joins(PlannerInfo *root, List *joinlist);
-extern void reduce_unique_semijoins(PlannerInfo *root);
+extern bool remove_useless_outer_joins(PlannerInfo *root);
+extern bool reduce_unique_semijoins(PlannerInfo *root);
 extern bool query_supports_distinctness(Query *query);
 extern bool query_is_distinct_for(Query *query, List *colnos, List *opids);
 extern bool innerrel_is_unique(PlannerInfo *root,
@@ -118,7 +118,7 @@ extern bool innerrel_is_unique_ext(PlannerInfo *root, Relids joinrelids,
 								   Relids outerrelids, RelOptInfo *innerrel,
 								   JoinType jointype, List *restrictlist,
 								   bool force_cache, List **extra_clauses);
-extern List *remove_useless_self_joins(PlannerInfo *root, List *joinlist);
+extern bool remove_useless_self_joins(PlannerInfo *root, List *joinlist);
 
 /*
  * prototypes for plan/setrefs.c
