@@ -78,5 +78,33 @@ else
 	);
 }
 
+# clean up
 $node->stop;
+$node->adjust_conf('postgresql.conf', "shared_preload_libraries", undef);
+
+###
+# Test "out of shared memory" in an after-startup request
+###
+$node->start;
+my $session = $node->background_psql('postgres', on_error_stop => 0);
+
+# make the request larger than the memory reserved for after-startup
+# requests.
+$session->query(q[SET test_shmem.area_size = '128kB';]);
+
+$session->query("SELECT get_test_shmem_attach_count();");
+like(
+	$session->{stderr},
+	qr/not enough shared memory/,
+	"an after-startup request larger than the reserve fails");
+
+# The server and the backend keep running.  Since only one area was
+# requested, it gets cleaned up on allocation failure.  Verify that a
+# request for a smaller area succeeds in the same session.
+$session->{stderr} = '';
+$session->query("SET test_shmem.area_size = default;");
+$session->query_safe("SELECT get_test_shmem_attach_count();");
+$session->quit;
+$node->stop;
+
 done_testing();
