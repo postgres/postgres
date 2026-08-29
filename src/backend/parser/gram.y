@@ -12543,25 +12543,25 @@ CreateConversionStmt:
  *****************************************************************************/
 
 RepackStmt:
-			REPACK opt_utility_option_list vacuum_relation USING INDEX name
+			REPACK opt_utility_option_list qualified_name opt_name_list USING INDEX name
 				{
 					RepackStmt *n = makeNode(RepackStmt);
 
 					n->command = REPACK_COMMAND_REPACK;
-					n->relation = (VacuumRelation *) $3;
-					n->indexname = $6;
+					n->relation = makeVacuumRelation($3, InvalidOid, $4);
+					n->indexname = $7;
 					n->usingindex = true;
 					n->params = $2;
 					$$ = (Node *) n;
 				}
-			| REPACK opt_utility_option_list vacuum_relation opt_usingindex
+			| REPACK opt_utility_option_list qualified_name opt_name_list opt_usingindex
 				{
 					RepackStmt *n = makeNode(RepackStmt);
 
 					n->command = REPACK_COMMAND_REPACK;
-					n->relation = (VacuumRelation *) $3;
+					n->relation = makeVacuumRelation($3, InvalidOid, $4);
 					n->indexname = NULL;
-					n->usingindex = $4;
+					n->usingindex = $5;
 					n->params = $2;
 					$$ = (Node *) n;
 				}
