@@ -2209,7 +2209,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add ability to cast between database names and <link linkend="datatype-oid"><type>oid8</type></link>s using <link linkend="datatype-oid"><type>regdatabase</type></link> (Ian Lawrence Barwick)
+Add ability to cast between database names and <link linkend="datatype-oid"><type>oid</type></link>s using <link linkend="datatype-oid"><type>regdatabase</type></link> (Ian Lawrence Barwick)
 <ulink url="&commit_baseurl;bd09f024a">&sect;</ulink>
 </para>
 </listitem>
