@@ -208,14 +208,13 @@ cmpspellaffix(const void *s1, const void *s2)
 }
 
 static int
-cmpcmdflag(const void *f1, const void *f2)
+cmpcmdflag(const void *f1, const void *f2, void *arg)
 {
 	const CompoundAffixFlag *fv1 = f1;
 	const CompoundAffixFlag *fv2 = f2;
+	FlagMode	flagMode = *(const FlagMode *) arg;
 
-	Assert(fv1->flagMode == fv2->flagMode);
-
-	if (fv1->flagMode == FM_NUM)
+	if (flagMode == FM_NUM)
 	{
 		if (fv1->flag.i == fv2->flag.i)
 			return 0;
@@ -1071,7 +1070,6 @@ setCompoundAffixFlagValue(IspellDict *Conf, CompoundAffixFlag *entry,
 	else
 		entry->flag.s = cpstrdup(Conf, s);
 
-	entry->flagMode = Conf->flagMode;
 	entry->value = val;
 }
 
@@ -1135,7 +1133,7 @@ addCompoundAffixFlagValue(IspellDict *Conf, const char *s, uint32 val)
 	 * how flags are spelled may appear anywhere in the affix file, including
 	 * after the compound flags themselves, so the final representation cannot
 	 * be chosen until the whole file has been read.  See
-	 * finalizeCompoundAffixFlags(), which fills in flagMode as well.
+	 * finalizeCompoundAffixFlags().
 	 *
 	 * The interim copy goes in the short-lived build context, since the final
 	 * representation may well not be a string at all.
@@ -1173,8 +1171,6 @@ finalizeCompoundAffixFlags(IspellDict *Conf)
 			entry->flag.i = parseNumericAffixFlag(entry->flag.s);
 		else
 			entry->flag.s = cpstrdup(Conf, entry->flag.s);
-
-		entry->flagMode = Conf->flagMode;
 	}
 }
 
@@ -1201,9 +1197,9 @@ getCompoundAffixFlagValue(IspellDict *Conf, const char *s)
 		setCompoundAffixFlagValue(Conf, &key, sflag, 0);
 
 		found = (CompoundAffixFlag *)
-			bsearch(&key, Conf->CompoundAffixFlags,
-					Conf->nCompoundAffixFlag, sizeof(CompoundAffixFlag),
-					cmpcmdflag);
+			bsearch_arg(&key, Conf->CompoundAffixFlags,
+						Conf->nCompoundAffixFlag, sizeof(CompoundAffixFlag),
+						cmpcmdflag, &Conf->flagMode);
 		if (found != NULL)
 			flag |= found->value;
 	}
@@ -1358,8 +1354,8 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 	finalizeCompoundAffixFlags(Conf);
 
 	if (Conf->nCompoundAffixFlag > 1)
-		qsort(Conf->CompoundAffixFlags, Conf->nCompoundAffixFlag,
-			  sizeof(CompoundAffixFlag), cmpcmdflag);
+		qsort_arg(Conf->CompoundAffixFlags, Conf->nCompoundAffixFlag,
+				  sizeof(CompoundAffixFlag), cmpcmdflag, &Conf->flagMode);
 
 	if (!tsearch_readline_begin(&trst, filename))
 		ereport(ERROR,

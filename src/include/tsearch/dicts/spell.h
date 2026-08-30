@@ -169,13 +169,11 @@ typedef struct CompoundAffixFlag
 {
 	union
 	{
-		/* Flag name if flagMode is FM_CHAR or FM_LONG */
+		/* Flag name if the dictionary's flagMode is FM_CHAR or FM_LONG */
 		const char *s;
-		/* Flag name if flagMode is FM_NUM */
+		/* Flag number if the dictionary's flagMode is FM_NUM */
 		uint32		i;
 	}			flag;
-	/* we don't have a bsearch_arg version, so, copy FlagMode */
-	FlagMode	flagMode;
 	uint32		value;
 } CompoundAffixFlag;
 
