@@ -1135,7 +1135,7 @@ AND c1.path[c2.level] = c2.path[c2.level];
    The <structname>pg_dsm_registry_allocations</structname> view shows shared
    memory allocations tracked in the dynamic shared memory (DSM) registry.
    This includes memory allocated by extensions using the mechanisms detailed
-   in <xref linkend="xfunc-shared-addin-after-startup" />.
+   in <xref linkend="xfunc-shared-addin-dynamic" />.
   </para>
 
   <table>
