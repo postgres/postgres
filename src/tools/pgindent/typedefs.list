@@ -3185,10 +3185,12 @@ Tcl_Obj
 Tcl_Size
 Tcl_Time
 TempNamespaceStatus
+TestCustomScanState
 TestDSMRegistryHashEntry
 TestDSMRegistryStruct
 TestDecodingData
 TestDecodingTxnData
+TestExtNode
 TestShmemData
 TestSpec
 TestValueType
