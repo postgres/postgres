@@ -249,8 +249,8 @@ attribute_statistics_update_internal(Oid reloid,
 	bool		result = true;
 
 	/*
-	 * Check argument sanity. If some arguments are unusable, emit a WARNING
-	 * and set the corresponding argument to NULL in fcinfo.
+	 * Check argument sanity.  If some arguments are unusable, emit a WARNING
+	 * and skip the corresponding statistics kind, reporting back a failure.
 	 */
 
 	if (!stats_check_arg_array(fcinfo, attarginfo, MOST_COMMON_FREQS_ARG))
