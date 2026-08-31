@@ -1361,11 +1361,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
      Extensions can add <literal>Extension</literal>,
      <literal>InjectionPoint</literal>, and <literal>LWLock</literal> events
      to the lists shown in <xref linkend="wait-event-extension-table"/> and
-     <xref linkend="wait-event-lwlock-table"/>. In some cases, the name
-     of an <literal>LWLock</literal> assigned by an extension will not be
-     available in all server processes.  It might be reported as just
-     <quote><literal>extension</literal></quote> rather than the
-     extension-assigned name.
+     <xref linkend="wait-event-lwlock-table"/>.
     </para>
    </note>
  </sect2>
