@@ -136,8 +136,7 @@ PostgreSQL documentation
       <term><option>--lc-collate=<replaceable class="parameter">locale</replaceable></option></term>
       <listitem>
        <para>
-        Specifies the LC_COLLATE setting to be used in this database (ignored
-        unless the locale provider is <literal>libc</literal>).
+        Specifies the LC_COLLATE setting to be used in this database.
        </para>
       </listitem>
      </varlistentry>
