@@ -37,6 +37,9 @@ select concat_ws('',10,20,null,30);
 select concat_ws(NULL,10,20,null,30) is null;
 select reverse('abcde');
 select i, left('ahoj', i), right('ahoj', i) from generate_series(-5, 5) t(i) order by i;
+-- the most negative value must skip the whole string, same as any other n
+-- whose absolute value exceeds its length
+select left('ahoj', (-2147483648)::int4), right('ahoj', (-2147483648)::int4);
 select quote_literal('');
 select quote_literal('abc''');
 select quote_literal(e'\\');
