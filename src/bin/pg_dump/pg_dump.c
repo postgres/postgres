@@ -8797,9 +8797,6 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 			pg_fatal("unrecognized table OID %u", tgrelid);
 
 		/* Save data for this table */
-		tbinfo->triggers = tginfo + j;
-		tbinfo->numTriggers = numtrigs;
-
 		for (int c = 0; c < numtrigs; c++, j++)
 		{
 			tginfo[j].dobj.objType = DO_TRIGGER;

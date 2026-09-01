@@ -388,8 +388,6 @@ typedef struct _tableInfo
 	int			numIndexes;		/* number of indexes */
 	struct _indxInfo *indexes;	/* indexes */
 	struct _tableDataInfo *dataObj; /* TableDataInfo, if dumping its data */
-	int			numTriggers;	/* number of triggers for table */
-	struct _triggerInfo *triggers;	/* array of TriggerInfo structs */
 } TableInfo;
 
 typedef struct _tableAttachInfo
