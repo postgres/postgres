@@ -48,7 +48,7 @@ $node->safe_psql('postgres',
 	"SELECT injection_points_detach('datachecksumsworker-fail-db-result');");
 
 # Make sure that disabling after a failure works
-disable_data_checksums($node);
+disable_data_checksums($node, wait => 1);
 test_checksum_state($node, 'off');
 
 # ---------------------------------------------------------------------------
