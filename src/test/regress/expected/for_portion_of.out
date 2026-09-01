@@ -2218,6 +2218,65 @@ SELECT * FROM temporal_partitioned_5 ORDER BY id, valid_at;
 
 DROP FUNCTION fpo_returning_row;
 DROP TABLE temporal_partitioned;
+-- Test FOR PORTION OF when the partition key depends on the range column.
+-- Then a leftover can belong to a partition that is not one of the plan's
+-- result relations, and we must build a new ResultRelInfo for it.
+CREATE TABLE temporal_partitioned_by_valid_at (
+  id int4range,
+  valid_at daterange,
+  name text
+) PARTITION BY RANGE (lower(valid_at));
+CREATE TABLE temporal_partitioned_early
+  PARTITION OF temporal_partitioned_by_valid_at
+  FOR VALUES FROM (MINVALUE) TO ('2000-06-01');
+CREATE TABLE temporal_partitioned_late
+  PARTITION OF temporal_partitioned_by_valid_at
+  FOR VALUES FROM ('2000-06-01') TO (MAXVALUE);
+INSERT INTO temporal_partitioned_by_valid_at (id, valid_at, name) VALUES
+  ('[1,2)', daterange('2000-01-01', '2010-01-01'), 'one');
+-- The WHERE clause prunes away the late partition, but the second leftover
+-- belongs there.  The leftovers must not appear in the RETURNING output.
+DELETE FROM temporal_partitioned_by_valid_at
+  FOR PORTION OF valid_at FROM '2000-03-01' TO '2000-07-01'
+  WHERE lower(valid_at) < '2000-06-01'
+  RETURNING id, valid_at, name;
+  id   |        valid_at         | name 
+-------+-------------------------+------
+ [1,2) | [2000-01-01,2010-01-01) | one
+(1 row)
+
+SELECT tableoid::regclass, * FROM temporal_partitioned_by_valid_at
+  ORDER BY id, valid_at;
+          tableoid          |  id   |        valid_at         | name 
+----------------------------+-------+-------------------------+------
+ temporal_partitioned_early | [1,2) | [2000-01-01,2000-03-01) | one
+ temporal_partitioned_late  | [1,2) | [2000-07-01,2010-01-01) | one
+(2 rows)
+
+-- The same thing for UPDATE
+DELETE FROM temporal_partitioned_by_valid_at;
+INSERT INTO temporal_partitioned_by_valid_at (id, valid_at, name) VALUES
+  ('[1,2)', daterange('2000-01-01', '2010-01-01'), 'one');
+UPDATE temporal_partitioned_by_valid_at
+  FOR PORTION OF valid_at FROM '2000-03-01' TO '2000-07-01'
+  SET name = 'one^1'
+  WHERE lower(valid_at) < '2000-06-01'
+  RETURNING id, valid_at, name;
+  id   |        valid_at         | name  
+-------+-------------------------+-------
+ [1,2) | [2000-03-01,2000-07-01) | one^1
+(1 row)
+
+SELECT tableoid::regclass, * FROM temporal_partitioned_by_valid_at
+  ORDER BY id, valid_at;
+          tableoid          |  id   |        valid_at         | name  
+----------------------------+-------+-------------------------+-------
+ temporal_partitioned_early | [1,2) | [2000-01-01,2000-03-01) | one
+ temporal_partitioned_early | [1,2) | [2000-03-01,2000-07-01) | one^1
+ temporal_partitioned_late  | [1,2) | [2000-07-01,2010-01-01) | one
+(3 rows)
+
+DROP TABLE temporal_partitioned_by_valid_at;
 -- UPDATE/DELETE FOR PORTION OF with RULEs
 CREATE TABLE fpo_rule (f1 bigint, f2 int4range);
 INSERT INTO fpo_rule VALUES (1, '[1, 11)');
