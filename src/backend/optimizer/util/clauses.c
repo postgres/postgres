@@ -115,6 +115,7 @@ static bool contain_agg_clause_walker(Node *node, void *context);
 static bool find_window_functions_walker(Node *node, WindowFuncLists *lists);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
+static bool xmlexpr_is_immutable(XmlExpr *xexpr);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_not_nextval_walker(Node *node, void *context);
 static bool max_parallel_hazard_walker(Node *node,
@@ -468,6 +469,13 @@ contain_mutable_functions_walker(Node *node, void *context)
 		return true;
 	}
 
+	if (IsA(node, XmlExpr))
+	{
+		/* some variants of XmlExpr are only stable */
+		if (!xmlexpr_is_immutable((XmlExpr *) node))
+			return true;
+	}
+
 	if (IsA(node, NextValueExpr))
 	{
 		/* NextValueExpr is volatile */
@@ -477,11 +485,10 @@ contain_mutable_functions_walker(Node *node, void *context)
 	/*
 	 * It should be safe to treat MinMaxExpr as immutable, because it will
 	 * depend on a non-cross-type btree comparison function, and those should
-	 * always be immutable.  Treating XmlExpr as immutable is more dubious,
-	 * and treating CoerceToDomain as immutable is outright dangerous.  But we
-	 * have done so historically, and changing this would probably cause more
-	 * problems than it would fix.  In practice, if you have a non-immutable
-	 * domain constraint you are in for pain anyhow.
+	 * always be immutable.  Treating CoerceToDomain as immutable is outright
+	 * dangerous, but we have done so historically, and changing this would
+	 * probably cause more problems than it would fix.  In practice, if you
+	 * have a non-immutable domain constraint you are in for pain anyhow.
 	 */
 
 	/* Recurse to check arguments */
@@ -494,6 +501,44 @@ contain_mutable_functions_walker(Node *node, void *context)
 	}
 	return expression_tree_walker(node, contain_mutable_functions_walker,
 								  context);
+}
+
+/*
+ * xmlexpr_is_immutable
+ *	  True if this XmlExpr node represents immutable processing
+ *	  (considering just the node itself, not its arguments)
+ */
+static bool
+xmlexpr_is_immutable(XmlExpr *xexpr)
+{
+	switch (xexpr->op)
+	{
+		case IS_XMLCONCAT:
+		case IS_XMLPARSE:
+		case IS_XMLPI:
+		case IS_XMLROOT:
+		case IS_XMLSERIALIZE:
+		case IS_DOCUMENT:
+			/* These variants manipulate XML text in a self-contained way */
+			return true;
+
+		case IS_XMLELEMENT:
+		case IS_XMLFOREST:
+
+			/*
+			 * These variants invoke I/O conversion functions for a wide range
+			 * of data types, and have various special rules too, so in some
+			 * cases they are only stable.  In principle we could analyze
+			 * their behavior precisely, but keeping such code in sync with
+			 * the actual implementation seems like more maintenance risk than
+			 * it's worth.
+			 */
+			return false;
+
+			/* There is intentionally no default: case here */
+	}
+	/* We shouldn't get here, but if we do, say "not immutable" */
+	return false;
 }
 
 /*
@@ -649,8 +694,9 @@ contain_volatile_functions_walker(Node *node, void *context)
 
 	/*
 	 * See notes in contain_mutable_functions_walker about why we treat
-	 * MinMaxExpr, XmlExpr, and CoerceToDomain as immutable, while
-	 * SQLValueFunction is stable.  Hence, none of them are of interest here.
+	 * MinMaxExpr and CoerceToDomain as immutable.  SQLValueFunction is
+	 * stable, and XmlExpr might be immutable or stable, but it should never
+	 * be volatile.  Hence, none of them are of interest here.
 	 */
 
 	/* Recurse to check arguments */
@@ -723,10 +769,11 @@ contain_volatile_functions_not_nextval_walker(Node *node, void *context)
 
 	/*
 	 * See notes in contain_mutable_functions_walker about why we treat
-	 * MinMaxExpr, XmlExpr, and CoerceToDomain as immutable, while
-	 * SQLValueFunction is stable.  Hence, none of them are of interest here.
-	 * Also, since we're intentionally ignoring nextval(), presumably we
-	 * should ignore NextValueExpr.
+	 * MinMaxExpr and CoerceToDomain as immutable.  SQLValueFunction is
+	 * stable, and XmlExpr might be immutable or stable, but it should never
+	 * be volatile.  Hence, none of them are of interest here.  Also, since
+	 * we're intentionally ignoring nextval(), presumably we should ignore
+	 * NextValueExpr.
 	 */
 
 	/* Recurse to check arguments */
@@ -3785,6 +3832,20 @@ eval_const_expressions_mutator(Node *node,
 												  InvalidOid);
 				else
 					return copyObject((Node *) svf);
+			}
+		case T_XmlExpr:
+			{
+				/*
+				 * Some variants of XmlExpr are immutable.  Others are only
+				 * stable, but in estimation mode those are still fair game to
+				 * simplify.
+				 */
+				node = ece_generic_processing(node);
+				if ((context->estimate ||
+					 xmlexpr_is_immutable((XmlExpr *) node)) &&
+					ece_all_arguments_const(node))
+					return ece_evaluate_expr(node);
+				return node;
 			}
 		case T_FieldSelect:
 			{
