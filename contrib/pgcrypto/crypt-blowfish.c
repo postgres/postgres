@@ -39,13 +39,10 @@
 #include "px.h"
 
 #ifdef __i386__
-#define BF_ASM				0	/* 1 */
 #define BF_SCALE			1
 #elif defined(__x86_64__)
-#define BF_ASM				0
 #define BF_SCALE			1
 #else
-#define BF_ASM				0
 #define BF_SCALE			0
 #endif
 
@@ -518,14 +515,6 @@ BF_swap(BF_word *x, int count)
 	R = L; \
 	L = tmp4 ^ data.ctx.P[BF_N + 1]
 
-#if BF_ASM
-
-extern void _BF_body_r(BF_ctx *ctx);
-
-#define BF_body() \
-	_BF_body_r(&data.ctx)
-#else
-
 #define BF_body() \
 do { \
 	L = R = 0; \
@@ -545,7 +534,6 @@ do { \
 		*(ptr - 1) = R; \
 	} while (ptr < &data.ctx.S[3][0xFF]); \
 } while (0)
-#endif
 
 static void
 BF_set_key(const char *key, BF_key expanded, BF_key initial,
