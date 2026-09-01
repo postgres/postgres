@@ -2768,7 +2768,9 @@ SELECT * FROM t;
     Consider this example from <xref linkend="ddl-property-graphs"/>:
 <programlisting>
 -- get list of customers active today
-SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers)-[IS customer_orders]->(o IS orders WHERE o.ordered_when = current_date) COLUMNS (c.name AS customer_name));
+SELECT customer_name FROM GRAPH_TABLE (myshop
+    MATCH (c IS customers)-[IS customer_orders]->(o IS orders WHERE o.ordered_when = current_date)
+    COLUMNS (c.name AS customer_name));
 </programlisting>
     The graph query part happens inside the <literal>GRAPH_TABLE</literal>
     construct.  As far as the rest of the query is concerned, this acts like a
@@ -2777,7 +2779,9 @@ SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers)-[IS custome
     names can be assigned to the result, and the result can be joined with
     other tables, subsequently filtered, and so on, for example:
 <programlisting>
-SELECT ... FROM GRAPH_TABLE (mygraph MATCH ... COLUMNS (...)) AS myresult (a, b, c) JOIN othertable USING (a) WHERE b > 0 ORDER BY c;
+SELECT ... FROM GRAPH_TABLE (mygraph
+    MATCH ...
+    COLUMNS (...)) AS myresult (a, b, c) JOIN othertable USING (a) WHERE b > 0 ORDER BY c;
 </programlisting>
    </para>
 
@@ -2893,8 +2897,9 @@ SELECT ... FROM GRAPH_TABLE (mygraph MATCH ... COLUMNS (...)) AS myresult (a, b,
     For example (assuming appropriate definitions of the property graph as
     well as the underlying tables):
 <programlisting>
-GRAPH_TABLE (mygraph MATCH (p IS person)-[h IS has]->(a IS account)
-             COLUMNS (p.name AS person_name, h.since AS has_account_since, a.num AS account_number)
+GRAPH_TABLE (mygraph
+    MATCH (p IS person)-[h IS has]->(a IS account)
+    COLUMNS (p.name AS person_name, h.since AS has_account_since, a.num AS account_number))
 </programlisting>
     <literal>WHERE</literal> clauses can be used inside element patterns to
     filter matches:
