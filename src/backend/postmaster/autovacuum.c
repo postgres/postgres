@@ -3210,9 +3210,10 @@ relation_needs_vacanalyze(Oid relid,
 	if (autovacuum_multixact_freeze_score_weight > 1.0)
 		effective_mxid_failsafe_age /= autovacuum_multixact_freeze_score_weight;
 
-	if (xid_age >= effective_xid_failsafe_age)
+	/* We must be careful to avoid lowering the score. */
+	if (xid_age >= effective_xid_failsafe_age && scores->xid > 1.0)
 		scores->xid = pow(scores->xid, Max(1.0, (double) xid_age / 100000000));
-	if (mxid_age >= effective_mxid_failsafe_age)
+	if (mxid_age >= effective_mxid_failsafe_age && scores->mxid > 1.0)
 		scores->mxid = pow(scores->mxid, Max(1.0, (double) mxid_age / 100000000));
 
 	scores->xid *= autovacuum_freeze_score_weight;
