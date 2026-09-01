@@ -91,9 +91,8 @@ static int	ldapServiceLookup(const char *purl, PQconninfoOption *options,
 
 /* This is part of the protocol so just define it */
 #define ERRCODE_INVALID_PASSWORD "28P01"
-/* These too */
+/* This too */
 #define ERRCODE_CANNOT_CONNECT_NOW "57P03"
-#define ERRCODE_PROTOCOL_VIOLATION "08P01"
 
 /*
  * Cope with the various platform-specific ways to spell TCP keepalive socket
@@ -2150,13 +2149,15 @@ pqConnectOptions2(PGconn *conn)
 	else
 	{
 		/*
-		 * Default to PG_PROTOCOL_GREASE, which is larger than all real
-		 * versions, to test negotiation. The server should automatically
-		 * downgrade to a supported version.
-		 *
-		 * This behavior is for 19beta only. It will be reverted before RC1.
+		 * To not break connecting to older servers/poolers that do not yet
+		 * support NegotiateProtocolVersion, default to the 3.0 protocol at
+		 * least for a while longer. Except when min_protocol_version is set
+		 * to something larger, then we might as well default to the latest.
 		 */
-		conn->max_pversion = PG_PROTOCOL_GREASE;
+		if (conn->min_pversion > PG_PROTOCOL(3, 0))
+			conn->max_pversion = PG_PROTOCOL_LATEST;
+		else
+			conn->max_pversion = PG_PROTOCOL(3, 0);
 	}
 
 	if (conn->min_pversion > conn->max_pversion)
@@ -4162,32 +4163,6 @@ keep_going:						/* We will come back to here until there is
 					/* Check to see if we should mention pgpassfile */
 					pgpassfileWarning(conn);
 
-					/*
-					 * ...and whether we should mention grease. If the error
-					 * message contains the PG_PROTOCOL_GREASE number (in
-					 * major.minor, decimal, or hex format) or a complaint
-					 * about a protocol violation before we've even started an
-					 * authentication exchange, it's probably caused by a
-					 * grease interaction.
-					 */
-					if (conn->max_pversion == PG_PROTOCOL_GREASE &&
-						!conn->auth_req_received)
-					{
-						const char *sqlstate = PQresultErrorField(conn->result,
-																  PG_DIAG_SQLSTATE);
-
-						if ((sqlstate &&
-							 strcmp(sqlstate, ERRCODE_PROTOCOL_VIOLATION) == 0) ||
-							(conn->errorMessage.len > 0 &&
-							 (strstr(conn->errorMessage.data, "3.9999") ||
-							  strstr(conn->errorMessage.data, "206607") ||
-							  strstr(conn->errorMessage.data, "3270F") ||
-							  strstr(conn->errorMessage.data, "3270f"))))
-						{
-							libpq_append_grease_info(conn);
-						}
-					}
-
 					CONNECTION_FAILED();
 				}
 				/* Handle NegotiateProtocolVersion */
@@ -4415,14 +4390,6 @@ keep_going:						/* We will come back to here until there is
 						conn->errorMessage.data[conn->errorMessage.len - 1] != '\n')
 						appendPQExpBufferChar(&conn->errorMessage, '\n');
 					PQclear(res);
-					goto error_return;
-				}
-
-				if (conn->max_pversion == PG_PROTOCOL_GREASE &&
-					conn->pversion == PG_PROTOCOL_GREASE)
-				{
-					libpq_append_conn_error(conn, "server incorrectly accepted \"grease\" protocol version 3.9999 without negotiation");
-					libpq_append_grease_info(conn);
 					goto error_return;
 				}
 

@@ -2211,23 +2211,6 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
      <varlistentry id="libpq-connect-max-protocol-version" xreflabel="max_protocol_version">
       <term><literal>max_protocol_version</literal></term>
       <listitem>
-       <note>
-        <para>
-        During the PostgreSQL 19 beta period, libpq connections that do not
-        specify a <literal>max_protocol_version</literal> will "grease" the
-        handshake by sending unsupported startup parameters, including version
-        <literal>3.9999</literal>, in order to identify software that does not
-        correctly negotiate the connection. This replaces the default behavior
-        described below.
-        </para>
-        <para>
-        If you know that a server doesn't properly implement protocol version
-        negotiation, you can set <literal>max_protocol_version=3.0</literal> to
-        revert to the standard behavior (preferably after notifying the server's
-        maintainers that their software needs to be fixed).
-        </para>
-       </note>
-
        <para>
         Specifies the protocol version to request from the server.
         The default is to use version <literal>3.0</literal> of the

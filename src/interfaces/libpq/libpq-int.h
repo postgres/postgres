@@ -965,7 +965,6 @@ extern char *libpq_ngettext(const char *msgid, const char *msgid_plural, unsigne
 
 extern void libpq_append_error(PQExpBuffer errorMessage, const char *fmt, ...) pg_attribute_printf(2, 3);
 extern void libpq_append_conn_error(PGconn *conn, const char *fmt, ...) pg_attribute_printf(2, 3);
-extern void libpq_append_grease_info(PGconn *conn);
 
 /*
  * These macros are needed to let error-handling code be portable between
