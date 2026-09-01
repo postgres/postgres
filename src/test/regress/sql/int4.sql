@@ -126,6 +126,15 @@ SELECT (-2147483648)::int4 * (-1)::int2;
 SELECT (-2147483648)::int4 / (-1)::int2;
 SELECT (-2147483648)::int4 % (-1)::int2;
 
+-- check overflow of to_char() with V format
+SELECT to_char(2, '9V999999999'); -- 10^9
+SELECT to_char(3, '9V999999999'); -- 10^9
+SELECT to_char(214748364, '999999999V9');
+SELECT to_char(2147483647, '9V9');
+SELECT to_char(-2, '9V999999999'); -- 10^9
+SELECT to_char((-2147483648)::int4, '9V9');
+SELECT to_char(1, '9V9999999999'); -- 10^10
+
 -- check rounding when casting from float
 SELECT x, x::int4 AS int4_value
 FROM (VALUES (-2.5::float8),
