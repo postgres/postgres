@@ -477,7 +477,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	memcpy(cp, sha_buf_tmp, block);
 
 	/* Make sure we don't leave something important behind */
-	px_memset(&sha_buf_tmp, 0, sizeof sha_buf);
+	px_memset(&sha_buf_tmp, 0, sizeof sha_buf_tmp);
 
 	/*-
 	 * 21. Repeat a loop according to the number specified in the rounds=<N>
