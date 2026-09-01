@@ -449,11 +449,10 @@ int8um(PG_FUNCTION_ARGS)
 	int64		arg = PG_GETARG_INT64(0);
 	int64		result;
 
-	if (unlikely(arg == PG_INT64_MIN))
+	if (pg_neg_s64_overflow(arg, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
-	result = -arg;
 	PG_RETURN_INT64(result);
 }
 
@@ -531,11 +530,10 @@ int8div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		if (unlikely(arg1 == PG_INT64_MIN))
+		if (pg_neg_s64_overflow(arg1, &result))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("bigint out of range")));
-		result = -arg1;
 		PG_RETURN_INT64(result);
 	}
 
@@ -991,11 +989,10 @@ int84div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		if (unlikely(arg1 == PG_INT64_MIN))
+		if (pg_neg_s64_overflow(arg1, &result))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("bigint out of range")));
-		result = -arg1;
 		PG_RETURN_INT64(result);
 	}
 
@@ -1133,11 +1130,10 @@ int82div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		if (unlikely(arg1 == PG_INT64_MIN))
+		if (pg_neg_s64_overflow(arg1, &result))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("bigint out of range")));
-		result = -arg1;
 		PG_RETURN_INT64(result);
 	}
 

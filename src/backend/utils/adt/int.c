@@ -800,12 +800,13 @@ Datum
 int4um(PG_FUNCTION_ARGS)
 {
 	int32		arg = PG_GETARG_INT32(0);
+	int32		result;
 
-	if (unlikely(arg == PG_INT32_MIN))
+	if (pg_neg_s32_overflow(arg, &result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
-	PG_RETURN_INT32(-arg);
+	PG_RETURN_INT32(result);
 }
 
 Datum
@@ -882,11 +883,10 @@ int4div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		if (unlikely(arg1 == PG_INT32_MIN))
+		if (pg_neg_s32_overflow(arg1, &result))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("integer out of range")));
-		result = -arg1;
 		PG_RETURN_INT32(result);
 	}
 
@@ -1140,11 +1140,10 @@ int42div(PG_FUNCTION_ARGS)
 	 */
 	if (arg2 == -1)
 	{
-		if (unlikely(arg1 == PG_INT32_MIN))
+		if (pg_neg_s32_overflow(arg1, &result))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("integer out of range")));
-		result = -arg1;
 		PG_RETURN_INT32(result);
 	}
 

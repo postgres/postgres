@@ -7870,9 +7870,8 @@ numericvar_to_int64(const NumericVar *var, int64 *result)
 
 	if (!neg)
 	{
-		if (unlikely(val == PG_INT64_MIN))
+		if (unlikely(pg_neg_s64_overflow(val, &val)))
 			return false;
-		val = -val;
 	}
 	*result = val;
 
