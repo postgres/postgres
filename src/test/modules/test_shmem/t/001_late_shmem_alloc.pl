@@ -125,6 +125,9 @@ SKIP:
 ###
 # Test "out of shared memory" in an after-startup request
 ###
+# Huge pages round up the main shared memory segment, which can leave more
+# unused space than the request below.  Disable them to make the test reliable.
+$node->append_conf('postgresql.conf', 'huge_pages = off');
 $node->start;
 my $session = $node->background_psql('postgres', on_error_stop => 0);
 
