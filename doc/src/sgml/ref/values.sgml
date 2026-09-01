@@ -198,10 +198,9 @@ UPDATE employees SET salary = salary * v.increase
   WHERE employees.depno = v.depno AND employees.sales &gt;= v.target;
 </programlisting>
 
-   Note that an <literal>AS</literal> clause is required when <command>VALUES</command>
-   is used in a <literal>FROM</literal> clause, just as is true for
-   <command>SELECT</command>.  It is not required that the <literal>AS</literal> clause
-   specify names for all the columns, but it's good practice to do so.
+   Note that if <command>VALUES</command> is used in a <literal>FROM</literal>
+   clause, a table alias is optional.  Assigning alias names to the columns
+   of the <command>VALUES</command> list is optional, but is good practice.
    (The default column names for <command>VALUES</command> are <literal>column1</literal>,
    <literal>column2</literal>, etc. in <productname>PostgreSQL</productname>, but
    these names might be different in other database systems.)
