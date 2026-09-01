@@ -198,17 +198,6 @@
     by default.
    </para>
 
-   <note>
-     <para>
-      During the PostgreSQL 19 beta period, libpq will instead default to
-      requesting protocol version 3.9999, to test that servers and middleware
-      properly implement protocol version negotiation. Servers that support
-      negotiation will automatically downgrade to version 3.2 or 3.0. Users can
-      bypass this beta-only behavior by explicitly setting
-      <literal>max_protocol_version=3.0</literal> in their connection string.
-     </para>
-   </note>
-
    <para>
     A single server can support multiple protocol versions.  The initial
     startup-request message tells the server which protocol version the client

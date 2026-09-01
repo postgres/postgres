@@ -1363,7 +1363,7 @@ test_protocol_version(PGconn *conn)
 	Assert(max_protocol_version_index >= 0);
 
 	/*
-	 * Test default protocol_version (GREASE - should negotiate down to 3.2)
+	 * Test default protocol_version
 	 */
 	vals[max_protocol_version_index] = "";
 	conn = PQconnectdbParams(keywords, vals, false);
@@ -1373,8 +1373,8 @@ test_protocol_version(PGconn *conn)
 				 PQerrorMessage(conn));
 
 	protocol_version = PQfullProtocolVersion(conn);
-	if (protocol_version != 30002)
-		pg_fatal("expected 30002, got %d", protocol_version);
+	if (protocol_version != 30000)
+		pg_fatal("expected 30000, got %d", protocol_version);
 
 	PQfinish(conn);
 
