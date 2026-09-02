@@ -295,7 +295,7 @@ Section: ClassName - WaitEventBuffer
 BUFFER_CLEANUP	"Waiting to acquire an exclusive pin on a buffer. Buffer pin waits can be protracted if another process holds an open cursor that last read data from the buffer in question."
 BUFFER_SHARED	"Waiting to acquire a shared lock on a buffer."
 BUFFER_SHARE_EXCLUSIVE	"Waiting to acquire a share exclusive lock on a buffer."
-BUFFER_EXCLUSIVE	"Waiting to acquire a exclusive lock on a buffer."
+BUFFER_EXCLUSIVE	"Waiting to acquire an exclusive lock on a buffer."
 
 ABI_compatibility:
 

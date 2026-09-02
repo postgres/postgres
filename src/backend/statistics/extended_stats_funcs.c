@@ -234,7 +234,7 @@ expand_stxkind(HeapTuple tup, StakindFlags *enabled)
 								   Anum_pg_statistic_ext_stxkind);
 	arr = DatumGetArrayTypeP(datum);
 	if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) || ARR_ELEMTYPE(arr) != CHAROID)
-		elog(ERROR, "stxkind is not a one-dimension char array");
+		elog(ERROR, "stxkind is not a one-dimensional char array");
 
 	kinds = (char *) ARR_DATA_PTR(arr);
 
