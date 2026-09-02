@@ -6263,6 +6263,7 @@ StartupXLOG(void)
 			 * during recovery and need not be started yet.
 			 */
 			StartupSUBTRANS(oldestActiveXID);
+			SetRecoverySubtransInitialized();
 
 			/*
 			 * If we're beginning at a shutdown checkpoint, we know that
@@ -8392,10 +8393,10 @@ CreateRestartPoint(int flags)
 	 * Truncate pg_subtrans if possible.  We can throw away all data before
 	 * the oldest XMIN of any running transaction.  No future transaction will
 	 * attempt to reference any pg_subtrans entry older than that (see Asserts
-	 * in subtrans.c).  When hot standby is disabled, though, we mustn't do
-	 * this because StartupSUBTRANS hasn't been called yet.
+	 * in subtrans.c).  During recovery, don't truncate pg_subtrans until hot
+	 * standby initialization has started it.
 	 */
-	if (EnableHotStandby)
+	if (RecoverySubtransInitialized())
 		TruncateSUBTRANS(GetOldestTransactionIdConsideredRunning());
 
 	/* Real work is done; log and update stats. */

@@ -4496,6 +4496,32 @@ CheckPromoteSignal(void)
 }
 
 /*
+ * Has hot standby initialization started pg_subtrans?
+ */
+bool
+RecoverySubtransInitialized(void)
+{
+	bool		result;
+
+	SpinLockAcquire(&XLogRecoveryCtl->info_lck);
+	result = XLogRecoveryCtl->SharedRecoverySubtransInitialized;
+	SpinLockRelease(&XLogRecoveryCtl->info_lck);
+
+	return result;
+}
+
+/*
+ * Remember that hot standby initialization has started pg_subtrans.
+ */
+void
+SetRecoverySubtransInitialized(void)
+{
+	SpinLockAcquire(&XLogRecoveryCtl->info_lck);
+	XLogRecoveryCtl->SharedRecoverySubtransInitialized = true;
+	SpinLockRelease(&XLogRecoveryCtl->info_lck);
+}
+
+/*
  * Wake up startup process to replay newly arrived WAL, or to notice that
  * failover has been requested.
  */
