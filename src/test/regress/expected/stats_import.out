@@ -1637,6 +1637,143 @@ AND attname = 'arange';
      0
 (1 row)
 
+-- Tests for pg_clear_attribute_stats()
+-- Invalid argument values.
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => NULL,
+    relname => 'test',
+    attname => 'arange',
+    inherited => false);
+ERROR:  argument "schemaname" must not be null
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => 'stats_import',
+    relname => NULL,
+    attname => 'arange',
+    inherited => false);
+ERROR:  argument "relname" must not be null
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => 'stats_import',
+    relname => 'test',
+    attname => NULL,
+    inherited => false);
+ERROR:  argument "attname" must not be null
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => 'stats_import',
+    relname => 'test',
+    attname => 'arange',
+    inherited => NULL);
+ERROR:  argument "inherited" must not be null
+-- Missing objects
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => 'schema_not_exist',
+    relname => 'test',
+    attname => 'arange',
+    inherited => false);
+ERROR:  schema "schema_not_exist" does not exist
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => 'stats_import',
+    relname => 'table_not_exist',
+    attname => 'arange',
+    inherited => false);
+ERROR:  relation "stats_import.table_not_exist" does not exist
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => 'stats_import',
+    relname => 'test',
+    attname => 'att_not_exist',
+    inherited => false);
+ERROR:  column "att_not_exist" of relation "test" does not exist
+-- error: system column
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => 'stats_import',
+    relname => 'test',
+    attname => 'ctid',
+    inherited => false);
+ERROR:  cannot clear statistics on system column "ctid"
+-- error: relkinds
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => 'stats_import',
+    relname => 'testseq',
+    attname => 'last_value',
+    inherited => false);
+ERROR:  cannot modify statistics for relation "testseq"
+DETAIL:  This operation is not supported for sequences.
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => 'stats_import',
+    relname => 'testview',
+    attname => 'id',
+    inherited => false);
+ERROR:  cannot modify statistics for relation "testview"
+DETAIL:  This operation is not supported for views.
+-- Inherited stats are held in separate pg_statistic rows, and only the
+-- rows matching the inherited argument are removed.  Plant one of each
+-- for the same column, clear the inherited one, and check that the
+-- non-inherited one survives.
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'arange',
+    'inherited', false::boolean,
+    'null_frac', 0.5::real);
+ pg_restore_attribute_stats 
+----------------------------
+ t
+(1 row)
+
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'arange',
+    'inherited', true::boolean,
+    'null_frac', 0.5::real);
+ pg_restore_attribute_stats 
+----------------------------
+ t
+(1 row)
+
+SELECT inherited, count(*)
+  FROM pg_stats
+  WHERE schemaname = 'stats_import'
+    AND tablename = 'test'
+    AND attname = 'arange'
+    GROUP BY inherited ORDER BY inherited;
+ inherited | count 
+-----------+-------
+ f         |     1
+ t         |     1
+(2 rows)
+
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => 'stats_import',
+    relname => 'test',
+    attname => 'arange',
+    inherited => true);
+ pg_clear_attribute_stats 
+--------------------------
+ 
+(1 row)
+
+SELECT inherited, count(*)
+  FROM pg_stats
+  WHERE schemaname = 'stats_import'
+    AND tablename = 'test'
+    AND attname = 'arange'
+    GROUP BY inherited ORDER BY inherited;
+ inherited | count 
+-----------+-------
+ f         |     1
+(1 row)
+
+-- Clean up the non-inherited row planted above.
+SELECT pg_catalog.pg_clear_attribute_stats(
+    schemaname => 'stats_import',
+    relname => 'test',
+    attname => 'arange',
+    inherited => false);
+ pg_clear_attribute_stats 
+--------------------------
+ 
+(1 row)
+
 -- temp tables
 CREATE TEMP TABLE stats_temp(i int);
 SELECT pg_restore_relation_stats(
