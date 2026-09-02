@@ -2257,7 +2257,7 @@ SELECT pg_restore_extended_stats(
          and <literal>most_common_base_freqs</literal>.
          To accept statistics for any expressions in the extended
          statistics object, the parameter <literal>exprs</literal> with a type
-         <type>jsonb</type> is available. This should be an one-dimension array
+         <type>jsonb</type> is available. This should be a one-dimensional array
          with a number of expressions matching the definition of the extended
          statistics object, made of json elements for each of the statistical
          columns in

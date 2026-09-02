@@ -2090,7 +2090,7 @@ Included in publications:
        <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
        and <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
        are enabled. Note that if a tuple cannot be found due to the table being
-       truncated, only a <literal>update_missing</literal> conflict will
+       truncated, only an <literal>update_missing</literal> conflict will
        arise. Additionally, if the tuple was deleted by the same origin, an
        <literal>update_missing</literal> conflict will arise.
       </para>

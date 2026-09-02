@@ -2801,7 +2801,7 @@ SELECT ... FROM GRAPH_TABLE (mygraph
     appears after the keyword <literal>MATCH</literal>.  Formally, a graph
     pattern consists of one or more path patterns.  A path is a sequence of
     graph elements, starting and ending with a vertex and alternating between
-    vertices and edges.  A path pattern is a syntactic expressions that
+    vertices and edges.  A path pattern is a syntactic expression that
     matches paths.
    </para>
 
