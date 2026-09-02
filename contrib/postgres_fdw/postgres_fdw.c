@@ -7045,8 +7045,6 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	PgFdwRelationInfo *fpinfo_i;
 	ListCell   *lc;
 	List	   *joinclauses;
-	bool		outer_is_function = false;
-	bool		inner_is_function = false;
 
 	/*
 	 * We support pushing down INNER, LEFT, RIGHT, FULL OUTER and SEMI joins.
@@ -7070,40 +7068,22 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	 * function RTE can be absorbed into joins on multiple foreign servers
 	 * (each call gets its own stub fpinfo and rechecks shippability for the
 	 * specific server).
+	 *
+	 * A function rel has no fdw_private of its own, so when one side is a
+	 * function RTE we replace its NULL fpinfo with a stub, and the rest of
+	 * this function and the cost estimator can then treat both sides
+	 * uniformly.  We hand the stub to the joinrel's deparser via the same
+	 * path the foreign side uses, but we never permanently attach it to the
+	 * function rel's fdw_private (different joinrels may pair the same
+	 * function RTE with different foreign servers).
 	 */
 	fpinfo = (PgFdwRelationInfo *) joinrel->fdw_private;
-	if (jointype == JOIN_INNER && innerrel->rtekind == RTE_FUNCTION &&
-		(fpinfo_o = (PgFdwRelationInfo *) outerrel->fdw_private) &&
-		fpinfo_o->pushdown_safe &&
-		function_rte_pushdown_ok(root, innerrel, outerrel))
-	{
-		inner_is_function = true;
-	}
-	else if (jointype == JOIN_INNER && outerrel->rtekind == RTE_FUNCTION &&
-			 (fpinfo_i = (PgFdwRelationInfo *) innerrel->fdw_private) &&
-			 fpinfo_i->pushdown_safe &&
-			 function_rte_pushdown_ok(root, outerrel, innerrel))
-	{
-		outer_is_function = true;
-	}
-	else
-	{
-		fpinfo_o = (PgFdwRelationInfo *) outerrel->fdw_private;
-		fpinfo_i = (PgFdwRelationInfo *) innerrel->fdw_private;
-		if (!fpinfo_o || !fpinfo_o->pushdown_safe ||
-			!fpinfo_i || !fpinfo_i->pushdown_safe)
-			return false;
-	}
+	fpinfo_o = (PgFdwRelationInfo *) outerrel->fdw_private;
+	fpinfo_i = (PgFdwRelationInfo *) innerrel->fdw_private;
 
-	/*
-	 * If one side is a function RTE, allocate a stub fpinfo so the rest of
-	 * this function and the cost estimator can treat it uniformly.  We hand
-	 * the stub to the joinrel's deparser via the same path the foreign side
-	 * uses, but we never permanently attach it to the function rel's
-	 * fdw_private (different joinrels may pair the same function RTE with
-	 * different foreign servers).
-	 */
-	if (inner_is_function)
+	if (jointype == JOIN_INNER && innerrel->rtekind == RTE_FUNCTION &&
+		fpinfo_o && fpinfo_o->pushdown_safe &&
+		function_rte_pushdown_ok(root, innerrel, outerrel))
 	{
 		fpinfo_i = init_func_stub_fpinfo(fpinfo_o, innerrel);
 
@@ -7118,15 +7098,20 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 						   &fpinfo_i->remote_conds, &fpinfo_i->local_conds);
 		fpinfo->inner_func_fpinfo = fpinfo_i;
 	}
-	else if (outer_is_function)
+	else if (jointype == JOIN_INNER && outerrel->rtekind == RTE_FUNCTION &&
+			 fpinfo_i && fpinfo_i->pushdown_safe &&
+			 function_rte_pushdown_ok(root, outerrel, innerrel))
 	{
 		fpinfo_o = init_func_stub_fpinfo(fpinfo_i, outerrel);
 
-		/* See the comment in the inner_is_function branch above. */
+		/* See the comment in the branch above. */
 		classifyConditions(root, outerrel, fpinfo_o, outerrel->baserestrictinfo,
 						   &fpinfo_o->remote_conds, &fpinfo_o->local_conds);
 		fpinfo->outer_func_fpinfo = fpinfo_o;
 	}
+	else if (!fpinfo_o || !fpinfo_o->pushdown_safe ||
+			 !fpinfo_i || !fpinfo_i->pushdown_safe)
+		return false;
 
 	/*
 	 * If joining relations have local conditions, those conditions are
