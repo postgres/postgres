@@ -719,6 +719,47 @@ SELECT pg_stat_statements_reset() IS NOT NULL AS t;
  t
 (1 row)
 
+-- WAIT FOR LSN
+WAIT FOR LSN '0/0' WITH (MODE 'primary_flush');
+ status  
+---------
+ success
+(1 row)
+
+WAIT FOR LSN '0/1' WITH (MODE 'primary_flush');
+ status  
+---------
+ success
+(1 row)
+
+WAIT FOR LSN '0/0' WITH (MODE 'primary_flush', NO_THROW);
+ status  
+---------
+ success
+(1 row)
+
+WAIT FOR LSN '0/0' WITH (MODE 'primary_flush', TIMEOUT 1);
+ status  
+---------
+ success
+(1 row)
+
+SELECT calls, rows, query FROM pg_stat_statements
+  WHERE query LIKE 'WAIT FOR LSN%'
+  ORDER BY query COLLATE "C";
+ calls | rows |                         query                          
+-------+------+--------------------------------------------------------
+     2 |    0 | WAIT FOR LSN $1 WITH (MODE 'primary_flush')
+     1 |    0 | WAIT FOR LSN $1 WITH (MODE 'primary_flush', NO_THROW)
+     1 |    0 | WAIT FOR LSN $1 WITH (MODE 'primary_flush', TIMEOUT 1)
+(3 rows)
+
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
 -- Special cases.  Keep these ones at the end to avoid conflicts.
 SET SCHEMA 'foo';
 SET SCHEMA 'public';
