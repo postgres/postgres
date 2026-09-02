@@ -104,12 +104,12 @@ static struct StatsArgInfo cleararginfo[] =
 	[C_NUM_ATTRIBUTE_STATS_ARGS] = {0}
 };
 
-static bool attribute_statistics_update(FunctionCallInfo fcinfo);
+static bool attribute_statistics_update(const NullableDatum *args);
 static bool attribute_statistics_update_internal(Oid reloid,
 												 const char *attname,
 												 AttrNumber attnum,
 												 bool inherited,
-												 FunctionCallInfo fcinfo);
+												 const AttributeStatsValues *statvalues);
 static void upsert_pg_statistic(Relation starel, HeapTuple oldtup,
 								const Datum *values, const bool *nulls, const bool *replaces);
 static bool delete_pg_statistic(Oid reloid, AttrNumber attnum, bool stainherit);
@@ -131,7 +131,7 @@ static bool delete_pg_statistic(Oid reloid, AttrNumber attnum, bool stainherit);
  * and other statistic kinds may still be updated.
  */
 static bool
-attribute_statistics_update(FunctionCallInfo fcinfo)
+attribute_statistics_update(const NullableDatum *args)
 {
 	char	   *nspname;
 	char	   *relname;
@@ -140,12 +140,13 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 	AttrNumber	attnum;
 	bool		inherited;
 	Oid			locked_table = InvalidOid;
+	AttributeStatsValues values;
 
-	stats_check_required_arg(fcinfo, attarginfo, ATTRELSCHEMA_ARG);
-	stats_check_required_arg(fcinfo, attarginfo, ATTRELNAME_ARG);
+	stats_check_required_arg(args, attarginfo, ATTRELSCHEMA_ARG);
+	stats_check_required_arg(args, attarginfo, ATTRELNAME_ARG);
 
-	nspname = TextDatumGetCString(PG_GETARG_DATUM(ATTRELSCHEMA_ARG));
-	relname = TextDatumGetCString(PG_GETARG_DATUM(ATTRELNAME_ARG));
+	nspname = TextDatumGetCString(args[ATTRELSCHEMA_ARG].value);
+	relname = TextDatumGetCString(args[ATTRELNAME_ARG].value);
 
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -159,13 +160,13 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 									  RangeVarCallbackForStats, &locked_table);
 
 	/* user can specify either attname or attnum, but not both */
-	if (!PG_ARGISNULL(ATTNAME_ARG))
+	if (!args[ATTNAME_ARG].isnull)
 	{
-		if (!PG_ARGISNULL(ATTNUM_ARG))
+		if (!args[ATTNUM_ARG].isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("cannot specify both \"%s\" and \"%s\"", "attname", "attnum")));
-		attname = TextDatumGetCString(PG_GETARG_DATUM(ATTNAME_ARG));
+		attname = TextDatumGetCString(args[ATTNAME_ARG].value);
 		attnum = get_attnum(reloid, attname);
 		/* note that this test covers attisdropped cases too: */
 		if (attnum == InvalidAttrNumber)
@@ -174,9 +175,9 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 					 errmsg("column \"%s\" of relation \"%s\" does not exist",
 							attname, relname)));
 	}
-	else if (!PG_ARGISNULL(ATTNUM_ARG))
+	else if (!args[ATTNUM_ARG].isnull)
 	{
-		attnum = PG_GETARG_INT16(ATTNUM_ARG);
+		attnum = DatumGetInt16(args[ATTNUM_ARG].value);
 		attname = get_attname(reloid, attnum, true);
 		/* annoyingly, get_attname doesn't check attisdropped */
 		if (attname == NULL ||
@@ -201,11 +202,28 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 				 errmsg("cannot modify statistics on system column \"%s\"",
 						attname)));
 
-	stats_check_required_arg(fcinfo, attarginfo, INHERITED_ARG);
-	inherited = PG_GETARG_BOOL(INHERITED_ARG);
+	stats_check_required_arg(args, attarginfo, INHERITED_ARG);
+	inherited = DatumGetBool(args[INHERITED_ARG].value);
+
+	/* Collect the values to apply */
+	values.version.value = (Datum) 0;
+	values.version.isnull = true;
+	values.null_frac = args[NULL_FRAC_ARG];
+	values.avg_width = args[AVG_WIDTH_ARG];
+	values.n_distinct = args[N_DISTINCT_ARG];
+	values.most_common_vals = args[MOST_COMMON_VALS_ARG];
+	values.most_common_freqs = args[MOST_COMMON_FREQS_ARG];
+	values.histogram_bounds = args[HISTOGRAM_BOUNDS_ARG];
+	values.correlation = args[CORRELATION_ARG];
+	values.most_common_elems = args[MOST_COMMON_ELEMS_ARG];
+	values.most_common_elem_freqs = args[MOST_COMMON_ELEM_FREQS_ARG];
+	values.elem_count_histogram = args[ELEM_COUNT_HISTOGRAM_ARG];
+	values.range_length_histogram = args[RANGE_LENGTH_HISTOGRAM_ARG];
+	values.range_empty_frac = args[RANGE_EMPTY_FRAC_ARG];
+	values.range_bounds_histogram = args[RANGE_BOUNDS_HISTOGRAM_ARG];
 
 	return attribute_statistics_update_internal(reloid, attname, attnum,
-												inherited, fcinfo);
+												inherited, &values);
 }
 
 /*
@@ -214,7 +232,8 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 static bool
 attribute_statistics_update_internal(Oid reloid,
 									 const char *attname, AttrNumber attnum,
-									 bool inherited, FunctionCallInfo fcinfo)
+									 bool inherited,
+									 const AttributeStatsValues *statvalues)
 {
 	Relation	starel;
 	HeapTuple	statup;
@@ -231,16 +250,16 @@ attribute_statistics_update_internal(Oid reloid,
 
 	FmgrInfo	array_in_fn;
 
-	bool		do_mcv = !PG_ARGISNULL(MOST_COMMON_FREQS_ARG) &&
-		!PG_ARGISNULL(MOST_COMMON_VALS_ARG);
-	bool		do_histogram = !PG_ARGISNULL(HISTOGRAM_BOUNDS_ARG);
-	bool		do_correlation = !PG_ARGISNULL(CORRELATION_ARG);
-	bool		do_mcelem = !PG_ARGISNULL(MOST_COMMON_ELEMS_ARG) &&
-		!PG_ARGISNULL(MOST_COMMON_ELEM_FREQS_ARG);
-	bool		do_dechist = !PG_ARGISNULL(ELEM_COUNT_HISTOGRAM_ARG);
-	bool		do_bounds_histogram = !PG_ARGISNULL(RANGE_BOUNDS_HISTOGRAM_ARG);
-	bool		do_range_length_histogram = !PG_ARGISNULL(RANGE_LENGTH_HISTOGRAM_ARG) &&
-		!PG_ARGISNULL(RANGE_EMPTY_FRAC_ARG);
+	bool		do_mcv = !statvalues->most_common_freqs.isnull &&
+		!statvalues->most_common_vals.isnull;
+	bool		do_histogram = !statvalues->histogram_bounds.isnull;
+	bool		do_correlation = !statvalues->correlation.isnull;
+	bool		do_mcelem = !statvalues->most_common_elems.isnull &&
+		!statvalues->most_common_elem_freqs.isnull;
+	bool		do_dechist = !statvalues->elem_count_histogram.isnull;
+	bool		do_bounds_histogram = !statvalues->range_bounds_histogram.isnull;
+	bool		do_range_length_histogram = !statvalues->range_length_histogram.isnull &&
+		!statvalues->range_empty_frac.isnull;
 
 	Datum		values[Natts_pg_statistic] = {0};
 	bool		nulls[Natts_pg_statistic] = {0};
@@ -253,41 +272,45 @@ attribute_statistics_update_internal(Oid reloid,
 	 * and skip the corresponding statistics kind, reporting back a failure.
 	 */
 
-	if (!stats_check_arg_array(fcinfo, attarginfo, MOST_COMMON_FREQS_ARG))
+	if (!stats_check_arg_array(&statvalues->most_common_freqs,
+							   "most_common_freqs"))
 	{
 		do_mcv = false;
 		result = false;
 	}
 
-	if (!stats_check_arg_array(fcinfo, attarginfo, MOST_COMMON_ELEM_FREQS_ARG))
+	if (!stats_check_arg_array(&statvalues->most_common_elem_freqs,
+							   "most_common_elem_freqs"))
 	{
 		do_mcelem = false;
 		result = false;
 	}
-	if (!stats_check_arg_array(fcinfo, attarginfo, ELEM_COUNT_HISTOGRAM_ARG))
+	if (!stats_check_arg_array(&statvalues->elem_count_histogram,
+							   "elem_count_histogram"))
 	{
 		do_dechist = false;
 		result = false;
 	}
 
-	if (!stats_check_arg_pair(fcinfo, attarginfo,
-							  MOST_COMMON_VALS_ARG, MOST_COMMON_FREQS_ARG))
+	if (!stats_check_arg_pair(&statvalues->most_common_vals,
+							  &statvalues->most_common_freqs,
+							  "most_common_vals", "most_common_freqs"))
 	{
 		do_mcv = false;
 		result = false;
 	}
 
-	if (!stats_check_arg_pair(fcinfo, attarginfo,
-							  MOST_COMMON_ELEMS_ARG,
-							  MOST_COMMON_ELEM_FREQS_ARG))
+	if (!stats_check_arg_pair(&statvalues->most_common_elems,
+							  &statvalues->most_common_elem_freqs,
+							  "most_common_elems", "most_common_elem_freqs"))
 	{
 		do_mcelem = false;
 		result = false;
 	}
 
-	if (!stats_check_arg_pair(fcinfo, attarginfo,
-							  RANGE_LENGTH_HISTOGRAM_ARG,
-							  RANGE_EMPTY_FRAC_ARG))
+	if (!stats_check_arg_pair(&statvalues->range_length_histogram,
+							  &statvalues->range_empty_frac,
+							  "range_length_histogram", "range_empty_frac"))
 	{
 		do_range_length_histogram = false;
 		result = false;
@@ -361,19 +384,19 @@ attribute_statistics_update_internal(Oid reloid,
 								 replaces);
 
 	/* if specified, set to argument values */
-	if (!PG_ARGISNULL(NULL_FRAC_ARG))
+	if (!statvalues->null_frac.isnull)
 	{
-		values[Anum_pg_statistic_stanullfrac - 1] = PG_GETARG_DATUM(NULL_FRAC_ARG);
+		values[Anum_pg_statistic_stanullfrac - 1] = statvalues->null_frac.value;
 		replaces[Anum_pg_statistic_stanullfrac - 1] = true;
 	}
-	if (!PG_ARGISNULL(AVG_WIDTH_ARG))
+	if (!statvalues->avg_width.isnull)
 	{
-		values[Anum_pg_statistic_stawidth - 1] = PG_GETARG_DATUM(AVG_WIDTH_ARG);
+		values[Anum_pg_statistic_stawidth - 1] = statvalues->avg_width.value;
 		replaces[Anum_pg_statistic_stawidth - 1] = true;
 	}
-	if (!PG_ARGISNULL(N_DISTINCT_ARG))
+	if (!statvalues->n_distinct.isnull)
 	{
-		values[Anum_pg_statistic_stadistinct - 1] = PG_GETARG_DATUM(N_DISTINCT_ARG);
+		values[Anum_pg_statistic_stadistinct - 1] = statvalues->n_distinct.value;
 		replaces[Anum_pg_statistic_stadistinct - 1] = true;
 	}
 
@@ -381,10 +404,10 @@ attribute_statistics_update_internal(Oid reloid,
 	if (do_mcv)
 	{
 		bool		converted;
-		Datum		stanumbers = PG_GETARG_DATUM(MOST_COMMON_FREQS_ARG);
+		Datum		stanumbers = statvalues->most_common_freqs.value;
 		Datum		stavalues = statatt_build_stavalues("most_common_vals",
 														&array_in_fn,
-														PG_GETARG_DATUM(MOST_COMMON_VALS_ARG),
+														statvalues->most_common_vals.value,
 														atttypid, atttypmod,
 														&converted);
 
@@ -424,7 +447,7 @@ attribute_statistics_update_internal(Oid reloid,
 
 		stavalues = statatt_build_stavalues("histogram_bounds",
 											&array_in_fn,
-											PG_GETARG_DATUM(HISTOGRAM_BOUNDS_ARG),
+											statvalues->histogram_bounds.value,
 											atttypid, atttypmod,
 											&converted);
 
@@ -442,7 +465,7 @@ attribute_statistics_update_internal(Oid reloid,
 	/* STATISTIC_KIND_CORRELATION */
 	if (do_correlation)
 	{
-		Datum		elems[] = {PG_GETARG_DATUM(CORRELATION_ARG)};
+		Datum		elems[] = {statvalues->correlation.value};
 		ArrayType  *arry = construct_array_builtin(elems, 1, FLOAT4OID);
 		Datum		stanumbers = PointerGetDatum(arry);
 
@@ -455,13 +478,13 @@ attribute_statistics_update_internal(Oid reloid,
 	/* STATISTIC_KIND_MCELEM */
 	if (do_mcelem)
 	{
-		Datum		stanumbers = PG_GETARG_DATUM(MOST_COMMON_ELEM_FREQS_ARG);
+		Datum		stanumbers = statvalues->most_common_elem_freqs.value;
 		bool		converted = false;
 		Datum		stavalues;
 
 		stavalues = statatt_build_stavalues("most_common_elems",
 											&array_in_fn,
-											PG_GETARG_DATUM(MOST_COMMON_ELEMS_ARG),
+											statvalues->most_common_elems.value,
 											elemtypid, atttypmod,
 											&converted);
 
@@ -479,7 +502,7 @@ attribute_statistics_update_internal(Oid reloid,
 	/* STATISTIC_KIND_DECHIST */
 	if (do_dechist)
 	{
-		Datum		stanumbers = PG_GETARG_DATUM(ELEM_COUNT_HISTOGRAM_ARG);
+		Datum		stanumbers = statvalues->elem_count_histogram.value;
 
 		statatt_set_slot(values, nulls, replaces,
 						 STATISTIC_KIND_DECHIST,
@@ -509,7 +532,7 @@ attribute_statistics_update_internal(Oid reloid,
 
 		stavalues = statatt_build_stavalues("range_bounds_histogram",
 											&array_in_fn,
-											PG_GETARG_DATUM(RANGE_BOUNDS_HISTOGRAM_ARG),
+											statvalues->range_bounds_histogram.value,
 											bounds_typid, atttypmod,
 											&converted);
 
@@ -529,7 +552,7 @@ attribute_statistics_update_internal(Oid reloid,
 	if (do_range_length_histogram)
 	{
 		/* The anyarray is always a float8[] for this stakind */
-		Datum		elems[] = {PG_GETARG_DATUM(RANGE_EMPTY_FRAC_ARG)};
+		Datum		elems[] = {statvalues->range_empty_frac.value};
 		ArrayType  *arry = construct_array_builtin(elems, 1, FLOAT4OID);
 		Datum		stanumbers = PointerGetDatum(arry);
 
@@ -538,7 +561,7 @@ attribute_statistics_update_internal(Oid reloid,
 
 		stavalues = statatt_build_stavalues("range_length_histogram",
 											&array_in_fn,
-											PG_GETARG_DATUM(RANGE_LENGTH_HISTOGRAM_ARG),
+											statvalues->range_length_histogram.value,
 											FLOAT8OID, 0, &converted);
 
 		if (converted)
@@ -631,10 +654,10 @@ pg_clear_attribute_stats(PG_FUNCTION_ARGS)
 	bool		inherited;
 	Oid			locked_table = InvalidOid;
 
-	stats_check_required_arg(fcinfo, cleararginfo, C_ATTRELSCHEMA_ARG);
-	stats_check_required_arg(fcinfo, cleararginfo, C_ATTRELNAME_ARG);
-	stats_check_required_arg(fcinfo, cleararginfo, C_ATTNAME_ARG);
-	stats_check_required_arg(fcinfo, cleararginfo, C_INHERITED_ARG);
+	stats_check_required_arg(fcinfo->args, cleararginfo, C_ATTRELSCHEMA_ARG);
+	stats_check_required_arg(fcinfo->args, cleararginfo, C_ATTRELNAME_ARG);
+	stats_check_required_arg(fcinfo->args, cleararginfo, C_ATTNAME_ARG);
+	stats_check_required_arg(fcinfo->args, cleararginfo, C_INHERITED_ARG);
 
 	nspname = TextDatumGetCString(PG_GETARG_DATUM(C_ATTRELSCHEMA_ARG));
 	relname = TextDatumGetCString(PG_GETARG_DATUM(C_ATTRELNAME_ARG));
@@ -699,64 +722,33 @@ pg_clear_attribute_stats(PG_FUNCTION_ARGS)
 Datum
 pg_restore_attribute_stats(PG_FUNCTION_ARGS)
 {
-	LOCAL_FCINFO(positional_fcinfo, NUM_ATTRIBUTE_STATS_ARGS);
+	NullableDatum positional_args[NUM_ATTRIBUTE_STATS_ARGS];
 	bool		result = true;
 
-	InitFunctionCallInfoData(*positional_fcinfo, NULL, NUM_ATTRIBUTE_STATS_ARGS,
-							 InvalidOid, NULL, NULL);
-
-	if (!stats_fill_fcinfo_from_arg_pairs(fcinfo, positional_fcinfo,
-										  attarginfo))
+	if (!stats_fill_args_from_arg_pairs(fcinfo, positional_args,
+										attarginfo))
 		result = false;
 
-	if (!attribute_statistics_update(positional_fcinfo))
+	if (!attribute_statistics_update(positional_args))
 		result = false;
 
 	PG_RETURN_BOOL(result);
 }
 
 /*
- * Import attribute statistics from NullableDatum inputs for all statistical
- * values.
+ * Import attribute statistics for a relation.
  *
- * For now, the 'version' argument is ignored. In the future it can be used
- * to interpret older statistics properly.
+ * See AttributeStatsValues for the values to provide.
  */
 bool
 import_attribute_statistics(Relation rel, AttrNumber attnum, bool inherited,
-							const NullableDatum *version,
-							const NullableDatum *null_frac,
-							const NullableDatum *avg_width,
-							const NullableDatum *n_distinct,
-							const NullableDatum *most_common_vals,
-							const NullableDatum *most_common_freqs,
-							const NullableDatum *histogram_bounds,
-							const NullableDatum *correlation,
-							const NullableDatum *most_common_elems,
-							const NullableDatum *most_common_elem_freqs,
-							const NullableDatum *elem_count_histogram,
-							const NullableDatum *range_length_histogram,
-							const NullableDatum *range_empty_frac,
-							const NullableDatum *range_bounds_histogram)
+							const AttributeStatsValues *statvalues)
 {
-	LOCAL_FCINFO(newfcinfo, NUM_ATTRIBUTE_STATS_ARGS);
 	Oid			reloid = RelationGetRelid(rel);
 	char	   *relname = RelationGetRelationName(rel);
 	char	   *attname = get_attname(reloid, attnum, true);
 
-	Assert(null_frac);
-	Assert(avg_width);
-	Assert(n_distinct);
-	Assert(most_common_vals);
-	Assert(most_common_freqs);
-	Assert(histogram_bounds);
-	Assert(correlation);
-	Assert(most_common_elems);
-	Assert(most_common_elem_freqs);
-	Assert(elem_count_histogram);
-	Assert(range_length_histogram);
-	Assert(range_empty_frac);
-	Assert(range_bounds_histogram);
+	Assert(statvalues);
 
 	/* annoyingly, get_attname doesn't check attisdropped */
 	if (attname == NULL ||
@@ -766,37 +758,8 @@ import_attribute_statistics(Relation rel, AttrNumber attnum, bool inherited,
 				 errmsg("column %d of relation \"%s\" does not exist",
 						attnum, relname)));
 
-	InitFunctionCallInfoData(*newfcinfo, NULL, NUM_ATTRIBUTE_STATS_ARGS,
-							 InvalidOid, NULL, NULL);
-
-	newfcinfo->args[ATTRELSCHEMA_ARG].value =
-		CStringGetTextDatum(get_namespace_name(RelationGetNamespace(rel)));
-	newfcinfo->args[ATTRELSCHEMA_ARG].isnull = false;
-	newfcinfo->args[ATTRELNAME_ARG].value = CStringGetTextDatum(relname);
-	newfcinfo->args[ATTRELNAME_ARG].isnull = false;
-	newfcinfo->args[ATTNAME_ARG].value = CStringGetTextDatum(attname);
-	newfcinfo->args[ATTNAME_ARG].isnull = false;
-	newfcinfo->args[ATTNUM_ARG].value = Int16GetDatum(attnum);
-	newfcinfo->args[ATTNUM_ARG].isnull = false;
-	newfcinfo->args[INHERITED_ARG].value = BoolGetDatum(inherited);
-	newfcinfo->args[INHERITED_ARG].isnull = false;
-
-	newfcinfo->args[NULL_FRAC_ARG] = *null_frac;
-	newfcinfo->args[AVG_WIDTH_ARG] = *avg_width;
-	newfcinfo->args[N_DISTINCT_ARG] = *n_distinct;
-	newfcinfo->args[MOST_COMMON_VALS_ARG] = *most_common_vals;
-	newfcinfo->args[MOST_COMMON_FREQS_ARG] = *most_common_freqs;
-	newfcinfo->args[HISTOGRAM_BOUNDS_ARG] = *histogram_bounds;
-	newfcinfo->args[CORRELATION_ARG] = *correlation;
-	newfcinfo->args[MOST_COMMON_ELEMS_ARG] = *most_common_elems;
-	newfcinfo->args[MOST_COMMON_ELEM_FREQS_ARG] = *most_common_elem_freqs;
-	newfcinfo->args[ELEM_COUNT_HISTOGRAM_ARG] = *elem_count_histogram;
-	newfcinfo->args[RANGE_LENGTH_HISTOGRAM_ARG] = *range_length_histogram;
-	newfcinfo->args[RANGE_EMPTY_FRAC_ARG] = *range_empty_frac;
-	newfcinfo->args[RANGE_BOUNDS_HISTOGRAM_ARG] = *range_bounds_histogram;
-
 	return attribute_statistics_update_internal(reloid, attname, attnum,
-												inherited, newfcinfo);
+												inherited, statvalues);
 }
 
 /*

@@ -121,7 +121,7 @@ static const char *extexprargname[NUM_ATTRIBUTE_STATS_ELEMS] =
 	"range_bounds_histogram"
 };
 
-static bool extended_statistics_update(FunctionCallInfo fcinfo);
+static bool extended_statistics_update(const NullableDatum *args);
 
 static HeapTuple get_pg_statistic_ext(Relation pg_stext, Oid nspoid,
 									  const char *stxname);
@@ -311,7 +311,7 @@ upsert_pg_statistic_ext_data(const Datum *values, const bool *nulls,
  * be updated.
  */
 static bool
-extended_statistics_update(FunctionCallInfo fcinfo)
+extended_statistics_update(const NullableDatum *args)
 {
 	char	   *relnspname;
 	char	   *relname;
@@ -356,12 +356,12 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	 * Therefore, none of the three array values is meaningful unless the
 	 * other two are also present and in sync in terms of array length.
 	 */
-	has.mcv = (!PG_ARGISNULL(MOST_COMMON_VALS_ARG) &&
-			   !PG_ARGISNULL(MOST_COMMON_FREQS_ARG) &&
-			   !PG_ARGISNULL(MOST_COMMON_BASE_FREQS_ARG));
-	has.ndistinct = !PG_ARGISNULL(NDISTINCT_ARG);
-	has.dependencies = !PG_ARGISNULL(DEPENDENCIES_ARG);
-	has.expressions = !PG_ARGISNULL(EXPRESSIONS_ARG);
+	has.mcv = (!args[MOST_COMMON_VALS_ARG].isnull &&
+			   !args[MOST_COMMON_FREQS_ARG].isnull &&
+			   !args[MOST_COMMON_BASE_FREQS_ARG].isnull);
+	has.ndistinct = !args[NDISTINCT_ARG].isnull;
+	has.dependencies = !args[DEPENDENCIES_ARG].isnull;
+	has.expressions = !args[EXPRESSIONS_ARG].isnull;
 
 	if (RecoveryInProgress())
 	{
@@ -373,18 +373,18 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	}
 
 	/* relation arguments */
-	stats_check_required_arg(fcinfo, extarginfo, RELSCHEMA_ARG);
-	relnspname = TextDatumGetCString(PG_GETARG_DATUM(RELSCHEMA_ARG));
-	stats_check_required_arg(fcinfo, extarginfo, RELNAME_ARG);
-	relname = TextDatumGetCString(PG_GETARG_DATUM(RELNAME_ARG));
+	stats_check_required_arg(args, extarginfo, RELSCHEMA_ARG);
+	relnspname = TextDatumGetCString(args[RELSCHEMA_ARG].value);
+	stats_check_required_arg(args, extarginfo, RELNAME_ARG);
+	relname = TextDatumGetCString(args[RELNAME_ARG].value);
 
 	/* extended statistics arguments */
-	stats_check_required_arg(fcinfo, extarginfo, STATSCHEMA_ARG);
-	nspname = TextDatumGetCString(PG_GETARG_DATUM(STATSCHEMA_ARG));
-	stats_check_required_arg(fcinfo, extarginfo, STATNAME_ARG);
-	stxname = TextDatumGetCString(PG_GETARG_DATUM(STATNAME_ARG));
-	stats_check_required_arg(fcinfo, extarginfo, INHERITED_ARG);
-	inherited = PG_GETARG_BOOL(INHERITED_ARG);
+	stats_check_required_arg(args, extarginfo, STATSCHEMA_ARG);
+	nspname = TextDatumGetCString(args[STATSCHEMA_ARG].value);
+	stats_check_required_arg(args, extarginfo, STATNAME_ARG);
+	stxname = TextDatumGetCString(args[STATNAME_ARG].value);
+	stats_check_required_arg(args, extarginfo, INHERITED_ARG);
+	inherited = DatumGetBool(args[INHERITED_ARG].value);
 
 	/*
 	 * First open the relation where we expect to find the statistics.  This
@@ -514,9 +514,9 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	 */
 	if (!enabled.mcv)
 	{
-		if (!PG_ARGISNULL(MOST_COMMON_VALS_ARG) ||
-			!PG_ARGISNULL(MOST_COMMON_FREQS_ARG) ||
-			!PG_ARGISNULL(MOST_COMMON_BASE_FREQS_ARG))
+		if (!args[MOST_COMMON_VALS_ARG].isnull ||
+			!args[MOST_COMMON_FREQS_ARG].isnull ||
+			!args[MOST_COMMON_BASE_FREQS_ARG].isnull)
 		{
 			ereport(WARNING,
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -538,9 +538,9 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 		 * statistics object expects something, something is wrong.  This
 		 * issues a WARNING if a partial input has been provided.
 		 */
-		if (!PG_ARGISNULL(MOST_COMMON_VALS_ARG) ||
-			!PG_ARGISNULL(MOST_COMMON_FREQS_ARG) ||
-			!PG_ARGISNULL(MOST_COMMON_BASE_FREQS_ARG))
+		if (!args[MOST_COMMON_VALS_ARG].isnull ||
+			!args[MOST_COMMON_FREQS_ARG].isnull ||
+			!args[MOST_COMMON_BASE_FREQS_ARG].isnull)
 		{
 			ereport(WARNING,
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -655,7 +655,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 
 	if (has.ndistinct)
 	{
-		Datum		ndistinct_datum = PG_GETARG_DATUM(NDISTINCT_ARG);
+		Datum		ndistinct_datum = args[NDISTINCT_ARG].value;
 		bytea	   *data = DatumGetByteaPP(ndistinct_datum);
 		MVNDistinct *ndistinct = statext_ndistinct_deserialize(data);
 
@@ -674,7 +674,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 
 	if (has.dependencies)
 	{
-		Datum		dependencies_datum = PG_GETARG_DATUM(DEPENDENCIES_ARG);
+		Datum		dependencies_datum = args[DEPENDENCIES_ARG].value;
 		bytea	   *data = DatumGetByteaPP(dependencies_datum);
 		MVDependencies *dependencies = statext_dependencies_deserialize(data);
 
@@ -696,9 +696,9 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 		Datum		datum;
 		bool		val_ok = false;
 
-		datum = import_mcv(PG_GETARG_ARRAYTYPE_P(MOST_COMMON_VALS_ARG),
-						   PG_GETARG_ARRAYTYPE_P(MOST_COMMON_FREQS_ARG),
-						   PG_GETARG_ARRAYTYPE_P(MOST_COMMON_BASE_FREQS_ARG),
+		datum = import_mcv(DatumGetArrayTypeP(args[MOST_COMMON_VALS_ARG].value),
+						   DatumGetArrayTypeP(args[MOST_COMMON_FREQS_ARG].value),
+						   DatumGetArrayTypeP(args[MOST_COMMON_BASE_FREQS_ARG].value),
 						   atttypids, atttypmods, atttypcolls, numattrs,
 						   &val_ok);
 
@@ -733,7 +733,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 								   &atttypids[numattnums],
 								   &atttypmods[numattnums],
 								   &atttypcolls[numattnums],
-								   PG_GETARG_JSONB_P(EXPRESSIONS_ARG),
+								   DatumGetJsonbP(args[EXPRESSIONS_ARG].value),
 								   &ok);
 
 		table_close(pgsd, RowExclusiveLock);
@@ -1718,22 +1718,19 @@ delete_pg_statistic_ext_data(Oid stxoid, bool inherited)
  * Restore (insert or replace) statistics for the given statistics object.
  *
  * This function accepts variadic arguments in key-value pairs, which are
- * given to stats_fill_fcinfo_from_arg_pairs to be mapped into positional
+ * given to stats_fill_args_from_arg_pairs to be mapped into positional
  * arguments.
  */
 Datum
 pg_restore_extended_stats(PG_FUNCTION_ARGS)
 {
-	LOCAL_FCINFO(positional_fcinfo, NUM_EXTENDED_STATS_ARGS);
+	NullableDatum positional_args[NUM_EXTENDED_STATS_ARGS];
 	bool		result = true;
 
-	InitFunctionCallInfoData(*positional_fcinfo, NULL, NUM_EXTENDED_STATS_ARGS,
-							 InvalidOid, NULL, NULL);
-
-	if (!stats_fill_fcinfo_from_arg_pairs(fcinfo, positional_fcinfo, extarginfo))
+	if (!stats_fill_args_from_arg_pairs(fcinfo, positional_args, extarginfo))
 		result = false;
 
-	if (!extended_statistics_update(positional_fcinfo))
+	if (!extended_statistics_update(positional_args))
 		result = false;
 
 	PG_RETURN_BOOL(result);
@@ -1758,17 +1755,17 @@ pg_clear_extended_stats(PG_FUNCTION_ARGS)
 	Oid			locked_table = InvalidOid;
 
 	/* relation arguments */
-	stats_check_required_arg(fcinfo, extarginfo, RELSCHEMA_ARG);
+	stats_check_required_arg(fcinfo->args, extarginfo, RELSCHEMA_ARG);
 	relnspname = TextDatumGetCString(PG_GETARG_DATUM(RELSCHEMA_ARG));
-	stats_check_required_arg(fcinfo, extarginfo, RELNAME_ARG);
+	stats_check_required_arg(fcinfo->args, extarginfo, RELNAME_ARG);
 	relname = TextDatumGetCString(PG_GETARG_DATUM(RELNAME_ARG));
 
 	/* extended statistics arguments */
-	stats_check_required_arg(fcinfo, extarginfo, STATSCHEMA_ARG);
+	stats_check_required_arg(fcinfo->args, extarginfo, STATSCHEMA_ARG);
 	nspname = TextDatumGetCString(PG_GETARG_DATUM(STATSCHEMA_ARG));
-	stats_check_required_arg(fcinfo, extarginfo, STATNAME_ARG);
+	stats_check_required_arg(fcinfo->args, extarginfo, STATNAME_ARG);
 	stxname = TextDatumGetCString(PG_GETARG_DATUM(STATNAME_ARG));
-	stats_check_required_arg(fcinfo, extarginfo, INHERITED_ARG);
+	stats_check_required_arg(fcinfo->args, extarginfo, INHERITED_ARG);
 	inherited = PG_GETARG_BOOL(INHERITED_ARG);
 
 	if (RecoveryInProgress())

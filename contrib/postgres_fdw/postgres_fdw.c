@@ -6253,11 +6253,12 @@ import_fetched_statistics(Relation relation,
 						  int attrcnt)
 {
 	PGresult   *res;
-	NullableDatum args[ATTSTATS_NUM_FIELDS];
+	NullableDatum version;
+	RelationStatsValues relvalues;
 
-	/* Set the 'version' parameter, which is common to both statistics. */
-	args[0].value = Int32GetDatum(remstats->version);
-	args[0].isnull = false;
+	/* Set the 'version' value, which is common to both statistics. */
+	version.value = Int32GetDatum(remstats->version);
+	version.isnull = false;
 
 	/*
 	 * We import attribute statistics first, if any, because those are more
@@ -6274,6 +6275,7 @@ import_fetched_statistics(Relation relation,
 		{
 			int			row = remattrmap[mapidx].res_index;
 			AttrNumber	attnum = remattrmap[mapidx].local_attnum;
+			AttributeStatsValues attvalues;
 
 			/* All mappings should have been assigned a result set row. */
 			Assert(row >= 0);
@@ -6284,41 +6286,38 @@ import_fetched_statistics(Relation relation,
 			/* Clear existing attribute statistics. */
 			delete_attribute_statistics(relation, attnum, false);
 
-			/* Set the remaining parameters. */
-			set_float_arg(&args[1],
+			/* Set the remaining values. */
+			attvalues.version = version;
+			set_float_arg(&attvalues.null_frac,
 						  get_opt_value(res, row, ATTSTATS_NULL_FRAC));
-			set_int32_arg(&args[2],
+			set_int32_arg(&attvalues.avg_width,
 						  get_opt_value(res, row, ATTSTATS_AVG_WIDTH));
-			set_float_arg(&args[3],
+			set_float_arg(&attvalues.n_distinct,
 						  get_opt_value(res, row, ATTSTATS_N_DISTINCT));
-			set_text_arg(&args[4],
+			set_text_arg(&attvalues.most_common_vals,
 						 get_opt_value(res, row, ATTSTATS_MOST_COMMON_VALS));
-			set_floatarr_arg(&args[5],
+			set_floatarr_arg(&attvalues.most_common_freqs,
 							 get_opt_value(res, row, ATTSTATS_MOST_COMMON_FREQS));
-			set_text_arg(&args[6],
+			set_text_arg(&attvalues.histogram_bounds,
 						 get_opt_value(res, row, ATTSTATS_HISTOGRAM_BOUNDS));
-			set_float_arg(&args[7],
+			set_float_arg(&attvalues.correlation,
 						  get_opt_value(res, row, ATTSTATS_CORRELATION));
-			set_text_arg(&args[8],
+			set_text_arg(&attvalues.most_common_elems,
 						 get_opt_value(res, row, ATTSTATS_MOST_COMMON_ELEMS));
-			set_floatarr_arg(&args[9],
+			set_floatarr_arg(&attvalues.most_common_elem_freqs,
 							 get_opt_value(res, row, ATTSTATS_MOST_COMMON_ELEM_FREQS));
-			set_floatarr_arg(&args[10],
+			set_floatarr_arg(&attvalues.elem_count_histogram,
 							 get_opt_value(res, row, ATTSTATS_ELEM_COUNT_HISTOGRAM));
-			set_text_arg(&args[11],
+			set_text_arg(&attvalues.range_length_histogram,
 						 get_opt_value(res, row, ATTSTATS_RANGE_LENGTH_HISTOGRAM));
-			set_float_arg(&args[12],
+			set_float_arg(&attvalues.range_empty_frac,
 						  get_opt_value(res, row, ATTSTATS_RANGE_EMPTY_FRAC));
-			set_text_arg(&args[13],
+			set_text_arg(&attvalues.range_bounds_histogram,
 						 get_opt_value(res, row, ATTSTATS_RANGE_BOUNDS_HISTOGRAM));
 
 			/* Try to import the statistics. */
 			if (!import_attribute_statistics(relation, attnum, false,
-											 &args[0], &args[1], &args[2],
-											 &args[3], &args[4], &args[5],
-											 &args[6], &args[7], &args[8],
-											 &args[9], &args[10], &args[11],
-											 &args[12], &args[13]))
+											 &attvalues))
 			{
 				ereport(WARNING,
 						errmsg("could not import statistics for foreign table \"%s.%s\" --- attribute statistics import failed for column \"%s\" of this foreign table",
@@ -6337,20 +6336,22 @@ import_fetched_statistics(Relation relation,
 	Assert(PQnfields(res) == RELSTATS_NUM_FIELDS);
 	Assert(PQntuples(res) == 1);
 
-	/* Set the remaining parameters. */
-	set_int32_arg(&args[1], get_opt_value(res, 0, RELSTATS_RELPAGES));
-	Assert(!args[1].isnull);
-	set_float_arg(&args[2], get_opt_value(res, 0, RELSTATS_RELTUPLES));
-	Assert(!args[2].isnull);
+	/* Set the remaining values. */
+	relvalues.version = version;
+	set_int32_arg(&relvalues.relpages,
+				  get_opt_value(res, 0, RELSTATS_RELPAGES));
+	Assert(!relvalues.relpages.isnull);
+	set_float_arg(&relvalues.reltuples,
+				  get_opt_value(res, 0, RELSTATS_RELTUPLES));
+	Assert(!relvalues.reltuples.isnull);
 	/* We don't import relallvisible/relallfrozen. */
-	args[3].value = (Datum) 0;
-	args[3].isnull = true;
-	args[4].value = (Datum) 0;
-	args[4].isnull = true;
+	relvalues.relallvisible.value = (Datum) 0;
+	relvalues.relallvisible.isnull = true;
+	relvalues.relallfrozen.value = (Datum) 0;
+	relvalues.relallfrozen.isnull = true;
 
 	/* Try to import the statistics. */
-	if (!import_relation_statistics(relation, &args[0], &args[1],
-									&args[2], &args[3], &args[4]))
+	if (!import_relation_statistics(relation, &relvalues))
 	{
 		ereport(WARNING,
 				errmsg("could not import statistics for foreign table \"%s.%s\" --- relation statistics import failed for this foreign table",

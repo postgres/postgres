@@ -51,11 +51,11 @@ static Node *statatt_get_index_expr(Relation rel, int attnum);
  * Ensure that a given argument is not null.
  */
 void
-stats_check_required_arg(FunctionCallInfo fcinfo,
+stats_check_required_arg(const NullableDatum *args,
 						 struct StatsArgInfo *arginfo,
 						 int argnum)
 {
-	if (PG_ARGISNULL(argnum))
+	if (args[argnum].isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("argument \"%s\" must not be null",
@@ -70,23 +70,21 @@ stats_check_required_arg(FunctionCallInfo fcinfo,
  * true.
  */
 bool
-stats_check_arg_array(FunctionCallInfo fcinfo,
-					  struct StatsArgInfo *arginfo,
-					  int argnum)
+stats_check_arg_array(const NullableDatum *arg, const char *argname)
 {
 	ArrayType  *arr;
 
-	if (PG_ARGISNULL(argnum))
+	if (arg->isnull)
 		return true;
 
-	arr = DatumGetArrayTypeP(PG_GETARG_DATUM(argnum));
+	arr = DatumGetArrayTypeP(arg->value);
 
 	if (ARR_NDIM(arr) != 1)
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("argument \"%s\" must not be a multidimensional array",
-						arginfo[argnum].argname)));
+						argname)));
 		return false;
 	}
 
@@ -95,7 +93,7 @@ stats_check_arg_array(FunctionCallInfo fcinfo,
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("argument \"%s\" array must not contain null values",
-						arginfo[argnum].argname)));
+						argname)));
 		return false;
 	}
 
@@ -111,23 +109,21 @@ stats_check_arg_array(FunctionCallInfo fcinfo,
  * true.
  */
 bool
-stats_check_arg_pair(FunctionCallInfo fcinfo,
-					 struct StatsArgInfo *arginfo,
-					 int argnum1, int argnum2)
+stats_check_arg_pair(const NullableDatum *arg1, const NullableDatum *arg2,
+					 const char *argname1, const char *argname2)
 {
-	if (PG_ARGISNULL(argnum1) && PG_ARGISNULL(argnum2))
+	if (arg1->isnull && arg2->isnull)
 		return true;
 
-	if (PG_ARGISNULL(argnum1) || PG_ARGISNULL(argnum2))
+	if (arg1->isnull || arg2->isnull)
 	{
-		int			nullarg = PG_ARGISNULL(argnum1) ? argnum1 : argnum2;
-		int			otherarg = PG_ARGISNULL(argnum1) ? argnum2 : argnum1;
+		const char *nullarg = arg1->isnull ? argname1 : argname2;
+		const char *otherarg = arg1->isnull ? argname2 : argname1;
 
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("argument \"%s\" must be specified when argument \"%s\" is specified",
-						arginfo[nullarg].argname,
-						arginfo[otherarg].argname)));
+						nullarg, otherarg)));
 
 		return false;
 	}
@@ -340,17 +336,17 @@ statatt_get_index_expr(Relation rel, int attnum)
 
 /*
  * Translate variadic argument pairs from 'pairs_fcinfo' into a
- * 'positional_fcinfo' appropriate for calling relation_statistics_update() or
- * attribute_statistics_update() with positional arguments.
+ * NullableDatum[] appropriate for calling the internal statistics update
+ * functions for relation stats, attribute stats, or extended stats.
  *
- * Caller should have already initialized positional_fcinfo with a size
- * appropriate for calling the intended positional function, and arginfo
- * should also match the intended positional function.
+ * Caller should have already initialized args with a size appropriate for
+ * calling the intended function, and arginfo should also match the intended
+ * function.
  */
 bool
-stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
-								 FunctionCallInfo positional_fcinfo,
-								 struct StatsArgInfo *arginfo)
+stats_fill_args_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
+							   NullableDatum *positional_args,
+							   struct StatsArgInfo *arginfo)
 {
 	Datum	   *args;
 	bool	   *argnulls;
@@ -361,8 +357,8 @@ stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 	/* clear positional args */
 	for (int i = 0; arginfo[i].argname != NULL; i++)
 	{
-		positional_fcinfo->args[i].value = (Datum) 0;
-		positional_fcinfo->args[i].isnull = true;
+		positional_args[i].value = (Datum) 0;
+		positional_args[i].isnull = true;
 	}
 
 	nargs = extract_variadic_args(pairs_fcinfo, 0, true,
@@ -420,8 +416,8 @@ stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 			continue;
 		}
 
-		positional_fcinfo->args[argnum].value = args[i + 1];
-		positional_fcinfo->args[argnum].isnull = false;
+		positional_args[argnum].value = args[i + 1];
+		positional_args[argnum].isnull = false;
 	}
 
 	return result;
