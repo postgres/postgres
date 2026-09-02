@@ -126,14 +126,19 @@ $ret =
 	qq[INSERT INTO wraparoundtest VALUES ('after VACUUM')],
 	'INSERT 0 1');
 
-# Check the table contents
+# Check the table contents.  It's possible for more than one "after VACUUM"
+# entry to appear, because there is a window where the preceding INSERT will
+# succeed but also produce a warning message about impending wraparound.
+# poll_query_until won't accept that as a successful result, so it iterates
+# an additional time or times until the INSERT succeeds cleanly.
 $ret = $node->safe_psql('postgres', qq[SELECT * from wraparoundtest]);
-is( $ret, "start
+like(
+	$ret, qr/^start
 oldxact
 after 1 billion
 after 2 billion
-reached warn-limit
-after VACUUM");
+reached warn-limit(
+after VACUUM)+$/);
 
 $node->stop;
 done_testing();
