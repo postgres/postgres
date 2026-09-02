@@ -146,7 +146,6 @@ static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 									bool has_clone,
 									bool is_clone,
 									List **postponed_oj_qual_list);
-static bool check_redundant_nullability_qual(PlannerInfo *root, Node *clause);
 static Relids get_join_domain_min_rels(PlannerInfo *root, Relids domain_relids);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
 static void check_hashjoinable(RestrictInfo *restrictinfo);
@@ -2871,10 +2870,6 @@ distribute_quals_to_rels(PlannerInfo *root, List *clauses,
  * 'qualscope' identifies what level of JOIN the qual came from syntactically.
  * 'ojscope' is needed if we decide to force the qual up to the outer-join
  * level, which will be ojscope not necessarily qualscope.
- *
- * At the time this is called, root->join_info_list must contain entries for
- * at least those special joins that are syntactically below this qual.
- * (We now need that only for detection of redundant IS NULL quals.)
  */
 static void
 distribute_qual_to_rels(PlannerInfo *root, Node *clause,
@@ -3078,15 +3073,6 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 */
 		is_pushed_down = true;
 
-		/*
-		 * It's possible that this is an IS NULL clause that's redundant with
-		 * a lower antijoin; if so we can just discard it.  We need not test
-		 * in any of the other cases, because this will only be possible for
-		 * pushed-down clauses.
-		 */
-		if (check_redundant_nullability_qual(root, clause))
-			return;
-
 		/* Feed qual to the equivalence machinery, if allowed by caller */
 		maybe_equivalence = allow_equivalence;
 
@@ -3251,53 +3237,6 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 
 	/* No EC special case applies, so push it into the clause lists */
 	distribute_restrictinfo_to_rels(root, restrictinfo);
-}
-
-/*
- * check_redundant_nullability_qual
- *	  Check to see if the qual is an IS NULL qual that is redundant with
- *	  a lower JOIN_ANTI join.
- *
- * We want to suppress redundant IS NULL quals, not so much to save cycles
- * as to avoid generating bogus selectivity estimates for them.  So if
- * redundancy is detected here, distribute_qual_to_rels() just throws away
- * the qual.
- */
-static bool
-check_redundant_nullability_qual(PlannerInfo *root, Node *clause)
-{
-	Var		   *forced_null_var;
-	ListCell   *lc;
-
-	/* Check for IS NULL, and identify the Var forced to NULL */
-	forced_null_var = find_forced_null_var(clause);
-	if (forced_null_var == NULL)
-		return false;
-
-	/*
-	 * If the Var comes from the nullable side of a lower antijoin, the IS
-	 * NULL condition is necessarily true.  If it's not nulled by anything,
-	 * there is no point in searching the join_info_list.  Otherwise, we need
-	 * to find out whether the nulling rel is an antijoin.
-	 */
-	if (forced_null_var->varnullingrels == NULL)
-		return false;
-
-	foreach(lc, root->join_info_list)
-	{
-		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
-
-		/*
-		 * This test will not succeed if sjinfo->ojrelid is zero, which is
-		 * possible for an antijoin that was converted from a semijoin; but in
-		 * such a case the Var couldn't have come from its nullable side.
-		 */
-		if (sjinfo->jointype == JOIN_ANTI && sjinfo->ojrelid != 0 &&
-			bms_is_member(sjinfo->ojrelid, forced_null_var->varnullingrels))
-			return true;
-	}
-
-	return false;
 }
 
 /*

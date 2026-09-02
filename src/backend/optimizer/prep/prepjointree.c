@@ -97,6 +97,7 @@ typedef struct reduce_outer_joins_pass2_state
 {
 	Relids		inner_reduced;	/* OJ relids reduced to plain inner joins */
 	List	   *partial_reduced;	/* List of partially reduced FULL joins */
+	Relids		anti_reduced;	/* OJ relids reduced to antijoins */
 } reduce_outer_joins_pass2_state;
 
 typedef struct reduce_outer_joins_partial_state
@@ -163,6 +164,9 @@ static void reduce_outer_joins_pass2(Node *jtnode,
 									 List *forced_null_vars);
 static void report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
 									 int rtindex, Relids relids);
+static void remove_redundant_nullability_quals(Node *jtnode,
+											   Relids antijoins);
+static Node *strip_redundant_nullability_quals(Node *quals, Relids antijoins);
 static bool has_notnull_forced_var(PlannerInfo *root, List *forced_null_vars,
 								   reduce_outer_joins_pass1_state *right_state);
 static Node *remove_useless_results_recurse(PlannerInfo *root, Node *jtnode,
@@ -3241,8 +3245,7 @@ flatten_simple_union_all(PlannerInfo *root)
  * could pass the upper WHERE, and we can conclude that what the query is
  * really specifying is an anti-semijoin.  We change the join type from
  * JOIN_LEFT to JOIN_ANTI.  The IS NULL clause then becomes redundant, and
- * must be removed to prevent bogus selectivity calculations, but we leave
- * it to distribute_qual_to_rels to get rid of such clauses.
+ * is removed at the end of this phase; see remove_redundant_nullability_quals.
  *
  * Also, we get rid of JOIN_RIGHT cases by flipping them around to become
  * JOIN_LEFT.  This saves some code here and in some later planner routines;
@@ -3279,6 +3282,7 @@ reduce_outer_joins(PlannerInfo *root)
 
 	state2.inner_reduced = NULL;
 	state2.partial_reduced = NIL;
+	state2.anti_reduced = NULL;
 
 	reduce_outer_joins_pass2((Node *) root->parse->jointree,
 							 state1, &state2,
@@ -3321,6 +3325,74 @@ reduce_outer_joins(PlannerInfo *root)
 								  full_join_relids,
 								  statep->unreduced_side);
 	}
+
+	/*
+	 * Finally, remove any quals made redundant by reducing outer joins to
+	 * antijoins.
+	 */
+	if (!bms_is_empty(state2.anti_reduced))
+		remove_redundant_nullability_quals((Node *) root->parse->jointree,
+										   state2.anti_reduced);
+}
+
+/*
+ * remove_redundant_nullability_quals
+ *		Remove quals made redundant by reducing outer joins to antijoins.
+ *
+ * An IS NULL qual on a Var from the nullable side of a lower antijoin is
+ * necessarily true.  Keeping such a qual would not be wrong, but it would
+ * generate bogus selectivity estimates, and it could prevent join removal
+ * from later removing the rel(s) it references.
+ */
+static void
+remove_redundant_nullability_quals(Node *jtnode, Relids antijoins)
+{
+	if (jtnode == NULL)
+		return;
+	if (IsA(jtnode, RangeTblRef))
+	{
+		/* nothing to do here */
+	}
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+		ListCell   *l;
+
+		foreach(l, f->fromlist)
+			remove_redundant_nullability_quals(lfirst(l), antijoins);
+		f->quals = strip_redundant_nullability_quals(f->quals, antijoins);
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+
+		remove_redundant_nullability_quals(j->larg, antijoins);
+		remove_redundant_nullability_quals(j->rarg, antijoins);
+		j->quals = strip_redundant_nullability_quals(j->quals, antijoins);
+	}
+	else
+		elog(ERROR, "unrecognized jointree node type: %d",
+			 (int) nodeTag(jtnode));
+}
+
+/*
+ * strip_redundant_nullability_quals
+ *		Strip redundant IS NULL quals from one implicit-AND qual list.
+ */
+static Node *
+strip_redundant_nullability_quals(Node *quals, Relids antijoins)
+{
+	List	   *newquals = NIL;
+
+	foreach_ptr(Node, clause, castNode(List, quals))
+	{
+		Var		   *var = find_forced_null_var(clause);
+
+		if (var && bms_overlap(var->varnullingrels, antijoins))
+			continue;
+		newquals = lappend(newquals, clause);
+	}
+	return (Node *) newquals;
 }
 
 /*
@@ -3435,9 +3507,10 @@ reduce_outer_joins_pass1(Node *jtnode)
  *
  * Returns info in state2 about outer joins that were successfully simplified.
  * Joins that were fully reduced to inner joins are all added to
- * state2->inner_reduced.  If a full join is reduced to a left join,
- * it needs its own entry in state2->partial_reduced, since that will
- * require custom processing to remove only the correct nullingrel markers.
+ * state2->inner_reduced, and joins that became antijoins are all added to
+ * state2->anti_reduced.  If a full join is reduced to a left join, it also
+ * needs its own entry in state2->partial_reduced, since that will require
+ * custom processing to remove only the correct nullingrel markers.
  */
 static void
 reduce_outer_joins_pass2(Node *jtnode,
@@ -3600,7 +3673,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 
 		/*
 		 * Apply the jointype change, if any, to both jointree node and RTE.
-		 * Also, if we changed an RTE to INNER, add its RTI to inner_reduced.
+		 * Also, if we changed an RTE to INNER, add its RTI to inner_reduced;
+		 * if we changed it to ANTI, add its RTI to anti_reduced.
 		 */
 		if (rtindex && jointype != j->jointype)
 		{
@@ -3612,6 +3686,9 @@ reduce_outer_joins_pass2(Node *jtnode,
 			if (jointype == JOIN_INNER)
 				state2->inner_reduced = bms_add_member(state2->inner_reduced,
 													   rtindex);
+			else if (jointype == JOIN_ANTI)
+				state2->anti_reduced = bms_add_member(state2->anti_reduced,
+													  rtindex);
 		}
 		j->jointype = jointype;
 
