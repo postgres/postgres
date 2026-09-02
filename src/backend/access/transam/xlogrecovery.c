@@ -323,6 +323,12 @@ typedef struct XLogRecoveryCtlData
 	bool		SharedPromoteIsTriggered;
 
 	/*
+	 * SharedRecoverySubtransInitialized indicates whether hot standby
+	 * initialization has started pg_subtrans. Protected by info_lck.
+	 */
+	bool		SharedRecoverySubtransInitialized;
+
+	/*
 	 * recoveryWakeupLatch is used to wake up the startup process to continue
 	 * WAL replay, if it is waiting for WAL to arrive or promotion to be
 	 * requested.
@@ -4521,6 +4527,32 @@ CheckPromoteSignal(void)
 		return true;
 
 	return false;
+}
+
+/*
+ * Has hot standby initialization started pg_subtrans?
+ */
+bool
+RecoverySubtransInitialized(void)
+{
+	bool		result;
+
+	SpinLockAcquire(&XLogRecoveryCtl->info_lck);
+	result = XLogRecoveryCtl->SharedRecoverySubtransInitialized;
+	SpinLockRelease(&XLogRecoveryCtl->info_lck);
+
+	return result;
+}
+
+/*
+ * Remember that hot standby initialization has started pg_subtrans.
+ */
+void
+SetRecoverySubtransInitialized(void)
+{
+	SpinLockAcquire(&XLogRecoveryCtl->info_lck);
+	XLogRecoveryCtl->SharedRecoverySubtransInitialized = true;
+	SpinLockRelease(&XLogRecoveryCtl->info_lck);
 }
 
 /*
