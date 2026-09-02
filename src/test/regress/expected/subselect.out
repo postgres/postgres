@@ -2124,6 +2124,33 @@ WHERE a = ROW(1.0)::t_rec;
   1 | (1.00)
 (1 row)
 
+-- Simple CASE: the arg is compared by each WHEN, so the same rules apply.
+-- The relabeled arg is compared by oid's "=", not the grouping eqop.
+EXPLAIN (COSTS OFF)
+SELECT * FROM (SELECT DISTINCT id FROM pdt) s
+WHERE (CASE id::oid WHEN 1 THEN 1 ELSE 0 END) = 1;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Subquery Scan on s
+   Filter: (CASE (s.id)::oid WHEN '1'::oid THEN 1 ELSE 0 END = 1)
+   ->  HashAggregate
+         Group Key: pdt.id
+         ->  Seq Scan on pdt
+(5 rows)
+
+-- Positive: compatible opfamily, safe to push past the grouping
+EXPLAIN (COSTS OFF)
+SELECT * FROM (SELECT DISTINCT id FROM pdt) s
+WHERE (CASE id WHEN 1 THEN 1 ELSE 0 END) = 1;
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Unique
+   ->  Sort
+         Sort Key: pdt.id
+         ->  Seq Scan on pdt
+               Filter: (CASE id WHEN 1 THEN 1 ELSE 0 END = 1)
+(5 rows)
+
 -- Set operations: any operation other than UNION ALL groups rows by equality,
 -- so the same opfamily-mismatch rules apply.
 CREATE TEMP TABLE u1 (a t_rec);
