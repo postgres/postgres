@@ -22,6 +22,7 @@
 #include "catalog/pg_propgraph_property.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse_clause.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_graphtable.h"
@@ -251,7 +252,8 @@ transformGraphElementPattern(ParseState *pstate, GraphElementPattern *gep)
 
 	gep->labelexpr = transformLabelExpr(gpstate, gep->labelexpr);
 
-	gep->whereClause = transformExpr(pstate, gep->whereClause, EXPR_KIND_WHERE);
+	gep->whereClause = transformWhereClause(pstate, gep->whereClause,
+											EXPR_KIND_WHERE, "WHERE");
 
 	/*
 	 * Assign collations here for the reason mentioned in the prologue of
@@ -387,7 +389,8 @@ transformGraphPattern(ParseState *pstate, GraphPattern *graph_pattern)
 											 transformPathPatternList(pstate, graph_pattern->path_pattern_list));
 
 	graph_pattern->path_pattern_list = path_pattern_list;
-	graph_pattern->whereClause = transformExpr(pstate, graph_pattern->whereClause, EXPR_KIND_WHERE);
+	graph_pattern->whereClause = transformWhereClause(pstate, graph_pattern->whereClause,
+													  EXPR_KIND_WHERE, "WHERE");
 	assign_expr_collations(pstate, graph_pattern->whereClause);
 
 	return (Node *) graph_pattern;

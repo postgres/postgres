@@ -92,6 +92,8 @@ SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.addr
 SELECT * FROM GRAPH_TABLE (myshop MATCH (c IS customers), (o IS orders) COLUMNS (c.name AS customer_name));  -- error
 SELECT * FROM GRAPH_TABLE (myshop MATCH COLUMNS (1 AS col));  -- error, empty match clause
 SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers)->{1,2}(o IS orders) COLUMNS (c.name AS customer_name));  -- error
+SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.name) COLUMNS (c.name AS customer_name));  -- error, WHERE must yield boolean
+SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers) WHERE c.customer_id COLUMNS (c.name AS customer_name));  -- error, WHERE must yield boolean
 SELECT * FROM GRAPH_TABLE (myshop MATCH ((c IS customers)->(o IS orders)) COLUMNS (c.name));
 
 -- a property graph can be referenced only from within GRAPH_TABLE clause.

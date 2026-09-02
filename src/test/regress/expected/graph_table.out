@@ -101,6 +101,10 @@ LINE 1: SELECT * FROM GRAPH_TABLE (myshop MATCH COLUMNS (1 AS col));
                                                 ^
 SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers)->{1,2}(o IS orders) COLUMNS (c.name AS customer_name));  -- error
 ERROR:  element pattern quantifier is not supported
+SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers WHERE c.name) COLUMNS (c.name AS customer_name));  -- error, WHERE must yield boolean
+ERROR:  argument of WHERE must be type boolean, not type character varying
+SELECT customer_name FROM GRAPH_TABLE (myshop MATCH (c IS customers) WHERE c.customer_id COLUMNS (c.name AS customer_name));  -- error, WHERE must yield boolean
+ERROR:  argument of WHERE must be type boolean, not type integer
 SELECT * FROM GRAPH_TABLE (myshop MATCH ((c IS customers)->(o IS orders)) COLUMNS (c.name));
 ERROR:  unsupported element pattern kind: "nested path pattern"
 LINE 1: SELECT * FROM GRAPH_TABLE (myshop MATCH ((c IS customers)->(...
