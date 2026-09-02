@@ -64,7 +64,7 @@
 
     <listitem>
      <para>
-      A new <link linkend="sql-wait-for"><command>WAIT FOR</command></link>
+      A new <link linkend="sql-waitfor"><command>WAIT FOR</command></link>
       command that waits until a standby has replayed changes up to a chosen
       point, thereby supporting <quote>read-your-writes</quote> query patterns
       on standbys.
@@ -1532,7 +1532,7 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 
 <listitem>
 <para>
-Add <link linkend="sql-wait-for"><command>WAIT FOR</command></link> command to allow standbys to wait for <link linkend="wal-internals"><acronym>LSN</acronym></link> values to be written, flushed, or replayed (Kartyshov Ivan, Alexander Korotkov, Xuneng Zhou)
+Add <link linkend="sql-waitfor"><command>WAIT FOR</command></link> command to allow standbys to wait for <link linkend="wal-internals"><acronym>LSN</acronym></link> values to be written, flushed, or replayed (Kartyshov Ivan, Alexander Korotkov, Xuneng Zhou)
 <ulink url="&commit_baseurl;447aae13b">&sect;</ulink>
 <ulink url="&commit_baseurl;49a181b5d">&sect;</ulink>
 </para>

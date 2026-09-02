@@ -600,7 +600,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
        <para>
         <replaceable class="parameter">graph_name</replaceable> is the name
         (optionally schema-qualified) of an existing property graph (defined
-        with <xref linkend="sql-create-property-graph"/>).
+        with <xref linkend="sql-createpropertygraph"/>).
        </para>
 
        <para>

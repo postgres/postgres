@@ -3,8 +3,8 @@ doc/src/sgml/ref/wait_for.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="sql-wait-for">
- <indexterm zone="sql-wait-for">
+<refentry id="sql-waitfor">
+ <indexterm zone="sql-waitfor">
   <primary>WAIT FOR</primary>
  </indexterm>
 

@@ -1426,7 +1426,7 @@ postgres=# SELECT pg_current_wal_insert_lsn();
     The <acronym>LSN</acronym> obtained from the primary is then communicated
     to the standby server. This can be managed at the application level or
     via the connection pooler.  On the standby, the application issues the
-    <xref linkend="sql-wait-for"/> command to block further processing until
+    <xref linkend="sql-waitfor"/> command to block further processing until
     the standby's WAL replay process reaches (or exceeds) the specified
     <acronym>LSN</acronym>.
 
