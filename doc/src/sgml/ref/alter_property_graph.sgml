@@ -3,8 +3,8 @@ doc/src/sgml/ref/alter_property_graph.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="sql-alter-property-graph">
- <indexterm zone="sql-alter-property-graph">
+<refentry id="sql-alterpropertygraph">
+ <indexterm zone="sql-alterpropertygraph">
   <primary>ALTER PROPERTY GRAPH</primary>
  </indexterm>
 
@@ -66,7 +66,7 @@ ALTER PROPERTY GRAPH [ IF EXISTS ] <replaceable class="parameter">name</replacea
      <listitem>
       <para>
        This form adds new vertex or edge tables to the property graph, using the
-       same syntax as <link linkend="sql-create-property-graph"><command>CREATE
+       same syntax as <link linkend="sql-createpropertygraph"><command>CREATE
        PROPERTY GRAPH</command></link>.
       </para>
      </listitem>
@@ -89,7 +89,7 @@ ALTER PROPERTY GRAPH [ IF EXISTS ] <replaceable class="parameter">name</replacea
       <para>
        This form adds a new label to an existing vertex or edge table, using
        the same syntax as <link
-       linkend="sql-create-property-graph"><command>CREATE PROPERTY
+       linkend="sql-createpropertygraph"><command>CREATE PROPERTY
        GRAPH</command></link>.
       </para>
      </listitem>
@@ -196,7 +196,7 @@ ALTER PROPERTY GRAPH [ IF EXISTS ] <replaceable class="parameter">name</replacea
     <term><replaceable class="parameter">edge_table_definition</replaceable></term>
     <listitem>
      <para>
-      See <link linkend="sql-create-property-graph"><command>CREATE PROPERTY
+      See <link linkend="sql-createpropertygraph"><command>CREATE PROPERTY
       GRAPH</command></link>.
      </para>
     </listitem>
@@ -221,7 +221,7 @@ ALTER PROPERTY GRAPH [ IF EXISTS ] <replaceable class="parameter">name</replacea
     <term><replaceable class="parameter">expression</replaceable></term>
     <listitem>
      <para>
-      See <link linkend="sql-create-property-graph"><command>CREATE PROPERTY
+      See <link linkend="sql-createpropertygraph"><command>CREATE PROPERTY
       GRAPH</command></link>.
      </para>
     </listitem>
@@ -261,7 +261,7 @@ ALTER PROPERTY GRAPH [ IF EXISTS ] <replaceable class="parameter">name</replacea
 
   <para>
    The consistency checks on a property graph described at <xref
-   linkend="sql-create-property-graph-notes"/> must be maintained by
+   linkend="sql-createpropertygraph-notes"/> must be maintained by
    <command>ALTER PROPERTY GRAPH</command> operations.  In some cases, it
    might be necessary to make multiple alterations in a single command to
    satisfy the checks.
@@ -294,8 +294,8 @@ ALTER PROPERTY GRAPH g1 RENAME TO g2;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-create-property-graph"/></member>
-   <member><xref linkend="sql-drop-property-graph"/></member>
+   <member><xref linkend="sql-createpropertygraph"/></member>
+   <member><xref linkend="sql-droppropertygraph"/></member>
   </simplelist>
  </refsect1>
 </refentry>

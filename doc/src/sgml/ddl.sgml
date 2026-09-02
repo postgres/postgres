@@ -5941,7 +5941,7 @@ SELECT ... FROM GRAPH_TABLE (myshop
 
   <para>
    For more details on the syntax for creating property graphs, see <link
-   linkend="sql-create-property-graph"><command>CREATE PROPERTY
+   linkend="sql-createpropertygraph"><command>CREATE PROPERTY
    GRAPH</command></link>.  More details about the graph query syntax is in
    <xref linkend="queries-graph"/>.
   </para>

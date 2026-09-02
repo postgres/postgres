@@ -3,8 +3,8 @@ doc/src/sgml/ref/create_property_graph.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="sql-create-property-graph">
- <indexterm zone="sql-create-property-graph">
+<refentry id="sql-createpropertygraph">
+ <indexterm zone="sql-createpropertygraph">
   <primary>CREATE PROPERTY GRAPH</primary>
  </indexterm>
 
@@ -191,7 +191,7 @@ CREATE [ TEMP | TEMPORARY ] PROPERTY GRAPH <replaceable class="parameter">name</
   </variablelist>
  </refsect1>
 
- <refsect1 id="sql-create-property-graph-notes">
+ <refsect1 id="sql-createpropertygraph-notes">
   <title>Notes</title>
 
   <para>
@@ -311,8 +311,8 @@ CREATE PROPERTY GRAPH g1
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-alter-property-graph"/></member>
-   <member><xref linkend="sql-drop-property-graph"/></member>
+   <member><xref linkend="sql-alterpropertygraph"/></member>
+   <member><xref linkend="sql-droppropertygraph"/></member>
   </simplelist>
  </refsect1>
 </refentry>

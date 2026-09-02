@@ -3,8 +3,8 @@ doc/src/sgml/ref/drop_property_graph.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="sql-drop-property-graph">
- <indexterm zone="sql-drop-property-graph">
+<refentry id="sql-droppropertygraph">
+ <indexterm zone="sql-droppropertygraph">
   <primary>DROP PROPERTY GRAPH</primary>
  </indexterm>
 
@@ -104,8 +104,8 @@ DROP PROPERTY GRAPH g1;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-create-property-graph"/></member>
-   <member><xref linkend="sql-alter-property-graph"/></member>
+   <member><xref linkend="sql-createpropertygraph"/></member>
+   <member><xref linkend="sql-alterpropertygraph"/></member>
   </simplelist>
  </refsect1>
 </refentry>
