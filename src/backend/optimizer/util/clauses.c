@@ -1957,11 +1957,12 @@ find_forced_null_vars(Node *node)
  *		*only* nullness of the particular Var, not any other conditions.
  *
  * This is just the single-clause case of find_forced_null_vars(), without
- * any allowance for AND conditions.  It's used by initsplan.c on individual
- * qual clauses.  The reason for not just applying find_forced_null_vars()
- * is that if an AND of an IS NULL clause with something else were to somehow
- * survive AND/OR flattening, initsplan.c might get fooled into discarding
- * the whole clause when only the IS NULL part of it had been proved redundant.
+ * any allowance for AND conditions.  It's used by prepjointree.c on
+ * individual qual clauses.  The reason for not just applying
+ * find_forced_null_vars() is that if an AND of an IS NULL clause with
+ * something else were to somehow survive AND/OR flattening, prepjointree.c
+ * might get fooled into discarding the whole clause when only the IS NULL
+ * part of it had been proved redundant.
  */
 Var *
 find_forced_null_var(Node *node)
