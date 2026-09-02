@@ -1187,6 +1187,36 @@ where t2 is null;
 select * from (values (1), (2)) v(x) left join tbl_zero t2 on t2 is not null
 where t2 is null;
 
+-- Test that quals made redundant by reducing an outer join to an antijoin are
+-- removed from the jointree
+-- (fallout from the fix for bug #19560)
+create temp table tbl_anti_pk (a int primary key, b int);
+
+-- t3.a IS NULL is redundant, and the t2/t3 join can be removed
+explain (costs off)
+select 1 from tbl_anti_pk t1 left join
+  (tbl_anti_pk t2 left join tbl_anti_pk t3 on t3.a = t2.a) on t2.a = t1.a
+where t2.a is null and t3.a is null;
+
+-- the redundant qual can also be a degenerate ON clause of an upper join
+explain (costs off)
+select 1 from tbl_anti_pk t1 left join
+  (tbl_anti_pk t2 left join
+   (tbl_anti_pk t3 left join tbl_anti_pk t5 on t5.a = t3.a) on t3.a = t2.a)
+  on t3.a is null and t5.a is null;
+
+-- the same happens when the antijoin is reduced from a full join
+explain (costs off)
+select 1 from tbl_anti_pk t1 full join
+  (tbl_anti_pk t2 left join tbl_anti_pk t3 on t3.a = t2.a) on true
+where t2.a is null and t3.a is null;
+
+-- but a qual on the surviving side of the reduced full join is not redundant
+explain (costs off)
+select 1 from tbl_anti_pk t1 full join
+  (tbl_anti_pk t2 left join tbl_anti_pk t3 on t3.a = t2.a) on true
+where t2.a is null and t1.b is null;
+
 rollback;
 
 --
