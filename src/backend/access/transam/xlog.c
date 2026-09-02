@@ -690,6 +690,12 @@ typedef struct XLogCtlData
 	bool		SharedPromoteIsTriggered;
 
 	/*
+	 * SharedRecoverySubtransInitialized indicates whether hot standby
+	 * initialization has started pg_subtrans. Protected by info_lck.
+	 */
+	bool		SharedRecoverySubtransInitialized;
+
+	/*
 	 * WalWriterSleeping indicates whether the WAL writer is currently in
 	 * low-power mode (and hence should be nudged if an async commit occurs).
 	 * Protected by info_lck.
@@ -971,6 +977,8 @@ static void ReadControlFile(void);
 static char *str_time(pg_time_t tnow);
 static void SetPromoteIsTriggered(void);
 static bool CheckForStandbyTrigger(void);
+static bool RecoverySubtransInitialized(void);
+static void SetRecoverySubtransInitialized(void);
 
 #ifdef WAL_DEBUG
 static void xlog_outrec(StringInfo buf, XLogReaderState *record);
@@ -5295,6 +5303,7 @@ XLOGShmemInit(void)
 	XLogCtl->SharedHotStandbyActive = false;
 	XLogCtl->InstallXLogFileSegmentActive = false;
 	XLogCtl->SharedPromoteIsTriggered = false;
+	XLogCtl->SharedRecoverySubtransInitialized = false;
 	XLogCtl->WalWriterSleeping = false;
 
 	SpinLockInit(&XLogCtl->Insert.insertpos_lck);
@@ -7308,6 +7317,7 @@ StartupXLOG(void)
 			 * during recovery and need not be started yet.
 			 */
 			StartupSUBTRANS(oldestActiveXID);
+			SetRecoverySubtransInitialized();
 
 			/*
 			 * If we're beginning at a shutdown checkpoint, we know that
@@ -10029,10 +10039,10 @@ CreateRestartPoint(int flags)
 	 * Truncate pg_subtrans if possible.  We can throw away all data before
 	 * the oldest XMIN of any running transaction.  No future transaction will
 	 * attempt to reference any pg_subtrans entry older than that (see Asserts
-	 * in subtrans.c).  When hot standby is disabled, though, we mustn't do
-	 * this because StartupSUBTRANS hasn't been called yet.
+	 * in subtrans.c).  During recovery, don't truncate pg_subtrans until hot
+	 * standby initialization has started it.
 	 */
-	if (EnableHotStandby)
+	if (RecoverySubtransInitialized())
 		TruncateSUBTRANS(GetOldestTransactionIdConsideredRunning());
 
 	/* Real work is done; log and update stats. */
@@ -13406,6 +13416,32 @@ CheckPromoteSignal(void)
 		return true;
 
 	return false;
+}
+
+/*
+ * Has hot standby initialization started pg_subtrans?
+ */
+static bool
+RecoverySubtransInitialized(void)
+{
+	bool		result;
+
+	SpinLockAcquire(&XLogCtl->info_lck);
+	result = XLogCtl->SharedRecoverySubtransInitialized;
+	SpinLockRelease(&XLogCtl->info_lck);
+
+	return result;
+}
+
+/*
+ * Remember that hot standby initialization has started pg_subtrans.
+ */
+static void
+SetRecoverySubtransInitialized(void)
+{
+	SpinLockAcquire(&XLogCtl->info_lck);
+	XLogCtl->SharedRecoverySubtransInitialized = true;
+	SpinLockRelease(&XLogCtl->info_lck);
 }
 
 /*
