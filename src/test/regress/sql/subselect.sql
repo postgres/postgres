@@ -1041,6 +1041,17 @@ WHERE a = ROW(1.0)::t_rec;
 SELECT * FROM (SELECT DISTINCT ON (a) id, a FROM pdt ORDER BY a, id) s
 WHERE a = ROW(1.0)::t_rec;
 
+-- Simple CASE: the arg is compared by each WHEN, so the same rules apply.
+-- The relabeled arg is compared by oid's "=", not the grouping eqop.
+EXPLAIN (COSTS OFF)
+SELECT * FROM (SELECT DISTINCT id FROM pdt) s
+WHERE (CASE id::oid WHEN 1 THEN 1 ELSE 0 END) = 1;
+
+-- Positive: compatible opfamily, safe to push past the grouping
+EXPLAIN (COSTS OFF)
+SELECT * FROM (SELECT DISTINCT id FROM pdt) s
+WHERE (CASE id WHEN 1 THEN 1 ELSE 0 END) = 1;
+
 -- Set operations: any operation other than UNION ALL groups rows by equality,
 -- so the same opfamily-mismatch rules apply.
 CREATE TEMP TABLE u1 (a t_rec);

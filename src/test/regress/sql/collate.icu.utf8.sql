@@ -831,6 +831,18 @@ EXPLAIN (COSTS OFF)
 SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE x WHEN 'abc' COLLATE case_insensitive THEN true ELSE false END);
 SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE x WHEN 'abc' COLLATE case_insensitive THEN true ELSE false END);
 
+-- Positive: the WHEN value's own CaseTestExpr (JSON RETURNING coercion) does
+-- not refer to the CASE arg
+EXPLAIN (COSTS OFF)
+SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE x WHEN JSON_OBJECT('a': 'b' RETURNING text) THEN true ELSE false END);
+SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE x WHEN JSON_OBJECT('a': 'b' RETURNING text) THEN true ELSE false END);
+
+-- Positive: likewise for the CaseTestExpr in an ArrayCoerceExpr's elemexpr
+CREATE DOMAIN nonempty_text AS text CHECK (VALUE <> '');
+EXPLAIN (COSTS OFF)
+SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE x WHEN ('{abc}'::text[]::nonempty_text[])[1] THEN true ELSE false END);
+SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE x WHEN ('{abc}'::text[]::nonempty_text[])[1] THEN true ELSE false END);
+
 -- Negative: nested CASE with collation conflict
 EXPLAIN (COSTS OFF)
 SELECT x, count(*) FROM test3ci GROUP BY x HAVING (CASE WHEN (CASE x WHEN 'abc' COLLATE case_sensitive THEN 1 ELSE 0 END) = 1 THEN true ELSE false END);
