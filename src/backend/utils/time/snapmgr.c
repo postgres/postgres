@@ -1174,10 +1174,19 @@ ExportSnapshot(Snapshot snapshot)
 		snapshot->subxcnt + nchildren > GetMaxSnapshotSubxidCount())
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("cannot export snapshot with %d running transaction IDs",
-						snapshot->subxcnt + nchildren),
-				 errdetail("A snapshot taken during recovery is exported with every transaction ID that it treats as running, and at most %d can be stored.",
-						   GetMaxSnapshotSubxidCount())));
+				 errmsg_plural("cannot export snapshot with %d running transaction ID",
+							   "cannot export snapshot with %d running transaction IDs",
+							   snapshot->subxcnt + nchildren,
+							   snapshot->subxcnt + nchildren),
+
+		/*
+		 * The singular and plural strings below are identical in English but
+		 * could differ in translations.
+		 */
+				 errdetail_plural("A snapshot taken during recovery is exported with every transaction ID that it treats as running, and at most %d can be stored.",
+								  "A snapshot taken during recovery is exported with every transaction ID that it treats as running, and at most %d can be stored.",
+								  GetMaxSnapshotSubxidCount(),
+								  GetMaxSnapshotSubxidCount())));
 
 	/*
 	 * Generate file path for the snapshot.  We start numbering of snapshots
