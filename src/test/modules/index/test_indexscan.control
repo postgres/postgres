@@ -1,0 +1,4 @@
+comment = 'helper function for low-level index scan behavior'
+default_version = '1.0'
+module_pathname = '$libdir/test_indexscan'
+relocatable = true
