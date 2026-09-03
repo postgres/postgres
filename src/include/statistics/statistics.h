@@ -128,56 +128,28 @@ extern StatisticExtInfo *choose_best_statistics(List *stats, char requiredkind,
 												int nclauses);
 extern HeapTuple statext_expressions_load(Oid stxoid, bool inh, int idx);
 
-/*
- * Statistics values applied to pg_class during stats import or restore
- *
- * A field with isnull set to true leaves the corresponding pg_class column
- * untouched.  The caller must initialize every field.
- *
- * The "version" field is currently ignored.  In the future it can be used to
- * interpret the format of older statistics.
- */
-typedef struct RelationStatsValues
-{
-	NullableDatum version;
-	NullableDatum relpages;
-	NullableDatum reltuples;
-	NullableDatum relallvisible;
-	NullableDatum relallfrozen;
-} RelationStatsValues;
-
-/*
- * Statistics values applied to pg_statistic during stats import or restore.
- *
- * A field with isnull set to true leaves the corresponding statistics kind
- * unset.  The caller must initialize every field.
- *
- * The "version" field is currently ignored.  In the future, it can be used to
- * interpret the format of older statistics.
- */
-typedef struct AttributeStatsValues
-{
-	NullableDatum version;
-	NullableDatum null_frac;
-	NullableDatum avg_width;
-	NullableDatum n_distinct;
-	NullableDatum most_common_vals;
-	NullableDatum most_common_freqs;
-	NullableDatum histogram_bounds;
-	NullableDatum correlation;
-	NullableDatum most_common_elems;
-	NullableDatum most_common_elem_freqs;
-	NullableDatum elem_count_histogram;
-	NullableDatum range_length_histogram;
-	NullableDatum range_empty_frac;
-	NullableDatum range_bounds_histogram;
-} AttributeStatsValues;
-
 extern bool import_relation_statistics(Relation rel,
-									   const RelationStatsValues *statvalues);
+									   const NullableDatum *version,
+									   const NullableDatum *relpages,
+									   const NullableDatum *reltuples,
+									   const NullableDatum *relallvisible,
+									   const NullableDatum *relallfrozen);
 extern bool import_attribute_statistics(Relation rel,
 										AttrNumber attnum, bool inherited,
-										const AttributeStatsValues *statvalues);
+										const NullableDatum *version,
+										const NullableDatum *null_frac,
+										const NullableDatum *avg_width,
+										const NullableDatum *n_distinct,
+										const NullableDatum *most_common_vals,
+										const NullableDatum *most_common_freqs,
+										const NullableDatum *histogram_bounds,
+										const NullableDatum *correlation,
+										const NullableDatum *most_common_elems,
+										const NullableDatum *most_common_elem_freqs,
+										const NullableDatum *elem_count_histogram,
+										const NullableDatum *range_length_histogram,
+										const NullableDatum *range_empty_frac,
+										const NullableDatum *range_bounds_histogram);
 extern bool delete_attribute_statistics(Relation rel,
 										AttrNumber attnum, bool inherited);
 

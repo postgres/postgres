@@ -185,7 +185,6 @@ AttrMissing
 AttrNumber
 AttrResultArgMap
 AttributeOpts
-AttributeStatsValues
 AuthRequest
 AuthToken
 AutoPrewarmReadStreamData
@@ -2623,7 +2622,6 @@ Relation
 RelationData
 RelationInfo
 RelationPtr
-RelationStatsValues
 RelationSyncEntry
 RelcacheCallbackFunction
 ReleaseMatchCB
