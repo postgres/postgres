@@ -150,8 +150,9 @@ clean:
 
 like.o: like.c like_match.c
 
-# Some code in numeric.c benefits from auto-vectorization
+# Some code benefits from auto-vectorization
 numeric.o: CFLAGS += ${CFLAGS_VECTORIZE}
+varbit.o: CFLAGS += ${CFLAGS_VECTORIZE}
 
 varlena.o: varlena.c levenshtein.c
 

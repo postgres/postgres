@@ -1251,6 +1251,7 @@ bit_and(PG_FUNCTION_ARGS)
 	uint8	   *p1,
 			   *p2,
 			   *r;
+	size_t		nbytes;
 
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
@@ -1267,8 +1268,9 @@ bit_and(PG_FUNCTION_ARGS)
 	p1 = VARBITS(arg1);
 	p2 = VARBITS(arg2);
 	r = VARBITS(result);
-	for (size_t i = 0; i < VARBITBYTES(arg1); i++)
-		*r++ = *p1++ & *p2++;
+	nbytes = VARBITBYTES(arg1);
+	for (size_t i = 0; i < nbytes; i++)
+		r[i] = p1[i] & p2[i];
 
 	/* Padding is not needed as & of 0 pads is 0 */
 
@@ -1291,6 +1293,7 @@ bit_or(PG_FUNCTION_ARGS)
 	uint8	   *p1,
 			   *p2,
 			   *r;
+	size_t		nbytes;
 
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
@@ -1306,8 +1309,9 @@ bit_or(PG_FUNCTION_ARGS)
 	p1 = VARBITS(arg1);
 	p2 = VARBITS(arg2);
 	r = VARBITS(result);
-	for (size_t i = 0; i < VARBITBYTES(arg1); i++)
-		*r++ = *p1++ | *p2++;
+	nbytes = VARBITBYTES(arg1);
+	for (size_t i = 0; i < nbytes; i++)
+		r[i] = p1[i] | p2[i];
 
 	/* Padding is not needed as | of 0 pads is 0 */
 
@@ -1330,6 +1334,7 @@ bitxor(PG_FUNCTION_ARGS)
 	uint8	   *p1,
 			   *p2,
 			   *r;
+	size_t		nbytes;
 
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
@@ -1346,8 +1351,9 @@ bitxor(PG_FUNCTION_ARGS)
 	p1 = VARBITS(arg1);
 	p2 = VARBITS(arg2);
 	r = VARBITS(result);
-	for (size_t i = 0; i < VARBITBYTES(arg1); i++)
-		*r++ = *p1++ ^ *p2++;
+	nbytes = VARBITBYTES(arg1);
+	for (size_t i = 0; i < nbytes; i++)
+		r[i] = p1[i] ^ p2[i];
 
 	/* Padding is not needed as ^ of 0 pads is 0 */
 
@@ -1365,6 +1371,7 @@ bitnot(PG_FUNCTION_ARGS)
 	VarBit	   *result;
 	uint8	   *p,
 			   *r;
+	size_t		nbytes;
 
 	result = (VarBit *) palloc(VARSIZE(arg));
 	SET_VARSIZE(result, VARSIZE(arg));
@@ -1372,11 +1379,12 @@ bitnot(PG_FUNCTION_ARGS)
 
 	p = VARBITS(arg);
 	r = VARBITS(result);
-	for (; p < VARBITEND(arg); p++)
-		*r++ = ~*p;
+	nbytes = VARBITBYTES(arg);
+	for (size_t i = 0; i < nbytes; i++)
+		r[i] = ~p[i];
 
 	/* Must zero-pad the result, because extra bits are surely 1's here */
-	VARBIT_PAD_LAST(result, r);
+	VARBIT_PAD(result);
 
 	PG_RETURN_VARBIT_P(result);
 }
