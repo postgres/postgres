@@ -318,7 +318,32 @@ visibilitymap_set(BlockNumber heapBlk,
  * since we don't lock the visibility map page either, it's even possible that
  * someone else could have changed the bit just before we look at it, but yet
  * we might see the old value.  It is the caller's responsibility to deal with
- * all concurrency issues!
+ * all concurrency issues!  In practice it can't be stale enough to matter for
+ * the primary use case: index-only scans that check whether a heap fetch can
+ * be skipped.
+ *
+ * The argument for why it can't be stale enough to matter for the primary use
+ * case is as follows:
+ *
+ * Inserts: we need to detect that a VM bit was cleared by an insert right
+ * away, because the new tuple is present in the index but not yet visible.
+ * Reading the TID from the index page (under a shared lock on the index
+ * buffer) is serialized with the insertion of the TID into the index (under
+ * an exclusive lock on the same index buffer).  Because the VM bit is cleared
+ * before the index is updated, and locking/unlocking of the index page acts
+ * as a full memory barrier, we are sure to see the cleared bit whenever we
+ * see a recently-inserted TID.
+ *
+ * Deletes: the clearing of the VM bit by a delete is NOT serialized with the
+ * index page access, because deletes do not update the index page (only
+ * VACUUM removes the index TID).  So we may see a significantly stale value.
+ * However, we don't need to detect the delete right away, because the tuple
+ * remains visible until the deleting transaction commits or the statement
+ * ends (if it's our own transaction).  In either case, the lock on the VM
+ * buffer will have been released (acting as a write barrier) after clearing
+ * the bit.  And for us to have a snapshot that includes the deleting
+ * transaction (making the tuple invisible), we must have acquired
+ * ProcArrayLock after that time, acting as a read barrier.
  */
 uint8
 visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *vmbuf)
