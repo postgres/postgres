@@ -475,17 +475,53 @@ if (defined($ENV{oldinstall}))
 	}
 }
 
+# In a VPATH build, we'll be started in the source directory, but we want
+# to run pg_upgrade in the build directory so that any files generated finish
+# in it, like delete_old_cluster.{sh,bat}.
+chdir ${PostgreSQL::Test::Utils::tmp_check};
+
+my @live_check_command = (
+	'pg_upgrade', '--no-sync',
+	'--old-datadir' => $oldnode->data_dir,
+	'--new-datadir' => $newnode->data_dir,
+	'--old-bindir' => $oldbindir,
+	'--new-bindir' => $newbindir,
+	'--socketdir' => $newnode->host,
+	'--old-port' => $oldnode->port);
+
+# A live check must use different ports for the running old server and
+# the temporary new server.
+command_checks_all(
+	[
+		@live_check_command,
+		'--new-port' => $oldnode->port,
+		$mode, '--check',
+	],
+	1,
+	[
+		qr/When checking a live server, the old and new port numbers must be different\./
+	],
+	[],
+	'pg_upgrade --check with the same old and new ports');
+
+rmtree($newnode->data_dir . "/pg_upgrade_output.d");
+
+# Check the old cluster while it is running.
+command_like(
+	[
+		@live_check_command,
+		'--new-port' => $newnode->port,
+		$mode, '--check',
+	],
+	qr/Performing Consistency Checks on Old Live Server/,
+	'run of pg_upgrade --check with old instance running');
+
 # Create an invalid database, will be deleted below
 $oldnode->safe_psql(
 	'postgres', qq(
   CREATE DATABASE regression_invalid;
   UPDATE pg_database SET datconnlimit = -2 WHERE datname = 'regression_invalid';
 ));
-
-# In a VPATH build, we'll be started in the source directory, but we want
-# to run pg_upgrade in the build directory so that any files generated finish
-# in it, like delete_old_cluster.{sh,bat}.
-chdir ${PostgreSQL::Test::Utils::tmp_check};
 
 # Upgrade the instance.
 $oldnode->stop;
