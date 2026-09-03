@@ -139,6 +139,38 @@ FROM prevstats AS pr;
 
 COMMIT;
 
+-----
+-- Basic tests for pg_stat_all_indexes
+-----
+CREATE TEMPORARY TABLE test_idx_tup_read AS
+  SELECT g AS a FROM generate_series(1, 200) g;
+CREATE INDEX ON test_idx_tup_read(a);
+
+BEGIN;
+SET LOCAL enable_seqscan TO off;
+
+-- plain index scan
+SET LOCAL enable_bitmapscan TO off;
+EXPLAIN (COSTS off) SELECT count(*) FROM test_idx_tup_read WHERE a BETWEEN 1 AND 200;
+SELECT count(*) FROM test_idx_tup_read WHERE a BETWEEN 1 AND 200;
+-- bitmap index scan
+SET LOCAL enable_indexscan TO off;
+SET LOCAL enable_bitmapscan TO on;
+EXPLAIN (COSTS off) SELECT count(*) FROM test_idx_tup_read WHERE a BETWEEN 1 AND 200;
+SELECT count(*) FROM test_idx_tup_read WHERE a BETWEEN 1 AND 200;
+
+COMMIT;
+
+-- We expect 2 index scans and a total of 400 tuples read (200 from plain
+-- index scan, 200 from bitmap index scan).  However, we only expect 200 tuple
+-- fetches, because bitmap index scans/heap scans don't affect the relevant
+-- counter.
+SELECT pg_stat_force_next_flush();
+SELECT idx_scan, idx_tup_read, idx_tup_fetch FROM pg_stat_all_indexes
+  WHERE indexrelid = 'test_idx_tup_read_a_idx'::regclass;
+
+DROP TABLE test_idx_tup_read;
+
 ----
 -- Basic tests for track_functions
 ---

@@ -269,6 +269,68 @@ FROM prevstats AS pr;
 (1 row)
 
 COMMIT;
+-----
+-- Basic tests for pg_stat_all_indexes
+-----
+CREATE TEMPORARY TABLE test_idx_tup_read AS
+  SELECT g AS a FROM generate_series(1, 200) g;
+CREATE INDEX ON test_idx_tup_read(a);
+BEGIN;
+SET LOCAL enable_seqscan TO off;
+-- plain index scan
+SET LOCAL enable_bitmapscan TO off;
+EXPLAIN (COSTS off) SELECT count(*) FROM test_idx_tup_read WHERE a BETWEEN 1 AND 200;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Aggregate
+   ->  Index Scan using test_idx_tup_read_a_idx on test_idx_tup_read
+         Index Cond: ((a >= 1) AND (a <= 200))
+(3 rows)
+
+SELECT count(*) FROM test_idx_tup_read WHERE a BETWEEN 1 AND 200;
+ count 
+-------
+   200
+(1 row)
+
+-- bitmap index scan
+SET LOCAL enable_indexscan TO off;
+SET LOCAL enable_bitmapscan TO on;
+EXPLAIN (COSTS off) SELECT count(*) FROM test_idx_tup_read WHERE a BETWEEN 1 AND 200;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on test_idx_tup_read
+         Recheck Cond: ((a >= 1) AND (a <= 200))
+         ->  Bitmap Index Scan on test_idx_tup_read_a_idx
+               Index Cond: ((a >= 1) AND (a <= 200))
+(5 rows)
+
+SELECT count(*) FROM test_idx_tup_read WHERE a BETWEEN 1 AND 200;
+ count 
+-------
+   200
+(1 row)
+
+COMMIT;
+-- We expect 2 index scans and a total of 400 tuples read (200 from plain
+-- index scan, 200 from bitmap index scan).  However, we only expect 200 tuple
+-- fetches, because bitmap index scans/heap scans don't affect the relevant
+-- counter.
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+SELECT idx_scan, idx_tup_read, idx_tup_fetch FROM pg_stat_all_indexes
+  WHERE indexrelid = 'test_idx_tup_read_a_idx'::regclass;
+ idx_scan | idx_tup_read | idx_tup_fetch 
+----------+--------------+---------------
+        2 |          400 |           200
+(1 row)
+
+DROP TABLE test_idx_tup_read;
 ----
 -- Basic tests for track_functions
 ---
