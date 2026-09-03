@@ -1048,8 +1048,10 @@ slot_store_data(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 			if (remoteattnum >= tupleData->ncols)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("logical replication column %d not found in tuple: only %d column(s) received",
-								remoteattnum + 1, tupleData->ncols)));
+						 errmsg_plural("logical replication column %d not found in tuple: only %d column received",
+									   "logical replication column %d not found in tuple: only %d columns received",
+									   tupleData->ncols,
+									   remoteattnum + 1, tupleData->ncols)));
 
 			colvalue = &tupleData->colvalues[remoteattnum];
 
@@ -1165,8 +1167,10 @@ slot_modify_data(TupleTableSlot *slot, TupleTableSlot *srcslot,
 		if (remoteattnum >= tupleData->ncols)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 errmsg("logical replication column %d not found in tuple: only %d column(s) received",
-							remoteattnum + 1, tupleData->ncols)));
+					 errmsg_plural("logical replication column %d not found in tuple: only %d column received",
+								   "logical replication column %d not found in tuple: only %d columns received",
+								   tupleData->ncols,
+								   remoteattnum + 1, tupleData->ncols)));
 
 		if (tupleData->colstatus[remoteattnum] != LOGICALREP_COLUMN_UNCHANGED)
 		{
@@ -2888,8 +2892,10 @@ apply_handle_update(StringInfo s)
 			if (remoteattnum >= newtup.ncols)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 errmsg("logical replication column %d not found in tuple: only %d column(s) received",
-								remoteattnum + 1, newtup.ncols)));
+						 errmsg_plural("logical replication column %d not found in tuple: only %d column received",
+									   "logical replication column %d not found in tuple: only %d columns received",
+									   newtup.ncols,
+									   remoteattnum + 1, newtup.ncols)));
 
 			if (newtup.colstatus[remoteattnum] != LOGICALREP_COLUMN_UNCHANGED)
 				target_perminfo->updatedCols =
