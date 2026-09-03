@@ -158,8 +158,8 @@
  *
  * - RDT_REQUEST_PUBLISHER_STATUS:
  *   Send a message to the walsender requesting the publisher status, which
- *   includes the latest WAL write position and information about transactions
- *   that are in the commit phase.
+ *   includes the latest WAL insert position and information about
+ *   transactions that are in the commit phase.
  *
  * - RDT_WAIT_FOR_PUBLISHER_STATUS:
  *   Wait for the status from the walsender. After receiving the first status,
@@ -417,7 +417,7 @@ typedef enum
 typedef struct RetainDeadTuplesData
 {
 	RetainDeadTuplesPhase phase;	/* current phase */
-	XLogRecPtr	remote_lsn;		/* WAL write position on the publisher */
+	XLogRecPtr	remote_lsn;		/* WAL insert position on the publisher */
 
 	/*
 	 * Oldest transaction ID that was in the commit phase on the publisher.
