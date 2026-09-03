@@ -634,11 +634,12 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	SysScanDesc toastscan;
 	HeapTuple	ttup;
 	int32		expectedchunk;
-	int32		totalchunks = ((attrsize - 1) / TOAST_MAX_CHUNK_SIZE) + 1;
+	int32		totalchunks;
 	int			startchunk;
 	int			endchunk;
 	int			num_indexes;
 	int			validIndex;
+	int32		max_chunk_size;
 
 	/* Look for the valid index of toast relation */
 	validIndex = toast_open_indexes(toastrel,
@@ -646,8 +647,11 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 									&toastidxs,
 									&num_indexes);
 
-	startchunk = sliceoffset / TOAST_MAX_CHUNK_SIZE;
-	endchunk = (sliceoffset + slicelength - 1) / TOAST_MAX_CHUNK_SIZE;
+	max_chunk_size = TOAST_MAX_CHUNK_SIZE;
+
+	totalchunks = ((attrsize - 1) / max_chunk_size) + 1;
+	startchunk = sliceoffset / max_chunk_size;
+	endchunk = (sliceoffset + slicelength - 1) / max_chunk_size;
 	Assert(endchunk <= totalchunks);
 
 	/* Set up a scan key to fetch from the index. */
@@ -747,8 +751,8 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 									 curchunk,
 									 startchunk, endchunk, valueid,
 									 RelationGetRelationName(toastrel))));
-		expected_size = curchunk < totalchunks - 1 ? TOAST_MAX_CHUNK_SIZE
-			: attrsize - ((totalchunks - 1) * TOAST_MAX_CHUNK_SIZE);
+		expected_size = curchunk < totalchunks - 1 ? max_chunk_size
+			: attrsize - ((totalchunks - 1) * max_chunk_size);
 		if (chunksize != expected_size)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
@@ -763,12 +767,12 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 		chcpystrt = 0;
 		chcpyend = chunksize - 1;
 		if (curchunk == startchunk)
-			chcpystrt = sliceoffset % TOAST_MAX_CHUNK_SIZE;
+			chcpystrt = sliceoffset % max_chunk_size;
 		if (curchunk == endchunk)
-			chcpyend = (sliceoffset + slicelength - 1) % TOAST_MAX_CHUNK_SIZE;
+			chcpyend = (sliceoffset + slicelength - 1) % max_chunk_size;
 
 		memcpy(VARDATA(result) +
-			   curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset + chcpystrt,
+			   (curchunk * max_chunk_size - sliceoffset) + chcpystrt,
 			   chunkdata + chcpystrt,
 			   (chcpyend - chcpystrt) + 1);
 
