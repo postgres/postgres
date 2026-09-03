@@ -23,6 +23,7 @@ tests += {
       't/012_ddlutils.pl',
       't/013_temp_obj_multisession.pl',
       't/014_log_statement_max_length.pl',
+      't/015_temp_schema_exit_deferrable.pl',
     ],
     # The injection points are cluster-wide, so disable installcheck
     'runningcheck': false,
