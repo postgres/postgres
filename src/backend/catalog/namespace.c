@@ -4700,7 +4700,15 @@ RemoveTempRelationsCallback(int code, Datum arg)
 		/* Need to ensure we have a usable transaction. */
 		AbortOutOfAnyTransaction();
 		StartTransactionCommand();
-		PushActiveSnapshot(GetTransactionSnapshot());
+
+		/*
+		 * Need an active snapshot for toast fetches during deletion.  Do not
+		 * use GetTransactionSnapshot(): under SERIALIZABLE READ ONLY
+		 * DEFERRABLE it may wait in GetSafeSnapshot(), and proc_exit holds
+		 * off interrupts so that wait cannot be cancelled.  A catalog
+		 * snapshot is enough and avoids that path.
+		 */
+		PushActiveSnapshot(GetCatalogSnapshot(RelationRelationId));
 
 		RemoveTempRelations(myTempNamespace);
 
