@@ -325,9 +325,10 @@ sub check_conflict_log
 sub check_conflict_stat
 {
 	my $conflict_type = shift;
-	my $count = $node_standby->safe_psql($test_db,
-		qq[SELECT confl_$conflict_type FROM pg_stat_database_conflicts WHERE datname='$test_db';]
-	);
 
-	is($count, 1, "$sect: stats show conflict on standby");
+	ok( $node_standby->poll_query_until(
+			$test_db,
+			qq[SELECT confl_$conflict_type FROM pg_stat_database_conflicts WHERE datname='$test_db';],
+			'1'),
+		"$sect: stats show conflict on standby");
 }
