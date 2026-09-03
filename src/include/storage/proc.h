@@ -17,6 +17,7 @@
 #include "access/xlogdefs.h"
 #include "lib/ilist.h"
 #include "miscadmin.h"
+#include "storage/buf.h"
 #include "storage/latch.h"
 #include "storage/lock.h"
 #include "storage/pg_sema.h"
@@ -498,8 +499,8 @@ typedef struct PROC_HDR
 
 	/* Current shared estimate of appropriate spins_per_delay value */
 	int			spins_per_delay;
-	/* Buffer id of the buffer that Startup process waits for pin on, or -1 */
-	int			startupBufferPinWaitBufId;
+	/* Buffer that Startup process waits for pin on, or InvalidBuffer */
+	Buffer		startupBufferPinWaitBuf;
 } PROC_HDR;
 
 extern PGDLLIMPORT PROC_HDR *ProcGlobal;
@@ -558,8 +559,8 @@ extern void InitProcess(void);
 extern void InitProcessPhase2(void);
 extern void InitAuxiliaryProcess(void);
 
-extern void SetStartupBufferPinWaitBufId(int bufid);
-extern int	GetStartupBufferPinWaitBufId(void);
+extern void SetStartupBufferPinWaitBuf(Buffer buffer);
+extern Buffer GetStartupBufferPinWaitBuf(void);
 
 extern bool HaveNFreeProcs(int n, int *nfree);
 extern void ProcReleaseLocks(bool isCommit);

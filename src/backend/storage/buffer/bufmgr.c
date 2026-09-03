@@ -6806,12 +6806,12 @@ LockBufferForCleanup(Buffer buffer)
 			if (log_recovery_conflict_waits && waitStart == 0)
 				waitStart = GetCurrentTimestamp();
 
-			/* Publish the bufid that Startup process waits on */
-			SetStartupBufferPinWaitBufId(buffer - 1);
+			/* Publish the buffer that Startup process waits on */
+			SetStartupBufferPinWaitBuf(buffer);
 			/* Set alarm and then wait to be signaled by UnpinBuffer() */
 			ResolveRecoveryConflictWithBufferPin();
-			/* Reset the published bufid */
-			SetStartupBufferPinWaitBufId(-1);
+			/* Reset the published buffer */
+			SetStartupBufferPinWaitBuf(InvalidBuffer);
 		}
 		else
 			ProcWaitForSignal(WAIT_EVENT_BUFFER_CLEANUP);
@@ -6865,18 +6865,18 @@ cleanup_lock_acquired:
 bool
 HoldingBufferPinThatDelaysRecovery(void)
 {
-	int			bufid = GetStartupBufferPinWaitBufId();
+	Buffer		buffer = GetStartupBufferPinWaitBuf();
 
 	/*
 	 * If we get woken slowly then it's possible that the Startup process was
 	 * already woken by other backends before we got here. Also possible that
 	 * we get here by multiple interrupts or interrupts at inappropriate
-	 * times, so make sure we do nothing if the bufid is not set.
+	 * times, so make sure we do nothing if the buffer is not set.
 	 */
-	if (bufid < 0)
+	if (buffer == InvalidBuffer)
 		return false;
 
-	if (GetPrivateRefCount(bufid + 1) > 0)
+	if (GetPrivateRefCount(buffer) > 0)
 		return true;
 
 	return false;

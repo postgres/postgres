@@ -238,7 +238,7 @@ ProcGlobalShmemInit(void *arg)
 	dlist_init(&ProcGlobal->autovacFreeProcs);
 	dlist_init(&ProcGlobal->bgworkerFreeProcs);
 	dlist_init(&ProcGlobal->walsenderFreeProcs);
-	ProcGlobal->startupBufferPinWaitBufId = -1;
+	ProcGlobal->startupBufferPinWaitBuf = InvalidBuffer;
 	pg_atomic_init_u32(&ProcGlobal->avLauncherProc, INVALID_PROC_NUMBER);
 	pg_atomic_init_u32(&ProcGlobal->walwriterProc, INVALID_PROC_NUMBER);
 	pg_atomic_init_u32(&ProcGlobal->checkpointerProc, INVALID_PROC_NUMBER);
@@ -759,30 +759,30 @@ InitAuxiliaryProcess(void)
 
 /*
  * Used from bufmgr to share the value of the buffer that Startup waits on,
- * or to reset the value to "not waiting" (-1). This allows processing
- * of recovery conflicts for buffer pins. Set is made before backends look
- * at this value, so locking not required, especially since the set is
- * an atomic integer set operation.
+ * or to reset the value to "not waiting" (InvalidBuffer). This allows
+ * processing of recovery conflicts for buffer pins. Set is made before
+ * backends look at this value, so locking not required, especially since
+ * the set is an atomic integer set operation.
  */
 void
-SetStartupBufferPinWaitBufId(int bufid)
+SetStartupBufferPinWaitBuf(Buffer buffer)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PROC_HDR *procglobal = ProcGlobal;
 
-	procglobal->startupBufferPinWaitBufId = bufid;
+	procglobal->startupBufferPinWaitBuf = buffer;
 }
 
 /*
  * Used by backends when they receive a request to check for buffer pin waits.
  */
-int
-GetStartupBufferPinWaitBufId(void)
+Buffer
+GetStartupBufferPinWaitBuf(void)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PROC_HDR *procglobal = ProcGlobal;
 
-	return procglobal->startupBufferPinWaitBufId;
+	return procglobal->startupBufferPinWaitBuf;
 }
 
 /*
