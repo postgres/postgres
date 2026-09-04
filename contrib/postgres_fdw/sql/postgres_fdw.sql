@@ -4960,6 +4960,21 @@ ALTER FOREIGN TABLE simport_fview OPTIONS (ADD import_stats 'true');
 
 ANALYZE simport_fview;                    -- should fail
 
+CREATE TABLE simport_pt (c1 int not null, c2 text) PARTITION BY LIST (c1);
+CREATE TABLE simport_p1 PARTITION OF simport_pt FOR VALUES IN (1);
+CREATE TABLE simport_p2 PARTITION OF simport_pt FOR VALUES IN (2);
+CREATE FOREIGN TABLE simport_fpt (c1 int not null, c2 text)
+       SERVER loopback OPTIONS (table_name 'simport_pt');
+INSERT INTO simport_pt VALUES (1, 'foo'), (1, 'foo'), (2, 'bar'), (2, 'bar');
+
+-- Check that we have relpages = 0 for simport_fpt regardless of the method
+ANALYZE simport_fpt;
+SELECT relpages FROM pg_class WHERE oid = 'public.simport_fpt'::regclass;
+ALTER FOREIGN TABLE simport_fpt OPTIONS (ADD import_stats 'true');
+ANALYZE simport_pt;
+ANALYZE VERBOSE simport_fpt;              -- should work
+SELECT relpages FROM pg_class WHERE oid = 'public.simport_fpt'::regclass;
+
 -- This tests build_remattrmap()'s deparsing of column names that include
 -- single quotes or backslashes
 CREATE TABLE dtest_table ("col'quote" int, "col\backslash" int);
@@ -5004,6 +5019,8 @@ DROP FOREIGN TABLE simport_ftable;
 DROP FOREIGN TABLE simport_fview;
 DROP VIEW simport_view;
 DROP TABLE simport_table;
+DROP FOREIGN TABLE simport_fpt;
+DROP TABLE simport_pt;
 DROP FOREIGN TABLE dtest_ftable;
 DROP TABLE dtest_table;
 

@@ -355,6 +355,7 @@ enum RelStatsColumns
 	RELSTATS_RELPAGES = 0,
 	RELSTATS_RELTUPLES,
 	RELSTATS_RELKIND,
+	RELSTATS_RELHASSUBCLASS,
 	RELSTATS_NUM_FIELDS,
 };
 
@@ -378,14 +379,14 @@ enum AttStatsColumns
 	ATTSTATS_NUM_FIELDS,
 };
 
-/* Result sets that are returned from a foreign statistics scan */
+/* Results that are returned from a foreign statistics scan */
 typedef struct
 {
+	int			version;		/* version of remote server */
+	BlockNumber relpages;		/* # of pages in remote table */
+	double		reltuples;		/* # of tuples in remote table */
 	PGresult   *rel;			/* result for relation stats query */
 	PGresult   *att;			/* result for attribute stats query */
-	double		livetuples;		/* livetuples estimates, for pgstat report */
-	double		deadtuples;		/* deadtuples estimates, for pgstat report */
-	int			version;		/* version of remote server */
 } RemoteStatsResults;
 
 /* Pairs of remote columns with local columns */
@@ -5294,7 +5295,7 @@ postgresGetAnalyzeInfoForForeignTable(Relation relation, bool *can_tablesample)
 
 	if (PQntuples(res) != 1 || PQnfields(res) != RELSTATS_NUM_FIELDS)
 		elog(ERROR, "unexpected result from deparseAnalyzeInfoSql query");
-	/* We don't use relpages here */
+	/* We don't use relpages/relhassubclass here */
 	reltuples = strtod(PQgetvalue(res, 0, RELSTATS_RELTUPLES), NULL);
 	relkind = *(PQgetvalue(res, 0, RELSTATS_RELKIND));
 	PQclear(res);
@@ -5771,8 +5772,7 @@ postgresImportForeignStatistics(Relation relation, List *va_cols, int elevel)
 
 	if (ok)
 	{
-		pgstat_report_analyze(relation,
-							  remstats.livetuples, remstats.deadtuples,
+		pgstat_report_analyze(relation, remstats.reltuples, 0,
 							  (va_cols == NIL), starttime);
 
 		ereport(elevel,
@@ -5867,6 +5867,23 @@ fetch_remote_statistics(Relation relation,
 	}
 
 	/*
+	 * If the remote table is inherited, relpages/reltuples in pg_class for it
+	 * provide stats for the parent table, not for the inheritance set.  We
+	 * could calculate stats for the set by fetching the relation stats for
+	 * child tables as well; but for now, just fallback to sampling.
+	 */
+	if ((relkind == RELKIND_RELATION || relkind == RELKIND_FOREIGN_TABLE) &&
+		strcmp(PQgetvalue(relstats, 0, RELSTATS_RELHASSUBCLASS), "t") == 0)
+	{
+		ereport(WARNING,
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("could not import statistics for foreign table \"%s.%s\" --- remote table \"%s.%s\" is inherited",
+					   local_schemaname, local_relname,
+					   remote_schemaname, remote_relname));
+		goto fetch_cleanup;
+	}
+
+	/*
 	 * If the reltuples value > 0, then we can expect to find attribute stats
 	 * for the remote table.
 	 *
@@ -5879,7 +5896,8 @@ fetch_remote_statistics(Relation relation,
 	 * that the table had never been analyzed, or that it was empty.  Assuming
 	 * the former, fallback to sampling.
 	 */
-	reltuples = strtod(PQgetvalue(relstats, 0, RELSTATS_RELTUPLES), NULL);
+	remstats->reltuples = reltuples =
+		strtod(PQgetvalue(relstats, 0, RELSTATS_RELTUPLES), NULL);
 	if (reltuples > 0)
 	{
 		RemoteAttributeMapping *remattrmap;
@@ -5919,9 +5937,15 @@ fetch_remote_statistics(Relation relation,
 		goto fetch_cleanup;
 	}
 
-	/* We assume that we have no dead tuple. */
-	remstats->deadtuples = 0.0;
-	remstats->livetuples = reltuples;
+	/*
+	 * If the remote table is partitioned, import relpages = 0, to match the
+	 * sampling case.
+	 */
+	if (relkind == RELKIND_PARTITIONED_TABLE)
+		remstats->relpages = 0;
+	else
+		remstats->relpages =
+			strtoul(PQgetvalue(relstats, 0, RELSTATS_RELPAGES), NULL, 10);
 
 	ok = true;
 
@@ -6005,7 +6029,13 @@ fetch_attstats(PGconn *conn, int server_version_num,
 					 " AND attname = ANY(%s)",
 					 column_list);
 
-	/* inherited is supported since Postgres 9.0 */
+	/*
+	 * inherited is supported since Postgres 9.0
+	 *
+	 * Note that this is okay because for now, we support the case where the
+	 * remote table is partitioned, but not the case where it is inherited
+	 * (see fetch_remote_statistics()).
+	 */
 	if (server_version_num >= 90000)
 		appendStringInfoString(&sql,
 							   " ORDER BY attname COLLATE \"C\", inherited DESC");
@@ -6055,7 +6085,10 @@ build_remattrmap(Relation relation, List *va_cols,
 		if (!attribute_is_analyzable(relation, attnum, attr, NULL))
 			continue;
 
-		/* If the column_name option is not specified, go with attname. */
+		/*
+		 * Assume the remote column names are the same as the local name
+		 * unless the foreign column's options tell us otherwise.
+		 */
 		colname = attname;
 		fc_options = GetForeignColumnOptions(RelationGetRelid(relation), attnum);
 		foreach(lc, fc_options)
@@ -6150,7 +6183,7 @@ remattrmap_cmp(const void *v1, const void *v2)
  * As the result set consists of the attribute stats for some/all of distinct
  * mapped remote columns in the RemoteAttributeMapping, every entry in it
  * should have at most one match in the result set; which is also ordered by
- * attname, so we find such pairs by doing a merge join.
+ * remote_attname, so we find such pairs by doing a merge join.
  *
  * Returns true if every entry in it has a match, and false if not.
  */
@@ -6252,7 +6285,6 @@ import_fetched_statistics(Relation relation,
 						  const RemoteAttributeMapping *remattrmap,
 						  int attrcnt)
 {
-	PGresult   *res;
 	NullableDatum args[ATTSTATS_NUM_FIELDS];
 
 	/* Set the 'version' parameter, which is common to both statistics. */
@@ -6264,9 +6296,10 @@ import_fetched_statistics(Relation relation,
 	 * prone to errors.  This avoids making a modification of pg_class that
 	 * will just get rolled back by a failed attribute import.
 	 */
-	res = remstats->att;
-	if (res != NULL)
+	if (remstats->att != NULL)
 	{
+		PGresult   *res = remstats->att;
+
 		Assert(PQnfields(res) == ATTSTATS_NUM_FIELDS);
 		Assert(PQntuples(res) >= 1);
 
@@ -6332,16 +6365,12 @@ import_fetched_statistics(Relation relation,
 	/*
 	 * Import relation statistics.
 	 */
-	res = remstats->rel;
-	Assert(res != NULL);
-	Assert(PQnfields(res) == RELSTATS_NUM_FIELDS);
-	Assert(PQntuples(res) == 1);
 
 	/* Set the remaining parameters. */
-	set_int32_arg(&args[1], get_opt_value(res, 0, RELSTATS_RELPAGES));
-	Assert(!args[1].isnull);
-	set_float_arg(&args[2], get_opt_value(res, 0, RELSTATS_RELTUPLES));
-	Assert(!args[2].isnull);
+	args[1].value = Int32GetDatum(remstats->relpages);
+	args[1].isnull = false;
+	args[2].value = Float4GetDatum(remstats->reltuples);
+	args[2].isnull = false;
 	/* We don't import relallvisible/relallfrozen. */
 	args[3].value = (Datum) 0;
 	args[3].isnull = true;

@@ -2647,11 +2647,14 @@ deparseAnalyzeSizeSql(StringInfo buf, Relation rel)
 
 /*
  * Construct SELECT statement to acquire the number of pages, the number of
- * rows, and the relkind of a relation.
+ * rows, and the relkind/relhassubclass of a relation.
  *
- * Note: we just return the remote server's reltuples value, which might
- * be off a good deal, but it doesn't seem worth working harder.  See
+ * Note: we just return the remote server's relpages/reltuples values, which
+ * might be off a good deal, but it doesn't seem worth working harder.  See
  * comments in postgresAcquireSampleRowsFunc.
+ *
+ * Note: in the stats-import case it is the user's responsibility to ensure
+ * that those stats values are up-to-date.
  */
 void
 deparseAnalyzeInfoSql(StringInfo buf, Relation rel)
@@ -2662,7 +2665,7 @@ deparseAnalyzeInfoSql(StringInfo buf, Relation rel)
 	initStringInfo(&relname);
 	deparseRelation(&relname, rel);
 
-	appendStringInfoString(buf, "SELECT relpages, reltuples, relkind FROM pg_catalog.pg_class WHERE oid = ");
+	appendStringInfoString(buf, "SELECT relpages, reltuples, relkind, relhassubclass FROM pg_catalog.pg_class WHERE oid = ");
 	deparseStringLiteral(buf, relname.data);
 	appendStringInfoString(buf, "::pg_catalog.regclass");
 }

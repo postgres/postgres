@@ -375,7 +375,7 @@ OPTIONS (ADD password_required 'false');
        the local server.  If the attempt failed, statistics are collected by
        row sampling on the foreign table.
        This option is only useful if the remote table is one that can have
-       regular statistics (tables and materialized views).
+       regular statistics (tables, not inherited, and materialized views).
        When using this option, <emphasis>it is the user's responsibility
        </emphasis> to ensure that the existing statistics for the foreign
        table are up-to-date.
@@ -386,7 +386,8 @@ OPTIONS (ADD password_required 'false');
        If the foreign table is a partition of a partitioned table, analyzing
        the partitioned table will still result in row sampling on the foreign
        table regardless of this setting, though direct analysis of the foreign
-       table would have attempted to fetch and import remote statistics first.
+       table would have attempted to fetch and import the remote statistics
+       first if this option was enabled.
       </para>
      </listitem>
     </varlistentry>
