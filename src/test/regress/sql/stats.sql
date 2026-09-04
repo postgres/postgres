@@ -51,6 +51,7 @@ CREATE TABLE trunc_stats_test1(id serial, stuff text);
 CREATE TABLE trunc_stats_test2(id serial);
 CREATE TABLE trunc_stats_test3(id serial, stuff text);
 CREATE TABLE trunc_stats_test4(id serial);
+CREATE TABLE trunc_stats_test5(id serial);
 
 -- check that n_live_tup is reset to 0 after truncate
 INSERT INTO trunc_stats_test DEFAULT VALUES;
@@ -103,6 +104,15 @@ TRUNCATE trunc_stats_test4;
 INSERT INTO trunc_stats_test4 DEFAULT VALUES;
 ROLLBACK;
 
+-- truncate-only flush: this should count 3 inserts, 1 update and 1 delete.
+INSERT INTO trunc_stats_test5 DEFAULT VALUES;
+INSERT INTO trunc_stats_test5 DEFAULT VALUES;
+INSERT INTO trunc_stats_test5 DEFAULT VALUES;
+UPDATE trunc_stats_test5 SET id = id + 10 WHERE id = 1;
+DELETE FROM trunc_stats_test5 WHERE id = 2;
+SELECT pg_stat_force_next_flush();
+TRUNCATE trunc_stats_test5;
+
 -- do a seqscan
 SELECT count(*) FROM tenk2;
 -- do an indexscan
@@ -121,6 +131,10 @@ SET LOCAL stats_fetch_consistency = snapshot;
 SELECT relname, n_tup_ins, n_tup_upd, n_tup_del, n_live_tup, n_dead_tup
   FROM pg_stat_user_tables
  WHERE relname like 'trunc_stats_test%' order by relname;
+
+SELECT relname, n_ins_since_vacuum
+  FROM pg_stat_user_tables
+ WHERE relname = 'trunc_stats_test5';
 
 SELECT st.seq_scan >= pr.seq_scan + 1,
        st.seq_tup_read >= pr.seq_tup_read + cl.reltuples,
@@ -331,7 +345,7 @@ RELEASE SAVEPOINT sp1;
 COMMIT;
 SELECT pg_stat_get_live_tuples(:drop_stats_test_subxact_oid);
 
-DROP TABLE trunc_stats_test, trunc_stats_test1, trunc_stats_test2, trunc_stats_test3, trunc_stats_test4;
+DROP TABLE trunc_stats_test, trunc_stats_test1, trunc_stats_test2, trunc_stats_test3, trunc_stats_test4, trunc_stats_test5;
 DROP TABLE prevstats;
 
 
