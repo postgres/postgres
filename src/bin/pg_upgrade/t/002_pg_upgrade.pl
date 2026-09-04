@@ -480,41 +480,48 @@ if (defined($ENV{oldinstall}))
 # in it, like delete_old_cluster.{sh,bat}.
 chdir ${PostgreSQL::Test::Utils::tmp_check};
 
-my @live_check_command = (
-	'pg_upgrade', '--no-sync',
-	'--old-datadir' => $oldnode->data_dir,
-	'--new-datadir' => $newnode->data_dir,
-	'--old-bindir' => $oldbindir,
-	'--new-bindir' => $newbindir,
-	'--socketdir' => $newnode->host,
-	'--old-port' => $oldnode->port);
+# Checks with the old server still running.
+SKIP:
+{
+	skip "Timing issues with live server detection on Windows", 5
+	  if ($windows_os);
 
-# A live check must use different ports for the running old server and
-# the temporary new server.
-command_checks_all(
-	[
-		@live_check_command,
-		'--new-port' => $oldnode->port,
-		$mode, '--check',
-	],
-	1,
-	[
-		qr/When checking a live server, the old and new port numbers must be different\./
-	],
-	[],
-	'pg_upgrade --check with the same old and new ports');
+	my @live_check_command = (
+		'pg_upgrade', '--no-sync',
+		'--old-datadir' => $oldnode->data_dir,
+		'--new-datadir' => $newnode->data_dir,
+		'--old-bindir' => $oldbindir,
+		'--new-bindir' => $newbindir,
+		'--socketdir' => $newnode->host,
+		'--old-port' => $oldnode->port);
 
-rmtree($newnode->data_dir . "/pg_upgrade_output.d");
+	# A live check must use different ports for the running old server and
+	# the temporary new server.
+	command_checks_all(
+		[
+			@live_check_command,
+			'--new-port' => $oldnode->port,
+			$mode, '--check',
+		],
+		1,
+		[
+			qr/When checking a live server, the old and new port numbers must be different\./
+		],
+		[],
+		'pg_upgrade --check with the same old and new ports');
 
-# Check the old cluster while it is running.
-command_like(
-	[
-		@live_check_command,
-		'--new-port' => $newnode->port,
-		$mode, '--check',
-	],
-	qr/Performing Consistency Checks on Old Live Server/,
-	'run of pg_upgrade --check with old instance running');
+	rmtree($newnode->data_dir . "/pg_upgrade_output.d");
+
+	# Check the old cluster while it is running.
+	command_like(
+		[
+			@live_check_command,
+			'--new-port' => $newnode->port,
+			$mode, '--check',
+		],
+		qr/Performing Consistency Checks on Old Live Server/,
+		'run of pg_upgrade --check with old instance running');
+}
 
 # Create an invalid database, will be deleted below
 $oldnode->safe_psql(
