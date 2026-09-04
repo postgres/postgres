@@ -1965,7 +1965,7 @@ heapam_scan_get_blocks_done(HeapScanDesc hscan)
 	if (hscan->rs_base.rs_parallel != NULL)
 	{
 		bpscan = (ParallelBlockTableScanDesc) hscan->rs_base.rs_parallel;
-		startblock = bpscan->phs_startblock;
+		startblock = pg_atomic_read_u32(&bpscan->phs_startblock);
 	}
 	else
 		startblock = hscan->rs_startblock;
