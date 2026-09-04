@@ -168,6 +168,20 @@ test_parse_error('could not parse start LSN', <<EOM);
 ]}
 EOM
 
+# An LSN half wider than 32 bits, or trailing garbage, must be rejected rather
+# than silently truncated.
+for my $lsn (
+	'123456789/0', '0/123456789',
+	'FFFFFFFFFFFFFFFFFFFF/0', '1/2garbage',
+	'0/', '/0')
+{
+	test_parse_error('could not parse start LSN', <<EOM);
+{"PostgreSQL-Backup-Manifest-Version": 1, "WAL-Ranges": [
+    {"Timeline": 1, "Start-LSN": "$lsn", "End-LSN": "0/0"}
+]}
+EOM
+}
+
 test_parse_error('could not parse end LSN', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "WAL-Ranges": [
     {"Timeline": 1, "Start-LSN": "0/0", "End-LSN": "oops"}
