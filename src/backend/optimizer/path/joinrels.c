@@ -640,6 +640,32 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			} while (more);
 			if (bms_overlap(join_plus_rhs, join_lateral_rels))
 				return false;	/* will not be able to join to some RHS rel */
+
+			/*
+			 * Furthermore, the minimum parameterization can include
+			 * outer-join relids as well as baserel relids.  In such a case
+			 * the value laterally needed is an output of that outer join, so
+			 * the outer join must be formed strictly outside this join for
+			 * the value to be supplied to it.  That's not possible if any rel
+			 * needed to form the outer join is within join_plus_rhs, since
+			 * all such rels must join into this join's own join tree.  If we
+			 * accepted this join anyway, every path for it would require a
+			 * parameter that can never be supplied, so it could never appear
+			 * in a complete plan.
+			 */
+			if (bms_overlap(join_lateral_rels, root->outer_join_rels))
+			{
+				foreach(l, root->join_info_list)
+				{
+					SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(l);
+
+					if (!bms_is_member(sjinfo->ojrelid, join_lateral_rels))
+						continue;
+					if (bms_overlap(join_plus_rhs, sjinfo->min_lefthand) ||
+						bms_overlap(join_plus_rhs, sjinfo->min_righthand))
+						return false;	/* OJ can't be formed outside join */
+				}
+			}
 		}
 	}
 
