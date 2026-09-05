@@ -1870,7 +1870,7 @@ DecodeXLogRecord(XLogReaderState *state,
 				{
 					report_invalid_record(state,
 										  "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X",
-										  (unsigned int) blk->data_len,
+										  (unsigned int) blk->bimg_len,
 										  LSN_FORMAT_ARGS(state->ReadRecPtr));
 					goto err;
 				}
