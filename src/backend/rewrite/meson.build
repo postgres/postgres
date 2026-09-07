@@ -2,7 +2,6 @@
 
 backend_sources += files(
   'rewriteDefine.c',
-  'rewriteGraphTable.c',
   'rewriteHandler.c',
   'rewriteManip.c',
   'rewriteRemove.c',

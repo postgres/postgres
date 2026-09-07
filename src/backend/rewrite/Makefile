@@ -14,7 +14,6 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS = \
 	rewriteDefine.o \
-	rewriteGraphTable.o \
 	rewriteHandler.o \
 	rewriteManip.o \
 	rewriteRemove.o \

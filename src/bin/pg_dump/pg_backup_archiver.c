@@ -3845,7 +3845,6 @@ _getObjectDescription(PQExpBuffer buf, const TocEntry *te)
 		strcmp(type, "DOMAIN") == 0 ||
 		strcmp(type, "FOREIGN TABLE") == 0 ||
 		strcmp(type, "MATERIALIZED VIEW") == 0 ||
-		strcmp(type, "PROPERTY GRAPH") == 0 ||
 		strcmp(type, "SEQUENCE") == 0 ||
 		strcmp(type, "STATISTICS") == 0 ||
 		strcmp(type, "TABLE") == 0 ||

@@ -20,14 +20,6 @@
    <itemizedlist>
     <listitem>
      <para>
-      Support for
-      <link linkend="ddl-property-graphs">property graph queries</link>
-      (<acronym>SQL/PGQ</acronym>).
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       A new <link linkend="sql-repack"><command>REPACK</command></link> command
       that reclaims disk space and reorganizes table contents, combining the
       functionality of the existing <command>VACUUM FULL</command> and
@@ -1754,28 +1746,6 @@ Add optional pid parameter to <link linkend="pg-replication-origin-session-setup
     <title>Query Commands</title>
 
     <itemizedlist>
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2026-03-16 [2f094e7ac] SQL Property Graph Queries (SQL/PGQ)
-Author: Peter Eisentraut <peter@eisentraut.org>
-2026-03-31 [c5b3253b8] Property references are preferred over regular column re
-Author: Peter Eisentraut <peter@eisentraut.org>
-2026-03-31 [a0dd0702e] Fix cross variable references in graph pattern causing s
--->
-
-<listitem>
-<para>
-Add support for <acronym>SQL</acronym> Property Graph Queries (<acronym>SQL</acronym>/<acronym>PGQ</acronym>) (Peter Eisentraut, Ashutosh Bapat)
-<ulink url="&commit_baseurl;2f094e7ac">&sect;</ulink>
-<ulink url="&commit_baseurl;c5b3253b8">&sect;</ulink>
-<ulink url="&commit_baseurl;a0dd0702e">&sect;</ulink>
-</para>
-
-<para>
-Internally these are processed like views so are written as standard relational queries.
-</para>
-</listitem>
-
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2026-04-01 [8e72d914c] Add UPDATE/DELETE FOR PORTION OF

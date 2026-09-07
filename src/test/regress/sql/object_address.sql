@@ -37,7 +37,6 @@ CREATE FUNCTION addr_nsp.trig() RETURNS TRIGGER LANGUAGE plpgsql AS $$ BEGIN END
 CREATE TRIGGER t BEFORE INSERT ON addr_nsp.gentable FOR EACH ROW EXECUTE PROCEDURE addr_nsp.trig();
 CREATE POLICY genpol ON addr_nsp.gentable;
 CREATE PROCEDURE addr_nsp.proc(int4) LANGUAGE SQL AS $$ $$;
-CREATE PROPERTY GRAPH addr_nsp.gengraph;
 CREATE SERVER "integer" FOREIGN DATA WRAPPER addr_fdw;
 CREATE USER MAPPING FOR regress_addr_user SERVER "integer";
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_addr_user IN SCHEMA public GRANT ALL ON TABLES TO regress_addr_user;
@@ -70,9 +69,7 @@ DECLARE
     objtype text;
 BEGIN
     FOR objtype IN VALUES ('toast table'), ('index column'), ('sequence column'),
-        ('toast table column'), ('view column'), ('materialized view column'),
-        ('property graph element'), ('property graph label'), ('property graph property'),
-        ('property graph element label'), ('property graph label property')
+        ('toast table column'), ('view column'), ('materialized view column')
     LOOP
         BEGIN
             PERFORM pg_get_object_address(objtype, '{one}', '{}');
@@ -97,7 +94,7 @@ DECLARE
 BEGIN
     FOR objtype IN VALUES
         ('table'), ('index'), ('sequence'), ('view'),
-        ('materialized view'), ('foreign table'), ('property graph'),
+        ('materialized view'), ('foreign table'),
         ('table column'), ('foreign table column'),
         ('aggregate'), ('function'), ('procedure'), ('type'), ('cast'),
         ('table constraint'), ('domain constraint'), ('conversion'), ('default value'),
@@ -170,7 +167,6 @@ WITH objects (type, name, args) AS (VALUES
     ('view', '{addr_nsp, genview}', '{}'),
     ('materialized view', '{addr_nsp, genmatview}', '{}'),
     ('foreign table', '{addr_nsp, genftable}', '{}'),
-    ('property graph', '{addr_nsp, gengraph}', '{}'),
     ('table column', '{addr_nsp, gentable, b}', '{}'),
     ('foreign table column', '{addr_nsp, genftable, a}', '{}'),
     ('aggregate', '{addr_nsp, genaggr}', '{int4}'),
@@ -286,11 +282,6 @@ WITH objects (classid, objid, objsubid) AS (VALUES
     ('pg_event_trigger'::regclass, 0, 0), -- no event trigger
     ('pg_parameter_acl'::regclass, 0, 0), -- no parameter ACL
     ('pg_policy'::regclass, 0, 0), -- no policy
-    ('pg_propgraph_element'::regclass, 0, 0), -- no property graph element
-    ('pg_propgraph_label'::regclass, 0, 0), -- no property graph label
-    ('pg_propgraph_property'::regclass, 0, 0), -- no property graph property
-    ('pg_propgraph_element_label'::regclass, 0, 0), -- no property graph element label
-    ('pg_propgraph_label_property'::regclass, 0, 0), -- no property graph label property
     ('pg_publication'::regclass, 0, 0), -- no publication
     ('pg_publication_namespace'::regclass, 0, 0), -- no publication namespace
     ('pg_publication_rel'::regclass, 0, 0), -- no publication relation

@@ -55,7 +55,6 @@
    &alterOperatorFamily;
    &alterPolicy;
    &alterProcedure;
-   &alterPropertyGraph;
    &alterPublication;
    &alterRole;
    &alterRoutine;
@@ -108,7 +107,6 @@
    &createOperatorFamily;
    &createPolicy;
    &createProcedure;
-   &createPropertyGraph;
    &createPublication;
    &createRole;
    &createRule;
@@ -157,7 +155,6 @@
    &dropOwned;
    &dropPolicy;
    &dropProcedure;
-   &dropPropertyGraph;
    &dropPublication;
    &dropRole;
    &dropRoutine;

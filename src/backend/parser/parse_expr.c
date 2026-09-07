@@ -29,7 +29,6 @@
 #include "parser/parse_collate.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
-#include "parser/parse_graphtable.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -578,7 +577,6 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 		case EXPR_KIND_COPY_WHERE:
 		case EXPR_KIND_GENERATED_COLUMN:
 		case EXPR_KIND_CYCLE_MARK:
-		case EXPR_KIND_PROPGRAPH_PROPERTY:
 			/* okay */
 			break;
 
@@ -616,16 +614,6 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 		if (node != NULL)
 			return node;
 	}
-
-	/*
-	 * Element pattern variables in a GRAPH_TABLE clause form the innermost
-	 * namespace since we do not allow subqueries in GRAPH_TABLE patterns. Try
-	 * to resolve the column reference as a graph table property reference
-	 * before trying to resolve it as a regular column reference.
-	 */
-	node = transformGraphTablePropertyRef(pstate, cref);
-	if (node != NULL)
-		return node;
 
 	/*----------
 	 * The allowed syntaxes are:
@@ -1885,9 +1873,6 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			break;
 		case EXPR_KIND_GENERATED_COLUMN:
 			err = _("cannot use subquery in column generation expression");
-			break;
-		case EXPR_KIND_PROPGRAPH_PROPERTY:
-			err = _("cannot use subquery in property definition expression");
 			break;
 		case EXPR_KIND_FOR_PORTION:
 			err = _("cannot use subquery in FOR PORTION OF expression");
@@ -3251,8 +3236,6 @@ ParseExprKindName(ParseExprKind exprKind)
 			return "GENERATED AS";
 		case EXPR_KIND_CYCLE_MARK:
 			return "CYCLE";
-		case EXPR_KIND_PROPGRAPH_PROPERTY:
-			return "property definition expression";
 		case EXPR_KIND_FOR_PORTION:
 			return "FOR PORTION OF";
 

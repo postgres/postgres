@@ -93,8 +93,6 @@ AlterOpFamilyStmt
 AlterOperatorStmt
 AlterOwnerStmt
 AlterPolicyStmt
-AlterPropGraphElementKind
-AlterPropGraphStmt
 AlterPublicationAction
 AlterPublicationStmt
 AlterReplicationSlotCmd
@@ -581,7 +579,6 @@ CreateOpClassStmt
 CreateOpFamilyStmt
 CreatePLangStmt
 CreatePolicyStmt
-CreatePropGraphStmt
 CreatePublicationStmt
 CreateRangeStmt
 CreateReplicationSlotCmd
@@ -932,11 +929,6 @@ FormData_pg_opfamily
 FormData_pg_partitioned_table
 FormData_pg_policy
 FormData_pg_proc
-FormData_pg_propgraph_element
-FormData_pg_propgraph_element_label
-FormData_pg_propgraph_label
-FormData_pg_propgraph_label_property
-FormData_pg_propgraph_property
 FormData_pg_publication
 FormData_pg_publication_namespace
 FormData_pg_publication_rel
@@ -997,11 +989,6 @@ Form_pg_opfamily
 Form_pg_partitioned_table
 Form_pg_policy
 Form_pg_proc
-Form_pg_propgraph_element
-Form_pg_propgraph_element_label
-Form_pg_propgraph_label
-Form_pg_propgraph_label_property
-Form_pg_propgraph_property
 Form_pg_publication
 Form_pg_publication_namespace
 Form_pg_publication_rel
@@ -1165,12 +1152,6 @@ GrantRoleOptions
 GrantRoleStmt
 GrantStmt
 GrantTargetType
-GraphElementPattern
-GraphElementPatternKind
-GraphLabelRef
-GraphPattern
-GraphPropertyRef
-GraphTableParseState
 Group
 GroupByColInfo
 GroupByOrdering
@@ -2442,10 +2423,6 @@ ProjectSetState
 ProjectionInfo
 ProjectionPath
 PromptInterruptContext
-PropGraphEdge
-PropGraphLabelAndProperties
-PropGraphProperties
-PropGraphVertex
 ProtocolVersion
 PrsStorage
 PruneFreezeParams
@@ -2532,7 +2509,6 @@ Range
 RangeBound
 RangeBox
 RangeFunction
-RangeGraphTable
 RangeIOData
 RangeQueryClause
 RangeSubselect

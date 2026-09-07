@@ -48,7 +48,6 @@ OBJS = \
 	portalcmds.o \
 	prepare.o \
 	proclang.o \
-	propgraphcmds.o \
 	publicationcmds.o \
 	repack.o \
 	repack_worker.o \

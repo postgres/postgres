@@ -143,20 +143,6 @@ create user mapping for regress_evt_user server useless_server;
 alter default privileges for role regress_evt_user
  revoke delete on tables from regress_evt_user;
 
--- property graph DDL should work with event trigger in place; these
--- objects are dropped further down, under the sql_drop trigger
-CREATE TABLE tv1 (a int PRIMARY KEY, b text);
-CREATE TABLE tv2 (i int PRIMARY KEY, j text);
-CREATE TABLE te1 (p int PRIMARY KEY, a int REFERENCES tv1(a), b int REFERENCES tv2(i), q text);
-
-CREATE PROPERTY GRAPH gx
-	VERTEX TABLES (
-		tv1 LABEL l1 PROPERTIES (b AS p1),
-		tv2 LABEL l2 PROPERTIES (j AS p1))
-  EDGE TABLES (te1 SOURCE tv1 DESTINATION tv2 LABEL e1 PROPERTIES (q as p1));
-
-ALTER PROPERTY GRAPH gx ALTER EDGE TABLE te1 ALTER LABEL e1 DROP PROPERTIES (p1);
-
 -- alter owner to non-superuser should fail
 alter event trigger regress_event_trigger owner to regress_evt_user;
 
@@ -333,12 +319,6 @@ BEGIN
 END; $$;
 CREATE EVENT TRIGGER regress_event_trigger_report_end ON ddl_command_end
   EXECUTE PROCEDURE event_trigger_report_end();
-
--- GRANT/REVOKE ON PROPERTY GRAPH with pg_event_trigger_ddl_commands()
-GRANT SELECT ON PROPERTY GRAPH gx TO public;
-REVOKE SELECT ON PROPERTY GRAPH gx FROM public;
-DROP PROPERTY GRAPH gx;
-DROP TABLE tv1, tv2, te1;
 
 CREATE SCHEMA evttrig
 	CREATE TABLE one (col_a SERIAL PRIMARY KEY, col_b text DEFAULT 'forty two', col_c SERIAL)

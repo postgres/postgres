@@ -2288,8 +2288,6 @@ stringify_grant_objtype(ObjectType objtype)
 			return "PARAMETER";
 		case OBJECT_PROCEDURE:
 			return "PROCEDURE";
-		case OBJECT_PROPGRAPH:
-			return "PROPERTY GRAPH";
 		case OBJECT_ROUTINE:
 			return "ROUTINE";
 		case OBJECT_TABLESPACE:
@@ -2401,7 +2399,6 @@ stringify_adefprivs_objtype(ObjectType objtype)
 		case OBJECT_OPFAMILY:
 		case OBJECT_PARAMETER_ACL:
 		case OBJECT_POLICY:
-		case OBJECT_PROPGRAPH:
 		case OBJECT_PUBLICATION:
 		case OBJECT_PUBLICATION_NAMESPACE:
 		case OBJECT_PUBLICATION_REL:
