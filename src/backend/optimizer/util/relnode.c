@@ -1735,6 +1735,15 @@ get_baserel_parampathinfo(PlannerInfo *root, RelOptInfo *baserel,
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
+		/*
+		 * A clone clause must not be enforced here if an outer join it is
+		 * incompatible with has already been computed below the point of
+		 * evaluation; some other clone is the right one to apply.
+		 */
+		if ((rinfo->has_clone || rinfo->is_clone) &&
+			bms_overlap(rinfo->incompatible_relids, joinrelids))
+			continue;
+
 		if (join_clause_is_movable_into(rinfo,
 										baserel->relids,
 										joinrelids))
@@ -1866,6 +1875,11 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
 	foreach(lc, joinrel->joininfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		/* As above, reject clones incompatible with a computed outer join */
+		if ((rinfo->has_clone || rinfo->is_clone) &&
+			bms_overlap(rinfo->incompatible_relids, join_and_req))
+			continue;
 
 		if (join_clause_is_movable_into(rinfo,
 										joinrel->relids,

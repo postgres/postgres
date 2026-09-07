@@ -2822,7 +2822,7 @@ typedef struct LimitPath
  * clause and null Vars that it uses.  In practice we only bother to populate
  * it for "clone" clauses, as it's currently only needed to prevent multiple
  * clones of the same clause from being accepted for evaluation at the same
- * join level.
+ * plan level, whether at a join or within a parameterized path.
  *
  * There is also an outer_relids field, which is NULL except for outer join
  * clauses; for those, it is the set of relids on the outer side of the
