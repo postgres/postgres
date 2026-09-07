@@ -650,6 +650,79 @@ $result = $node_A->safe_psql('postgres',
 is($result, qq(t), 'retention is active');
 
 ###############################################################################
+# Check that the conflict detection slot's xmin is re-initialized when a
+# database newly appears among the databases with retain_dead_tuples
+# subscriptions.
+#
+# The slot's xmin is advanced according to the per-database horizons of the
+# databases seen so far. Without re-initialization, a worker started in a
+# newly retaining database whose oldest active transaction ID is older would
+# be seeded with a value newer than its database's horizon.
+###############################################################################
+
+# Create a second database on node B, with the same table.
+$node_B->safe_psql('postgres', "CREATE DATABASE dbb");
+$node_B->safe_psql('dbb', "CREATE TABLE tab (a int PRIMARY KEY, b int)");
+
+# Hold a transaction with an assigned transaction ID open in dbb, pinning its
+# oldest active transaction ID.
+my $dbb_session = $node_B->background_psql('dbb');
+$dbb_session->query_until(
+	qr/starting_bg_psql/, q{
+	\echo starting_bg_psql
+	BEGIN;
+	SELECT txid_current();
+});
+
+# Push the transaction ID counter clearly past the pinned transaction ID and
+# wait for the slot's xmin to advance past it. Only the apply worker in the
+# postgres database drives the slot's xmin here, and postgres has no old
+# transaction running.
+$next_xid = $node_B->safe_psql('postgres', "SELECT txid_current() + 1");
+ok( $node_B->poll_query_until(
+		'postgres',
+		"SELECT xmin::text::bigint >= $next_xid FROM pg_replication_slots WHERE slot_name = 'pg_conflict_detection'"
+	),
+	"slot xmin advanced past the transaction ID pinned in dbb");
+
+# Create the second retention subscription in dbb. The launcher must
+# re-initialize the slot's xmin before launching dbb's apply worker.
+my $subname_BA2 = 'tap_sub_b_a2';
+$node_B->safe_psql('dbb',
+	"CREATE SUBSCRIPTION $subname_BA2
+	 CONNECTION '$node_A_connstr application_name=$subname_BA2'
+	 PUBLICATION tap_pub_A
+	 WITH (retain_dead_tuples = true, origin = none)");
+$node_B->wait_for_subscription_sync($node_A, $subname_BA2, 'dbb');
+
+# The slot's xmin must regress to the horizon pinned in dbb.
+ok( $node_B->poll_query_until(
+		'postgres',
+		"SELECT xmin::text::bigint < $next_xid FROM pg_replication_slots WHERE slot_name = 'pg_conflict_detection'"
+	),
+	"slot xmin regressed to the horizon pinned in dbb");
+
+# Once the pinned transaction commits, the xmin must be able to advance
+# again.
+$dbb_session->query_until(
+	qr/committed/, q{
+	COMMIT;
+	\echo committed
+});
+ok($dbb_session->quit, 'close pinned session');
+
+$next_xid = $node_B->safe_psql('postgres', "SELECT txid_current() + 1");
+ok( $node_B->poll_query_until(
+		'postgres',
+		"SELECT xmin::text::bigint >= $next_xid FROM pg_replication_slots WHERE slot_name = 'pg_conflict_detection'"
+	),
+	"slot xmin advances again after the pinned transaction commits");
+
+# Clean up the second database.
+$node_B->safe_psql('dbb', "DROP SUBSCRIPTION $subname_BA2");
+$node_B->safe_psql('postgres', "DROP DATABASE dbb");
+
+###############################################################################
 # Check that the replication slot pg_conflict_detection is dropped after
 # removing all the subscriptions.
 ###############################################################################

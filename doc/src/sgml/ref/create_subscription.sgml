@@ -493,7 +493,13 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
            the subscription is disabled; thus, the information will accumulate
            until the subscription is enabled. To prevent excessive accumulation,
            it is recommended to disable <literal>retain_dead_tuples</literal>
-           if the subscription will be inactive for an extended period.
+           if the subscription will be inactive for an extended period. The
+           same applies while the subscription is enabled but its apply worker
+           is not running, for example because the worker repeatedly fails to
+           apply a change. The oldest information being retained can be seen as
+           the <structfield>xmin</structfield> of the
+           <quote><literal>pg_conflict_detection</literal></quote> slot in
+           <link linkend="view-pg-replication-slots">pg_replication_slots</link>.
           </para>
 
           <para>
@@ -544,6 +550,17 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           publisher. For the changes originating from different origins,
           reliable conflict detection cannot be guaranteed.
          </para>
+
+         <para>
+          Detection of <xref linkend="conflict-update-deleted"/> also requires
+          <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
+          to be enabled on the subscriber, and a warning is issued if
+          <literal>retain_dead_tuples</literal> is enabled while it is not. If
+          <varname>track_commit_timestamp</varname> is disabled afterwards, the
+          information for conflict detection continues to be retained, but the
+          conflict is reported as <xref linkend="conflict-update-missing"/>
+          instead, so the retention no longer serves its purpose.
+         </para>
         </listitem>
        </varlistentry>
 
@@ -579,6 +596,18 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           <literal>retain_dead_tuples</literal> is enabled and the apply
           worker associated with the subscription is active.
          </para>
+         <caution>
+          <para>
+           Note that the retention duration is not evaluated while the
+           subscription is disabled or its apply worker is not running. Thus,
+           the information retained for conflict detection will continue to
+           accumulate regardless of this setting until the subscription is
+           enabled or its apply worker resumes. To prevent excessive
+           accumulation, consider disabling
+           <literal>retain_dead_tuples</literal> if the subscription will be
+           inactive for an extended period.
+          </para>
+         </caution>
          <warning>
           <para>
            Note that setting a non-zero value for this option could lead to
