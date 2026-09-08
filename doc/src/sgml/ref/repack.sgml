@@ -287,6 +287,12 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
 
        <listitem>
         <para>
+          The table's access method is not <literal>heap</literal>.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
          <command>REPACK</command> is executed inside a transaction block.
         </para>
        </listitem>
