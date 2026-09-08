@@ -796,9 +796,24 @@ ORDER BY 1;
  clstr_tst_pkey
 (3 rows)
 
--- Verify partial analyze works
+-- Verify REPACK (ANALYZE) works, including partial analyze.
 REPACK (ANALYZE) clstr_tst (a);
 REPACK (ANALYZE) clstr_tst;
+-- Plain REPACK is allowed in a transaction block.
+BEGIN;
+REPACK clstr_tst;
+ROLLBACK;
+-- REPACK (ANALYZE) is not allowed in a transaction block.
+BEGIN;
+REPACK (ANALYZE) clstr_tst;
+ERROR:  REPACK (ANALYZE) cannot run inside a transaction block
+ROLLBACK;
+-- REPACK is allowed within a PL, as long as there's no ANALYZE.
+DO $$ BEGIN EXECUTE 'REPACK clstr_tst'; END $$;
+DO $$ BEGIN EXECUTE 'REPACK (ANALYZE) clstr_tst'; END $$;
+ERROR:  REPACK (ANALYZE) cannot be executed from a function or procedure
+CONTEXT:  SQL statement "REPACK (ANALYZE) clstr_tst"
+PL/pgSQL function inline_code_block line 1 at EXECUTE
 REPACK (VERBOSE) clstr_tst (a);
 ERROR:  ANALYZE option must be specified when a column list is provided
 -- REPACK w/o argument performs no ordering, so we can only check which tables

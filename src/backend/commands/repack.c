@@ -303,7 +303,7 @@ ExecRepack(ParseState *pstate, RepackStmt *stmt, bool isTopLevel)
 	if ((params.options & CLUOPT_CONCURRENT) != 0)
 	{
 		/*
-		 * Make sure we're not in a transaction block.
+		 * In concurrent mode, make sure we're not in a transaction block.
 		 *
 		 * The reason is that repack_setup_logical_decoding() could wait
 		 * indefinitely for our XID to complete. (The deadlock detector would
@@ -313,6 +313,17 @@ ExecRepack(ParseState *pstate, RepackStmt *stmt, bool isTopLevel)
 		 * to understand and we don't lose any functionality.
 		 */
 		PreventInTransactionBlock(isTopLevel, "REPACK (CONCURRENTLY)");
+	}
+	else if ((params.options & CLUOPT_ANALYZE) != 0)
+	{
+		/*
+		 * With ANALYZE, process_single_relation() would commit the current
+		 * transaction and start a new one, which would break our state if
+		 * we're in a transaction block or PL-execution environment.  Reject
+		 * the option in that case.  It may be possible to remove this
+		 * restriction in the future.
+		 */
+		PreventInTransactionBlock(isTopLevel, "REPACK (ANALYZE)");
 	}
 
 	/*
