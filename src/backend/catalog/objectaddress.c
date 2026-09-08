@@ -2140,37 +2140,37 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	if (type == OBJECT_TYPE || type == OBJECT_DOMAIN || type == OBJECT_CAST ||
 		type == OBJECT_TRANSFORM || type == OBJECT_DOMCONSTRAINT)
 	{
-		Datum	   *elems;
-		bool	   *nulls;
+		Datum	   *arr_elems;
+		bool	   *arr_nulls;
 		int			nelems;
 
-		deconstruct_array_builtin(namearr, TEXTOID, &elems, &nulls, &nelems);
+		deconstruct_array_builtin(namearr, TEXTOID, &arr_elems, &arr_nulls, &nelems);
 		if (nelems != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("name list length must be exactly %d", 1)));
-		if (nulls[0])
+		if (arr_nulls[0])
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("name or argument lists may not contain nulls")));
-		typename = typeStringToTypeName(TextDatumGetCString(elems[0]), NULL);
+		typename = typeStringToTypeName(TextDatumGetCString(arr_elems[0]), NULL);
 	}
 	else if (type == OBJECT_LARGEOBJECT)
 	{
-		Datum	   *elems;
-		bool	   *nulls;
+		Datum	   *arr_elems;
+		bool	   *arr_nulls;
 		int			nelems;
 
-		deconstruct_array_builtin(namearr, TEXTOID, &elems, &nulls, &nelems);
+		deconstruct_array_builtin(namearr, TEXTOID, &arr_elems, &arr_nulls, &nelems);
 		if (nelems != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("name list length must be exactly %d", 1)));
-		if (nulls[0])
+		if (arr_nulls[0])
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("large object OID may not be null")));
-		objnode = (Node *) makeFloat(TextDatumGetCString(elems[0]));
+		objnode = (Node *) makeFloat(TextDatumGetCString(arr_elems[0]));
 	}
 	else
 	{
@@ -2194,22 +2194,22 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		type == OBJECT_AMPROC)
 	{
 		/* in these cases, the args list must be of TypeName */
-		Datum	   *elems;
-		bool	   *nulls;
+		Datum	   *arr_elems;
+		bool	   *arr_nulls;
 		int			nelems;
 		int			i;
 
-		deconstruct_array_builtin(argsarr, TEXTOID, &elems, &nulls, &nelems);
+		deconstruct_array_builtin(argsarr, TEXTOID, &arr_elems, &arr_nulls, &nelems);
 
 		args = NIL;
 		for (i = 0; i < nelems; i++)
 		{
-			if (nulls[i])
+			if (arr_nulls[i])
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("name or argument lists may not contain nulls")));
 			args = lappend(args,
-						   typeStringToTypeName(TextDatumGetCString(elems[i]),
+						   typeStringToTypeName(TextDatumGetCString(arr_elems[i]),
 												NULL));
 		}
 	}

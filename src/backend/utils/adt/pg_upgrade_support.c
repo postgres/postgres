@@ -227,10 +227,10 @@ binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 		deconstruct_array_builtin(textArray, TEXTOID, &textDatums, NULL, &ndatums);
 		for (i = 0; i < ndatums; i++)
 		{
-			char	   *extName = TextDatumGetCString(textDatums[i]);
-			Oid			extOid = get_extension_oid(extName, false);
+			char	   *reqExtName = TextDatumGetCString(textDatums[i]);
+			Oid			reqExtOid = get_extension_oid(reqExtName, false);
 
-			requiredExtensions = lappend_oid(requiredExtensions, extOid);
+			requiredExtensions = lappend_oid(requiredExtensions, reqExtOid);
 		}
 	}
 

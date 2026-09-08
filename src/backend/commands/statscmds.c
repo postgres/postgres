@@ -359,15 +359,15 @@ CreateStatistics(List *relids, CreateStatsStmt *stmt, bool check_rights)
 			Node	   *expr = selem->expr;
 			Oid			atttype;
 			TypeCacheEntry *type;
-			Bitmapset  *attnums = NULL;
+			Bitmapset  *expr_attrs = NULL;
 			int			k;
 
 			Assert(expr != NULL);
 
-			pull_varattnos(expr, 1, &attnums);
+			pull_varattnos(expr, 1, &expr_attrs);
 
 			k = -1;
-			while ((k = bms_next_member(attnums, k)) >= 0)
+			while ((k = bms_next_member(expr_attrs, k)) >= 0)
 			{
 				AttrNumber	attnum = k + FirstLowInvalidHeapAttributeNumber;
 

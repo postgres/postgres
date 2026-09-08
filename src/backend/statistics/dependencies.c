@@ -70,7 +70,7 @@ static bool dependency_is_fully_matched(MVDependency *dependency,
 static bool dependency_is_compatible_clause(Node *clause, Index relid,
 											AttrNumber *attnum);
 static bool dependency_is_compatible_expression(Node *clause, Index relid,
-												List *statlist, Node **expr);
+												List *statlist, Node **stat_expr_p);
 static MVDependency *find_strongest_dependency(MVDependencies **dependencies,
 											   int ndependencies, Bitmapset *attnums);
 static Selectivity clauselist_apply_dependencies(PlannerInfo *root, List *clauses,
@@ -1143,10 +1143,10 @@ clauselist_apply_dependencies(PlannerInfo *root, List *clauses,
  *
  * Similar to dependency_is_compatible_clause, but doesn't enforce that the
  * expression is a simple Var.  On success, return the matching statistics
- * expression into *expr.
+ * expression into *stat_expr_p.
  */
 static bool
-dependency_is_compatible_expression(Node *clause, Index relid, List *statlist, Node **expr)
+dependency_is_compatible_expression(Node *clause, Index relid, List *statlist, Node **stat_expr_p)
 {
 	ListCell   *lc,
 			   *lc2;
@@ -1170,17 +1170,17 @@ dependency_is_compatible_expression(Node *clause, Index relid, List *statlist, N
 	if (is_opclause(clause))
 	{
 		/* If it's an opclause, check for Var = Const or Const = Var. */
-		OpExpr	   *expr = (OpExpr *) clause;
+		OpExpr	   *opexpr = (OpExpr *) clause;
 
 		/* Only expressions with two arguments are candidates. */
-		if (list_length(expr->args) != 2)
+		if (list_length(opexpr->args) != 2)
 			return false;
 
 		/* Make sure non-selected argument is a pseudoconstant. */
-		if (is_pseudo_constant_clause(lsecond(expr->args)))
-			clause_expr = linitial(expr->args);
-		else if (is_pseudo_constant_clause(linitial(expr->args)))
-			clause_expr = lsecond(expr->args);
+		if (is_pseudo_constant_clause(lsecond(opexpr->args)))
+			clause_expr = linitial(opexpr->args);
+		else if (is_pseudo_constant_clause(linitial(opexpr->args)))
+			clause_expr = lsecond(opexpr->args);
 		else
 			return false;
 
@@ -1196,7 +1196,7 @@ dependency_is_compatible_expression(Node *clause, Index relid, List *statlist, N
 		 * selectivity functions, and to be more consistent with decisions
 		 * elsewhere in the planner.
 		 */
-		if (get_oprrest(expr->opno) != F_EQSEL)
+		if (get_oprrest(opexpr->opno) != F_EQSEL)
 			return false;
 
 		/* OK to proceed with checking "var" */
@@ -1245,7 +1245,7 @@ dependency_is_compatible_expression(Node *clause, Index relid, List *statlist, N
 		BoolExpr   *bool_expr = (BoolExpr *) clause;
 
 		/* start with no expression (we'll use the first match) */
-		*expr = NULL;
+		*stat_expr_p = NULL;
 
 		foreach(lc, bool_expr->args)
 		{
@@ -1259,11 +1259,11 @@ dependency_is_compatible_expression(Node *clause, Index relid, List *statlist, N
 													 statlist, &or_expr))
 				return false;
 
-			if (*expr == NULL)
-				*expr = or_expr;
+			if (*stat_expr_p == NULL)
+				*stat_expr_p = or_expr;
 
 			/* ensure all the expressions are the same */
-			if (!equal(or_expr, *expr))
+			if (!equal(or_expr, *stat_expr_p))
 				return false;
 		}
 
@@ -1311,7 +1311,7 @@ dependency_is_compatible_expression(Node *clause, Index relid, List *statlist, N
 
 			if (equal(clause_expr, stat_expr))
 			{
-				*expr = stat_expr;
+				*stat_expr_p = stat_expr;
 				return true;
 			}
 		}

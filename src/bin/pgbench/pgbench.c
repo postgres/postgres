@@ -387,7 +387,7 @@ typedef struct StatsData
 	 * possibly after some retries when --max-tries is not one. Thus
 	 *
 	 * the number of all transactions =
-	 *   'skipped' (it was too late to execute them) +
+	 *   'cnt_skipped' (it was too late to execute them) +
 	 *   'cnt' (the number of successful transactions) +
 	 *   'failed' (the number of failed transactions).
 	 *
@@ -426,8 +426,8 @@ typedef struct StatsData
 	 *----------
 	 */
 	int64		cnt;			/* number of successful transactions, not
-								 * including 'skipped' */
-	int64		skipped;		/* number of transactions skipped under --rate
+								 * including 'cnt_skipped' */
+	int64		cnt_skipped;	/* number of transactions skipped under --rate
 								 * and --latency-limit */
 	int64		retries;		/* number of retries after a serialization or
 								 * a deadlock error in all the transactions */
@@ -835,9 +835,9 @@ static bool evaluateExpr(CState *st, PgBenchExpr *expr,
 						 PgBenchValue *retval);
 static ConnectionStateEnum executeMetaCommand(CState *st, pg_time_usec_t *now);
 static void doLog(TState *thread, CState *st,
-				  StatsData *agg, bool skipped, double latency, double lag);
+				  StatsData *agg, bool tx_skipped, double latency, double lag);
 static void processXactStats(TState *thread, CState *st, pg_time_usec_t *now,
-							 bool skipped, StatsData *agg);
+							 bool tx_skipped, StatsData *agg);
 static void addScript(const ParsedScript *script);
 static THREAD_FUNC_RETURN_TYPE THREAD_FUNC_CC threadRun(void *arg);
 static void finishCon(CState *st);
@@ -1426,7 +1426,7 @@ initStats(StatsData *sd, pg_time_usec_t start)
 {
 	sd->start_time = start;
 	sd->cnt = 0;
-	sd->skipped = 0;
+	sd->cnt_skipped = 0;
 	sd->retries = 0;
 	sd->retried = 0;
 	sd->serialization_failures = 0;
@@ -1440,14 +1440,14 @@ initStats(StatsData *sd, pg_time_usec_t start)
  * Accumulate one additional item into the given stats object.
  */
 static void
-accumStats(StatsData *stats, bool skipped, double lat, double lag,
+accumStats(StatsData *stats, bool tx_skipped, double lat, double lag,
 		   EStatus estatus, int64 tries)
 {
 	/* Record the skipped transaction */
-	if (skipped)
+	if (tx_skipped)
 	{
 		/* no latency to record on skipped transactions */
-		stats->skipped++;
+		stats->cnt_skipped++;
 		return;
 	}
 
@@ -4594,9 +4594,9 @@ getFailures(const StatsData *stats)
  * that is not successfully processed.
  */
 static const char *
-getResultString(bool skipped, EStatus estatus)
+getResultString(bool tx_skipped, EStatus estatus)
 {
-	if (skipped)
+	if (tx_skipped)
 		return "skipped";
 	else if (failures_detailed)
 	{
@@ -4628,7 +4628,7 @@ getResultString(bool skipped, EStatus estatus)
  */
 static void
 doLog(TState *thread, CState *st,
-	  StatsData *agg, bool skipped, double latency, double lag)
+	  StatsData *agg, bool tx_skipped, double latency, double lag)
 {
 	FILE	   *logfile = thread->logfile;
 	pg_time_usec_t now = pg_time_now() + epoch_shift;
@@ -4660,7 +4660,7 @@ doLog(TState *thread, CState *st,
 			double		lag_sum2 = 0.0;
 			double		lag_min = 0.0;
 			double		lag_max = 0.0;
-			int64		skipped = 0;
+			int64		cnt_skipped = 0;
 			int64		serialization_failures = 0;
 			int64		deadlock_failures = 0;
 			int64		other_sql_failures = 0;
@@ -4690,8 +4690,8 @@ doLog(TState *thread, CState *st,
 					lag_max);
 
 			if (latency_limit)
-				skipped = agg->skipped;
-			fprintf(logfile, " " INT64_FORMAT, skipped);
+				cnt_skipped = agg->cnt_skipped;
+			fprintf(logfile, " " INT64_FORMAT, cnt_skipped);
 
 			if (max_tries != 1)
 			{
@@ -4718,12 +4718,12 @@ doLog(TState *thread, CState *st,
 		}
 
 		/* accumulate the current transaction */
-		accumStats(agg, skipped, latency, lag, st->estatus, st->tries);
+		accumStats(agg, tx_skipped, latency, lag, st->estatus, st->tries);
 	}
 	else
 	{
 		/* no, print raw transactions */
-		if (!skipped && st->estatus == ESTATUS_NO_ERROR)
+		if (!tx_skipped && st->estatus == ESTATUS_NO_ERROR)
 			fprintf(logfile, "%d " INT64_FORMAT " %.0f %d " INT64_FORMAT " "
 					INT64_FORMAT,
 					st->id, st->cnt, latency, st->use_file,
@@ -4731,7 +4731,7 @@ doLog(TState *thread, CState *st,
 		else
 			fprintf(logfile, "%d " INT64_FORMAT " %s %d " INT64_FORMAT " "
 					INT64_FORMAT,
-					st->id, st->cnt, getResultString(skipped, st->estatus),
+					st->id, st->cnt, getResultString(tx_skipped, st->estatus),
 					st->use_file, now / 1000000, now % 1000000);
 
 		if (throttle_delay)
@@ -4751,14 +4751,14 @@ doLog(TState *thread, CState *st,
  */
 static void
 processXactStats(TState *thread, CState *st, pg_time_usec_t *now,
-				 bool skipped, StatsData *agg)
+				 bool tx_skipped, StatsData *agg)
 {
 	double		latency = 0.0,
 				lag = 0.0;
 	bool		detailed = progress || throttle_delay || latency_limit ||
 		use_log || per_script_stats;
 
-	if (detailed && !skipped && st->estatus == ESTATUS_NO_ERROR)
+	if (detailed && !tx_skipped && st->estatus == ESTATUS_NO_ERROR)
 	{
 		pg_time_now_lazy(now);
 
@@ -4768,7 +4768,7 @@ processXactStats(TState *thread, CState *st, pg_time_usec_t *now,
 	}
 
 	/* keep detailed thread stats */
-	accumStats(&thread->stats, skipped, latency, lag, st->estatus, st->tries);
+	accumStats(&thread->stats, tx_skipped, latency, lag, st->estatus, st->tries);
 
 	/* count transactions over the latency limit, if needed */
 	if (latency_limit && latency > latency_limit)
@@ -4778,11 +4778,11 @@ processXactStats(TState *thread, CState *st, pg_time_usec_t *now,
 	st->cnt++;
 
 	if (use_log)
-		doLog(thread, st, agg, skipped, latency, lag);
+		doLog(thread, st, agg, tx_skipped, latency, lag);
 
 	/* XXX could use a mutex here, but we choose not to */
 	if (per_script_stats)
-		accumStats(&sql_script[st->use_file].stats, skipped, latency, lag,
+		accumStats(&sql_script[st->use_file].stats, tx_skipped, latency, lag,
 				   st->estatus, st->tries);
 }
 
@@ -6336,7 +6336,7 @@ printProgressReport(TState *threads, int64 test_start, pg_time_usec_t now,
 		mergeSimpleStats(&cur.latency, &threads[i].stats.latency);
 		mergeSimpleStats(&cur.lag, &threads[i].stats.lag);
 		cur.cnt += threads[i].stats.cnt;
-		cur.skipped += threads[i].stats.skipped;
+		cur.cnt_skipped += threads[i].stats.cnt_skipped;
 		cur.retries += threads[i].stats.retries;
 		cur.retried += threads[i].stats.retried;
 		cur.serialization_failures +=
@@ -6383,7 +6383,7 @@ printProgressReport(TState *threads, int64 test_start, pg_time_usec_t now,
 		fprintf(stderr, ", lag %.3f ms", lag);
 		if (latency_limit)
 			fprintf(stderr, ", " INT64_FORMAT " skipped",
-					cur.skipped - last->skipped);
+					cur.cnt_skipped - last->cnt_skipped);
 	}
 
 	/* it can be non-zero only if max_tries is not equal to one */
@@ -6451,7 +6451,7 @@ printResults(StatsData *total,
 {
 	/* tps is about actually executed transactions during benchmarking */
 	int64		failures = getFailures(total);
-	int64		total_cnt = total->cnt + total->skipped + failures;
+	int64		total_cnt = total->cnt + total->cnt_skipped + failures;
 	double		bench_duration = PG_TIME_GET_DOUBLE(total_duration);
 	double		tps = total->cnt / bench_duration;
 
@@ -6517,7 +6517,7 @@ printResults(StatsData *total,
 
 	if (throttle_delay && latency_limit)
 		printf("number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
-			   total->skipped, 100.0 * total->skipped / total_cnt);
+			   total->cnt_skipped, 100.0 * total->cnt_skipped / total_cnt);
 
 	if (latency_limit)
 		printf("number of transactions above the %.1f ms latency limit: " INT64_FORMAT "/" INT64_FORMAT " (%.3f%%)\n",
@@ -6578,7 +6578,7 @@ printResults(StatsData *total,
 				StatsData  *sstats = &sql_script[i].stats;
 				int64		script_failures = getFailures(sstats);
 				int64		script_total_cnt =
-					sstats->cnt + sstats->skipped + script_failures;
+					sstats->cnt + sstats->cnt_skipped + script_failures;
 
 				printf("SQL script %d: %s\n"
 					   " - weight: %d (targets %.1f%% of total)\n"
@@ -6629,8 +6629,8 @@ printResults(StatsData *total,
 
 					if (throttle_delay && latency_limit)
 						printf(" - number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
-							   sstats->skipped,
-							   100.0 * sstats->skipped / script_total_cnt);
+							   sstats->cnt_skipped,
+							   100.0 * sstats->cnt_skipped / script_total_cnt);
 
 				}
 				printSimpleStats(" - latency", &sstats->latency);
@@ -7482,7 +7482,7 @@ main(int argc, char **argv)
 		mergeSimpleStats(&stats.latency, &thread->stats.latency);
 		mergeSimpleStats(&stats.lag, &thread->stats.lag);
 		stats.cnt += thread->stats.cnt;
-		stats.skipped += thread->stats.skipped;
+		stats.cnt_skipped += thread->stats.cnt_skipped;
 		stats.retries += thread->stats.retries;
 		stats.retried += thread->stats.retried;
 		stats.serialization_failures += thread->stats.serialization_failures;

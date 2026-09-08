@@ -141,11 +141,11 @@ ValuesNext(ValuesScanState *node)
 		resind = 0;
 		foreach(lc, exprstatelist)
 		{
-			ExprState  *estate = (ExprState *) lfirst(lc);
+			ExprState  *exprstate = (ExprState *) lfirst(lc);
 			CompactAttribute *attr = TupleDescCompactAttr(slot->tts_tupleDescriptor,
 														  resind);
 
-			values[resind] = ExecEvalExpr(estate,
+			values[resind] = ExecEvalExpr(exprstate,
 										  econtext,
 										  &isnull[resind]);
 

@@ -388,7 +388,7 @@ static int	compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
 static void checkTimezoneIsUsedForCast(bool useTz, const char *type1,
 									   const char *type2);
 
-static void JsonTableInitOpaque(TableFuncScanState *state, int natts);
+static void JsonTableInitOpaque(TableFuncScanState *tscanstate, int natts);
 static JsonTablePlanState *JsonTableInitPlan(JsonTableExecContext *cxt,
 											 JsonTablePlan *plan,
 											 JsonTablePlanState *parentstate,
@@ -1921,32 +1921,32 @@ executeBoolItem(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				 * check that there are no errors at all.
 				 */
 				JsonValueList vals;
-				JsonPathExecResult res;
+				JsonPathExecResult jper;
 				bool		isempty;
 
 				JsonValueListInit(&vals);
 
-				res = executeItemOptUnwrapResultNoThrow(cxt, &larg, jb,
-														false, &vals);
+				jper = executeItemOptUnwrapResultNoThrow(cxt, &larg, jb,
+														 false, &vals);
 
 				isempty = JsonValueListIsEmpty(&vals);
 				JsonValueListClear(&vals);
 
-				if (jperIsError(res))
+				if (jperIsError(jper))
 					return jpbUnknown;
 
 				return isempty ? jpbFalse : jpbTrue;
 			}
 			else
 			{
-				JsonPathExecResult res =
+				JsonPathExecResult jper =
 					executeItemOptUnwrapResultNoThrow(cxt, &larg, jb,
 													  false, NULL);
 
-				if (jperIsError(res))
+				if (jperIsError(jper))
 					return jpbUnknown;
 
-				return res == jperOk ? jpbTrue : jpbFalse;
+				return jper == jperOk ? jpbTrue : jpbFalse;
 			}
 
 		default:
@@ -2077,7 +2077,7 @@ executePredicate(JsonPathExecContext *cxt, JsonPathItem *pred,
 				 bool unwrapRightArg, JsonPathPredicateCallback exec,
 				 void *param)
 {
-	JsonPathExecResult res;
+	JsonPathExecResult jper;
 	JsonValueListIterator lseqit;
 	JsonValueList lseq;
 	JsonValueList rseq;
@@ -2089,8 +2089,8 @@ executePredicate(JsonPathExecContext *cxt, JsonPathItem *pred,
 	JsonValueListInit(&rseq);
 
 	/* Left argument is always auto-unwrapped. */
-	res = executeItemOptUnwrapResultNoThrow(cxt, larg, jb, true, &lseq);
-	if (jperIsError(res))
+	jper = executeItemOptUnwrapResultNoThrow(cxt, larg, jb, true, &lseq);
+	if (jperIsError(jper))
 	{
 		error = true;
 		goto exit;
@@ -2099,9 +2099,9 @@ executePredicate(JsonPathExecContext *cxt, JsonPathItem *pred,
 	if (rarg)
 	{
 		/* Right argument is conditionally auto-unwrapped. */
-		res = executeItemOptUnwrapResultNoThrow(cxt, rarg, jb,
-												unwrapRightArg, &rseq);
-		if (jperIsError(res))
+		jper = executeItemOptUnwrapResultNoThrow(cxt, rarg, jb,
+												 unwrapRightArg, &rseq);
+		if (jperIsError(jper))
 		{
 			error = true;
 			goto exit;
@@ -4425,10 +4425,10 @@ GetJsonTableExecContext(TableFuncScanState *state, const char *fname)
  * JsonTablePlan given in TableFunc.
  */
 static void
-JsonTableInitOpaque(TableFuncScanState *state, int natts)
+JsonTableInitOpaque(TableFuncScanState *tscanstate, int natts)
 {
 	JsonTableExecContext *cxt;
-	PlanState  *ps = &state->ss.ps;
+	PlanState  *ps = &tscanstate->ss.ps;
 	TableFuncScan *tfs = castNode(TableFuncScan, ps->plan);
 	TableFunc  *tf = tfs->tablefunc;
 	JsonTablePlan *rootplan = (JsonTablePlan *) tf->plan;
@@ -4442,30 +4442,30 @@ JsonTableInitOpaque(TableFuncScanState *state, int natts)
 	 * Evaluate JSON_TABLE() PASSING arguments to be passed to the jsonpath
 	 * executor via JsonPathVariables.
 	 */
-	if (state->passingvalexprs)
+	if (tscanstate->passingvalexprs)
 	{
 		ListCell   *exprlc;
 		ListCell   *namelc;
 
-		Assert(list_length(state->passingvalexprs) ==
+		Assert(list_length(tscanstate->passingvalexprs) ==
 			   list_length(je->passing_names));
-		forboth(exprlc, state->passingvalexprs,
+		forboth(exprlc, tscanstate->passingvalexprs,
 				namelc, je->passing_names)
 		{
-			ExprState  *state = lfirst_node(ExprState, exprlc);
+			ExprState  *exprstate = lfirst_node(ExprState, exprlc);
 			String	   *name = lfirst_node(String, namelc);
 			JsonPathVariable *var = palloc_object(JsonPathVariable);
 
 			var->name = pstrdup(name->sval);
 			var->namelen = strlen(var->name);
-			var->typid = exprType((Node *) state->expr);
-			var->typmod = exprTypmod((Node *) state->expr);
+			var->typid = exprType((Node *) exprstate->expr);
+			var->typmod = exprTypmod((Node *) exprstate->expr);
 
 			/*
 			 * Evaluate the expression and save the value to be returned by
 			 * GetJsonPathVar().
 			 */
-			var->value = ExecEvalExpr(state, ps->ps_ExprContext,
+			var->value = ExecEvalExpr(exprstate, ps->ps_ExprContext,
 									  &var->isnull);
 
 			args = lappend(args, var);
@@ -4481,7 +4481,7 @@ JsonTableInitOpaque(TableFuncScanState *state, int natts)
 	cxt->rootplanstate = JsonTableInitPlan(cxt, rootplan, NULL, args,
 										   CurrentMemoryContext);
 
-	state->opaque = cxt;
+	tscanstate->opaque = cxt;
 }
 
 /*

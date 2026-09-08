@@ -1477,7 +1477,7 @@ FreePageManagerPutInternal(FreePageManager *fpm, Size first_page, Size npages,
 						   bool soft)
 {
 	char	   *base = fpm_segment_base(fpm);
-	FreePageBtreeSearchResult result;
+	FreePageBtreeSearchResult searchresult;
 	FreePageBtreeLeafKey *prevkey = NULL;
 	FreePageBtreeLeafKey *nextkey = NULL;
 	FreePageBtree *np;
@@ -1564,19 +1564,19 @@ FreePageManagerPutInternal(FreePageManager *fpm, Size first_page, Size npages,
 	}
 
 	/* Search the btree. */
-	FreePageBtreeSearch(fpm, first_page, &result);
-	Assert(!result.found);
-	if (result.index > 0)
-		prevkey = &result.page->u.leaf_key[result.index - 1];
-	if (result.index < result.page->hdr.nused)
+	FreePageBtreeSearch(fpm, first_page, &searchresult);
+	Assert(!searchresult.found);
+	if (searchresult.index > 0)
+		prevkey = &searchresult.page->u.leaf_key[searchresult.index - 1];
+	if (searchresult.index < searchresult.page->hdr.nused)
 	{
-		np = result.page;
-		nindex = result.index;
-		nextkey = &result.page->u.leaf_key[result.index];
+		np = searchresult.page;
+		nindex = searchresult.index;
+		nextkey = &searchresult.page->u.leaf_key[searchresult.index];
 	}
 	else
 	{
-		np = FreePageBtreeFindRightSibling(base, result.page);
+		np = FreePageBtreeFindRightSibling(base, searchresult.page);
 		nindex = 0;
 		if (np != NULL)
 			nextkey = &np->u.leaf_key[0];
@@ -1649,7 +1649,7 @@ FreePageManagerPutInternal(FreePageManager *fpm, Size first_page, Size npages,
 	}
 
 	/* Split leaf page and as many of its ancestors as necessary. */
-	if (result.split_pages > 0)
+	if (searchresult.split_pages > 0)
 	{
 		/*
 		 * NB: We could consider various coping strategies here to avoid a
@@ -1667,7 +1667,7 @@ FreePageManagerPutInternal(FreePageManager *fpm, Size first_page, Size npages,
 			return 0;
 
 		/* Check whether we need to allocate more btree pages to split. */
-		if (result.split_pages > fpm->btree_recycle_count)
+		if (searchresult.split_pages > fpm->btree_recycle_count)
 		{
 			Size		pages_needed;
 			Size		recycle_page;
@@ -1682,7 +1682,7 @@ FreePageManagerPutInternal(FreePageManager *fpm, Size first_page, Size npages,
 			 * ever use a tiny number of pages compared to the number under
 			 * management.  If it does, something's badly screwed up.
 			 */
-			pages_needed = result.split_pages - fpm->btree_recycle_count;
+			pages_needed = searchresult.split_pages - fpm->btree_recycle_count;
 			for (i = 0; i < pages_needed; ++i)
 			{
 				if (!FreePageManagerGetInternal(fpm, 1, &recycle_page))
@@ -1698,7 +1698,7 @@ FreePageManagerPutInternal(FreePageManager *fpm, Size first_page, Size npages,
 			 * we don't bother. Consolidation can't be possible now if it
 			 * wasn't previously.)
 			 */
-			FreePageBtreeSearch(fpm, first_page, &result);
+			FreePageBtreeSearch(fpm, first_page, &searchresult);
 
 			/*
 			 * The act of allocating pages for use in constructing our btree
@@ -1707,13 +1707,13 @@ FreePageManagerPutInternal(FreePageManager *fpm, Size first_page, Size npages,
 			 * less if we fortuitously allocated a chunk that freed up a slot
 			 * on the page we need to update.
 			 */
-			Assert(result.split_pages <= fpm->btree_recycle_count);
+			Assert(searchresult.split_pages <= fpm->btree_recycle_count);
 		}
 
 		/* If we still need to perform a split, do it. */
-		if (result.split_pages > 0)
+		if (searchresult.split_pages > 0)
 		{
-			FreePageBtree *split_target = result.page;
+			FreePageBtree *split_target = searchresult.page;
 			FreePageBtree *child = NULL;
 			Size		key = first_page;
 
@@ -1822,12 +1822,12 @@ FreePageManagerPutInternal(FreePageManager *fpm, Size first_page, Size npages,
 	}
 
 	/* Physically add the key to the page. */
-	Assert(result.page->hdr.nused < FPM_ITEMS_PER_LEAF_PAGE);
-	FreePageBtreeInsertLeaf(result.page, result.index, first_page, npages);
+	Assert(searchresult.page->hdr.nused < FPM_ITEMS_PER_LEAF_PAGE);
+	FreePageBtreeInsertLeaf(searchresult.page, searchresult.index, first_page, npages);
 
 	/* If new first key on page, ancestors might need adjustment. */
-	if (result.index == 0)
-		FreePageBtreeAdjustAncestorKeys(fpm, result.page);
+	if (searchresult.index == 0)
+		FreePageBtreeAdjustAncestorKeys(fpm, searchresult.page);
 
 	/* Put it on the free list. */
 	FreePagePushSpanLeader(fpm, first_page, npages);

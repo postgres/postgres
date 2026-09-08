@@ -740,7 +740,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 						 Oid opcintype,
 						 Oid collation,
 						 Index sortref,
-						 Relids rel,
+						 Relids relids,
 						 bool create_it)
 {
 	JoinDomain *jdomain;
@@ -783,14 +783,14 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 		if (!equal(opfamilies, cur_ec->ec_opfamilies))
 			continue;
 
-		setup_eclass_member_iterator(&it, cur_ec, rel);
+		setup_eclass_member_iterator(&it, cur_ec, relids);
 		while ((cur_em = eclass_member_iterator_next(&it)) != NULL)
 		{
 			/*
 			 * Ignore child members unless they match the request.
 			 */
 			if (cur_em->em_is_child &&
-				!bms_equal(cur_em->em_relids, rel))
+				!bms_equal(cur_em->em_relids, relids))
 				continue;
 
 			/*

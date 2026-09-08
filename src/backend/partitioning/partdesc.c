@@ -146,7 +146,7 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	int			i,
 				nparts;
 	bool		retried = false;
-	PartitionKey key = RelationGetPartitionKey(rel);
+	PartitionKey partkey = RelationGetPartitionKey(rel);
 	MemoryContext new_pdcxt;
 	MemoryContext oldcxt;
 	int		   *mapping;
@@ -226,15 +226,15 @@ retry:
 		{
 			Relation	pg_class;
 			SysScanDesc scan;
-			ScanKeyData key[1];
+			ScanKeyData skey[1];
 
 			pg_class = table_open(RelationRelationId, AccessShareLock);
-			ScanKeyInit(&key[0],
+			ScanKeyInit(&skey[0],
 						Anum_pg_class_oid,
 						BTEqualStrategyNumber, F_OIDEQ,
 						ObjectIdGetDatum(inhrelid));
 			scan = systable_beginscan(pg_class, ClassOidIndexId, true,
-									  NULL, 1, key);
+									  NULL, 1, skey);
 
 			/*
 			 * We could get one tuple from the scan (the normal case), or zero
@@ -308,7 +308,7 @@ retry:
 	 * This could fail, but we haven't done any damage if so.
 	 */
 	if (nparts > 0)
-		boundinfo = partition_bounds_create(boundspecs, nparts, key, &mapping);
+		boundinfo = partition_bounds_create(boundspecs, nparts, partkey, &mapping);
 
 	/*
 	 * Now build the actual relcache partition descriptor, copying all the
@@ -329,7 +329,7 @@ retry:
 	if (nparts > 0)
 	{
 		oldcxt = MemoryContextSwitchTo(new_pdcxt);
-		partdesc->boundinfo = partition_bounds_copy(boundinfo, key);
+		partdesc->boundinfo = partition_bounds_copy(boundinfo, partkey);
 
 		/* Initialize caching fields for speeding up ExecFindPartition */
 		partdesc->last_found_datum_index = -1;

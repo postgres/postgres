@@ -1304,19 +1304,19 @@ read_stream_next_buffer(ReadStream *stream, void **per_buffer_data)
 	 */
 	if (stream->per_buffer_data)
 	{
-		void	   *per_buffer_data;
+		void	   *prev_per_buffer_data;
 
-		per_buffer_data = get_per_buffer_data(stream,
-											  oldest_buffer_index == 0 ?
-											  stream->queue_size - 1 :
-											  oldest_buffer_index - 1);
+		prev_per_buffer_data = get_per_buffer_data(stream,
+												   oldest_buffer_index == 0 ?
+												   stream->queue_size - 1 :
+												   oldest_buffer_index - 1);
 
 #if defined(CLOBBER_FREED_MEMORY)
 		/* This also tells Valgrind the memory is "noaccess". */
-		wipe_mem(per_buffer_data, stream->per_buffer_data_size);
+		wipe_mem(prev_per_buffer_data, stream->per_buffer_data_size);
 #elif defined(USE_VALGRIND)
 		/* Tell it ourselves. */
-		VALGRIND_MAKE_MEM_NOACCESS(per_buffer_data,
+		VALGRIND_MAKE_MEM_NOACCESS(prev_per_buffer_data,
 								   stream->per_buffer_data_size);
 #endif
 	}

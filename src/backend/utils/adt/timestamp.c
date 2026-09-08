@@ -6127,7 +6127,7 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 	Interval   *interval = PG_GETARG_INTERVAL_P(1);
 	int64		intresult;
 	int			type,
-				val;
+				fieldval;
 	char	   *lowunits;
 	struct pg_itm tt,
 			   *tm = &tt;
@@ -6136,13 +6136,13 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 											VARSIZE_ANY_EXHDR(units),
 											false);
 
-	type = DecodeUnits(0, lowunits, &val);
+	type = DecodeUnits(0, lowunits, &fieldval);
 	if (type == UNKNOWN_FIELD)
-		type = DecodeSpecial(0, lowunits, &val);
+		type = DecodeSpecial(0, lowunits, &fieldval);
 
 	if (INTERVAL_NOT_FINITE(interval))
 	{
-		double		r = NonFiniteIntervalPart(type, val, lowunits,
+		double		r = NonFiniteIntervalPart(type, fieldval, lowunits,
 											  INTERVAL_IS_NOBEGIN(interval));
 
 		if (r != 0.0)
@@ -6170,7 +6170,7 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 	if (type == UNITS)
 	{
 		interval2itm(*interval, tm);
-		switch (val)
+		switch (fieldval)
 		{
 			case DTK_MICROSEC:
 				intresult = tm->tm_sec * INT64CONST(1000000) + tm->tm_usec;
@@ -6260,13 +6260,13 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 				intresult = 0;
 		}
 	}
-	else if (type == RESERV && val == DTK_EPOCH)
+	else if (type == RESERV && fieldval == DTK_EPOCH)
 	{
 		if (retnumeric)
 		{
 			Numeric		result;
 			int64		secs_from_day_month;
-			int64		val;
+			int64		tmpval;
 
 			/*
 			 * To do this calculation in integer arithmetic even though
@@ -6289,9 +6289,9 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 			 * numeric (slower).  This overflow happens around 10^9 days, so
 			 * not common in practice.
 			 */
-			if (!pg_mul_s64_overflow(secs_from_day_month, 1000000, &val) &&
-				!pg_add_s64_overflow(val, interval->time, &val))
-				result = int64_div_fast_to_numeric(val, 6);
+			if (!pg_mul_s64_overflow(secs_from_day_month, 1000000, &tmpval) &&
+				!pg_add_s64_overflow(tmpval, interval->time, &tmpval))
+				result = int64_div_fast_to_numeric(tmpval, 6);
 			else
 				result =
 					numeric_add_safe(int64_div_fast_to_numeric(interval->time, 6),

@@ -668,7 +668,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 			   *width_wrap,
 			   *width_average;
 	unsigned int *max_nl_lines, /* value split by newlines */
-			   *curr_nl_line,
+			   *curr_nl_lines,
 			   *max_bytes;
 	unsigned char **format_buf;
 	unsigned int width_total;
@@ -698,7 +698,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 		max_width = pg_malloc0_array(unsigned int, col_count);
 		width_wrap = pg_malloc0_array(unsigned int, col_count);
 		max_nl_lines = pg_malloc0_array(unsigned int, col_count);
-		curr_nl_line = pg_malloc0_array(unsigned int, col_count);
+		curr_nl_lines = pg_malloc0_array(unsigned int, col_count);
 		col_lineptrs = pg_malloc0_array(struct lineptr *, col_count);
 		max_bytes = pg_malloc0_array(unsigned int, col_count);
 		format_buf = pg_malloc0_array(unsigned char *, col_count);
@@ -713,7 +713,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 		max_width = NULL;
 		width_wrap = NULL;
 		max_nl_lines = NULL;
-		curr_nl_line = NULL;
+		curr_nl_lines = NULL;
 		col_lineptrs = NULL;
 		max_bytes = NULL;
 		format_buf = NULL;
@@ -1015,7 +1015,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 		{
 			pg_wcsformat((const unsigned char *) ptr[j], strlen(ptr[j]), encoding,
 						 col_lineptrs[j], max_nl_lines[j]);
-			curr_nl_line[j] = 0;
+			curr_nl_lines[j] = 0;
 		}
 
 		memset(bytes_output, 0, col_count * sizeof(int));
@@ -1037,7 +1037,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 			for (j = 0; j < col_count; j++)
 			{
 				/* We have a valid array element, so index it */
-				struct lineptr *this_line = &col_lineptrs[j][curr_nl_line[j]];
+				struct lineptr *this_line = &col_lineptrs[j][curr_nl_lines[j]];
 				int			bytes_to_output;
 				int			chars_to_output = width_wrap[j];
 				bool		finalspaces = (opt_border == 2 ||
@@ -1098,8 +1098,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 					else
 					{
 						/* Advance to next newline line */
-						curr_nl_line[j]++;
-						if (col_lineptrs[j][curr_nl_line[j]].ptr != NULL)
+						curr_nl_lines[j]++;
+						if (col_lineptrs[j][curr_nl_lines[j]].ptr != NULL)
 							more_lines = true;
 						bytes_output[j] = 0;
 					}
@@ -1107,11 +1107,11 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 
 				/* Determine next line's wrap status for this column */
 				wrap[j] = PRINT_LINE_WRAP_NONE;
-				if (col_lineptrs[j][curr_nl_line[j]].ptr != NULL)
+				if (col_lineptrs[j][curr_nl_lines[j]].ptr != NULL)
 				{
 					if (bytes_output[j] != 0)
 						wrap[j] = PRINT_LINE_WRAP_WRAP;
-					else if (curr_nl_line[j] != 0)
+					else if (curr_nl_lines[j] != 0)
 						wrap[j] = PRINT_LINE_WRAP_NEWLINE;
 				}
 
@@ -1143,7 +1143,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 						fputs(format->midvrule_wrap, fout);
 					else if (wrap[j + 1] == PRINT_LINE_WRAP_NEWLINE)
 						fputs(format->midvrule_nl, fout);
-					else if (col_lineptrs[j + 1][curr_nl_line[j + 1]].ptr == NULL)
+					else if (col_lineptrs[j + 1][curr_nl_lines[j + 1]].ptr == NULL)
 						fputs(format->midvrule_blank, fout);
 					else
 						fputs(dformat->midvrule, fout);
@@ -1189,7 +1189,7 @@ cleanup:
 	pg_free(max_width);
 	pg_free(width_wrap);
 	pg_free(max_nl_lines);
-	pg_free(curr_nl_line);
+	pg_free(curr_nl_lines);
 	pg_free(col_lineptrs);
 	pg_free(max_bytes);
 	pg_free(format_buf);

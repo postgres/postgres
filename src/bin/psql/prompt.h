@@ -12,6 +12,6 @@
 /* enum promptStatus_t is now defined by psqlscan.h */
 #include "fe_utils/psqlscan.h"
 
-char	   *get_prompt(promptStatus_t status, ConditionalStack cstack);
+char	   *get_prompt(promptStatus_t prompt_status, ConditionalStack cstack);
 
 #endif							/* PROMPT_H */

@@ -154,9 +154,9 @@ extern void HandleCatchupInterrupt(void);
  */
 extern void ProcessCatchupInterrupt(void);
 
-extern int	xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
+extern int	xactGetCommittedInvalidationMessages(SharedInvalidationMessage **invalmsgs,
 												 bool *RelcacheInitFileInval);
-extern int	inplaceGetInvalidationMessages(SharedInvalidationMessage **msgs,
+extern int	inplaceGetInvalidationMessages(SharedInvalidationMessage **invalmsgs,
 										   bool *RelcacheInitFileInval);
 extern void ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
 												 int nmsgs, bool RelcacheInitFileInval,

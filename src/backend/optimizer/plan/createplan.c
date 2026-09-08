@@ -1242,16 +1242,16 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 	if (best_path->subpaths == NIL)
 	{
 		/* Generate a Result plan with constant-FALSE gating qual */
-		Plan	   *plan;
+		Plan	   *resultplan;
 
-		plan = (Plan *) make_one_row_result(tlist,
-											(Node *) list_make1(makeBoolConst(false,
-																			  false)),
-											best_path->path.parent);
+		resultplan = (Plan *) make_one_row_result(tlist,
+												  (Node *) list_make1(makeBoolConst(false,
+																					false)),
+												  best_path->path.parent);
 
-		copy_generic_path_info(plan, (Path *) best_path);
+		copy_generic_path_info(resultplan, (Path *) best_path);
 
-		return plan;
+		return resultplan;
 	}
 
 	/*
@@ -2415,7 +2415,7 @@ create_minmaxagg_plan(PlannerInfo *root, MinMaxAggPath *best_path)
 		MinMaxAggInfo *mminfo = (MinMaxAggInfo *) lfirst(lc);
 		PlannerInfo *subroot = mminfo->subroot;
 		Query	   *subparse = subroot->parse;
-		Plan	   *plan;
+		Plan	   *sqplan;
 
 		/*
 		 * Generate the plan for the subquery. We already have a Path, but we
@@ -2423,25 +2423,25 @@ create_minmaxagg_plan(PlannerInfo *root, MinMaxAggPath *best_path)
 		 * Since we are entering a different planner context (subroot),
 		 * recurse to create_plan not create_plan_recurse.
 		 */
-		plan = create_plan(subroot, mminfo->path);
+		sqplan = create_plan(subroot, mminfo->path);
 
-		plan = (Plan *) make_limit(plan,
-								   subparse->limitOffset,
-								   subparse->limitCount,
-								   subparse->limitOption,
-								   0, NULL, NULL, NULL);
+		sqplan = (Plan *) make_limit(sqplan,
+									 subparse->limitOffset,
+									 subparse->limitCount,
+									 subparse->limitOption,
+									 0, NULL, NULL, NULL);
 
 		/* Must apply correct cost/width data to Limit node */
-		plan->disabled_nodes = mminfo->path->disabled_nodes;
-		plan->startup_cost = mminfo->path->startup_cost;
-		plan->total_cost = mminfo->pathcost;
-		plan->plan_rows = 1;
-		plan->plan_width = mminfo->path->pathtarget->width;
-		plan->parallel_aware = false;
-		plan->parallel_safe = mminfo->path->parallel_safe;
+		sqplan->disabled_nodes = mminfo->path->disabled_nodes;
+		sqplan->startup_cost = mminfo->path->startup_cost;
+		sqplan->total_cost = mminfo->pathcost;
+		sqplan->plan_rows = 1;
+		sqplan->plan_width = mminfo->path->pathtarget->width;
+		sqplan->parallel_aware = false;
+		sqplan->parallel_safe = mminfo->path->parallel_safe;
 
 		/* Convert the plan into an InitPlan in the outer query. */
-		SS_make_initplan_from_plan(root, subroot, plan, mminfo->param);
+		SS_make_initplan_from_plan(root, subroot, sqplan, mminfo->param);
 	}
 
 	/* Generate the output plan --- basically just a Result */

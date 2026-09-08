@@ -1058,7 +1058,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 						  BlockNumber parentblk, OffsetNumber downlinkoffnum)
 {
 	GISTBuildBuffers *gfbb = buildstate->gfbb;
-	List	   *splitinfo;
+	List	   *splitinfos;
 	bool		is_split;
 	BlockNumber placed_to_blk = InvalidBlockNumber;
 
@@ -1068,7 +1068,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 							   buffer,
 							   itup, ntup, oldoffnum, &placed_to_blk,
 							   InvalidBuffer,
-							   &splitinfo,
+							   &splitinfos,
 							   false,
 							   buildstate->heaprel, true);
 
@@ -1117,7 +1117,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 		}
 	}
 
-	if (splitinfo)
+	if (splitinfos)
 	{
 		/*
 		 * Insert the downlinks to the parent. This is analogous with
@@ -1142,7 +1142,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 		/*
 		 * If there's a buffer associated with this page, that needs to be
 		 * split too. gistRelocateBuildBuffersOnSplit() will also adjust the
-		 * downlinks in 'splitinfo', to make sure they're consistent not only
+		 * downlinks in 'splitinfos', to make sure they're consistent not only
 		 * with the tuples already on the pages, but also the tuples in the
 		 * buffers that will eventually be inserted to them.
 		 */
@@ -1150,13 +1150,13 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 										buildstate->giststate,
 										buildstate->indexrel,
 										level,
-										buffer, splitinfo);
+										buffer, splitinfos);
 
 		/* Create an array of all the downlink tuples */
-		ndownlinks = list_length(splitinfo);
+		ndownlinks = list_length(splitinfos);
 		downlinks = palloc_array(IndexTuple, ndownlinks);
 		i = 0;
-		foreach(lc, splitinfo)
+		foreach(lc, splitinfos)
 		{
 			GISTPageSplitInfo *splitinfo = lfirst(lc);
 
@@ -1194,7 +1194,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 								  downlinks, ndownlinks, downlinkoffnum,
 								  InvalidBlockNumber, InvalidOffsetNumber);
 
-		list_free_deep(splitinfo);	/* we don't need this anymore */
+		list_free_deep(splitinfos); /* we don't need this anymore */
 	}
 	else
 		UnlockReleaseBuffer(buffer);

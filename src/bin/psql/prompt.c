@@ -68,17 +68,16 @@
  */
 
 char *
-get_prompt(promptStatus_t status, ConditionalStack cstack)
+get_prompt(promptStatus_t prompt_status, ConditionalStack cstack)
 {
 #define MAX_PROMPT_SIZE 256
 	static char destination[MAX_PROMPT_SIZE + 1];
 	char		buf[MAX_PROMPT_SIZE + 1];
 	bool		esc = false;
-	const char *p;
 	const char *prompt_string = "? ";
 	static size_t last_prompt1_width = 0;
 
-	switch (status)
+	switch (prompt_status)
 	{
 		case PROMPT_READY:
 			prompt_string = pset.prompt1;
@@ -100,7 +99,7 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 
 	destination[0] = '\0';
 
-	for (p = prompt_string;
+	for (const char *p = prompt_string;
 		 *p && strlen(destination) < sizeof(destination) - 1;
 		 p++)
 	{
@@ -203,11 +202,11 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 				case 'P':
 					if (pset.db)
 					{
-						PGpipelineStatus status = PQpipelineStatus(pset.db);
+						PGpipelineStatus plstatus = PQpipelineStatus(pset.db);
 
-						if (status == PQ_PIPELINE_ON)
+						if (plstatus == PQ_PIPELINE_ON)
 							strlcpy(buf, "on", sizeof(buf));
-						else if (status == PQ_PIPELINE_ABORTED)
+						else if (plstatus == PQ_PIPELINE_ABORTED)
 							strlcpy(buf, "abort", sizeof(buf));
 						else
 							strlcpy(buf, "off", sizeof(buf));
@@ -225,7 +224,7 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 					--p;
 					break;
 				case 'R':
-					switch (status)
+					switch (prompt_status)
 					{
 						case PROMPT_READY:
 							if (cstack != NULL && !conditional_active(cstack))
@@ -390,23 +389,23 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 	/* Compute the visible width of PROMPT1, for PROMPT2's %w */
 	if (prompt_string == pset.prompt1)
 	{
-		char	   *p = destination;
-		char	   *end = p + strlen(p);
+		char	   *d = destination;
+		char	   *end = d + strlen(d);
 		bool		visible = true;
 
 		last_prompt1_width = 0;
-		while (*p)
+		while (*d)
 		{
 #if defined(USE_READLINE) && defined(RL_PROMPT_START_IGNORE)
-			if (*p == RL_PROMPT_START_IGNORE)
+			if (*d == RL_PROMPT_START_IGNORE)
 			{
 				visible = false;
-				++p;
+				++d;
 			}
-			else if (*p == RL_PROMPT_END_IGNORE)
+			else if (*d == RL_PROMPT_END_IGNORE)
 			{
 				visible = true;
-				++p;
+				++d;
 			}
 			else
 #endif
@@ -414,21 +413,21 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 				int			chlen,
 							chwidth;
 
-				chlen = PQmblen(p, pset.encoding);
-				if (p + chlen > end)
+				chlen = PQmblen(d, pset.encoding);
+				if (d + chlen > end)
 					break;		/* Invalid string */
 
 				if (visible)
 				{
-					chwidth = PQdsplen(p, pset.encoding);
+					chwidth = PQdsplen(d, pset.encoding);
 
-					if (*p == '\n')
+					if (*d == '\n')
 						last_prompt1_width = 0;
 					else if (chwidth > 0)
 						last_prompt1_width += chwidth;
 				}
 
-				p += chlen;
+				d += chlen;
 			}
 		}
 	}

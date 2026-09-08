@@ -1668,7 +1668,7 @@ describeOneTableDetails(const char *schemaname,
 	if (tableinfo.relkind == RELKIND_SEQUENCE)
 	{
 		PGresult   *result = NULL;
-		printQueryOpt myopt = pset.popt;
+		printQueryOpt popt = pset.popt;
 		char	   *footers[3] = {NULL, NULL, NULL};
 
 		printfPQExpBuffer(&buf, "/* %s */\n", _("Get sequence information"));
@@ -1784,12 +1784,12 @@ describeOneTableDetails(const char *schemaname,
 			printfPQExpBuffer(&title, _("Sequence \"%s.%s\""),
 							  schemaname, relationname);
 
-		myopt.footers = footers;
-		myopt.topt.default_footer = false;
-		myopt.title = title.data;
-		myopt.translate_header = true;
+		popt.footers = footers;
+		popt.topt.default_footer = false;
+		popt.title = title.data;
+		popt.translate_header = true;
 
-		printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
+		printQuery(res, &popt, pset.queryFout, false, pset.logfile);
 
 		pg_free(footers[0]);
 		pg_free(footers[1]);
@@ -2212,11 +2212,11 @@ describeOneTableDetails(const char *schemaname,
 
 		if (PQntuples(result) == 1)
 		{
-			char	   *schemaname = PQgetvalue(result, 0, 0);
-			char	   *relname = PQgetvalue(result, 0, 1);
+			char	   *owning_schemaname = PQgetvalue(result, 0, 0);
+			char	   *owning_relname = PQgetvalue(result, 0, 1);
 
 			printfPQExpBuffer(&tmpbuf, _("Owning table: \"%s.%s\""),
-							  schemaname, relname);
+							  owning_schemaname, owning_relname);
 			printTableAddFooter(&cont, tmpbuf.data);
 		}
 		PQclear(result);

@@ -60,7 +60,7 @@ static XLogRecPtr endpos = InvalidXLogRecPtr;
 static void usage(void);
 static DIR *get_destination_dir(char *dest_folder);
 static void close_destination_dir(DIR *dest_dir, char *dest_folder);
-static XLogRecPtr FindStreamingStart(uint32 *tli);
+static XLogRecPtr FindStreamingStart(uint32 *tli_p);
 static void StreamLog(void);
 static bool stop_streaming(XLogRecPtr xlogpos, uint32 timeline,
 						   bool segment_finished);
@@ -266,7 +266,7 @@ close_destination_dir(DIR *dest_dir, char *dest_folder)
  * If there are no WAL files in the directory, returns InvalidXLogRecPtr.
  */
 static XLogRecPtr
-FindStreamingStart(uint32 *tli)
+FindStreamingStart(uint32 *tli_p)
 {
 	DIR		   *dir;
 	struct dirent *dirent;
@@ -487,7 +487,7 @@ FindStreamingStart(uint32 *tli)
 
 		XLogSegNoOffsetToRecPtr(high_segno, 0, WalSegSz, high_ptr);
 
-		*tli = high_tli;
+		*tli_p = high_tli;
 		return high_ptr;
 	}
 	else

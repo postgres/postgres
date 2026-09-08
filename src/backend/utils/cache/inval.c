@@ -469,7 +469,7 @@ static void
 AddRelcacheInvalidationMessage(InvalidationMsgsGroup *group,
 							   Oid dbId, Oid relId)
 {
-	SharedInvalidationMessage msg;
+	SharedInvalidationMessage invalmsg;
 
 	/*
 	 * Don't add a duplicate item. We assume dbId need not be checked because
@@ -483,13 +483,13 @@ AddRelcacheInvalidationMessage(InvalidationMsgsGroup *group,
 						   return);
 
 	/* OK, add the item */
-	msg.rc.id = SHAREDINVALRELCACHE_ID;
-	msg.rc.dbId = dbId;
-	msg.rc.relId = relId;
+	invalmsg.rc.id = SHAREDINVALRELCACHE_ID;
+	invalmsg.rc.dbId = dbId;
+	invalmsg.rc.relId = relId;
 	/* check AddCatcacheInvalidationMessage() for an explanation */
-	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
+	VALGRIND_MAKE_MEM_DEFINED(&invalmsg, sizeof(invalmsg));
 
-	AddInvalidationMessage(group, RelCacheMsgs, &msg);
+	AddInvalidationMessage(group, RelCacheMsgs, &invalmsg);
 }
 
 /*
@@ -503,7 +503,7 @@ static void
 AddRelsyncInvalidationMessage(InvalidationMsgsGroup *group,
 							  Oid dbId, Oid relId)
 {
-	SharedInvalidationMessage msg;
+	SharedInvalidationMessage invalmsg;
 
 	/* Don't add a duplicate item. */
 	ProcessMessageSubGroup(group, RelCacheMsgs,
@@ -513,13 +513,13 @@ AddRelsyncInvalidationMessage(InvalidationMsgsGroup *group,
 						   return);
 
 	/* OK, add the item */
-	msg.rs.id = SHAREDINVALRELSYNC_ID;
-	msg.rs.dbId = dbId;
-	msg.rs.relid = relId;
+	invalmsg.rs.id = SHAREDINVALRELSYNC_ID;
+	invalmsg.rs.dbId = dbId;
+	invalmsg.rs.relid = relId;
 	/* check AddCatcacheInvalidationMessage() for an explanation */
-	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
+	VALGRIND_MAKE_MEM_DEFINED(&invalmsg, sizeof(invalmsg));
 
-	AddInvalidationMessage(group, RelCacheMsgs, &msg);
+	AddInvalidationMessage(group, RelCacheMsgs, &invalmsg);
 }
 
 /*
@@ -531,7 +531,7 @@ static void
 AddSnapshotInvalidationMessage(InvalidationMsgsGroup *group,
 							   Oid dbId, Oid relId)
 {
-	SharedInvalidationMessage msg;
+	SharedInvalidationMessage invalmsg;
 
 	/* Don't add a duplicate item */
 	/* We assume dbId need not be checked because it will never change */
@@ -541,13 +541,13 @@ AddSnapshotInvalidationMessage(InvalidationMsgsGroup *group,
 						   return);
 
 	/* OK, add the item */
-	msg.sn.id = SHAREDINVALSNAPSHOT_ID;
-	msg.sn.dbId = dbId;
-	msg.sn.relId = relId;
+	invalmsg.sn.id = SHAREDINVALSNAPSHOT_ID;
+	invalmsg.sn.dbId = dbId;
+	invalmsg.sn.relId = relId;
 	/* check AddCatcacheInvalidationMessage() for an explanation */
-	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
+	VALGRIND_MAKE_MEM_DEFINED(&invalmsg, sizeof(invalmsg));
 
-	AddInvalidationMessage(group, RelCacheMsgs, &msg);
+	AddInvalidationMessage(group, RelCacheMsgs, &invalmsg);
 }
 
 /*
@@ -1007,7 +1007,7 @@ PostPrepare_Inval(void)
  * see also xact_redo_commit() and xact_desc_commit()
  */
 int
-xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
+xactGetCommittedInvalidationMessages(SharedInvalidationMessage **invalmsgs,
 									 bool *RelcacheInitFileInval)
 {
 	SharedInvalidationMessage *msgarray;
@@ -1018,7 +1018,7 @@ xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
 	if (transInvalInfo == NULL)
 	{
 		*RelcacheInitFileInval = false;
-		*msgs = NULL;
+		*invalmsgs = NULL;
 		return 0;
 	}
 
@@ -1043,7 +1043,7 @@ xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
 	nummsgs = NumMessagesInGroup(&transInvalInfo->PriorCmdInvalidMsgs) +
 		NumMessagesInGroup(&transInvalInfo->ii.CurrentCmdInvalidMsgs);
 
-	*msgs = msgarray = (SharedInvalidationMessage *)
+	*invalmsgs = msgarray = (SharedInvalidationMessage *)
 		MemoryContextAlloc(CurTransactionContext,
 						   nummsgs * sizeof(SharedInvalidationMessage));
 
@@ -1083,7 +1083,7 @@ xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
  * function, we might still fail.
  */
 int
-inplaceGetInvalidationMessages(SharedInvalidationMessage **msgs,
+inplaceGetInvalidationMessages(SharedInvalidationMessage **invalmsgs,
 							   bool *RelcacheInitFileInval)
 {
 	SharedInvalidationMessage *msgarray;
@@ -1094,13 +1094,13 @@ inplaceGetInvalidationMessages(SharedInvalidationMessage **msgs,
 	if (inplaceInvalInfo == NULL)
 	{
 		*RelcacheInitFileInval = false;
-		*msgs = NULL;
+		*invalmsgs = NULL;
 		return 0;
 	}
 
 	*RelcacheInitFileInval = inplaceInvalInfo->RelcacheInitFileInval;
 	nummsgs = NumMessagesInGroup(&inplaceInvalInfo->CurrentCmdInvalidMsgs);
-	*msgs = msgarray = palloc_array(SharedInvalidationMessage, nummsgs);
+	*invalmsgs = msgarray = palloc_array(SharedInvalidationMessage, nummsgs);
 
 	nmsgs = 0;
 	ProcessMessageSubGroupMulti(&inplaceInvalInfo->CurrentCmdInvalidMsgs,

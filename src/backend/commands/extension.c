@@ -1455,8 +1455,8 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 			Datum		old = t_sql;
 			char	   *reqextname = (char *) lfirst(lc);
 			Oid			reqschema = lfirst_oid(lc2);
-			char	   *schemaName = get_namespace_name(reqschema);
-			const char *qSchemaName = quote_identifier(schemaName);
+			char	   *reqSchemaName = get_namespace_name(reqschema);
+			const char *qReqSchemaName = quote_identifier(reqSchemaName);
 			char	   *repltoken;
 
 			repltoken = psprintf("@extschema:%s@", reqextname);
@@ -1464,8 +1464,8 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 											C_COLLATION_OID,
 											t_sql,
 											CStringGetTextDatum(repltoken),
-											CStringGetTextDatum(qSchemaName));
-			if (t_sql != old && strpbrk(schemaName, quoting_relevant_chars))
+											CStringGetTextDatum(qReqSchemaName));
+			if (t_sql != old && strpbrk(reqSchemaName, quoting_relevant_chars))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid character in extension \"%s\" schema: must not contain any of \"%s\"",

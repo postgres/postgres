@@ -4065,12 +4065,12 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 */
 	for (phaseidx = 0; phaseidx < aggstate->numphases; phaseidx++)
 	{
-		AggStatePerPhase phase = &aggstate->phases[phaseidx];
+		AggStatePerPhase phasedata = &aggstate->phases[phaseidx];
 		bool		dohash = false;
 		bool		dosort = false;
 
 		/* phase 0 doesn't necessarily exist */
-		if (!phase->aggnode)
+		if (!phasedata->aggnode)
 			continue;
 
 		if (aggstate->aggstrategy == AGG_MIXED && phaseidx == 1)
@@ -4091,13 +4091,13 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			 */
 			continue;
 		}
-		else if (phase->aggstrategy == AGG_PLAIN ||
-				 phase->aggstrategy == AGG_SORTED)
+		else if (phasedata->aggstrategy == AGG_PLAIN ||
+				 phasedata->aggstrategy == AGG_SORTED)
 		{
 			dohash = false;
 			dosort = true;
 		}
-		else if (phase->aggstrategy == AGG_HASHED)
+		else if (phasedata->aggstrategy == AGG_HASHED)
 		{
 			dohash = true;
 			dosort = false;
@@ -4105,11 +4105,11 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		else
 			Assert(false);
 
-		phase->evaltrans = ExecBuildAggTrans(aggstate, phase, dosort, dohash,
-											 false);
+		phasedata->evaltrans = ExecBuildAggTrans(aggstate, phasedata, dosort, dohash,
+												 false);
 
 		/* cache compiled expression for outer slot without NULL check */
-		phase->evaltrans_cache[0][0] = phase->evaltrans;
+		phasedata->evaltrans_cache[0][0] = phasedata->evaltrans;
 	}
 
 	return aggstate;

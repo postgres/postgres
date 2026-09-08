@@ -1040,7 +1040,7 @@ build_sorted_items(StatsBuildData *data, int *nitems,
 	Size		len;
 	SortItem   *items;
 	Datum	   *values;
-	bool	   *isnull;
+	bool	   *nulls;
 	char	   *ptr;
 	int		   *typlen;
 
@@ -1060,7 +1060,7 @@ build_sorted_items(StatsBuildData *data, int *nitems,
 	values = (Datum *) ptr;
 	ptr += nvalues * sizeof(Datum);
 
-	isnull = (bool *) ptr;
+	nulls = (bool *) ptr;
 	ptr += nvalues * sizeof(bool);
 
 	/* make sure we consumed the whole buffer exactly */
@@ -1071,7 +1071,7 @@ build_sorted_items(StatsBuildData *data, int *nitems,
 	for (i = 0; i < data->numrows; i++)
 	{
 		items[nrows].values = &values[nrows * numattrs];
-		items[nrows].isnull = &isnull[nrows * numattrs];
+		items[nrows].isnull = &nulls[nrows * numattrs];
 
 		nrows++;
 	}

@@ -143,7 +143,7 @@ extern EquivalenceClass *get_eclass_for_sort_expr(PlannerInfo *root,
 												  Oid opcintype,
 												  Oid collation,
 												  Index sortref,
-												  Relids rel,
+												  Relids relids,
 												  bool create_it);
 extern EquivalenceMember *find_ec_member_matching_expr(EquivalenceClass *ec,
 													   Expr *expr,

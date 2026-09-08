@@ -1280,7 +1280,7 @@ ReadBuffer_common(Relation rel, SMgrRelation smgr, char smgr_persistence,
 {
 	ReadBuffersOperation operation;
 	Buffer		buffer;
-	int			flags;
+	int			readflags;
 	char		persistence;
 
 	/*
@@ -1302,7 +1302,7 @@ ReadBuffer_common(Relation rel, SMgrRelation smgr, char smgr_persistence,
 	 */
 	if (unlikely(blockNum == P_NEW))
 	{
-		uint32		flags = EB_SKIP_EXTENSION_LOCK;
+		uint32		ebflags = EB_SKIP_EXTENSION_LOCK;
 
 		/*
 		 * Since no-one else can be looking at the page contents yet, there is
@@ -1310,9 +1310,9 @@ ReadBuffer_common(Relation rel, SMgrRelation smgr, char smgr_persistence,
 		 * lock.
 		 */
 		if (mode == RBM_ZERO_AND_LOCK || mode == RBM_ZERO_AND_CLEANUP_LOCK)
-			flags |= EB_LOCK_FIRST;
+			ebflags |= EB_LOCK_FIRST;
 
-		return ExtendBufferedRel(BMR_REL(rel), forkNum, strategy, flags);
+		return ExtendBufferedRel(BMR_REL(rel), forkNum, strategy, ebflags);
 	}
 
 	if (rel)
@@ -1350,9 +1350,9 @@ ReadBuffer_common(Relation rel, SMgrRelation smgr, char smgr_persistence,
 	 * waiting, there is no benefit in actually executing the IO
 	 * asynchronously, it would just add dispatch overhead.
 	 */
-	flags = READ_BUFFERS_SYNCHRONOUSLY;
+	readflags = READ_BUFFERS_SYNCHRONOUSLY;
 	if (mode == RBM_ZERO_ON_ERROR)
-		flags |= READ_BUFFERS_ZERO_ON_ERROR;
+		readflags |= READ_BUFFERS_ZERO_ON_ERROR;
 	operation.smgr = smgr;
 	operation.rel = rel;
 	operation.persistence = persistence;
@@ -1361,7 +1361,7 @@ ReadBuffer_common(Relation rel, SMgrRelation smgr, char smgr_persistence,
 	if (StartReadBuffer(&operation,
 						&buffer,
 						blockNum,
-						flags))
+						readflags))
 		WaitReadBuffers(&operation);
 
 	return buffer;

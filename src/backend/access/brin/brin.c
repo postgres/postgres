@@ -699,15 +699,15 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		 */
 		if (consistentFn[keyattno - 1].fn_oid == InvalidOid)
 		{
-			FmgrInfo   *tmp;
+			FmgrInfo   *consistentFI;
 
 			/* First time we see this attribute, so no key/null keys. */
 			Assert(nkeys[keyattno - 1] == 0);
 			Assert(nnullkeys[keyattno - 1] == 0);
 
-			tmp = index_getprocinfo(idxRel, keyattno,
-									BRIN_PROCNUM_CONSISTENT);
-			fmgr_info_copy(&consistentFn[keyattno - 1], tmp,
+			consistentFI = index_getprocinfo(idxRel, keyattno,
+											 BRIN_PROCNUM_CONSISTENT);
+			fmgr_info_copy(&consistentFn[keyattno - 1], consistentFI,
 						   CurrentMemoryContext);
 		}
 

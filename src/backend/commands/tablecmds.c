@@ -672,8 +672,8 @@ static void RememberStatisticsForRebuilding(Oid stxoid, AlteredTableInfo *tab);
 static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab,
 								   LOCKMODE lockmode);
 static void ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, Oid ownerId,
-								 char *cmd, List **wqueue, LOCKMODE lockmode,
-								 bool rewrite);
+								 const char *cmdstring, List **wqueue,
+								 LOCKMODE lockmode, bool rewrite);
 static void RebuildConstraintComment(AlteredTableInfo *tab, AlterTablePass pass,
 									 Oid objid, Relation rel, List *domname,
 									 const char *conname);
@@ -16286,7 +16286,7 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
  */
 static void
 ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, Oid ownerId,
-					 char *cmd, List **wqueue, LOCKMODE lockmode,
+					 const char *cmdstring, List **wqueue, LOCKMODE lockmode,
 					 bool rewrite)
 {
 	List	   *raw_parsetree_list;
@@ -16300,7 +16300,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, Oid ownerId,
 	 * parse_analyze_*() or the rewriter, but instead we need to pass them
 	 * through parse_utilcmd.c to make them ready for execution.
 	 */
-	raw_parsetree_list = raw_parser(cmd, RAW_PARSE_DEFAULT);
+	raw_parsetree_list = raw_parser(cmdstring, RAW_PARSE_DEFAULT);
 	querytree_list = NIL;
 	foreach(list_item, raw_parsetree_list)
 	{
@@ -16311,7 +16311,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, Oid ownerId,
 			querytree_list = lappend(querytree_list,
 									 transformIndexStmt(oldRelId,
 														(IndexStmt *) stmt,
-														cmd));
+														cmdstring));
 		else if (IsA(stmt, AlterTableStmt))
 		{
 			List	   *beforeStmts;
@@ -16319,7 +16319,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, Oid ownerId,
 
 			stmt = (Node *) transformAlterTableStmt(oldRelId,
 													(AlterTableStmt *) stmt,
-													cmd,
+													cmdstring,
 													&beforeStmts,
 													&afterStmts);
 			querytree_list = list_concat(querytree_list, beforeStmts);
@@ -16330,7 +16330,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, Oid ownerId,
 		{
 			CreateStatsStmt *csstmt;
 
-			csstmt = transformStatsStmt(oldRelId, (CreateStatsStmt *) stmt, cmd);
+			csstmt = transformStatsStmt(oldRelId, (CreateStatsStmt *) stmt, cmdstring);
 			csstmt->owner = ownerId;
 
 			querytree_list = lappend(querytree_list, csstmt);

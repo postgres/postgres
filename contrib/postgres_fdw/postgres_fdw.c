@@ -2002,7 +2002,7 @@ postgresPlanForeignModify(PlannerInfo *root,
 {
 	CmdType		operation = plan->operation;
 	RangeTblEntry *rte = planner_rt_fetch(resultRelation, root);
-	Relation	rel;
+	Relation	targetrel;
 	StringInfoData sql;
 	List	   *targetAttrs = NIL;
 	List	   *withCheckOptionList = NIL;
@@ -2017,7 +2017,7 @@ postgresPlanForeignModify(PlannerInfo *root,
 	 * Core code already has some lock on each rel being planned, so we can
 	 * use NoLock here.
 	 */
-	rel = table_open(rte->relid, NoLock);
+	targetrel = table_open(rte->relid, NoLock);
 
 	/*
 	 * In an INSERT, we transmit all columns that are defined in the foreign
@@ -2032,10 +2032,10 @@ postgresPlanForeignModify(PlannerInfo *root,
 	 */
 	if (operation == CMD_INSERT ||
 		(operation == CMD_UPDATE &&
-		 rel->trigdesc &&
-		 rel->trigdesc->trig_update_before_row))
+		 targetrel->trigdesc &&
+		 targetrel->trigdesc->trig_update_before_row))
 	{
-		TupleDesc	tupdesc = RelationGetDescr(rel);
+		TupleDesc	tupdesc = RelationGetDescr(targetrel);
 		int			attnum;
 
 		for (attnum = 1; attnum <= tupdesc->natts; attnum++)
@@ -2049,8 +2049,8 @@ postgresPlanForeignModify(PlannerInfo *root,
 	else if (operation == CMD_UPDATE)
 	{
 		int			col;
-		RelOptInfo *rel = find_base_rel(root, resultRelation);
-		Bitmapset  *allUpdatedCols = get_rel_all_updated_cols(root, rel);
+		RelOptInfo *baserel = find_base_rel(root, resultRelation);
+		Bitmapset  *allUpdatedCols = get_rel_all_updated_cols(root, baserel);
 
 		col = -1;
 		while ((col = bms_next_member(allUpdatedCols, col)) >= 0)
@@ -2095,19 +2095,19 @@ postgresPlanForeignModify(PlannerInfo *root,
 	switch (operation)
 	{
 		case CMD_INSERT:
-			deparseInsertSql(&sql, rte, resultRelation, rel,
+			deparseInsertSql(&sql, rte, resultRelation, targetrel,
 							 targetAttrs, doNothing,
 							 withCheckOptionList, returningList,
 							 &retrieved_attrs, &values_end_len);
 			break;
 		case CMD_UPDATE:
-			deparseUpdateSql(&sql, rte, resultRelation, rel,
+			deparseUpdateSql(&sql, rte, resultRelation, targetrel,
 							 targetAttrs,
 							 withCheckOptionList, returningList,
 							 &retrieved_attrs);
 			break;
 		case CMD_DELETE:
-			deparseDeleteSql(&sql, rte, resultRelation, rel,
+			deparseDeleteSql(&sql, rte, resultRelation, targetrel,
 							 returningList,
 							 &retrieved_attrs);
 			break;
@@ -2116,7 +2116,7 @@ postgresPlanForeignModify(PlannerInfo *root,
 			break;
 	}
 
-	table_close(rel, NoLock);
+	table_close(targetrel, NoLock);
 
 	/*
 	 * Build the fdw_private list that will be available to the executor.

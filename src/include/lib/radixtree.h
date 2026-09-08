@@ -2293,7 +2293,7 @@ RT_COPY_ARRAYS_AND_DELETE(uint8 *dst_chunks, RT_PTR_ALLOC * dst_children,
  * in the caller.
  */
 static void pg_noinline
-RT_SHRINK_NODE_256(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, RT_CHILD_PTR node, uint8 chunk)
+RT_SHRINK_NODE_256(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, RT_CHILD_PTR node)
 {
 	RT_NODE_256 *n256 = (RT_NODE_256 *) node.local;
 	RT_CHILD_PTR newnode;
@@ -2353,7 +2353,7 @@ RT_REMOVE_CHILD_256(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, RT_CHILD_P
 	shrink_threshold = Min(RT_FANOUT_48 / 4 * 3, shrink_threshold);
 
 	if (n256->base.count <= shrink_threshold)
-		RT_SHRINK_NODE_256(tree, parent_slot, node, chunk);
+		RT_SHRINK_NODE_256(tree, parent_slot, node);
 }
 
 /*
@@ -2361,7 +2361,7 @@ RT_REMOVE_CHILD_256(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, RT_CHILD_P
  * in the caller.
  */
 static void pg_noinline
-RT_SHRINK_NODE_48(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, RT_CHILD_PTR node, uint8 chunk)
+RT_SHRINK_NODE_48(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, RT_CHILD_PTR node)
 {
 	RT_NODE_48 *n48 = (RT_NODE_48 *) (node.local);
 	RT_CHILD_PTR newnode;
@@ -2377,12 +2377,12 @@ RT_SHRINK_NODE_48(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, RT_CHILD_PTR
 
 	/* copy over all existing entries */
 	RT_COPY_COMMON(newnode, node);
-	for (int chunk = 0; chunk < RT_NODE_MAX_SLOTS; chunk++)
+	for (int i = 0; i < RT_NODE_MAX_SLOTS; i++)
 	{
-		if (n48->slot_idxs[chunk] != RT_INVALID_SLOT_IDX)
+		if (n48->slot_idxs[i] != RT_INVALID_SLOT_IDX)
 		{
-			new16->chunks[destidx] = chunk;
-			new16->children[destidx] = n48->children[n48->slot_idxs[chunk]];
+			new16->chunks[destidx] = i;
+			new16->children[destidx] = n48->children[n48->slot_idxs[i]];
 			destidx++;
 		}
 	}
@@ -2421,7 +2421,7 @@ RT_REMOVE_CHILD_48(RT_RADIX_TREE * tree, RT_PTR_ALLOC * parent_slot, RT_CHILD_PT
 	 * node48 anyway.
 	 */
 	if (n48->base.count <= shrink_threshold)
-		RT_SHRINK_NODE_48(tree, parent_slot, node, chunk);
+		RT_SHRINK_NODE_48(tree, parent_slot, node);
 }
 
 /*

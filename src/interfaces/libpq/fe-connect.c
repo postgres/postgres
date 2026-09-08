@@ -2930,7 +2930,6 @@ PQconnectPoll(PGconn *conn)
 {
 	bool		reset_connection_state_machine = false;
 	bool		need_new_connection = false;
-	PGresult   *res;
 	char		sebuf[PG_STRERROR_R_BUFLEN];
 	int			optval;
 
@@ -4341,6 +4340,8 @@ keep_going:						/* We will come back to here until there is
 				 * asyncStatus = PGASYNC_BUSY (done above).
 				 */
 
+				PGresult   *res;
+
 				if (PQisBusy(conn))
 					return PGRES_POLLING_READING;
 
@@ -4550,6 +4551,9 @@ keep_going:						/* We will come back to here until there is
 				 * CONNECTION_OK in order to use the result-consuming
 				 * subroutines.
 				 */
+
+				PGresult   *res;
+
 				conn->status = CONNECTION_OK;
 				if (!PQconsumeInput(conn))
 					goto error_return;
@@ -4580,6 +4584,9 @@ keep_going:						/* We will come back to here until there is
 				 * must transiently set status = CONNECTION_OK in order to use
 				 * the result-consuming subroutines.
 				 */
+
+				PGresult   *res;
+
 				conn->status = CONNECTION_OK;
 				if (!PQconsumeInput(conn))
 					goto error_return;
@@ -4645,6 +4652,9 @@ keep_going:						/* We will come back to here until there is
 				 * must transiently set status = CONNECTION_OK in order to use
 				 * the result-consuming subroutines.
 				 */
+
+				PGresult   *res;
+
 				conn->status = CONNECTION_OK;
 				if (!PQconsumeInput(conn))
 					goto error_return;

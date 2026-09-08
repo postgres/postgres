@@ -3253,7 +3253,7 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 
 	while (p < p_end)
 	{
-		const char *chunk_start = p;
+		const char *replace_start = p;
 		int			so;
 		int			eo;
 
@@ -3263,8 +3263,8 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 			p = p_end;
 
 		/* Copy the text we just scanned over, if any. */
-		if (p > chunk_start)
-			appendBinaryStringInfo(str, chunk_start, p - chunk_start);
+		if (p > replace_start)
+			appendBinaryStringInfo(str, replace_start, p - replace_start);
 
 		/* Done if at end of string, else advance over escape char. */
 		if (p >= p_end)
@@ -4795,7 +4795,7 @@ Datum
 text_format(PG_FUNCTION_ARGS)
 {
 	text	   *fmt;
-	StringInfoData str;
+	StringInfoData result_str;
 	const char *cp;
 	const char *start_ptr;
 	const char *end_ptr;
@@ -4868,7 +4868,7 @@ text_format(PG_FUNCTION_ARGS)
 	fmt = PG_GETARG_TEXT_PP(0);
 	start_ptr = VARDATA_ANY(fmt);
 	end_ptr = start_ptr + VARSIZE_ANY_EXHDR(fmt);
-	initStringInfo(&str);
+	initStringInfo(&result_str);
 	arg = 1;					/* next argument position to print */
 
 	/* Scan format string, looking for conversion specifiers. */
@@ -4888,7 +4888,7 @@ text_format(PG_FUNCTION_ARGS)
 		 */
 		if (*cp != '%')
 		{
-			appendStringInfoCharMacro(&str, *cp);
+			appendStringInfoCharMacro(&result_str, *cp);
 			continue;
 		}
 
@@ -4897,7 +4897,7 @@ text_format(PG_FUNCTION_ARGS)
 		/* Easy case: %% outputs a single % */
 		if (*cp == '%')
 		{
-			appendStringInfoCharMacro(&str, *cp);
+			appendStringInfoCharMacro(&result_str, *cp);
 			continue;
 		}
 
@@ -5030,7 +5030,7 @@ text_format(PG_FUNCTION_ARGS)
 			case 's':
 			case 'I':
 			case 'L':
-				text_format_string_conversion(&str, *cp, &typoutputfinfo,
+				text_format_string_conversion(&result_str, *cp, &typoutputfinfo,
 											  value, isNull,
 											  flags, width);
 				break;
@@ -5052,8 +5052,8 @@ text_format(PG_FUNCTION_ARGS)
 		pfree(nulls);
 
 	/* Generate results. */
-	result = cstring_to_text_with_len(str.data, str.len);
-	pfree(str.data);
+	result = cstring_to_text_with_len(result_str.data, result_str.len);
+	pfree(result_str.data);
 
 	PG_RETURN_TEXT_P(result);
 }
