@@ -667,9 +667,7 @@ $node_B->safe_psql('dbb', "CREATE TABLE tab (a int PRIMARY KEY, b int)");
 # Hold a transaction with an assigned transaction ID open in dbb, pinning its
 # oldest active transaction ID.
 my $dbb_session = $node_B->background_psql('dbb');
-$dbb_session->query_until(
-	qr/starting_bg_psql/, q{
-	\echo starting_bg_psql
+$dbb_session->query_safe(q{
 	BEGIN;
 	SELECT txid_current();
 });
@@ -704,11 +702,7 @@ ok( $node_B->poll_query_until(
 
 # Once the pinned transaction commits, the xmin must be able to advance
 # again.
-$dbb_session->query_until(
-	qr/committed/, q{
-	COMMIT;
-	\echo committed
-});
+$dbb_session->query_safe("COMMIT;");
 ok($dbb_session->quit, 'close pinned session');
 
 $next_xid = $node_B->safe_psql('postgres', "SELECT txid_current() + 1");
