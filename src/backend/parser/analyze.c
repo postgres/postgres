@@ -1465,8 +1465,7 @@ transformForPortionOfClause(ParseState *pstate,
 										 EXPR_KIND_FOR_PORTION);
 		actual_arg_types[0] = exprType(result->targetFrom);
 		actual_arg_types[1] = exprType(result->targetTo);
-		args = list_make2(copyObject(result->targetFrom),
-						  copyObject(result->targetTo));
+		args = list_make2(result->targetFrom, result->targetTo);
 
 		/*
 		 * Check the bound types separately, for better error message and
@@ -1490,6 +1489,15 @@ transformForPortionOfClause(ParseState *pstate,
 					 parser_errposition(pstate, exprLocation(forPortionOf->target_end))));
 
 		make_fn_arguments(pstate, args, actual_arg_types, declared_arg_types);
+
+		/*
+		 * Keep the *coerced* bounds.  This lets prepared statements use
+		 * parameters without explicit casts, and it improves deparsing when
+		 * FOR PORTION OF appears in a function or RULE.
+		 */
+		result->targetFrom = copyObject((Node *) linitial(args));
+		result->targetTo = copyObject((Node *) lsecond(args));
+
 		result->targetRange = (Node *) makeFuncExpr(get_range_constructor2(attbasetype),
 													attbasetype,
 													args,
