@@ -2109,9 +2109,10 @@ pgstat_read_statsfile(void)
 					}
 
 					header = pgstat_init_entry(key.kind, p);
-					dshash_release_lock(pgStatLocal.shared_hash, p);
 					if (header == NULL)
 					{
+						dshash_delete_entry(pgStatLocal.shared_hash, p);
+
 						/*
 						 * It would be tempting to switch this ERROR to a
 						 * WARNING, but it would mean that all the statistics
@@ -2121,6 +2122,7 @@ pgstat_read_statsfile(void)
 							 key.kind, key.dboid,
 							 key.objid, t);
 					}
+					dshash_release_lock(pgStatLocal.shared_hash, p);
 
 					if (!read_chunk(fpin,
 									pgstat_get_entry_data(key.kind, header),
