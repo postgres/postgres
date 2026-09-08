@@ -148,6 +148,49 @@ SELECT a, b FROM prt1 FULL JOIN prt2 p2(b,a,c) USING(a,b)
 RESET enable_partitionwise_aggregate;
 RESET enable_hashjoin;
 
+-- bug with PlaceHolderVars supplied as nestloop params by a child join
+SET enable_hashjoin TO false;
+SET enable_mergejoin TO false;
+
+EXPLAIN (COSTS OFF)
+SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1 LEFT JOIN
+  (SELECT b, COALESCE(c, 'x') AS c FROM prt2 WHERE a = 0) t2 ON t1.a = t2.b
+  WHERE t1.c = t2.c ORDER BY t1.a, t2.b;
+SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1 LEFT JOIN
+  (SELECT b, COALESCE(c, 'x') AS c FROM prt2 WHERE a = 0) t2 ON t1.a = t2.b
+  WHERE t1.c = t2.c ORDER BY t1.a, t2.b;
+
+-- same, with the PlaceHolderVar needed by a parameterized child join nested
+-- inside the child join that supplies the parameter
+CREATE TABLE prt3 (a int, b int, c varchar) PARTITION BY RANGE(a);
+CREATE TABLE prt3_p1 PARTITION OF prt3 FOR VALUES FROM (0) TO (250);
+CREATE TABLE prt3_p2 PARTITION OF prt3 FOR VALUES FROM (250) TO (500);
+CREATE TABLE prt3_p3 PARTITION OF prt3 FOR VALUES FROM (500) TO (600);
+INSERT INTO prt3 SELECT lb + i / 2, i % 25, to_char(i, 'FM0000') FROM generate_series(0, 99) i, (VALUES (0), (250), (500)) v(lb);
+CREATE INDEX iprt3_a ON prt3(a);
+ANALYZE prt3;
+
+CREATE TABLE prt4 (a int, b int, c varchar) PARTITION BY RANGE(a);
+CREATE TABLE prt4_p1 PARTITION OF prt4 FOR VALUES FROM (0) TO (250);
+CREATE TABLE prt4_p2 PARTITION OF prt4 FOR VALUES FROM (250) TO (500);
+CREATE TABLE prt4_p3 PARTITION OF prt4 FOR VALUES FROM (500) TO (600);
+INSERT INTO prt4 SELECT lb + i / 5, i % 25, to_char(i % 5, 'FM0000') FROM generate_series(0, 249) i, (VALUES (0), (250), (500)) v(lb);
+CREATE INDEX iprt4_c_a ON prt4(c, a);
+ANALYZE prt4;
+
+EXPLAIN (COSTS OFF)
+SELECT t1.a, t1.c, t2.a, t2.c FROM prt4 t1 LEFT JOIN
+  (SELECT t3.a, COALESCE(t3.c, t4.c) AS c FROM prt3 t3 JOIN prt1 t4 ON t3.a = t4.a
+   WHERE t4.b = 0) t2 ON t1.a = t2.a
+  WHERE t1.c = t2.c AND t2.a IS NOT NULL ORDER BY t1.a, t1.c;
+SELECT t1.a, t1.c, t2.a, t2.c FROM prt4 t1 LEFT JOIN
+  (SELECT t3.a, COALESCE(t3.c, t4.c) AS c FROM prt3 t3 JOIN prt1 t4 ON t3.a = t4.a
+   WHERE t4.b = 0) t2 ON t1.a = t2.a
+  WHERE t1.c = t2.c AND t2.a IS NOT NULL ORDER BY t1.a, t1.c;
+
+RESET enable_hashjoin;
+RESET enable_mergejoin;
+
 -- bug in freeing the SpecialJoinInfo of a child-join
 EXPLAIN (COSTS OFF)
 SELECT * FROM prt1 t1 JOIN prt1 t2 ON t1.a = t2.a WHERE t1.a IN (SELECT a FROM prt1 t3);

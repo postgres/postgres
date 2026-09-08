@@ -4192,6 +4192,7 @@ create_nestloop_plan(PlannerInfo *root,
 	Plan	   *outer_plan;
 	Plan	   *inner_plan;
 	Relids		outerrelids;
+	Relids		req_outer;
 	List	   *tlist = build_path_tlist(root, &best_path->jpath.path);
 	List	   *joinrestrictclauses = best_path->jpath.joinrestrictinfo;
 	List	   *joinclauses;
@@ -4221,8 +4222,17 @@ create_nestloop_plan(PlannerInfo *root,
 	/* NestLoop can project, so no need to be picky about child tlists */
 	outer_plan = create_plan_recurse(root, best_path->jpath.outerjoinpath, 0);
 
-	/* For a nestloop, include outer relids in curOuterRels for inner side */
+	/*
+	 * Include the outer relids in curOuterRels while building the inner side.
+	 * If the outer rel is a child rel, also include its top parent's relids.
+	 * We need both forms, since Vars in the inner side refer to the child rel
+	 * while PlaceHolderInfo.ph_eval_at is expressed in terms of top parent
+	 * rels.
+	 */
 	outerrelids = best_path->jpath.outerjoinpath->parent->relids;
+	if (best_path->jpath.outerjoinpath->parent->top_parent_relids)
+		outerrelids = bms_union(outerrelids,
+								best_path->jpath.outerjoinpath->parent->top_parent_relids);
 	root->curOuterRels = bms_union(root->curOuterRels, outerrelids);
 
 	inner_plan = create_plan_recurse(root, best_path->jpath.innerjoinpath, 0);
@@ -4259,12 +4269,31 @@ create_nestloop_plan(PlannerInfo *root,
 	}
 
 	/*
+	 * The required-outer set may contain child rels if this path has been
+	 * reparameterized by an upper child join.  Include their top parents'
+	 * relids too, so that we can match both Vars referring to the child rels
+	 * and PlaceHolderVars whose PlaceHolderInfo.ph_eval_at is expressed in
+	 * terms of top parent rels.
+	 */
+	req_outer = PATH_REQ_OUTER((Path *) best_path);
+	if (req_outer)
+	{
+		int			rti = -1;
+
+		while ((rti = bms_next_member(req_outer, rti)) >= 0)
+		{
+			RelOptInfo *rel = find_base_rel_ignore_join(root, rti);
+
+			if (rel && rel->top_parent_relids)
+				req_outer = bms_union(req_outer, rel->top_parent_relids);
+		}
+	}
+
+	/*
 	 * Identify any nestloop parameters that should be supplied by this join
 	 * node, and remove them from root->curOuterParams.
 	 */
-	nestParams = identify_current_nestloop_params(root,
-												  outerrelids,
-												  PATH_REQ_OUTER((Path *) best_path));
+	nestParams = identify_current_nestloop_params(root, outerrelids, req_outer);
 
 	/*
 	 * While nestloop parameters that are Vars had better be available from
