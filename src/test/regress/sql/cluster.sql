@@ -380,9 +380,24 @@ INSERT INTO clstr_tst (b, c) VALUES (1111, 'this should fail');
 SELECT conname FROM pg_constraint WHERE conrelid = 'clstr_tst'::regclass
 ORDER BY 1;
 
--- Verify partial analyze works
+-- Verify REPACK (ANALYZE) works, including partial analyze.
 REPACK (ANALYZE) clstr_tst (a);
 REPACK (ANALYZE) clstr_tst;
+
+-- Plain REPACK is allowed in a transaction block.
+BEGIN;
+REPACK clstr_tst;
+ROLLBACK;
+
+-- REPACK (ANALYZE) is not allowed in a transaction block.
+BEGIN;
+REPACK (ANALYZE) clstr_tst;
+ROLLBACK;
+
+-- REPACK is allowed within a PL, as long as there's no ANALYZE.
+DO $$ BEGIN EXECUTE 'REPACK clstr_tst'; END $$;
+DO $$ BEGIN EXECUTE 'REPACK (ANALYZE) clstr_tst'; END $$;
+
 REPACK (VERBOSE) clstr_tst (a);
 
 -- REPACK w/o argument performs no ordering, so we can only check which tables

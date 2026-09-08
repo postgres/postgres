@@ -329,6 +329,8 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
      <para>
       Applies <xref linkend="sql-analyze"/> on the table after repacking.  This is
       currently only supported when a single (non-partitioned) table is specified.
+      This option cannot be used inside a transaction block, or from a function,
+      procedure, or <command>DO</command> block.
      </para>
     </listitem>
    </varlistentry>
