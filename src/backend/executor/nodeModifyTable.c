@@ -5619,9 +5619,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		TupleDesc	tupDesc;
 		ForPortionOfExpr *forPortionOf;
 		Datum		targetRange;
-		bool		isNull;
-		ExprContext *econtext;
-		ExprState  *exprState;
 		ForPortionOfState *fpoState;
 
 		rootRelInfo = mtstate->resultRelInfo;
@@ -5632,22 +5629,31 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		forPortionOf = (ForPortionOfExpr *) node->forPortionOf;
 
 		/* Eval the FOR PORTION OF target */
-		if (mtstate->ps.ps_ExprContext == NULL)
-			ExecAssignExprContext(estate, &mtstate->ps);
-		econtext = mtstate->ps.ps_ExprContext;
+		if (!(eflags & EXEC_FLAG_EXPLAIN_ONLY))
+		{
+			bool		isNull;
+			ExprContext *econtext;
+			ExprState  *exprState;
 
-		exprState = ExecPrepareExpr((Expr *) forPortionOf->targetRange, estate);
-		targetRange = ExecEvalExpr(exprState, econtext, &isNull);
+			if (mtstate->ps.ps_ExprContext == NULL)
+				ExecAssignExprContext(estate, &mtstate->ps);
+			econtext = mtstate->ps.ps_ExprContext;
 
-		/*
-		 * FOR PORTION OF ... TO ... FROM should never give us a NULL target,
-		 * but FOR PORTION OF (...) could.
-		 */
-		if (isNull)
-			ereport(ERROR,
-					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("FOR PORTION OF target must not be null"),
-					 executor_errposition(estate, forPortionOf->targetLocation)));
+			exprState = ExecPrepareExpr((Expr *) forPortionOf->targetRange, estate);
+			targetRange = ExecEvalExpr(exprState, econtext, &isNull);
+
+			/*
+			 * FOR PORTION OF ... FROM ... TO should never give us a NULL
+			 * target, but FOR PORTION OF (...) could.
+			 */
+			if (isNull)
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("FOR PORTION OF target must not be null"),
+						 executor_errposition(estate, forPortionOf->targetLocation)));
+		}
+		else
+			targetRange = (Datum) 0;
 
 		/* Create state for FOR PORTION OF operation */
 
