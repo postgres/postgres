@@ -1084,6 +1084,7 @@ copy_table(Relation rel)
 	ParseState *pstate;
 	List	   *options = NIL;
 	bool		gencol_published = false;
+	int			server_version = walrcv_server_version(LogRepWorkerWalRcvConn);
 
 	/* Get the publisher relation info. */
 	fetch_remote_table_info(get_namespace_name(RelationGetNamespace(rel)),
@@ -1100,9 +1101,14 @@ copy_table(Relation rel)
 	/* Start copy on the publisher. */
 	initStringInfo(&cmd);
 
-	/* Regular or partitioned table with no row filter or generated columns */
-	if ((lrel.relkind == RELKIND_RELATION || lrel.relkind == RELKIND_PARTITIONED_TABLE)
-		&& qual == NIL && !gencol_published)
+	/*
+	 * Regular or partitioned table with no row filter or generated columns.
+	 *
+	 * "COPY table TO" on a partitioned table is supported since v19.
+	 */
+	if ((lrel.relkind == RELKIND_RELATION ||
+		 (lrel.relkind == RELKIND_PARTITIONED_TABLE && server_version >= 190000)) &&
+		qual == NIL && !gencol_published)
 	{
 		appendStringInfo(&cmd, "COPY %s",
 						 quote_qualified_identifier(lrel.nspname, lrel.relname));
@@ -1182,8 +1188,7 @@ copy_table(Relation rel)
 	 * Prior to v16, initial table synchronization will use text format even
 	 * if the binary option is enabled for a subscription.
 	 */
-	if (walrcv_server_version(LogRepWorkerWalRcvConn) >= 160000 &&
-		MySubscription->binary)
+	if (server_version >= 160000 && MySubscription->binary)
 	{
 		appendStringInfoString(&cmd, " WITH (FORMAT binary)");
 		options = list_make1(makeDefElem("format",
