@@ -354,35 +354,6 @@ Branch: REL_14_STABLE [42d333a78] 2026-08-10 06:38:36 -0700
 
     <listitem>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [57835938f] 2026-08-10 06:37:49 -0700
-Branch: REL_19_STABLE [b3d9262bb] 2026-08-10 06:38:05 -0700
-Branch: REL_18_STABLE [08454e8b2] 2026-08-10 06:38:12 -0700
-Branch: REL_18_STABLE [8d428c6e6] 2026-08-10 06:38:12 -0700
--->
-     <para>
-      Fix multirange type handling
-      in <function>pg_restore_attribute_stats()</function>
-      (OpenAI Security Research Team)
-     </para>
-
-     <para>
-      <function>pg_restore_attribute_stats()</function> treated multirange
-      types just like their underlying range type.  This works correctly
-      for the bounds histogram, but it was wrong for all the other
-      statistics kinds.
-     </para>
-
-     <para>
-      The <productname>PostgreSQL</productname> Project thanks
-      Amy Burnett (OpenAI Codex Security)
-      for reporting this problem.
-      (CVE-2026-16238)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [8f0c3d2fe] 2026-08-10 06:37:48 -0700
 Branch: REL_19_STABLE [0d60ee717] 2026-08-10 06:38:04 -0700
@@ -675,35 +646,6 @@ Branch: REL_14_STABLE [f4174aa84] 2026-08-10 06:38:36 -0700
 
     <listitem>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [3bf185b4b] 2026-08-10 06:37:49 -0700
-Branch: REL_19_STABLE [bf1bb7e29] 2026-08-10 06:38:05 -0700
-Branch: REL_18_STABLE [203a48209] 2026-08-10 06:38:11 -0700
-Branch: REL_17_STABLE [067a64d40] 2026-08-10 06:38:18 -0700
--->
-     <para>
-      Reject GSSEncRequest after direct SSL connection (Michael Paquier)
-     </para>
-
-     <para>
-      After establishing a TLS-encrypted connection, the server would
-      still accept a request for GSSAPI encryption.  If that succeeded,
-      the connection would proceed using TLS encryption, but it would look
-      like a GSS connection to the <filename>pg_hba</filename> rules.
-      Thus, a <filename>pg_hba</filename> policy intending to disallow TLS
-      would not be enforced correctly.
-     </para>
-
-     <para>
-      The <productname>PostgreSQL</productname> Project thanks
-      p4p3r
-      for reporting this problem.
-      (CVE-2026-14681)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Nathan Bossart <nathan@postgresql.org>
 Branch: master [feb8b0182] 2026-08-10 06:37:49 -0700
 Branch: REL_19_STABLE [4d192fa16] 2026-08-10 06:38:05 -0700
@@ -968,31 +910,6 @@ Branch: REL_14_STABLE [9505175f2] 2026-08-10 06:38:36 -0700
       Ben Morris (in collaboration with Claude and Anthropic Research)
       for reporting this problem.
       (CVE-2026-15742)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Álvaro Herrera <alvherre@kurilemu.de>
-Branch: master [1e2795dde] 2026-08-10 06:37:48 -0700
-Branch: REL_19_STABLE [bb02eba53] 2026-08-10 06:38:04 -0700
-Branch: REL_18_STABLE [8a31ffc2d] 2026-08-10 06:38:11 -0700
--->
-     <para>
-      Fix buffer overrun
-      in <filename>contrib/pg_stat_statements</filename> (Álvaro Herrera)
-     </para>
-
-     <para>
-      Query normalization didn't accurately account for the amount of
-      space the normalized string would require.
-     </para>
-
-     <para>
-      The <productname>PostgreSQL</productname> Project thanks
-      Sajeeb Lohani (with TrendAI Zero Day Initiative) and Yuelin Wang
-      for reporting this problem.
-      (CVE-2026-14676)
      </para>
     </listitem>
 
