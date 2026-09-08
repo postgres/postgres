@@ -1920,4 +1920,48 @@ SELECT definition FROM pg_rules WHERE rulename = 'fpo_param_r';
 DROP TABLE fpo_param_src;
 DROP TABLE fpo_param;
 
+--
+-- EXPLAIN without ANALYZE must only plan the statement, so it must not
+-- evaluate the FOR PORTION OF target.
+--
+
+CREATE TABLE fpo_explain (
+  id int4range,
+  valid_at daterange,
+  name text
+);
+INSERT INTO fpo_explain (id, valid_at, name) VALUES
+  ('[1,2)', daterange('2000-01-01', '2010-01-01'), 'one');
+
+-- GENERIC_PLAN exists precisely so that a statement containing parameter
+-- placeholders can be planned without supplying any parameter values.  The
+-- hand-written equivalent qual is the control case.
+EXPLAIN (COSTS OFF, GENERIC_PLAN)
+  UPDATE fpo_explain SET name = 'q' WHERE valid_at && $1::daterange;
+EXPLAIN (COSTS OFF, GENERIC_PLAN)
+  UPDATE fpo_explain FOR PORTION OF valid_at ($1::daterange) SET name = 'q';
+EXPLAIN (COSTS OFF, GENERIC_PLAN)
+  DELETE FROM fpo_explain FOR PORTION OF valid_at ($1::daterange);
+
+-- A null target is a run-time error, so plain EXPLAIN should still report
+-- the plan.
+EXPLAIN (COSTS OFF)
+  UPDATE fpo_explain FOR PORTION OF valid_at (NULL::daterange) SET name = 'q';
+EXPLAIN (COSTS OFF)
+  DELETE FROM fpo_explain FOR PORTION OF valid_at (NULL::daterange);
+
+-- Actually running it is still an error.
+UPDATE fpo_explain FOR PORTION OF valid_at (NULL::daterange) SET name = 'q';
+DELETE FROM fpo_explain FOR PORTION OF valid_at (NULL::daterange);
+
+-- EXPLAIN ANALYZE does execute, so the null check must still fire there.
+EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF, BUFFERS OFF)
+  UPDATE fpo_explain FOR PORTION OF valid_at (NULL::daterange) SET name = 'q';
+
+UPDATE fpo_explain FOR PORTION OF valid_at FROM '2002-01-01' TO '2003-01-01'
+  SET name = 'q';
+SELECT * FROM fpo_explain ORDER BY valid_at;
+
+DROP TABLE fpo_explain;
+
 RESET datestyle;
