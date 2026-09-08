@@ -42,6 +42,11 @@ REPACK (CONCURRENTLY) clstrpart;
 -- Disallowed in catalogs
 REPACK (CONCURRENTLY) pg_class;
 
+-- Doesn't support tables used as catalog tables
+CREATE TABLE repack_conc_user_catalog (i int) WITH (user_catalog_table = true);
+REPACK (CONCURRENTLY) repack_conc_user_catalog;
+DROP TABLE repack_conc_user_catalog;
+
 -- Doesn't support TOAST tables directly
 CREATE TABLE repack_conc_toast (t text);
 SELECT reltoastrelid::regclass AS toast_rel

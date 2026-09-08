@@ -61,6 +61,12 @@ HINT:  Consider running the command on individual partitions.
 REPACK (CONCURRENTLY) pg_class;
 ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "pg_class"
 HINT:  REPACK (CONCURRENTLY) is not supported for catalog relations.
+-- Doesn't support tables used as catalog tables
+CREATE TABLE repack_conc_user_catalog (i int) WITH (user_catalog_table = true);
+REPACK (CONCURRENTLY) repack_conc_user_catalog;
+ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_user_catalog"
+DETAIL:  This operation is not supported for user catalog tables.
+DROP TABLE repack_conc_user_catalog;
 -- Doesn't support TOAST tables directly
 CREATE TABLE repack_conc_toast (t text);
 SELECT reltoastrelid::regclass AS toast_rel

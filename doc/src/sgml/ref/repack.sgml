@@ -293,6 +293,14 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
 
        <listitem>
         <para>
+          The table is declared as a catalog table using the
+          <link linkend="reloption-user-catalog-table"><literal>user_catalog_table</literal></link>
+          storage parameter.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
          <command>REPACK</command> is executed inside a transaction block.
         </para>
        </listitem>
