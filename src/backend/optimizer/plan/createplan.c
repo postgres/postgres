@@ -4272,20 +4272,29 @@ create_nestloop_plan(PlannerInfo *root,
 	NestLoop   *join_plan;
 	Plan	   *outer_plan;
 	Plan	   *inner_plan;
+	Relids		outerrelids;
 	List	   *tlist = build_path_tlist(root, &best_path->path);
 	List	   *joinrestrictclauses = best_path->joinrestrictinfo;
 	List	   *joinclauses;
 	List	   *otherclauses;
-	Relids		outerrelids;
 	List	   *nestParams;
 	Relids		saveOuterRels = root->curOuterRels;
 
 	/* NestLoop can project, so no need to be picky about child tlists */
 	outer_plan = create_plan_recurse(root, best_path->outerjoinpath, 0);
 
-	/* For a nestloop, include outer relids in curOuterRels for inner side */
-	root->curOuterRels = bms_union(root->curOuterRels,
-								   best_path->outerjoinpath->parent->relids);
+	/*
+	 * Include the outer relids in curOuterRels while building the inner side.
+	 * If the outer rel is a child rel, also include its top parent's relids.
+	 * We need both forms, since Vars in the inner side refer to the child rel
+	 * while PlaceHolderInfo.ph_eval_at is expressed in terms of top parent
+	 * rels.
+	 */
+	outerrelids = best_path->outerjoinpath->parent->relids;
+	if (best_path->outerjoinpath->parent->top_parent_relids)
+		outerrelids = bms_union(outerrelids,
+								best_path->outerjoinpath->parent->top_parent_relids);
+	root->curOuterRels = bms_union(root->curOuterRels, outerrelids);
 
 	inner_plan = create_plan_recurse(root, best_path->innerjoinpath, 0);
 
@@ -4324,7 +4333,6 @@ create_nestloop_plan(PlannerInfo *root,
 	 * Identify any nestloop parameters that should be supplied by this join
 	 * node, and remove them from root->curOuterParams.
 	 */
-	outerrelids = best_path->outerjoinpath->parent->relids;
 	nestParams = identify_current_nestloop_params(root, outerrelids);
 
 	join_plan = make_nestloop(tlist,
