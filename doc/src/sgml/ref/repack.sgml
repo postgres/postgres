@@ -263,6 +263,12 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
       <itemizedlist>
        <listitem>
         <para>
+          The relation is not a table (e.g., it is a materialized view).
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
           The table is <literal>UNLOGGED</literal>.
         </para>
        </listitem>

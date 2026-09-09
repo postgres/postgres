@@ -945,6 +945,14 @@ check_concurrent_repack_requirements(Relation rel, Oid *ident_idx_p)
 				errhint("%s is only allowed for permanent relations.",
 						"REPACK (CONCURRENTLY)"));
 
+	/* A materialized view produces no logically decoded changes. */
+	if (rel->rd_rel->relkind == RELKIND_MATVIEW)
+		ereport(ERROR,
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("cannot execute %s on relation \"%s\"",
+					   "REPACK (CONCURRENTLY)", RelationGetRelationName(rel)),
+				errdetail_relkind_not_supported(rel->rd_rel->relkind));
+
 	/*
 	 * With NOTHING, WAL does not contain the old tuple; FULL is not yet
 	 * supported.
