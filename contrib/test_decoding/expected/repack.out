@@ -87,6 +87,12 @@ REPACK (CONCURRENTLY) repack_conc_unlogged;
 ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_unlogged"
 HINT:  REPACK (CONCURRENTLY) is only allowed for permanent relations.
 DROP TABLE repack_conc_unlogged;
+-- Doesn't support materialized views
+CREATE MATERIALIZED VIEW repack_conc_matview AS SELECT 1 AS i;
+REPACK (CONCURRENTLY) repack_conc_matview;
+ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_matview"
+DETAIL:  This operation is not supported for materialized views.
+DROP MATERIALIZED VIEW repack_conc_matview;
 -- Doesn't support tables with REPLICA IDENTITY NOTHING, even if they have a primary key
 CREATE TABLE repack_conc_replident (i int PRIMARY KEY);
 ALTER TABLE repack_conc_replident REPLICA IDENTITY NOTHING;

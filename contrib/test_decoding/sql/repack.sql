@@ -64,6 +64,11 @@ CREATE UNLOGGED TABLE repack_conc_unlogged (i int PRIMARY KEY);
 REPACK (CONCURRENTLY) repack_conc_unlogged;
 DROP TABLE repack_conc_unlogged;
 
+-- Doesn't support materialized views
+CREATE MATERIALIZED VIEW repack_conc_matview AS SELECT 1 AS i;
+REPACK (CONCURRENTLY) repack_conc_matview;
+DROP MATERIALIZED VIEW repack_conc_matview;
+
 -- Doesn't support tables with REPLICA IDENTITY NOTHING, even if they have a primary key
 CREATE TABLE repack_conc_replident (i int PRIMARY KEY);
 ALTER TABLE repack_conc_replident REPLICA IDENTITY NOTHING;
