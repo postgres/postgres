@@ -91,16 +91,16 @@ typedef enum
  * function prototypes in nodes/bitmapset.c
  */
 
-extern Bitmapset *bms_copy(const Bitmapset *a);
+pg_nodiscard extern Bitmapset *bms_copy(const Bitmapset *a);
 extern bool bms_equal(const Bitmapset *a, const Bitmapset *b);
 extern int	bms_compare(const Bitmapset *a, const Bitmapset *b);
-extern Bitmapset *bms_make_singleton(int x);
+pg_nodiscard extern Bitmapset *bms_make_singleton(int x);
 extern void bms_free(Bitmapset *a);
 
-extern Bitmapset *bms_union(const Bitmapset *a, const Bitmapset *b);
-extern Bitmapset *bms_intersect(const Bitmapset *a, const Bitmapset *b);
-extern Bitmapset *bms_difference(const Bitmapset *a, const Bitmapset *b);
-extern Bitmapset *bms_offset_members(const Bitmapset *a, int offset);
+pg_nodiscard extern Bitmapset *bms_union(const Bitmapset *a, const Bitmapset *b);
+pg_nodiscard extern Bitmapset *bms_intersect(const Bitmapset *a, const Bitmapset *b);
+pg_nodiscard extern Bitmapset *bms_difference(const Bitmapset *a, const Bitmapset *b);
+pg_nodiscard extern Bitmapset *bms_offset_members(const Bitmapset *a, int offset);
 extern bool bms_is_subset(const Bitmapset *a, const Bitmapset *b);
 extern BMS_Comparison bms_subset_compare(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_is_member(int x, const Bitmapset *a);
@@ -120,14 +120,14 @@ extern BMS_Membership bms_membership(const Bitmapset *a);
 
 /* these routines recycle (modify or free) their non-const inputs: */
 
-extern Bitmapset *bms_add_member(Bitmapset *a, int x);
-extern Bitmapset *bms_del_member(Bitmapset *a, int x);
-extern Bitmapset *bms_add_members(Bitmapset *a, const Bitmapset *b);
-extern Bitmapset *bms_replace_members(Bitmapset *a, const Bitmapset *b);
-extern Bitmapset *bms_add_range(Bitmapset *a, int lower, int upper);
-extern Bitmapset *bms_int_members(Bitmapset *a, const Bitmapset *b);
-extern Bitmapset *bms_del_members(Bitmapset *a, const Bitmapset *b);
-extern Bitmapset *bms_join(Bitmapset *a, Bitmapset *b);
+pg_nodiscard extern Bitmapset *bms_add_member(Bitmapset *a, int x);
+pg_nodiscard extern Bitmapset *bms_del_member(Bitmapset *a, int x);
+pg_nodiscard extern Bitmapset *bms_add_members(Bitmapset *a, const Bitmapset *b);
+pg_nodiscard extern Bitmapset *bms_replace_members(Bitmapset *a, const Bitmapset *b);
+pg_nodiscard extern Bitmapset *bms_add_range(Bitmapset *a, int lower, int upper);
+pg_nodiscard extern Bitmapset *bms_int_members(Bitmapset *a, const Bitmapset *b);
+pg_nodiscard extern Bitmapset *bms_del_members(Bitmapset *a, const Bitmapset *b);
+pg_nodiscard extern Bitmapset *bms_join(Bitmapset *a, Bitmapset *b);
 
 /* support for iterating through the integer elements of a set: */
 extern int	bms_next_member(const Bitmapset *a, int prevbit);
