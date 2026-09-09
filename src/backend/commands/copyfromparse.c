@@ -654,13 +654,27 @@ CopyLoadRawBuf(CopyFromState cstate)
  *
  * If "speculative" is true, this function skips reporting any encoding or
  * conversion errors, provided there are still data for the caller to process.
- * Such callers must be prepared for this function to return without loading
- * anything.
+ * It also won't read past a backslash in text mode, since that might begin an
+ * end-of-copy marker (in which case there's no point in waiting for more data,
+ * which might not materialize anyway).  Such callers must be prepared for this
+ * function to return without loading anything.
  */
 static void
 CopyLoadInputBuf(CopyFromState cstate, bool speculative)
 {
 	int			nbytes = INPUT_BUF_BYTES(cstate);
+
+	/*
+	 * If "speculative" is true and we're in text mode, refuse to wait for
+	 * more input if there's a backslash in the buffer that the caller still
+	 * needs to process.  That might be the start of an end-of-copy marker. If
+	 * it _is_ an end-of-copy marker, we don't need any more data, and more
+	 * data might not show up, anyway (e.g., from a pipe that was left open).
+	 */
+	if (speculative && cstate->opts.format == COPY_FORMAT_TEXT &&
+		memchr(cstate->input_buf + cstate->input_buf_index, '\\',
+			   nbytes) != NULL)
+		return;
 
 	/*
 	 * The caller has updated input_buf_index to indicate how much of the
