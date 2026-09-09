@@ -1284,12 +1284,12 @@ ApplyLauncherMain(Datum main_arg)
 				retain_dead_tuples = true;
 
 				/*
-				 * Create a replication slot to retain information necessary
-				 * for conflict detection such as dead tuples, commit
-				 * timestamps, and origins.
+				 * Create a (physical) replication slot to retain information
+				 * necessary for conflict detection such as dead tuples,
+				 * commit timestamps, and origins.
 				 *
 				 * The slot is created before starting the apply worker to
-				 * prevent it from unnecessarily maintaining its
+				 * prevent the worker from unnecessarily maintaining its
 				 * oldest_nonremovable_xid.
 				 *
 				 * The slot is created even for a disabled subscription to
@@ -1418,7 +1418,6 @@ ApplyLauncherMain(Datum main_arg)
 		if (MyReplicationSlot)
 		{
 			if (!retain_dead_tuples)
-				/* XXX unclear why we don't request logical decoding disable */
 				ReplicationSlotDropAcquired(false);
 			else if (can_update_xmin)
 				update_conflict_slot_xmin(xmin);
@@ -1627,6 +1626,11 @@ reset_conflict_slot_xmin_to_safe_horizon(void)
 /*
  * Create and acquire the replication slot used to retain information for
  * conflict detection, if not yet.
+ *
+ * A physical slot is enough, as no logical decoding is going to be performed
+ * through it.  In fact, the slot will only be used through its xmin horizon
+ * to prevent the removal of dead tuples and commit timestamp data required by
+ * subscriptions with retain_dead_tuples enabled in any database.
  */
 void
 CreateConflictDetectionSlot(void)
