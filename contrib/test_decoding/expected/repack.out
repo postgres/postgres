@@ -60,7 +60,7 @@ HINT:  Consider running the command on individual partitions.
 -- Disallowed in catalogs
 REPACK (CONCURRENTLY) pg_class;
 ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "pg_class"
-HINT:  REPACK (CONCURRENTLY) is not supported for catalog relations.
+DETAIL:  This operation is not supported for system catalogs.
 -- Doesn't support tables used as catalog tables
 CREATE TABLE repack_conc_user_catalog (i int) WITH (user_catalog_table = true);
 REPACK (CONCURRENTLY) repack_conc_user_catalog;
@@ -80,12 +80,12 @@ DROP TABLE repack_conc_toast;
 CREATE TEMP TABLE repack_conc_temp (i int PRIMARY KEY);
 REPACK (CONCURRENTLY) repack_conc_temp;
 ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_temp"
-HINT:  REPACK (CONCURRENTLY) is only allowed for permanent relations.
+DETAIL:  This operation is only supported for permanent relations.
 DROP TABLE repack_conc_temp;
 CREATE UNLOGGED TABLE repack_conc_unlogged (i int PRIMARY KEY);
 REPACK (CONCURRENTLY) repack_conc_unlogged;
 ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_unlogged"
-HINT:  REPACK (CONCURRENTLY) is only allowed for permanent relations.
+DETAIL:  This operation is only supported for permanent relations.
 DROP TABLE repack_conc_unlogged;
 -- Doesn't support materialized views
 CREATE MATERIALIZED VIEW repack_conc_matview AS SELECT 1 AS i;
@@ -98,18 +98,18 @@ CREATE TABLE repack_conc_replident (i int PRIMARY KEY);
 ALTER TABLE repack_conc_replident REPLICA IDENTITY NOTHING;
 REPACK (CONCURRENTLY) repack_conc_replident;
 ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_replident"
-DETAIL:  REPACK (CONCURRENTLY) does not support tables with REPLICA IDENTITY NOTHING.
+DETAIL:  This operation does not support tables with REPLICA IDENTITY NOTHING.
 -- Doesn't support tables without a primary key or replica identity index
 ALTER TABLE repack_conc_replident DROP CONSTRAINT repack_conc_replident_pkey;
 ALTER TABLE repack_conc_replident REPLICA IDENTITY DEFAULT;
 REPACK (CONCURRENTLY) repack_conc_replident;
 ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_replident"
-HINT:  Relation "repack_conc_replident" has no identity index.
+DETAIL:  Relation "repack_conc_replident" has no identity index.
 -- Doesn't support tables with deferrable primary keys
 ALTER TABLE repack_conc_replident ADD PRIMARY KEY (i) DEFERRABLE;
 REPACK (CONCURRENTLY) repack_conc_replident;
 ERROR:  cannot execute REPACK (CONCURRENTLY) on relation "repack_conc_replident"
-DETAIL:  REPACK (CONCURRENTLY) does not support deferrable primary keys.
+DETAIL:  This operation does not support deferrable primary keys.
 HINT:  Use ALTER TABLE ... REPLICA IDENTITY USING INDEX to designate another index as replica identity.
 -- clean up
 DROP TABLE repack_conc_replident, clstrpart;
