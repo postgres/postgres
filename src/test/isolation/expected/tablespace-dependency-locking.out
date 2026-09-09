@@ -1,0 +1,84 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s1_begin s1_create_table_in_tablespace s2_drop_tablespace s1_commit s1_drop_table s1_drop_tablespace
+step s1_begin: BEGIN;
+step s1_create_table_in_tablespace: 
+	CREATE TABLE tbl_tablespace (a int) PARTITION BY RANGE (a)
+		TABLESPACE regress_dependency_tablespace;
+
+step s2_drop_tablespace: DROP TABLESPACE regress_dependency_tablespace; <waiting ...>
+step s1_commit: COMMIT;
+step s2_drop_tablespace: <... completed>
+ERROR:  tablespace "regress_dependency_tablespace" cannot be dropped because some objects depend on it
+step s1_drop_table: DROP TABLE tbl_tablespace;
+step s1_drop_tablespace: DROP TABLESPACE regress_dependency_tablespace;
+
+starting permutation: s1_begin s1_alter_tablespace s2_drop_tablespace s3_create_table_in_dropped_tablespace s1_rollback
+step s1_begin: BEGIN;
+step s1_alter_tablespace: 
+	ALTER TABLESPACE regress_dependency_tablespace
+		SET (random_page_cost = 1.1);
+
+step s2_drop_tablespace: DROP TABLESPACE regress_dependency_tablespace; <waiting ...>
+step s3_create_table_in_dropped_tablespace: 
+	DO $$
+	BEGIN
+		EXECUTE 'CREATE TABLE tbl_tablespace (a int) PARTITION BY RANGE (a)
+			TABLESPACE regress_dependency_tablespace';
+	EXCEPTION WHEN undefined_object THEN
+		RAISE NOTICE 'referenced tablespace was concurrently dropped';
+	END
+	$$;
+ <waiting ...>
+step s1_rollback: ROLLBACK;
+step s2_drop_tablespace: <... completed>
+s3: NOTICE:  referenced tablespace was concurrently dropped
+step s3_create_table_in_dropped_tablespace: <... completed>
+
+starting permutation: s1_begin s1_alter_tablespace s2_drop_tablespace s1_create_table_in_tablespace s1_commit
+step s1_begin: BEGIN;
+step s1_alter_tablespace: 
+	ALTER TABLESPACE regress_dependency_tablespace
+		SET (random_page_cost = 1.1);
+
+step s2_drop_tablespace: DROP TABLESPACE regress_dependency_tablespace; <waiting ...>
+step s1_create_table_in_tablespace: 
+	CREATE TABLE tbl_tablespace (a int) PARTITION BY RANGE (a)
+		TABLESPACE regress_dependency_tablespace;
+
+step s1_commit: COMMIT;
+step s2_drop_tablespace: <... completed>
+ERROR:  tablespace "regress_dependency_tablespace" cannot be dropped because some objects depend on it
+
+starting permutation: s1_begin s1_rename_tablespace s2_drop_tablespace s1_create_table_in_renamed_tablespace s1_commit
+step s1_begin: BEGIN;
+step s1_rename_tablespace: ALTER TABLESPACE regress_dependency_tablespace RENAME TO regress_dependency_tablespace_renamed;
+step s2_drop_tablespace: DROP TABLESPACE regress_dependency_tablespace; <waiting ...>
+step s1_create_table_in_renamed_tablespace: CREATE TABLE tbl_tablespace (a int) PARTITION BY RANGE (a) TABLESPACE regress_dependency_tablespace_renamed;
+step s1_commit: COMMIT;
+step s2_drop_tablespace: <... completed>
+ERROR:  tablespace "regress_dependency_tablespace" cannot be dropped because some objects depend on it
+
+starting permutation: s1_begin s1_reassign_owned s2_drop_tablespace s1_create_table_in_tablespace s1_commit
+step s1_begin: BEGIN;
+step s1_reassign_owned: REASSIGN OWNED BY regress_ts_owner TO CURRENT_USER;
+step s2_drop_tablespace: DROP TABLESPACE regress_dependency_tablespace; <waiting ...>
+step s1_create_table_in_tablespace: 
+	CREATE TABLE tbl_tablespace (a int) PARTITION BY RANGE (a)
+		TABLESPACE regress_dependency_tablespace;
+
+step s1_commit: COMMIT;
+step s2_drop_tablespace: <... completed>
+ERROR:  tablespace "regress_dependency_tablespace" cannot be dropped because some objects depend on it
+
+starting permutation: s1_begin s1_drop_owned s2_drop_tablespace s1_create_table_in_tablespace s1_commit
+step s1_begin: BEGIN;
+step s1_drop_owned: DROP OWNED BY regress_ts_grantee;
+step s2_drop_tablespace: DROP TABLESPACE regress_dependency_tablespace; <waiting ...>
+step s1_create_table_in_tablespace: 
+	CREATE TABLE tbl_tablespace (a int) PARTITION BY RANGE (a)
+		TABLESPACE regress_dependency_tablespace;
+
+step s1_commit: COMMIT;
+step s2_drop_tablespace: <... completed>
+ERROR:  tablespace "regress_dependency_tablespace" cannot be dropped because some objects depend on it

@@ -1199,15 +1199,14 @@ classIdGetDbId(Oid classId)
 /*
  * shdepLockAndCheckObject
  *
- * Lock the object that we are about to record a dependency on.
- * After it's locked, verify that it hasn't been dropped while we
- * weren't looking.  If the object has been dropped, this function
- * does not return!
+ * Acquire an AccessShareLock on a shared object and verify that it still
+ * exists.  This is used when recording a dependency or performing another
+ * operation that must protect the object against a concurrent DROP.
  */
 void
 shdepLockAndCheckObject(Oid classId, Oid objectId)
 {
-	/* AccessShareLock should be OK, since we are not modifying the object */
+	/* AccessShareLock is sufficient to prevent a concurrent DROP. */
 	LockSharedObject(classId, objectId, 0, AccessShareLock);
 
 	switch (classId)
@@ -1450,6 +1449,23 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					 */
 					if (sdepForm->classid != AuthMemRelationId)
 					{
+						/*
+						 * Lock tablespaces before updating their catalog
+						 * tuple.
+						 */
+						if (sdepForm->classid == TableSpaceRelationId)
+						{
+							LockSharedObject(sdepForm->classid,
+											 sdepForm->objid, 0,
+											 AccessShareLock);
+							if (!systable_recheck_tuple(scan, tuple))
+							{
+								UnlockSharedObject(sdepForm->classid,
+												   sdepForm->objid, 0,
+												   AccessShareLock);
+								break;
+							}
+						}
 						RemoveRoleFromObjectACL(roleid,
 												sdepForm->classid,
 												sdepForm->objid);
@@ -1605,6 +1621,20 @@ shdepReassignOwned(List *roleids, Oid newrole)
 			switch (sdepForm->deptype)
 			{
 				case SHARED_DEPENDENCY_OWNER:
+					/* Lock tablespaces before updating their catalog tuple. */
+					if (sdepForm->classid == TableSpaceRelationId)
+					{
+						LockSharedObject(sdepForm->classid,
+										 sdepForm->objid, 0,
+										 AccessShareLock);
+						if (!systable_recheck_tuple(scan, tuple))
+						{
+							UnlockSharedObject(sdepForm->classid,
+											   sdepForm->objid, 0,
+											   AccessShareLock);
+							break;
+						}
+					}
 					shdepReassignOwned_Owner(sdepForm, newrole);
 					break;
 				case SHARED_DEPENDENCY_INITACL:
