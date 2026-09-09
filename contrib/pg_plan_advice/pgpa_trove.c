@@ -27,6 +27,7 @@
 #include "pgpa_trove.h"
 
 #include "common/hashfn_unstable.h"
+#include "miscadmin.h"
 
 /*
  * An advice trove is organized into a series of "slices", each of which
@@ -401,6 +402,8 @@ pgpa_trove_add_to_hash(pgpa_trove_entry_hash *hash, pgpa_advice_target *target,
 	pgpa_trove_entry_key key;
 	pgpa_trove_entry_element *element;
 	bool		found;
+
+	check_stack_depth();
 
 	/* For non-identifiers, add entries for all descendants. */
 	if (target->ttype != PGPA_TARGET_IDENTIFIER)

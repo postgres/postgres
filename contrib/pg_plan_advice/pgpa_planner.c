@@ -25,6 +25,7 @@
 
 #include "commands/defrem.h"
 #include "common/hashfn_unstable.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/extendplan.h"
 #include "optimizer/pathnode.h"
@@ -1649,6 +1650,8 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 		pgpa_trove_entry *my_entry = &scan_entries[i];
 		uint64		my_scan_type = all_scan_mask;
 
+		CHECK_FOR_INTERRUPTS();
+
 		/* Translate our advice tags to a scan strategy advice value. */
 		if (my_entry->tag == PGPA_TAG_DO_NOT_SCAN)
 			my_scan_type = 0;
@@ -1710,6 +1713,8 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 		pgpa_trove_entry *my_entry = &rel_entries[i];
 		uint64		my_gather_mask = 0;
 		bool		just_one_rel;
+
+		CHECK_FOR_INTERRUPTS();
 
 		just_one_rel = my_entry->target->ttype == PGPA_TARGET_IDENTIFIER
 			|| list_length(my_entry->target->children) == 1;
@@ -1881,6 +1886,8 @@ pgpa_planner_append_feedback(List *list, pgpa_trove *trove,
 	{
 		pgpa_trove_entry *entry = &entries[i];
 		DefElem    *item;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * If this entry was fully matched, check whether generating advice
