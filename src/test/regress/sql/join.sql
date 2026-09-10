@@ -2447,6 +2447,30 @@ select * from onek t1
 where t1.unique1 < 1;
 
 --
+-- check that an EC-derived condition is not enforced twice, both within a
+-- parameterized path and at the join above it
+--
+
+begin;
+
+set local from_collapse_limit to 1;
+
+explain (costs off)
+select count(*) from int4_tbl t1,
+  lateral (select * from tenk1 t2,
+           lateral (select t2.ten as x offset 0) s0
+           join tenk1 t3 on t3.unique2 = t1.f1
+           where t3.unique1 = t2.hundred + s0.x) ss1;
+
+select count(*) from int4_tbl t1,
+  lateral (select * from tenk1 t2,
+           lateral (select t2.ten as x offset 0) s0
+           join tenk1 t3 on t3.unique2 = t1.f1
+           where t3.unique1 = t2.hundred + s0.x) ss1;
+
+rollback;
+
+--
 -- test successful handling of full join underneath left join (bug #14105)
 --
 

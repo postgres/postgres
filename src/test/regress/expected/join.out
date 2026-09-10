@@ -2337,17 +2337,17 @@ select a.f1, b.f1, t.thousand, t.tenthous from
   (select sum(f1)+1 as f1 from int4_tbl i4a) a,
   (select sum(f1) as f1 from int4_tbl i4b) b
 where b.f1 = t.thousand and a.f1 = b.f1 and (a.f1+b.f1+999) = t.tenthous;
-                                                   QUERY PLAN                                                    
------------------------------------------------------------------------------------------------------------------
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
  Nested Loop
+   ->  Aggregate
+         ->  Seq Scan on int4_tbl i4a
    ->  Nested Loop
          Join Filter: ((sum(i4b.f1)) = ((sum(i4a.f1) + 1)))
          ->  Aggregate
-               ->  Seq Scan on int4_tbl i4a
-         ->  Aggregate
                ->  Seq Scan on int4_tbl i4b
-   ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t
-         Index Cond: ((thousand = (sum(i4b.f1))) AND (tenthous = ((((sum(i4a.f1) + 1)) + (sum(i4b.f1))) + 999)))
+         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 t
+               Index Cond: ((thousand = (sum(i4b.f1))) AND (tenthous = ((((sum(i4a.f1) + 1)) + (sum(i4b.f1))) + 999)))
 (9 rows)
 
 select a.f1, b.f1, t.thousand, t.tenthous from
@@ -4860,17 +4860,17 @@ select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
   left join tenk1 t2
   on (subq1.y1 = t2.unique1)
 where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
-                              QUERY PLAN                               
------------------------------------------------------------------------
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
  Nested Loop
    ->  Nested Loop
          Join Filter: (t1.stringu1 > t2.stringu2)
          ->  Nested Loop
+               ->  Seq Scan on onerow onerow_1
                ->  Nested Loop
                      ->  Seq Scan on onerow
-                     ->  Seq Scan on onerow onerow_1
-               ->  Index Scan using tenk1_unique2 on tenk1 t1
-                     Index Cond: ((unique2 = (11)) AND (unique2 < 42))
+                     ->  Index Scan using tenk1_unique2 on tenk1 t1
+                           Index Cond: ((unique2 = (11)) AND (unique2 < 42))
          ->  Index Scan using tenk1_unique1 on tenk1 t2
                Index Cond: (unique1 = (3))
    ->  Seq Scan on int4_tbl i1
@@ -4915,7 +4915,6 @@ where t1.unique1 < i4.f1;
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Nested Loop
    Output: (64)::information_schema.cardinal_number
-   Join Filter: (t1.tenthous = ((64)::information_schema.cardinal_number)::integer)
    ->  Seq Scan on public.tenk1 t3
          Output: t3.unique1, t3.unique2, t3.two, t3.four, t3.ten, t3.twenty, t3.hundred, t3.thousand, t3.twothousand, t3.fivethous, t3.tenthous, t3.odd, t3.even, t3.stringu1, t3.stringu2, t3.string4
          Filter: (t3.fivethous < 0)
@@ -4946,7 +4945,7 @@ where t1.unique1 < i4.f1;
          ->  Seq Scan on public.int8_tbl i8
                Output: i8.q1, i8.q2
                Filter: (i8.q1 = ((64)::information_schema.cardinal_number)::integer)
-(33 rows)
+(32 rows)
 
 select ss1.d1 from
   tenk1 as t1
@@ -6793,6 +6792,44 @@ where t1.unique1 < 1;
                Index Cond: (unique1 = t3.unique1)
 (15 rows)
 
+--
+-- check that an EC-derived condition is not enforced twice, both within a
+-- parameterized path and at the join above it
+--
+begin;
+set local from_collapse_limit to 1;
+explain (costs off)
+select count(*) from int4_tbl t1,
+  lateral (select * from tenk1 t2,
+           lateral (select t2.ten as x offset 0) s0
+           join tenk1 t3 on t3.unique2 = t1.f1
+           where t3.unique1 = t2.hundred + s0.x) ss1;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         Join Filter: (t3.unique2 = t1.f1)
+         ->  Nested Loop
+               ->  Seq Scan on tenk1 t2
+               ->  Nested Loop
+                     ->  Result
+                     ->  Index Scan using tenk1_unique1 on tenk1 t3
+                           Index Cond: (unique1 = (t2.hundred + (t2.ten)))
+         ->  Materialize
+               ->  Seq Scan on int4_tbl t1
+(11 rows)
+
+select count(*) from int4_tbl t1,
+  lateral (select * from tenk1 t2,
+           lateral (select t2.ten as x offset 0) s0
+           join tenk1 t3 on t3.unique2 = t1.f1
+           where t3.unique1 = t2.hundred + s0.x) ss1;
+ count 
+-------
+     0
+(1 row)
+
+rollback;
 --
 -- test successful handling of full join underneath left join (bug #14105)
 --
