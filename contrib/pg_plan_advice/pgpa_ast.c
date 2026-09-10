@@ -294,9 +294,9 @@ pgpa_identifiers_match_target(int nrids, pgpa_identifier *rids,
 	bool	   *rids_used = palloc0_array(bool, nrids);
 
 	/*
-	 * This function is called from within various loops within pgpa_planner.c;
-	 * to avoid needing a separate CHECK_FOR_INTERRUPTS() in each one, we check
-	 * here instead.
+	 * This function is called from within various loops within
+	 * pgpa_planner.c; to avoid needing a separate CHECK_FOR_INTERRUPTS() in
+	 * each one, we check here instead.
 	 */
 	CHECK_FOR_INTERRUPTS();
 
