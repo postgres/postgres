@@ -1397,8 +1397,9 @@ CREATE VIEW pg_stat_progress_cluster AS
         datname,
         relid,
         CASE WHEN command IN ('CLUSTER', 'VACUUM FULL') THEN command
-             WHEN repack_index_relid = 0 THEN 'VACUUM FULL'
-             ELSE 'CLUSTER' END AS command,
+             WHEN command = 'REPACK' AND repack_index_relid = 0 THEN 'VACUUM FULL'
+             WHEN command = 'REPACK' THEN 'CLUSTER'
+             END AS command,
         phase,
         repack_index_relid AS cluster_index_relid,
         heap_tuples_scanned,

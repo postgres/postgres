@@ -2038,8 +2038,9 @@ pg_stat_progress_cluster| SELECT pid,
     relid,
         CASE
             WHEN (command = ANY (ARRAY['CLUSTER'::text, 'VACUUM FULL'::text])) THEN command
-            WHEN (repack_index_relid = (0)::oid) THEN 'VACUUM FULL'::text
-            ELSE 'CLUSTER'::text
+            WHEN ((command = 'REPACK'::text) AND (repack_index_relid = (0)::oid)) THEN 'VACUUM FULL'::text
+            WHEN (command = 'REPACK'::text) THEN 'CLUSTER'::text
+            ELSE NULL::text
         END AS command,
     phase,
     repack_index_relid AS cluster_index_relid,
