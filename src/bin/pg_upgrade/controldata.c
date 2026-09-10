@@ -245,7 +245,7 @@ get_control_data(ClusterInfo *cluster)
 				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
-			cluster->controldata.chkpnt_nxtoid = str2uint(p);
+			cluster->controldata.chkpnt_nxtoid = str2uint64(p);
 			got_oid = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's NextMultiXactId:")) != NULL)

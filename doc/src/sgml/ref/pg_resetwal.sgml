@@ -286,17 +286,19 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
-    <term><option>-o <replaceable class="parameter">oid</replaceable></option></term>
-    <term><option>--next-oid=<replaceable class="parameter">oid</replaceable></option></term>
+    <term><option>-o <replaceable class="parameter">oid8</replaceable></option></term>
+    <term><option>--next-oid=<replaceable class="parameter">oid8</replaceable></option></term>
     <listitem>
      <para>
-      Manually set the next OID.
+      Manually set the next OID (8 bytes).
      </para>
 
      <para>
       There is no comparably easy way to determine a next OID that's beyond
       the largest one in the database, but fortunately it is not critical to
-      get the next-OID setting right.
+      get the next-OID setting right, as long as the counter is not moved
+      backwards. The counter is 8 bytes wide and never wraps around during
+      the life of a cluster.
      </para>
     </listitem>
    </varlistentry>

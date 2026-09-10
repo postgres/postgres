@@ -82,7 +82,7 @@ static TransactionId oldest_commit_ts_xid_val;
 static TransactionId newest_commit_ts_xid_val;
 
 static bool next_oid_given = false;
-static Oid	next_oid_val;
+static Oid8 next_oid_val;
 
 static bool mxids_given = false;
 static MultiXactId next_mxid_val;
@@ -253,7 +253,7 @@ main(int argc, char *argv[])
 
 			case 'o':
 				errno = 0;
-				next_oid_val = strtouint32_strict(optarg, &endptr, 0);
+				next_oid_val = strtouint64_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-o");
@@ -775,7 +775,7 @@ PrintControlValues(bool guessed)
 	printf(_("Latest checkpoint's NextXID:          %u:%u\n"),
 		   EpochFromFullTransactionId(ControlFile.checkPointCopy.nextXid),
 		   XidFromFullTransactionId(ControlFile.checkPointCopy.nextXid));
-	printf(_("Latest checkpoint's NextOID:          %u\n"),
+	printf(_("Latest checkpoint's NextOID:          " OID8_FORMAT "\n"),
 		   ControlFile.checkPointCopy.nextOid);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"),
 		   ControlFile.checkPointCopy.nextMulti);
@@ -861,7 +861,7 @@ PrintNewControlValues(void)
 
 	if (next_oid_given)
 	{
-		printf(_("NextOID:                              %u\n"),
+		printf(_("NextOID:                              " OID8_FORMAT "\n"),
 			   ControlFile.checkPointCopy.nextOid);
 	}
 
@@ -1236,7 +1236,7 @@ usage(void)
 	printf(_("  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"));
 	printf(_("  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"));
 	printf(_("  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"));
-	printf(_("  -o, --next-oid=OID               set next OID\n"));
+	printf(_("  -o, --next-oid=OID8              set next OID (8 bytes)\n"));
 	printf(_("  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"));
 	printf(_("  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"));
 	printf(_("  -x, --next-transaction-id=XID    set next transaction ID\n"));

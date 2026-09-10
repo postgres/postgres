@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	1903
+#define PG_CONTROL_VERSION	2000
 
 /* Nonce key length, see below */
 #define MOCK_AUTH_NONCE_LEN		32
@@ -43,7 +43,7 @@ typedef struct CheckPoint
 	int			wal_level;		/* current wal_level */
 	bool		logicalDecodingEnabled; /* current logical decoding status */
 	FullTransactionId nextXid;	/* next free transaction ID */
-	Oid			nextOid;		/* next free OID */
+	Oid8		nextOid;		/* next free OID */
 	MultiXactId nextMulti;		/* next free MultiXactId */
 	MultiXactOffset nextMultiOffset;	/* next free MultiXact offset */
 	TransactionId oldestXid;	/* cluster-wide minimum datfrozenxid */

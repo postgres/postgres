@@ -8604,10 +8604,10 @@ KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
  * Write a NEXTOID log record
  */
 void
-XLogPutNextOid(Oid nextOid)
+XLogPutNextOid(Oid8 nextOid)
 {
 	XLogBeginInsert();
-	XLogRegisterData(&nextOid, sizeof(Oid));
+	XLogRegisterData(&nextOid, sizeof(Oid8));
 	(void) XLogInsert(RM_XLOG_ID, XLOG_NEXTOID);
 
 	/*
@@ -8873,16 +8873,17 @@ xlog_redo(XLogReaderState *record)
 
 	if (info == XLOG_NEXTOID)
 	{
-		Oid			nextOid;
+		Oid8		nextOid;
 
 		/*
 		 * We used to try to take the maximum of TransamVariables->nextOid and
-		 * the recorded nextOid, but that fails if the OID counter wraps
-		 * around.  Since no OID allocation should be happening during replay
-		 * anyway, better to just believe the record exactly.  We still take
-		 * OidGenLock while setting the variable, just in case.
+		 * the recorded nextOid, but that failed back when the counter was 4
+		 * bytes wide and could wrap around.  Since no OID allocation should
+		 * be happening during replay anyway, better to just believe the
+		 * record exactly.  We still take OidGenLock while setting the
+		 * variable, just in case.
 		 */
-		memcpy(&nextOid, XLogRecGetData(record), sizeof(Oid));
+		memcpy(&nextOid, XLogRecGetData(record), sizeof(Oid8));
 		LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
 		TransamVariables->nextOid = nextOid;
 		TransamVariables->oidCount = 0;
@@ -9010,11 +9011,10 @@ xlog_redo(XLogReaderState *record)
 		 * to track OID assignment through XLOG_NEXTOID records.  The nextOid
 		 * counter is from the start of the checkpoint and might well be stale
 		 * compared to later XLOG_NEXTOID records.  We could try to take the
-		 * maximum of the nextOid counter and our latest value, but since
-		 * there's no particular guarantee about the speed with which the OID
-		 * counter wraps around, that's a risky thing to do.  In any case,
-		 * users of the nextOid counter are required to avoid assignment of
-		 * duplicates, so that a somewhat out-of-date value should be safe.
+		 * maximum of the nextOid counter and our latest value, but there is
+		 * no point in doing so: an online checkpoint records nextOid plus
+		 * oidCount, which is never ahead of the last XLOG_NEXTOID record that
+		 * replay has applied.
 		 */
 
 		/* Handle multixact */

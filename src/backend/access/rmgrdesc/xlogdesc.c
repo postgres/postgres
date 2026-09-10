@@ -101,7 +101,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
 		appendStringInfo(buf, "redo %X/%08X; "
-						 "tli %u; prev tli %u; fpw %s; wal_level %s; logical decoding %s; xid %u:%u; oid %u; multi %u; offset %" PRIu64 "; "
+						 "tli %u; prev tli %u; fpw %s; wal_level %s; logical decoding %s; xid %u:%u; oid " OID8_FORMAT "; multi %u; offset %" PRIu64 "; "
 						 "oldest xid %u in DB %u; oldest multi %u in DB %u; "
 						 "oldest/newest commit timestamp xid: %u/%u; "
 						 "oldest running xid %u; "
@@ -129,10 +129,10 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 	}
 	else if (info == XLOG_NEXTOID)
 	{
-		Oid			nextOid;
+		Oid8		nextOid;
 
-		memcpy(&nextOid, rec, sizeof(Oid));
-		appendStringInfo(buf, "%u", nextOid);
+		memcpy(&nextOid, rec, sizeof(Oid8));
+		appendStringInfo(buf, OID8_FORMAT, nextOid);
 	}
 	else if (info == XLOG_RESTORE_POINT)
 	{

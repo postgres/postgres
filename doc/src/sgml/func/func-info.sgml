@@ -3433,7 +3433,7 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
 
       <row>
        <entry><structfield>next_oid</structfield></entry>
-       <entry><type>oid</type></entry>
+       <entry><type>oid8</type></entry>
       </row>
 
       <row>

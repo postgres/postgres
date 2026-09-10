@@ -588,6 +588,20 @@ $oldnode->start;
 $oldnode->safe_psql('postgres', 'DROP DATABASE regression_invalid');
 $oldnode->stop;
 
+# The OID counter is 8 bytes wide, check that it is carried.  Older versions
+# may not support 8-byte OIDs, so skip in this case.
+my $big_next_oid = '4295067296';    # 2^32 + 100000
+if (!defined($ENV{oldinstall}))
+{
+	command_ok(
+		[
+			'pg_resetwal',
+			'--next-oid' => $big_next_oid,
+			$oldnode->data_dir
+		],
+		'set an 8-byte OID counter in the old instance');
+}
+
 # --check command works here, cleans up pg_upgrade_output.d.
 command_ok(
 	[
@@ -623,6 +637,17 @@ ok( !-d $newnode->data_dir . "/pg_upgrade_output.d",
 	"pg_upgrade_output.d/ removed after pg_upgrade success");
 
 $newnode->start;
+
+# The 8-byte OID has been carried.
+if (!defined($ENV{oldinstall}))
+{
+	is( $newnode->safe_psql(
+			'postgres',
+			"SELECT next_oid >= '$big_next_oid'::oid8 FROM pg_control_checkpoint()"
+		),
+		't',
+		'8-byte OID counter is carried over by pg_upgrade');
+}
 
 # Check if there are any logs coming from pg_upgrade, that would only be
 # retained on failure.
