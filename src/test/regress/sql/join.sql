@@ -2136,6 +2136,28 @@ select count(*) from int4_tbl t1 left join
     on t2.bx = t3.cnt + t4.f1;
 
 --
+-- check that identical clone variants of an outer-join qual are not
+-- enforced multiple times in a parameterized path
+--
+
+explain (costs off)
+select * from onek t1
+    left join onek t2 on t1.unique1 = t2.unique1
+    left join onek t3 on t2.unique1 = t3.unique1
+    left join onek t4 on t3.unique1 = t4.unique1 and t3.ten = t4.ten + 0
+                     and t2.unique2 = t4.unique2 + 0
+where t1.unique1 < 1;
+
+explain (costs off)
+select * from onek t1
+    left join onek t2 on t1.unique1 = t2.unique1
+    left join onek t3 on t2.unique1 = t3.unique1
+    left join (onek t4 join onek t5 on t4.ten = t5.ten)
+      on t3.unique1 = t5.unique1 and t3.hundred = t4.unique1 + t5.two
+         and t2.unique2 = t4.unique2
+where t1.unique1 < 1;
+
+--
 -- test successful handling of full join underneath left join (bug #14105)
 --
 

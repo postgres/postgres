@@ -5966,6 +5966,61 @@ select count(*) from int4_tbl t1 left join
 (1 row)
 
 --
+-- check that identical clone variants of an outer-join qual are not
+-- enforced multiple times in a parameterized path
+--
+explain (costs off)
+select * from onek t1
+    left join onek t2 on t1.unique1 = t2.unique1
+    left join onek t3 on t2.unique1 = t3.unique1
+    left join onek t4 on t3.unique1 = t4.unique1 and t3.ten = t4.ten + 0
+                     and t2.unique2 = t4.unique2 + 0
+where t1.unique1 < 1;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Nested Loop Left Join
+   Join Filter: (t2.unique2 = (t4.unique2 + 0))
+   ->  Nested Loop Left Join
+         ->  Nested Loop Left Join
+               ->  Index Scan using onek_unique1 on onek t1
+                     Index Cond: (unique1 < 1)
+               ->  Index Scan using onek_unique1 on onek t2
+                     Index Cond: (unique1 = t1.unique1)
+         ->  Index Scan using onek_unique1 on onek t3
+               Index Cond: (unique1 = t2.unique1)
+   ->  Index Scan using onek_unique1 on onek t4
+         Index Cond: (unique1 = t3.unique1)
+         Filter: (t3.ten = (ten + 0))
+(13 rows)
+
+explain (costs off)
+select * from onek t1
+    left join onek t2 on t1.unique1 = t2.unique1
+    left join onek t3 on t2.unique1 = t3.unique1
+    left join (onek t4 join onek t5 on t4.ten = t5.ten)
+      on t3.unique1 = t5.unique1 and t3.hundred = t4.unique1 + t5.two
+         and t2.unique2 = t4.unique2
+where t1.unique1 < 1;
+                                    QUERY PLAN                                     
+-----------------------------------------------------------------------------------
+ Nested Loop Left Join
+   ->  Nested Loop Left Join
+         ->  Nested Loop Left Join
+               ->  Index Scan using onek_unique1 on onek t1
+                     Index Cond: (unique1 < 1)
+               ->  Index Scan using onek_unique1 on onek t2
+                     Index Cond: (unique1 = t1.unique1)
+         ->  Index Scan using onek_unique1 on onek t3
+               Index Cond: (unique1 = t2.unique1)
+   ->  Nested Loop
+         Join Filter: ((t4.ten = t5.ten) AND (t3.hundred = (t4.unique1 + t5.two)))
+         ->  Index Scan using onek_unique2 on onek t4
+               Index Cond: (unique2 = t2.unique2)
+         ->  Index Scan using onek_unique1 on onek t5
+               Index Cond: (unique1 = t3.unique1)
+(15 rows)
+
+--
 -- test successful handling of full join underneath left join (bug #14105)
 --
 explain (costs off)
