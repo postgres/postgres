@@ -2928,8 +2928,8 @@ ri_LockPKTuple(Relation pk_rel, TupleTableSlot *slot, Snapshot snap,
 
 			/*
 			 * In READ COMMITTED, FIND_LAST_VERSION should have chased the
-			 * chain and returned TM_Ok.  Getting here means something
-			 * unexpected -- fall through to error.
+			 * chain rather than returning TM_Updated.  As in ExecLockRows(),
+			 * treat this as an unexpected result.
 			 */
 			elog(ERROR, "unexpected table_tuple_lock status: %u", result);
 			break;
@@ -2937,10 +2937,8 @@ ri_LockPKTuple(Relation pk_rel, TupleTableSlot *slot, Snapshot snap,
 		case TM_SelfModified:
 
 			/*
-			 * The current command or a later command in this transaction
-			 * modified the PK row.  This shouldn't normally happen during an
-			 * FK check (we're not modifying pk_rel), but handle it safely by
-			 * treating the tuple as not found.
+			 * As in ExecLockRows(), ignore a tuple updated or deleted by the
+			 * current command or a later command in this transaction.
 			 */
 			return false;
 
