@@ -263,5 +263,3 @@ good idea to incorporate that ability at some future point, as pg_hint_plan
 does. However, since the primary goal of the initial development work is to be
 able to induce the planner to recreate a desired plan that worked well in
 the past, this has not been included in the initial development effort.
-
-XXX Need to investigate whether and how well supplying advice works with GEQO
