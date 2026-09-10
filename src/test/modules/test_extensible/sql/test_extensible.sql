@@ -33,6 +33,10 @@ SELECT test_ext_node_equal(test_ext_node_make('1234'::oid, 2),
 
 -- correct node type, missing field
 SELECT test_ext_node_get_relid('{EXTENSIBLENODE :extnodename TestExtNode}');
+-- incorrect node patterns
+SELECT test_ext_node_get_relid('{QUERY}');
+SELECT test_ext_node_get_relid('{EXTENSIBLENODE :extnodename NoSuchExtNode}');
+SELECT test_ext_node_get_relid('42');
 
 -- CustomScan tests
 CREATE TABLE test_extensible_tbl (id integer, val text);
