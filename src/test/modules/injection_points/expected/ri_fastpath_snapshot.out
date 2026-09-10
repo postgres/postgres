@@ -1,0 +1,19 @@
+Parsed test spec with 2 sessions
+
+starting permutation: validate ins wake checked validated
+step validate: ALTER TABLE ri_snapshot_fk VALIDATE CONSTRAINT ri_snapshot_fkey; <waiting ...>
+step ins: INSERT INTO ri_snapshot_pk VALUES (500);
+step wake: 
+    DO $$BEGIN
+        PERFORM injection_points_detach('ri-before-pk-lock');
+        PERFORM injection_points_wakeup('ri-before-pk-lock');
+    END$$;
+
+step validate: <... completed>
+step checked: 
+step validated: SELECT convalidated FROM pg_constraint WHERE conname = 'ri_snapshot_fkey';
+convalidated
+------------
+t           
+(1 row)
+
