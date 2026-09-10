@@ -239,6 +239,20 @@ wc_isxdigit_icu(pg_wchar wc, pg_locale_t locale)
 static bool
 wc_iscased_icu(pg_wchar wc, pg_locale_t locale)
 {
+	/*
+	 * For non-UTF8 encodings (single or multibyte), pg_wchar may not be a
+	 * codepoint, so we conservatively assume that any non-ASCII character
+	 * could be case-varying.
+	 */
+	if (wc > (pg_wchar) 127)
+		return true;
+
+	return u_hasBinaryProperty(wc, UCHAR_CASED);
+}
+
+static bool
+wc_iscased_icu_utf8(pg_wchar wc, pg_locale_t locale)
+{
 	return u_hasBinaryProperty(wc, UCHAR_CASED);
 }
 
@@ -280,7 +294,7 @@ static const struct ctype_methods ctype_methods_icu_utf8 = {
 	.wc_ispunct = wc_ispunct_icu,
 	.wc_isspace = wc_isspace_icu,
 	.wc_isxdigit = wc_isxdigit_icu,
-	.wc_iscased = wc_iscased_icu,
+	.wc_iscased = wc_iscased_icu_utf8,
 	.wc_toupper = toupper_icu,
 	.wc_tolower = tolower_icu,
 };

@@ -1771,6 +1771,11 @@ pg_iswxdigit(pg_wchar wc, pg_locale_t locale)
 		return locale->ctype->wc_isxdigit(wc, locale);
 }
 
+/*
+ * Is the character potentially case-varying? Used by ILIKE to extract a
+ * prefix suitable for an index search. Safe to return true if the character
+ * can't be easily classified.
+ */
 bool
 pg_iswcased(pg_wchar wc, pg_locale_t locale)
 {
