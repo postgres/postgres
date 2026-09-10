@@ -24,6 +24,7 @@
 #include "nodes/bitmapset.h"
 #include "nodes/nodes.h"
 #include "nodes/pg_list.h"
+#include "nodes/readfuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/timestamp.h"
@@ -86,16 +87,53 @@ PG_FUNCTION_INFO_V1(test_random_offset_operations);
 				 #expr, __FILE__, __LINE__); \
 	} while (0)
 
-/* Encode/Decode to/from TEXT and Bitmapset */
+/* Encode Bitmapset to TEXT */
 #define BITMAPSET_TO_TEXT(bms) cstring_to_text(nodeToString(bms))
-#define TEXT_TO_BITMAPSET(str) ((Bitmapset *) stringToNode(text_to_cstring(str)))
+
+/*
+ * Decode Bitmapset from text
+ */
+static Bitmapset *
+text_to_bitmapset(text *txt)
+{
+	char	   *str = text_to_cstring(txt);
+	ReadNodeContext ctx;
+	const char *token;
+	int			length;
+	bool		is_bitmapset = false;
+	Node	   *node;
+
+	ctx.str = str;
+
+	token = pg_strtok(&ctx, &length);
+
+	/* Check empty case, translated to "<>". */
+	if (token != NULL && length == 0)
+		return NULL;
+
+	/* First token has to be a single '('. */
+	if (token != NULL && length == 1 && token[0] == '(')
+	{
+		/* Second token has to be a single 'b'. */
+		token = pg_strtok(&ctx, &length);
+		is_bitmapset = (token != NULL && length == 1 && token[0] == 'b');
+	}
+
+	if (!is_bitmapset)
+		elog(ERROR, "argument is not a Bitmapset");
+
+	node = stringToNode(str);
+	Assert(node == NULL || IsA(node, Bitmapset));
+
+	return (Bitmapset *) node;
+}
 
 /*
  * Helper macro to fetch text parameters as Bitmapsets. SQL-NULL means empty
  * set.
  */
 #define PG_ARG_GETBITMAPSET(n) \
-	(PG_ARGISNULL(n) ? NULL : TEXT_TO_BITMAPSET(PG_GETARG_TEXT_PP(n)))
+	(PG_ARGISNULL(n) ? NULL : text_to_bitmapset(PG_GETARG_TEXT_PP(n)))
 
 /*
  * Helper macro to handle converting sets back to text, returning the

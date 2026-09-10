@@ -426,4 +426,14 @@ SELECT test_random_operations(NULL, 10000, 0, 81920) > 0 AS result;
 -- perform some random tests on bms_offset_members()
 SELECT test_random_offset_operations(NULL, 1000, 0, 1024) AS result;
 
+-- incorrect inputs
+SELECT test_bms_num_members('{QUERY}');
+SELECT test_bms_num_members('42');
+SELECT test_bms_num_members('(i 1 2)');
+SELECT test_bms_num_members('()');
+SELECT test_bms_num_members('');
+-- empty set
+SELECT test_bms_num_members('<>') AS result;
+SELECT test_bms_copy('<>') AS result;
+
 DROP EXTENSION test_bitmapset;

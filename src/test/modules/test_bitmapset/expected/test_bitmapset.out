@@ -1656,4 +1656,28 @@ SELECT test_random_offset_operations(NULL, 1000, 0, 1024) AS result;
    1000
 (1 row)
 
+-- incorrect inputs
+SELECT test_bms_num_members('{QUERY}');
+ERROR:  argument is not a Bitmapset
+SELECT test_bms_num_members('42');
+ERROR:  argument is not a Bitmapset
+SELECT test_bms_num_members('(i 1 2)');
+ERROR:  argument is not a Bitmapset
+SELECT test_bms_num_members('()');
+ERROR:  argument is not a Bitmapset
+SELECT test_bms_num_members('');
+ERROR:  argument is not a Bitmapset
+-- empty set
+SELECT test_bms_num_members('<>') AS result;
+ result 
+--------
+      0
+(1 row)
+
+SELECT test_bms_copy('<>') AS result;
+ result 
+--------
+ <>
+(1 row)
+
 DROP EXTENSION test_bitmapset;
