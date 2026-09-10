@@ -5939,6 +5939,24 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_stat_force_next_flush</primary>
+        </indexterm>
+        <function>pg_stat_force_next_flush</function> ()
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Forces the statistics accumulated by the current session to be
+        flushed to shared memory when the current transaction ends,
+        without waiting for the
+        <varname>PGSTAT_MIN_INTERVAL</varname> delay between flushes. This
+        is mainly useful in tests that need this flush to happen without
+        that delay.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_stat_reset</primary>
         </indexterm>
         <function>pg_stat_reset</function> ()
