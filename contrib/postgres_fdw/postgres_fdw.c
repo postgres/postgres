@@ -6940,8 +6940,9 @@ init_func_stub_fpinfo(const PgFdwRelationInfo *fpinfo_foreign,
 
 	stub->pushdown_safe = true;
 
-	/* Server-level options, inherited from the foreign side. */
+	/* Connection information and options, inherited from the foreign side */
 	stub->server = fpinfo_foreign->server;
+	stub->user = fpinfo_foreign->user;
 	stub->shippable_extensions = fpinfo_foreign->shippable_extensions;
 	stub->fdw_startup_cost = fpinfo_foreign->fdw_startup_cost;
 	stub->fdw_tuple_cost = fpinfo_foreign->fdw_tuple_cost;
