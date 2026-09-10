@@ -471,10 +471,6 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 	snap = SnapBuildBuildSnapshot(builder);
 
 	/*
-	 * We know that snap->xmin is alive, enforced by the logical xmin
-	 * mechanism. Due to that we can do this without locks, we're only
-	 * changing our own value.
-	 *
 	 * Building an initial snapshot is expensive and an unenforced xmin
 	 * horizon would have bad consequences, therefore always double-check that
 	 * the horizon is enforced.
@@ -487,6 +483,11 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 		elog(ERROR, "cannot build an initial slot snapshot as oldest safe xid %u follows snapshot's xmin %u",
 			 safeXid, snap->xmin);
 
+	/*
+	 * We know that snap->xmin is alive, enforced by the logical xmin
+	 * mechanism. Due to that we can do this without locks, we're only
+	 * changing our own value.
+	 */
 	MyProc->xmin = snap->xmin;
 
 	/* allocate in transaction context */
