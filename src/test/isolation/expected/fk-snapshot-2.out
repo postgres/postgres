@@ -59,3 +59,47 @@ step s1c: COMMIT;
 step s2ins: <... completed>
 ERROR:  could not serialize access due to concurrent delete
 step s2c: COMMIT;
+
+starting permutation: s1rr s2rr s2sel s1ins s1c s2ins2 s2c
+step s1rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2rr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2sel: SELECT count(*) FROM parent;
+count
+-----
+    1
+(1 row)
+
+step s1ins: INSERT INTO parent VALUES (2);
+step s1c: COMMIT;
+step s2ins2: INSERT INTO child VALUES (2, 2);
+ERROR:  insert or update on table "child" violates foreign key constraint "child_parent_id_fkey"
+step s2c: COMMIT;
+
+starting permutation: s1ser s2ser s2sel s1ins s1c s2ins2 s2c
+step s1ser: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2ser: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2sel: SELECT count(*) FROM parent;
+count
+-----
+    1
+(1 row)
+
+step s1ins: INSERT INTO parent VALUES (2);
+step s1c: COMMIT;
+step s2ins2: INSERT INTO child VALUES (2, 2);
+ERROR:  insert or update on table "child" violates foreign key constraint "child_parent_id_fkey"
+step s2c: COMMIT;
+
+starting permutation: s1rc s2rc s2sel s1ins s1c s2ins2 s2c
+step s1rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2rc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2sel: SELECT count(*) FROM parent;
+count
+-----
+    1
+(1 row)
+
+step s1ins: INSERT INTO parent VALUES (2);
+step s1c: COMMIT;
+step s2ins2: INSERT INTO child VALUES (2, 2);
+step s2c: COMMIT;
