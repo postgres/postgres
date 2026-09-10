@@ -389,6 +389,12 @@ OPTIONS (ADD password_required 'false');
        table would have attempted to fetch and import the remote statistics
        first if this option was enabled.
       </para>
+
+      <para>
+       Note that this option doesn't currently support the case where the
+       remote table is (or was once) inherited.  This is an implementation
+       restriction that might be fixed in a future release.
+      </para>
      </listitem>
     </varlistentry>
 
