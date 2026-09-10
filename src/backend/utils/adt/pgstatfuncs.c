@@ -1922,7 +1922,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 	return (Datum) 0;
 }
 
-#define PG_STAT_GET_XACT_RELENTRY_INT64(stat)			\
+#define PG_STAT_GET_XACT_RELENTRY_INT64(member, stat)	\
 Datum													\
 CppConcat(pg_stat_get_xact_,stat)(PG_FUNCTION_ARGS)		\
 {														\
@@ -1934,40 +1934,40 @@ CppConcat(pg_stat_get_xact_,stat)(PG_FUNCTION_ARGS)		\
 											relid)) == NULL)	\
 		result = 0;										\
 	else												\
-		result = (int64) (tabentry->tab.counts.stat);		\
+		result = (int64) (tabentry->tab.member.stat);	\
 														\
 	PG_RETURN_INT64(result);							\
 }
 
 /* pg_stat_get_xact_numscans */
-PG_STAT_GET_XACT_RELENTRY_INT64(numscans)
+PG_STAT_GET_XACT_RELENTRY_INT64(counts, numscans)
 
 /* pg_stat_get_xact_tuples_returned */
-PG_STAT_GET_XACT_RELENTRY_INT64(tuples_returned)
+PG_STAT_GET_XACT_RELENTRY_INT64(counts, tuples_returned)
 
 /* pg_stat_get_xact_tuples_fetched */
-PG_STAT_GET_XACT_RELENTRY_INT64(tuples_fetched)
+PG_STAT_GET_XACT_RELENTRY_INT64(counts, tuples_fetched)
 
 /* pg_stat_get_xact_tuples_hot_updated */
-PG_STAT_GET_XACT_RELENTRY_INT64(tuples_hot_updated)
+PG_STAT_GET_XACT_RELENTRY_INT64(counts_xact, tuples_hot_updated)
 
 /* pg_stat_get_xact_tuples_newpage_updated */
-PG_STAT_GET_XACT_RELENTRY_INT64(tuples_newpage_updated)
+PG_STAT_GET_XACT_RELENTRY_INT64(counts_xact, tuples_newpage_updated)
 
 /* pg_stat_get_xact_blocks_fetched */
-PG_STAT_GET_XACT_RELENTRY_INT64(blocks_fetched)
+PG_STAT_GET_XACT_RELENTRY_INT64(counts, blocks_fetched)
 
 /* pg_stat_get_xact_blocks_hit */
-PG_STAT_GET_XACT_RELENTRY_INT64(blocks_hit)
+PG_STAT_GET_XACT_RELENTRY_INT64(counts, blocks_hit)
 
 /* pg_stat_get_xact_tuples_inserted */
-PG_STAT_GET_XACT_RELENTRY_INT64(tuples_inserted)
+PG_STAT_GET_XACT_RELENTRY_INT64(counts_xact, tuples_inserted)
 
 /* pg_stat_get_xact_tuples_updated */
-PG_STAT_GET_XACT_RELENTRY_INT64(tuples_updated)
+PG_STAT_GET_XACT_RELENTRY_INT64(counts_xact, tuples_updated)
 
 /* pg_stat_get_xact_tuples_deleted */
-PG_STAT_GET_XACT_RELENTRY_INT64(tuples_deleted)
+PG_STAT_GET_XACT_RELENTRY_INT64(counts_xact, tuples_deleted)
 
 /*
  * Accessor macro for in-transaction index stats.

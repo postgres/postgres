@@ -2349,6 +2349,7 @@ PgStat_StatTabEntry
 PgStat_StatsFileOp
 PgStat_SubXactStatus
 PgStat_TableCounts
+PgStat_TableCountsXact
 PgStat_TableXactStatus
 PgStat_WalCounters
 PgStat_WalStats
