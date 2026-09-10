@@ -5867,17 +5867,17 @@ fetch_remote_statistics(Relation relation,
 	}
 
 	/*
-	 * If the remote table is inherited, relpages/reltuples in pg_class for it
-	 * provide stats for the parent table, not for the inheritance set.  We
-	 * could calculate stats for the set by fetching the relation stats for
-	 * child tables as well; but for now, just fallback to sampling.
+	 * For now, we don't support the case where the remote table is (or was
+	 * once) inherited; fallback to sampling in that case.  XXX FIXME: for the
+	 * case where it is inherited, we could also support it by fetching and
+	 * adding the relation stats for child tables as well.
 	 */
 	if ((relkind == RELKIND_RELATION || relkind == RELKIND_FOREIGN_TABLE) &&
 		strcmp(PQgetvalue(relstats, 0, RELSTATS_RELHASSUBCLASS), "t") == 0)
 	{
 		ereport(WARNING,
 				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("could not import statistics for foreign table \"%s.%s\" --- remote table \"%s.%s\" is inherited",
+				errmsg("could not import statistics for foreign table \"%s.%s\" --- remote table \"%s.%s\" is (or was once) inherited",
 					   local_schemaname, local_relname,
 					   remote_schemaname, remote_relname));
 		goto fetch_cleanup;
