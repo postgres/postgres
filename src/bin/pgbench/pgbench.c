@@ -3319,6 +3319,7 @@ readCommandResponse(CState *st, MetaCommand meta, char *varprefix)
 				if ((is_last && meta == META_GSET) || meta == META_ASET)
 				{
 					int			ntuples = PQntuples(res);
+					const char *context = (meta == META_ASET) ? "aset" : "gset";
 
 					if (meta == META_GSET && ntuples != 1)
 					{
@@ -3338,14 +3339,26 @@ readCommandResponse(CState *st, MetaCommand meta, char *varprefix)
 					for (int fld = 0; fld < PQnfields(res); fld++)
 					{
 						char	   *varname = PQfname(res, fld);
+						bool		ok;
 
 						/* allocate varname only if necessary, freed below */
 						if (*varprefix != '\0')
 							varname = psprintf("%s%s", varprefix, varname);
 
-						/* store last row result as a string */
-						if (!putVariable(&st->variables, meta == META_ASET ? "aset" : "gset", varname,
-										 PQgetvalue(res, ntuples - 1, fld)))
+						/* store last row result */
+						if (PQgetisnull(res, ntuples - 1, fld))
+						{
+							PgBenchValue nullval;
+
+							setNullValue(&nullval);
+							ok = putVariableValue(&st->variables, context,
+												  varname, &nullval);
+						}
+						else
+							ok = putVariable(&st->variables, context, varname,
+											 PQgetvalue(res, ntuples - 1, fld));
+
+						if (!ok)
 						{
 							/* internal error */
 							pg_log_error("client %d script %d command %d query %d: error storing into variable %s",

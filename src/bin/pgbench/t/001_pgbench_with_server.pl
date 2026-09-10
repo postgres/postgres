@@ -850,6 +850,20 @@ SELECT 5432 AS fail UNION SELECT 5433 ORDER BY 1 \gset
 }
 	});
 
+# \gset stores a SQL NULL as the null value.
+$node->pgbench(
+	'-t 1', 0,
+	[ qr{type: .*/001_pgbench_gset_null}, qr{processed: 1/1} ],
+	[ qr{command=2.: null\b}, qr{command=3.: boolean true\b} ],
+	'pgbench gset command with NULL',
+	{
+		'001_pgbench_gset_null' => q{-- NULL is stored as the null value
+SELECT NULL AS nv \gset
+\set i debug(:nv)
+\set i debug(:nv IS NULL)
+}
+	});
+
 # working \aset
 # Valid cases.
 $node->pgbench(
