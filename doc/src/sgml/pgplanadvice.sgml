@@ -812,6 +812,22 @@ EXPLAIN (COSTS OFF)
    force the choice of a plan which the planner refused to consider in the
    first place.
   </para>
+
+  <para>
+   One consequence of the limitation described in the previous paragraph is
+   that plan advice works only probabilistically when
+   <link linkend="geqo"><acronym>GEQO</acronym></link> is used. Even if plans
+   compatible with the supplied advice exist, there is no guarantee that any
+   of them will be a part of the randomly generated pool of candidates. If
+   not, the planner will generate a plan that does not comply with the
+   supplied advice, with some parts of that plan marked disabled. If you
+   supply advice that only mildly constrains join planning,
+   <acronym>GEQO</acronym> will usually manage to find a plan that conforms
+   with it; but if you wish to constrain it more substantially, you may need
+   to disable <acronym>GEQO</acronym> in order to obtain satisfactory results.
+   Note that scan advice is not affected by this limitation because it does
+   not constrain the join order.
+  </para>
  </sect2>
 
  <sect2 id="pgplanadvice-author">
