@@ -232,7 +232,6 @@ BuildTupleHashTable(PlanState *parent,
 	hashtable->tuplescxt = tuplescxt;
 	hashtable->tempcxt = tempcxt;
 	hashtable->additionalsize = additionalsize;
-	hashtable->tableslot = NULL;	/* will be made on first lookup */
 	hashtable->inputslot = NULL;
 	hashtable->in_hash_expr = NULL;
 	hashtable->cur_eq_func = NULL;
