@@ -78,18 +78,62 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
 
    <para>
     If the <literal>USING INDEX</literal> clause is specified, the rows in
-    the table are stored in the order that the index specifies;
-    <firstterm>clustering</firstterm>, because rows are physically clustered
-    afterwards.
-    If an index name is specified in the command, the order implied by that
-    index is used, and that index is configured as the index to cluster on.
+    the table are physically rearranged according to the ordering implied by
+    the specified index; this is known as <firstterm>clustering</firstterm>.
+    This can have performance implications:
+    in cases where you are accessing single rows randomly within a table, the
+    actual order of the data in the table is unimportant. However, if you tend
+    to access some data more than others, and there is an index that groups
+    them together, you will benefit from using clustering.  If
+    you are requesting a range of indexed values from a table, or a single
+    indexed value that has multiple matching rows,
+    clustering will help because once the index identifies the
+    table page for the first row that matches, all other rows that match are
+    probably already on the same table page, and so you save disk accesses and
+    speed up the query.
+   </para>
+
+   <para>
+    For B-Tree indexes, the ordering used by clustering is the index's linear
+    sort order.  Other clusterable index access methods may use a different
+    ordering strategy, one which may not necessarily correspond to any SQL
+    sort order.
+    If an index name is specified in the command, that index is used and
+    is recorded as the table's clustering index.
     (This also applies to an index given to the <command>CLUSTER</command>
     command.)
-    If no index name is specified, then the index that has
-    been configured as the index to cluster on is used; an
-    error is thrown if none has.
+    If no index name is specified, then the index that has been configured as
+    the clustering one is used; if none has been configured, an error is thrown.
     An index can be set manually using <command>ALTER TABLE ... CLUSTER ON</command>,
     and reset with <command>ALTER TABLE ... SET WITHOUT CLUSTER</command>.
+   </para>
+
+   <para>
+    Clustering is a one-time operation: when the table is
+    subsequently updated, the changes are not clustered.  That is, no attempt
+    is made to store new or updated rows according to the clustering order.
+    (If one wishes, one can periodically recluster by issuing the command again.
+    Also, setting the table's <literal>fillfactor</literal> storage parameter
+    to less than 100% can aid in preserving cluster ordering during updates,
+    since updated rows are kept on the same page if enough space is available
+    there.)
+   </para>
+
+   <para>
+    When clustering on a B-Tree index, <command>REPACK</command> can rewrite
+    the table using either an index scan on the specified index, or a
+    sequential scan followed by sorting.  It will attempt to choose the method
+    that will be faster, based on planner cost parameters and available
+    statistical information.  When clustering on an index of an access method
+    other than B-Tree, <command>REPACK</command> always uses an index scan.
+   </para>
+
+   <para>
+    Because the planner records statistics about the ordering of tables, it is
+    advisable to specify the <literal>ANALYZE</literal> option, or to
+    run <link linkend="sql-analyze"><command>ANALYZE</command></link> on the
+    newly repacked table.  Otherwise, the planner might make poor choices of
+    query plans.
    </para>
 
    <para>
@@ -98,45 +142,6 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
     user has privileges for are processed.
    </para>
 
-   <para>
-    Clustering is a one-time operation: when the table is
-    subsequently updated, the changes are not clustered.  That is, no attempt
-    is made to store new or updated rows according to their index order.  (If
-    one wishes, one can periodically recluster by issuing the command again.
-    Also, setting the table's <literal>fillfactor</literal> storage parameter
-    to less than 100% can aid in preserving cluster ordering during updates,
-    since updated rows are kept on the same page if enough space is available
-    there.)
-   </para>
-
-   <para>
-    In cases where you are accessing single rows randomly within a table, the
-    actual order of the data in the table is unimportant. However, if you tend
-    to access some data more than others, and there is an index that groups
-    them together, you will benefit from using clustering.  If
-    you are requesting a range of indexed values from a table, or a single
-    indexed value that has multiple rows that match,
-    clustering will help because once the index identifies the
-    table page for the first row that matches, all other rows that match are
-    probably already on the same table page, and so you save disk accesses and
-    speed up the query.
-   </para>
-
-   <para>
-    <command>REPACK</command> can re-sort the table using either an index scan
-    on the specified index (if the index is a b-tree), or a sequential scan
-    followed by sorting.  It will attempt to choose the method that will be
-    faster, based on planner cost parameters and available statistical
-    information.
-   </para>
-
-   <para>
-    Because the planner records statistics about the ordering of tables, it is
-    advisable to
-    run <link linkend="sql-analyze"><command>ANALYZE</command></link> on the
-    newly repacked table.  Otherwise, the planner might make poor choices of
-    query plans.
-   </para>
   </refsect2>
 
   <refsect2 id="sql-repack-notes-on-resources" xreflabel="Notes on Resources">

@@ -1429,10 +1429,12 @@ copy_table_data(Relation NewHeap, Relation OldHeap, Relation OldIndex,
 
 	/*
 	 * Decide whether to use an indexscan or seqscan-and-optional-sort to scan
-	 * the OldHeap.  We know how to use a sort to duplicate the ordering of a
-	 * btree index, and will use seqscan-and-sort for that case if the planner
-	 * tells us it's cheaper.  Otherwise, always indexscan if an index is
-	 * provided, else plain seqscan.
+	 * the OldHeap.  If the index is a btree, ask the planner to choose via
+	 * normal path cost comparison.
+	 *
+	 * The underlying tuplesort.c code doesn't support AMs other than btree,
+	 * so we must always use a normal indexscan if a non-btree index is
+	 * specified -- or an unsorted seqscan if no index is given.
 	 */
 	if (OldIndex != NULL && OldIndex->rd_rel->relam == BTREE_AM_OID)
 		use_sort = plan_cluster_use_sort(RelationGetRelid(OldHeap),
