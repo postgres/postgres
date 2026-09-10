@@ -698,10 +698,6 @@ Author: Amit Langote <amitlan@postgresql.org>
 2026-03-31 [2da86c1ef] Add fast path for foreign key constraint checks
 Author: Amit Langote <amitlan@postgresql.org>
 2026-04-01 [e484b0eea] Fix two issues in fast-path FK check introduced by commi
-Author: Amit Langote <amitlan@postgresql.org>
-2026-04-03 [b7b27eb41] Optimize fast-path FK checks with batched index probes
-Author: Amit Langote <amitlan@postgresql.org>
-2026-04-07 [5c54c3ed1] Fix deferred FK check batching introduced by commit b7b2
 -->
 
 <listitem>

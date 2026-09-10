@@ -30,7 +30,6 @@ test: detach-partition-concurrently-2
 test: detach-partition-concurrently-3
 test: detach-partition-concurrently-4
 test: fk-contention
-test: fk-crosstype-recheck
 test: fk-deadlock
 test: fk-deadlock2
 test: fk-partitioned-1
@@ -39,6 +38,7 @@ test: fk-snapshot
 test: fk-snapshot-2
 test: fk-snapshot-3
 test: fk-concurrent-pk-upd
+test: fk-crosstype-recheck
 test: fk-fastpath-null-key
 test: subxid-overflow
 test: eval-plan-qual
