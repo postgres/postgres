@@ -92,15 +92,15 @@ void
 pgstat_progress_parallel_incr_param(int index, int64 incr)
 {
 	/*
-	 * Parallel workers notify a leader through a PqMsg_Progress message to
-	 * update progress, passing the progress index and incremented value.
-	 * Leaders can just call pgstat_progress_incr_param directly.
+	 * Parallel workers notify a leader through a PqParallelMsg_Progress
+	 * message to update progress, passing the progress index and incremented
+	 * value. Leaders can just call pgstat_progress_incr_param directly.
 	 */
 	if (IsParallelWorker())
 	{
 		static StringInfoData progress_message;
 
-		pq_beginmessage(&progress_message, PqMsg_Progress);
+		pq_beginmessage(&progress_message, PqParallelMsg_Progress);
 		pq_sendint32(&progress_message, index);
 		pq_sendint64(&progress_message, incr);
 		pq_endmessage(&progress_message);
