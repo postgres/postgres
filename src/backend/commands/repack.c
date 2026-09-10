@@ -511,6 +511,11 @@ cluster_rel(RepackCommand cmd, Relation OldHeap, Oid indexOid,
 	bool		recheck = ((params->options & CLUOPT_RECHECK) != 0);
 	bool		concurrent = ((params->options & CLUOPT_CONCURRENT) != 0);
 	Oid			ident_idx = InvalidOid;
+	const int	progress_index[] = {
+		PROGRESS_REPACK_COMMAND,
+		PROGRESS_REPACK_INDEX_RELID
+	};
+	const int64 progress_values[] = {cmd, indexOid};
 
 	/* Determine the lock mode to use. */
 	lmode = RepackLockLevel(concurrent);
@@ -526,7 +531,8 @@ cluster_rel(RepackCommand cmd, Relation OldHeap, Oid indexOid,
 	CHECK_FOR_INTERRUPTS();
 
 	pgstat_progress_start_command(PROGRESS_COMMAND_REPACK, tableOid);
-	pgstat_progress_update_param(PROGRESS_REPACK_COMMAND, cmd);
+	/* Report the ordering index even when using a sequential scan and sort. */
+	pgstat_progress_update_multi_param(2, progress_index, progress_values);
 
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
