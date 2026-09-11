@@ -26,7 +26,53 @@ step s1_decode:
 
 count
 -----
-    9
+    8
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+pg_drop_replication_slot
+------------------------
+                        
+(1 row)
+
+
+starting permutation: s1_wait_before_lock s2_short_change s2_wakeup_before_lock s1_decode_updates
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step s1_wait_before_lock: 
+	REPACK (CONCURRENTLY) repack_toast;
+ <waiting ...>
+step s2_short_change: 
+	UPDATE repack_toast SET t = 'short' WHERE i=1;
+
+step s2_wakeup_before_lock: 
+	SELECT injection_points_wakeup('repack-concurrently-before-lock');
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step s1_wait_before_lock: <... completed>
+step s1_decode_updates: 
+	SELECT data FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1')
+	WHERE data LIKE '%UPDATE%';
+
+data                                                           
+---------------------------------------------------------------
+table public.repack_toast: UPDATE: i[integer]:1 t[text]:'short'
+(1 row)
+
+injection_points_detach
+-----------------------
+                       
 (1 row)
 
 pg_drop_replication_slot
