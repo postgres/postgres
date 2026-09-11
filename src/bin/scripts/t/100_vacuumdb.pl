@@ -207,5 +207,9 @@ $node->command_fails_like(
 	[ 'vacuumdb', '-a', 'postgres' ],
 	qr/cannot vacuum all databases and a specific one at the same time/,
 	'cannot use option -a and a dbname as argument at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', 'postgres', '--jobs' ],
+	qr/requires an argument/,
+	'option missing its argument after a non-option');
 
 done_testing();
