@@ -35,7 +35,6 @@ static JsonPathString scanstring;
 /* Handles to the buffer that the lexer uses internally */
 static YY_BUFFER_STATE scanbufhandle;
 static char *scanbuf;
-static int	scanbuflen;
 
 static void addstring(bool init, char *s, int l);
 static void addchar(bool init, char c);
@@ -482,7 +481,6 @@ jsonpath_scanner_init(const char *str, int slen)
 	 * Make a scan buffer with special termination needed by flex.
 	 */
 
-	scanbuflen = slen;
 	scanbuf = palloc(slen + 2);
 	memcpy(scanbuf, str, slen);
 	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
