@@ -5078,6 +5078,13 @@ RelationGetPrimaryKeyIndex(Relation relation, bool deferrable_ok)
 /*
  * RelationGetReplicaIndex -- get OID of the relation's replica identity index
  *
+ * If replica identity is DEFAULT, then return the OID of the primary key, if
+ * it's not deferrable; if replica identity is INDEX, return the OID of the
+ * index with indisreplident, if one exists.
+ *
+ * Note that a working PK is not returned if identity is INDEX!  This is
+ * surprising if the replica identity index is dropped.  FIXME someday.
+ *
  * Returns InvalidOid if there is no such index.
  */
 Oid
