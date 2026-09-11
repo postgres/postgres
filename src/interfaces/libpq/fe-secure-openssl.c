@@ -90,7 +90,9 @@ static int	my_SSL_set_fd(PGconn *conn, int fd);
 
 
 static bool pq_init_ssl_lib = true;
+#ifdef HAVE_CRYPTO_LOCK
 static bool pq_init_crypto_lib = true;
+#endif
 
 static bool ssl_lib_initialized = false;
 
@@ -121,7 +123,9 @@ pgtls_init_library(bool do_ssl, int do_crypto)
 #endif
 
 	pq_init_ssl_lib = do_ssl;
+#ifdef HAVE_CRYPTO_LOCK
 	pq_init_crypto_lib = do_crypto;
+#endif
 }
 
 PostgresPollingStatusType
