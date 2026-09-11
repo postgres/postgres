@@ -42,11 +42,27 @@ step s1_decode
 {
 	SELECT count(*) FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1');
 }
+# Show the decoded updates.  The row loaded by setup carries a random TOAST
+# value, so only the updates are stable enough to display.
+step s1_decode_updates
+{
+	SELECT data FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1')
+	WHERE data LIKE '%UPDATE%';
+}
+teardown
+{
+	SELECT injection_points_detach('repack-concurrently-before-lock');
+}
 
 session s2
 step s2_changes
 {
 	UPDATE repack_toast SET t = gen_external() WHERE i=1;
+}
+# Change the row using a value small enough to stay in-line.
+step s2_short_change
+{
+	UPDATE repack_toast SET t = 'short' WHERE i=1;
 }
 step s2_wakeup_before_lock
 {
@@ -58,3 +74,12 @@ permutation
 	s2_changes
 	s2_wakeup_before_lock
 	s1_decode
+
+# The changes REPACK applies to the transient heap must not be reported to an
+# output plugin, not even as records that carry no tuple.  Unlike the
+# permutation above, no TOAST value is involved here.
+permutation
+	s1_wait_before_lock
+	s2_short_change
+	s2_wakeup_before_lock
+	s1_decode_updates

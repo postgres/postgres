@@ -981,6 +981,15 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	xlrec = (xl_heap_update *) XLogRecGetData(r);
 
+	/*
+	 * Ignore update records without a new tuple. This happens when the update
+	 * is done on a catalog relation, or when the caller of heap_update()
+	 * asked for the change not to be decoded, as REPACK (CONCURRENTLY) does
+	 * for the transient heap.
+	 */
+	if (!(xlrec->flags & XLH_UPDATE_CONTAINS_NEW_TUPLE))
+		return;
+
 	/* only interested in our database */
 	XLogRecGetBlockTag(r, 0, &target_locator, NULL, NULL);
 	if (target_locator.dbOid != ctx->slot->data.database)
