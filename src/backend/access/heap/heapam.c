@@ -3961,8 +3961,12 @@ l2:
 		 */
 		if (need_toast)
 		{
-			/* Note we always use WAL and FSM during updates */
-			heaptup = heap_toast_insert_or_update(relation, newtup, &oldtup, 0);
+			/*
+			 * If logical decoding is not needed, suppress it for the TOAST
+			 * tuples too. We never skip the FSM here.
+			 */
+			heaptup = heap_toast_insert_or_update(relation, newtup, &oldtup,
+												  walLogical ? 0 : HEAP_INSERT_NO_LOGICAL);
 			newtupsize = MAXALIGN(heaptup->t_len);
 		}
 		else
