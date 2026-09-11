@@ -1032,8 +1032,8 @@ static const SchemaQuery Query_for_trigger_of_table = {
 #define Query_for_list_of_database_vars \
 "SELECT conf FROM ("\
 "       SELECT setdatabase, pg_catalog.split_part(pg_catalog.unnest(setconfig),'=',1) conf"\
-"         FROM pg_db_role_setting "\
-"       ) s, pg_database d "\
+"         FROM pg_catalog.pg_db_role_setting "\
+"       ) s, pg_catalog.pg_database d "\
 " WHERE s.setdatabase = d.oid "\
 "   AND conf LIKE '%s'"\
 "   AND d.datname LIKE '%s'"
