@@ -83,6 +83,15 @@ REPACK (CONCURRENTLY) repack_conc_replident;
 ALTER TABLE repack_conc_replident ADD PRIMARY KEY (i) DEFERRABLE;
 REPACK (CONCURRENTLY) repack_conc_replident;
 
+-- Doesn't support tables whose replica identity indexes were dropped, even
+-- if a workable primary key is present.
+ALTER TABLE repack_conc_replident DROP CONSTRAINT repack_conc_replident_pkey,
+	ADD PRIMARY KEY (i);
+CREATE UNIQUE INDEX replidx ON repack_conc_replident (i);
+ALTER TABLE repack_conc_replident REPLICA IDENTITY USING INDEX replidx;
+DROP INDEX replidx;
+REPACK (CONCURRENTLY) repack_conc_replident;
+
 -- clean up
 DROP TABLE repack_conc_replident, clstrpart;
 

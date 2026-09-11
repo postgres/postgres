@@ -971,13 +971,11 @@ check_concurrent_repack_requirements(Relation rel, Oid *ident_idx_p)
 						  "REPLICA IDENTITY NOTHING" : "REPLICA IDENTITY FULL"));
 
 	/*
-	 * Obtain the replica identity index -- either one that has been set
-	 * explicitly, or a non-deferrable primary key.  If none of these cases
-	 * apply, the table cannot be repacked concurrently.  It might be possible
-	 * to have repack work with a FULL replica identity; however that requires
-	 * more work and is not implemented yet.
+	 * Obtain the replica identity index to use.  If there isn't one, the
+	 * table cannot be repacked concurrently.  (Replica identity FULL is not
+	 * supported yet.)
 	 */
-	ident_idx = GetRelationIdentityOrPK(rel);
+	ident_idx = RelationGetReplicaIndex(rel);
 	if (!OidIsValid(ident_idx))
 	{
 		/* This special case warrants its own error message */
