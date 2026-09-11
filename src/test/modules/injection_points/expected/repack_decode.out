@@ -1,0 +1,36 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_wait_before_lock s2_changes s2_wakeup_before_lock s1_decode
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step s1_wait_before_lock: 
+	REPACK (CONCURRENTLY) repack_toast;
+ <waiting ...>
+step s2_changes: 
+	UPDATE repack_toast SET t = gen_external() WHERE i=1;
+
+step s2_wakeup_before_lock: 
+	SELECT injection_points_wakeup('repack-concurrently-before-lock');
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step s1_wait_before_lock: <... completed>
+step s1_decode: 
+	SELECT count(*) FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1');
+
+count
+-----
+    9
+(1 row)
+
+pg_drop_replication_slot
+------------------------
+                        
+(1 row)
+
