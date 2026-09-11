@@ -38,6 +38,10 @@ typedef struct varatt_external_oid
 	Oid			va_toastrelid;	/* RelID of TOAST table containing it */
 } varatt_external_oid;
 
+StaticAssertDecl((sizeof(int32) + sizeof(uint32) + 2 * sizeof(Oid)) ==
+				 sizeof(varatt_external_oid),
+				 "varatt_external_oid should have no padding");
+
 /*
  * These macros define the "saved size" portion of va_extinfo.  Its remaining
  * two high-order bits identify the compression method.
