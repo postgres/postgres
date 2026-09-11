@@ -157,7 +157,6 @@ static const int dbObjectTypePriority[] =
 StaticAssertDecl(lengthof(dbObjectTypePriority) == NUM_DUMPABLE_OBJECT_TYPES,
 				 "array length mismatch");
 
-static DumpId preDataBoundId;
 static DumpId postDataBoundId;
 
 
@@ -568,7 +567,6 @@ sortDumpableObjects(DumpableObject **objs, int numObjs,
 	 * Saving the boundary IDs in static variables is a bit grotty, but seems
 	 * better than adding them to parameter lists of subsidiary functions.
 	 */
-	preDataBoundId = preBoundaryId;
 	postDataBoundId = postBoundaryId;
 
 	ordering = (DumpableObject **) pg_malloc(numObjs * sizeof(DumpableObject *));

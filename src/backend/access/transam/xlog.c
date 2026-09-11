@@ -645,7 +645,6 @@ static TimeLineID openLogTLI = 0;
  * Those values are kept consistent as long as crash recovery runs.
  */
 static XLogRecPtr LocalMinRecoveryPoint;
-static TimeLineID LocalMinRecoveryPointTLI;
 static bool updateMinRecoveryPoint = true;
 
 /* For WALInsertLockAcquire/Release functions */
@@ -2724,7 +2723,6 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 
 	/* update local copy */
 	LocalMinRecoveryPoint = ControlFile->minRecoveryPoint;
-	LocalMinRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 
 	if (XLogRecPtrIsInvalid(LocalMinRecoveryPoint))
 		updateMinRecoveryPoint = false;
@@ -2759,7 +2757,6 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 			ControlFile->minRecoveryPointTLI = newMinRecoveryPointTLI;
 			UpdateControlFile();
 			LocalMinRecoveryPoint = newMinRecoveryPoint;
-			LocalMinRecoveryPointTLI = newMinRecoveryPointTLI;
 
 			ereport(DEBUG2,
 					(errmsg_internal("updated min recovery point to %X/%X on timeline %u",
@@ -3139,7 +3136,6 @@ XLogNeedsFlush(XLogRecPtr record)
 		if (!LWLockConditionalAcquire(ControlFileLock, LW_SHARED))
 			return true;
 		LocalMinRecoveryPoint = ControlFile->minRecoveryPoint;
-		LocalMinRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 		LWLockRelease(ControlFileLock);
 
 		/*
@@ -5788,12 +5784,10 @@ StartupXLOG(void)
 		if (InArchiveRecovery)
 		{
 			LocalMinRecoveryPoint = ControlFile->minRecoveryPoint;
-			LocalMinRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 		}
 		else
 		{
 			LocalMinRecoveryPoint = InvalidXLogRecPtr;
-			LocalMinRecoveryPointTLI = 0;
 		}
 
 		/* Check that the GUCs used to generate the WAL allow recovery */
@@ -6259,7 +6253,6 @@ SwitchIntoArchiveRecovery(XLogRecPtr EndRecPtr, TimeLineID replayTLI)
 	}
 	/* update local copy */
 	LocalMinRecoveryPoint = ControlFile->minRecoveryPoint;
-	LocalMinRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 
 	/*
 	 * The startup process can update its local copy of minRecoveryPoint from
@@ -7784,7 +7777,6 @@ CreateRestartPoint(int flags)
 
 				/* update local copy */
 				LocalMinRecoveryPoint = ControlFile->minRecoveryPoint;
-				LocalMinRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 			}
 			if (flags & CHECKPOINT_IS_SHUTDOWN)
 				ControlFile->state = DB_SHUTDOWNED_IN_RECOVERY;
@@ -8600,7 +8592,6 @@ xlog_redo(XLogReaderState *record)
 		if (InArchiveRecovery)
 		{
 			LocalMinRecoveryPoint = ControlFile->minRecoveryPoint;
-			LocalMinRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 		}
 		if (LocalMinRecoveryPoint != InvalidXLogRecPtr && LocalMinRecoveryPoint < lsn)
 		{
