@@ -1057,15 +1057,6 @@ AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
 	if (!pubform->puballtables && publish_via_partition_root_given &&
 		!publish_via_partition_root)
 	{
-		/*
-		 * Lock the publication so nobody else can do anything with it. This
-		 * prevents concurrent alter to add partitioned table(s) with WHERE
-		 * clause(s) and/or column lists which we don't allow when not
-		 * publishing via root.
-		 */
-		LockDatabaseObject(PublicationRelationId, pubform->oid, 0,
-						   AccessShareLock);
-
 		root_relids = GetIncludedPublicationRelations(pubform->oid,
 													  PUBLICATION_PART_ROOT);
 
@@ -1659,6 +1650,10 @@ AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 	Relation	rel;
 	HeapTuple	tup;
 	Form_pg_publication pubform;
+	List	   *relations = NIL;
+	List	   *exceptrelations = NIL;
+	List	   *schemaidlist = NIL;
+	Oid			pubid;
 
 	rel = table_open(PublicationRelationId, RowExclusiveLock);
 
@@ -1678,38 +1673,48 @@ AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_PUBLICATION,
 					   stmt->pubname);
 
+	pubid = pubform->oid;
+
+	/*
+	 * Resolve publication objects to OIDs when altering the publication
+	 * objects.
+	 */
+	if (!stmt->options)
+		ObjectsInPublicationToOids(stmt->pubobjects, pstate, &relations,
+								   &exceptrelations, &schemaidlist);
+
+	heap_freetuple(tup);
+
+	/*
+	 * Lock the publication while we validate and update it. This prevents
+	 * concurrent changes to the publication's relation and schema set, such
+	 * as adding partitioned table(s) with WHERE clause(s) and/or column
+	 * lists, which are not allowed when not publishing via root. It also
+	 * ensures that the publication definition does not change via SET ALL
+	 * TABLES between the validation performed by AlterPublicationOptions()
+	 * and the subsequent catalog update.
+	 */
+	LockDatabaseObject(PublicationRelationId, pubid, 0,
+					   stmt->options ? AccessShareLock : AccessExclusiveLock);
+
+	/*
+	 * It is possible that by the time we acquire the lock on publication,
+	 * concurrent DDL has removed it. We can test this by checking the
+	 * existence of publication. We get the tuple again to avoid the risk of
+	 * any publication option getting changed.
+	 */
+	tup = SearchSysCacheCopy1(PUBLICATIONOID, ObjectIdGetDatum(pubid));
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("publication \"%s\" does not exist",
+					   stmt->pubname));
+
 	if (stmt->options)
 		AlterPublicationOptions(pstate, stmt, rel, tup);
 	else
 	{
-		List	   *relations = NIL;
-		List	   *exceptrelations = NIL;
-		List	   *schemaidlist = NIL;
-		Oid			pubid = pubform->oid;
-
-		ObjectsInPublicationToOids(stmt->pubobjects, pstate, &relations,
-								   &exceptrelations, &schemaidlist);
-
 		CheckAlterPublication(stmt, tup, relations, schemaidlist);
-
-		heap_freetuple(tup);
-
-		/* Lock the publication so nobody else can do anything with it. */
-		LockDatabaseObject(PublicationRelationId, pubid, 0,
-						   AccessExclusiveLock);
-
-		/*
-		 * It is possible that by the time we acquire the lock on publication,
-		 * concurrent DDL has removed it. We can test this by checking the
-		 * existence of publication. We get the tuple again to avoid the risk
-		 * of any publication option getting changed.
-		 */
-		tup = SearchSysCacheCopy1(PUBLICATIONOID, ObjectIdGetDatum(pubid));
-		if (!HeapTupleIsValid(tup))
-			ereport(ERROR,
-					errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("publication \"%s\" does not exist",
-						   stmt->pubname));
 
 		relations = list_concat(relations, exceptrelations);
 		AlterPublicationTables(stmt, tup, relations, pstate->p_sourcetext,

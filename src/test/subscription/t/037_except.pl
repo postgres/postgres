@@ -52,6 +52,10 @@ sub test_except_root_partition
 	$result = $node_publisher->safe_psql('postgres',
 		"SELECT count(*) = 0 FROM pg_logical_slot_get_binary_changes('test_slot', NULL, NULL, 'proto_version', '1', 'publication_names', 'tap_pub_part')"
 	);
+	is($result, qq(t),
+		"no changes for the partitioned table in the EXCEPT clause are present in the replication slot (publish_via_partition_root = $pubviaroot)"
+	);
+
 	$node_publisher->wait_for_catchup('tap_sub_part');
 
 	# Verify that no rows are replicated to subscriber for root or partitions.
@@ -235,7 +239,7 @@ $node_publisher->safe_psql(
 	CREATE PUBLICATION tap_pub2 FOR TABLE tab1;
 	INSERT INTO tab1 VALUES(1);
 ));
-$node_subscriber->psql('postgres',
+$node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub1, tap_pub2"
 );
 $node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
@@ -249,12 +253,17 @@ is( $result, qq(1
 2),
 	"check replication of a table in the EXCEPT clause of one publication but included by another"
 );
+
+$node_subscriber->safe_psql(
+	'postgres', qq(
+	DROP SUBSCRIPTION tap_sub;
+	TRUNCATE tab1;
+));
 $node_publisher->safe_psql(
 	'postgres', qq(
 	DROP PUBLICATION tap_pub2;
 	TRUNCATE tab1;
 ));
-$node_subscriber->safe_psql('postgres', qq(TRUNCATE tab1));
 
 # OK when a table is excluded by pub1 EXCEPT clause, but it is included by pub2
 # FOR ALL TABLES.
@@ -263,7 +272,7 @@ $node_publisher->safe_psql(
 	CREATE PUBLICATION tap_pub2 FOR ALL TABLES;
 	INSERT INTO tab1 VALUES(1);
 ));
-$node_subscriber->psql('postgres',
+$node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub1, tap_pub2"
 );
 $node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
@@ -277,11 +286,5 @@ is( $result, qq(1
 2),
 	"check replication of a table in the EXCEPT clause of one publication but included by another"
 );
-
-$node_subscriber->safe_psql('postgres', 'DROP SUBSCRIPTION tap_sub');
-$node_publisher->safe_psql('postgres', 'DROP PUBLICATION tap_pub1');
-$node_publisher->safe_psql('postgres', 'DROP PUBLICATION tap_pub2');
-
-$node_publisher->stop('fast');
 
 done_testing();
