@@ -66,6 +66,9 @@ getopt_long(int argc, char *const argv[],
 	static int	nonopt_start = -1;
 	static bool force_nonopt = false;
 
+	if (nonopt_start == -1)
+		nonopt_start = argc;
+
 	if (!*place)
 	{							/* update scanning pointer */
 		char	  **args = (char **) argv;
@@ -75,7 +78,7 @@ retry:
 		/*
 		 * If we are out of arguments or only non-options remain, return -1.
 		 */
-		if (optind >= argc || optind == nonopt_start)
+		if (optind >= nonopt_start)
 		{
 			place = EMSG;
 			nonopt_start = -1;
@@ -99,10 +102,7 @@ retry:
 				args[i] = args[i + 1];
 			args[argc - 1] = place;
 
-			if (nonopt_start == -1)
-				nonopt_start = argc - 1;
-			else
-				nonopt_start--;
+			nonopt_start--;
 
 			goto retry;
 		}
@@ -139,7 +139,7 @@ retry:
 							optarg = place + namelen + 1;
 						else if (has_arg == optional_argument)
 							optarg = NULL;
-						else if (optind < argc - 1)
+						else if (optind < nonopt_start - 1)
 						{
 							optind++;
 							optarg = argv[optind];
@@ -222,7 +222,7 @@ retry:
 	{							/* need an argument */
 		if (*place)				/* no white space */
 			optarg = place;
-		else if (argc <= ++optind)
+		else if (nonopt_start <= ++optind)
 		{						/* no arg */
 			place = EMSG;
 			if (*optstring == ':')
