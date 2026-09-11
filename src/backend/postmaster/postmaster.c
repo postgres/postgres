@@ -369,8 +369,6 @@ static time_t AbortStartTime = 0;
 /* Length of said timeout */
 #define SIGKILL_CHILDREN_AFTER_SECS		5
 
-static bool ReachedNormalRunning = false;	/* T if we've reached PM_RUN */
-
 bool		ClientAuthInProgress = false;	/* T during new-client
 											 * authentication */
 
@@ -2362,7 +2360,6 @@ process_pm_child_exit(void)
 			StartupStatus = STARTUP_NOT_RUNNING;
 			FatalError = false;
 			AbortStartTime = 0;
-			ReachedNormalRunning = true;
 			UpdatePMState(PM_RUN);
 			connsAllowed = true;
 
