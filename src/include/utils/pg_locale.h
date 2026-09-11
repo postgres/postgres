@@ -133,11 +133,6 @@ struct ctype_methods
 							const char *src, size_t srclen,
 							pg_locale_t locale);
 
-	/* optional */
-	size_t		(*downcase_ident) (char *dest, size_t destsize,
-								   const char *src, size_t srclen,
-								   pg_locale_t locale);
-
 	/* required */
 	bool		(*wc_isdigit) (pg_wchar wc, pg_locale_t locale);
 	bool		(*wc_isalpha) (pg_wchar wc, pg_locale_t locale);
@@ -192,7 +187,6 @@ struct pg_locale_struct
 			const char *locale;
 			struct UCollator *ucol;
 			struct UCaseMap *ucasemap;
-			locale_t	lt;
 		}			icu;
 #endif
 	};
@@ -216,8 +210,6 @@ extern size_t pg_strupper(char *dst, size_t dstsize,
 extern size_t pg_strfold(char *dst, size_t dstsize,
 						 const char *src, size_t srclen,
 						 pg_locale_t locale);
-extern size_t pg_downcase_ident(char *dst, size_t dstsize,
-								const char *src, size_t srclen);
 extern int	pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale);
 extern int	pg_strncoll(const char *arg1, size_t len1,
 						const char *arg2, size_t len2, pg_locale_t locale);

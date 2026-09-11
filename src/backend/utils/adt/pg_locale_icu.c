@@ -70,8 +70,6 @@ static size_t strupper_icu_utf8(char *dest, size_t destsize, const char *src,
 								size_t srclen, pg_locale_t locale);
 static size_t strfold_icu_utf8(char *dest, size_t destsize, const char *src,
 							   size_t srclen, pg_locale_t locale);
-static size_t downcase_ident_icu(char *dst, size_t dstsize, const char *src,
-								 size_t srclen, pg_locale_t locale);
 static int	strncoll_icu(const char *arg1, size_t len1,
 						 const char *arg2, size_t len2,
 						 pg_locale_t locale);
@@ -141,7 +139,7 @@ static int32_t foldcase_options(const char *locale);
 
 /*
  * XXX: many of the functions below rely on casts directly from pg_wchar to
- * UChar32, which is correct for UTF-8 and LATIN1, but not in general.
+ * UChar32, which is correct for the UTF-8 encoding, but not in general.
  */
 
 static pg_wchar
@@ -261,7 +259,6 @@ static const struct ctype_methods ctype_methods_icu = {
 	.strtitle = strtitle_icu,
 	.strupper = strupper_icu,
 	.strfold = strfold_icu,
-	.downcase_ident = downcase_ident_icu,
 	.wc_isdigit = wc_isdigit_icu,
 	.wc_isalpha = wc_isalpha_icu,
 	.wc_isalnum = wc_isalnum_icu,
@@ -282,8 +279,6 @@ static const struct ctype_methods ctype_methods_icu_utf8 = {
 	.strtitle = strtitle_icu_utf8,
 	.strupper = strupper_icu_utf8,
 	.strfold = strfold_icu_utf8,
-	/* uses plain ASCII semantics for historical reasons */
-	.downcase_ident = NULL,
 	.wc_isdigit = wc_isdigit_icu,
 	.wc_isalpha = wc_isalpha_icu,
 	.wc_isalnum = wc_isalnum_icu,
@@ -299,28 +294,6 @@ static const struct ctype_methods ctype_methods_icu_utf8 = {
 	.wc_tolower = tolower_icu,
 };
 
-/*
- * ICU still depends on libc for compatibility with certain historical
- * behavior for single-byte encodings.  See downcase_ident_icu().
- *
- * XXX: consider fixing by decoding the single byte into a code point, and
- * using u_tolower().
- */
-static locale_t
-make_libc_ctype_locale(const char *ctype)
-{
-	locale_t	loc;
-
-#ifndef WIN32
-	loc = newlocale(LC_CTYPE_MASK, ctype, NULL);
-#else
-	loc = _create_locale(LC_ALL, ctype);
-#endif
-	if (!loc)
-		report_newlocale_failure(ctype);
-
-	return loc;
-}
 #endif							/* USE_ICU */
 
 pg_locale_t
@@ -331,7 +304,6 @@ create_pg_locale_icu(Oid collid, MemoryContext context)
 	const char *iculocstr;
 	const char *icurules = NULL;
 	UCollator  *collator;
-	locale_t	loc = (locale_t) 0;
 	pg_locale_t result;
 
 	if (collid == DEFAULT_COLLATION_OID)
@@ -353,18 +325,6 @@ create_pg_locale_icu(Oid collid, MemoryContext context)
 								Anum_pg_database_daticurules, &isnull);
 		if (!isnull)
 			icurules = TextDatumGetCString(datum);
-
-		/* libc only needed for default locale and single-byte encoding */
-		if (pg_database_encoding_max_length() == 1)
-		{
-			const char *ctype;
-
-			datum = SysCacheGetAttrNotNull(DATABASEOID, tp,
-										   Anum_pg_database_datctype);
-			ctype = TextDatumGetCString(datum);
-
-			loc = make_libc_ctype_locale(ctype);
-		}
 
 		ReleaseSysCache(tp);
 	}
@@ -396,7 +356,6 @@ create_pg_locale_icu(Oid collid, MemoryContext context)
 	result = MemoryContextAllocZero(context, sizeof(struct pg_locale_struct));
 	result->icu.locale = MemoryContextStrdup(context, iculocstr);
 	result->icu.ucol = collator;
-	result->icu.lt = loc;
 	result->deterministic = deterministic;
 	result->collate_is_c = false;
 	result->ctype_is_c = false;
@@ -660,39 +619,6 @@ strfold_icu_utf8(char *dest, size_t destsize, const char *src, size_t srclen,
 		ereport(ERROR,
 				errmsg("case conversion failed: %s", u_errorName(status)));
 	return needed;
-}
-
-/*
- * For historical compatibility, behavior is not multibyte-aware.
- *
- * NB: uses libc tolower_l() for single-byte encodings (also for historical
- * compatibility), and therefore relies on the LC_CTYPE setting.
- */
-static size_t
-downcase_ident_icu(char *dst, size_t dstsize, const char *src,
-				   size_t srclen, pg_locale_t locale)
-{
-	size_t		i;
-	bool		libc_lower;
-	locale_t	lt = locale->icu.lt;
-
-	libc_lower = lt && (pg_database_encoding_max_length() == 1);
-
-	for (i = 0; i < srclen && i < dstsize; i++)
-	{
-		unsigned char ch = (unsigned char) src[i];
-
-		if (ch >= 'A' && ch <= 'Z')
-			ch = pg_ascii_tolower(ch);
-		else if (libc_lower && IS_HIGHBIT_SET(ch) && isupper_l(ch, lt))
-			ch = tolower_l(ch, lt);
-		dst[i] = (char) ch;
-	}
-
-	if (i < dstsize)
-		dst[i] = '\0';
-
-	return srclen;
 }
 
 /*

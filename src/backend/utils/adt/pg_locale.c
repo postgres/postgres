@@ -1463,30 +1463,6 @@ pg_strfold(char *dst, size_t dstsize, const char *src, size_t srclen,
 }
 
 /*
- * pg_downcase_ident()
- *
- * Lowercase an identifier using historical identifier-folding semantics, and
- * return the result length (not including terminating NUL). If the result
- * length is less than dstsize, the NUL-terminated result is stored in dst;
- * otherwise the contents of dst are undefined.
- *
- * XXX: callers currently depend on the result length being equal to srclen,
- * but that may change in the future if we change to proper case folding.
- */
-size_t
-pg_downcase_ident(char *dst, size_t dstsize, const char *src, size_t srclen)
-{
-	pg_locale_t locale = default_locale;
-
-	if (locale == NULL || locale->ctype == NULL ||
-		locale->ctype->downcase_ident == NULL)
-		return strlower_c(dst, dstsize, src, srclen);
-	else
-		return locale->ctype->downcase_ident(dst, dstsize, src, srclen,
-											 locale);
-}
-
-/*
  * pg_strcoll
  *
  * Like pg_strncoll for NUL-terminated input strings.
