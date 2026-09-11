@@ -225,25 +225,6 @@ The <xref linkend="btree-gist"/> <type>inet</type>/<type>cidr</type> opclasses a
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2026-04-06 [a9c350d9e] Don't try to re-order the subcommands of CREATE SCHEMA.
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2026-04-06 [404db8f9e] Execute foreign key constraints in CREATE SCHEMA at the
--->
-
-<listitem>
-<para>
-Stop reordering non-schema objects created by <link linkend="sql-createschema"><command>CREATE SCHEMA</command></link> (Tom Lane, Jian He)
-<ulink url="&commit_baseurl;a9c350d9e">&sect;</ulink>
-<ulink url="&commit_baseurl;404db8f9e">&sect;</ulink>
-</para>
-
-<para>
-The goal of the reordering was to avoid dependencies, but it was imperfect.  <productname>PostgreSQL</productname> now uses the specified object ordering, except for foreign keys which are created last.
-</para>
-</listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 2026-04-06 [21c69dc73] Disallow system columns in COPY FROM WHERE conditions.
 -->
 
@@ -1888,13 +1869,13 @@ The <literal>GRANTED BY</literal> clause controls this.
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2026-04-06 [d51697484] Support more object types within CREATE SCHEMA.
+2026-04-06 [404db8f9e] Execute foreign key constraints in CREATE SCHEMA at the
 -->
 
 <listitem>
 <para>
-Allow <link linkend="sql-createschema"><command>CREATE SCHEMA</command></link> to create more types of objects in newly-created schemas (Kirill Reshke, Jian He, Tom Lane)
-<ulink url="&commit_baseurl;d51697484">&sect;</ulink>
+Support forward references in <literal>FOREIGN KEY</literal> constraint clauses within <link linkend="sql-createschema"><command>CREATE SCHEMA</command></link> (Jian He, Tom Lane)
+<ulink url="&commit_baseurl;404db8f9e">&sect;</ulink>
 </para>
 </listitem>
 
