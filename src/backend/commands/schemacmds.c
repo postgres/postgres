@@ -189,9 +189,10 @@ CreateSchemaCommand(ParseState *pstate, CreateSchemaStmt *stmt,
 
 	/*
 	 * Examine the list of commands embedded in the CREATE SCHEMA command, and
-	 * do preliminary transformations.  Note that the result is still a list
-	 * of raw parsetrees --- we cannot, in general, run parse analysis on one
-	 * statement until we have actually executed the prior ones.
+	 * reorganize them into a sequentially executable order with no forward
+	 * references.  Note that the result is still a list of raw parsetrees ---
+	 * we cannot, in general, run parse analysis on one statement until we
+	 * have actually executed the prior ones.
 	 */
 	parsetree_list = transformCreateSchemaStmtElements(pstate,
 													   stmt->schemaElts,
