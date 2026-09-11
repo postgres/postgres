@@ -75,7 +75,9 @@ StaticAssertDecl(USECS_PER_SEC % WAITS_PER_SEC == 0,
 
 static bool do_wait = true;
 static int	wait_seconds = DEFAULT_WAIT;
+#ifdef WIN32
 static bool wait_seconds_arg = false;
+#endif
 static bool silent_mode = false;
 static ShutdownMode shutdown_mode = FAST_MODE;
 static int	sig = SIGINT;		/* default */
@@ -87,10 +89,12 @@ static char *post_opts = NULL;
 static const char *progname;
 static char *log_file = NULL;
 static char *exec_path = NULL;
+#ifdef WIN32
 static char *event_source = NULL;
 static char *register_servicename = "PostgreSQL";	/* FIXME: + version ID? */
 static char *register_username = NULL;
 static char *register_password = NULL;
+#endif
 static char *argv0 = NULL;
 static bool allow_core_files = false;
 static time_t start_time;
@@ -2292,7 +2296,13 @@ main(int argc, char **argv)
 					break;
 				}
 			case 'e':
+#ifdef WIN32
 				event_source = pg_strdup(optarg);
+#else
+				write_stderr(_("%s: -%c option not supported on this platform\n"),
+							 progname, c);
+				exit(1);
+#endif
 				break;
 			case 'l':
 				log_file = pg_strdup(optarg);
@@ -2301,7 +2311,13 @@ main(int argc, char **argv)
 				set_mode(optarg);
 				break;
 			case 'N':
+#ifdef WIN32
 				register_servicename = pg_strdup(optarg);
+#else
+				write_stderr(_("%s: -%c option not supported on this platform\n"),
+							 progname, c);
+				exit(1);
+#endif
 				break;
 			case 'o':
 				/* append option? */
@@ -2319,7 +2335,13 @@ main(int argc, char **argv)
 				exec_path = pg_strdup(optarg);
 				break;
 			case 'P':
+#ifdef WIN32
 				register_password = pg_strdup(optarg);
+#else
+				write_stderr(_("%s: -%c option not supported on this platform\n"),
+							 progname, c);
+				exit(1);
+#endif
 				break;
 			case 's':
 				silent_mode = true;
@@ -2328,21 +2350,29 @@ main(int argc, char **argv)
 #ifdef WIN32
 				set_starttype(optarg);
 #else
-				write_stderr(_("%s: -S option not supported on this platform\n"),
-							 progname);
+				write_stderr(_("%s: -%c option not supported on this platform\n"),
+							 progname, c);
 				exit(1);
 #endif
 				break;
 			case 't':
 				wait_seconds = atoi(optarg);
+#ifdef WIN32
 				wait_seconds_arg = true;
+#endif
 				break;
 			case 'U':
+#ifdef WIN32
 				if (strchr(optarg, '\\'))
 					register_username = pg_strdup(optarg);
 				else
 					/* Prepend .\ for local accounts */
 					register_username = psprintf(".\\%s", optarg);
+#else
+				write_stderr(_("%s: -%c option not supported on this platform\n"),
+							 progname, c);
+				exit(1);
+#endif
 				break;
 			case 'w':
 				do_wait = true;
