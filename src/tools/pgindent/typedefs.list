@@ -2505,6 +2505,7 @@ RI_CompareKey
 RI_ConstraintInfo
 RI_FastPathEntry
 RI_FastPathKey
+RI_FastPathState
 RI_QueryHashEntry
 RI_QueryKey
 RTEKind

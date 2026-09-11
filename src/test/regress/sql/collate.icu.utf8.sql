@@ -1115,6 +1115,66 @@ CREATE TABLE test10fk (x text COLLATE case_insensitive REFERENCES test10pk (x) O
 CREATE TABLE test11pk (x text COLLATE case_insensitive PRIMARY KEY);
 CREATE TABLE test11fk (x text COLLATE case_sensitive REFERENCES test11pk (x) ON UPDATE CASCADE ON DELETE CASCADE);  -- error
 
+-- The referenced index's collation can differ from the column's collation.
+-- Use reversed index columns to exercise the index-to-table column mapping.
+CREATE TABLE fk_collation_pk (id int, x text COLLATE case_insensitive);
+CREATE UNIQUE INDEX fk_collation_idx ON fk_collation_pk (x COLLATE "C", id);
+INSERT INTO fk_collation_pk VALUES (1, 'ABC');
+CREATE TABLE fk_collation_fk (id int, x text COLLATE case_insensitive);
+INSERT INTO fk_collation_fk VALUES (1, 'abc');
+-- Lack of SELECT on the PK table forces per-row validation.
+CREATE ROLE regress_fk_collation;
+GRANT USAGE ON SCHEMA collate_tests TO regress_fk_collation;
+GRANT REFERENCES ON fk_collation_pk TO regress_fk_collation;
+ALTER TABLE fk_collation_fk OWNER TO regress_fk_collation;
+SET ROLE regress_fk_collation;
+ALTER TABLE fk_collation_fk ADD CONSTRAINT fk_collation_fkey
+    FOREIGN KEY (id, x) REFERENCES fk_collation_pk (id, x);
+-- Ordinary DML must also use the column's case-insensitive equality.
+INSERT INTO fk_collation_fk VALUES (1, 'aBc');
+INSERT INTO fk_collation_fk VALUES (2, 'abc'); -- fails
+RESET ROLE;
+DROP TABLE fk_collation_fk, fk_collation_pk;
+REVOKE USAGE ON SCHEMA collate_tests FROM regress_fk_collation;
+DROP ROLE regress_fk_collation;
+
+-- Conversely, a case-insensitive index must not make the FK comparison
+-- accept unequal values under the column's deterministic collation.
+CREATE TABLE fk_collation_pk (x text COLLATE "C");
+CREATE UNIQUE INDEX fk_collation_idx ON fk_collation_pk (x COLLATE case_insensitive);
+INSERT INTO fk_collation_pk VALUES ('ABC');
+CREATE TABLE fk_collation_fk (x text COLLATE "C",
+    CONSTRAINT fk_collation_fkey FOREIGN KEY (x) REFERENCES fk_collation_pk (x));
+INSERT INTO fk_collation_fk VALUES ('ABC');
+INSERT INTO fk_collation_fk VALUES ('abc'); -- fails
+-- SPI fallback must preserve checks already buffered for another FK.
+CREATE TABLE fk_collation_intpk (id int PRIMARY KEY);
+INSERT INTO fk_collation_intpk VALUES (1);
+CREATE TABLE fk_collation_mix (
+    id int REFERENCES fk_collation_intpk,
+    x text COLLATE "C" REFERENCES fk_collation_pk (x));
+-- Name the INSERT triggers after their constraints so the integer check is
+-- buffered before the text check falls back to SPI, regardless of their OIDs.
+DO $$
+DECLARE
+    trig record;
+BEGIN
+    FOR trig IN
+        SELECT t.tgname, c.conname
+        FROM pg_trigger t JOIN pg_constraint c ON c.oid = t.tgconstraint
+        WHERE t.tgrelid = 'fk_collation_mix'::regclass
+          AND t.tgfoid = '"RI_FKey_check_ins"'::regproc
+    LOOP
+        EXECUTE format('ALTER TRIGGER %I ON fk_collation_mix RENAME TO %I',
+                       trig.tgname, trig.conname);
+    END LOOP;
+END
+$$;
+INSERT INTO fk_collation_mix VALUES (2, 'ABC'); -- fails
+INSERT INTO fk_collation_mix VALUES (1, 'ABC'), (1, 'ABC');
+DROP TABLE fk_collation_mix, fk_collation_intpk;
+DROP TABLE fk_collation_fk, fk_collation_pk;
+
 -- foreign key actions
 -- Some of the behaviors are most easily visible with a
 -- case-insensitive collation.
