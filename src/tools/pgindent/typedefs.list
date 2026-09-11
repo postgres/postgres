@@ -2493,6 +2493,7 @@ RIX
 RI_CompareHashEntry
 RI_CompareKey
 RI_ConstraintInfo
+RI_FastPathState
 RI_QueryHashEntry
 RI_QueryKey
 RTEKind
