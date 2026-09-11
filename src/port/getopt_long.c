@@ -137,8 +137,9 @@ retry:
 					{
 						if (place[namelen] == '=')
 							optarg = place + namelen + 1;
-						else if (optind < argc - 1 &&
-								 has_arg == required_argument)
+						else if (has_arg == optional_argument)
+							optarg = NULL;
+						else if (optind < argc - 1)
 						{
 							optind++;
 							optarg = argv[optind];
@@ -152,16 +153,14 @@ retry:
 								return BADARG;
 							}
 
-							if (opterr && has_arg == required_argument)
+							if (opterr)
 								fprintf(stderr,
 										"%s: option requires an argument -- %s\n",
 										argv[0], place);
 
 							place = EMSG;
 
-							if (has_arg == required_argument)
-								return BADCH;
-							optarg = NULL;
+							return BADCH;
 						}
 					}
 					else

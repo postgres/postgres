@@ -340,11 +340,10 @@ sub test_pg_waldump
 	my ($stdout, $stderr);
 
 	my $result = IPC::Run::run [
-		'pg_waldump',
+		'pg_waldump', @opts,
 		'--start' => $startlsn,
 		'--end' => $endlsn,
 		'--path' => $path,
-		@opts
 	  ],
 	  '>' => \$stdout,
 	  '2>' => \$stderr;
