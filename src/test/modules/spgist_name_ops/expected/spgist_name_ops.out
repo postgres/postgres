@@ -61,9 +61,10 @@ select * from t
  binary_upgrade_set_next_pg_enum_oid                  |    | binary_upgrade_set_next_pg_enum_oid
  binary_upgrade_set_next_pg_tablespace_oid            |    | binary_upgrade_set_next_pg_tablespace_oid
  binary_upgrade_set_next_pg_type_oid                  |    | binary_upgrade_set_next_pg_type_oid
+ binary_upgrade_set_next_toast_chunk_id_typoid        |    | binary_upgrade_set_next_toast_chunk_id_typoid
  binary_upgrade_set_next_toast_pg_class_oid           |  1 | binary_upgrade_set_next_toast_pg_class_oid
  binary_upgrade_set_next_toast_relfilenode            |    | binary_upgrade_set_next_toast_relfilenode
-(13 rows)
+(14 rows)
 
 -- Verify clean failure when INCLUDE'd columns result in overlength tuple
 -- The error message details are platform-dependent, so show only SQLSTATE
@@ -110,9 +111,10 @@ select * from t
  binary_upgrade_set_next_pg_enum_oid                  |    | binary_upgrade_set_next_pg_enum_oid
  binary_upgrade_set_next_pg_tablespace_oid            |    | binary_upgrade_set_next_pg_tablespace_oid
  binary_upgrade_set_next_pg_type_oid                  |    | binary_upgrade_set_next_pg_type_oid
+ binary_upgrade_set_next_toast_chunk_id_typoid        |    | binary_upgrade_set_next_toast_chunk_id_typoid
  binary_upgrade_set_next_toast_pg_class_oid           |  1 | binary_upgrade_set_next_toast_pg_class_oid
  binary_upgrade_set_next_toast_relfilenode            |    | binary_upgrade_set_next_toast_relfilenode
-(13 rows)
+(14 rows)
 
 \set VERBOSITY sqlstate
 insert into t values(repeat('xyzzy', 12), 42, repeat('xyzzy', 4000));

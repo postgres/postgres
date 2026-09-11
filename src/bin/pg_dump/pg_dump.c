@@ -104,6 +104,7 @@ typedef struct
 	RelFileNumber relfilenumber;	/* object filenode */
 	Oid			toast_oid;		/* toast table OID */
 	RelFileNumber toast_relfilenumber;	/* toast table filenode */
+	Oid			toast_chunk_id_typoid;	/* type of chunk_id attribute */
 	Oid			toast_index_oid;	/* toast table index OID */
 	RelFileNumber toast_index_relfilenumber;	/* toast table index filenode */
 } BinaryUpgradeClassOidItem;
@@ -5869,7 +5870,10 @@ collectBinaryUpgradeClassOids(Archive *fout)
 	const char *query;
 
 	query = "SELECT c.oid, c.relkind, c.relfilenode, c.reltoastrelid, "
-		"ct.relfilenode, i.indexrelid, cti.relfilenode "
+		"ct.relfilenode, i.indexrelid, cti.relfilenode, "
+		"(SELECT a.atttypid FROM pg_attribute AS a "
+		"  WHERE a.attrelid = c.reltoastrelid AND attname = 'chunk_id'::text) "
+		"  AS toastchunktypid "
 		"FROM pg_catalog.pg_class c LEFT JOIN pg_catalog.pg_index i "
 		"ON (c.reltoastrelid = i.indrelid AND i.indisvalid) "
 		"LEFT JOIN pg_catalog.pg_class ct ON (c.reltoastrelid = ct.oid) "
@@ -5891,6 +5895,7 @@ collectBinaryUpgradeClassOids(Archive *fout)
 		binaryUpgradeClassOids[i].toast_relfilenumber = atooid(PQgetvalue(res, i, 4));
 		binaryUpgradeClassOids[i].toast_index_oid = atooid(PQgetvalue(res, i, 5));
 		binaryUpgradeClassOids[i].toast_index_relfilenumber = atooid(PQgetvalue(res, i, 6));
+		binaryUpgradeClassOids[i].toast_chunk_id_typoid = atooid(PQgetvalue(res, i, 7));
 	}
 
 	PQclear(res);
@@ -5907,7 +5912,7 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 
 	/*
 	 * Preserve the OID and relfilenumber of the table, table's index, table's
-	 * toast table and toast table's index if any.
+	 * toast table, toast table's chunk type and toast table's index if any.
 	 *
 	 * One complexity is that the current table definition might not require
 	 * the creation of a TOAST table, but the old database might have a TOAST
@@ -5922,7 +5927,7 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 					BinaryUpgradeClassOidItemCmp);
 
 	appendPQExpBufferStr(upgrade_buffer,
-						 "\n-- For binary upgrade, must preserve pg_class oids and relfilenodes\n");
+						 "\n-- For binary upgrade, must preserve pg_class oids, toast chunk type oids and relfilenodes\n");
 
 	if (entry->relkind != RELKIND_INDEX &&
 		entry->relkind != RELKIND_PARTITIONED_INDEX)
@@ -5955,6 +5960,9 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 			appendPQExpBuffer(upgrade_buffer,
 							  "SELECT pg_catalog.binary_upgrade_set_next_toast_relfilenode('%u'::pg_catalog.oid);\n",
 							  entry->toast_relfilenumber);
+			appendPQExpBuffer(upgrade_buffer,
+							  "SELECT pg_catalog.binary_upgrade_set_next_toast_chunk_id_typoid('%u'::pg_catalog.oid);\n",
+							  entry->toast_chunk_id_typoid);
 
 			/* every toast table has an index */
 			appendPQExpBuffer(upgrade_buffer,

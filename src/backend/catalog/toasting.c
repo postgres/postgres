@@ -146,6 +146,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	int16		coloptions[2];
 	ObjectAddress baseobject,
 				toastobject;
+	Oid			toast_chunkid_typid = OIDOID;
 
 	/*
 	 * Is it already toasted?
@@ -184,6 +185,23 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		 */
 		if (!OidIsValid(binary_upgrade_next_toast_pg_class_oid))
 			return false;
+
+		/*
+		 * The attribute type for chunk_id should have been set when
+		 * requesting a TOAST table creation.
+		 */
+		if (!OidIsValid(binary_upgrade_next_toast_chunk_id_typoid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("toast chunk_id type not set while in binary upgrade mode")));
+		if (binary_upgrade_next_toast_chunk_id_typoid != OIDOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("cannot support toast chunk_id type %u in binary upgrade mode",
+							binary_upgrade_next_toast_chunk_id_typoid)));
+
+		toast_chunkid_typid = binary_upgrade_next_toast_chunk_id_typoid;
+		binary_upgrade_next_toast_chunk_id_typoid = InvalidOid;
 	}
 
 	/*
@@ -205,7 +223,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	tupdesc = CreateTemplateTupleDesc(3);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "chunk_id",
-					   OIDOID,
+					   toast_chunkid_typid,
 					   -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2,
 					   "chunk_seq",
