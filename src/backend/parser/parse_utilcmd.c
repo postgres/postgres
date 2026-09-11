@@ -96,6 +96,20 @@ typedef struct
 	bool		ofType;			/* true if statement contains OF typename */
 } CreateStmtContext;
 
+/* State shared by transformCreateSchemaStmtElements and its subroutines */
+typedef struct
+{
+	ParseState *pstate;			/* overall parse state */
+	const char *schemaname;		/* name of schema */
+	List	   *sequences;		/* CREATE SEQUENCE items */
+	List	   *tables;			/* CREATE TABLE items */
+	List	   *views;			/* CREATE VIEW items */
+	List	   *indexes;		/* CREATE INDEX items */
+	List	   *triggers;		/* CREATE TRIGGER items */
+	List	   *grants;			/* GRANT items */
+	List	   *foreign_keys;	/* generated ALTER ADD FOREIGN KEY items */
+} CreateSchemaStmtContext;
+
 
 static void transformColumnDefinition(CreateStmtContext *cxt,
 									  ColumnDef *column);
@@ -122,8 +136,7 @@ static void transformCheckConstraints(CreateStmtContext *cxt,
 static void transformConstraintAttrs(ParseState *pstate,
 									 List *constraintList);
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
-static void checkSchemaNameRV(ParseState *pstate, const char *context_schema,
-							  RangeVar *relation);
+static void checkSchemaNameRV(CreateSchemaStmtContext *cxt, RangeVar *relation);
 static CreateStmt *transformCreateSchemaCreateTable(ParseState *pstate,
 													CreateStmt *stmt,
 													List **fk_elements);
@@ -4112,17 +4125,17 @@ transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
  * transformCreateSchemaStmtElements -
  *	  analyzes the elements of a CREATE SCHEMA statement
  *
- * This presently has two responsibilities.  We verify that no subcommands are
- * trying to create objects outside the new schema.  We also pull out any
- * foreign-key constraint clauses embedded in CREATE TABLE subcommands, and
- * convert them to ALTER TABLE ADD CONSTRAINT commands appended to the list.
- * This supports forward references in foreign keys, which is required by the
- * SQL standard.
- *
- * We used to try to re-order the commands in a way that would work even if
- * the user-written order would not, but that's too hard (perhaps impossible)
- * to do correctly with not-yet-parse-analyzed commands.  Now we'll just
- * execute the elements in the order given, except for foreign keys.
+ * This presently has two responsibilities.  We verify that no subcommands
+ * are trying to create objects outside the new schema.  We also attempt to
+ * re-order the subcommands such that there are no forward references
+ * (e.g. GRANT to a table created later in the list).  Note that the logic
+ * we use for determining forward references is presently quite incomplete,
+ * and it's unlikely that we can do significantly better while working with
+ * non-parse-analyzed commands.  The only case that the SQL standard calls
+ * out as required is to support forward references in foreign-key constraint
+ * clauses in CREATE TABLE subcommands.  We do handle that, by pulling out
+ * such clauses and converting them to ALTER TABLE ADD CONSTRAINT commands
+ * appended to the list.
  *
  * "schemaName" is the name of the schema that will be used for the creation
  * of the objects listed.  It may be obtained from the schema name defined
@@ -4140,17 +4153,28 @@ List *
 transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 								  const char *schemaName)
 {
-	List	   *elements = NIL;
-	List	   *fk_elements = NIL;
-	ListCell   *lc;
+	CreateSchemaStmtContext cxt;
+	List	   *result;
+	ListCell   *elements;
+
+	cxt.pstate = pstate;
+	cxt.schemaname = schemaName;
+	cxt.sequences = NIL;
+	cxt.tables = NIL;
+	cxt.views = NIL;
+	cxt.indexes = NIL;
+	cxt.triggers = NIL;
+	cxt.grants = NIL;
+	cxt.foreign_keys = NIL;
 
 	/*
 	 * Run through each schema element in the schema element list.  Check
-	 * target schema names, and collect the list of actions to be done.
+	 * target schema names, separate statements by type, and do preliminary
+	 * analysis.
 	 */
-	foreach(lc, schemaElts)
+	foreach(elements, schemaElts)
 	{
-		Node	   *element = lfirst(lc);
+		Node	   *element = lfirst(elements);
 
 		switch (nodeTag(element))
 		{
@@ -4158,8 +4182,8 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 				{
 					CreateSeqStmt *elp = (CreateSeqStmt *) element;
 
-					checkSchemaNameRV(pstate, schemaName, elp->sequence);
-					elements = lappend(elements, element);
+					checkSchemaNameRV(&cxt, elp->sequence);
+					cxt.sequences = lappend(cxt.sequences, element);
 				}
 				break;
 
@@ -4167,12 +4191,16 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 				{
 					CreateStmt *elp = (CreateStmt *) element;
 
-					checkSchemaNameRV(pstate, schemaName, elp->relation);
+					checkSchemaNameRV(&cxt, elp->relation);
 					/* Pull out any foreign key clauses, add to fk_elements */
 					elp = transformCreateSchemaCreateTable(pstate,
 														   elp,
-														   &fk_elements);
-					elements = lappend(elements, elp);
+														   &cxt.foreign_keys);
+
+					/*
+					 * XXX todo: deal with other constraints
+					 */
+					cxt.tables = lappend(cxt.tables, elp);
 				}
 				break;
 
@@ -4180,8 +4208,12 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 				{
 					ViewStmt   *elp = (ViewStmt *) element;
 
-					checkSchemaNameRV(pstate, schemaName, elp->view);
-					elements = lappend(elements, element);
+					checkSchemaNameRV(&cxt, elp->view);
+
+					/*
+					 * XXX todo: deal with references between views
+					 */
+					cxt.views = lappend(cxt.views, element);
 				}
 				break;
 
@@ -4189,8 +4221,8 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 				{
 					IndexStmt  *elp = (IndexStmt *) element;
 
-					checkSchemaNameRV(pstate, schemaName, elp->relation);
-					elements = lappend(elements, element);
+					checkSchemaNameRV(&cxt, elp->relation);
+					cxt.indexes = lappend(cxt.indexes, element);
 				}
 				break;
 
@@ -4198,13 +4230,13 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 				{
 					CreateTrigStmt *elp = (CreateTrigStmt *) element;
 
-					checkSchemaNameRV(pstate, schemaName, elp->relation);
-					elements = lappend(elements, element);
+					checkSchemaNameRV(&cxt, elp->relation);
+					cxt.triggers = lappend(cxt.triggers, element);
 				}
 				break;
 
 			case T_GrantStmt:
-				elements = lappend(elements, element);
+				cxt.grants = lappend(cxt.grants, element);
 				break;
 
 			default:
@@ -4213,7 +4245,16 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 		}
 	}
 
-	return list_concat(elements, fk_elements);
+	result = NIL;
+	result = list_concat(result, cxt.sequences);
+	result = list_concat(result, cxt.tables);
+	result = list_concat(result, cxt.views);
+	result = list_concat(result, cxt.indexes);
+	result = list_concat(result, cxt.triggers);
+	result = list_concat(result, cxt.grants);
+	result = list_concat(result, cxt.foreign_keys);
+
+	return result;
 }
 
 /*
@@ -4228,17 +4269,16 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
  * that would likewise put the object into the wrong schema.
  */
 static void
-checkSchemaNameRV(ParseState *pstate, const char *context_schema,
-				  RangeVar *relation)
+checkSchemaNameRV(CreateSchemaStmtContext *cxt, RangeVar *relation)
 {
 	if (relation->schemaname != NULL &&
-		strcmp(context_schema, relation->schemaname) != 0)
+		strcmp(cxt->schemaname, relation->schemaname) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
 				 errmsg("CREATE specifies a schema (%s) "
 						"different from the one being created (%s)",
-						relation->schemaname, context_schema),
-				 parser_errposition(pstate, relation->location)));
+						relation->schemaname, cxt->schemaname),
+				 parser_errposition(cxt->pstate, relation->location)));
 
 	if (relation->relpersistence == RELPERSISTENCE_TEMP)
 	{
@@ -4246,7 +4286,7 @@ checkSchemaNameRV(ParseState *pstate, const char *context_schema,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("cannot create temporary relation in non-temporary schema"),
-				 parser_errposition(pstate, relation->location)));
+				 parser_errposition(cxt->pstate, relation->location)));
 	}
 }
 
