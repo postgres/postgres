@@ -1653,6 +1653,32 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
+   <varlistentry id="reloption-toast-value-type" xreflabel="toast_value_type">
+    <term><literal>toast_value_type</literal> (<type>enum</type>)
+    <indexterm>
+     <primary><varname>toast_value_type</varname> storage parameter</primary>
+    </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Specifies the attribute type of <literal>chunk_id</literal> to use when
+      creating a <acronym>TOAST</acronym> relation for this table.  The
+      default is <literal>oid</literal>.
+      This parameter cannot be set for <acronym>TOAST</acronym> tables.
+     </para>
+     <para>
+      The value is only consulted when the <acronym>TOAST</acronym> relation
+      is created.  Changing it afterwards has no effect on an existing
+      <acronym>TOAST</acronym> relation, and a table rewrite such as
+      <link linkend="sql-cluster"><command>CLUSTER</command></link> or
+      <link linkend="sql-vacuum"><command>VACUUM FULL</command></link>
+      preserves the type already in use.  A dump and restore, on the other
+      hand, recreates the <acronym>TOAST</acronym> relation and therefore
+      applies the current value of this parameter.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="reloption-parallel-workers" xreflabel="parallel_workers">
     <term><literal>parallel_workers</literal> (<type>integer</type>)
      <indexterm>

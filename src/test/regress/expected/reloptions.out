@@ -194,6 +194,28 @@ SELECT reloptions FROM pg_class WHERE oid = :toast_oid;
 -- Fail on non-existent options in toast namespace
 CREATE TABLE reloptions_test2 (i int) WITH (toast.not_existing_option = 42);
 ERROR:  unrecognized parameter "not_existing_option"
+-- Test toast_value_type.
+CREATE TABLE reloptions_test2 (s VARCHAR) WITH (toast.toast_value_type = 'oid');
+ERROR:  unrecognized parameter "toast_value_type"
+CREATE TABLE reloptions_test2 (s VARCHAR) WITH (toast_value_type = 'int8');
+ERROR:  invalid value for enum option "toast_value_type": int8
+DETAIL:  Valid values are "oid".
+CREATE TABLE reloptions_test2 (s VARCHAR) WITH (toast_value_type = 'oid');
+SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test2'::regclass;
+       reloptions       
+------------------------
+ {toast_value_type=oid}
+(1 row)
+
+DROP TABLE reloptions_test2;
+-- relkinds not supported.
+CREATE INDEX reloptions_test_idx0 ON reloptions_test (s)
+	WITH (toast_value_type = 'oid');
+ERROR:  unrecognized parameter "toast_value_type"
+CREATE TABLE reloptions_test2 (i int) PARTITION BY RANGE (i)
+	WITH (toast_value_type = 'oid');
+ERROR:  cannot specify storage parameters for a partitioned table
+HINT:  Specify storage parameters for its leaf partitions instead.
 -- Mix TOAST & heap
 DROP TABLE reloptions_test;
 CREATE TABLE reloptions_test (s VARCHAR) WITH

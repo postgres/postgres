@@ -341,11 +341,20 @@ typedef enum StdRdOptIndexCleanup
 	STDRD_OPTION_VACUUM_INDEX_CLEANUP_NOT_SET,
 } StdRdOptIndexCleanup;
 
+/* StdRdOptions->toast_value_type values */
+typedef enum StdRdOptToastValueType
+{
+	STDRD_OPTION_TOAST_VALUE_TYPE_INVALID = 0,
+	STDRD_OPTION_TOAST_VALUE_TYPE_OID,
+} StdRdOptToastValueType;
+
 typedef struct StdRdOptions
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int			fillfactor;		/* page fill factor in percent (0..100) */
 	int			toast_tuple_target; /* target for tuple toasting */
+	StdRdOptToastValueType toast_value_type;	/* type assigned to chunk_id
+												 * at toast table creation */
 	AutoVacOpts autovacuum;		/* autovacuum-related options */
 	bool		user_catalog_table; /* use as an additional catalog relation */
 	int			parallel_workers;	/* max number of parallel workers */
@@ -369,6 +378,14 @@ typedef struct StdRdOptions
 #define RelationGetToastTupleTarget(relation, defaulttarg) \
 	((relation)->rd_options ? \
 	 ((StdRdOptions *) (relation)->rd_options)->toast_tuple_target : (defaulttarg))
+
+/*
+ * RelationGetToastValueType
+ *		Returns the relation's toast_value_type.  Note multiple eval of argument!
+ */
+#define RelationGetToastValueType(relation, defaulttarg) \
+	((relation)->rd_options ? \
+	 ((StdRdOptions *) (relation)->rd_options)->toast_value_type : (defaulttarg))
 
 /*
  * RelationGetFillFactor

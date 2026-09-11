@@ -1441,6 +1441,7 @@ static const char *const table_storage_parameters[] = {
 	"toast.vacuum_max_eager_freeze_failure_rate",
 	"toast.vacuum_truncate",
 	"toast_tuple_target",
+	"toast_value_type",
 	"user_catalog_table",
 	"vacuum_index_cleanup",
 	"vacuum_max_eager_freeze_failure_rate",

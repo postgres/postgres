@@ -548,6 +548,14 @@ static relopt_enum_elt_def viewCheckOptValues[] =
 	{(const char *) NULL}		/* list terminator */
 };
 
+/* values from StdRdOptToastValueType */
+static relopt_enum_elt_def StdRdOptToastValueTypes[] =
+{
+	/* no value for INVALID */
+	{"oid", STDRD_OPTION_TOAST_VALUE_TYPE_OID},
+	{(const char *) NULL}		/* list terminator */
+};
+
 static relopt_enum enumRelOpts[] =
 {
 	{
@@ -560,6 +568,17 @@ static relopt_enum enumRelOpts[] =
 		StdRdOptIndexCleanupValues,
 		STDRD_OPTION_VACUUM_INDEX_CLEANUP_NOT_SET,
 		gettext_noop("Valid values are \"on\", \"off\", and \"auto\".")
+	},
+	{
+		{
+			"toast_value_type",
+			"Controls the attribute type of chunk_id at toast table creation",
+			RELOPT_KIND_HEAP,
+			ShareUpdateExclusiveLock
+		},
+		StdRdOptToastValueTypes,
+		STDRD_OPTION_TOAST_VALUE_TYPE_OID,
+		gettext_noop("Valid values are \"oid\".")
 	},
 	{
 		{
@@ -2078,6 +2097,8 @@ static const relopt_parse_elt stdRdOptionsTab[] = {
 	offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, log_analyze_min_duration)},
 	{"toast_tuple_target", RELOPT_TYPE_INT,
 	offsetof(StdRdOptions, toast_tuple_target)},
+	{"toast_value_type", RELOPT_TYPE_ENUM,
+	offsetof(StdRdOptions, toast_value_type)},
 	{"autovacuum_vacuum_cost_delay", RELOPT_TYPE_REAL,
 	offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_cost_delay)},
 	{"autovacuum_vacuum_scale_factor", RELOPT_TYPE_REAL,

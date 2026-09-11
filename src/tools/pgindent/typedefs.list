@@ -3000,6 +3000,7 @@ StatsElem
 StatsExtInfo
 StdAnalyzeData
 StdRdOptIndexCleanup
+StdRdOptToastValueType
 StdRdOptions
 Step
 StopList
