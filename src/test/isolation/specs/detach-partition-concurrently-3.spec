@@ -31,6 +31,9 @@ step s1c			{ COMMIT; }
 step s1alter		{ ALTER TABLE d3_listp1 ALTER a DROP NOT NULL; }
 step s1insert		{ INSERT INTO d3_listp VALUES (1); }
 step s1insertpart	{ INSERT INTO d3_listp1 VALUES (1); }
+step s1updpart		{ UPDATE d3_listp1 SET a = 1; }
+step s1delpart		{ DELETE FROM d3_listp1; }
+step s1exceptpart	{ CREATE PUBLICATION pub_d3 FOR ALL TABLES EXCEPT (TABLE d3_listp1); }
 step s1drop			{ DROP TABLE d3_listp; }
 step s1droppart		{ DROP TABLE d3_listp1; }
 step s1trunc		{ TRUNCATE TABLE d3_listp; }
@@ -54,6 +57,13 @@ permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s1describe s1alter
 permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1insert s1c
 permutation s2snitch s1brr s1s s2detach s1cancel(s2detach) s1insert s1c s1spart
 permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s1insertpart
+
+# Verify that UPDATE, DELETE, and publication exclusion addition
+# using EXCEPT clause correctly handle a concurrently detached partition.
+# A partition whose concurrent detach has been committed but not finalized
+# reports no ancestors, even though relispartition is still set, which
+# would otherwise trigger a topmost ancestor lookup crash.
+permutation s2snitch s1b s1s s2detach s1cancel(s2detach) s1c s1updpart s1delpart s1exceptpart
 
 # Test partition descriptor caching
 permutation s2snitch s1b s1s s2detach2 s1cancel(s2detach2) s1c s1brr s1insert s1s s1insert s1c

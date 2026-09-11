@@ -73,10 +73,19 @@ check_publication_add_relation(PublicationRelInfo *pri)
 
 	/* If in EXCEPT clause, must be root partitioned table */
 	if (pri->except && targetrel->rd_rel->relispartition)
+	{
+		if (PartitionHasPendingDetach(RelationGetRelid(targetrel)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg(errormsg, relname),
+					 errdetail("This operation is not supported for partitions with an incomplete detach."),
+					 errhint("Use ALTER TABLE ... DETACH PARTITION ... FINALIZE to complete the pending detach operation.")));
+
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg(errormsg, relname),
 				 errdetail("This operation is not supported for individual partitions.")));
+	}
 
 	/* Must be a regular or partitioned table */
 	if (RelationGetForm(targetrel)->relkind != RELKIND_RELATION &&

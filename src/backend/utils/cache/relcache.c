@@ -5846,12 +5846,20 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 	schemaid = RelationGetNamespace(relation);
 	puboids = list_concat_unique_oid(puboids, GetSchemaPublications(schemaid));
 
+	/*
+	 * A partition whose concurrent detach has been committed but not
+	 * finalized reports no ancestors, even though relispartition is still
+	 * set. Treat such a partition as a standalone table, as after the detach
+	 * is finalized.
+	 */
 	if (relation->rd_rel->relispartition)
+		ancestors = get_partition_ancestors(relid);
+
+	if (ancestors)
 	{
 		Oid			last_ancestor_relid;
 
 		/* Add publications that the ancestors are in too. */
-		ancestors = get_partition_ancestors(relid);
 		last_ancestor_relid = llast_oid(ancestors);
 
 		foreach(lc, ancestors)
