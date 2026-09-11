@@ -959,8 +959,8 @@ other			.
 /* LCOV_EXCL_STOP */
 
 /*
- * Record the first few keywords/identifiers of a statement or CREATE
- * SCHEMA sub-statement in the idents[] array, of length idents_size.
+ * Record the first few keywords/identifiers of a statement
+ * in the idents[] array, of length idents_size.
  * *idents_count is the number of entries filled so far.
  *
  * We record the interesting keywords using their first character, which
@@ -976,20 +976,18 @@ psqlscan_record_initial_keyword(const char *identifier,
 	if (*idents_count < idents_size)
 	{
 		/*
-		 * What we need to recognize is CREATE [OR REPLACE] FUNCTION/PROCEDURE
-		 * and CREATE SCHEMA.  Checking for SCHEMA is useless but not harmful
-		 * in the CREATE SCHEMA sub-statement case.  We record these keywords
-		 * in lower case.  We also need to recognize COPY ... FROM STDIN.
-		 * (Note: the backend grammar doesn't distinguish STDIN from STDOUT,
-		 * so we should not do so here either.)  We record these keywords in
-		 * upper case, to avoid conflicting with the first set.
+		 * What we need to recognize is CREATE [OR REPLACE] FUNCTION/PROCEDURE.
+		 * We record these keywords in lower case.  We also need to recognize
+		 * COPY ... FROM STDIN.  (Note: the backend grammar doesn't
+		 * distinguish STDIN from STDOUT, so we should not do so here either.)
+		 * We record these keywords in upper case, to avoid conflicting with
+		 * the first set.
 		 */
 		if (pg_strcasecmp(identifier, "create") == 0 ||
 			pg_strcasecmp(identifier, "function") == 0 ||
 			pg_strcasecmp(identifier, "procedure") == 0 ||
 			pg_strcasecmp(identifier, "or") == 0 ||
-			pg_strcasecmp(identifier, "replace") == 0 ||
-			pg_strcasecmp(identifier, "schema") == 0)
+			pg_strcasecmp(identifier, "replace") == 0)
 			idents[*idents_count] = pg_tolower((unsigned char) identifier[0]);
 		else if (pg_strcasecmp(identifier, "copy") == 0 ||
 			pg_strcasecmp(identifier, "from") == 0 ||
@@ -1052,10 +1050,8 @@ psqlscan_is_copy_from_stdin(PsqlScanState state)
  * Short of writing a full parser here, the following heuristic should work.
  *
  * We track whether the beginning of the statement matches CREATE [OR REPLACE]
- * {FUNCTION|PROCEDURE}.  For CREATE SCHEMA, track BEGIN .. END blocks only
- * after recognizing an embedded CREATE [OR REPLACE] {FUNCTION|PROCEDURE}
- * subcommand.  Once one of these conditions holds, count BEGIN and END
- * pairs.  We also have to account for CASE ... END.
+ * {FUNCTION|PROCEDURE}.  If so, count BEGIN and END pairs.  We also have to
+ * account for CASE ... END.
  *
  * 2. Record enough information for psqlscan_is_copy_from_stdin() to recognize
  * COPY FROM STDIN commands.
@@ -1063,19 +1059,13 @@ psqlscan_is_copy_from_stdin(PsqlScanState state)
 static void
 psqlscan_track_identifier(PsqlScanState state, const char *identifier)
 {
-	bool		is_create_schema;
-
 	/* None of this needs to happen when we're inside parentheses */
 	if (state->paren_depth != 0)
 		return;
 
 	/* Reset all my state at the start of each new statement */
 	if (state->init_idents_count == 0)
-	{
 		memset(state->init_idents, 0, sizeof(state->init_idents));
-		state->sub_idents_count = 0;
-		memset(state->sub_idents, 0, sizeof(state->sub_idents));
-	}
 
 	/* Record initial keywords if init_idents_count is small enough */
 	psqlscan_record_initial_keyword(identifier,
@@ -1084,34 +1074,9 @@ psqlscan_track_identifier(PsqlScanState state, const char *identifier)
 									&state->init_idents_count);
 
 	/*
-	 * In CREATE SCHEMA, track identifiers from each top-level CREATE schema
-	 * element separately, so that BEGIN/END tracking is enabled only within
-	 * CREATE [OR REPLACE] {FUNCTION|PROCEDURE} clauses.
+	 * Track BEGIN/CASE/END only when within an appropriate statement.
 	 */
-	is_create_schema = (state->init_idents[0] == 'c' &&
-						state->init_idents[1] == 's');
-	if (is_create_schema &&
-		state->begin_depth == 0)
-	{
-		/* Reset sub-clause state at each top-level CREATE keyword */
-		if (pg_strcasecmp(identifier, "create") == 0)
-		{
-			state->sub_idents_count = 0;
-			memset(state->sub_idents, 0, sizeof(state->sub_idents));
-		}
-		/* ... and record the first few keywords following that */
-		psqlscan_record_initial_keyword(identifier,
-										state->sub_idents,
-										lengthof(state->sub_idents),
-										&state->sub_idents_count);
-	}
-
-	/*
-	 * Track BEGIN/CASE/END only when within an appropriate (sub) statement.
-	 */
-	if (psqlscan_is_create_routine(state->init_idents) ||
-		(is_create_schema &&
-		 psqlscan_is_create_routine(state->sub_idents)))
+	if (psqlscan_is_create_routine(state->init_idents))
 	{
 		if (pg_strcasecmp(identifier, "begin") == 0)
 			state->begin_depth++;
