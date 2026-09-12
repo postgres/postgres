@@ -2279,42 +2279,6 @@ The Dutch stemmer has also been updated.  The old Dutch stemmer is available via
 </listitem>
 
 <!--
-Author: Andrew Dunstan <andrew@dunslane.net>
-2026-04-05 [76e514ebb] Add pg_get_role_ddl() function
--->
-
-<listitem>
-<para>
-Add function <link linkend="functions-get-object-ddl-table"><function>pg_get_role_ddl()</function></link> to output role creation commands (Mario Gonzalez, Bryan Green, Andrew Dunstan, Euler Taveira)
-<ulink url="&commit_baseurl;76e514ebb">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: Andrew Dunstan <andrew@dunslane.net>
-2026-04-05 [b99fd9fd7] Add pg_get_tablespace_ddl() function
--->
-
-<listitem>
-<para>
-Add function <link linkend="functions-get-object-ddl-table"><function>pg_get_tablespace_ddl()</function></link> to output tablespace creation commands (Nishant Sharma, Manni Wood, Andrew Dunstan, Euler Taveira)
-<ulink url="&commit_baseurl;b99fd9fd7">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: Andrew Dunstan <andrew@dunslane.net>
-2026-04-05 [a4f774cf1] Add pg_get_database_ddl() function
--->
-
-<listitem>
-<para>
-Add function <link linkend="functions-get-object-ddl-table"><function>pg_get_database_ddl()</function></link> to output database creation commands (Akshay Joshi, Andrew Dunstan, Euler Taveira)
-<ulink url="&commit_baseurl;a4f774cf1">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2025-08-21 [53eff471c] PL/Python: Add event trigger support
 -->
