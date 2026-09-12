@@ -6343,7 +6343,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
         backend with the specified ID.
         The fields returned are <parameter>subxact_count</parameter>, which
         is the number of subtransactions in the backend's subtransaction cache,
-        and <parameter>subxact_overflow</parameter>, which indicates whether
+        and <parameter>subxact_overflowed</parameter>, which indicates whether
         the backend's subtransaction cache is overflowed or not.
        </para></entry>
       </row>
