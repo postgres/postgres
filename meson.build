@@ -924,10 +924,7 @@ endif
 llvmopt = get_option('llvm')
 llvm = not_found_dep
 if have_cxx
-  # Use include_type 'system' so that warnings from LLVM's own headers are
-  # not reported under the warning options we select for our own code.
-  llvm = dependency('llvm', version: '>=14', method: 'config-tool',
-                    include_type: 'system', required: llvmopt)
+  llvm = dependency('llvm', version: '>=14', method: 'config-tool', required: llvmopt)
 
   if llvm.found()
 
