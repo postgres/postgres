@@ -325,6 +325,14 @@ heap_page_prune_opt(Relation relation, Buffer buffer, Buffer *vmbuffer,
 		bool		record_free_space = false;
 		Size		freespace = 0;
 
+		/*
+		 * Pin the VM page before taking the heap cleanup lock. This may
+		 * occasionally lead to an unnecessary pin when the buffer is
+		 * contended, but the same VM page covers many heap pages, so there is
+		 * a good chance for the work to be reusable.
+		 */
+		visibilitymap_pin(relation, BufferGetBlockNumber(buffer), vmbuffer);
+
 		/* OK, try to get exclusive buffer lock */
 		if (!ConditionalLockBufferForCleanup(buffer))
 			return;
@@ -339,9 +347,6 @@ heap_page_prune_opt(Relation relation, Buffer buffer, Buffer *vmbuffer,
 			OffsetNumber dummy_off_loc;
 			PruneFreezeResult presult;
 			PruneFreezeParams params;
-
-			visibilitymap_pin(relation, BufferGetBlockNumber(buffer),
-							  vmbuffer);
 
 			params.relation = relation;
 			params.buffer = buffer;
