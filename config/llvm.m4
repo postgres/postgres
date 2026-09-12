@@ -46,10 +46,13 @@ AC_DEFUN([PGAC_LLVM_SUPPORT],
   # clear what the minimum version is.
 
   # Collect compiler flags necessary to build the LLVM dependent
-  # shared library.
+  # shared library.  The include directories are added with -isystem
+  # rather than -I, so that warnings from LLVM's own headers are not
+  # reported under the warning options we select for our own code.
   for pgac_option in `$LLVM_CONFIG --cppflags`; do
     case $pgac_option in
-      -I*|-D*) LLVM_CPPFLAGS="$pgac_option $LLVM_CPPFLAGS";;
+      -I*) LLVM_CPPFLAGS="-isystem ${pgac_option#-I} $LLVM_CPPFLAGS";;
+      -D*) LLVM_CPPFLAGS="$pgac_option $LLVM_CPPFLAGS";;
     esac
   done
 
