@@ -159,6 +159,7 @@ static bool cluster_rel_recheck(RepackCommand cmd, Relation OldHeap,
 								int options);
 static void check_concurrent_repack_requirements(Relation rel,
 												 Oid *ident_idx_p);
+static void check_index_requirements(Relation rel, RepackCommand cmd);
 static void rebuild_relation(Relation OldHeap, Relation index, bool verbose,
 							 Oid ident_idx);
 static void copy_table_data(Relation NewHeap, Relation OldHeap, Relation OldIndex,
@@ -527,6 +528,14 @@ cluster_rel(RepackCommand cmd, Relation OldHeap, Oid indexOid,
 	if (concurrent)
 		check_concurrent_repack_requirements(OldHeap, &ident_idx);
 
+	/*
+	 * Also check the state of indexes; this can abort the command for REPACK.
+	 * Historically this hasn't affected CLUSTER or VACUUM FULL, so don't do
+	 * it for those commands.
+	 */
+	if (cmd == REPACK_COMMAND_REPACK)
+		check_index_requirements(OldHeap, cmd);
+
 	/* Check for user-requested abort. */
 	CHECK_FOR_INTERRUPTS();
 
@@ -872,6 +881,68 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 	}
 
 	table_close(pg_index, RowExclusiveLock);
+}
+
+/*
+ * check_index_requirements: verify index state on relation being processed
+ *
+ * Throw an error if any !indisready indexes are found.
+ *
+ * Indexes that are not ready for inserts, such as ones left behind by failed
+ * CREATE INDEX CONCURRENTLY, are not maintained by DML.  In some cases they
+ * may fail to build altogether.  Throwing an error here forces the user to
+ * take action on these indexes separately from the table reconstruction,
+ * which prevents perpetuating them for no reason.
+ */
+static void
+check_index_requirements(Relation rel, RepackCommand cmd)
+{
+	Relation	indrel;
+	SysScanDesc indscan;
+	ScanKeyData skey;
+	HeapTuple	htup;
+	int			num_invalid_idxs = 0;
+	StringInfoData dest;
+
+	initStringInfo(&dest);
+
+	/* Prepare to scan pg_index for entries having indrelid = this rel. */
+	ScanKeyInit(&skey,
+				Anum_pg_index_indrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
+
+	indrel = table_open(IndexRelationId, AccessShareLock);
+	indscan = systable_beginscan(indrel, IndexIndrelidIndexId, true,
+								 NULL, 1, &skey);
+
+	while (HeapTupleIsValid(htup = systable_getnext(indscan)))
+	{
+		Form_pg_index index = (Form_pg_index) GETSTRUCT(htup);
+
+		if (!index->indisready)
+		{
+			Assert(!index->indisvalid);
+			if (num_invalid_idxs == 0)
+				appendStringInfo(&dest, _("\"%s\""), get_rel_name(index->indexrelid));
+			else
+				appendStringInfo(&dest, _(", \"%s\""), get_rel_name(index->indexrelid));
+			num_invalid_idxs++;
+		}
+	}
+	systable_endscan(indscan);
+	table_close(indrel, AccessShareLock);
+
+	if (num_invalid_idxs > 0)
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("cannot execute %s on relation \"%s\"",
+					   RepackCommandAsString(cmd), RelationGetRelationName(rel)),
+				errdetail_plural("An invalid index cannot be processed correctly: %s.",
+								 "Some invalid indexes cannot be processed correctly: %s.",
+								 num_invalid_idxs,
+								 dest.data),
+				errhint("Use DROP INDEX or REINDEX."));
 }
 
 /*

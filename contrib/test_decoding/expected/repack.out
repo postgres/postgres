@@ -51,6 +51,22 @@ SELECT * FROM rpk_missing;
 (3 rows)
 
 DROP TABLE rpk_missing;
+-- Verify handling of !indisready indexes
+CREATE TABLE repack_conc_invidx (i int PRIMARY KEY, j int);
+INSERT INTO repack_conc_invidx VALUES (1, 0), (2, 0);
+CREATE UNIQUE INDEX CONCURRENTLY repack_conc_invidx_uq ON repack_conc_invidx (j);
+ERROR:  could not create unique index "repack_conc_invidx_uq"
+DETAIL:  Key (j)=(0) is duplicated.
+CREATE INDEX CONCURRENTLY repack_conc_invalid_expr ON repack_conc_invidx ((1/j));
+ERROR:  division by zero
+REPACK repack_conc_invidx;
+ERROR:  cannot execute REPACK on relation "repack_conc_invidx"
+DETAIL:  Some invalid indexes cannot be processed correctly: "repack_conc_invidx_uq", "repack_conc_invalid_expr".
+HINT:  Use DROP INDEX or REINDEX.
+REPACK (CONCURRENTLY) repack_conc_invidx;
+ERROR:  cannot execute REPACK on relation "repack_conc_invidx"
+DETAIL:  Some invalid indexes cannot be processed correctly: "repack_conc_invidx_uq", "repack_conc_invalid_expr".
+HINT:  Use DROP INDEX or REINDEX.
 -- Error cases for concurrent mode
 -- Doesn't like partitioned tables
 CREATE TABLE clstrpart (a int) PARTITION BY RANGE (a);
