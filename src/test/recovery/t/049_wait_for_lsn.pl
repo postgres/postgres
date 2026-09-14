@@ -286,8 +286,7 @@ $node_standby->psql(
 	'postgres',
 	"BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT 1; WAIT FOR LSN '${lsn3}';",
 	stderr => \$stderr);
-ok( $stderr =~
-	  /WAIT FOR must be called without an active or registered snapshot/,
+ok( $stderr =~ /WAIT must be called without an active or registered snapshot/,
 	"get an error when running in a transaction with an isolation level higher than REPEATABLE READ"
 );
 
@@ -315,21 +314,21 @@ $node_standby->psql(
 	'postgres',
 	"SELECT pg_wal_replay_wait_wrap('${lsn3}');",
 	stderr => \$stderr);
-ok($stderr =~ /WAIT FOR can only be executed as a top-level statement/,
+ok($stderr =~ /WAIT can only be executed as a top-level statement/,
 	"get an error when running within a function");
 
 $node_standby->psql(
 	'postgres',
 	"CALL pg_wal_replay_wait_proc('${lsn3}');",
 	stderr => \$stderr);
-ok($stderr =~ /WAIT FOR can only be executed as a top-level statement/,
+ok($stderr =~ /WAIT can only be executed as a top-level statement/,
 	"get an error when running within a procedure");
 
 $node_standby->psql(
 	'postgres',
 	"DO \$\$ BEGIN EXECUTE format('WAIT FOR LSN %L;', '${lsn3}'); END \$\$;",
 	stderr => \$stderr);
-ok($stderr =~ /WAIT FOR can only be executed as a top-level statement/,
+ok($stderr =~ /WAIT can only be executed as a top-level statement/,
 	"get an error when running within a DO block");
 
 # 6. Check parameter validation error cases on standby before promotion
