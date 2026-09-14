@@ -5182,7 +5182,7 @@ where i8.q2 = 123;
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  Nested Loop
-   Output: i8.q1, i8.q2, (InitPlan expr_1).col1, false, (i8.q2)
+   Output: i8.q1, i8.q2, (InitPlan expr_2).col1, false, (i8.q2)
    InitPlan expr_1
      ->  Result
            Output: true
@@ -5195,7 +5195,7 @@ where i8.q2 = 123;
    ->  Nested Loop
          Output: i8.q1, i8.q2, (i8.q2)
          ->  Subquery Scan on ss1
-               Output: ss1.y, (InitPlan expr_1).col1
+               Output: ss1.y, (InitPlan expr_2).col1
                ->  Limit
                      Output: NULL::integer
                      ->  Result
@@ -5209,7 +5209,7 @@ where i8.q2 = 123;
                      Output: (i8.q2)
                      ->  Result
                            Output: i8.q2
-                           One-Time Filter: ((InitPlan expr_1).col1)
+                           One-Time Filter: ((InitPlan expr_2).col1)
 (29 rows)
 
 explain (verbose, costs off)
@@ -5225,7 +5225,7 @@ where i8.q2 = 123;
                              QUERY PLAN                              
 ---------------------------------------------------------------------
  Nested Loop
-   Output: i8.q1, i8.q2, (InitPlan expr_1).col1, false, (i8.q2)
+   Output: i8.q1, i8.q2, (InitPlan expr_2).col1, false, (i8.q2)
    InitPlan expr_1
      ->  Result
            Output: true
@@ -5239,7 +5239,7 @@ where i8.q2 = 123;
    ->  Nested Loop
          Output: i8.q1, i8.q2, (i8.q2)
          ->  Seq Scan on public.int4_tbl i4
-               Output: i4.f1, (InitPlan expr_1).col1
+               Output: i4.f1, (InitPlan expr_2).col1
                Filter: (i4.f1 = 0)
          ->  Nested Loop
                Output: i8.q1, i8.q2, (i8.q2)
@@ -5250,7 +5250,7 @@ where i8.q2 = 123;
                      Output: (i8.q2)
                      ->  Result
                            Output: i8.q2
-                           One-Time Filter: ((InitPlan expr_1).col1)
+                           One-Time Filter: ((InitPlan expr_2).col1)
 (27 rows)
 
 -- Test proper handling of appendrel PHVs during useless-RTE removal
@@ -7281,6 +7281,154 @@ on lhs.id = rhs.id;
    ->  Hash
          ->  Result
 (5 rows)
+
+-- check handling of a removed Var that's pushed down into a subquery
+-- (fallout from the fix for bug #19560)
+explain (verbose, costs off)
+select c1, c2
+from (select case when false then remov.id end as c1
+      from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
+     right join int4_tbl i42 on false,
+     lateral (select ss1.c1 as c2 from int4_tbl i43 offset 0) ss2;
+                  QUERY PLAN                  
+----------------------------------------------
+ Nested Loop
+   Output: (NULL::integer), ((NULL::integer))
+   ->  Nested Loop Left Join
+         Output: (NULL::integer)
+         Join Filter: false
+         ->  Seq Scan on public.int4_tbl i42
+               Output: i42.f1
+         ->  Result
+               Output: NULL::integer
+               Replaces: Scan on i41
+               One-Time Filter: false
+   ->  Memoize
+         Output: ((NULL::integer))
+         Cache Key: (NULL::integer)
+         Cache Mode: binary
+         ->  Seq Scan on public.int4_tbl i43
+               Output: (NULL::integer)
+(17 rows)
+
+-- likewise, where the subquery is a UNION ALL whose arms are appendrel
+-- children that are not simple enough to be pulled up
+explain (verbose, costs off)
+select c1, c2
+from (select case when false then remov.id end as c1
+      from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
+     right join int4_tbl i42 on false,
+     lateral ((select ss1.c1 as c2 from int4_tbl i43 offset 0)
+              union all
+              (select ss1.c1 from int4_tbl i44 offset 0)) ss2;
+                    QUERY PLAN                     
+---------------------------------------------------
+ Nested Loop
+   Output: (NULL::integer), ((NULL::integer))
+   ->  Nested Loop Left Join
+         Output: (NULL::integer)
+         Join Filter: false
+         ->  Seq Scan on public.int4_tbl i42
+               Output: i42.f1
+         ->  Result
+               Output: NULL::integer
+               Replaces: Scan on i41
+               One-Time Filter: false
+   ->  Memoize
+         Output: ((NULL::integer))
+         Cache Key: (NULL::integer)
+         Cache Mode: binary
+         ->  Append
+               ->  Seq Scan on public.int4_tbl i43
+                     Output: (NULL::integer)
+               ->  Seq Scan on public.int4_tbl i44
+                     Output: (NULL::integer)
+(20 rows)
+
+-- likewise, where the PHV contains a SubPlan and the subquery has a join, so
+-- that its planner runs flatten_join_alias_vars over the outer-level PHV
+explain (verbose, costs off)
+select c1, c2
+from (select case when false then remov.id else (select i41.f1) end as c1
+      from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
+     right join int4_tbl i42 on false,
+     lateral (select ss1.c1 as c2 from int4_tbl i43 join int4_tbl i44 on true
+              offset 0) ss2;
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Nested Loop
+   Output: ((SubPlan expr_2)), (((SubPlan expr_2)))
+   ->  Nested Loop Left Join
+         Output: ((SubPlan expr_2))
+         Join Filter: false
+         ->  Seq Scan on public.int4_tbl i42
+               Output: i42.f1
+         ->  Result
+               Output: (SubPlan expr_2)
+               Replaces: Scan on i41
+               One-Time Filter: false
+               SubPlan expr_2
+                 ->  Result
+                       Output: i41.f1
+   ->  Memoize
+         Output: (((SubPlan expr_2)))
+         Cache Key: ((SubPlan expr_2))
+         Cache Mode: binary
+         ->  Nested Loop
+               Output: ((SubPlan expr_2))
+               ->  Seq Scan on public.int4_tbl i43
+                     Output: i43.f1
+               ->  Materialize
+                     ->  Seq Scan on public.int4_tbl i44
+(24 rows)
+
+-- likewise, where the PHV copy is pushed into a SubLink's subselect rather
+-- than a LATERAL subquery
+explain (verbose, costs off)
+select (select ss1.c1 from int4_tbl i43 offset 0) as c2
+from (select case when false then remov.id end as c1
+      from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
+     right join int4_tbl i42 on true;
+                 QUERY PLAN                  
+---------------------------------------------
+ Nested Loop Left Join
+   Output: (SubPlan expr_1)
+   ->  Seq Scan on public.int4_tbl i42
+         Output: i42.f1
+   ->  Materialize
+         Output: (NULL::integer)
+         ->  Seq Scan on public.int4_tbl i41
+               Output: NULL::integer
+   SubPlan expr_1
+     ->  Seq Scan on public.int4_tbl i43
+           Output: (NULL::integer)
+(11 rows)
+
+-- likewise, where the pushed-down PHV's expression itself contains a SubLink,
+-- so it must be preprocessed once at the outer level rather than again while
+-- building the SubPlan that references it
+explain (verbose, costs off)
+select (select ss1.c1 from int4_tbl i43 offset 0) as c2
+from (select case when false then remov.id else (select i41.f1) end as c1
+      from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
+     right join int4_tbl i42 on true;
+                 QUERY PLAN                  
+---------------------------------------------
+ Nested Loop Left Join
+   Output: (SubPlan expr_2)
+   ->  Seq Scan on public.int4_tbl i42
+         Output: i42.f1
+   ->  Materialize
+         Output: ((SubPlan expr_1))
+         ->  Seq Scan on public.int4_tbl i41
+               Output: (SubPlan expr_1)
+               SubPlan expr_1
+                 ->  Result
+                       Output: i41.f1
+   SubPlan expr_2
+     ->  Seq Scan on public.int4_tbl i43
+           Output: ((SubPlan expr_1))
+(14 rows)
 
 -- More tests of correct placement of pseudoconstant quals
 -- simple constant-false condition

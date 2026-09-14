@@ -3407,9 +3407,8 @@ eval_const_expressions_mutator(Node *node,
 
 			/*
 			 * Return a SubPlan unchanged --- too late to do anything with it.
-			 *
-			 * XXX should we ereport() here instead?  Probably this routine
-			 * should never be invoked after SubPlan creation.
+			 * This can happen in estimation mode, which runs after SubPlans
+			 * have been created.
 			 */
 			return node;
 		case T_RelabelType:
@@ -4215,20 +4214,28 @@ eval_const_expressions_mutator(Node *node,
 				return (Node *) newcdomain;
 			}
 		case T_PlaceHolderVar:
-
-			/*
-			 * In estimation mode, just strip the PlaceHolderVar node
-			 * altogether; this amounts to estimating that the contained value
-			 * won't be forced to null by an outer join.  In regular mode we
-			 * just use the default behavior (ie, simplify the expression but
-			 * leave the PlaceHolderVar node intact).
-			 */
-			if (context->estimate)
 			{
 				PlaceHolderVar *phv = (PlaceHolderVar *) node;
 
-				return eval_const_expressions_mutator((Node *) phv->phexpr,
-													  context);
+				/*
+				 * Leave a PHV of an upper query level alone: its expression
+				 * belongs to that level, which has already preprocessed it.
+				 * But we do copy the subtree, just to conform to this
+				 * function's API spec.
+				 */
+				if (phv->phlevelsup > 0)
+					return copyObject(node);
+
+				/*
+				 * In estimation mode, just strip the PlaceHolderVar node
+				 * altogether; this amounts to estimating that the contained
+				 * value won't be forced to null by an outer join.  In regular
+				 * mode we just use the default behavior (ie, simplify the
+				 * expression but leave the PlaceHolderVar node intact).
+				 */
+				if (context->estimate)
+					return eval_const_expressions_mutator((Node *) phv->phexpr,
+														  context);
 			}
 			break;
 		case T_ConvertRowtypeExpr:

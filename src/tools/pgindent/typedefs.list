@@ -4170,6 +4170,7 @@ postprocess_result_function
 pqbool
 pqsigfunc
 pqsigfunc_legacy
+preprocess_subquery_phvs_context
 printQueryOpt
 printTableContent
 printTableFooter

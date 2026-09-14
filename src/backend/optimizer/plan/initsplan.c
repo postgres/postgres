@@ -29,7 +29,6 @@
 #include "optimizer/paths.h"
 #include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
-#include "optimizer/planner.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/analyze.h"
 #include "rewrite/rewriteManip.h"
@@ -1132,17 +1131,13 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 			PlaceHolderVar *phv = (PlaceHolderVar *) node;
 			int			levelsup = phv->phlevelsup;
 
-			/* Have to work harder to adjust the contained expression too */
+			/*
+			 * Have to work harder to adjust the contained expression too.
+			 * (Its expression has already been preprocessed by
+			 * subquery_planner(), so we must not do that again here.)
+			 */
 			if (levelsup != 0)
 				IncrementVarSublevelsUp(node, -levelsup, 0);
-
-			/*
-			 * If we pulled the PHV out of a subquery RTE, its expression
-			 * needs to be preprocessed.  subquery_planner() already did this
-			 * for level-zero PHVs in function and values RTEs, though.
-			 */
-			if (levelsup > 0)
-				phv->phexpr = preprocess_phv_expression(root, phv->phexpr);
 		}
 		else
 			Assert(false);

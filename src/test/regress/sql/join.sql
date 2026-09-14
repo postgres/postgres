@@ -2699,6 +2699,53 @@ full join
   ) as rhs
 on lhs.id = rhs.id;
 
+-- check handling of a removed Var that's pushed down into a subquery
+-- (fallout from the fix for bug #19560)
+explain (verbose, costs off)
+select c1, c2
+from (select case when false then remov.id end as c1
+      from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
+     right join int4_tbl i42 on false,
+     lateral (select ss1.c1 as c2 from int4_tbl i43 offset 0) ss2;
+
+-- likewise, where the subquery is a UNION ALL whose arms are appendrel
+-- children that are not simple enough to be pulled up
+explain (verbose, costs off)
+select c1, c2
+from (select case when false then remov.id end as c1
+      from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
+     right join int4_tbl i42 on false,
+     lateral ((select ss1.c1 as c2 from int4_tbl i43 offset 0)
+              union all
+              (select ss1.c1 from int4_tbl i44 offset 0)) ss2;
+
+-- likewise, where the PHV contains a SubPlan and the subquery has a join, so
+-- that its planner runs flatten_join_alias_vars over the outer-level PHV
+explain (verbose, costs off)
+select c1, c2
+from (select case when false then remov.id else (select i41.f1) end as c1
+      from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
+     right join int4_tbl i42 on false,
+     lateral (select ss1.c1 as c2 from int4_tbl i43 join int4_tbl i44 on true
+              offset 0) ss2;
+
+-- likewise, where the PHV copy is pushed into a SubLink's subselect rather
+-- than a LATERAL subquery
+explain (verbose, costs off)
+select (select ss1.c1 from int4_tbl i43 offset 0) as c2
+from (select case when false then remov.id end as c1
+      from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
+     right join int4_tbl i42 on true;
+
+-- likewise, where the pushed-down PHV's expression itself contains a SubLink,
+-- so it must be preprocessed once at the outer level rather than again while
+-- building the SubPlan that references it
+explain (verbose, costs off)
+select (select ss1.c1 from int4_tbl i43 offset 0) as c2
+from (select case when false then remov.id else (select i41.f1) end as c1
+      from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
+     right join int4_tbl i42 on true;
+
 -- More tests of correct placement of pseudoconstant quals
 
 -- simple constant-false condition
