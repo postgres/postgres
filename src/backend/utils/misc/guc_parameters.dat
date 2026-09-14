@@ -1297,6 +1297,7 @@
 
 { name => 'idle_replication_slot_timeout', type => 'int', context => 'PGC_SIGHUP', group => 'REPLICATION_SENDING',
   short_desc => 'Sets the duration a replication slot can remain idle before it is invalidated.',
+  long_desc => '0 disables the timeout.',
   flags => 'GUC_UNIT_S',
   variable => 'idle_replication_slot_timeout_secs',
   boot_val => '0',
@@ -1383,6 +1384,7 @@
 
 { name => 'io_max_concurrency', type => 'int', context => 'PGC_POSTMASTER', group => 'RESOURCES_IO',
   short_desc => 'Max number of IOs that one process can execute simultaneously.',
+  long_desc => '-1 means use a value based on "shared_buffers" and the maximum number of processes.',
   variable => 'io_max_concurrency',
   boot_val => '-1',
   min => '-1',
@@ -2352,7 +2354,7 @@
 
 { name => 'password_expiration_warning_threshold', type => 'int', context => 'PGC_SIGHUP', group => 'CONN_AUTH_AUTH',
   short_desc => 'Threshold for password expiration warnings.',
-  long_desc => '0 means not to emit these warnings.',
+  long_desc => '0 disables these warnings.',
   flags => 'GUC_UNIT_S',
   variable => 'password_expiration_warning_threshold',
   boot_val => '604800',
@@ -3567,7 +3569,7 @@
 
 { name => 'wal_sender_shutdown_timeout', type => 'int', context => 'PGC_USERSET', group => 'REPLICATION_SENDING',
   short_desc => 'Sets the maximum time the server waits during shutdown for all WAL data to be replicated to the receiver.',
-  long_desc => '-1 disables the timeout and waits for the receiver to catch up; 0 does not wait for the receiver to catch up.',
+  long_desc => '-1 means wait indefinitely. 0 means do not wait.',
   flags => 'GUC_UNIT_MS',
   variable => 'wal_sender_shutdown_timeout',
   boot_val => '-1',
@@ -3577,6 +3579,7 @@
 
 { name => 'wal_sender_timeout', type => 'int', context => 'PGC_USERSET', group => 'REPLICATION_SENDING',
   short_desc => 'Sets the maximum time to wait for WAL replication.',
+  long_desc => '0 disables the timeout.',
   flags => 'GUC_UNIT_MS',
   variable => 'wal_sender_timeout',
   boot_val => '60 * 1000',
