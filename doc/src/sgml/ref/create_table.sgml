@@ -1670,7 +1670,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       The value is only consulted when the <acronym>TOAST</acronym> relation
       is created.  Changing it afterwards has no effect on an existing
       <acronym>TOAST</acronym> relation, and a table rewrite such as
-      <link linkend="sql-cluster"><command>CLUSTER</command></link> or
+      <link linkend="sql-cluster"><command>CLUSTER</command></link>,
+      <link linkend="sql-repack"><command>REPACK</command></link> or
       <link linkend="sql-vacuum"><command>VACUUM FULL</command></link>
       preserves the type already in use.  A dump and restore, on the other
       hand, recreates the <acronym>TOAST</acronym> relation and therefore
