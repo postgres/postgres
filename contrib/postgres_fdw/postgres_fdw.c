@@ -596,6 +596,7 @@ static bool fetch_remote_statistics(Relation relation,
 									const char *local_schemaname,
 									const char *local_relname,
 									ForeignTable *table,
+									ForeignServer *server,
 									RemoteStatsResults *remstats,
 									RemoteAttributeMapping **p_remattrmap,
 									int *p_attrcnt);
@@ -5763,7 +5764,7 @@ postgresImportForeignStatistics(Relation relation, List *va_cols, int elevel)
 	starttime = GetCurrentTimestamp();
 
 	ok = fetch_remote_statistics(relation, va_cols,
-								 schemaname, relname, table,
+								 schemaname, relname, table, server,
 								 &remstats, &remattrmap, &attrcnt);
 
 	if (ok)
@@ -5796,6 +5797,7 @@ fetch_remote_statistics(Relation relation,
 						const char *local_schemaname,
 						const char *local_relname,
 						ForeignTable *table,
+						ForeignServer *server,
 						RemoteStatsResults *remstats,
 						RemoteAttributeMapping **p_remattrmap,
 						int *p_attrcnt)
@@ -5912,6 +5914,19 @@ fetch_remote_statistics(Relation relation,
 		/* Try to get attribute stats if needed. */
 		if (attrcnt > 0)
 		{
+			/*
+			 * The fetch_attstats query sends COLLATE "C" to the remote
+			 * server; if it hasn't got it, fallback to sampling.
+			 */
+			if (server_version_num < 90100)
+			{
+				ereport(WARNING,
+						errmsg("could not import statistics for foreign table \"%s.%s\" --- foreign server \"%s\" is too old to support attribute statistics import",
+							   local_schemaname, local_relname,
+							   server->servername));
+				goto fetch_cleanup;
+			}
+
 			/* Fetch attribute stats. */
 			remstats->att = attstats = fetch_attstats(conn,
 													  server_version_num,
@@ -5987,6 +6002,9 @@ fetch_attstats(PGconn *conn, int server_version_num,
 	StringInfoData sql;
 	PGresult   *res;
 
+	/* The caller guarantees the remote server is v9.1 or later. */
+	Assert(server_version_num >= 90100);
+
 	initStringInfo(&sql);
 	appendStringInfoString(&sql,
 						   "SELECT DISTINCT ON (attname COLLATE \"C\") attname,"
@@ -6030,18 +6048,11 @@ fetch_attstats(PGconn *conn, int server_version_num,
 					 column_list);
 
 	/*
-	 * inherited is supported since Postgres 9.0
-	 *
-	 * Note that this is okay because for now, we support the case where the
-	 * remote table is partitioned, but not the case where it is inherited
-	 * (see fetch_remote_statistics()).
+	 * inherited and COLLATE are supported since Postgres 9.0 and 9.1,
+	 * respectively.
 	 */
-	if (server_version_num >= 90000)
-		appendStringInfoString(&sql,
-							   " ORDER BY attname COLLATE \"C\", inherited DESC");
-	else
-		appendStringInfoString(&sql,
-							   " ORDER BY attname COLLATE \"C\"");
+	appendStringInfoString(&sql,
+						   " ORDER BY attname COLLATE \"C\", inherited DESC");
 
 	res = pgfdw_exec_query(conn, sql.data, NULL);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)

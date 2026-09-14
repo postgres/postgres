@@ -370,14 +370,15 @@ OPTIONS (ADD password_required 'false');
       <para>
        This option, which can be specified for a foreign table or a foreign
        server, determines if <command>ANALYZE</command> on a foreign table
-       will instead attempt to fetch the existing statistics for the foreign
-       table on the remote server, and import those statistics directly to
-       the local server.  If the attempt failed, statistics are collected by
-       row sampling on the foreign table.
+       will instead attempt to fetch the existing statistics for the remote
+       table, and import those statistics directly to the local server
+       (without applying the foreign table columns'
+       <literal>n_distinct</literal> option).  If the attempt failed,
+       statistics are collected by row sampling on the foreign table.
        This option is only useful if the remote table is one that can have
        regular statistics (tables, not inherited, and materialized views).
        When using this option, <emphasis>it is the user's responsibility
-       </emphasis> to ensure that the existing statistics for the foreign
+       </emphasis> to ensure that the existing statistics for the remote
        table are up-to-date.
        The default is <literal>false</literal>.
       </para>
