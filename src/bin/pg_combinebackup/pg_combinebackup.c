@@ -670,13 +670,19 @@ check_control_files(int n_backups, char **backup_dirs)
 	pg_log_debug("system identifier is %" PRIu64, system_identifier);
 
 	/*
-	 * Warn the user if not all backups are in the same state with regards to
-	 * checksums.
+	 * Reject a chain whose backups were not all in the same state with
+	 * regards to checksums.  The loop above only flags that when the last
+	 * backup has checksums enabled: the blocks taken from the older backups
+	 * have no checksums, and pg_combinebackup does not recompute them, so the
+	 * combined cluster would fail verification as soon as it reads them.  The
+	 * other direction is harmless, since stale checksums are never verified
+	 * while checksums are disabled.
 	 */
 	if (data_checksum_mismatch)
 	{
-		pg_log_warning("only some backups have checksums enabled");
-		pg_log_warning_hint("Disable, and optionally reenable, checksums on the output directory to avoid failures.");
+		pg_log_error("only some backups have checksums enabled");
+		pg_log_error_hint("Take a new full backup after changing the data checksum state with pg_checksums.");
+		exit(1);
 	}
 
 	return system_identifier;

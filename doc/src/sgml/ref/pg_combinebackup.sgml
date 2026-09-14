@@ -306,18 +306,19 @@ PostgreSQL documentation
 
   <para>
    <literal>pg_combinebackup</literal> does not recompute page checksums when
-   writing the output directory. Therefore, if any of the backups used for
-   reconstruction were taken with checksums disabled, but the final backup was
-   taken with checksums enabled, the resulting directory may contain pages
-   with invalid checksums.
+   writing the output directory.  It therefore refuses a chain in which some
+   of the backups used for reconstruction were taken with checksums disabled
+   but the final backup was taken with checksums enabled: the resulting
+   directory would contain pages with invalid checksums, and the cluster
+   would fail checksum verification as soon as it reads them.  Take a new
+   full backup after enabling data checksums with
+   <xref linkend="app-pgchecksums"/>.
   </para>
 
   <para>
-   To avoid this problem, taking a new full backup after changing the checksum
-   state of the cluster using <xref linkend="app-pgchecksums"/> is
-   recommended. Otherwise, you can disable and then optionally reenable
-   checksums on the directory produced by <literal>pg_combinebackup</literal>
-   in order to correct the problem.
+   The reverse case is accepted: when the final backup was taken with
+   checksums disabled, stale checksums copied from an earlier backup are
+   never verified.
   </para>
  </refsect1>
 
