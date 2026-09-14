@@ -1255,7 +1255,8 @@ contain_exec_param_walker(Node *node, List *param_ids)
  * not nested within another one, or they'll see the wrong test value.  If one
  * appears "bare" in the arguments of a SQL function, then we can't inline the
  * SQL function for fear of creating such a situation.  The same applies for
- * CaseTestExpr used within the elemexpr of an ArrayCoerceExpr.
+ * CaseTestExpr used within the elemexpr of an ArrayCoerceExpr or the coercion
+ * of a JsonConstructorExpr.
  *
  * CoerceToDomainValue would have the same issue if domain CHECK expressions
  * could get inlined into larger expressions, but presently that's impossible.
@@ -1324,6 +1325,26 @@ contain_context_dependent_node_walker(Node *node, int *flags)
 		save_flags = *flags;
 		*flags |= CCDN_CASETESTEXPR_OK;
 		res = contain_context_dependent_node_walker((Node *) ac->elemexpr,
+													flags);
+		*flags = save_flags;
+		return res;
+	}
+	else if (IsA(node, JsonConstructorExpr))
+	{
+		JsonConstructorExpr *jce = (JsonConstructorExpr *) node;
+		int			save_flags;
+		bool		res;
+
+		/* Check the args and func expressions */
+		if (contain_context_dependent_node_walker((Node *) jce->args, flags))
+			return true;
+		if (contain_context_dependent_node_walker((Node *) jce->func, flags))
+			return true;
+
+		/* Check the coercion, which is allowed to contain CaseTestExpr */
+		save_flags = *flags;
+		*flags |= CCDN_CASETESTEXPR_OK;
+		res = contain_context_dependent_node_walker((Node *) jce->coercion,
 													flags);
 		*flags = save_flags;
 		return res;

@@ -155,6 +155,14 @@ SELECT JSON_OBJECT(1: 1, '2': NULL, '3': 1, 4: NULL, '5': 'a' ABSENT ON NULL WIT
 -- the RETURNING coercion must not pick up the test value of an enclosing CASE
 SELECT CASE 'x' WHEN JSON_OBJECT('a': 'b' RETURNING text) THEN 1 ELSE 0 END;
 
+-- the RETURNING coercion must not prevent inlining of a SQL function
+CREATE FUNCTION json_object_inline_test(text) RETURNS text
+LANGUAGE sql IMMUTABLE AS $$ SELECT $1 || '!' $$;
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT json_object_inline_test(JSON_OBJECT('a': 'b' RETURNING text));
+SELECT json_object_inline_test(JSON_OBJECT('a': 'b' RETURNING text));
+DROP FUNCTION json_object_inline_test(text);
+
 -- BUG: https://postgr.es/m/CADXhmgTJtJZK9A3Na_ry%2BXrq-ghjcejBRhcRMzWZvbd__QdgJA%40mail.gmail.com
 -- datum_to_jsonb_internal() didn't catch keys that are casts instead of a simple scalar
 CREATE TYPE mood AS ENUM ('happy', 'sad', 'neutral');
