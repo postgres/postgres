@@ -145,13 +145,21 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
          <para>
           When specified and <parameter>timeout</parameter> is greater than zero,
           the command waits until <parameter>lsn</parameter> is reached or
-          the specified <parameter>timeout</parameter> has elapsed.
+          the specified <parameter>timeout</parameter> has elapsed.  A value
+          of zero (the default) means the command waits indefinitely.
          </para>
          <para>
-          The <parameter>timeout</parameter> might be given as integer number of
-          milliseconds.  Also it might be given as string literal with
-          integer number of milliseconds or a number with unit
-          (see <xref linkend="config-setting-names-values"/>).
+          The <parameter>timeout</parameter> is an amount of time in
+          milliseconds.  It may also be specified as a string containing the
+          numerical value followed by a time unit
+          (see <xref linkend="config-setting-names-values"/>).  The maximum
+          value is <literal>2147483647 ms</literal>.
+         </para>
+         <para>
+          Fractional values are rounded to the nearest millisecond.  Note
+          that a <parameter>timeout</parameter> of half a millisecond or
+          less therefore rounds down to zero, which means waiting
+          indefinitely.
          </para>
         </listitem>
        </varlistentry>

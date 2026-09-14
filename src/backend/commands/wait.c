@@ -13,8 +13,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
-
 #include "access/xlog.h"
 #include "access/xlogrecovery.h"
 #include "access/xlogwait.h"
@@ -37,7 +35,7 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 			 DestReceiver *dest)
 {
 	XLogRecPtr	lsn;
-	int64		timeout = 0;
+	int			timeout = 0;
 	WaitLSNResult waitLSNResult;
 	WaitLSNType lsnType = WAIT_LSN_TYPE_STANDBY_REPLAY; /* default */
 	bool		throw = true;
@@ -94,7 +92,6 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 		{
 			char	   *timeout_str;
 			const char *hintmsg;
-			double		dval;
 
 			if (timeout_specified)
 				errorConflictingDefElem(defel, pstate);
@@ -102,33 +99,18 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 
 			timeout_str = defGetString(defel);
 
-			if (!parse_real(timeout_str, &dval, GUC_UNIT_MS, &hintmsg))
-			{
+			if (!parse_int(timeout_str, &timeout, GUC_UNIT_MS, &hintmsg))
 				ereport(ERROR,
 						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("invalid timeout value: \"%s\"", timeout_str),
-						hintmsg ? errhint("%s", _(hintmsg)) : 0);
-			}
+						hintmsg ? errhint("%s", _(hintmsg)) : 0,
+						parser_errposition(pstate, defel->location));
 
-			/*
-			 * Get rid of any fractional part in the input. This is so we
-			 * don't fail on just-out-of-range values that would round into
-			 * range.
-			 */
-			dval = rint(dval);
-
-			/* Range check */
-			if (unlikely(isnan(dval) || !FLOAT8_FITS_IN_INT64(dval)))
-				ereport(ERROR,
-						errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						errmsg("timeout value is out of range"));
-
-			if (dval < 0)
+			if (timeout < 0)
 				ereport(ERROR,
 						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("timeout cannot be negative"));
-
-			timeout = (int64) dval;
+						errmsg("timeout cannot be negative"),
+						parser_errposition(pstate, defel->location));
 		}
 		else if (strcmp(defel->defname, "no_throw") == 0)
 		{

@@ -453,7 +453,7 @@ decode_concurrent_changes(LogicalDecodingContext *ctx,
 
 		if (record == NULL)
 		{
-			int64		timeout = 0;
+			int			timeout = 0;
 			WaitLSNResult res;
 
 			/*
@@ -472,7 +472,7 @@ decode_concurrent_changes(LogicalDecodingContext *ctx,
 			 * should already have been flushed to disk.
 			 */
 			if (!XLogRecPtrIsValid(lsn_upto))
-				timeout = 100L;
+				timeout = 100;
 			res = WaitForLSN(WAIT_LSN_TYPE_PRIMARY_FLUSH,
 							 ctx->reader->EndRecPtr + 1,
 							 timeout);
