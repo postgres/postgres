@@ -832,7 +832,7 @@ pg_stat_get_backend_subxact(PG_FUNCTION_ARGS)
 	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_SUBXACT_COLS);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "subxact_count",
 					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "subxact_overflow",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "subxact_overflowed",
 					   BOOLOID, -1, 0);
 
 	TupleDescFinalize(tupdesc);
