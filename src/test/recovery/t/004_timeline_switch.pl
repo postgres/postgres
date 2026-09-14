@@ -14,6 +14,13 @@ use Test::More;
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1);
+
+# Move the OID counter past 2^32, to check below that the promoted standby
+# receives its 8-byte value through WAL.
+my $next_oid = '4295067296';    # 2^32 + 100000
+command_ok(
+	[ 'pg_resetwal', '--next-oid' => $next_oid, $node_primary->data_dir ],
+	'set an 8-byte OID counter on the primary');
 $node_primary->start;
 
 # Take backup
@@ -50,6 +57,16 @@ $node_standby_1->psql(
 	"SELECT pg_promote(wait_seconds => 300)",
 	stdout => \$psql_out);
 is($psql_out, 't', "promotion of standby with pg_promote");
+
+# The OID counter of the promoted standby was set by replaying the
+# XLOG_NEXTOID and checkpoint records of the primary.  Force a checkpoint so
+# that pg_control_checkpoint() reports the value in use.
+$node_standby_1->safe_psql('postgres', 'CHECKPOINT');
+is( $node_standby_1->safe_psql(
+		'postgres',
+		"SELECT next_oid >= '$next_oid'::oid8 FROM pg_control_checkpoint()"),
+	't',
+	'8-byte OID counter carried over to the promoted standby');
 
 # Switch standby 2 to replay from standby 1.  During the timeline switch,
 # the WAL receiver process on standby 2 should not be stopped, and the
