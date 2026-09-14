@@ -3952,6 +3952,7 @@ post_parse_analyze_hook_type
 postprocess_result_function
 pqbool
 pqsigfunc
+preprocess_subquery_phvs_context
 printQueryOpt
 printTableContent
 printTableFooter

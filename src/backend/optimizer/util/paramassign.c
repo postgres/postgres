@@ -677,19 +677,18 @@ identify_current_nestloop_params(PlannerInfo *root,
 				/*
 				 * Deal with an edge case: if the PHV was pulled up out of a
 				 * subquery and it contains a subquery that was originally
-				 * pushed down from this query level, then that will still be
-				 * represented as a SubLink, because SS_process_sublinks won't
-				 * recurse into outer PHVs, so it didn't get transformed
-				 * during expression preprocessing in the subquery.  We need a
-				 * version of the PHV that has a SubPlan, which we can get
-				 * from the current query level's placeholder_list.  This is
-				 * quite grotty of course, but dealing with it earlier in the
-				 * handling of subplan params would be just as grotty, and it
-				 * might end up being a waste of cycles if we don't decide to
-				 * treat the PHV as a NestLoopParam.  (Perhaps that whole
-				 * mechanism should be redesigned someday, but today is not
-				 * that day.)
+				 * pushed down from this query level, then the copy of the PHV
+				 * we got from the subquery has its own SubPlan for that,
+				 * distinct from the one in the current query level's
+				 * placeholder_list.  We'd rather use the placeholder_list's
+				 * version of the PHV, so that we don't end up evaluating
+				 * duplicate SubPlans.
+				 *
+				 * Note that the subquery's copy cannot contain any SubLinks:
+				 * subquery_planner preprocessed the PHVs of this query level
+				 * within the subquery before the subquery was planned.
 				 */
+				Assert(!checkExprHasSubLink((Node *) phv));
 				if (root->parse->hasSubLinks)
 				{
 					phv = copyObject(phinfo->ph_var);
