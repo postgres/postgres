@@ -142,7 +142,7 @@ extern HeapTuple toast_build_flattened_tuple(TupleDesc tupleDesc,
  *	Fetch a slice from a toast value stored in a heap table.
  * ----------
  */
-extern void heap_fetch_toast_slice(Relation toastrel, Oid valueid,
+extern void heap_fetch_toast_slice(Relation toastrel, Oid8 valueid,
 								   int32 attrsize, int32 sliceoffset,
 								   int32 slicelength, varlena *result);
 
