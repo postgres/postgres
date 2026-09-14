@@ -19541,16 +19541,17 @@ ATPrepChangePersistence(AlteredTableInfo *tab, Relation rel, bool toLogged)
 	}
 
 	/*
-	 * Check that the table is not part of any publication when changing to
-	 * UNLOGGED, as UNLOGGED tables can't be published.
+	 * UNLOGGED tables can neither be published nor be named in a
+	 * publication's EXCEPT clause, so reject the change if the table is
+	 * referenced by any publication.
 	 */
-	if (!toLogged &&
-		GetRelationIncludedPublications(RelationGetRelid(rel)) != NIL)
+	if (!toLogged && RelationHasPublication(RelationGetRelid(rel)))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("cannot change table \"%s\" to unlogged because it is part of a publication",
+				 errmsg("cannot change table \"%s\" to unlogged because it is referenced by a publication",
 						RelationGetRelationName(rel)),
-				 errdetail("Unlogged relations cannot be replicated.")));
+				 errdetail("Unlogged relations cannot be published or excluded via an EXCEPT clause."),
+				 errhint("Drop the table from the publication, or remove it from the publication's EXCEPT clause, first.")));
 
 	/*
 	 * Check existing foreign key constraints to preserve the invariant that

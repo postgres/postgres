@@ -938,6 +938,25 @@ GetRelationExcludedPublications(Oid relid)
 }
 
 /*
+ * Check whether the relation is referenced by any publication, either as a
+ * published relation or in a publication's EXCEPT clause.
+ */
+bool
+RelationHasPublication(Oid relid)
+{
+	CatCList   *pubrellist;
+	bool		found;
+
+	pubrellist = SearchSysCacheList1(PUBLICATIONRELMAP,
+									 ObjectIdGetDatum(relid));
+	found = (pubrellist->n_members > 0);
+
+	ReleaseSysCacheList(pubrellist);
+
+	return found;
+}
+
+/*
  * Internal function to get the list of relation oids for a publication.
  *
  * If except_flag is true, returns the list of relations specified in the

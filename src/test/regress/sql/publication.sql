@@ -126,6 +126,14 @@ CREATE PUBLICATION testpub_foralltables_excepttable1 FOR ALL TABLES EXCEPT (TABL
 -- fail - first table in the EXCEPT list should use TABLE keyword
 CREATE PUBLICATION testpub_foralltables_excepttable2 FOR ALL TABLES EXCEPT (testpub_tbl1, testpub_tbl2);
 
+-- A table in an EXCEPT clause cannot be changed to UNLOGGED.
+CREATE TABLE testpub_exc_unlogged_tbl (a int);
+CREATE PUBLICATION testpub_exc_unlogged FOR ALL TABLES EXCEPT (TABLE testpub_exc_unlogged_tbl);
+-- fail - the table is referenced in a publication EXCEPT clause
+ALTER TABLE testpub_exc_unlogged_tbl SET UNLOGGED;
+DROP PUBLICATION testpub_exc_unlogged;
+DROP TABLE testpub_exc_unlogged_tbl;
+
 ---------------------------------------------
 -- SET ALL TABLES/SEQUENCES
 ---------------------------------------------

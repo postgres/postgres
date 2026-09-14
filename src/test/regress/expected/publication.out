@@ -279,6 +279,16 @@ CREATE PUBLICATION testpub_foralltables_excepttable2 FOR ALL TABLES EXCEPT (test
 ERROR:  syntax error at or near "testpub_tbl1"
 LINE 1: ..._foralltables_excepttable2 FOR ALL TABLES EXCEPT (testpub_tb...
                                                              ^
+-- A table in an EXCEPT clause cannot be changed to UNLOGGED.
+CREATE TABLE testpub_exc_unlogged_tbl (a int);
+CREATE PUBLICATION testpub_exc_unlogged FOR ALL TABLES EXCEPT (TABLE testpub_exc_unlogged_tbl);
+-- fail - the table is referenced in a publication EXCEPT clause
+ALTER TABLE testpub_exc_unlogged_tbl SET UNLOGGED;
+ERROR:  cannot change table "testpub_exc_unlogged_tbl" to unlogged because it is referenced by a publication
+DETAIL:  Unlogged relations cannot be published or excluded via an EXCEPT clause.
+HINT:  Drop the table from the publication, or remove it from the publication's EXCEPT clause, first.
+DROP PUBLICATION testpub_exc_unlogged;
+DROP TABLE testpub_exc_unlogged_tbl;
 ---------------------------------------------
 -- SET ALL TABLES/SEQUENCES
 ---------------------------------------------
