@@ -31,7 +31,6 @@ OBJS = \
 	datetime.o \
 	datum.o \
 	dbsize.o \
-	ddlutils.o \
 	domains.o \
 	encode.o \
 	enum.o \
