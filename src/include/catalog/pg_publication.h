@@ -157,6 +157,7 @@ extern Publication *GetPublication(Oid pubid);
 extern Publication *GetPublicationByName(const char *pubname, bool missing_ok);
 extern List *GetRelationIncludedPublications(Oid relid);
 extern List *GetRelationExcludedPublications(Oid relid);
+extern bool RelationHasPublication(Oid relid);
 
 /*---------
  * Expected values for pub_partopt parameter of
