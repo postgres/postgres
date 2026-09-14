@@ -59,7 +59,7 @@ setup
 
 	CREATE TABLE relfilenodes(node oid);
 
-	CREATE TABLE data_s1 (i int, j text, j_toast oid, k text, k_toast oid);
+	CREATE TABLE data_s1 (i int, j text, j_toast oid8, k text, k_toast oid8);
 	CREATE TABLE data_s2 (LIKE data_s1);
 }
 

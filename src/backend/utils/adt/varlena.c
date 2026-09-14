@@ -4290,7 +4290,7 @@ pg_column_toast_chunk_id(PG_FUNCTION_ARGS)
 
 	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
 
-	PG_RETURN_OID(toast_pointer.va_valueid);
+	PG_RETURN_OID8(toast_pointer.va_valueid);
 }
 
 /*

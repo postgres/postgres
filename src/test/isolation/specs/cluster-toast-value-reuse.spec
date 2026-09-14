@@ -60,7 +60,7 @@ step s2_verify_chunk_ids {
   SELECT o.id AS chunk_ids_preserved
     FROM cluster_chunk_id o
     JOIN cluster_toast_value c ON o.id = c.id
-    WHERE o.chunk_id != pg_column_toast_chunk_id(c.value);
+    WHERE o.chunk_id::oid8 != pg_column_toast_chunk_id(c.value);
 }
 
 # Run UPDATE with its transaction still open, then store the chunk IDs.

@@ -785,7 +785,7 @@ SELECT t.relname AS toastrel FROM pg_class c
   WHERE c.relname = 'test_chunk_id'
 \gset
 SELECT pg_column_toast_chunk_id(a) IS NULL,
-  pg_column_toast_chunk_id(b) IN (SELECT chunk_id FROM pg_toast.:toastrel)
+  pg_column_toast_chunk_id(b) IN (SELECT chunk_id::oid8 FROM pg_toast.:toastrel)
   FROM test_chunk_id;
  ?column? | ?column? 
 ----------+----------
