@@ -31,9 +31,9 @@ extern bool visibilitymap_clear(RelFileLocator rlocator, BlockNumber heapBlk,
 extern void visibilitymap_pin(Relation rel, BlockNumber heapBlk,
 							  Buffer *vmbuf);
 extern bool visibilitymap_pin_ok(BlockNumber heapBlk, Buffer vmbuf);
-extern void visibilitymap_set(BlockNumber heapBlk,
-							  Buffer vmBuf, uint8 flags,
-							  RelFileLocator rlocator);
+extern uint8 visibilitymap_set(BlockNumber heapBlk,
+							   Buffer vmBuf, uint8 flags,
+							   RelFileLocator rlocator);
 extern uint8 visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *vmbuf);
 extern void visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_frozen);
 extern BlockNumber visibilitymap_prepare_truncate(Relation rel,

@@ -1315,8 +1315,9 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 			 */
 			PageSetAllVisible(prstate.page);
 			PageClearPrunable(prstate.page);
-			visibilitymap_set(prstate.block, prstate.vmbuffer, prstate.new_vmbits,
-							  prstate.relation->rd_locator);
+			(void) visibilitymap_set(prstate.block, prstate.vmbuffer,
+									 prstate.new_vmbits,
+									 prstate.relation->rd_locator);
 		}
 
 		MarkBufferDirty(prstate.buffer);
