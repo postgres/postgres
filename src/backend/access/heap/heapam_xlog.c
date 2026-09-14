@@ -286,10 +286,8 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 		if (PageIsNew(vmpage))
 			PageInit(vmpage, BLCKSZ, 0);
 
-		visibilitymap_set(blkno, vmbuffer, vmflags, rlocator);
-
-		Assert(BufferIsDirty(vmbuffer));
-		PageSetLSN(vmpage, lsn);
+		if (visibilitymap_set(blkno, vmbuffer, vmflags, rlocator) != vmflags)
+			PageSetLSN(vmpage, lsn);
 	}
 
 	if (BufferIsValid(vmbuffer))
@@ -706,19 +704,15 @@ heap_xlog_multi_insert(XLogReaderState *record)
 									  &vmbuffer) == BLK_NEEDS_REDO)
 	{
 		Page		vmpage = BufferGetPage(vmbuffer);
+		uint8		vmflags = VISIBILITYMAP_ALL_VISIBLE |
+			VISIBILITYMAP_ALL_FROZEN;
 
 		/* initialize the page if it was read as zeros */
 		if (PageIsNew(vmpage))
 			PageInit(vmpage, BLCKSZ, 0);
 
-		visibilitymap_set(blkno,
-						  vmbuffer,
-						  VISIBILITYMAP_ALL_VISIBLE |
-						  VISIBILITYMAP_ALL_FROZEN,
-						  rlocator);
-
-		Assert(BufferIsDirty(vmbuffer));
-		PageSetLSN(vmpage, lsn);
+		if (visibilitymap_set(blkno, vmbuffer, vmflags, rlocator) != vmflags)
+			PageSetLSN(vmpage, lsn);
 	}
 
 	if (BufferIsValid(vmbuffer))

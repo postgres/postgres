@@ -252,8 +252,10 @@ visibilitymap_pin_ok(BlockNumber heapBlk, Buffer vmbuf)
  * containing heapBlk.
  *
  * rlocator is used only for debugging messages.
+ *
+ * Returns the state of the page's VM bits before setting flags.
  */
-void
+uint8
 visibilitymap_set(BlockNumber heapBlk,
 				  Buffer vmBuf, uint8 flags,
 				  const RelFileLocator rlocator)
@@ -296,6 +298,8 @@ visibilitymap_set(BlockNumber heapBlk,
 		map[mapByte] |= (flags << mapOffset);
 		MarkBufferDirty(vmBuf);
 	}
+
+	return status;
 }
 
 /*
