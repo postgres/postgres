@@ -513,10 +513,10 @@ static const struct config_enum_entry file_extend_method_options[] = {
 };
 
 static const struct config_enum_entry data_checksums_options[] = {
-	{"on", PG_DATA_CHECKSUM_VERSION, true},
-	{"off", PG_DATA_CHECKSUM_OFF, true},
-	{"inprogress-on", PG_DATA_CHECKSUM_INPROGRESS_ON, true},
-	{"inprogress-off", PG_DATA_CHECKSUM_INPROGRESS_OFF, true},
+	{"on", PG_DATA_CHECKSUM_VERSION, false},
+	{"off", PG_DATA_CHECKSUM_OFF, false},
+	{"inprogress-on", PG_DATA_CHECKSUM_INPROGRESS_ON, false},
+	{"inprogress-off", PG_DATA_CHECKSUM_INPROGRESS_OFF, false},
 	{NULL, 0, false}
 };
 
