@@ -23,12 +23,17 @@ typedef struct GinTuple
 {
 	int			tuplen;			/* length of the whole tuple */
 	OffsetNumber attrnum;		/* attnum of index key */
-	uint16		keylen;			/* bytes in data for key value */
+	Size		keylen;			/* bytes in data for key value */
 	int16		typlen;			/* typlen for key */
 	bool		typbyval;		/* typbyval for key */
 	signed char category;		/* category: normal or NULL? */
 	int			nitems;			/* number of TIDs in the data */
-	char		data[FLEXIBLE_ARRAY_MEMBER];
+
+	/*
+	 * The key value is accessed in place, so it must be aligned well enough
+	 * for any key type.
+	 */
+	char		alignas(MAXIMUM_ALIGNOF) data[FLEXIBLE_ARRAY_MEMBER];
 } GinTuple;
 
 static inline ItemPointer
