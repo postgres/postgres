@@ -109,7 +109,8 @@ note(
 my $page;
 open(my $fh, '<', $standby->data_dir . '/' . $relpath) or die $!;
 binmode $fh;
-read($fh, $page, 8192);
+my $len = read($fh, $page, 8192);
+isnt($len, undef, "Reading from filehandle didn't fail");
 close($fh);
 my ($pd_checksum) = unpack('x8 v', $page);
 note("on-disk pd_checksum of t block 0: $pd_checksum");
