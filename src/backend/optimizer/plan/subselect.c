@@ -359,12 +359,14 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 		 * adjusted to have the correct varlevelsup, phlevelsup, or
 		 * agglevelsup.
 		 *
-		 * If it's a PlaceHolderVar, Aggref or GroupingFunc, its arguments
-		 * might contain SubLinks, which have not yet been processed (see the
-		 * comments for SS_replace_correlation_vars).  Do that now.
+		 * If it's an Aggref or GroupingFunc, its arguments might contain
+		 * SubLinks, which have not yet been processed (see the comments for
+		 * SS_replace_correlation_vars).  Do that now.  A PlaceHolderVar needs
+		 * no such treatment: subquery_planner already preprocessed the PHVs
+		 * of its owning level, so its expression is fully processed and may
+		 * already contain SubPlans.
 		 */
-		if (IsA(arg, PlaceHolderVar) ||
-			IsA(arg, Aggref) ||
+		if (IsA(arg, Aggref) ||
 			IsA(arg, GroupingFunc))
 			arg = SS_process_sublinks(root, arg, false);
 

@@ -2114,7 +2114,7 @@ select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
  MixedAggregate
    Hash Key: $2
    Group Key: ()
-   InitPlan 1 (returns $1)
+   InitPlan 1 (returns $0)
      ->  Result
    InitPlan 3 (returns $2)
      ->  Result
