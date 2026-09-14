@@ -2250,7 +2250,7 @@ _gin_build_tuple(OffsetNumber attrnum, unsigned char category,
 	char	   *ptr;
 
 	Size		tuplen;
-	int			keylen;
+	Size		keylen;
 
 	dlist_mutable_iter iter;
 	dlist_head	segments;
