@@ -924,6 +924,13 @@ RewriteControlFile(void)
 	ControlFile.backupEndRequired = false;
 
 	/*
+	 * The old WAL is gone and the new position may lie below the old
+	 * watermark, which would make replay ignore future checksum transition
+	 * records.  The state itself is kept.
+	 */
+	ControlFile.data_checksum_lsn = InvalidXLogRecPtr;
+
+	/*
 	 * Force the defaults for max_* settings. The values don't really matter
 	 * as long as wal_level='minimal'; the postmaster will reset these fields
 	 * anyway at startup.

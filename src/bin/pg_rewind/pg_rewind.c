@@ -37,7 +37,8 @@ static void usage(const char *progname);
 static void perform_rewind(filemap_t *filemap, rewind_source *source,
 						   XLogRecPtr chkptrec,
 						   TimeLineID chkpttli,
-						   XLogRecPtr chkptredo);
+						   XLogRecPtr chkptredo,
+						   XLogRecPtr divergerec);
 
 static void createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli,
 							  XLogRecPtr checkpointloc);
@@ -531,7 +532,8 @@ main(int argc, char **argv)
 	 * This is the point of no return. Once we start copying things, there is
 	 * no turning back!
 	 */
-	perform_rewind(filemap, source, chkptrec, chkpttli, chkptredo);
+	perform_rewind(filemap, source, chkptrec, chkpttli, chkptredo,
+				   divergerec);
 
 	if (showprogress)
 		pg_log_info("syncing target data directory");
@@ -566,7 +568,8 @@ static void
 perform_rewind(filemap_t *filemap, rewind_source *source,
 			   XLogRecPtr chkptrec,
 			   TimeLineID chkpttli,
-			   XLogRecPtr chkptredo)
+			   XLogRecPtr chkptredo,
+			   XLogRecPtr divergerec)
 {
 	XLogRecPtr	endrec;
 	TimeLineID	endtli;
@@ -738,6 +741,32 @@ perform_rewind(filemap_t *filemap, rewind_source *source,
 	ControlFile_new.minRecoveryPoint = endrec;
 	ControlFile_new.minRecoveryPointTLI = endtli;
 	ControlFile_new.state = DB_IN_ARCHIVE_RECOVERY;
+
+	/*
+	 * Keep the target's own data checksum state.  Most of the data directory
+	 * is still the target's: only blocks it changed since the divergence were
+	 * copied from the source, so the source's state says nothing about the
+	 * pages that stay.  Replay from the last common checkpoint applies any
+	 * WAL-logged transition the target has not seen (the watermark tells them
+	 * apart), which converges the rewound server to the source's state
+	 * whenever the WAL carries it.
+	 */
+	ControlFile_new.data_checksum_version = ControlFile_target.data_checksum_version;
+	ControlFile_new.data_checksum_lsn = ControlFile_target.data_checksum_lsn;
+	ControlFile_new.data_checksum_is_local = ControlFile_target.data_checksum_is_local;
+
+	/*
+	 * The watermark is only meaningful within the history the node replays.
+	 * Records at or below the divergence point are common to both histories
+	 * and stay covered, but a watermark above it was set by a transition
+	 * record on the target's own abandoned fork: numerically it can cover
+	 * transition records the source wrote after the divergence, and replay
+	 * would skip them as already applied.  Clamp it to the divergence point,
+	 * so that every transition record on the source's history takes effect.
+	 */
+	if (ControlFile_new.data_checksum_lsn > divergerec)
+		ControlFile_new.data_checksum_lsn = divergerec;
+
 	if (!dry_run)
 		update_controlfile(datadir_target, &ControlFile_new, do_sync);
 }

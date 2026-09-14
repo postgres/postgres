@@ -349,6 +349,10 @@ main(int argc, char *argv[])
 		   (ControlFile->float8ByVal ? _("by value") : _("by reference")));
 	printf(_("Data page checksum version:           %u\n"),
 		   ControlFile->data_checksum_version);
+	printf(_("Data checksum watermark:              %X/%08X\n"),
+		   LSN_FORMAT_ARGS(ControlFile->data_checksum_lsn));
+	printf(_("Data checksum state is node-local:    %s\n"),
+		   (ControlFile->data_checksum_is_local ? _("yes") : _("no")));
 	printf(_("Default char data signedness:         %s\n"),
 		   (ControlFile->default_char_signedness ? _("signed") : _("unsigned")));
 	printf(_("Mock authentication nonce:            %s\n"),

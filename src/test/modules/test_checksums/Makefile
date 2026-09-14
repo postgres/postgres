@@ -9,7 +9,7 @@
 #
 #-------------------------------------------------------------------------
 
-EXTRA_INSTALL = src/test/modules/injection_points
+EXTRA_INSTALL = contrib/pg_buffercache src/test/modules/injection_points
 
 export enable_injection_points
 

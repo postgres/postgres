@@ -94,9 +94,9 @@
  *
  * If processing is started in an online cluster then all backends are in Bd.
  * If processing was halted by the cluster shutting down (due to a crash or
- * intentional restart), the controlfile state "inprogress-on" will be observed
- * on system startup and all backends will be placed in Bd. The controlfile
- * state will also be set to "off".
+ * intentional restart), the control file state "inprogress-on" will be
+ * observed on system startup and all backends will be placed in Bd. The
+ * control file state will also be set to "off".
  *
  * Backends transition Bd -> Bi via a procsignalbarrier which is emitted by the
  * DataChecksumsWorkerLauncherMain.  When all backends have acknowledged the
@@ -146,7 +146,25 @@
  * stop writing data checksums as no backend is enforcing data checksum
  * validation any longer.
  *
- * 4. Future opportunities for optimizations
+ * 4. Interaction with offline data checksum changes
+ * -------------------------------------------------
+ * Enabling or disabling checksums offline with pg_checksums uses none of the
+ * machinery in this file, but the two mechanisms share the state kept in the
+ * control file, so their interaction is documented here.
+ *
+ * pg_checksums writes the new state to the control file and sets
+ * data_checksum_is_local, marking a state that no WAL record accounts for.
+ * Recovery then does not adopt the state carried by a replayed checkpoint
+ * record over it.  The control file also carries a watermark, the WAL
+ * position through which data checksum transitions are covered.  Replay skips
+ * transition records ending at or below the watermark, as their effect is
+ * already contained in the control file, and applies records above it as
+ * usual, whether they were written before or after an offline change.  This
+ * is why an offline change in a replicated setup must be made on every node
+ * while all of them are stopped and caught up; see the pg_checksums
+ * documentation for the procedure.
+ *
+ * 5. Future opportunities for optimizations
  * -----------------------------------------
  * Below are some potential optimizations and improvements which were brought
  * up during reviews of this feature, but which weren't implemented in the

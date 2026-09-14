@@ -371,6 +371,7 @@ WaitLSN	"Waiting to read or update shared Wait-for-LSN state."
 LogicalDecodingControl	"Waiting to read or update logical decoding status information."
 DataChecksumsWorker	"Waiting for data checksums worker."
 AioWorkerControl	"Waiting to update AIO worker information."
+DataChecksumTransition	"Waiting for a data checksum state transition to be written to WAL."
 
 #
 # END OF PREDEFINED LWLOCKS (DO NOT CHANGE THIS LINE)

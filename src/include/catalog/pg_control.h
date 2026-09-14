@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	2000
+#define PG_CONTROL_VERSION	2001
 
 /* Nonce key length, see below */
 #define MOCK_AUTH_NONCE_LEN		32
@@ -236,6 +236,33 @@ typedef struct ControlFileData
 	uint32		data_checksum_version_init;
 	/* Current data checksums state */
 	uint32		data_checksum_version;
+
+	/*
+	 * WAL position through which data checksum transitions are covered.
+	 * Replay ignores XLOG2_CHECKSUMS records ending at or below this point:
+	 * their effect is already contained in data_checksum_version, or an
+	 * offline pg_checksums change made after they were first applied
+	 * supersedes them.  Ordinarily this is the end of the newest such record
+	 * this node has written or applied, but a tool may store any position
+	 * that covers the same set of records.  If the node has never written or
+	 * applied such a record this field shall be set to InvalidXLogRecPtr.
+	 *
+	 * The comparison has no timeline context, so the value is only valid
+	 * within the WAL history this node replays.  A tool that moves the node
+	 * to another history must clamp the watermark to the point where the
+	 * histories fork, as pg_rewind does, or reset it, as pg_resetwal does.
+	 */
+	XLogRecPtr	data_checksum_lsn;
+
+	/*
+	 * True when data_checksum_version was last set by pg_checksums in an
+	 * offline operation rather than by an online, WAL-logged transition. Such
+	 * a state is local to this node and not derived from WAL, so recovery
+	 * must not replace it with a state taken from a checkpoint record;
+	 * nothing in the WAL could restore the change once it is overwritten.
+	 * Cleared by the next WAL-logged transition.
+	 */
+	bool		data_checksum_is_local;
 
 	/*
 	 * True if the default signedness of char is "signed" on a platform where

@@ -242,21 +242,90 @@ PostgreSQL documentation
    data directory must not be started or else data loss may occur.
   </para>
   <para>
-   When using a replication setup with tools which perform direct copies
-   of relation file blocks (for example <xref linkend="app-pgrewind"/>),
-   enabling or disabling checksums can lead to page corruptions in the
-   shape of incorrect checksums if the operation is not done consistently
-   across all nodes. When enabling or disabling checksums in a replication
-   setup, it is thus recommended to stop all the clusters before switching
-   them all consistently. Destroying all standbys, performing the operation
-   on the primary and finally recreating the standbys from scratch is also
-   safe.
+   Enabling or disabling checksums with
+   <application>pg_checksums</application> changes only the local data
+   directory; the new state is not replicated to any other node.  In a
+   replication setup the same change must be applied to every node:
+  </para>
+
+  <procedure>
+   <step id="shut-down-nodes">
+    <title>Shut down all nodes</title>
+    <para>
+     All nodes participating in the replication must be stopped with a
+     clean shutdown; <application>pg_checksums</application> refuses to run
+     on a data directory left behind by an immediate shutdown.  Before
+     stopping a standby, make sure it has replayed all WAL of the primary:
+     stop the primary first, read its <quote>Latest checkpoint
+     location</quote> with <xref linkend="app-pgcontroldata"/>, and check
+     that <function>pg_last_wal_replay_lsn()</function> on the standby has
+     advanced past it.  Comparing the replay position with
+     <function>pg_last_wal_receive_lsn()</function> is not enough, as it
+     only shows that the WAL the standby received has been replayed.
+    </para>
+   </step>
+
+   <step>
+    <title>Enable or disable data checksums on each node</title>
+    <para>
+     Run <application>pg_checksums</application> on the data directory of
+     each node in the replication setup.  Nodes can be processed in
+     parallel while they are shut down.  Processing must complete
+     successfully on all nodes before continuing.
+    </para>
+   </step>
+
+   <step>
+    <title>Restart all nodes</title>
+    <para>
+     Start the nodes normally, verify that
+     <xref linkend="guc-data-checksums"/> matches on all of them, and
+     monitor the logs of the standbys for data checksum state mismatch
+     warnings.
+    </para>
+   </step>
+  </procedure>
+
+  <para>
+   The replay requirement in <xref linkend="shut-down-nodes"/>exists
+   because an offline change is recorded only in the control file and
+   has no defined ordering against WAL the node has not replayed yet; see
+   <xref linkend="checksums-offline-enable-disable"/>.  A node stopped
+   before replaying an online checksum state change applies that change
+   when it is restarted, overriding the offline change, and the states of
+   the nodes silently diverge until a later checkpoint record triggers
+   the warning described below.  Because of this it is best not to mix
+   the two mechanisms: change the state of a replication setup either
+   with the offline procedure above or with an online transition, and
+   make sure the previous change has reached every node before starting
+   the next one.
+  </para>
+  <para>
+   If the change is applied inconsistently, each node keeps its own state,
+   and a standby logs a warning when the state recorded in the replayed WAL
+   differs from its own.  The same warning can appear transiently while a
+   standby catches up over WAL written before a consistent change; it stops
+   once a checkpoint record carrying the new state has been replayed.
+  </para>
+  <para>
+   A standby whose data directory was never checksummed must not have
+   checksums enabled by catching up this way.  Converge the cluster by
+   running <application>pg_checksums</application> on it while stopped as
+   outlined above, by enabling checksums online, or by recreating it from
+   a base backup.  Note
+   that an online enable only starts from a primary whose checksums are off,
+   so if they are already enabled there, disable them online first.
   </para>
   <para>
    If <application>pg_checksums</application> is aborted or killed while
    enabling or disabling checksums, the cluster's data checksum configuration
    remains unchanged, and <application>pg_checksums</application> can be
    re-run to perform the same operation.
+  </para>
+  <para>
+   Tools that copy relation file blocks directly between nodes, such as
+   <xref linkend="app-pgrewind"/>, require all nodes to be in
+   the same data checksum state, else there is risk for data corruption.
   </para>
   <para>
    The target cluster must have the same major version as

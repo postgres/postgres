@@ -431,7 +431,7 @@ get_control_data(ClusterInfo *cluster)
 			cluster->controldata.date_is_int = strstr(p, "64-bit integers") != NULL;
 			got_date_is_int = true;
 		}
-		else if ((p = strstr(bufin, "checksum")) != NULL)
+		else if ((p = strstr(bufin, "Data page checksum version:")) != NULL)
 		{
 			p = strchr(p, ':');
 
