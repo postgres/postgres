@@ -775,7 +775,7 @@ PrintControlValues(bool guessed)
 	printf(_("Latest checkpoint's NextXID:          %u:%u\n"),
 		   EpochFromFullTransactionId(ControlFile.checkPointCopy.nextXid),
 		   XidFromFullTransactionId(ControlFile.checkPointCopy.nextXid));
-	printf(_("Latest checkpoint's NextOID:          " OID8_FORMAT "\n"),
+	printf(_("Latest checkpoint's NextOID:          %" PRIu64 "\n"),
 		   ControlFile.checkPointCopy.nextOid);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"),
 		   ControlFile.checkPointCopy.nextMulti);
@@ -861,7 +861,7 @@ PrintNewControlValues(void)
 
 	if (next_oid_given)
 	{
-		printf(_("NextOID:                              " OID8_FORMAT "\n"),
+		printf(_("NextOID:                              %" PRIu64 "\n"),
 			   ControlFile.checkPointCopy.nextOid);
 	}
 
