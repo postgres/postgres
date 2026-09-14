@@ -643,8 +643,6 @@ heap_xlog_multi_insert(XLogReaderState *record)
 		if (tupdata != endptr)
 			elog(PANIC, "total tuple length mismatch");
 
-		freespace = PageGetHeapFreeSpace(page); /* needed to update FSM below */
-
 		PageSetLSN(page, lsn);
 
 		if (xlrec->flags & XLH_INSERT_ALL_VISIBLE_CLEARED)
@@ -672,8 +670,40 @@ heap_xlog_multi_insert(XLogReaderState *record)
 
 		MarkBufferDirty(buffer);
 	}
+
 	if (BufferIsValid(buffer))
+	{
+		/*
+		 * If we are marking the page all-frozen or the page is running low on
+		 * free space, update the FSM as well. Arbitrarily, our definition of
+		 * "low" is less than 20%. We can't do much better than that without
+		 * knowing the fill-factor for the table.
+		 *
+		 * XXX: Unless setting the page all-frozen, we don't do this if the
+		 * page was restored from full page image. We don't bother to update
+		 * the FSM in that case, it doesn't need to be totally accurate
+		 * anyway.
+		 *
+		 * If setting the page all-frozen, we update the FSM regardless since,
+		 * once frozen, we lose the chance to update it during vacuum after
+		 * promotion. See comment in heap_xlog_prune_freeze() for details.
+		 */
+		bool		update_fsm = false;
+
+		if (xlrec->flags & XLH_INSERT_ALL_FROZEN_SET ||
+			action == BLK_NEEDS_REDO)
+		{
+			freespace = PageGetHeapFreeSpace(BufferGetPage(buffer));
+			if (xlrec->flags & XLH_INSERT_ALL_FROZEN_SET ||
+				freespace < BLCKSZ / 5)
+				update_fsm = true;
+		}
+
 		UnlockReleaseBuffer(buffer);
+
+		if (update_fsm)
+			XLogRecordPageWithFreeSpace(rlocator, blkno, freespace);
+	}
 
 	buffer = InvalidBuffer;
 
@@ -717,18 +747,6 @@ heap_xlog_multi_insert(XLogReaderState *record)
 
 	if (BufferIsValid(vmbuffer))
 		UnlockReleaseBuffer(vmbuffer);
-
-	/*
-	 * If the page is running low on free space, update the FSM as well.
-	 * Arbitrarily, our definition of "low" is less than 20%. We can't do much
-	 * better than that without knowing the fill-factor for the table.
-	 *
-	 * XXX: Don't do this if the page was restored from full page image. We
-	 * don't bother to update the FSM in that case, it doesn't need to be
-	 * totally accurate anyway.
-	 */
-	if (action == BLK_NEEDS_REDO && freespace < BLCKSZ / 5)
-		XLogRecordPageWithFreeSpace(rlocator, blkno, freespace);
 }
 
 /*
