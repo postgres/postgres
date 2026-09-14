@@ -124,6 +124,20 @@ PostgreSQL documentation
    <literal>on</literal>, but is enabled by default.
   </para>
 
+  <para>
+   The data checksum states of the source and target server must be
+   compatible.  <application>pg_rewind</application> refuses to run if an
+   online checksum state transition was interrupted on either server, or
+   if data checksums are enabled on the target server, or were enabled at
+   the point of divergence, while the source server runs without them: the
+   rewound server would fail checksum verification on the blocks copied
+   from the source.  The opposite combination is allowed with a warning;
+   the rewound server keeps data checksums disabled unless the source
+   server enabled them online after the point of divergence.  See
+   <xref linkend="app-pgchecksums"/> for how to change the state
+   consistently across a replication setup.
+  </para>
+
   <warning>
    <title>Warning: Failures While Rewinding</title>
    <para>

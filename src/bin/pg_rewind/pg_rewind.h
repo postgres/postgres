@@ -39,6 +39,7 @@ extern void findLastCheckpoint(const char *datadir, XLogRecPtr forkptr,
 							   int tliIndex,
 							   XLogRecPtr *lastchkptrec, TimeLineID *lastchkpttli,
 							   XLogRecPtr *lastchkptredo,
+							   uint32 *lastchkptdatachecksums,
 							   const char *restoreCommand);
 extern XLogRecPtr readOneRecord(const char *datadir, XLogRecPtr ptr,
 								int tliIndex, const char *restoreCommand);

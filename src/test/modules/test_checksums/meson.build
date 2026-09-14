@@ -45,6 +45,8 @@ tests += {
       't/019_standby_shutdown_catchup.pl',
       't/020_cascade_divergence.pl',
       't/021_rewind_divergent_transitions.pl',
+      't/022_rewind_state.pl',
+      't/023_rewind_standby_target.pl',
     ],
   },
 }

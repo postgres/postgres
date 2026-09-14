@@ -167,7 +167,8 @@ readOneRecord(const char *datadir, XLogRecPtr ptr, int tliIndex,
 void
 findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 				   XLogRecPtr *lastchkptrec, TimeLineID *lastchkpttli,
-				   XLogRecPtr *lastchkptredo, const char *restoreCommand)
+				   XLogRecPtr *lastchkptredo, uint32 *lastchkptdatachecksums,
+				   const char *restoreCommand)
 {
 	/* Walk backwards, starting from the given record */
 	XLogRecord *record;
@@ -255,6 +256,7 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 			*lastchkptrec = searchptr;
 			*lastchkpttli = checkPoint.ThisTimeLineID;
 			*lastchkptredo = checkPoint.redo;
+			*lastchkptdatachecksums = checkPoint.dataChecksumState;
 			break;
 		}
 
