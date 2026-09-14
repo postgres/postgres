@@ -2493,10 +2493,10 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 
 		/*
 		 * Set pd_prune_xid. See heap_insert() for more on why we do this when
-		 * inserting tuples. This only makes sense if we aren't already
-		 * setting the page frozen in the VM and we're not in bootstrap mode.
+		 * inserting tuples. This only makes sense if the tuples aren't frozen
+		 * and we're not in bootstrap mode.
 		 */
-		if (!all_frozen_set && TransactionIdIsNormal(xid))
+		if (TransactionIdIsNormal(xid) && !(options & HEAP_INSERT_FROZEN))
 			PageSetPrunable(page, xid);
 
 		MarkBufferDirty(buffer);

@@ -583,6 +583,7 @@ heap_xlog_multi_insert(XLogReaderState *record)
 		char	   *tupdata;
 		char	   *endptr;
 		Size		len;
+		bool		inserted_tuples_frozen = false;
 
 		/* Tuples are stored as block data */
 		tupdata = XLogRecGetBlockData(record, HEAP_MULTI_INSERT_BLKREF_HEAP,
@@ -630,6 +631,10 @@ heap_xlog_multi_insert(XLogReaderState *record)
 			ItemPointerSetBlockNumber(&htup->t_ctid, blkno);
 			ItemPointerSetOffsetNumber(&htup->t_ctid, offnum);
 
+			/* If one inserted tuple was frozen, they all were */
+			if (i == 0)
+				inserted_tuples_frozen = HeapTupleHeaderXminFrozen(htup);
+
 			offnum = PageAddItem(page, htup, newlen, offnum, true, true);
 			if (offnum == InvalidOffsetNumber)
 				elog(PANIC, "failed to add tuple");
@@ -645,17 +650,23 @@ heap_xlog_multi_insert(XLogReaderState *record)
 			PageClearAllVisible(page);
 
 		/*
-		 * XLH_INSERT_ALL_FROZEN_SET implies that all tuples are visible. If
-		 * we are not setting the page frozen, then set the page's prunable
-		 * hint so that we trigger on-access pruning later which may set the
-		 * page all-visible in the VM.
+		 * XLH_INSERT_ALL_FROZEN_SET implies that all tuples are visible, so
+		 * set PD_ALL_VISIBLE and clear pd_prune_xid.
+		 *
+		 * If the page isn't being set all-frozen and we aren't inserting
+		 * frozen tuples, set pd_prune_xid so that the page gets on-access
+		 * pruned.
+		 *
+		 * Frozen tuples may be added to an already all-frozen page or to a
+		 * page containing non-frozen tuples, but they introduce nothing new
+		 * for on-access pruning, so preserve the existing hint.
 		 */
 		if (xlrec->flags & XLH_INSERT_ALL_FROZEN_SET)
 		{
 			PageSetAllVisible(page);
 			PageClearPrunable(page);
 		}
-		else
+		else if (!inserted_tuples_frozen)
 			PageSetPrunable(page, XLogRecGetXid(record));
 
 		MarkBufferDirty(buffer);
