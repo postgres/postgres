@@ -3390,6 +3390,8 @@ eval_const_expressions_mutator(Node *node,
 		case T_JsonConstructorExpr:
 			{
 				JsonConstructorExpr *jce = (JsonConstructorExpr *) node;
+				JsonConstructorExpr *newjce;
+				Node	   *save_case_val;
 
 				/*
 				 * JSCTOR_JSON_ARRAY_QUERY carries a pre-built executable form
@@ -3400,8 +3402,36 @@ eval_const_expressions_mutator(Node *node,
 				if (jce->type == JSCTOR_JSON_ARRAY_QUERY)
 					return eval_const_expressions_mutator((Node *) jce->func,
 														  context);
+
+				/*
+				 * Copy the node and const-simplify its arguments.  We can't
+				 * use ece_generic_processing() here because we need to mess
+				 * with case_val only while processing the coercion.
+				 */
+				newjce = makeNode(JsonConstructorExpr);
+				memcpy(newjce, jce, sizeof(JsonConstructorExpr));
+				newjce->args = (List *)
+					eval_const_expressions_mutator((Node *) jce->args,
+												   context);
+				newjce->func = (Expr *)
+					eval_const_expressions_mutator((Node *) jce->func,
+												   context);
+
+				/*
+				 * Set up for the CaseTestExpr node contained in the coercion.
+				 * We must prevent it from absorbing any outer CASE value.
+				 */
+				save_case_val = context->case_val;
+				context->case_val = NULL;
+
+				newjce->coercion = (Expr *)
+					eval_const_expressions_mutator((Node *) jce->coercion,
+												   context);
+
+				context->case_val = save_case_val;
+
+				return (Node *) newjce;
 			}
-			break;
 		case T_SubPlan:
 		case T_AlternativeSubPlan:
 
