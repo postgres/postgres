@@ -440,7 +440,7 @@ WaitLSNTypeRequiresRecovery(WaitLSNType t)
  * or replica got promoted before the target LSN reached.
  */
 WaitLSNResult
-WaitForLSN(WaitLSNType lsnType, XLogRecPtr targetLSN, int64 timeout)
+WaitForLSN(WaitLSNType lsnType, XLogRecPtr targetLSN, int timeout)
 {
 	XLogRecPtr	currentLSN;
 	WaitLSNProcInfo *procInfo;
