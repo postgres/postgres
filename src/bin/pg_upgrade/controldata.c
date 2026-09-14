@@ -658,8 +658,10 @@ check_control_data(ControlData *oldctrl,
 	 * upgrade. The user should either let the process finish, or turn off
 	 * data checksums, before retrying.
 	 */
-	if (oldctrl->data_checksum_version > PG_DATA_CHECKSUM_VERSION)
+	if (oldctrl->data_checksum_version == PG_DATA_CHECKSUM_INPROGRESS_ON)
 		pg_fatal("data checksums are being enabled in the old cluster");
+	if (oldctrl->data_checksum_version == PG_DATA_CHECKSUM_INPROGRESS_OFF)
+		pg_fatal("data checksums are being disabled in the old cluster");
 
 	/*
 	 * We might eventually allow upgrades from checksum to no-checksum
