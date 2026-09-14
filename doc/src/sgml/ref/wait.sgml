@@ -1,21 +1,21 @@
 <!--
-doc/src/sgml/ref/wait_for.sgml
+doc/src/sgml/ref/wait.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="sql-waitfor">
- <indexterm zone="sql-waitfor">
-  <primary>WAIT FOR</primary>
+<refentry id="sql-wait">
+ <indexterm zone="sql-wait">
+  <primary>WAIT</primary>
  </indexterm>
 
  <refmeta>
-  <refentrytitle>WAIT FOR</refentrytitle>
+  <refentrytitle>WAIT</refentrytitle>
   <manvolnum>7</manvolnum>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
  <refnamediv>
-  <refname>WAIT FOR</refname>
+  <refname>WAIT</refname>
   <refpurpose>wait for WAL to reach a target <acronym>LSN</acronym></refpurpose>
  </refnamediv>
 
@@ -225,7 +225,7 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
  <refsect1>
   <title>Notes</title>
   <para>
-   <command>WAIT FOR</command> must be executed as a top-level command.
+   <command>WAIT</command> must be executed as a top-level command.
    It cannot be executed from a function, procedure, or
    <command>DO</command> block. It also requires that no active or
    registered snapshot be held, and therefore cannot be used in contexts
@@ -274,7 +274,7 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
   </para>
 
   <para>
-   <command>WAIT FOR</command> waits until the specified
+   <command>WAIT</command> waits until the specified
    <parameter>lsn</parameter> is reached according to the specified
    <parameter>mode</parameter>. The <literal>standby_replay</literal> mode
    waits for the LSN to be replayed (applied to the database), which is
@@ -306,12 +306,12 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
   </para>
 
   <para>
-   <command>WAIT FOR</command> compares only the numeric
+   <command>WAIT</command> compares only the numeric
    <acronym>LSN</acronym>; it has no notion of which timeline a WAL
    record belongs to.  This matters when a standby continues recovery
    across an upstream timeline switch &mdash; for example, a cascading
    standby whose upstream gets promoted.  In that case
-   <command>WAIT FOR</command> will return <literal>success</literal>
+   <command>WAIT</command> will return <literal>success</literal>
    as soon as the position used by the selected wait mode reaches or
    passes the numeric <acronym>LSN</acronym>, regardless of which
    timeline that <acronym>LSN</acronym> belongs to.  Applications that need to
@@ -320,11 +320,11 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
   </para>
 
   <para>
-   On a standby server, <command>WAIT FOR</command> sessions may be
+   On a standby server, <command>WAIT</command> sessions may be
    interrupted by recovery conflicts.  Some recovery conflicts are
    unavoidable: for example, replaying a tablespace drop resolves
    conflicts by terminating all backends, regardless of what they are
-   doing.  Applications using <command>WAIT FOR</command> on a standby
+   doing.  Applications using <command>WAIT</command> on a standby
    should be prepared to handle such interruptions, for example by
    retrying the command or falling back to an alternative mechanism.
   </para>
@@ -335,7 +335,7 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
   <title>Examples</title>
 
   <para>
-   You can use <command>WAIT FOR</command> command to wait for
+   You can use the <command>WAIT</command> command to wait for
    the <type>pg_lsn</type> value.  For example, an application could update
    the <literal>movie</literal> table and get the <acronym>lsn</acronym> after
    changes just made.  This example uses <function>pg_current_wal_insert_lsn</function>
@@ -353,7 +353,7 @@ postgres=# SELECT pg_current_wal_insert_lsn();
 (1 row)
 </programlisting>
 
-   Then an application could run <command>WAIT FOR</command>
+   Then an application could run <command>WAIT</command>
    with the <parameter>lsn</parameter> obtained from primary.  After that the
    changes made on primary should be guaranteed to be visible on replica.
 
@@ -416,7 +416,7 @@ ERROR:  timed out while waiting for target LSN 0/0306EE20 to be replayed; curren
   </para>
 
   <para>
-   The same example uses <command>WAIT FOR</command> with
+   The same example uses <command>WAIT</command> with the
    <parameter>NO_THROW</parameter> option:
 
 <programlisting>

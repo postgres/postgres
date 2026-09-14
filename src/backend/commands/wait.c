@@ -54,8 +54,8 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("%s can only be executed as a top-level statement",
-						"WAIT FOR"),
-				 errdetail("WAIT FOR cannot be used within a function, procedure, or DO block.")));
+						"WAIT"),
+				 errdetail("WAIT cannot be used within a function, procedure, or DO block.")));
 
 	/* Parse and validate the mandatory LSN */
 	lsn = DatumGetLSN(DirectFunctionCall1(pg_lsn_in,
@@ -155,8 +155,8 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 	if (HaveRegisteredOrActiveSnapshot())
 		ereport(ERROR,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				errmsg("WAIT FOR must be called without an active or registered snapshot"),
-				errdetail("WAIT FOR cannot be executed within a transaction with an isolation level higher than READ COMMITTED."));
+				errmsg("WAIT must be called without an active or registered snapshot"),
+				errdetail("WAIT cannot be executed within a transaction with an isolation level higher than READ COMMITTED."));
 
 	/*
 	 * As the result we should hold no snapshot, and correspondingly our xmin
