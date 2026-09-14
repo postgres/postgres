@@ -49,11 +49,12 @@ PostgreSQL documentation
   </para>
 
   <para>
-   When enabling checksums with <application>pg_checksums</application>, if
-   checksums were in the process of being enabled using
-   <xref linkend="checksums-online-enable-disable"/>  when the cluster was shut
-   down, <application>pg_checksums</application> will still process all
-   relation files regardless of the progress of online checksum processing.
+   If checksums were in the process of being enabled or disabled using
+   <xref linkend="checksums-online-enable-disable"/> when the cluster was
+   shut down, the control file still records that interrupted state, and
+   <application>pg_checksums</application> refuses to run in any mode.
+   Start the cluster and shut it down cleanly to reset the state, then
+   retry; on a standby, let replication complete the transition first.
   </para>
 
   <para>

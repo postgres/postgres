@@ -167,7 +167,10 @@ $newnode->stop('immediate');
 
 # Converge the cluster: enable offline on the standby too.
 $standby->stop;
-$standby->checksum_enable_offline;
+command_checks_all(
+	[ 'pg_checksums', '--enable', '-D', $standby->data_dir ],
+	0, [qr/appears to be a standby/],
+	[], 'standby-role notice on offline enable');
 $standby->start;
 test_checksum_state($standby, 'on');
 $primary->wait_for_catchup($standby);
@@ -235,11 +238,11 @@ unlike(
 );
 
 # Scenario 4: a standby stopped while replaying an interrupted online
-# transition keeps the interrupted state in its own control file.  A
-# primary is never caught this way, as its checksums launcher resolves
-# inprogress-on back to off from its exit cleanup.  A standby has no
-# launcher; it carries forward whatever the last replayed record left
-# it in.
+# transition keeps the interrupted state in its own control file, and
+# pg_checksums must refuse to touch it.  A primary is never caught this
+# way, as its checksums launcher resolves inprogress-on back to off from
+# its exit cleanup.  A standby has no launcher; it carries forward
+# whatever the last replayed record left it in.
 
 # Block an online enable on the primary at inprogress-on with a
 # blocking temp table, same trick as in 004_offline.pl.
@@ -253,6 +256,20 @@ wait_for_checksum_state($standby, 'inprogress-on');
 # Stop the standby cleanly; its restartpoint persists inprogress-on to
 # its own control file, since nothing on a standby resolves it away.
 $standby->stop;
+
+command_fails_like(
+	[ 'pg_checksums', '--enable', '-D', $standby->data_dir ],
+	qr/online data checksum state transition was interrupted/,
+	'pg_checksums --enable refuses a standby stopped mid-transition');
+command_fails_like(
+	[ 'pg_checksums', '--check', '-D', $standby->data_dir ],
+	qr/online data checksum state transition was interrupted/,
+	'pg_checksums --check refuses a standby stopped mid-transition');
+command_fails_like(
+	[ 'pg_checksums', '--disable', '-D', $standby->data_dir ],
+	qr/online data checksum state transition was interrupted/,
+	'pg_checksums --disable refuses a standby stopped mid-transition');
+
 $standby->start;
 wait_for_checksum_state($standby, 'inprogress-on');
 
