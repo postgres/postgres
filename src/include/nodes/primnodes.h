@@ -1360,11 +1360,11 @@ typedef struct CaseWhen
  *	* Placeholder for intermediate results in some SQL/JSON expression nodes,
  *	  such as JsonConstructorExpr.
  *
- * The uses in CaseExpr and ArrayCoerceExpr are safe only to the extent that
- * there is not any other CaseExpr or ArrayCoerceExpr between the value source
- * node and its child CaseTestExpr(s).  This is true in the parse analysis
- * output, but the planner's function-inlining logic has to be careful not to
- * break it.
+ * The uses in CaseExpr, ArrayCoerceExpr, and JsonConstructorExpr are safe
+ * only to the extent that there is not any other such node between the
+ * value source node and its child CaseTestExpr(s).  This is true in the
+ * parse analysis output, but the planner's constant-folding of simple CASE
+ * and its function-inlining logic have to be careful not to break it.
  *
  * The nested-assignment-expression case is safe because the only node types
  * that can be above such CaseTestExprs are FieldStore and SubscriptingRef.
