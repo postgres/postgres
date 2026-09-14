@@ -316,30 +316,6 @@
     application can be used to enable or disable data checksums, as well as
     verify checksums, on an offline cluster.
    </para>
-
-   <para>
-    An offline change provides durability differently from an
-    <link linkend="checksums-online-enable-disable">online change</link>.
-    An online transition is WAL-logged: it is ordered against all other
-    WAL records, it is replayed after a crash, and it propagates to
-    standbys.  An offline change is recorded only in the cluster's
-    control file: it writes no WAL, it is invisible to replication, and
-    it has no defined ordering against WAL the node has not replayed
-    yet.  When a node later replays WAL that contains an online checksum
-    state change, that change takes effect on the node even if it was
-    written before the offline change was made.
-   </para>
-
-   <para>
-    An offline change only affects the data directory it is run on; the
-    new state does not propagate over replication.  In a replication setup
-    the same change must be applied to all nodes while all of them are
-    stopped, as described in <xref linkend="app-pgchecksums"/>.  A standby
-    whose state diverges logs a warning but keeps its local setting.  The
-    mismatch persists until the states are brought together again, with
-    the offline procedure or with an online transition; do this promptly.
-   </para>
-
   </sect2>
 
   <sect2 id="checksums-online-enable-disable" xreflabel="Online Enabling of Checksums">
@@ -428,7 +404,7 @@
       <listitem><para>
        I/O: all pages need to have data checksums calculated and written which
        will generate a lot of dirty pages that will need to be flushed to disk,
-       as well as WAL logged.
+       as well as WAL-logged.
       </para></listitem>
       <listitem><para>
        Replication: When the standby receives the data checksum state change
@@ -456,7 +432,43 @@
      still required.
     </para>
    </sect3>
+  </sect2>
 
+  <sect2 id="checksums-mismatched-states">
+   <title>Mismatched Data Checksum States in a Replicated Cluster</title>
+   <para>
+    The primary and secondaries can end up with different data checksums
+    states due to the different durability models between offline and online
+    checksum operations.
+   </para>
+   <para>
+    An online transition is WAL-logged, which means that it is replayed after a
+    crash, and the transition along with all checksum updates are propagated to
+    standbys.  An offline change is recorded only in the cluster's control
+    file, it writes no WAL and is invisible to replication.  The changes made
+    to the data files to write checksums are not WAL-logged. This means that it
+    has no defined ordering against WAL the node has not replayed yet.  When a
+    node later replays WAL that contains an online checksum state change, that
+    change takes effect on the node even if it was written before the offline
+    change was made.
+   </para>
+
+   <para>
+    An offline change only affects the data directory it is run on; the new
+    state does not propagate over replication.  This means that all nodes can
+    be operated on in parallel, and no additional network traffic or WAL
+    archive traffic will occur.  In a replication setup the same change must be
+    applied to all nodes while all of them are stopped, as described in
+    <xref linkend="app-pgchecksums"/>.  A standby whose state diverges logs a
+    warning but keeps its local setting.  The mismatch persists until the
+    states are brought together again, with the offline procedure or with an
+    online transition.
+   </para>
+
+   <para>
+    Running a replicated cluster with different data checksum states on the
+    different nodes is not supported or recommended.
+   </para>
   </sect2>
  </sect1>
 

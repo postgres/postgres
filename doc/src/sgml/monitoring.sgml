@@ -8339,7 +8339,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
         <structfield>blocks_total</structfield> <type>bigint</type>
        </para>
        <para>
-        The number of blocks in the current relation which will be processed,
+        The number of blocks in the current relation fork which will be processed,
         or <literal>NULL</literal> if the worker process hasn't
         calculated the number of blocks yet. The launcher process has
         this set to <literal>NULL</literal>.
@@ -8353,7 +8353,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
         <structfield>blocks_done</structfield> <type>bigint</type>
        </para>
        <para>
-        The number of blocks in the current relation which have been processed.
+        The number of blocks in the current relation fork which have been processed.
         The launcher process has this set to <literal>NULL</literal>.
        </para>
       </entry>

@@ -3128,7 +3128,8 @@ SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');
 
    <para>
     The functions shown in <xref linkend="functions-checksums-table" /> can
-    be used to enable or disable data checksums in a running cluster.
+    be used to enable or disable data checksums in a running cluster.  Use of
+    these functions is restricted to superusers.
    </para>
    <para>
     Changing data checksums can be done in a cluster with concurrent activity
@@ -3158,7 +3159,7 @@ SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');
         <indexterm>
          <primary>pg_enable_data_checksums</primary>
         </indexterm>
-        <function>pg_enable_data_checksums</function> ( <optional><parameter>cost_delay</parameter> <type>int</type>, <parameter>cost_limit</parameter> <type>int</type></optional> )
+        <function>pg_enable_data_checksums</function> ( <optional><parameter>cost_delay</parameter> <type>int</type> <optional>, <parameter>cost_limit</parameter> <type>int</type></optional></optional> )
         <returnvalue>void</returnvalue>
        </para>
        <para>
@@ -3174,6 +3175,11 @@ SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');
         If <parameter>cost_delay</parameter> and <parameter>cost_limit</parameter> are
         specified, the process is throttled using the same principles as
         <link linkend="runtime-config-resource-vacuum-cost">Cost-based Vacuum Delay</link>.
+        <parameter>cost_delay</parameter> defaults to 0,
+        <parameter>cost_limit</parameter> defaults to 100.
+       </para>
+       <para>
+        This function is restricted to superusers.
        </para>
        </entry>
       </row>
@@ -3192,6 +3198,9 @@ SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');
         while data checksums are being disabled.  When all active backends have
         stopped validating data checksums, the data checksum state will be
         set to <literal>off</literal>.
+       </para>
+       <para>
+        This function is restricted to superusers.
        </para>
        </entry>
       </row>

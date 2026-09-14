@@ -1,14 +1,49 @@
-digraph G {
-    A -> B [label="SELECT pg_enable_data_checksums()"];
-    B -> C;
-    D -> A;
-    C -> D [label="SELECT pg_disable_data_checksums()"];
-    E -> A [label=" --no-data-checksums"];
-    E -> C [label=" --data-checksums"];
+digraph "datachecksums_states" {
+  layout=dot;
+  node [label="", shape=box, style=filled, fillcolor=gray, width=1.0, fontname="sans-serif"];
 
-    A [label="off"];
-    B [label="inprogress-on"];
-    C [label="on"];
-    D [label="inprogress-off"];
-    E [label="initdb"];
+  m1 [label="initdb", shape=Mdiamond];
+
+  subgraph cluster01 {
+    label="Online Checksums";
+    subgraph agroup1 {
+      rank=same;
+      a1;
+      a3;
+    }
+
+    subgraph agroup2 {
+      rank=same;
+      a2;
+      a4;
+    }
+
+    a1 -> a2;
+    a2 -> a3;
+    a3 -> a4;
+    a4 -> a1;
+
+    a1 [fillcolor=lightblue, label="off"];
+    a2 [fillcolor=lightgreen, label="inprogress-on"];
+    a3 [fillcolor=lightblue, label="on"];
+    a4 [fillcolor=lightgreen, label="inprogress-off"];
+  }
+
+  subgraph cluster05 {
+    label="Offline Checksums";
+    subgraph bgroup2 {
+      rank=same;
+      b1 -> b2;
+    }
+
+    b2 -> b1;
+
+    b1 [fillcolor=lightblue, label="off"];
+    b2 [fillcolor=lightblue, label="on"];
+  }
+
+  m1 -> a1;
+  m1 -> a3;
+  m1 -> b1;
+  m1 -> b2;
 }

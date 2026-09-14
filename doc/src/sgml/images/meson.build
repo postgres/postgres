@@ -11,6 +11,7 @@ image_targets = []
 fixup_svg_xsl = files('fixup-svg.xsl')
 
 all_files = [
+  'datachecksums.gv',
   'genetic-algorithm.gv',
   'gin.gv',
   'pagelayout.txt',

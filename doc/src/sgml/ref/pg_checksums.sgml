@@ -288,7 +288,7 @@ PostgreSQL documentation
   </procedure>
 
   <para>
-   The replay requirement in <xref linkend="shut-down-nodes"/>exists
+   The replay requirement in <xref linkend="shut-down-nodes"/> exists
    because an offline change is recorded only in the control file and
    has no defined ordering against WAL the node has not replayed yet; see
    <xref linkend="checksums-offline-enable-disable"/>.  A node stopped
