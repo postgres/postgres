@@ -77,7 +77,6 @@ extern void mark_partial_aggref(Aggref *agg, AggSplit aggsplit);
 extern Path *get_cheapest_fractional_path(RelOptInfo *rel,
 										  double tuple_fraction);
 
-extern Expr *preprocess_phv_expression(PlannerInfo *root, Expr *expr);
 
 extern RelOptInfo *create_unique_paths(PlannerInfo *root, RelOptInfo *rel,
 									   SpecialJoinInfo *sjinfo);

@@ -2387,12 +2387,12 @@ select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
  MixedAggregate
    Hash Key: (InitPlan expr_3).col1
    Group Key: ()
-   InitPlan expr_2
+   InitPlan expr_1
      ->  Result
    InitPlan expr_3
      ->  Result
    ->  Result
-   SubPlan expr_1
+   SubPlan expr_2
      ->  Result
 (10 rows)
 
