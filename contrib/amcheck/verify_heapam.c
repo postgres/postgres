@@ -28,7 +28,6 @@
 #include "storage/procarray.h"
 #include "storage/read_stream.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/rel.h"
 #include "utils/tuplestore.h"
 
@@ -1876,8 +1875,12 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 	uint32		extsize;
 	int32		expected_chunk_seq = 0;
 	int32		last_chunk_seq;
-	int32		max_chunk_size = TOAST_OID_MAX_CHUNK_SIZE;
+	int32		max_chunk_size;
 	Oid8		toast_valueid;
+	Oid			toast_typid;
+
+	toast_typid = TupleDescAttr(ctx->toast_rel->rd_att, 0)->atttypid;
+	max_chunk_size = TOAST_OID_MAX_CHUNK_SIZE;
 
 	extsize = VARATT_EXTERNAL_OID_GET_EXTSIZE(ta->toast_pointer);
 	last_chunk_seq = (extsize - 1) / max_chunk_size;
@@ -1885,10 +1888,8 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 	/*
 	 * Setup a scan key to find chunks in toast table with matching va_valueid
 	 */
-	ScanKeyInit(&toastkey,
-				(AttrNumber) 1,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(ta->toast_pointer.va_valueid));
+	toast_valueid_scankey_init(&toastkey, toast_typid,
+							   ta->toast_pointer.va_valueid);
 
 	/*
 	 * Check if any chunks for this toasted object exist in the toast table,

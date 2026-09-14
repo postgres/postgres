@@ -5036,6 +5036,8 @@ ReorderBufferToastAppendChunk(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	TupleDesc	desc = RelationGetDescr(relation);
 	Oid8		chunk_id;
 	int32		chunk_seq;
+	Oid			valueid_type;
+	Datum		valueid_datum;
 
 	if (txn->toast_hash == NULL)
 		ReorderBufferToastInitHash(rb, txn);
@@ -5043,7 +5045,12 @@ ReorderBufferToastAppendChunk(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	Assert(IsToastRelation(relation));
 
 	newtup = change->data.tp.newtuple;
-	chunk_id = DatumGetObjectId(fastgetattr(newtup, 1, desc, &isnull));
+	valueid_type = TupleDescAttr(desc, 0)->atttypid;
+	valueid_datum = fastgetattr(newtup, 1, desc, &isnull);
+	if (valueid_type == OID8OID)
+		chunk_id = DatumGetObjectId8(valueid_datum);
+	else
+		chunk_id = DatumGetObjectId(valueid_datum);
 	Assert(!isnull);
 	chunk_seq = DatumGetInt32(fastgetattr(newtup, 2, desc, &isnull));
 	Assert(!isnull);

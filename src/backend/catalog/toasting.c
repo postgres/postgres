@@ -32,6 +32,7 @@
 #include "nodes/makefuncs.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 static void CheckAndCreateToastTable(Oid relOid, Datum reloptions,
@@ -173,6 +174,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 			case STDRD_OPTION_TOAST_VALUE_TYPE_OID:
 				toast_chunkid_typid = OIDOID;
 				break;
+			case STDRD_OPTION_TOAST_VALUE_TYPE_OID8:
+				toast_chunkid_typid = OID8OID;
+				break;
 			case STDRD_OPTION_TOAST_VALUE_TYPE_INVALID:
 				elog(ERROR, "unexpected toast_value_type value %d",
 					 value_type);
@@ -210,7 +214,8 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("toast chunk_id type not set while in binary upgrade mode")));
-		if (binary_upgrade_next_toast_chunk_id_typoid != OIDOID)
+		if (binary_upgrade_next_toast_chunk_id_typoid != OIDOID &&
+			binary_upgrade_next_toast_chunk_id_typoid != OID8OID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("cannot support toast chunk_id type %u in binary upgrade mode",
@@ -234,6 +239,19 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 			 "pg_toast_%u", relOid);
 	snprintf(toast_idxname, sizeof(toast_idxname),
 			 "pg_toast_%u_index", relOid);
+
+	/*
+	 * Special case here.  If OIDOldToast is defined, rely on the existing
+	 * TOAST table and its chunk_id type, not the reloption value.  This
+	 * guarantees that the same TOAST table is kept across rewrites of the
+	 * parent.
+	 */
+	if (OidIsValid(OIDOldToast))
+	{
+		toast_chunkid_typid = get_atttype(OIDOldToast, 1);
+		if (!OidIsValid(toast_chunkid_typid))
+			elog(ERROR, "cache lookup failed for relation %u", OIDOldToast);
+	}
 
 	/* this is pretty painful...  need a tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(3);
@@ -353,7 +371,10 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	collationIds[0] = InvalidOid;
 	collationIds[1] = InvalidOid;
 
-	opclassIds[0] = OID_BTREE_OPS_OID;
+	if (toast_chunkid_typid == OID8OID)
+		opclassIds[0] = OID8_BTREE_OPS_OID;
+	else
+		opclassIds[0] = OID_BTREE_OPS_OID;
 	opclassIds[1] = INT4_BTREE_OPS_OID;
 
 	coloptions[0] = 0;

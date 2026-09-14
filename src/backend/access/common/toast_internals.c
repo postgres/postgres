@@ -25,6 +25,7 @@
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
+#include "utils/lsyscache.h"
 
 static bool toastrel_valueid_exists(Relation toastrel, Oid8 valueid);
 static bool toastid_valueid_exists(Oid toastrelid, Oid8 valueid);
@@ -131,6 +132,7 @@ toast_save_datum(Relation rel, Datum value,
 	Pointer		dval = DatumGetPointer(value);
 	int			num_indexes;
 	int			validIndex;
+	Oid			toast_typid = get_atttype(rel->rd_rel->reltoastrelid, 1);
 
 	Assert(!VARATT_IS_EXTERNAL(dval));
 
@@ -200,24 +202,31 @@ toast_save_datum(Relation rel, Datum value,
 		toast_pointer.va_toastrelid = RelationGetRelid(toastrel);
 
 	/*
-	 * Choose an OID to use as the value ID for this toast value.
+	 * Choose a new value to use as the value ID for this toast value, be it
+	 * for OID or OID8 TOAST relations.
 	 *
-	 * Normally we just choose an unused OID within the toast table.  But
+	 * Normally we just choose an unused value within the toast table.  But
 	 * during table-rewriting operations where we are preserving an existing
-	 * toast table OID, we want to preserve toast value OIDs too.  So, if
+	 * toast table OID, we want to preserve toast value IDs too.  So, if
 	 * rd_toastoid is set and we had a prior external value from that same
 	 * toast table, re-use its value ID.  If we didn't have a prior external
 	 * value (which is a corner case, but possible if the table's attstorage
 	 * options have been changed), we have to pick a value ID that doesn't
-	 * conflict with either new or existing toast value OIDs.
+	 * conflict with either new or existing toast value IDs.  If the TOAST
+	 * table uses 8-byte value IDs, we should not really care much about that.
 	 */
 	if (!OidIsValid(rel->rd_toastoid))
 	{
 		/* normal case: just choose an unused OID */
-		toast_pointer.va_valueid =
-			GetNewOidWithIndex(toastrel,
-							   RelationGetRelid(toastidxs[validIndex]),
-							   (AttrNumber) 1);
+		if (toast_typid == OID8OID)
+			toast_pointer.va_valueid = GetNewObjectId8();
+		else
+		{
+			toast_pointer.va_valueid =
+				GetNewOidWithIndex(toastrel,
+								   RelationGetRelid(toastidxs[validIndex]),
+								   (AttrNumber) 1);
+		}
 	}
 	else
 	{
@@ -263,17 +272,22 @@ toast_save_datum(Relation rel, Datum value,
 		if (toast_pointer.va_valueid == InvalidOid)
 		{
 			/*
-			 * new value; must choose an OID that doesn't conflict in either
-			 * old or new toast table
+			 * new value; must choose a value that doesn't conflict in either
+			 * old or new toast table.
 			 */
-			do
+			if (toast_typid == OID8OID)
+				toast_pointer.va_valueid = GetNewObjectId8();
+			else
 			{
-				toast_pointer.va_valueid =
-					GetNewOidWithIndex(toastrel,
-									   RelationGetRelid(toastidxs[validIndex]),
-									   (AttrNumber) 1);
-			} while (toastid_valueid_exists(rel->rd_toastoid,
-											toast_pointer.va_valueid));
+				do
+				{
+					toast_pointer.va_valueid =
+						GetNewOidWithIndex(toastrel,
+										   RelationGetRelid(toastidxs[validIndex]),
+										   (AttrNumber) 1);
+				} while (toastid_valueid_exists(rel->rd_toastoid,
+												toast_pointer.va_valueid));
+			}
 		}
 	}
 
@@ -303,7 +317,10 @@ toast_save_datum(Relation rel, Datum value,
 		/*
 		 * Build a tuple and store it
 		 */
-		t_values[0] = ObjectIdGetDatum(toast_pointer.va_valueid);
+		if (toast_typid == OID8OID)
+			t_values[0] = ObjectId8GetDatum(toast_pointer.va_valueid);
+		else
+			t_values[0] = ObjectIdGetDatum(toast_pointer.va_valueid);
 		t_values[1] = Int32GetDatum(chunk_seq++);
 		SET_VARSIZE(&chunk_data, chunk_size + VARHDRSZ);
 		memcpy(VARDATA(&chunk_data), data_p, chunk_size);
@@ -367,6 +384,26 @@ toast_save_datum(Relation rel, Datum value,
 }
 
 /* ----------
+ * toast_valueid_scankey_init -
+ *
+ *	Initialize a scan key that matches the value ID column of a TOAST table.
+ * ----------
+ */
+void
+toast_valueid_scankey_init(ScanKey entry, Oid toast_typid, Oid8 valueid)
+{
+	Assert(toast_typid == OIDOID || toast_typid == OID8OID);
+	if (toast_typid == OID8OID)
+		ScanKeyInit(entry, (AttrNumber) 1,
+					BTEqualStrategyNumber, F_OID8EQ,
+					ObjectId8GetDatum(valueid));
+	else
+		ScanKeyInit(entry, (AttrNumber) 1,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum((Oid) valueid));
+}
+
+/* ----------
  * toast_delete_datum -
  *
  *	Delete a single external stored value.
@@ -405,10 +442,9 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 	/*
 	 * Setup a scan key to find chunks with matching va_valueid
 	 */
-	ScanKeyInit(&toastkey,
-				(AttrNumber) 1,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(toast_pointer.va_valueid));
+	toast_valueid_scankey_init(&toastkey,
+							   TupleDescAttr(toastrel->rd_att, 0)->atttypid,
+							   toast_pointer.va_valueid);
 
 	/*
 	 * Find all the chunks.  (We don't actually care whether we see them in
@@ -455,6 +491,7 @@ toastrel_valueid_exists(Relation toastrel, Oid8 valueid)
 	int			num_indexes;
 	int			validIndex;
 	Relation   *toastidxs;
+	Oid			toast_typid;
 
 	/* Fetch a valid index relation */
 	validIndex = toast_open_indexes(toastrel,
@@ -462,13 +499,12 @@ toastrel_valueid_exists(Relation toastrel, Oid8 valueid)
 									&toastidxs,
 									&num_indexes);
 
+	toast_typid = TupleDescAttr(toastrel->rd_att, 0)->atttypid;
+
 	/*
 	 * Setup a scan key to find chunks with matching va_valueid
 	 */
-	ScanKeyInit(&toastkey,
-				(AttrNumber) 1,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(valueid));
+	toast_valueid_scankey_init(&toastkey, toast_typid, valueid);
 
 	/*
 	 * Is there any such chunk?

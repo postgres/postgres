@@ -199,7 +199,7 @@ CREATE TABLE reloptions_test2 (s VARCHAR) WITH (toast.toast_value_type = 'oid');
 ERROR:  unrecognized parameter "toast_value_type"
 CREATE TABLE reloptions_test2 (s VARCHAR) WITH (toast_value_type = 'int8');
 ERROR:  invalid value for enum option "toast_value_type": int8
-DETAIL:  Valid values are "oid".
+DETAIL:  Valid values are "oid" and "oid8".
 CREATE TABLE reloptions_test2 (s VARCHAR) WITH (toast_value_type = 'oid');
 SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test2'::regclass;
        reloptions       
@@ -207,6 +207,19 @@ SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test2'::regclass;
  {toast_value_type=oid}
 (1 row)
 
+-- The option is only consulted when the TOAST relation is created, so
+-- changing it afterwards leaves chunk_id alone.
+ALTER TABLE reloptions_test2 SET (toast_value_type = 'oid8');
+SELECT a.atttypid::regtype AS chunk_id_type
+  FROM pg_class AS c, pg_attribute AS a
+  WHERE c.oid = 'reloptions_test2'::regclass AND
+        a.attrelid = c.reltoastrelid AND a.attname = 'chunk_id';
+ chunk_id_type 
+---------------
+ oid
+(1 row)
+
+ALTER TABLE reloptions_test2 RESET (toast_value_type);
 DROP TABLE reloptions_test2;
 -- relkinds not supported.
 CREATE INDEX reloptions_test_idx0 ON reloptions_test (s)

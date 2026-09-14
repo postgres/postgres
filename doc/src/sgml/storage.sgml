@@ -421,14 +421,15 @@ most <symbol>TOAST_OID_MAX_CHUNK_SIZE</symbol> bytes (by default this value is c
 so that four chunk rows will fit on a page, making it about 2000 bytes).
 Each chunk is stored as a separate row in the <acronym>TOAST</acronym> table
 belonging to the owning table.  Every
-<acronym>TOAST</acronym> table has the columns <structfield>chunk_id</structfield> (an OID
-identifying the particular <acronym>TOAST</acronym>ed value),
+<acronym>TOAST</acronym> table has the columns
+<structfield>chunk_id</structfield> (an OID or an OID8 identifying
+the particular <acronym>TOAST</acronym>ed value),
 <structfield>chunk_seq</structfield> (a sequence number for the chunk within its value),
 and <structfield>chunk_data</structfield> (the actual data of the chunk).  A unique index
 on <structfield>chunk_id</structfield> and <structfield>chunk_seq</structfield> provides fast
 retrieval of the values.  A pointer datum representing an out-of-line on-disk
 <acronym>TOAST</acronym>ed value therefore needs to store the OID of the
-<acronym>TOAST</acronym> table in which to look and the OID of the specific value
+<acronym>TOAST</acronym> table in which to look and the specific value
 (its <structfield>chunk_id</structfield>).  For convenience, pointer datums also store the
 logical datum size (original uncompressed data length), physical stored size
 (different if compression was applied), and the compression method used, if

@@ -1663,7 +1663,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       Specifies the attribute type of <literal>chunk_id</literal> to use when
       creating a <acronym>TOAST</acronym> relation for this table.  The
-      default is <literal>oid</literal>.
+      default is <literal>oid</literal>; <literal>oid8</literal> assigns
+      <type>oid8</type> instead, which allows a larger number of distinct
+      <acronym>TOAST</acronym>ed values at the price of four extra bytes per
+      out-of-line pointer.
       This parameter cannot be set for <acronym>TOAST</acronym> tables.
      </para>
      <para>

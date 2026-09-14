@@ -640,6 +640,7 @@ heap_fetch_toast_slice(Relation toastrel, Oid8 valueid, int32 attrsize,
 	int			num_indexes;
 	int			validIndex;
 	int32		max_chunk_size;
+	Oid			toast_typid;
 
 	/* Look for the valid index of toast relation */
 	validIndex = toast_open_indexes(toastrel,
@@ -647,6 +648,7 @@ heap_fetch_toast_slice(Relation toastrel, Oid8 valueid, int32 attrsize,
 									&toastidxs,
 									&num_indexes);
 
+	toast_typid = TupleDescAttr(toastrel->rd_att, 0)->atttypid;
 	max_chunk_size = TOAST_OID_MAX_CHUNK_SIZE;
 
 	totalchunks = ((attrsize - 1) / max_chunk_size) + 1;
@@ -655,10 +657,7 @@ heap_fetch_toast_slice(Relation toastrel, Oid8 valueid, int32 attrsize,
 	Assert(endchunk <= totalchunks);
 
 	/* Set up a scan key to fetch from the index. */
-	ScanKeyInit(&toastkey[0],
-				(AttrNumber) 1,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(valueid));
+	toast_valueid_scankey_init(&toastkey[0], toast_typid, valueid);
 
 	/*
 	 * No additional condition if fetching all chunks. Otherwise, use an
