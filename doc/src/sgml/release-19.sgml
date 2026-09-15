@@ -1649,7 +1649,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Add <link linkend="sql-createpublication"><command>CREATE</command></link>/<link linkend="sql-alterpublication"><command>ALTER PUBLICATION</command></link> setting <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><varname>retain_dead_tuples</varname></link> to retain information needed for conflict resolution (Zhijie Hou)
+Add <link linkend="sql-createsubscription"><command>CREATE</command></link>/<link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION</command></link> setting <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><varname>retain_dead_tuples</varname></link> to retain information needed for conflict detection (Zhijie Hou)
 <ulink url="&commit_baseurl;228c37086">&sect;</ulink>
 <ulink url="&commit_baseurl;0d48d393d">&sect;</ulink>
 <ulink url="&commit_baseurl;a850be2fe">&sect;</ulink>
