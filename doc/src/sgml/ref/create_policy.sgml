@@ -531,43 +531,11 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
        <entry>&mdash;</entry>
       </row>
       <row>
-       <entry><command>UPDATE ... FOR PORTION OF</command></entry>
-       <entry>
-        Filter existing row &amp; check new row
-       </entry>
-       <entry>
-        Check leftover rows&nbsp;<footnote id="rls-fpo-leftover">
-         <para>
-          <literal>FOR PORTION OF</literal> re-inserts the portions of the
-          affected row that fall outside the targeted range, to preserve them.
-          These leftover rows are checked against the <command>INSERT</command>
-          policy's <literal>WITH CHECK</literal> expression, even though no
-          <literal>INSERT</literal> privilege is required to store them.
-         </para>
-        </footnote>
-       </entry>
-       <entry>Filter existing row</entry>
-       <entry>Check new row</entry>
-       <entry>&mdash;</entry>
-      </row>
-      <row>
        <entry><command>DELETE</command></entry>
        <entry>
         Filter existing row&nbsp;<footnoteref linkend="rls-select-priv"/>
        </entry>
        <entry>&mdash;</entry>
-       <entry>&mdash;</entry>
-       <entry>&mdash;</entry>
-       <entry>Filter existing row</entry>
-      </row>
-      <row>
-       <entry><command>DELETE ... FOR PORTION OF</command></entry>
-       <entry>
-        Filter existing row
-       </entry>
-       <entry>
-        Check leftover rows&nbsp;<footnoteref linkend="rls-fpo-leftover"/>
-       </entry>
        <entry>&mdash;</entry>
        <entry>&mdash;</entry>
        <entry>Filter existing row</entry>

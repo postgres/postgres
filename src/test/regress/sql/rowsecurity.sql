@@ -85,22 +85,6 @@ CREATE POLICY upd_pol ON rls_test_tgt FOR UPDATE
 CREATE POLICY del_pol ON rls_test_tgt FOR DELETE
   USING (rls_test_policy_fn('DELETE USING on rls_test_tgt', rls_test_tgt));
 
--- setup temporal target table (for FOR PORTION OF operations)
-CREATE TABLE rls_test_fpo_tgt (a int, b text, valid_at int4range);
-ALTER TABLE rls_test_fpo_tgt ENABLE ROW LEVEL SECURITY;
-GRANT SELECT, UPDATE, DELETE ON rls_test_fpo_tgt TO public;
-INSERT INTO rls_test_fpo_tgt VALUES (1, 'fpo a', '[1,10)');
-
-CREATE POLICY sel_pol ON rls_test_fpo_tgt FOR SELECT
-  USING (rls_test_policy_fn('SELECT USING on rls_test_fpo_tgt', rls_test_fpo_tgt));
-CREATE POLICY ins_pol ON rls_test_fpo_tgt FOR INSERT
-  WITH CHECK (rls_test_policy_fn('INSERT CHECK on rls_test_fpo_tgt', rls_test_fpo_tgt));
-CREATE POLICY upd_pol ON rls_test_fpo_tgt FOR UPDATE
-  USING (rls_test_policy_fn('UPDATE USING on rls_test_fpo_tgt', rls_test_fpo_tgt))
-  WITH CHECK (rls_test_policy_fn('UPDATE CHECK on rls_test_fpo_tgt', rls_test_fpo_tgt));
-CREATE POLICY del_pol ON rls_test_fpo_tgt FOR DELETE
-  USING (rls_test_policy_fn('DELETE USING on rls_test_fpo_tgt', rls_test_fpo_tgt));
-
 -- test policies applied to regress_rls_bob
 SET SESSION AUTHORIZATION regress_rls_bob;
 
@@ -130,27 +114,12 @@ UPDATE rls_test_tgt SET b = 'tgt b';
 UPDATE rls_test_tgt SET b = 'tgt c' WHERE a = 1;
 UPDATE rls_test_tgt SET b = 'tgt d' RETURNING *;
 
--- UPDATE ... FOR PORTION OF should also apply SELECT USING policy clauses to
--- the old and new rows, and INSERT CHECK policy clauses to leftover rows.
-BEGIN;
-UPDATE rls_test_fpo_tgt
-  FOR PORTION OF valid_at FROM 3 TO 7
-  SET b = 'fpo b';
-ROLLBACK;
-
 -- DELETE without WHERE or RETURNING should only apply DELETE USING policy clause
 BEGIN; DELETE FROM rls_test_tgt; ROLLBACK;
 
 -- DELETE with WHERE or RETURNING should also apply SELECT USING policy clause
 BEGIN; DELETE FROM rls_test_tgt WHERE a = 1; ROLLBACK;
 DELETE FROM rls_test_tgt RETURNING *;
-
--- DELETE ... FOR PORTION OF should also apply SELECT USING policy clauses to
--- the old row, and INSERT CHECK policy clauses to leftover rows.
-BEGIN;
-DELETE FROM rls_test_fpo_tgt
-  FOR PORTION OF valid_at FROM 3 TO 7;
-ROLLBACK;
 
 -- INSERT ... ON CONFLICT DO NOTHING with an arbiter clause should apply
 -- INSERT CHECK and SELECT USING policy clauses (to new value, whether it
@@ -223,7 +192,7 @@ MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
 
 -- Tidy up
 RESET SESSION AUTHORIZATION;
-DROP TABLE rls_test_src, rls_test_tgt, rls_test_fpo_tgt;
+DROP TABLE rls_test_src, rls_test_tgt;
 DROP FUNCTION rls_test_tgt_set_c;
 DROP FUNCTION rls_test_policy_fn;
 

@@ -394,31 +394,6 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	}
 
 	/*
-	 * UPDATE/DELETE FOR PORTION OF may insert leftover rows to preserve the
-	 * portions of the old row not covered by the target range.  Those hidden
-	 * inserts go through ExecInsert(), so they need the same INSERT RLS WITH
-	 * CHECK options as ordinary INSERTs.  SELECT rights are never needed for
-	 * the leftover rows, because they are not considered by RETURNING.
-	 */
-	if (root->forPortionOf != NULL && rt_index == root->resultRelation &&
-		(commandType == CMD_UPDATE || commandType == CMD_DELETE))
-	{
-		List	   *insert_permissive_policies;
-		List	   *insert_restrictive_policies;
-
-		get_policies_for_relation(rel, CMD_INSERT, user_id,
-								  &insert_permissive_policies,
-								  &insert_restrictive_policies);
-		add_with_check_options(rel, rt_index,
-							   WCO_RLS_INSERT_CHECK,
-							   insert_permissive_policies,
-							   insert_restrictive_policies,
-							   withCheckOptions,
-							   hasSubLinks,
-							   false);
-	}
-
-	/*
 	 * FOR MERGE, we fetch policies for UPDATE, DELETE and INSERT (and ALL)
 	 * and set them up so that we can enforce the appropriate policy depending
 	 * on the final action we take.

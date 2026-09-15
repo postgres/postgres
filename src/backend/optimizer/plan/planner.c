@@ -858,34 +858,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 	transform_MERGE_to_join(parse);
 
 	/*
-	 * Reject FOR PORTION OF on a generated column.  We can't write to a
-	 * virtual generated column, and a stored generated column should be
-	 * written by its own expression.
-	 *
-	 * We do this in the planner rather than parse analysis so that updatable
-	 * views have been rewritten; otherwise they would mask which columns are
-	 * generated.  We need to check before preprocess_relation_rtes(), so that
-	 * for virtual generated columns we still have the rangeVar.  After that
-	 * it is replaced by the column's expression.
-	 *
-	 * XXX: We plan to implement PERIODs as stored generated columns, so later
-	 * we will loosen this restriction if the column belongs to a PERIOD.
-	 */
-	if (parse->forPortionOf)
-	{
-		ForPortionOfExpr *forPortionOf = parse->forPortionOf;
-		RangeTblEntry *rte = rt_fetch(parse->resultRelation, parse->rtable);
-
-		if (get_attgenerated(rte->relid, forPortionOf->rangeVar->varattno))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use generated column \"%s\" in FOR PORTION OF",
-							get_attname(rte->relid,
-										forPortionOf->rangeVar->varattno,
-										false))));
-	}
-
-	/*
 	 * Scan the rangetable for relation RTEs and retrieve the necessary
 	 * catalog information for each relation.  Using this information, clear
 	 * the inh flag for any relation that has no children, collect not-null
@@ -1106,18 +1078,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 								  parse->onConflict->onConflictWhere,
 								  EXPRKIND_QUAL);
 		/* exclRelTlist contains only Vars, so no preprocessing needed */
-	}
-
-	if (parse->forPortionOf)
-	{
-		parse->forPortionOf->targetRange =
-			preprocess_expression(root,
-								  parse->forPortionOf->targetRange,
-								  EXPRKIND_TARGET);
-		if (contain_volatile_functions(parse->forPortionOf->targetRange))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("FOR PORTION OF bounds cannot contain volatile functions")));
 	}
 
 	foreach(l, parse->mergeActionList)
@@ -2452,7 +2412,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction,
 										parse->onConflict,
 										mergeActionLists,
 										mergeJoinConditions,
-										parse->forPortionOf,
 										assign_special_exec_param(root));
 		}
 

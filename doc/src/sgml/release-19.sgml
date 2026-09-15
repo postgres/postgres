@@ -65,14 +65,6 @@
 
     <listitem>
      <para>
-      Support for temporal updates and deletes via the new
-      <link linkend="dml-application-time-update-delete"><literal>FOR PORTION OF</literal></link>
-      clause.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       A new
       <link linkend="pgplanadvice"><application>pg_plan_advice</application></link>
       extension for stabilizing and controlling the query planner's decisions,
@@ -1734,25 +1726,6 @@ Add optional pid parameter to <link linkend="pg-replication-origin-session-setup
     <title>Query Commands</title>
 
     <itemizedlist>
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2026-04-01 [8e72d914c] Add UPDATE/DELETE FOR PORTION OF
-Author: Peter Eisentraut <peter@eisentraut.org>
-2026-04-07 [b6ccd30d8] Add isolation tests for UPDATE/DELETE FOR PORTION OF
--->
-
-<listitem>
-<para>
-Add <literal>FOR PORTION OF</literal> clause to <link linkend="sql-update"><command>UPDATE</command></link> and <link linkend="sql-delete"><command>DELETE</command></link> (Paul A. Jungwirth)
-<ulink url="&commit_baseurl;8e72d914c">&sect;</ulink>
-<ulink url="&commit_baseurl;b6ccd30d8">&sect;</ulink>
-</para>
-
-<para>
-This allows operations on temporal ranges.
-</para>
-</listitem>
-
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2026-03-06 [415100aa6] Support grouping-expression references and GROUPING() in

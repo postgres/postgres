@@ -68,20 +68,6 @@ CREATE POLICY upd_pol ON rls_test_tgt FOR UPDATE
   WITH CHECK (rls_test_policy_fn('UPDATE CHECK on rls_test_tgt', rls_test_tgt));
 CREATE POLICY del_pol ON rls_test_tgt FOR DELETE
   USING (rls_test_policy_fn('DELETE USING on rls_test_tgt', rls_test_tgt));
--- setup temporal target table (for FOR PORTION OF operations)
-CREATE TABLE rls_test_fpo_tgt (a int, b text, valid_at int4range);
-ALTER TABLE rls_test_fpo_tgt ENABLE ROW LEVEL SECURITY;
-GRANT SELECT, UPDATE, DELETE ON rls_test_fpo_tgt TO public;
-INSERT INTO rls_test_fpo_tgt VALUES (1, 'fpo a', '[1,10)');
-CREATE POLICY sel_pol ON rls_test_fpo_tgt FOR SELECT
-  USING (rls_test_policy_fn('SELECT USING on rls_test_fpo_tgt', rls_test_fpo_tgt));
-CREATE POLICY ins_pol ON rls_test_fpo_tgt FOR INSERT
-  WITH CHECK (rls_test_policy_fn('INSERT CHECK on rls_test_fpo_tgt', rls_test_fpo_tgt));
-CREATE POLICY upd_pol ON rls_test_fpo_tgt FOR UPDATE
-  USING (rls_test_policy_fn('UPDATE USING on rls_test_fpo_tgt', rls_test_fpo_tgt))
-  WITH CHECK (rls_test_policy_fn('UPDATE CHECK on rls_test_fpo_tgt', rls_test_fpo_tgt));
-CREATE POLICY del_pol ON rls_test_fpo_tgt FOR DELETE
-  USING (rls_test_policy_fn('DELETE USING on rls_test_fpo_tgt', rls_test_fpo_tgt));
 -- test policies applied to regress_rls_bob
 SET SESSION AUTHORIZATION regress_rls_bob;
 -- SELECT, COPY ... TO, and TABLE should only apply SELECT USING policy clause
@@ -169,19 +155,6 @@ NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt d","TGT D")
  1 | tgt d | TGT D
 (1 row)
 
--- UPDATE ... FOR PORTION OF should also apply SELECT USING policy clauses to
--- the old and new rows, and INSERT CHECK policy clauses to leftover rows.
-BEGIN;
-UPDATE rls_test_fpo_tgt
-  FOR PORTION OF valid_at FROM 3 TO 7
-  SET b = 'fpo b';
-NOTICE:  UPDATE USING on rls_test_fpo_tgt.(1,"fpo a","[1,10)")
-NOTICE:  SELECT USING on rls_test_fpo_tgt.(1,"fpo a","[1,10)")
-NOTICE:  UPDATE CHECK on rls_test_fpo_tgt.(1,"fpo b","[3,7)")
-NOTICE:  SELECT USING on rls_test_fpo_tgt.(1,"fpo b","[3,7)")
-NOTICE:  INSERT CHECK on rls_test_fpo_tgt.(1,"fpo a","[1,3)")
-NOTICE:  INSERT CHECK on rls_test_fpo_tgt.(1,"fpo a","[7,10)")
-ROLLBACK;
 -- DELETE without WHERE or RETURNING should only apply DELETE USING policy clause
 BEGIN; DELETE FROM rls_test_tgt; ROLLBACK;
 NOTICE:  DELETE USING on rls_test_tgt.(1,"tgt d","TGT D")
@@ -197,16 +170,6 @@ NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt d","TGT D")
  1 | tgt d | TGT D
 (1 row)
 
--- DELETE ... FOR PORTION OF should also apply SELECT USING policy clauses to
--- the old row, and INSERT CHECK policy clauses to leftover rows.
-BEGIN;
-DELETE FROM rls_test_fpo_tgt
-  FOR PORTION OF valid_at FROM 3 TO 7;
-NOTICE:  DELETE USING on rls_test_fpo_tgt.(1,"fpo a","[1,10)")
-NOTICE:  SELECT USING on rls_test_fpo_tgt.(1,"fpo a","[1,10)")
-NOTICE:  INSERT CHECK on rls_test_fpo_tgt.(1,"fpo a","[1,3)")
-NOTICE:  INSERT CHECK on rls_test_fpo_tgt.(1,"fpo a","[7,10)")
-ROLLBACK;
 -- INSERT ... ON CONFLICT DO NOTHING with an arbiter clause should apply
 -- INSERT CHECK and SELECT USING policy clauses (to new value, whether it
 -- conflicts or not)
@@ -369,7 +332,7 @@ NOTICE:  DELETE USING on rls_test_tgt.(1,"tgt c","TGT C")
 
 -- Tidy up
 RESET SESSION AUTHORIZATION;
-DROP TABLE rls_test_src, rls_test_tgt, rls_test_fpo_tgt;
+DROP TABLE rls_test_src, rls_test_tgt;
 DROP FUNCTION rls_test_tgt_set_c;
 DROP FUNCTION rls_test_policy_fn;
 -- BASIC Row-Level Security Scenario

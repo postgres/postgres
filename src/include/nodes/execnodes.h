@@ -39,7 +39,6 @@
 #include "partitioning/partdefs.h"
 #include "storage/buf.h"
 #include "utils/reltrigger.h"
-#include "utils/typcache.h"
 
 
 /*
@@ -468,24 +467,6 @@ typedef struct MergeActionState
 } MergeActionState;
 
 /*
- * ForPortionOfState
- *
- * Executor state of a FOR PORTION OF operation.
- */
-typedef struct ForPortionOfState
-{
-	NodeTag		type;
-
-	Oid			fp_rangeType;	/* the base type (not domain) of the FOR
-								 * PORTION OF expression */
-	int			fp_rangeAttno;	/* the attno of the range column */
-	Datum		fp_targetRange; /* the range/multirange from FOR PORTION OF */
-	TypeCacheEntry *fp_leftoverstypcache;	/* type cache entry of the range */
-	TupleTableSlot *fp_Existing;	/* slot to store old tuple */
-	TupleTableSlot *fp_Leftover;	/* slot to store leftover */
-} ForPortionOfState;
-
-/*
  * ResultRelInfo
  *
  * Whenever we update an existing relation, we have to update indexes on the
@@ -620,9 +601,6 @@ typedef struct ResultRelInfo
 
 	/* for MERGE, expr state for checking the join condition */
 	ExprState  *ri_MergeJoinCondition;
-
-	/* FOR PORTION OF evaluation state */
-	ForPortionOfState *ri_forPortionOf;
 
 	/* partition check expression state (NULL if not set up yet) */
 	ExprState  *ri_PartitionCheckExpr;
