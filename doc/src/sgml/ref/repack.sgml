@@ -385,6 +385,12 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
    </para>
 
    <para>
+    <command>REPACK</command> refuses to process a table on which an invalid
+    index exists.  Such indexes must be dropped or reindexed by the user ahead
+    of time.
+   </para>
+
+   <para>
     While <command>REPACK</command> is running, the <xref
     linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
     pg_temp</literal>.
