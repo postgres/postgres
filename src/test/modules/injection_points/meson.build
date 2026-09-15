@@ -47,6 +47,7 @@ tests += {
       'syscache-update-pruned',
       'wait_cleanup',
       'heap_lock_update',
+      'on_conflict_probe_window',
     ],
     'runningcheck': false, # see syscache-update-pruned
   },

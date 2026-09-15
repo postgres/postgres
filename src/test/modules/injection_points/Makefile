@@ -16,7 +16,8 @@ ISOLATION = inplace \
 	    reindex_concurrently_deferred \
 	    syscache-update-pruned \
 	    wait_cleanup \
-	    heap_lock_update
+	    heap_lock_update \
+	    on_conflict_probe_window
 
 # The injection points are cluster-wide, so disable installcheck
 NO_INSTALLCHECK = 1
