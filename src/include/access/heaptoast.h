@@ -69,13 +69,14 @@
 
 /*
  * When we store an oversize datum externally, we divide it into chunks
- * containing at most TOAST_OID_MAX_CHUNK_SIZE data bytes.  This number *must*
- * be small enough that the completed toast-table tuple (including the
- * ID and sequence fields and all overhead) will fit on a page.
+ * containing at most TOAST_OID_MAX_CHUNK_SIZE or TOAST_OID8_MAX_CHUNK_SIZE
+ * data bytes, depending on the chunk_id type of the TOAST table.  These
+ * numbers *must* be small enough that the completed toast-table tuple
+ * (including the ID and sequence fields and all overhead) will fit on a page.
  * The coding here sets the size on the theory that we want to fit
  * EXTERN_TUPLES_PER_PAGE tuples of maximum size onto a page.
  *
- * NB: Changing TOAST_OID_MAX_CHUNK_SIZE requires an initdb.
+ * NB: Changing these values requires an initdb.
  */
 #define EXTERN_TUPLES_PER_PAGE	4	/* tweak only this */
 
@@ -87,6 +88,19 @@
 	 sizeof(Oid) -										\
 	 sizeof(int32) -									\
 	 VARHDRSZ)
+
+#define TOAST_OID8_MAX_CHUNK_SIZE	\
+	(EXTERN_TUPLE_MAX_SIZE -							\
+	 MAXALIGN(SizeofHeapTupleHeader) -					\
+	 sizeof(Oid8) -										\
+	 sizeof(int32) -									\
+	 VARHDRSZ)
+
+/*
+ * Select the chunk size for a TOAST table from its value type.
+ */
+#define TOAST_MAX_CHUNK_SIZE(toast_typid) \
+	((toast_typid) == OID8OID ? TOAST_OID8_MAX_CHUNK_SIZE : TOAST_OID_MAX_CHUNK_SIZE)
 
 /* ----------
  * heap_toast_insert_or_update -

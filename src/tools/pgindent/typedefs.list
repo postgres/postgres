@@ -4361,6 +4361,7 @@ timeout_params
 timerCA
 tlist_vinfo
 toast_compress_header
+toast_external_data
 tokenize_error_callback_arg
 transferMode
 transfer_thread_arg
@@ -4417,6 +4418,7 @@ vacuumingOptions
 validate_string_relopt
 varatt_expanded
 varatt_external_oid
+varatt_external_oid8
 varatt_indirect
 varattrib_1b
 varattrib_1b_e

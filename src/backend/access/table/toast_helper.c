@@ -69,12 +69,16 @@ toast_tuple_init(ToastTupleContext *ttc)
 			/*
 			 * If the old value is stored on disk, check if it has changed so
 			 * we have to delete it later.
+			 *
+			 * Note that TOAST pointers could have different vartags, for oid
+			 * or oid8, and these can have different sizes.
 			 */
 			if (att->attlen == -1 && !ttc->ttc_oldisnull[i] &&
 				VARATT_IS_EXTERNAL_ONDISK(old_value))
 			{
 				if (ttc->ttc_isnull[i] ||
 					!VARATT_IS_EXTERNAL_ONDISK(new_value) ||
+					VARTAG_EXTERNAL(old_value) != VARTAG_EXTERNAL(new_value) ||
 					memcmp(old_value, new_value,
 						   VARSIZE_EXTERNAL(old_value)) != 0)
 				{
@@ -171,8 +175,9 @@ toast_tuple_init(ToastTupleContext *ttc)
  * The column must have attstorage EXTERNAL or EXTENDED if check_main is
  * false, and must have attstorage MAIN if check_main is true.
  *
- * The column must have a minimum size of MAXALIGN(TOAST_OID_POINTER_SIZE);
- * if not, no benefit is to be expected by compressing it.
+ * The column must be larger than the TOAST pointer that would replace it;
+ * if not, no benefit is to be expected by compressing it.  Note that this
+ * choice depends on the TOAST value type, oid or oid8.
  *
  * The return value is the index of the biggest suitable column, or
  * -1 if there is none.
@@ -184,9 +189,20 @@ toast_tuple_find_biggest_attribute(ToastTupleContext *ttc,
 	TupleDesc	tupleDesc = ttc->ttc_rel->rd_att;
 	int			numAttrs = tupleDesc->natts;
 	int			biggest_attno = -1;
-	int32		biggest_size = MAXALIGN(TOAST_OID_POINTER_SIZE);
+	int32		biggest_size;
 	int32		skip_colflags = TOASTCOL_IGNORE;
 	int			i;
+
+	/*
+	 * Size of the TOAST pointer this relation would use.  A relation without
+	 * a TOAST table cannot have any of its attributes moved out-of-line, but
+	 * it can still have some of them compressed.  Fall back to the oid size
+	 * in that case.
+	 */
+	if (RelationGetToastChunkIdType(ttc->ttc_rel) == OID8OID)
+		biggest_size = MAXALIGN(TOAST_OID8_POINTER_SIZE);
+	else
+		biggest_size = MAXALIGN(TOAST_OID_POINTER_SIZE);
 
 	if (for_compression)
 		skip_colflags |= TOASTCOL_INCOMPRESSIBLE;

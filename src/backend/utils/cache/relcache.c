@@ -1205,6 +1205,9 @@ retry:
 	relation->rd_fkeylist = NIL;
 	relation->rd_fkeyvalid = false;
 
+	/* TOAST type data is not loaded till asked for */
+	relation->rd_toastchunkidtype = InvalidOid;
+
 	/* partitioning data is not loaded till asked for */
 	relation->rd_partkey = NULL;
 	relation->rd_partkeycxt = NULL;
@@ -5101,6 +5104,39 @@ RelationGetReplicaIndex(Relation relation)
 }
 
 /*
+ * RelationGetToastChunkIdType -- get the type of the relation's TOAST
+ *		table "chunk_id" column
+ *
+ * Returns OIDOID or OID8OID, or InvalidOid if the relation has no TOAST
+ * table.
+ */
+Oid
+RelationGetToastChunkIdType(Relation relation)
+{
+	Oid			toastrelid = relation->rd_rel->reltoastrelid;
+	Oid			typid;
+
+	/* Quick exit if we already computed the value */
+	if (OidIsValid(relation->rd_toastchunkidtype))
+		return relation->rd_toastchunkidtype;
+
+	/* Nothing to report without a TOAST table */
+	if (!OidIsValid(toastrelid))
+		return InvalidOid;
+
+	typid = get_atttype(toastrelid, 1);
+	if (!OidIsValid(typid))
+		elog(ERROR, "cache lookup failed for TOAST relation %u",
+			 toastrelid);
+	if (typid != OIDOID && typid != OID8OID)
+		elog(ERROR, "unexpected type %u for chunk_id in TOAST relation %u",
+			 typid, toastrelid);
+
+	relation->rd_toastchunkidtype = typid;
+	return typid;
+}
+
+/*
  * RelationGetIndexExpressions -- get the index expressions for an index
  *
  * We cache the result of transforming pg_index.indexprs into a node tree.
@@ -6545,6 +6581,7 @@ load_relcache_init_file(bool shared)
 		rel->rd_firstRelfilelocatorSubid = InvalidSubTransactionId;
 		rel->rd_droppedSubid = InvalidSubTransactionId;
 		rel->rd_amcache = NULL;
+		rel->rd_toastchunkidtype = InvalidOid;
 		rel->pgstat_info = NULL;
 
 		/*

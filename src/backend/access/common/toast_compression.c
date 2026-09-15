@@ -262,12 +262,12 @@ toast_get_compression_id(varlena *attr)
 	 */
 	if (VARATT_IS_EXTERNAL_ONDISK(attr))
 	{
-		varatt_external_oid toast_pointer;
+		toast_external_data toast_ext_data;
 
-		VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
+		toast_external_info_get(attr, &toast_ext_data);
 
-		if (VARATT_EXTERNAL_OID_IS_COMPRESSED(toast_pointer))
-			cmid = VARATT_EXTERNAL_OID_GET_COMPRESS_METHOD(toast_pointer);
+		if (VARATT_EXTINFO_IS_COMPRESSED(toast_ext_data.extinfo, toast_ext_data.rawsize))
+			cmid = VARATT_EXTINFO_GET_COMPRESS_METHOD(toast_ext_data.extinfo);
 	}
 	else if (VARATT_IS_COMPRESSED(attr))
 		cmid = VARDATA_COMPRESSED_GET_COMPRESS_METHOD(attr);

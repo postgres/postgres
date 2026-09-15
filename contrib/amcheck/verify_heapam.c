@@ -74,7 +74,9 @@ typedef enum SkipPages
  */
 typedef struct ToastedAttribute
 {
-	varatt_external_oid toast_pointer;
+	Oid8		va_valueid;		/* value ID (works for both Oid and Oid8) */
+	uint32		va_extinfo;		/* external size and compression method */
+	vartag_external tag;		/* VARTAG_ONDISK_OID or VARTAG_ONDISK_OID8 */
 	BlockNumber blkno;			/* block in main table */
 	OffsetNumber offnum;		/* offset in main table */
 	AttrNumber	attnum;			/* attribute in main table */
@@ -189,7 +191,7 @@ static void check_tuple(HeapCheckContext *ctx,
 						XidCommitStatus *xmin_commit_status);
 static void check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 							  ToastedAttribute *ta, int32 *expected_chunk_seq,
-							  uint32 extsize);
+							  uint32 extsize, int32 max_chunk_size);
 
 static bool check_tuple_attribute(HeapCheckContext *ctx);
 static void check_toasted_attribute(HeapCheckContext *ctx,
@@ -1554,7 +1556,7 @@ check_tuple_visibility(HeapCheckContext *ctx, bool *xmin_commit_status_ok,
 static void
 check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 				  ToastedAttribute *ta, int32 *expected_chunk_seq,
-				  uint32 extsize)
+				  uint32 extsize, int32 max_chunk_size)
 {
 	int32		chunk_seq;
 	int32		last_chunk_seq;
@@ -1562,12 +1564,9 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 	bool		isnull;
 	int32		chunksize;
 	int32		expected_size;
-	int32		max_chunk_size;
-	Oid8		toast_valueid;
+	Oid8		toast_valueid = ta->va_valueid;
 
-	max_chunk_size = TOAST_OID_MAX_CHUNK_SIZE;
 	last_chunk_seq = (extsize - 1) / max_chunk_size;
-	toast_valueid = ta->toast_pointer.va_valueid;
 
 	/* Sanity-check the sequence number. */
 	chunk_seq = DatumGetInt32(fastgetattr(toasttup, 2,
@@ -1671,8 +1670,11 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	char	   *tp;				/* pointer to the tuple data */
 	uint16		infomask;
 	Oid8		toast_pointer_valueid;
+	int32		va_rawsize;
+	uint32		va_extinfo;
 	CompactAttribute *thisatt;
-	varatt_external_oid toast_pointer;
+	vartag_external va_tag_value;
+	toast_external_data toast_ext_data;
 
 	infomask = ctx->tuphdr->t_infomask;
 	thisatt = TupleDescCompactAttr(RelationGetDescr(ctx->rel), ctx->attnum);
@@ -1731,7 +1733,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	{
 		uint8		va_tag = VARTAG_EXTERNAL(tp + ctx->offset);
 
-		if (va_tag != VARTAG_ONDISK_OID)
+		if (va_tag != VARTAG_ONDISK_OID && va_tag != VARTAG_ONDISK_OID8)
 		{
 			report_corruption(ctx,
 							  psprintf("toasted attribute has unexpected TOAST tag %u",
@@ -1775,27 +1777,28 @@ check_tuple_attribute(HeapCheckContext *ctx)
 
 	/* It is external, and we're looking at a page on disk */
 
-	/*
-	 * Must copy attr into toast_pointer for alignment considerations
-	 */
-	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
-	toast_pointer_valueid = toast_pointer.va_valueid;
+	/* Must copy attr into a decoded pointer for alignment considerations */
+	toast_external_info_get(attr, &toast_ext_data);
+	va_tag_value = toast_ext_data.tag;
+	toast_pointer_valueid = toast_ext_data.valueid;
+	va_rawsize = toast_ext_data.rawsize;
+	va_extinfo = toast_ext_data.extinfo;
 
 	/* Toasted attributes too large to be untoasted should never be stored */
-	if (toast_pointer.va_rawsize > VARLENA_SIZE_LIMIT)
+	if (va_rawsize > VARLENA_SIZE_LIMIT)
 		report_corruption(ctx,
 						  psprintf("toast value " OID8_FORMAT " rawsize %d exceeds limit %d",
 								   toast_pointer_valueid,
-								   toast_pointer.va_rawsize,
+								   va_rawsize,
 								   VARLENA_SIZE_LIMIT));
 
-	if (VARATT_EXTERNAL_OID_IS_COMPRESSED(toast_pointer))
+	if (VARATT_EXTINFO_IS_COMPRESSED(toast_ext_data.extinfo, toast_ext_data.rawsize))
 	{
 		ToastCompressionId cmid;
 		bool		valid = false;
 
 		/* Compressed attributes should have a valid compression method */
-		cmid = TOAST_COMPRESS_METHOD(&toast_pointer);
+		cmid = VARATT_EXTINFO_GET_COMPRESS_METHOD(toast_ext_data.extinfo);
 		switch (cmid)
 		{
 				/* List of all valid compression method IDs */
@@ -1849,7 +1852,10 @@ check_tuple_attribute(HeapCheckContext *ctx)
 
 		ta = palloc0_object(ToastedAttribute);
 
-		VARATT_EXTERNAL_GET_POINTER(ta->toast_pointer, attr);
+		/* The pointer has already been decoded above, just reuse it */
+		ta->tag = va_tag_value;
+		ta->va_valueid = toast_pointer_valueid;
+		ta->va_extinfo = va_extinfo;
 		ta->blkno = ctx->blkno;
 		ta->offnum = ctx->offnum;
 		ta->attnum = ctx->attnum;
@@ -1878,18 +1884,44 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 	int32		max_chunk_size;
 	Oid8		toast_valueid;
 	Oid			toast_typid;
+	vartag_external expected_tag = VARTAG_ONDISK_OID;
 
+	toast_valueid = ta->va_valueid;
+	extsize = VARATT_EXTINFO_GET_EXTSIZE(ta->va_extinfo);
+
+	/*
+	 * Take the chunk_id type from the TOAST table's own definition, not from
+	 * from the vartag in the main table as that pointer is the very thing
+	 * under scrutiny here.  The two must agree.
+	 */
 	toast_typid = TupleDescAttr(ctx->toast_rel->rd_att, 0)->atttypid;
-	max_chunk_size = TOAST_OID_MAX_CHUNK_SIZE;
+	if (toast_typid == OID8OID)
+		expected_tag = VARTAG_ONDISK_OID8;
+	else if (toast_typid == OIDOID)
+		expected_tag = VARTAG_ONDISK_OID;
+	else
+	{
+		report_toast_corruption(ctx, ta,
+								psprintf("toast value " OID8_FORMAT " stored in toast table whose chunk_id has unexpected type %u",
+										 toast_valueid, toast_typid));
+	}
 
-	extsize = VARATT_EXTERNAL_OID_GET_EXTSIZE(ta->toast_pointer);
+	if (ta->tag != expected_tag)
+	{
+		report_toast_corruption(ctx, ta,
+								psprintf("toast value " OID8_FORMAT " has TOAST tag %u, but chunk_id of toast table has type %u",
+										 toast_valueid, (uint8) ta->tag,
+										 toast_typid));
+		return;
+	}
+
+	max_chunk_size = TOAST_MAX_CHUNK_SIZE(toast_typid);
 	last_chunk_seq = (extsize - 1) / max_chunk_size;
 
 	/*
-	 * Setup a scan key to find chunks in toast table with matching va_valueid
+	 * Setup a scan key to find chunks in toast table with matching value ID
 	 */
-	toast_valueid_scankey_init(&toastkey, toast_typid,
-							   ta->toast_pointer.va_valueid);
+	toast_valueid_scankey_init(&toastkey, toast_typid, toast_valueid);
 
 	/*
 	 * Check if any chunks for this toasted object exist in the toast table,
@@ -1905,11 +1937,10 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 									 ForwardScanDirection)) != NULL)
 	{
 		found_toasttup = true;
-		check_toast_tuple(toasttup, ctx, ta, &expected_chunk_seq, extsize);
+		check_toast_tuple(toasttup, ctx, ta, &expected_chunk_seq, extsize,
+						  max_chunk_size);
 	}
 	systable_endscan_ordered(toastscan);
-
-	toast_valueid = ta->toast_pointer.va_valueid;
 
 	if (!found_toasttup)
 		report_toast_corruption(ctx, ta,

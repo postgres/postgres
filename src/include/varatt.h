@@ -43,6 +43,44 @@ StaticAssertDecl((sizeof(int32) + sizeof(uint32) + 2 * sizeof(Oid)) ==
 				 "varatt_external_oid should have no padding");
 
 /*
+ * varatt_external_oid8 is a "TOAST pointer" for TOAST tables that use
+ * Oid8 (64-bit) as their chunk_id type.  Same layout as varatt_external_oid
+ * except for the value ID, which is 8 bytes wide.  The value ID is split
+ * into two uint32 to force alignment.
+ *
+ * This struct must not contain any padding, because we sometimes compare
+ * these pointers using memcmp.
+ */
+typedef struct varatt_external_oid8
+{
+	int32		va_rawsize;		/* Original data size (includes header) */
+	uint32		va_extinfo;		/* External saved size (without header) and
+								 * compression method */
+	uint32		va_valueid_lo;	/* Low 32 bits of value ID */
+	uint32		va_valueid_hi;	/* High 32 bits of value ID */
+	Oid			va_toastrelid;	/* RelID of TOAST table containing it */
+} varatt_external_oid8;
+
+StaticAssertDecl((sizeof(int32) + 3 * sizeof(uint32) + sizeof(Oid)) ==
+				 sizeof(varatt_external_oid8),
+				 "varatt_external_oid8 should have no padding");
+
+/* Get/set the 64-bit value ID from the lo/hi halves */
+static inline Oid8
+VARATT_EXTERNAL_OID8_GET_VALUEID(varatt_external_oid8 toast_pointer)
+{
+	return ((Oid8) toast_pointer.va_valueid_lo) |
+		(((Oid8) toast_pointer.va_valueid_hi) << 32);
+}
+
+static inline void
+VARATT_EXTERNAL_OID8_SET_VALUEID(varatt_external_oid8 *toast_pointer, Oid8 id)
+{
+	toast_pointer->va_valueid_lo = (uint32) id;
+	toast_pointer->va_valueid_hi = (uint32) (id >> 32);
+}
+
+/*
  * These macros define the "saved size" portion of va_extinfo.  Its remaining
  * two high-order bits identify the compression method.
  */
@@ -91,6 +129,7 @@ typedef enum vartag_external
 	VARTAG_INDIRECT = 1,
 	VARTAG_EXPANDED_RO = 2,
 	VARTAG_EXPANDED_RW = 3,
+	VARTAG_ONDISK_OID8 = 4,
 	VARTAG_ONDISK_OID = 18
 } vartag_external;
 
@@ -112,6 +151,8 @@ VARTAG_SIZE(vartag_external tag)
 		return sizeof(varatt_expanded);
 	else if (tag == VARTAG_ONDISK_OID)
 		return sizeof(varatt_external_oid);
+	else if (tag == VARTAG_ONDISK_OID8)
+		return sizeof(varatt_external_oid8);
 	else
 	{
 		Assert(false);
@@ -365,7 +406,12 @@ VARATT_IS_EXTERNAL(const void *PTR)
 static inline bool
 VARATT_IS_EXTERNAL_ONDISK(const void *PTR)
 {
-	return VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_ONDISK_OID;
+	vartag_external tag;
+
+	if (!VARATT_IS_EXTERNAL(PTR))
+		return false;
+	tag = VARTAG_EXTERNAL(PTR);
+	return (tag == VARTAG_ONDISK_OID || tag == VARTAG_ONDISK_OID8);
 }
 
 /* Is varlena datum an indirect pointer? */
@@ -508,43 +554,31 @@ VARDATA_COMPRESSED_GET_COMPRESS_METHOD(const void *PTR)
 }
 
 /*
- * Same for external Datums; but note argument is a struct
- * varatt_external_oid.
+ * Same for external Datums, saved into an va_extinfo.
  */
 static inline Size
-VARATT_EXTERNAL_OID_GET_EXTSIZE(varatt_external_oid toast_pointer)
+VARATT_EXTINFO_GET_EXTSIZE(uint32 extinfo)
 {
-	return toast_pointer.va_extinfo & VARLENA_EXTSIZE_MASK;
+	return extinfo & VARLENA_EXTSIZE_MASK;
 }
 
 static inline uint32
-VARATT_EXTERNAL_OID_GET_COMPRESS_METHOD(varatt_external_oid toast_pointer)
+VARATT_EXTINFO_GET_COMPRESS_METHOD(uint32 extinfo)
 {
-	return toast_pointer.va_extinfo >> VARLENA_EXTSIZE_BITS;
+	return extinfo >> VARLENA_EXTSIZE_BITS;
 }
 
-/* Set size and compress method of an externally-stored varlena datum */
-/* This has to remain a macro; beware multiple evaluations! */
-#define VARATT_EXTERNAL_SET_SIZE_AND_COMPRESS_METHOD(toast_pointer, len, cm) \
-	do { \
-		Assert((cm) == TOAST_PGLZ_COMPRESSION_ID || \
-			   (cm) == TOAST_LZ4_COMPRESSION_ID); \
-		((toast_pointer).va_extinfo = \
-			(len) | ((uint32) (cm) << VARLENA_EXTSIZE_BITS)); \
-	} while (0)
-
 /*
- * Testing whether an externally-stored value is compressed now requires
- * comparing size stored in va_extinfo (the actual length of the external data)
+ * Testing whether an externally-stored value is compressed requires comparing
+ * the saved size stored in va_extinfo (the actual length of the external data)
  * to rawsize (the original uncompressed datum's size).  The latter includes
  * VARHDRSZ overhead, the former doesn't.  We never use compression unless it
  * actually saves space, so we expect either equality or less-than.
  */
 static inline bool
-VARATT_EXTERNAL_OID_IS_COMPRESSED(varatt_external_oid toast_pointer)
+VARATT_EXTINFO_IS_COMPRESSED(uint32 extinfo, int32 rawsize)
 {
-	return VARATT_EXTERNAL_OID_GET_EXTSIZE(toast_pointer) <
-		(Size) (toast_pointer.va_rawsize - VARHDRSZ);
+	return VARATT_EXTINFO_GET_EXTSIZE(extinfo) < (Size) (rawsize - VARHDRSZ);
 }
 
 #endif

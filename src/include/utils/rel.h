@@ -250,6 +250,15 @@ typedef struct RelationData
 	 */
 	Oid			rd_toastoid;	/* Real TOAST table's OID, or InvalidOid */
 
+	/*
+	 * Type OID of the "chunk_id" column of this relation's TOAST table, i.e.
+	 * OIDOID or OID8OID.
+	 *
+	 * This data is filled on demand by RelationGetToastChunkIdType(), not at
+	 * relcache build time, so as to save in syscache lookups.
+	 */
+	Oid			rd_toastchunkidtype;
+
 	bool		pgstat_enabled; /* should relation stats be counted */
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_RelationStatus *pgstat_info;	/* statistics collection area */

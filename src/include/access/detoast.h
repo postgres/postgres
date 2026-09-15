@@ -12,6 +12,8 @@
 #ifndef DETOAST_H
 #define DETOAST_H
 
+#include "varatt.h"
+
 /*
  * Macro to fetch the possibly-unaligned contents of an EXTERNAL datum
  * into a local "varatt_external_oid" toast pointer.  This should be
@@ -30,8 +32,54 @@ do { \
 /* Size of an EXTERNAL datum that contains a standard TOAST pointer */
 #define TOAST_OID_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(varatt_external_oid))
 
+/* Size of an EXTERNAL datum that contains an Oid8 TOAST pointer */
+#define TOAST_OID8_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(varatt_external_oid8))
+
 /* Size of an EXTERNAL datum that contains an indirection pointer */
 #define INDIRECT_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(varatt_indirect))
+
+/*
+ * Decoded contents of an on-disk external TOAST pointer.
+ */
+typedef struct toast_external_data
+{
+	vartag_external tag;		/* VARTAG_ONDISK_* */
+	int32		rawsize;		/* original data size (includes header) */
+	uint32		extinfo;		/* saved size + compression method */
+	Oid8		valueid;		/* value ID (can be widened from Oid) */
+	Oid			toastrelid;		/* OID of the TOAST table containing it */
+} toast_external_data;
+
+/*
+ * Decode an on-disk external TOAST pointer into a toast_external_data.
+ */
+static inline void
+toast_external_info_get(const struct varlena *attr, toast_external_data *toast_ext_data)
+{
+	Assert(VARATT_IS_EXTERNAL_ONDISK(attr));
+
+	toast_ext_data->tag = VARTAG_EXTERNAL(attr);
+	if (toast_ext_data->tag == VARTAG_ONDISK_OID8)
+	{
+		varatt_external_oid8 toast_pointer;
+
+		VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
+		toast_ext_data->rawsize = toast_pointer.va_rawsize;
+		toast_ext_data->extinfo = toast_pointer.va_extinfo;
+		toast_ext_data->valueid = VARATT_EXTERNAL_OID8_GET_VALUEID(toast_pointer);
+		toast_ext_data->toastrelid = toast_pointer.va_toastrelid;
+	}
+	else
+	{
+		varatt_external_oid toast_pointer;
+
+		VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
+		toast_ext_data->rawsize = toast_pointer.va_rawsize;
+		toast_ext_data->extinfo = toast_pointer.va_extinfo;
+		toast_ext_data->valueid = toast_pointer.va_valueid;
+		toast_ext_data->toastrelid = toast_pointer.va_toastrelid;
+	}
+}
 
 /* ----------
  * detoast_external_attr() -
