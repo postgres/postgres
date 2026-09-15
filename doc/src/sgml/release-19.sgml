@@ -1301,12 +1301,15 @@ Add IO wait events for <link linkend="sql-copy"><command>COPY FROM/TO</command><
 <!--
 Author: Alexander Korotkov <akorotkov@postgresql.org>
 2026-01-05 [7a39f43d8] Extend xlogwait infrastructure with write and flush wait
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+2025-12-09 [3cb5808bd] Add wait event for the group commit delay before WAL flu
 -->
 
 <listitem>
 <para>
-Add wait events for <acronym>WAL</acronym> write and flush <link linkend="wal-internals">LSN</link>s (Xuneng Zhou)
+Add wait events for <xref linkend="guc-commit-delay"/> and for <acronym>WAL</acronym> write and flush <link linkend="wal-internals">LSN</link>s (Xuneng Zhou)
 <ulink url="&commit_baseurl;7a39f43d8">&sect;</ulink>
+<ulink url="&commit_baseurl;3cb5808bd">&sect;</ulink>
 </para>
 </listitem>
 
