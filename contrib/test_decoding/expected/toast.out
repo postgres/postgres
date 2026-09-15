@@ -382,6 +382,45 @@ SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', 
  COMMIT
 (4 rows)
 
+-- Test decoding of TOAST values with oid8
+CREATE TABLE toasted_oid8 (id serial primary key, data text)
+  WITH (toast_value_type = 'oid8');
+-- uncompressed external toast data
+ALTER TABLE toasted_oid8 ALTER COLUMN data SET STORAGE EXTERNAL;
+INSERT INTO toasted_oid8(data) VALUES (repeat('1234567890', 20000));
+-- compressed external toast data
+ALTER TABLE toasted_oid8 ALTER COLUMN data SET STORAGE EXTENDED;
+INSERT INTO toasted_oid8(data) VALUES (repeat('1234567890', 20000));
+-- update without changing the toasted column, reported as unchanged
+UPDATE toasted_oid8 SET id = id + 10 WHERE id = 1;
+-- update changing the toasted column
+UPDATE toasted_oid8 SET data = repeat('abcdefghij', 20000) WHERE id = 2;
+DELETE FROM toasted_oid8;
+-- Check that the values are reassembled in full.
+SELECT regexp_replace(data, '^(.{60}).*(.{20})$', '\1..\2') AS shortened,
+       length(data) AS len
+  FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+                                     shortened                                      |  len   
+------------------------------------------------------------------------------------+--------
+ BEGIN                                                                              |      5
+ table public.toasted_oid8: INSERT: id[integer]:1 data[text]:..2345678901234567890' | 200062
+ COMMIT                                                                             |      6
+ BEGIN                                                                              |      5
+ table public.toasted_oid8: INSERT: id[integer]:2 data[text]:..2345678901234567890' | 200062
+ COMMIT                                                                             |      6
+ BEGIN                                                                              |      5
+ table public.toasted_oid8: UPDATE: old-key: id[integer]:1 ne..nchanged-toast-datum |    116
+ COMMIT                                                                             |      6
+ BEGIN                                                                              |      5
+ table public.toasted_oid8: UPDATE: id[integer]:2 data[text]:..bcdefghijabcdefghij' | 200062
+ COMMIT                                                                             |      6
+ BEGIN                                                                              |      5
+ table public.toasted_oid8: DELETE: id[integer]:11                                  |     49
+ table public.toasted_oid8: DELETE: id[integer]:2                                   |     48
+ COMMIT                                                                             |      6
+(16 rows)
+
+DROP TABLE toasted_oid8;
 SELECT pg_drop_replication_slot('regression_slot');
  pg_drop_replication_slot 
 --------------------------

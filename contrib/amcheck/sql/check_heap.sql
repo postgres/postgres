@@ -112,6 +112,31 @@ SELECT * FROM verify_heapam('test_partition',
 							startblock := NULL,
 							endblock := NULL);
 
+-- Check TOAST relations of both chunk_id: oid and oid8
+CREATE TABLE test_toast_oid (a int, b text) WITH (toast_value_type = 'oid');
+CREATE TABLE test_toast_oid8 (a int, b text) WITH (toast_value_type = 'oid8');
+-- Uncompressed out-of-line values
+ALTER TABLE test_toast_oid ALTER COLUMN b SET STORAGE EXTERNAL;
+ALTER TABLE test_toast_oid8 ALTER COLUMN b SET STORAGE EXTERNAL;
+INSERT INTO test_toast_oid (a, b)
+	(SELECT gs, repeat('xyzzy', 20000) FROM generate_series(1,5) gs);
+INSERT INTO test_toast_oid8 (a, b)
+	(SELECT gs, repeat('xyzzy', 20000) FROM generate_series(1,5) gs);
+-- Compressed out-of-line values.
+ALTER TABLE test_toast_oid ALTER COLUMN b SET STORAGE EXTENDED;
+ALTER TABLE test_toast_oid8 ALTER COLUMN b SET STORAGE EXTENDED;
+INSERT INTO test_toast_oid (a, b)
+	(SELECT gs, repeat('xyzzy', 20000) FROM generate_series(6,10) gs);
+INSERT INTO test_toast_oid8 (a, b)
+	(SELECT gs, repeat('xyzzy', 20000) FROM generate_series(6,10) gs);
+SELECT c.relname, a.atttypid::regtype AS chunk_id_type
+	FROM pg_class AS c, pg_attribute AS a
+	WHERE c.relname IN ('test_toast_oid', 'test_toast_oid8') AND
+	      a.attrelid = c.reltoastrelid AND a.attname = 'chunk_id'
+	ORDER BY c.relname COLLATE "C";
+SELECT * FROM verify_heapam('test_toast_oid', check_toast := true);
+SELECT * FROM verify_heapam('test_toast_oid8', check_toast := true);
+
 -- Check that indexes are rejected
 CREATE INDEX test_index ON test_partition (a);
 SELECT * FROM verify_heapam('test_index',
@@ -139,6 +164,8 @@ SELECT * FROM verify_heapam('test_foreign_table',
 							endblock := NULL);
 
 -- cleanup
+DROP TABLE test_toast_oid;
+DROP TABLE test_toast_oid8;
 DROP TABLE heaptest;
 DROP TABLESPACE regress_test_stats_tblspc;
 DROP TABLE test_partition;

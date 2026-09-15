@@ -37,6 +37,28 @@ SELECT pg_column_compression(f1) FROM cmdata2;
 SELECT SUBSTR(f1, 200, 5) FROM cmdata2;
 DROP TABLE cmdata2;
 
+-- pg_column_compression() with oid and oid8
+CREATE TABLE toastcomp_oid(f1 text) WITH (toast_value_type = 'oid');
+CREATE TABLE toastcomp_oid8(f1 text) WITH (toast_value_type = 'oid8');
+ALTER TABLE toastcomp_oid ALTER COLUMN f1 SET STORAGE EXTERNAL;
+ALTER TABLE toastcomp_oid8 ALTER COLUMN f1 SET STORAGE EXTERNAL;
+INSERT INTO toastcomp_oid VALUES (repeat('1234567890', 10000));
+INSERT INTO toastcomp_oid8 VALUES (repeat('1234567890', 10000));
+SELECT pg_column_compression(f1) IS NULL AS uncompressed FROM toastcomp_oid;
+SELECT pg_column_compression(f1) IS NULL AS uncompressed FROM toastcomp_oid8;
+-- out-of-line and compressed.
+TRUNCATE toastcomp_oid;
+TRUNCATE toastcomp_oid8;
+ALTER TABLE toastcomp_oid ALTER COLUMN f1 SET STORAGE EXTENDED;
+ALTER TABLE toastcomp_oid8 ALTER COLUMN f1 SET STORAGE EXTENDED;
+ALTER TABLE toastcomp_oid SET (toast_tuple_target = 128);
+ALTER TABLE toastcomp_oid8 SET (toast_tuple_target = 128);
+INSERT INTO toastcomp_oid VALUES (repeat('1234567890', 10000));
+INSERT INTO toastcomp_oid8 VALUES (repeat('1234567890', 10000));
+SELECT pg_column_compression(f1) FROM toastcomp_oid;
+SELECT pg_column_compression(f1) FROM toastcomp_oid8;
+DROP TABLE toastcomp_oid, toastcomp_oid8;
+
 --test column type update varlena/non-varlena
 CREATE TABLE cmdata2 (f1 int);
 \d+ cmdata2

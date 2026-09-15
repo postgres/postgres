@@ -563,89 +563,248 @@ SELECT text 'text' || char(20) ' and characters' AS "Concat text to char";
 SELECT text 'text' || varchar ' and varchar' AS "Concat text to varchar";
 
 --
--- test substr with toasted text values
+-- Test substr with toasted text values, for all types of TOAST relations
+-- supported.
 --
-CREATE TABLE toasttest(f1 text);
+CREATE TABLE toasttest_oid(f1 text) with (toast_value_type = 'oid');
+CREATE TABLE toasttest_oid8(f1 text) with (toast_value_type = 'oid8');
 
-insert into toasttest values(repeat('1234567890',10000));
-insert into toasttest values(repeat('1234567890',10000));
+insert into toasttest_oid values(repeat('1234567890',10000));
+insert into toasttest_oid values(repeat('1234567890',10000));
+insert into toasttest_oid8 values(repeat('1234567890',10000));
+insert into toasttest_oid8 values(repeat('1234567890',10000));
 
 --
 -- Ensure that some values are uncompressed, to test the faster substring
 -- operation used in that case
 --
-alter table toasttest alter column f1 set storage external;
-insert into toasttest values(repeat('1234567890',10000));
-insert into toasttest values(repeat('1234567890',10000));
+alter table toasttest_oid alter column f1 set storage external;
+insert into toasttest_oid values(repeat('1234567890',10000));
+insert into toasttest_oid values(repeat('1234567890',10000));
+alter table toasttest_oid8 alter column f1 set storage external;
+insert into toasttest_oid8 values(repeat('1234567890',10000));
+insert into toasttest_oid8 values(repeat('1234567890',10000));
 
 -- If the starting position is zero or less, then return from the start of the string
 -- adjusting the length to be consistent with the "negative start" per SQL.
-SELECT substr(f1, -1, 5) from toasttest;
+SELECT substr(f1, -1, 5) from toasttest_oid;
+SELECT substr(f1, -1, 5) from toasttest_oid8;
 
 -- If the length is less than zero, an ERROR is thrown.
-SELECT substr(f1, 5, -1) from toasttest;
+SELECT substr(f1, 5, -1) from toasttest_oid;
+SELECT substr(f1, 5, -1) from toasttest_oid8;
 
 -- If no third argument (length) is provided, the length to the end of the
 -- string is assumed.
-SELECT substr(f1, 99995) from toasttest;
+SELECT substr(f1, 99995) from toasttest_oid;
+SELECT substr(f1, 99995) from toasttest_oid8;
 
 -- If start plus length is > string length, the result is truncated to
 -- string length
-SELECT substr(f1, 99995, 10) from toasttest;
+SELECT substr(f1, 99995, 10) from toasttest_oid;
+SELECT substr(f1, 99995, 10) from toasttest_oid8;
 
-TRUNCATE TABLE toasttest;
-INSERT INTO toasttest values (repeat('1234567890',300));
-INSERT INTO toasttest values (repeat('1234567890',300));
-INSERT INTO toasttest values (repeat('1234567890',300));
-INSERT INTO toasttest values (repeat('1234567890',300));
+-- TRUNCATE cases for TOAST relations with OID values.
+TRUNCATE TABLE toasttest_oid;
+INSERT INTO toasttest_oid values (repeat('1234567890',300));
+INSERT INTO toasttest_oid values (repeat('1234567890',300));
+INSERT INTO toasttest_oid values (repeat('1234567890',300));
+INSERT INTO toasttest_oid values (repeat('1234567890',300));
 -- expect >0 blocks
 SELECT pg_relation_size(reltoastrelid) = 0 AS is_empty
-  FROM pg_class where relname = 'toasttest';
-
-TRUNCATE TABLE toasttest;
-ALTER TABLE toasttest set (toast_tuple_target = 4080);
-INSERT INTO toasttest values (repeat('1234567890',300));
-INSERT INTO toasttest values (repeat('1234567890',300));
-INSERT INTO toasttest values (repeat('1234567890',300));
-INSERT INTO toasttest values (repeat('1234567890',300));
+  FROM pg_class where relname = 'toasttest_oid';
+TRUNCATE TABLE toasttest_oid;
+ALTER TABLE toasttest_oid set (toast_tuple_target = 4080);
+INSERT INTO toasttest_oid values (repeat('1234567890',300));
+INSERT INTO toasttest_oid values (repeat('1234567890',300));
+INSERT INTO toasttest_oid values (repeat('1234567890',300));
+INSERT INTO toasttest_oid values (repeat('1234567890',300));
 -- expect 0 blocks
 SELECT pg_relation_size(reltoastrelid) = 0 AS is_empty
-  FROM pg_class where relname = 'toasttest';
+  FROM pg_class where relname = 'toasttest_oid';
+DROP TABLE toasttest_oid;
 
-DROP TABLE toasttest;
+-- TRUNCATE cases for TOAST relation with int8 values.
+TRUNCATE TABLE toasttest_oid8;
+INSERT INTO toasttest_oid8 values (repeat('1234567890',300));
+INSERT INTO toasttest_oid8 values (repeat('1234567890',300));
+INSERT INTO toasttest_oid8 values (repeat('1234567890',300));
+INSERT INTO toasttest_oid8 values (repeat('1234567890',300));
+-- expect >0 blocks
+SELECT pg_relation_size(reltoastrelid) = 0 AS is_empty
+  FROM pg_class where relname = 'toasttest_oid8';
+TRUNCATE TABLE toasttest_oid8;
+ALTER TABLE toasttest_oid8 set (toast_tuple_target = 4080);
+INSERT INTO toasttest_oid8 values (repeat('1234567890',300));
+INSERT INTO toasttest_oid8 values (repeat('1234567890',300));
+INSERT INTO toasttest_oid8 values (repeat('1234567890',300));
+INSERT INTO toasttest_oid8 values (repeat('1234567890',300));
+-- expect 0 blocks
+SELECT pg_relation_size(reltoastrelid) = 0 AS is_empty
+  FROM pg_class where relname = 'toasttest_oid8';
+DROP TABLE toasttest_oid8;
 
 --
--- test substr with toasted bytea values
+-- test substr with toasted bytea values, for all types of TOAST relations
+-- supported. Do not drop these two relations, for pg_upgrade.
 --
-CREATE TABLE toasttest(f1 bytea);
+CREATE TABLE toasttest_oid(f1 bytea) WITH (toast_value_type = 'oid');
+CREATE TABLE toasttest_oid8(f1 bytea) WITH (toast_value_type = 'oid8');
 
-insert into toasttest values(decode(repeat('1234567890',10000),'escape'));
-insert into toasttest values(decode(repeat('1234567890',10000),'escape'));
+insert into toasttest_oid values(decode(repeat('1234567890',10000),'escape'));
+insert into toasttest_oid values(decode(repeat('1234567890',10000),'escape'));
+insert into toasttest_oid8 values(decode(repeat('1234567890',10000),'escape'));
+insert into toasttest_oid8 values(decode(repeat('1234567890',10000),'escape'));
 
 --
 -- Ensure that some values are uncompressed, to test the faster substring
 -- operation used in that case
 --
-alter table toasttest alter column f1 set storage external;
-insert into toasttest values(decode(repeat('1234567890',10000),'escape'));
-insert into toasttest values(decode(repeat('1234567890',10000),'escape'));
+alter table toasttest_oid alter column f1 set storage external;
+insert into toasttest_oid values(decode(repeat('1234567890',10000),'escape'));
+insert into toasttest_oid values(decode(repeat('1234567890',10000),'escape'));
+alter table toasttest_oid8 alter column f1 set storage external;
+insert into toasttest_oid8 values(decode(repeat('1234567890',10000),'escape'));
+insert into toasttest_oid8 values(decode(repeat('1234567890',10000),'escape'));
 
 -- If the starting position is zero or less, then return from the start of the string
 -- adjusting the length to be consistent with the "negative start" per SQL.
-SELECT substr(f1, -1, 5) from toasttest;
+SELECT substr(f1, -1, 5) from toasttest_oid;
+SELECT substr(f1, -1, 5) from toasttest_oid8;
 
 -- If the length is less than zero, an ERROR is thrown.
-SELECT substr(f1, 5, -1) from toasttest;
+SELECT substr(f1, 5, -1) from toasttest_oid;
+SELECT substr(f1, 5, -1) from toasttest_oid8;
 
 -- If no third argument (length) is provided, the length to the end of the
 -- string is assumed.
-SELECT substr(f1, 99995) from toasttest;
+SELECT substr(f1, 99995) from toasttest_oid;
+SELECT substr(f1, 99995) from toasttest_oid8;
 
 -- If start plus length is > string length, the result is truncated to
 -- string length
-SELECT substr(f1, 99995, 10) from toasttest;
+SELECT substr(f1, 99995, 10) from toasttest_oid;
+SELECT substr(f1, 99995, 10) from toasttest_oid8;
 
-DROP TABLE toasttest;
+-- A relation rewrite leaves the TOAST value attributes unchanged.
+VACUUM FULL toasttest_oid;
+VACUUM FULL toasttest_oid8;
+SELECT c1.relname, a.atttypid::regtype
+  FROM pg_attribute AS a,
+       pg_class AS c1,
+       pg_class AS c2
+  WHERE
+       c1.relname IN ('toasttest_oid', 'toasttest_oid8') AND
+       c1.reltoastrelid = c2.oid AND
+       a.attrelid = c2.oid AND
+       a.attname = 'chunk_id'
+  ORDER BY c1.relname COLLATE "C";
+-- Check that data slices are still accessible.
+SELECT substr(f1, 99995) from toasttest_oid;
+SELECT substr(f1, 99995) from toasttest_oid8;
+SELECT substr(f1, 99995, 10) from toasttest_oid;
+SELECT substr(f1, 99995, 10) from toasttest_oid8;
+
+-- ALTER TABLE after TOAST table creation does not affect relation rewrite.
+ALTER TABLE toasttest_oid SET (toast_value_type = oid8);
+ALTER TABLE toasttest_oid8 SET (toast_value_type = oid);
+VACUUM FULL toasttest_oid;
+VACUUM FULL toasttest_oid8;
+SELECT c1.relname, a.atttypid::regtype
+  FROM pg_attribute AS a,
+       pg_class AS c1,
+       pg_class AS c2
+  WHERE
+       c1.relname IN ('toasttest_oid', 'toasttest_oid8') AND
+       c1.reltoastrelid = c2.oid AND
+       a.attrelid = c2.oid AND
+       a.attname = 'chunk_id'
+  ORDER BY c1.relname COLLATE "C";
+REPACK toasttest_oid;
+REPACK toasttest_oid8;
+SELECT c1.relname, a.atttypid::regtype
+  FROM pg_attribute AS a,
+       pg_class AS c1,
+       pg_class AS c2
+  WHERE
+       c1.relname IN ('toasttest_oid', 'toasttest_oid8') AND
+       c1.reltoastrelid = c2.oid AND
+       a.attrelid = c2.oid AND
+       a.attname = 'chunk_id'
+  ORDER BY c1.relname COLLATE "C";
+ALTER TABLE toasttest_oid RESET (toast_value_type);
+ALTER TABLE toasttest_oid8 RESET (toast_value_type);
+
+-- Reset column storage to its default
+ALTER TABLE toasttest_oid ALTER COLUMN f1 SET STORAGE EXTENDED;
+ALTER TABLE toasttest_oid8 ALTER COLUMN f1 SET STORAGE EXTENDED;
+
+-- UPDATE with out-of-line datum that belongs to another TOAST table.
+CREATE TABLE toastupd_oid(f1 text) WITH (toast_value_type = 'oid');
+CREATE TABLE toastupd_oid8(f1 text) WITH (toast_value_type = 'oid8');
+ALTER TABLE toastupd_oid ALTER COLUMN f1 SET STORAGE EXTERNAL;
+ALTER TABLE toastupd_oid8 ALTER COLUMN f1 SET STORAGE EXTERNAL;
+SELECT reltoastrelid::regclass AS upd_oid_toast FROM pg_class
+  WHERE oid = 'toastupd_oid'::regclass \gset
+SELECT reltoastrelid::regclass AS upd_oid8_toast FROM pg_class
+  WHERE oid = 'toastupd_oid8'::regclass \gset
+INSERT INTO toastupd_oid VALUES (repeat('a', 100000));
+INSERT INTO toastupd_oid8 VALUES (repeat('b', 100000));
+-- old value is an oid8 pointer, new value an oid pointer.
+UPDATE toastupd_oid8 SET f1 = toastupd_oid.f1 FROM toastupd_oid;
+SELECT length(f1), substr(f1, 1, 3) FROM toastupd_oid8;
+-- replaced value must be gone, leaving a single value behind.
+SELECT count(*) FROM :upd_oid8_toast WHERE chunk_seq = 0;
+-- reverse: old value is an oid pointer, new value an oid8 pointer.
+TRUNCATE toastupd_oid;
+INSERT INTO toastupd_oid VALUES (repeat('c', 100000));
+UPDATE toastupd_oid SET f1 = toastupd_oid8.f1 FROM toastupd_oid8;
+SELECT length(f1), substr(f1, 1, 3) FROM toastupd_oid;
+SELECT count(*) FROM :upd_oid_toast WHERE chunk_seq = 0;
+DROP TABLE toastupd_oid, toastupd_oid8;
+
+-- TOAST table manipulations with ALTER TABLE and attributes
+CREATE TABLE toast_alter_oid (f1 int, f2 text STORAGE EXTERNAL)
+  WITH (toast_value_type = 'oid');
+INSERT INTO toast_alter_oid VALUES (1, repeat('1234567890',10000));
+INSERT INTO toast_alter_oid VALUES (2, repeat('2234567890',10000));
+BEGIN;
+ALTER TABLE toast_alter_oid DROP COLUMN f2;
+SELECT reltoastrelid::regclass > 0 AS has_toast FROM pg_class
+  WHERE oid = 'toast_alter_oid'::regclass;
+-- New toast_value_type has no effect.
+ALTER TABLE toast_alter_oid SET (toast_value_type = 'oid8');
+ALTER TABLE toast_alter_oid ADD COLUMN f3 text
+  DEFAULT (repeat('5234567890',10000));
+ALTER TABLE toast_alter_oid ALTER COLUMN f3 SET STORAGE EXTERNAL;
+INSERT INTO toast_alter_oid VALUES (3, repeat('3234567890',10000));
+INSERT INTO toast_alter_oid VALUES (4, repeat('4234567890',10000));
+SELECT reltoastrelid::regclass > 0 AS has_toast FROM pg_class
+  WHERE oid = 'toast_alter_oid'::regclass;
+SELECT c1.relname, a.atttypid::regtype
+  FROM pg_attribute AS a,
+       pg_class AS c1,
+       pg_class AS c2
+  WHERE
+       c1.relname = 'toast_alter_oid' AND
+       c1.reltoastrelid = c2.oid AND
+       a.attrelid = c2.oid AND
+       a.attname = 'chunk_id'
+  ORDER BY c1.relname COLLATE "C";
+SELECT f1, substr(f3, 99991) FROM toast_alter_oid;
+ROLLBACK;
+SELECT f1, substr(f2, 99991) FROM toast_alter_oid;
+SELECT c1.relname, a.atttypid::regtype
+  FROM pg_attribute AS a,
+       pg_class AS c1,
+       pg_class AS c2
+  WHERE
+       c1.relname = 'toast_alter_oid' AND
+       c1.reltoastrelid = c2.oid AND
+       a.attrelid = c2.oid AND
+       a.attname = 'chunk_id'
+  ORDER BY c1.relname COLLATE "C";
+DROP TABLE toast_alter_oid;
 
 -- test internally compressing datums
 
