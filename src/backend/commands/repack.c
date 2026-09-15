@@ -3031,10 +3031,10 @@ find_target_tuple(Relation rel, ChangeContext *chgcxt, TupleTableSlot *locator,
 	}
 
 	/* XXX no instrumentation for now */
-	scan = index_beginscan(rel, chgcxt->cc_ident_index, GetActiveSnapshot(),
+	scan = index_beginscan(rel, chgcxt->cc_ident_index, false, GetActiveSnapshot(),
 						   NULL, chgcxt->cc_ident_key_nentries, 0, 0);
 	index_rescan(scan, chgcxt->cc_ident_key, chgcxt->cc_ident_key_nentries, NULL, 0);
-	while (index_getnext_slot(scan, ForwardScanDirection, retrieved))
+	while (table_index_getnext_slot(scan, ForwardScanDirection, retrieved))
 	{
 		/* Be wary of temporal constraints */
 		if (scan->xs_recheck && !identity_key_equal(chgcxt, locator, retrieved))

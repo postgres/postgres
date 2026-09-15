@@ -38,6 +38,7 @@ typedef struct BulkInsertStateData BulkInsertStateData;
 typedef struct IndexInfo IndexInfo;
 typedef struct SampleScanState SampleScanState;
 typedef struct ScanKeyData ScanKeyData;
+typedef struct IndexScanDescData *IndexScanDesc;
 typedef struct ValidateIndexState ValidateIndexState;
 typedef struct VacuumParams VacuumParams;
 
@@ -446,60 +447,59 @@ typedef struct TableAmRoutine
 	 */
 
 	/*
-	 * Prepare to fetch tuples from the relation, as needed when fetching
-	 * tuples for an index scan.  The callback has to return an
-	 * IndexFetchTableData, which the AM will typically embed in a larger
-	 * structure with additional information.
+	 * Prepare for an index scan of the table.  The callback stores its own
+	 * private scan state in the index scan descriptor's xs_table_opaque field
+	 * (an opaque pointer).
 	 *
 	 * flags is a bitmask of ScanOptions affecting underlying table scan
 	 * behavior. See scan_begin() for more information on passing these.
 	 *
-	 * Tuples for an index scan can then be fetched via index_fetch_tuple.
+	 * Callback is responsible for setting scan->xs_getnext_slot, the callback
+	 * that table_index_getnext_slot() dispatches to.  Tuples are then
+	 * returned through the caller's slot.  No separate xs_getnext_slot
+	 * callback exists in this struct.
+	 *
+	 * In principle a single general-purpose callback (stored here) would
+	 * suffice, but using specialized variants allows the table AM to provide
+	 * minimal code based on conditions that are fixed for the whole scan as
+	 * an optimization (e.g., variants for plain index scans and index-only
+	 * scans, each with fewer branches).
+	 *
+	 * Plain index scans use whatever slot type the table AM's slot_callbacks
+	 * chooses.  Index-only scans always use a virtual slot, which is filled
+	 * using index data in a standardized way (though determining which index
+	 * tuples satisfy scan->xs_snapshot is still up to the table AM).
+	 *
+	 * The xs_getnext_slot callback is also responsible for whatever
+	 * bookkeeping its callers expect of an index scan, such as maintaining
+	 * instrumentation counters.
 	 */
-	struct IndexFetchTableData *(*index_fetch_begin) (Relation rel, uint32 flags);
+	void		(*index_scan_begin) (IndexScanDesc scan, uint32 flags);
 
 	/*
-	 * Reset index fetch. Typically this will release cross index fetch
-	 * resources held in IndexFetchTableData.
+	 * Inform the table AM that there's to be either a rescan or a restore of
+	 * a marked position.
 	 */
-	void		(*index_fetch_reset) (struct IndexFetchTableData *data);
+	void		(*index_scan_reset) (IndexScanDesc scan);
 
 	/*
-	 * Release resources and deallocate index fetch.
+	 * Release resources and deallocate index scan state.
 	 */
-	void		(*index_fetch_end) (struct IndexFetchTableData *data);
-
-	/*
-	 * Fetch tuple at `tid` into `slot`, after doing a visibility test
-	 * according to `snapshot`. If a tuple was found and passed the visibility
-	 * test, return true, false otherwise.
-	 *
-	 * Note that AMs that do not necessarily update indexes when indexed
-	 * columns do not change, need to return the current/correct version of
-	 * the tuple that is visible to the snapshot, even if the tid points to an
-	 * older version of the tuple.
-	 *
-	 * *call_again is false on the first call to index_fetch_tuple for a tid.
-	 * If there potentially is another tuple matching the tid, *call_again
-	 * needs to be set to true by index_fetch_tuple, signaling to the caller
-	 * that index_fetch_tuple should be called again for the same tid.
-	 *
-	 * *all_dead, if all_dead is not NULL, should be set to true by
-	 * index_fetch_tuple iff it is guaranteed that no backend needs to see
-	 * that tuple. Index AMs can use that to avoid returning that tid in
-	 * future searches.
-	 */
-	bool		(*index_fetch_tuple) (struct IndexFetchTableData *scan,
-									  ItemPointer tid,
-									  Snapshot snapshot,
-									  TupleTableSlot *slot,
-									  bool *call_again, bool *all_dead);
-
+	void		(*index_scan_end) (IndexScanDesc scan);
 
 	/* ------------------------------------------------------------------------
 	 * Callbacks for non-modifying operations on individual tuples
 	 * ------------------------------------------------------------------------
 	 */
+
+	/*
+	 * Check whether any tuple reachable through `tid` passes a visibility
+	 * test according to `snapshot`.  Return true if so, false otherwise.
+	 */
+	bool		(*fetch_tid) (Relation rel,
+							  ItemPointer tid,
+							  Snapshot snapshot,
+							  bool *all_dead);
 
 	/*
 	 * Fetch tuple at `tid` into `slot`, after doing a visibility test
@@ -1235,15 +1235,14 @@ table_parallelscan_reinitialize(Relation rel, ParallelTableScanDesc pscan)
  */
 
 /*
- * Prepare to fetch tuples from the relation, as needed when fetching tuples
- * for an index scan.
+ * Prepare an index scan descriptor by storing table AM private state in
+ * scan->xs_table_opaque and setting scan->xs_getnext_slot.  index_beginscan
+ * calls here after it has called ambeginscan.
  *
  * flags is a bitmask of ScanOptions. No SO_INTERNAL_FLAGS are permitted.
- *
- * Tuples for an index scan can then be fetched via table_index_fetch_tuple().
  */
-static inline IndexFetchTableData *
-table_index_fetch_begin(Relation rel, uint32 flags)
+static inline void
+table_index_scan_begin(IndexScanDesc scan, uint32 flags)
 {
 	Assert((flags & SO_INTERNAL_FLAGS) == 0);
 
@@ -1255,74 +1254,61 @@ table_index_fetch_begin(Relation rel, uint32 flags)
 	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
 		elog(ERROR, "scan started during logical decoding");
 
-	return rel->rd_tableam->index_fetch_begin(rel, flags);
+	scan->heapRelation->rd_tableam->index_scan_begin(scan, flags);
 }
 
 /*
- * Reset index fetch. Typically this will release cross index fetch resources
- * held in IndexFetchTableData.
+ * Inform the table AM that there's to be either a rescan or a restore of a
+ * marked position
  */
 static inline void
-table_index_fetch_reset(struct IndexFetchTableData *scan)
+table_index_scan_reset(IndexScanDesc scan)
 {
-	scan->rel->rd_tableam->index_fetch_reset(scan);
+	Assert(scan->xs_table_opaque);
+
+	scan->heapRelation->rd_tableam->index_scan_reset(scan);
 }
 
 /*
- * Release resources and deallocate index fetch.
+ * Release resources and deallocate the table AM's private index scan state
+ * (the scan's xs_table_opaque).  index_endscan calls here right before
+ * calling amendscan.
  */
 static inline void
-table_index_fetch_end(struct IndexFetchTableData *scan)
+table_index_scan_end(IndexScanDesc scan)
 {
-	scan->rel->rd_tableam->index_fetch_end(scan);
+	Assert(scan->xs_table_opaque);
+
+	scan->heapRelation->rd_tableam->index_scan_end(scan);
 }
 
 /*
- * Fetches, as part of an index scan, tuple at `tid` into `slot`, after doing
- * a visibility test according to `snapshot`. If a tuple was found and passed
- * the visibility test, returns true, false otherwise. Note that *tid may be
- * modified when we return true (see later remarks on multiple row versions
- * reachable via a single index entry).
+ * Return the next tuple from an index scan through `slot`, scanning in the
+ * specified direction.  Returns true if a tuple satisfying the scan keys and
+ * the snapshot was found, false otherwise.
  *
- * *call_again needs to be false on the first call to table_index_fetch_tuple() for
- * a tid. If there potentially is another tuple matching the tid, *call_again
- * will be set to true, signaling that table_index_fetch_tuple() should be called
- * again for the same tid.
+ * Dispatches through scan->xs_getnext_slot, which is resolved once by the
+ * table AM's index_scan_begin callback.
  *
- * *all_dead, if all_dead is not NULL, will be set to true by
- * table_index_fetch_tuple() iff it is guaranteed that no backend needs to see
- * that tuple. Index AMs can use that to avoid returning that tid in future
- * searches.
+ * On success, resources (like buffer pins) are likely to be held, and will be
+ * released by a future table_index_getnext_slot or table_index_scan_end call.
  *
- * The difference between this function and table_tuple_fetch_row_version()
- * is that this function returns the currently visible version of a row if
- * the AM supports storing multiple row versions reachable via a single index
- * entry (like heap's HOT). Whereas table_tuple_fetch_row_version() only
- * evaluates the tuple exactly at `tid`. Outside of index entry ->table tuple
- * lookups, table_tuple_fetch_row_version() is what's usually needed.
+ * Note: caller must check scan->xs_recheck, and perform rechecking of the
+ * scan keys if required.  We do not do that here because we don't have
+ * enough information to do it efficiently in the general case.  Similarly,
+ * for ordered scans, the caller must check scan->xs_recheckorderby and
+ * recheck the ORDER BY expressions for itself.
  */
 static inline bool
-table_index_fetch_tuple(struct IndexFetchTableData *scan,
-						ItemPointer tid,
-						Snapshot snapshot,
-						TupleTableSlot *slot,
-						bool *call_again, bool *all_dead)
+table_index_getnext_slot(IndexScanDesc scan, ScanDirection direction,
+						 TupleTableSlot *slot)
 {
-	return scan->rel->rd_tableam->index_fetch_tuple(scan, tid, snapshot,
-													slot, call_again,
-													all_dead);
-}
+	/* See index_scan_begin for an explanation of index-only scan slot type */
+	Assert(!scan->xs_want_itup || TTS_IS_VIRTUAL(slot));
+	Assert(scan->xs_table_opaque);
 
-/*
- * This is a convenience wrapper around table_index_fetch_tuple() which
- * returns whether there are table tuple items corresponding to an index
- * entry.  This likely is only useful to verify if there's a conflict in a
- * unique index.
- */
-extern bool table_index_fetch_tuple_check(Relation rel,
-										  ItemPointer tid,
-										  Snapshot snapshot,
-										  bool *all_dead);
+	return scan->xs_getnext_slot(scan, direction, slot);
+}
 
 
 /* ------------------------------------------------------------------------
@@ -1332,13 +1318,45 @@ extern bool table_index_fetch_tuple_check(Relation rel,
 
 
 /*
+ * Check whether any tuple reachable through `tid` passes a visibility test
+ * according to `snapshot`.  Returns true if so, false otherwise.  This is a
+ * low-level interface designed for use by constraint enforcement code.
+ *
+ * Unlike table_tuple_fetch_row_version(), every version reachable from `tid`
+ * is tested (such as the members of a heapam HOT chain), and *tid may be
+ * modified to point at the visible version when we return true.  Caller
+ * should consider passing a pointer to a mutable copy of their original TID
+ * to avoid unwanted side-effects.
+ *
+ * If all_dead is not NULL, *all_dead will be set to true here iff it is
+ * guaranteed that no backend needs to see any tuple reachable through
+ * caller's TID.  This means that it is safe to mark an index tuple containing
+ * this TID as LP_DEAD.
+ */
+static inline bool
+table_fetch_tid(Relation rel,
+				ItemPointer tid,
+				Snapshot snapshot,
+				bool *all_dead)
+{
+	/*
+	 * We don't expect direct calls to table_fetch_tid with valid
+	 * CheckXidAlive for catalog or regular tables.  See detailed comments in
+	 * xact.c where these variables are declared.
+	 */
+	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
+		elog(ERROR, "unexpected table_fetch_tid call during logical decoding");
+
+	return rel->rd_tableam->fetch_tid(rel, tid, snapshot, all_dead);
+}
+
+/*
  * Fetch tuple at `tid` into `slot`, after doing a visibility test according to
  * `snapshot`. If a tuple was found and passed the visibility test, returns
  * true, false otherwise.
  *
- * See table_index_fetch_tuple's comment about what the difference between
- * these functions is. It is correct to use this function outside of index
- * entry->table tuple lookups.
+ * Unlike table_fetch_tid(), only the tuple at `tid` itself is tested; no
+ * version chain is followed.
  */
 static inline bool
 table_tuple_fetch_row_version(Relation rel,

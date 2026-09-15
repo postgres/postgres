@@ -115,12 +115,10 @@ typedef struct BitmapHeapScanDescData
 typedef struct BitmapHeapScanDescData *BitmapHeapScanDesc;
 
 /*
- * Descriptor for fetches from heap via an index.
+ * heapam-specific IndexScanDescData opaque state
  */
-typedef struct IndexFetchHeapData
+typedef struct IndexScanHeapData
 {
-	IndexFetchTableData xs_base;	/* AM independent part of the descriptor */
-
 	/*
 	 * Current heap buffer in scan (and its block number), if any.  NB: if
 	 * xs_blk is not InvalidBlockNumber, we hold a pin in xs_cbuf.
@@ -128,9 +126,12 @@ typedef struct IndexFetchHeapData
 	Buffer		xs_cbuf;
 	BlockNumber xs_blk;
 
-	/* Current heap block's corresponding page in the visibility map */
-	Buffer		xs_vmbuffer;
-} IndexFetchHeapData;
+	Buffer		xs_vmbuffer;	/* visibility map buffer */
+
+	bool		xs_readonly;	/* scan is read-only? */
+
+	uint16		xs_blkswitch_count; /* number of heap blocks fetched */
+} IndexScanHeapData;
 
 /* Result codes for HeapTupleSatisfiesVacuum */
 typedef enum
@@ -430,16 +431,14 @@ extern TransactionId heap_index_delete_tuples(Relation rel,
 											  TM_IndexDeleteOp *delstate);
 
 /* in heap/heapam_indexscan.c */
-extern IndexFetchTableData *heapam_index_fetch_begin(Relation rel, uint32 flags);
-extern void heapam_index_fetch_reset(IndexFetchTableData *scan);
-extern void heapam_index_fetch_end(IndexFetchTableData *scan);
+extern bool heapam_fetch_tid(Relation rel, ItemPointer tid, Snapshot snapshot,
+							 bool *all_dead);
+extern void heapam_index_scan_begin(IndexScanDesc scan, uint32 flags);
+extern void heapam_index_scan_reset(IndexScanDesc scan);
+extern void heapam_index_scan_end(IndexScanDesc scan);
 extern bool heap_hot_search_buffer(ItemPointer tid, Relation relation,
 								   Buffer buffer, Snapshot snapshot, HeapTuple heapTuple,
 								   bool *all_dead, bool first_call);
-extern bool heapam_index_fetch_tuple(struct IndexFetchTableData *scan,
-									 ItemPointer tid, Snapshot snapshot,
-									 TupleTableSlot *slot, bool *heap_continue,
-									 bool *all_dead);
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer,

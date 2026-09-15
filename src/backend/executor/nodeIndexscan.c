@@ -110,6 +110,7 @@ IndexNext(IndexScanState *node)
 		 */
 		scandesc = index_beginscan(node->ss.ss_currentRelation,
 								   node->iss_RelationDesc,
+								   false,
 								   estate->es_snapshot,
 								   node->iss_Instrument,
 								   node->iss_NumScanKeys,
@@ -132,7 +133,7 @@ IndexNext(IndexScanState *node)
 	/*
 	 * ok, now that we have what we need, fetch the next tuple.
 	 */
-	while (index_getnext_slot(scandesc, direction, slot))
+	while (table_index_getnext_slot(scandesc, direction, slot))
 	{
 		CHECK_FOR_INTERRUPTS();
 
@@ -208,6 +209,7 @@ IndexNextWithReorder(IndexScanState *node)
 		 */
 		scandesc = index_beginscan(node->ss.ss_currentRelation,
 								   node->iss_RelationDesc,
+								   false,
 								   estate->es_snapshot,
 								   node->iss_Instrument,
 								   node->iss_NumScanKeys,
@@ -266,7 +268,7 @@ IndexNextWithReorder(IndexScanState *node)
 		 * Fetch next tuple from the index.
 		 */
 next_indextuple:
-		if (!index_getnext_slot(scandesc, ForwardScanDirection, slot))
+		if (!table_index_getnext_slot(scandesc, ForwardScanDirection, slot))
 		{
 			/*
 			 * No more tuples from the index.  But we still need to drain any
@@ -818,6 +820,7 @@ ExecEndIndexScan(IndexScanState *node)
 		 * which will have a new IndexOnlyScanState and zeroed stats.
 		 */
 		winstrument->nsearches += node->iss_Instrument->nsearches;
+		Assert(node->iss_Instrument->ntabletuplefetches == 0);
 	}
 
 	/*
@@ -1696,6 +1699,7 @@ ExecIndexScanInitializeDSM(IndexScanState *node,
 	node->iss_ScanDesc =
 		index_beginscan_parallel(node->ss.ss_currentRelation,
 								 node->iss_RelationDesc,
+								 false,
 								 node->iss_Instrument,
 								 node->iss_NumScanKeys,
 								 node->iss_NumOrderByKeys,
@@ -1744,6 +1748,7 @@ ExecIndexScanInitializeWorker(IndexScanState *node,
 	node->iss_ScanDesc =
 		index_beginscan_parallel(node->ss.ss_currentRelation,
 								 node->iss_RelationDesc,
+								 false,
 								 node->iss_Instrument,
 								 node->iss_NumScanKeys,
 								 node->iss_NumOrderByKeys,

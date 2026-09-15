@@ -102,7 +102,6 @@
 #include "access/gin.h"
 #include "access/table.h"
 #include "access/tableam.h"
-#include "access/visibilitymap.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
@@ -122,7 +121,6 @@
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "statistics/statistics.h"
-#include "storage/bufmgr.h"
 #include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -268,7 +266,7 @@ static bool get_actual_variable_endpoint(Relation heapRel,
 										 ScanKey scankeys,
 										 int16 typLen,
 										 bool typByVal,
-										 TupleTableSlot *tableslot,
+										 TupleTableSlot *slot,
 										 MemoryContext outercontext,
 										 Datum *endpointDatum);
 static RelOptInfo *find_join_input_rel(PlannerInfo *root, Relids relids);
@@ -7142,7 +7140,8 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			indexRel = index_open(index->indexoid, NoLock);
 
 			/* build some stuff needed for indexscan execution */
-			slot = table_slot_create(heapRel, NULL);
+			slot = MakeSingleTupleTableSlot(RelationGetDescr(indexRel),
+											&TTSOpsVirtual);
 			get_typlenbyval(vardata->atttype, &typLen, &typByVal);
 
 			/* set up an IS NOT NULL scan key so that we ignore nulls */
@@ -7214,8 +7213,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
  *
  * scankeys is a 1-element scankey array set up to reject nulls.
  * typLen/typByVal describe the datatype of the index's first column.
- * tableslot is a slot suitable to hold table tuples, in case we need
- * to probe the heap.
+ * slot is a virtual slot to receive each index tuple's values.
  * (We could compute these values locally, but that would mean computing them
  * twice when get_actual_variable_range needs both the min and the max.)
  *
@@ -7229,19 +7227,15 @@ get_actual_variable_endpoint(Relation heapRel,
 							 ScanKey scankeys,
 							 int16 typLen,
 							 bool typByVal,
-							 TupleTableSlot *tableslot,
+							 TupleTableSlot *slot,
 							 MemoryContext outercontext,
 							 Datum *endpointDatum)
 {
 	bool		have_data = false;
 	SnapshotData SnapshotNonVacuumable;
 	IndexScanDesc index_scan;
-	Buffer		vmbuffer = InvalidBuffer;
-	BlockNumber last_heap_block = InvalidBlockNumber;
-	int			n_visited_heap_pages = 0;
-	ItemPointer tid;
-	Datum		values[INDEX_MAX_KEYS];
-	bool		isnull[INDEX_MAX_KEYS];
+	Datum		val;
+	bool		isnull;
 	MemoryContext oldcontext;
 
 	/*
@@ -7287,95 +7281,49 @@ get_actual_variable_endpoint(Relation heapRel,
 	 * a huge amount of time here, so we give up once we've read too many heap
 	 * pages.  When we fail for that reason, the caller will end up using
 	 * whatever extremal value is recorded in pg_statistic.
+	 *
+	 * We set xs_visited_pages_limit to tell the table AM to give up once it
+	 * has switched heap pages this many times without finding a visible
+	 * tuple.
 	 */
+#define VISITED_PAGES_LIMIT 100
 	InitNonVacuumableSnapshot(SnapshotNonVacuumable,
 							  GlobalVisTestFor(heapRel));
 
-	index_scan = index_beginscan(heapRel, indexRel,
+	index_scan = index_beginscan(heapRel, indexRel, true,
 								 &SnapshotNonVacuumable, NULL,
 								 1, 0,
 								 SO_NONE);
-	/* Set it up for index-only scan */
-	index_scan->xs_want_itup = true;
+	Assert(index_scan->xs_want_itup);
+	index_scan->xs_visited_pages_limit = VISITED_PAGES_LIMIT;
 	index_rescan(index_scan, scankeys, 1, NULL, 0);
 
 	/* Fetch first/next tuple in specified direction */
-	while ((tid = index_getnext_tid(index_scan, indexscandir)) != NULL)
+	while (table_index_getnext_slot(index_scan, indexscandir, slot))
 	{
-		BlockNumber block = ItemPointerGetBlockNumber(tid);
-
-		if (!VM_ALL_VISIBLE(heapRel,
-							block,
-							&vmbuffer))
-		{
-			/* Rats, we have to visit the heap to check visibility */
-			if (!index_fetch_heap(index_scan, tableslot))
-			{
-				/*
-				 * No visible tuple for this index entry, so we need to
-				 * advance to the next entry.  Before doing so, count heap
-				 * page fetches and give up if we've done too many.
-				 *
-				 * We don't charge a page fetch if this is the same heap page
-				 * as the previous tuple.  This is on the conservative side,
-				 * since other recently-accessed pages are probably still in
-				 * buffers too; but it's good enough for this heuristic.
-				 */
-#define VISITED_PAGES_LIMIT 100
-
-				if (block != last_heap_block)
-				{
-					last_heap_block = block;
-					n_visited_heap_pages++;
-					if (n_visited_heap_pages > VISITED_PAGES_LIMIT)
-						break;
-				}
-
-				continue;		/* no visible tuple, try next index entry */
-			}
-
-			/* We don't actually need the heap tuple for anything */
-			ExecClearTuple(tableslot);
-
-			/*
-			 * We don't care whether there's more than one visible tuple in
-			 * the HOT chain; if any are visible, that's good enough.
-			 */
-		}
-
-		/*
-		 * We expect that the index will return data in IndexTuple not
-		 * HeapTuple format.
-		 */
-		if (!index_scan->xs_itup)
-			elog(ERROR, "no data returned for index-only scan");
-
 		/*
 		 * We do not yet support recheck here.
 		 */
 		if (index_scan->xs_recheck)
 			break;
 
-		/* OK to deconstruct the index tuple */
-		index_deform_tuple(index_scan->xs_itup,
-						   index_scan->xs_itupdesc,
-						   values, isnull);
+		/* Read the index's first column value out of the slot */
+		val = slot_getattr(slot, 1, &isnull);
 
 		/* Shouldn't have got a null, but be careful */
-		if (isnull[0])
+		if (isnull)
 			elog(ERROR, "found unexpected null value in index \"%s\"",
 				 RelationGetRelationName(indexRel));
 
 		/* Copy the index column value out to caller's context */
 		oldcontext = MemoryContextSwitchTo(outercontext);
-		*endpointDatum = datumCopy(values[0], typByVal, typLen);
+		*endpointDatum = datumCopy(val, typByVal, typLen);
 		MemoryContextSwitchTo(oldcontext);
 		have_data = true;
 		break;
 	}
 
-	if (vmbuffer != InvalidBuffer)
-		ReleaseBuffer(vmbuffer);
+	ExecClearTuple(slot);		/* defensive, slot can be reused by later scan */
 	index_endscan(index_scan);
 
 	return have_data;

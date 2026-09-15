@@ -3,6 +3,7 @@
 backend_sources += files(
   'table.c',
   'tableam.c',
+  'tableam_indexscan.c',
   'tableamapi.c',
   'toast_helper.c',
 )

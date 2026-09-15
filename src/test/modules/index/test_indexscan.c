@@ -115,11 +115,11 @@ index_scan_tids(PG_FUNCTION_ARGS)
 
 	slot = table_slot_create(heaprel, NULL);
 
-	scan = index_beginscan(heaprel, indexrel, snapshot, NULL,
+	scan = index_beginscan(heaprel, indexrel, false, snapshot, NULL,
 						   0, 0, SO_NONE);
 	index_rescan(scan, NULL, 0, NULL, 0);
 
-	while (index_getnext_slot(scan, dir, slot))
+	while (table_index_getnext_slot(scan, dir, slot))
 	{
 		ItemPointerData tid = slot->tts_tid;
 		Datum		values[1];

@@ -15,6 +15,7 @@ include $(top_builddir)/src/Makefile.global
 OBJS = \
 	table.o \
 	tableam.o \
+	tableam_indexscan.o \
 	tableamapi.o \
 	toast_helper.o
 

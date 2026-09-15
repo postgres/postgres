@@ -98,13 +98,16 @@ AccumulateIOStats(IOStats *dst, IOStats *src)
 
 
 /* ---------------------
- *	Instrumentation information for indexscans (amgettuple and amgetbitmap)
+ *	Instrumentation information for index scans (used by all AM interfaces)
  * ---------------------
  */
 typedef struct IndexScanInstrumentation
 {
 	/* Index search count (incremented with pgstat_count_index_scan call) */
 	uint64		nsearches;
+
+	/* Table tuples fetched count (incremented during index-only scans) */
+	uint64		ntabletuplefetches;
 } IndexScanInstrumentation;
 
 /*

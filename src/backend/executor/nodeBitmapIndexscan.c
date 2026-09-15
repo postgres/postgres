@@ -204,6 +204,7 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 		 * which will have a new BitmapIndexScanState and zeroed stats.
 		 */
 		winstrument->nsearches += node->biss_Instrument->nsearches;
+		Assert(node->biss_Instrument->ntabletuplefetches == 0);
 	}
 
 	/*

@@ -1312,8 +1312,6 @@ IndexDeleteCounts
 IndexDeletePrefetchState
 IndexDoCheckCallback
 IndexElem
-IndexFetchHeapData
-IndexFetchTableData
 IndexInfo
 IndexList
 IndexOnlyScan
@@ -1325,6 +1323,7 @@ IndexRuntimeKeyInfo
 IndexScan
 IndexScanDesc
 IndexScanDescData
+IndexScanHeapData
 IndexScanInstrumentation
 IndexScanState
 IndexStateFlagsAction

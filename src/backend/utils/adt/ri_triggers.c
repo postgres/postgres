@@ -2947,7 +2947,7 @@ ri_FastPathCheck(RI_ConstraintInfo *riinfo,
 	 * btree this has no functional consequence, but it keeps the ordering
 	 * correct for out-of-tree access methods.
 	 */
-	scandesc = index_beginscan(pk_rel, idx_rel,
+	scandesc = index_beginscan(pk_rel, idx_rel, false,
 							   snapshot, NULL,
 							   riinfo->nkeys, 0,
 							   SO_NONE);
@@ -3114,7 +3114,7 @@ ri_FastPathBatchFlush(RI_FastPathEntry *fpentry, Relation fk_rel,
 	 * btree this has no functional consequence, but it keeps the ordering
 	 * correct for out-of-tree access methods.
 	 */
-	scandesc = index_beginscan(pk_rel, idx_rel, snapshot, NULL,
+	scandesc = index_beginscan(pk_rel, idx_rel, false, snapshot, NULL,
 							   riinfo->nkeys, 0, SO_NONE);
 
 	if (riinfo->fpmeta == NULL)
@@ -3322,7 +3322,7 @@ ri_FastPathFlushArray(RI_FastPathEntry *fpentry, TupleTableSlot *fk_slot,
 	 * Walk all matches.  The index AM returns them in index order.  For each
 	 * match, find which batch item(s) it satisfies.
 	 */
-	while (index_getnext_slot(scandesc, ForwardScanDirection, pk_slot))
+	while (table_index_getnext_slot(scandesc, ForwardScanDirection, pk_slot))
 	{
 		Datum		found_val;
 		bool		found_null;
@@ -3397,7 +3397,7 @@ ri_FastPathProbeOne(Relation pk_rel, Relation idx_rel,
 
 	index_rescan(scandesc, skey, nkeys, NULL, 0);
 
-	if (index_getnext_slot(scandesc, ForwardScanDirection, slot))
+	if (table_index_getnext_slot(scandesc, ForwardScanDirection, slot))
 	{
 		bool		concurrently_updated;
 

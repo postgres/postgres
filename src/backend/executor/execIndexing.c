@@ -823,12 +823,13 @@ check_exclusion_or_unique_constraint(Relation heap, Relation index,
 retry:
 	conflict = false;
 	found_self = false;
-	index_scan = index_beginscan(heap, index,
+	index_scan = index_beginscan(heap, index, false,
 								 &DirtySnapshot, NULL, indnkeyatts, 0,
 								 SO_NONE);
 	index_rescan(index_scan, scankeys, indnkeyatts, NULL, 0);
 
-	while (index_getnext_slot(index_scan, ForwardScanDirection, existing_slot))
+	while (table_index_getnext_slot(index_scan, ForwardScanDirection,
+									existing_slot))
 	{
 		TransactionId xwait;
 		XLTW_Oper	reason_wait;
