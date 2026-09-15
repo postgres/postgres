@@ -368,7 +368,7 @@ ExecFindPartition(ModifyTableState *mtstate,
 					/* Verify this ResultRelInfo allows INSERTs */
 					CheckValidResultRel(rri, CMD_INSERT,
 										node ? node->onConflictAction : ONCONFLICT_NONE,
-										NIL, node);
+										NIL);
 
 					/*
 					 * Initialize information needed to insert this and
@@ -591,11 +591,10 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	/*
 	 * Verify result relation is a valid target for an INSERT.  An UPDATE of a
 	 * partition-key becomes a DELETE+INSERT operation, so this check is still
-	 * required when the operation is CMD_UPDATE.  It is also required for
-	 * CMD_DELETE, because DELETE ... FOR PORTION OF inserts leftover rows.
+	 * required when the operation is CMD_UPDATE.
 	 */
 	CheckValidResultRel(leaf_part_rri, CMD_INSERT,
-						node ? node->onConflictAction : ONCONFLICT_NONE, NIL, node);
+						node ? node->onConflictAction : ONCONFLICT_NONE, NIL);
 
 	/*
 	 * Open partition indices.  The user may have asked to check for conflicts
@@ -613,9 +612,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	 * Build WITH CHECK OPTION constraints for the partition.  Note that we
 	 * didn't build the withCheckOptionList for partitions within the planner,
 	 * but simple translation of varattnos will suffice.  This only occurs for
-	 * the INSERT case or in the case of UPDATE/DELETE/MERGE tuple routing
-	 * where we didn't find a result rel to reuse.  We reach here with DELETE
-	 * only when inserting temporal leftovers.
+	 * the INSERT case or in the case of UPDATE/MERGE tuple routing where we
+	 * didn't find a result rel to reuse.
 	 */
 	if (node && node->withCheckOptionLists != NIL)
 	{
@@ -626,16 +624,12 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		/*
 		 * In the case of INSERT on a partitioned table, there is only one
 		 * plan.  Likewise, there is only one WCO list, not one per partition.
-		 * For UPDATE/DELETE/MERGE, there are as many WCO lists as there are
-		 * plans.
+		 * For UPDATE/MERGE, there are as many WCO lists as there are plans.
 		 */
 		Assert((node->operation == CMD_INSERT &&
 				list_length(node->withCheckOptionLists) == 1 &&
 				list_length(node->resultRelations) == 1) ||
 			   (node->operation == CMD_UPDATE &&
-				list_length(node->withCheckOptionLists) ==
-				list_length(node->resultRelations)) ||
-			   (node->operation == CMD_DELETE &&
 				list_length(node->withCheckOptionLists) ==
 				list_length(node->resultRelations)) ||
 			   (node->operation == CMD_MERGE &&
@@ -685,9 +679,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	 * Build the RETURNING projection for the partition.  Note that we didn't
 	 * build the returningList for partitions within the planner, but simple
 	 * translation of varattnos will suffice.  This only occurs for the INSERT
-	 * case or in the case of UPDATE/DELETE/MERGE tuple routing where we
-	 * didn't find a result rel to reuse.  We reach here with DELETE only when
-	 * inserting temporal leftovers.
+	 * case or in the case of UPDATE/MERGE tuple routing where we didn't find
+	 * a result rel to reuse.
 	 */
 	if (node && node->returningLists != NIL)
 	{
@@ -700,9 +693,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				list_length(node->returningLists) == 1 &&
 				list_length(node->resultRelations) == 1) ||
 			   (node->operation == CMD_UPDATE &&
-				list_length(node->returningLists) ==
-				list_length(node->resultRelations)) ||
-			   (node->operation == CMD_DELETE &&
 				list_length(node->returningLists) ==
 				list_length(node->resultRelations)) ||
 			   (node->operation == CMD_MERGE &&

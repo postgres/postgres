@@ -382,9 +382,7 @@ CREATE TABLE people (
    A generated column cannot be written to directly.  In
    <command>INSERT</command> or <command>UPDATE</command> commands, a value
    cannot be specified for a generated column, but the keyword
-   <literal>DEFAULT</literal> may be specified.  Also, a generated column
-   cannot be used in the <literal>FOR PORTION OF</literal> clause of an
-   <command>UPDATE</command> or <command>DELETE</command> command.
+   <literal>DEFAULT</literal> may be specified.
   </para>
 
   <para>

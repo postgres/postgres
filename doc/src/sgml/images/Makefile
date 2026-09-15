@@ -8,10 +8,7 @@ ALL_IMAGES = \
 	gin.svg \
 	pagelayout.svg \
 	temporal-entities.svg \
-	temporal-references.svg \
-	temporal-update.svg \
-	temporal-delete.svg \
-	temporal-isolation.svg
+	temporal-references.svg
 
 DITAA = ditaa
 DOT = dot

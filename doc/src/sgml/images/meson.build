@@ -17,9 +17,6 @@ all_files = [
   'pagelayout.txt',
   'temporal-entities.txt',
   'temporal-references.txt',
-  'temporal-update.txt',
-  'temporal-delete.txt',
-  'temporal-isolation.txt',
 ]
 
 foreach file : all_files

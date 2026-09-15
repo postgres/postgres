@@ -3470,53 +3470,6 @@ rewriteTargetView(Query *parsetree, Relation view)
 	}
 
 	/*
-	 * Similarly, make sure the FOR PORTION OF column is updateable. This is
-	 * not included in the columns tested above, and we have to test it even
-	 * for DELETEs.
-	 */
-	if (parsetree->forPortionOf)
-	{
-		AttrNumber	rangeAttno;
-		Bitmapset  *fpo_cols;
-		char	   *non_updatable_col;
-		const char *fpo_update_detail;
-
-		rangeAttno = parsetree->forPortionOf->rangeVar->varattno;
-		fpo_cols = bms_make_singleton(rangeAttno - FirstLowInvalidHeapAttributeNumber);
-
-		fpo_update_detail = view_cols_are_auto_updatable(viewquery,
-														 fpo_cols,
-														 NULL,
-														 &non_updatable_col);
-		if (fpo_update_detail)
-		{
-			switch (parsetree->commandType)
-			{
-				case CMD_UPDATE:
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot update column \"%s\" of view \"%s\"",
-									non_updatable_col,
-									RelationGetRelationName(view)),
-							 errdetail_internal("%s", _(fpo_update_detail))));
-					break;
-				case CMD_DELETE:
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot delete from view \"%s\" using FOR PORTION OF \"%s\"",
-									RelationGetRelationName(view),
-									non_updatable_col),
-							 errdetail_internal("%s", _(fpo_update_detail))));
-					break;
-				default:
-					elog(ERROR, "unrecognized CmdType: %d",
-						 (int) parsetree->commandType);
-					break;
-			}
-		}
-	}
-
-	/*
 	 * For MERGE, there must not be any INSTEAD OF triggers on an otherwise
 	 * updatable view.  The caller already checked that there isn't a full set
 	 * of INSTEAD OF triggers, so this is to guard against having a partial
@@ -3857,30 +3810,6 @@ rewriteTargetView(Query *parsetree, Relation view)
 									  &parsetree->hasSubLinks);
 	}
 
-	if (parsetree->forPortionOf && parsetree->commandType == CMD_UPDATE)
-	{
-		/*
-		 * Like the INSERT/UPDATE code above, update the resnos in the
-		 * auxiliary UPDATE targetlist to refer to columns of the base
-		 * relation.
-		 */
-		foreach(lc, parsetree->forPortionOf->rangeTargetList)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(lc);
-			TargetEntry *view_tle;
-
-			if (tle->resjunk)
-				continue;
-
-			view_tle = get_tle_by_resno(view_targetlist, tle->resno);
-			if (view_tle != NULL && !view_tle->resjunk && IsA(view_tle->expr, Var))
-				tle->resno = ((Var *) view_tle->expr)->varattno;
-			else
-				elog(ERROR, "attribute number %d not found in view targetlist",
-					 tle->resno);
-		}
-	}
-
 	/*
 	 * For UPDATE/DELETE/MERGE, pull up any WHERE quals from the view.  We
 	 * know that any Vars in the quals must reference the one base relation,
@@ -3941,14 +3870,8 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * the WITH CHECK OPTION, or any parent view specified WITH CASCADED CHECK
 	 * OPTION, add the quals from the view to the query's withCheckOptions
 	 * list.
-	 *
-	 * DELETE FOR PORTION OF needs this too: it inserts temporal leftovers to
-	 * preserve the untouched parts of the deleted row, and those must not
-	 * escape the view either.  For UPDATE, any WCO we add below will apply to
-	 * inserted leftovers as well.
 	 */
-	if (insert_or_update ||
-		(parsetree->commandType == CMD_DELETE && parsetree->forPortionOf != NULL))
+	if (insert_or_update)
 	{
 		bool		has_wco = RelationHasCheckOption(view);
 		bool		cascaded = RelationHasCascadedCheckOption(view);
@@ -4165,14 +4088,6 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length,
 		 */
 		rt_entry_relation = relation_open(rt_entry->relid, NoLock);
 
-		/* We don't support FOR PORTION OF on views with INSTEAD OF triggers. */
-		if (parsetree->forPortionOf &&
-			rt_entry_relation->rd_rel->relkind == RELKIND_VIEW &&
-			view_has_instead_trigger(rt_entry_relation, event, NIL))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("views with INSTEAD OF triggers do not support FOR PORTION OF")));
-
 		/*
 		 * Rewrite the targetlist as needed for the command type.
 		 */
@@ -4251,37 +4166,6 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length,
 		else if (event == CMD_UPDATE)
 		{
 			Assert(parsetree->override == OVERRIDING_NOT_SET);
-
-			if (parsetree->forPortionOf)
-			{
-				/*
-				 * Don't add FOR PORTION OF details until we're done rewriting
-				 * a view update, so that we don't add the same qual and TLE
-				 * on the recursion.
-				 *
-				 * Views don't need to do anything special here to remap Vars;
-				 * that is handled by the tree walker.
-				 */
-				if (rt_entry_relation->rd_rel->relkind != RELKIND_VIEW)
-				{
-					ListCell   *tl;
-
-					/*
-					 * Add qual: UPDATE FOR PORTION OF should be limited to
-					 * rows that overlap the target range.
-					 */
-					AddQual(parsetree, parsetree->forPortionOf->overlapsExpr);
-
-					/* Update FOR PORTION OF column(s) automatically. */
-					foreach(tl, parsetree->forPortionOf->rangeTargetList)
-					{
-						TargetEntry *tle = (TargetEntry *) lfirst(tl);
-
-						parsetree->targetList = lappend(parsetree->targetList, tle);
-					}
-				}
-			}
-
 			parsetree->targetList =
 				rewriteTargetListIU(parsetree->targetList,
 									parsetree->commandType,
@@ -4327,25 +4211,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length,
 		}
 		else if (event == CMD_DELETE)
 		{
-			if (parsetree->forPortionOf)
-			{
-				/*
-				 * Don't add FOR PORTION OF details until we're done rewriting
-				 * a view delete, so that we don't add the same qual on the
-				 * recursion.
-				 *
-				 * Views don't need to do anything special here to remap Vars;
-				 * that is handled by the tree walker.
-				 */
-				if (rt_entry_relation->rd_rel->relkind != RELKIND_VIEW)
-				{
-					/*
-					 * Add qual: DELETE FOR PORTION OF should be limited to
-					 * rows that overlap the target range.
-					 */
-					AddQual(parsetree, parsetree->forPortionOf->overlapsExpr);
-				}
-			}
+			/* Nothing to do here */
 		}
 		else
 			elog(ERROR, "unrecognized commandType: %d", (int) event);

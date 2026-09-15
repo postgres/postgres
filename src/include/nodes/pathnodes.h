@@ -2722,7 +2722,6 @@ typedef struct ModifyTablePath
 	List	   *returningLists; /* per-target-table RETURNING tlists */
 	List	   *rowMarks;		/* PlanRowMarks (non-locking only) */
 	OnConflictExpr *onconflict; /* ON CONFLICT clause, or NULL */
-	ForPortionOfExpr *forPortionOf; /* FOR PORTION OF clause for UPDATE/DELETE */
 	int			epqParam;		/* ID of Param for EvalPlanQual re-eval */
 	List	   *mergeActionLists;	/* per-target-table lists of actions for
 									 * MERGE */
