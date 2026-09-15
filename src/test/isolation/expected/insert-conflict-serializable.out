@@ -1,0 +1,116 @@
+Parsed test spec with 2 sessions
+
+starting permutation: ioc_nothing1 count2 delete2 insert1 c1 c2
+step ioc_nothing1: INSERT INTO ioc_a VALUES (1, 99) ON CONFLICT (key) DO NOTHING;
+step count2: SELECT count(*) FROM ioc_b;
+count
+-----
+    0
+(1 row)
+
+step delete2: DELETE FROM ioc_a WHERE key = 1;
+step insert1: INSERT INTO ioc_b VALUES (1, 10);
+step c1: COMMIT;
+step c2: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: ioc_nothing1 count2 update2 insert1 c1 c2
+step ioc_nothing1: INSERT INTO ioc_a VALUES (1, 99) ON CONFLICT (key) DO NOTHING;
+step count2: SELECT count(*) FROM ioc_b;
+count
+-----
+    0
+(1 row)
+
+step update2: UPDATE ioc_a SET val = 1 WHERE key = 1;
+step insert1: INSERT INTO ioc_b VALUES (1, 10);
+step c1: COMMIT;
+step c2: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: ioc_update1_where count2 update2 insert1 c1 c2
+step ioc_update1_where: INSERT INTO ioc_a VALUES (1, 99) ON CONFLICT (key) DO UPDATE SET val = 99 WHERE ioc_a.val > 100;
+step count2: SELECT count(*) FROM ioc_b;
+count
+-----
+    0
+(1 row)
+
+step update2: UPDATE ioc_a SET val = 1 WHERE key = 1; <waiting ...>
+step insert1: INSERT INTO ioc_b VALUES (1, 10);
+step c1: COMMIT;
+step update2: <... completed>
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c2: COMMIT;
+
+starting permutation: ioc_select1 count2 update2 insert1 c1 c2
+step ioc_select1: INSERT INTO ioc_a VALUES (1, 99) ON CONFLICT (key) DO SELECT RETURNING val;
+val
+---
+  0
+(1 row)
+
+step count2: SELECT count(*) FROM ioc_b;
+count
+-----
+    0
+(1 row)
+
+step update2: UPDATE ioc_a SET val = 1 WHERE key = 1;
+step insert1: INSERT INTO ioc_b VALUES (1, 10);
+step c1: COMMIT;
+step c2: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: ioc_select1_keyshare count2 update2 insert1 c1 c2
+step ioc_select1_keyshare: INSERT INTO ioc_a VALUES (1, 99) ON CONFLICT (key) DO SELECT FOR KEY SHARE RETURNING val;
+val
+---
+  0
+(1 row)
+
+step count2: SELECT count(*) FROM ioc_b;
+count
+-----
+    0
+(1 row)
+
+step update2: UPDATE ioc_a SET val = 1 WHERE key = 1;
+step insert1: INSERT INTO ioc_b VALUES (1, 10);
+step c1: COMMIT;
+step c2: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: ioc_select1_where count2 update2 insert1 c1 c2
+step ioc_select1_where: INSERT INTO ioc_a VALUES (1, 99) ON CONFLICT (key) DO SELECT WHERE ioc_a.val > 100 RETURNING val;
+val
+---
+(0 rows)
+
+step count2: SELECT count(*) FROM ioc_b;
+count
+-----
+    0
+(1 row)
+
+step update2: UPDATE ioc_a SET val = 1 WHERE key = 1;
+step insert1: INSERT INTO ioc_b VALUES (1, 10);
+step c1: COMMIT;
+step c2: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: count2 update2 ioc_select1 c2 insert1 c1
+step count2: SELECT count(*) FROM ioc_b;
+count
+-----
+    0
+(1 row)
+
+step update2: UPDATE ioc_a SET val = 1 WHERE key = 1;
+step ioc_select1: INSERT INTO ioc_a VALUES (1, 99) ON CONFLICT (key) DO SELECT RETURNING val; <waiting ...>
+step c2: COMMIT;
+step ioc_select1: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step insert1: INSERT INTO ioc_b VALUES (1, 10);
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+step c1: COMMIT;

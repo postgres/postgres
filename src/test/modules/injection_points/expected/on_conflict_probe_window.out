@@ -1,0 +1,113 @@
+Parsed test spec with 2 sessions
+
+starting permutation: ioc_nothing1 count2 update2 c2 wake2 insert1 c1
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step ioc_nothing1: INSERT INTO probe_a VALUES (1, 99) ON CONFLICT (key) DO NOTHING; <waiting ...>
+step count2: SELECT count(*) FROM probe_b;
+count
+-----
+    0
+(1 row)
+
+step update2: UPDATE probe_a SET val = 1 WHERE key = 1;
+step c2: COMMIT;
+step wake2: 
+	SELECT injection_points_detach('check-exclusion-or-unique-constraint-conflict');
+	SELECT injection_points_wakeup('check-exclusion-or-unique-constraint-conflict');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step ioc_nothing1: <... completed>
+step insert1: INSERT INTO probe_b VALUES (1, 10);
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1: COMMIT;
+
+starting permutation: ioc_select1 count2 update2 c2 wake2 insert1 c1
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step ioc_select1: INSERT INTO probe_a VALUES (1, 99) ON CONFLICT (key) DO SELECT RETURNING val; <waiting ...>
+step count2: SELECT count(*) FROM probe_b;
+count
+-----
+    0
+(1 row)
+
+step update2: UPDATE probe_a SET val = 1 WHERE key = 1;
+step c2: COMMIT;
+step wake2: 
+	SELECT injection_points_detach('check-exclusion-or-unique-constraint-conflict');
+	SELECT injection_points_wakeup('check-exclusion-or-unique-constraint-conflict');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step ioc_select1: <... completed>
+val
+---
+  0
+(1 row)
+
+step insert1: INSERT INTO probe_b VALUES (1, 10);
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1: COMMIT;
+
+starting permutation: ioc_select1_keyshare count2 update2 c2 wake2 insert1 c1
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step ioc_select1_keyshare: INSERT INTO probe_a VALUES (1, 99) ON CONFLICT (key) DO SELECT FOR KEY SHARE RETURNING val; <waiting ...>
+step count2: SELECT count(*) FROM probe_b;
+count
+-----
+    0
+(1 row)
+
+step update2: UPDATE probe_a SET val = 1 WHERE key = 1;
+step c2: COMMIT;
+step wake2: 
+	SELECT injection_points_detach('check-exclusion-or-unique-constraint-conflict');
+	SELECT injection_points_wakeup('check-exclusion-or-unique-constraint-conflict');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step ioc_select1_keyshare: <... completed>
+val
+---
+  0
+(1 row)
+
+step insert1: INSERT INTO probe_b VALUES (1, 10);
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step c1: COMMIT;
