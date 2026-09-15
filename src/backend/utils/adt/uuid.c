@@ -19,7 +19,9 @@
 #include "common/hashfn.h"
 #include "lib/hyperloglog.h"
 #include "libpq/pqformat.h"
+#include "nodes/miscnodes.h"
 #include "port/pg_bswap.h"
+#include "utils/builtins.h"
 #include "utils/fmgrprotos.h"
 #include "utils/guc.h"
 #include "utils/skipsupport.h"
@@ -139,13 +141,13 @@ uuid_out(PG_FUNCTION_ARGS)
 }
 
 /*
- * We allow UUIDs as a series of 32 hexadecimal digits with an optional dash
- * after each group of 4 hexadecimal digits, and optionally surrounded by {}.
- * (The canonical format 8x-4x-4x-4x-12x, where "nx" means n hexadecimal
- * digits, is the only one used for output.)
+ * Reference implementation of the UUID grammar, parsing one byte at a time.
+ * string_to_uuid() recognizes the common shapes more cheaply and defers to
+ * this function for everything else, so this is also the only place that
+ * reports a syntax error.
  */
 static void
-string_to_uuid(const char *source, pg_uuid_t *uuid, Node *escontext)
+string_to_uuid_scalar(const char *source, pg_uuid_t *uuid, Node *escontext)
 {
 	const char *src = source;
 	bool		braces = false;
@@ -192,6 +194,95 @@ syntax_error:
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type %s: \"%s\"",
 					"uuid", source)));
+}
+
+/*
+ * We allow UUIDs as a series of 32 hexadecimal digits with an optional dash
+ * after each group of 4 hexadecimal digits, and optionally surrounded by {}.
+ * (The canonical format 8x-4x-4x-4x-12x, where "nx" means n hexadecimal
+ * digits, is the only one used for output.)
+ *
+ * The two common shapes -- a bare string of 32 hexadecimal digits and the
+ * canonical form, each optionally wrapped in braces -- are compacted into 32
+ * contiguous hex digits and decoded with hex_decode_safe(), which is much
+ * faster than the byte-at-a-time loop. Any other shape, or any decoding
+ * error, is handed off to string_to_uuid_scalar() so that the accepted
+ * grammar and the error messages are unchanged.
+ */
+static void
+string_to_uuid(const char *source, pg_uuid_t *uuid, Node *escontext)
+{
+	const char *body = source;
+	const char *hexsrc = NULL;
+	char		hexbuf[32];
+	uint64		written;
+	size_t		len;
+	ErrorSaveContext private_escontext = {T_ErrorSaveContext};
+
+	/*
+	 * Measure the input only far enough to classify its shape. The bound must
+	 * exceed the longest shape handled here, the braced canonical form at 38
+	 * characters: strnlen() returns the bound for anything at least that
+	 * long, so stopping at an accepted length would accept a longer string
+	 * that merely starts with a valid UUID.
+	 */
+	len = strnlen(source, 64);
+
+	/* Strip one optional surrounding brace pair */
+	if (len >= 2 && source[0] == '{' && source[len - 1] == '}')
+	{
+		body = source + 1;
+		len -= 2;
+	}
+
+	if (len == 32)
+	{
+		/*
+		 * Body is already 32 contiguous hex digits -- decode straight from
+		 * the input. hex_decode_safe() reads exactly body[0..31], so it never
+		 * touches the trailing NUL or '}'.
+		 */
+		hexsrc = body;
+	}
+	else if (len == 36 && body[8] == '-' && body[13] == '-' &&
+			 body[18] == '-' && body[23] == '-')
+	{
+		/*
+		 * Canonical 8x-4x-4x-4x-12x form; compact them into hexbuf with
+		 * fixed-offset copies, dropping the dashes.
+		 */
+		memcpy(&hexbuf[0], &body[0], 8);
+		memcpy(&hexbuf[8], &body[9], 4);
+		memcpy(&hexbuf[12], &body[14], 4);
+		memcpy(&hexbuf[16], &body[19], 4);
+		memcpy(&hexbuf[20], &body[24], 12);
+		hexsrc = hexbuf;
+	}
+
+	if (hexsrc == NULL)
+	{
+		/* Uncommon shape; let the general parse handle it */
+		string_to_uuid_scalar(source, uuid, escontext);
+		return;
+	}
+
+	/*
+	 * The shape matched, so the decode is expected to succeed. Any error is
+	 * routed into a private context and discarded, leaving
+	 * string_to_uuid_scalar() to parse the input again and report the syntax
+	 * error, so that the message does not depend on which path rejected the
+	 * input.
+	 */
+	written = hex_decode_safe(hexsrc, 32, (char *) uuid->data,
+							  (Node *) &private_escontext);
+
+	/*
+	 * A short result must be rejected as well as an error: hex_decode_safe()
+	 * skips whitespace, so it can succeed yet write fewer than UUID_LEN
+	 * bytes, whereas the UUID grammar forbids whitespace.
+	 */
+	if (private_escontext.error_occurred || written != UUID_LEN)
+		string_to_uuid_scalar(source, uuid, escontext);
 }
 
 Datum

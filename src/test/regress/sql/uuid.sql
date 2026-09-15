@@ -178,5 +178,29 @@ SELECT '\x019a2f859ced7225b99d9c55044a2563'::bytea::uuid;
 SELECT '\x1234567890abcdef'::bytea::uuid; -- error
 SELECT v = v::bytea::uuid as matched FROM gen_random_uuid() v;
 
+-- Test the UUID shapes for which the parser uses the fast path.
+SELECT '5b35380a-7143-4912-9b55-f322699c6770'::uuid;
+SELECT '{5b35380a-7143-4912-9b55-f322699c6770}'::uuid;
+SELECT '5b35380a714349129b55f322699c6770'::uuid;
+SELECT '{5b35380a714349129b55f322699c6770}'::uuid;
+
+-- Test that the fast path correctly rejects invalid UUID strings.
+SELECT '5b35380a714349129b55f32  99c6770'::uuid;
+SELECT '5b35380a-7143-4912-9b55-f322699c67  '::uuid;
+SELECT '  35380a-7143-4912-9b55-f322699c6770'::uuid;
+SELECT 'AZ35380a-7143-4912-9b55-f322699c6770'::uuid;
+SELECT '{AZ35380a-7143-4912-9b55-f322699c6770}'::uuid;
+SELECT '{AZ35380a714349129b55f322699c6770}'::uuid;
+SELECT '{AZ35380a714349129b55f322699c67  }'::uuid;
+
+-- The parser only measures the input far enough to classify its shape.  If it
+-- stopped measuring at one of the accepted lengths, a longer string that
+-- merely starts with a valid UUID would look like that UUID and be accepted
+-- with the rest silently ignored, so check that trailing data is rejected.
+SELECT '5b35380a714349129b55f322699c6770TRAILING'::uuid;
+SELECT '{5b35380a714349129b55f322699c6770}TRAILING'::uuid;
+SELECT '5b35380a-7143-4912-9b55-f322699c6770TRAILING'::uuid;
+SELECT '{5b35380a-7143-4912-9b55-f322699c6770}TRAILING'::uuid;
+
 -- clean up
 DROP TABLE guid1, guid2, guid3 CASCADE;
