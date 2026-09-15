@@ -19,7 +19,8 @@ ISOLATION = basic \
 	    reindex_concurrently_deferred \
 	    syscache-update-pruned \
 	    wait_cleanup \
-	    heap_lock_update
+	    heap_lock_update \
+	    on_conflict_probe_window
 
 TAP_TESTS = 1
 
