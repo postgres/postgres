@@ -1884,7 +1884,7 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 	int32		max_chunk_size;
 	Oid8		toast_valueid;
 	Oid			toast_typid;
-	vartag_external expected_tag = VARTAG_ONDISK_OID;
+	vartag_external expected_tag;
 
 	toast_valueid = ta->va_valueid;
 	extsize = VARATT_EXTINFO_GET_EXTSIZE(ta->va_extinfo);
@@ -1904,6 +1904,7 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 		report_toast_corruption(ctx, ta,
 								psprintf("toast value " OID8_FORMAT " stored in toast table whose chunk_id has unexpected type %u",
 										 toast_valueid, toast_typid));
+		return;
 	}
 
 	if (ta->tag != expected_tag)
