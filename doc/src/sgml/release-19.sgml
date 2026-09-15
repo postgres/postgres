@@ -6,7 +6,7 @@
 
  <formalpara>
   <title>Release date:</title>
-  <para>2026-??-??, AS OF 2026-08-18</para>
+  <para>2026-??-??, AS OF 2026-09-14</para>
  </formalpara>
 
   <sect2 id="release-19-highlights">
@@ -686,8 +686,6 @@ Author: Amit Langote <amitlan@postgresql.org>
 Improve performance of foreign key constraint checks (Junwang Zhao, Amit Langote, Chao Li)
 <ulink url="&commit_baseurl;2da86c1ef">&sect;</ulink>
 <ulink url="&commit_baseurl;e484b0eea">&sect;</ulink>
-<ulink url="&commit_baseurl;b7b27eb41">&sect;</ulink>
-<ulink url="&commit_baseurl;5c54c3ed1">&sect;</ulink>
 </para>
 </listitem>
 
@@ -1365,6 +1363,8 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 2026-04-03 [f19c0ecca] Online enabling and disabling of data checksums
 Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 2026-04-08 [b364828f8] doc: Fix data_checksums data type
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+2026-08-18 [397f0fd06] Add data_page_checksum_version to pg_control_checkpoint
 -->
 
 <listitem>
@@ -1372,10 +1372,18 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 Allow <link linkend="functions-admin-checksum">online enabling</link> and disabling of <link linkend="checksums">data checksums</link> (Daniel Gustafsson, Magnus Hagander, Tomas Vondra)
 <ulink url="&commit_baseurl;f19c0ecca">&sect;</ulink>
 <ulink url="&commit_baseurl;b364828f8">&sect;</ulink>
+<ulink url="&commit_baseurl;397f0fd06">&sect;</ulink>
 </para>
 
 <para>
 Previously the checksum status could only be changed while the cluster was offline using <link linkend="app-pgchecksums"><application>pg_checksums</application></link>.
+</para>
+
+<para>
+Application <link
+linkend="app-pgcontroldata"><application>pg_controldata</application></link> and function <link linkend="functions-pg-control-checkpoint"><function>pg_control_checkpoint()</function></link> report
+the checksum status at the time of the most recent checkpoint, and function <link linkend="functions-pg-control-init"><function>pg_control_init()</function></link> reports
+checksum status at the time the cluster was initialized.
 </para>
 </listitem>
 
@@ -1837,21 +1845,6 @@ This is enabled via the <literal>CONCURRENTLY</literal> option.  Server variable
 </listitem>
 
 <!--
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-2025-12-14 [f2e4cc427] Implement ALTER TABLE ... MERGE PARTITIONS ... command
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-2025-12-14 [4b3d17362] Implement ALTER TABLE ... SPLIT PARTITION ... command
--->
-
-<listitem>
-<para>
-Allow partitions to be merged and split using <link linkend="sql-altertable"><command>ALTER TABLE ... MERGE/SPLIT PARTITIONS</command></link> (Dmitry Koval, Alexander Korotkov, Tender Wang, Richard Guo, Dagfinn Ilmari Mannsåker, Fujii Masao, Jian He)
-<ulink url="&commit_baseurl;f2e4cc427">&sect;</ulink>
-<ulink url="&commit_baseurl;4b3d17362">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
 Author: Nathan Bossart <nathan@postgresql.org>
 2026-03-19 [dd1398f13] Allow choosing specific grantors via GRANT/REVOKE ... GR
 -->
@@ -1913,6 +1906,18 @@ Author: Jeff Davis <jdavis@postgresql.org>
 Add <literal>CONNECTION</literal> clause to <link linkend="sql-createforeigndatawrapper"><command>CREATE FOREIGN DATA WRAPPER</command></link> to specify a function to be called for subscription connection parameters (Jeff Davis, Noriyoshi Shinoda)
 <ulink url="&commit_baseurl;8185bb534">&sect;</ulink>
 <ulink url="&commit_baseurl;90630ec42">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2026-08-23 [165aa5040] Allow an aggregate's planner support function
+-->
+
+<listitem>
+<para>
+Add <literal>SUPPORT</literal> clause to <link linkend="sql-createaggregate"><command>CREATE AGGREGATE</command></link> so extensions can specify support functions to optimize aggregate calls (Tom Lane)
+<ulink url="&commit_baseurl;165aa5040">&sect;</ulink>
 </para>
 </listitem>
 
