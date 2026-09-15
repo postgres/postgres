@@ -55,6 +55,7 @@
 #include "utils/sampling.h"
 #include "utils/selfuncs.h"
 #include "utils/timestamp.h"
+#include "utils/typcache.h"
 
 PG_MODULE_MAGIC_EXT(
 					.name = "postgres_fdw",
