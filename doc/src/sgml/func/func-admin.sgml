@@ -1536,7 +1536,9 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
     or understanding of usage results.  <literal>bigint</literal> results
     are measured in bytes.  If an OID that does
     not represent an existing object is passed to one of these
-    functions, <literal>NULL</literal> is returned.
+    functions, <literal>NULL</literal> is returned, except for
+    <function>pg_database_size</function> and
+    <function>pg_tablespace_size</function>, which raise an error.
    </para>
 
    <table id="functions-admin-dbsize">
@@ -1618,7 +1620,8 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         name or OID.  To use this function, you must
         have <literal>CONNECT</literal> privilege on the specified database
         (which is granted by default) or have privileges of
-        the <literal>pg_read_all_stats</literal> role.
+        the <literal>pg_read_all_stats</literal> role.  Throws an error if the
+        database does not exist.
        </para></entry>
       </row>
 
@@ -1751,7 +1754,8 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         specified name or OID. To use this function, you must
         have <literal>CREATE</literal> privilege on the specified tablespace
         or have privileges of the <literal>pg_read_all_stats</literal> role,
-        unless it is the default tablespace for the current database.
+        unless it is the default tablespace for the current database. Throws
+        an error if the tablespace does not exist.
        </para></entry>
       </row>
 
