@@ -229,6 +229,21 @@ $oldnode->append_conf('postgresql.conf', 'log_statement = none');
 # Set wal_level = replica to run the regression tests in the same
 # wal_level as when 'make check' runs.
 $oldnode->append_conf('postgresql.conf', 'wal_level = replica');
+
+# The OID counter is 8 bytes wide, check that it is carried across the
+# test.  Older versions may not support 8-byte OIDs, so skip in this case.
+my $big_next_oid = '4295067296';    # 2^32 + 100000
+if (!defined($ENV{oldinstall}))
+{
+	command_ok(
+		[
+			'pg_resetwal',
+			'--next-oid' => $big_next_oid,
+			$oldnode->data_dir
+		],
+		'set an 8-byte OID counter in the old instance');
+}
+
 $oldnode->start;
 
 my $result;
@@ -294,6 +309,19 @@ else
 			"--outputdir=$outputdir"
 		],
 		'regression tests in old instance');
+}
+
+# Checks for 8-byte OIDs
+if (!defined($ENV{olddump}))
+{
+	# Table with 8-byte OID values, past 2^32.  toasttest_oid8 is
+	# defined in strings.sql.
+	is( $oldnode->safe_psql(
+			'regression',
+			"SELECT max(pg_column_toast_chunk_id(f1)) > '$big_next_oid'::oid8 FROM toasttest_oid8"
+		),
+		't',
+		'oid8 chunk_ids are past 2^32');
 }
 
 # Initialize a new node for the upgrade.
@@ -587,20 +615,6 @@ SKIP:
 $oldnode->start;
 $oldnode->safe_psql('postgres', 'DROP DATABASE regression_invalid');
 $oldnode->stop;
-
-# The OID counter is 8 bytes wide, check that it is carried.  Older versions
-# may not support 8-byte OIDs, so skip in this case.
-my $big_next_oid = '4295067296';    # 2^32 + 100000
-if (!defined($ENV{oldinstall}))
-{
-	command_ok(
-		[
-			'pg_resetwal',
-			'--next-oid' => $big_next_oid,
-			$oldnode->data_dir
-		],
-		'set an 8-byte OID counter in the old instance');
-}
 
 # --check command works here, cleans up pg_upgrade_output.d.
 command_ok(
