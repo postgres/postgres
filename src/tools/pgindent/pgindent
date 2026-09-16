@@ -235,6 +235,10 @@ sub write_source
 	return;
 }
 
+# Text of each alignas(...) call, stashed by pre_indent() and restored
+# by post_indent().
+my @alignas_stash;
+
 sub pre_indent
 {
 	my $source = shift;
@@ -263,12 +267,28 @@ sub pre_indent
 	# Protect wrapping in CATALOG()
 	$source =~ s!^(CATALOG\(.*)$!/*$1*/!gm;
 
+	# pg_bsd_indent doesn't know about alignas(), so a non-first struct
+	# member declared with it gets misindented.  Disguise each call as
+	# a plain identifier; stash the original text rather than embed it,
+	# so nested parens or line breaks in the argument aren't a problem.
+	@alignas_stash = ();
+	$source =~ s!
+		\b alignas \s*
+		( \( (?: [^()]++ | (?1) )*+ \) )
+	!
+		push(@alignas_stash, "alignas" . $1);
+		"alignas_" . $#alignas_stash . "_";
+	!gex;
+
 	return $source;
 }
 
 sub post_indent
 {
 	my $source = shift;
+
+	# Restore alignas(...)
+	$source =~ s!\balignas_(\d+)_!$alignas_stash[$1]!g;
 
 	# Restore CATALOG lines
 	$source =~ s!^/\*(CATALOG\(.*)\*/$!$1!gm;
