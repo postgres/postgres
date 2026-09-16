@@ -705,6 +705,33 @@ CREATE UNIQUE INDEX ON test3ci (x);  -- error
 SELECT string_to_array('ABC,DEF,GHI' COLLATE case_insensitive, ',', 'abc');
 SELECT string_to_array('ABCDEFGHI' COLLATE case_insensitive, NULL, 'b');
 
+-- Unique-ifying a semijoin's RHS must use the join's collation.  test3cs
+-- holds both 'abc' and 'ABC', so test1ci's 'abc' must come out once.
+BEGIN;
+
+SET LOCAL enable_seqscan TO off;
+SET LOCAL enable_material TO off;
+SET LOCAL enable_hashjoin TO off;
+SET LOCAL enable_mergejoin TO off;
+SET LOCAL enable_hashagg TO off;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM test1ci
+WHERE x COLLATE case_insensitive IN (SELECT x FROM test3cs);
+SELECT count(*) FROM test1ci
+WHERE x COLLATE case_insensitive IN (SELECT x FROM test3cs);
+
+SET LOCAL enable_hashagg TO on;
+SET LOCAL enable_sort TO off;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM test1ci
+WHERE x COLLATE case_insensitive IN (SELECT x FROM test3cs);
+SELECT count(*) FROM test1ci
+WHERE x COLLATE case_insensitive IN (SELECT x FROM test3cs);
+
+ROLLBACK;
+
 -- bpchar
 CREATE TABLE test1bpci (x char(3) COLLATE case_insensitive);
 CREATE TABLE test2bpci (x char(3) COLLATE case_insensitive);
