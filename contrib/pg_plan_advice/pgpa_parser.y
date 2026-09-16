@@ -257,12 +257,18 @@ join_order_sublist:
 			$$ = palloc0_object(pgpa_advice_target);
 			$$->ttype = PGPA_TARGET_ORDERED_LIST;
 			$$->children = $2;
+			if ($2 == NIL)
+				pgpa_yyerror(result, parse_error_msg_p, yyscanner,
+							 "JOIN_ORDER targets must contain at least one relation identifier");
 		}
 	| '{' simple_target_list '}'
 		{
 			$$ = palloc0_object(pgpa_advice_target);
 			$$->ttype = PGPA_TARGET_UNORDERED_LIST;
 			$$->children = $2;
+			if ($2 == NIL)
+				pgpa_yyerror(result, parse_error_msg_p, yyscanner,
+							 "JOIN_ORDER targets must contain at least one relation identifier");
 		}
 	;
 

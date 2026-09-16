@@ -75,6 +75,10 @@ SET pg_plan_advice.advice = 'FOREIGN_JOIN(a)';
 SET pg_plan_advice.advice = 'FOREIGN_JOIN((a))';
 SET pg_plan_advice.advice = 'FOREIGN_JOIN(())';
 
+-- Join order requires at least one relation identifier.
+SET pg_plan_advice.advice = 'JOIN_ORDER(())';
+SET pg_plan_advice.advice = 'JOIN_ORDER(a ({}))';
+
 -- Tag keywords used as alias names work fine, because the 'identifier'
 -- nonterminal accepts all token types.
 SET pg_plan_advice.advice = 'SEQ_SCAN(hash_join)';
