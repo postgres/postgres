@@ -2517,9 +2517,18 @@ compute_semijoin_info(PlannerInfo *root, SpecialJoinInfo *sjinfo, List *clause)
 		if (!(all_btree || all_hash))
 			return;
 
+		/*
+		 * Ensure the RHS expression exposes the join's input collation (its
+		 * type should be OK already); see comments for
+		 * canonicalize_ec_expression.
+		 */
+		right_expr = (Node *) canonicalize_ec_expression((Expr *) copyObject(right_expr),
+														 exprType(right_expr),
+														 op->inputcollid);
+
 		/* so far so good, keep building lists */
 		semi_operators = lappend_oid(semi_operators, opno);
-		semi_rhs_exprs = lappend(semi_rhs_exprs, copyObject(right_expr));
+		semi_rhs_exprs = lappend(semi_rhs_exprs, right_expr);
 	}
 
 	/* Punt if we didn't find at least one column to unique-ify */
