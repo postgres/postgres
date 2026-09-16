@@ -230,7 +230,7 @@ be_tls_init(bool isServerStart)
 		{
 			ereport(isServerStart ? FATAL : LOG,
 					errcode(ERRCODE_CONFIG_FILE_ERROR),
-					errmsg("could not load \"%s\": %s", HostsFileName,
+					errmsg("could not load file \"%s\": %s", HostsFileName,
 						   err_msg ? err_msg : "unknown error"));
 			goto error;
 		}
@@ -366,7 +366,7 @@ be_tls_init(bool isServerStart)
 				errcode(ERRCODE_CONFIG_FILE_ERROR),
 				errmsg("no SSL configurations loaded"),
 		/*- translator: The two %s contain filenames */
-				errhint("If ssl_sni is enabled then add configuration to \"%s\", else \"%s\".",
+				errhint("If ssl_sni is enabled then add configuration to file \"%s\", else file \"%s\".",
 						HostsFileName, "postgresql.conf"));
 		goto error;
 	}
