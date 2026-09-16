@@ -760,35 +760,7 @@ InitPostgres(const char *in_dbname, Oid dboid,
 	 */
 	SharedInvalBackendInit(false);
 
-	/*
-	 * Prevent consuming interrupts between setting ProcSignalInit and setting
-	 * the initial local data checksum value.  If a barrier is emitted, and
-	 * absorbed, before local cached state is initialized the state transition
-	 * can be invalid.
-	 */
-	HOLD_INTERRUPTS();
-
 	ProcSignalInit(MyCancelKey, MyCancelKeyLength);
-
-	/*
-	 * Initialize a local cache of the data_checksum_version, to be updated by
-	 * the procsignal-based barriers.
-	 *
-	 * This intentionally happens after initializing the procsignal, otherwise
-	 * we might miss a state change. This means we can get a barrier for the
-	 * state we've just initialized.
-	 *
-	 * The postmaster (which is what gets forked into the new child process)
-	 * does not handle barriers, therefore it may not have the current value
-	 * of LocalDataChecksumState value (it'll have the value read from the
-	 * control file, which may be arbitrarily old).
-	 *
-	 * NB: Even if the postmaster handled barriers, the value might still be
-	 * stale, as it might have changed after this process forked.
-	 */
-	InitLocalDataChecksumState();
-
-	RESUME_INTERRUPTS();
 
 	/*
 	 * Also set up timeout handlers needed for backend operation.  We need
@@ -928,7 +900,7 @@ InitPostgres(const char *in_dbname, Oid dboid,
 					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
 							 username != NULL ? username : "postgres")));
 	}
-	else if (AmBackgroundWorkerProcess() || AmDataChecksumsWorkerProcess())
+	else if (AmBackgroundWorkerProcess())
 	{
 		if (username == NULL && !OidIsValid(useroid))
 		{

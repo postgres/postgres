@@ -560,23 +560,6 @@ CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid, Oid src_tsid,
 	HeapTuple	tuple;
 
 	/*
-	 * The strategy check in createdb() runs before our transaction has an XID
-	 * and before the pg_database row exists, so the datachecksumsworker
-	 * launcher can start in that window and miss both the new database and
-	 * our transaction, leaving the raw-copied files without checksums.
-	 */
-	if (DataChecksumsInProgressOn())
-		ereport(ERROR,
-				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				errmsg("create database strategy \"%s\" not allowed when data checksums are being enabled",
-					   "file_copy"));
-
-	/*
-	 * The XID is assigned by now, so a datachecksumsworker launcher starting
-	 * after this point will wait for us and find the new database.
-	 */
-
-	/*
 	 * Force a checkpoint before starting the copy. This will force all dirty
 	 * buffers, including those of unlogged tables, out to disk, to ensure
 	 * source database is up-to-date on disk for the copy.
@@ -1062,22 +1045,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		if (pg_strcasecmp(strategy, "wal_log") == 0)
 			dbstrategy = CREATEDB_WAL_LOG;
 		else if (pg_strcasecmp(strategy, "file_copy") == 0)
-		{
-			/*
-			 * If data checksums are being enabled we must not use file_copy
-			 * since it might copy source database which hasn't yet had data
-			 * checksums enabled, and the destination database will be skipped
-			 * as it's expected to have data checksums enabled.  Once we have
-			 * an XID assigned this needs to be rechecked, but if can error
-			 * out already we can save a lot of work.
-			 */
-			if (DataChecksumsInProgressOn())
-				ereport(ERROR,
-						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("create database strategy \"%s\" not allowed when data checksums are being enabled",
-							   strategy));
 			dbstrategy = CREATEDB_FILE_COPY;
-		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1882,8 +1850,6 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	datform->datconnlimit = DATCONNLIMIT_INVALID_DB;
 	systable_inplace_update_finish(inplace_state, tup);
 	XLogFlush(XactLastRecEnd);
-
-	INJECTION_POINT("dropdb-after-invalid-marker", NULL);
 
 	/*
 	 * Also delete the tuple - transactionally. If this transaction commits,

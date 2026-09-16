@@ -7498,7 +7498,6 @@ local0.*    /var/log/postgresql
          <member><literal>bgworker</literal></member>
          <member><literal>bgwriter</literal></member>
          <member><literal>checkpointer</literal></member>
-         <member><literal>checksums</literal></member>
          <member><literal>ioworker</literal></member>
          <member><literal>postmaster</literal></member>
          <member><literal>slotsyncworker</literal></member>
@@ -12305,7 +12304,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
      </varlistentry>
 
      <varlistentry id="guc-data-checksums" xreflabel="data_checksums">
-      <term><varname>data_checksums</varname> (<type>enum</type>)
+      <term><varname>data_checksums</varname> (<type>bool</type>)
       <indexterm>
        <primary><varname>data_checksums</varname> configuration parameter</primary>
       </indexterm>
@@ -12313,8 +12312,6 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
       <listitem>
        <para>
         Reports the state of data checksums for this cluster.
-        Possible values are <literal>on</literal>, <literal>off</literal>,
-        <literal>inprogress-on</literal> and <literal>inprogress-off</literal>.
         See <xref linkend="checksums"/> for more information.
        </para>
       </listitem>

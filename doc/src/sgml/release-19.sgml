@@ -49,13 +49,6 @@
 
     <listitem>
      <para>
-      Data checksums can now be
-      <link linkend="checksums-online-enable-disable">enabled or disabled while the database server is running</link>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       A new <link linkend="sql-wait"><command>WAIT</command></link>
       command that waits until a standby has replayed changes up to a chosen
       point, thereby supporting <quote>read-your-writes</quote> query patterns
@@ -1353,34 +1346,6 @@ The previous warning was 40 million.  Warnings are issued to clients and in the 
      <title>Server Configuration</title>
 
      <itemizedlist>
-<!--
-Author: Daniel Gustafsson <dgustafsson@postgresql.org>
-2026-04-03 [f19c0ecca] Online enabling and disabling of data checksums
-Author: Daniel Gustafsson <dgustafsson@postgresql.org>
-2026-04-08 [b364828f8] doc: Fix data_checksums data type
-Author: Daniel Gustafsson <dgustafsson@postgresql.org>
-2026-08-18 [397f0fd06] Add data_page_checksum_version to pg_control_checkpoint
--->
-
-<listitem>
-<para>
-Allow <link linkend="functions-admin-checksum">online enabling</link> and disabling of <link linkend="checksums">data checksums</link> (Daniel Gustafsson, Magnus Hagander, Tomas Vondra)
-<ulink url="&commit_baseurl;f19c0ecca">&sect;</ulink>
-<ulink url="&commit_baseurl;b364828f8">&sect;</ulink>
-<ulink url="&commit_baseurl;397f0fd06">&sect;</ulink>
-</para>
-
-<para>
-Previously the checksum status could only be changed while the cluster was offline using <link linkend="app-pgchecksums"><application>pg_checksums</application></link>.
-</para>
-
-<para>
-Application <link
-linkend="app-pgcontroldata"><application>pg_controldata</application></link> and function <link linkend="functions-pg-control-checkpoint"><function>pg_control_checkpoint()</function></link> report
-the checksum status at the time of the most recent checkpoint, and function <link linkend="functions-pg-control-init"><function>pg_control_init()</function></link> reports
-checksum status at the time the cluster was initialized.
-</para>
-</listitem>
 
 <!--
 Author: Nathan Bossart <nathan@postgresql.org>

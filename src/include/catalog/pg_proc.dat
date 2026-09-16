@@ -12359,18 +12359,6 @@
   proname => 'jsonb_subscript_handler', prorettype => 'internal',
   proargtypes => 'internal', prosrc => 'jsonb_subscript_handler' },
 
-# data checksum management functions
-{ oid => '6507', descr => 'disable data checksums',
-  proname => 'pg_disable_data_checksums', provolatile => 'v',
-  proparallel => 'r', prorettype => 'void', proargtypes => '',
-  prosrc => 'disable_data_checksums', proacl => '{POSTGRES=X}' },
-{ oid => '6506', descr => 'enable data checksums',
-  proname => 'pg_enable_data_checksums', provolatile => 'v', proparallel => 'r',
-  prorettype => 'void', proargtypes => 'int4 int4',
-  proallargtypes => '{int4,int4}', proargmodes => '{i,i}',
-  proargnames => '{cost_delay,cost_limit}', proargdefaults => '{0,100}',
-  prosrc => 'enable_data_checksums', proacl => '{POSTGRES=X}' },
-
 # collation management functions
 { oid => '3445', descr => 'import collations from operating system',
   proname => 'pg_import_system_collations', procost => '100',

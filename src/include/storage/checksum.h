@@ -16,19 +16,14 @@
 #include "storage/block.h"
 
 /*
- * Checksum state 0 is used for when data checksums are disabled (OFF).
- * PG_DATA_CHECKSUM_INPROGRESS_{ON|OFF} defines that data checksums are either
- * currently being enabled or disabled, and PG_DATA_CHECKSUM_VERSION defines
- * that data checksums are enabled.  The ChecksumStateType is stored in
- * pg_control so changing requires a catversion bump, and the values cannot
- * be reordered.  New states must be added at the end.
+ * Checksum state 0 is used for when data checksums are disabled (OFF), and
+ * PG_DATA_CHECKSUM_VERSION defines that data checksums are enabled. New
+ * states must be added at the end.
  */
 typedef enum ChecksumStateType
 {
 	PG_DATA_CHECKSUM_OFF = 0,
 	PG_DATA_CHECKSUM_VERSION = 1,
-	PG_DATA_CHECKSUM_INPROGRESS_OFF = 2,
-	PG_DATA_CHECKSUM_INPROGRESS_ON = 3,
 } ChecksumStateType;
 
 /*

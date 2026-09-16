@@ -18,7 +18,6 @@ OBJS = \
 	bgworker.o \
 	bgwriter.o \
 	checkpointer.o \
-	datachecksum_state.o \
 	fork_process.o \
 	interrupt.o \
 	launch_backend.o \

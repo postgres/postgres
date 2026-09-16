@@ -3,7 +3,6 @@
 # see README in this directory about image handling
 
 ALL_IMAGES = \
-	datachecksums.svg \
 	genetic-algorithm.svg \
 	gin.svg \
 	pagelayout.svg \

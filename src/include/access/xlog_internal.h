@@ -288,12 +288,6 @@ typedef struct xl_restore_point
 	char		rp_name[MAXFNAMELEN];
 } xl_restore_point;
 
-/* Information logged when data checksum level is changed */
-typedef struct xl_checksum_state
-{
-	ChecksumStateType new_checksum_state;
-} xl_checksum_state;
-
 /* Overwrite of prior contrecord */
 typedef struct xl_overwrite_contrecord
 {

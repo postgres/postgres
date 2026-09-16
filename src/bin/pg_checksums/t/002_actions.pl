@@ -216,6 +216,11 @@ $node->start;
 command_fails([ 'pg_checksums', '--check', '--pgdata' => $pgdata ],
 	"fails with online cluster");
 
+# Make sure pg_control_init reports the initial state as disabled
+my $result = $node->safe_psql('postgres',
+	'SELECT data_page_checksum_version FROM pg_control_init();');
+is($result, '0', 'ensure pg_control_init reports disabled state');
+
 # Check corruption of table on default tablespace.
 check_relation_corruption($node, 'corrupt1', 'pg_default');
 

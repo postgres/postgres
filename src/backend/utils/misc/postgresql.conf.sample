@@ -557,11 +557,11 @@
                                         # archiver              autovacuum
                                         # backend               bgworker
                                         # bgwriter              checkpointer
-                                        # checksums             ioworker
-                                        # postmaster            slotsyncworker
-                                        # startup               syslogger
-                                        # walreceiver           walsummarizer
-                                        # walwriter             walsender
+                                        # ioworker              postmaster
+                                        # slotsyncworker        startup
+                                        # syslogger             walreceiver
+                                        # walsummarizer         walwriter
+                                        # walsender
                                         #
                                         # Level values in order of decreasing
                                         # detail:

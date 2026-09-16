@@ -15,7 +15,6 @@
 #include "access/xlog_internal.h"
 #include "common/string.h"
 #include "pg_upgrade.h"
-#include "storage/checksum.h"
 
 
 /*
@@ -736,14 +735,6 @@ check_control_data(ControlData *oldctrl,
 	 * float8_pass_by_value does not need to match, but is used in
 	 * check_for_isn_and_int8_passing_mismatch().
 	 */
-
-	/*
-	 * If data checksums are in any in-progress state then disallow the
-	 * upgrade. The user should either let the process finish, or turn off
-	 * data checksums, before retrying.
-	 */
-	if (oldctrl->data_checksum_version > PG_DATA_CHECKSUM_VERSION)
-		pg_fatal("data checksums are being enabled in the old cluster");
 
 	/*
 	 * We might eventually allow upgrades from checksum to no-checksum

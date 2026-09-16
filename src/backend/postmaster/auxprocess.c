@@ -68,35 +68,7 @@ AuxiliaryProcessMainCommon(void)
 
 	BaseInit();
 
-	/*
-	 * Prevent consuming interrupts between setting ProcSignalInit and setting
-	 * the initial local data checksum value.  If a barrier is emitted, and
-	 * absorbed, before local cached state is initialized the state transition
-	 * can be invalid.
-	 */
-	HOLD_INTERRUPTS();
-
 	ProcSignalInit(NULL, 0);
-
-	/*
-	 * Initialize a local cache of the data_checksum_version, to be updated by
-	 * the procsignal-based barriers.
-	 *
-	 * This intentionally happens after initializing the procsignal, otherwise
-	 * we might miss a state change. This means we can get a barrier for the
-	 * state we've just initialized - but it can happen only once.
-	 *
-	 * The postmaster (which is what gets forked into the new child process)
-	 * does not handle barriers, therefore it may not have the current value
-	 * of LocalDataChecksumState value (it'll have the value read from the
-	 * control file, which may be arbitrarily old).
-	 *
-	 * NB: Even if the postmaster handled barriers, the value might still be
-	 * stale, as it might have changed after this process forked.
-	 */
-	InitLocalDataChecksumState();
-
-	RESUME_INTERRUPTS();
 
 	/*
 	 * Initialize the process-local logical info WAL logging state.

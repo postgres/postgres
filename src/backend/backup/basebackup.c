@@ -45,7 +45,6 @@
 #include "storage/reinit.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
-#include "utils/injection_point.h"
 #include "utils/ps_status.h"
 #include "utils/relcache.h"
 #include "utils/resowner.h"
@@ -108,7 +107,6 @@ static off_t read_file_data_into_buffer(bbsink *sink,
 										int *checksum_failures);
 static void push_to_sink(bbsink *sink, pg_checksum_context *checksum_ctx,
 						 size_t *bytes_done, void *data, size_t length);
-static bool backup_checksums_verifiable(XLogRecPtr start_lsn);
 static bool verify_page_checksum(Page page, XLogRecPtr start_lsn,
 								 BlockNumber blkno,
 								 uint16 *expected_checksum);
@@ -326,12 +324,6 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 
 		/* notify basebackup sink about start of backup */
 		bbsink_begin_backup(sink, &state, SINK_BUFFER_LENGTH);
-
-		/*
-		 * Allow tests to hold the backup after the starting checkpoint but
-		 * before any file data is sent.
-		 */
-		INJECTION_POINT("basebackup-before-send-files", NULL);
 
 		/* Send off our tablespaces one by one */
 		foreach(lc, state.tablespaces)
@@ -1616,14 +1608,12 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 	Assert((sink->bbs_buffer_length % BLCKSZ) == 0);
 
 	/*
-	 * Verify checksums unless the client requested otherwise, but only for
-	 * relation files, and only while checksums have been continuously enabled
-	 * since the checkpoint this backup started from.  Checksums can still be
-	 * disabled while the backup runs, thus we check at each point where we
-	 * could be validating a checksum.
+	 * If we weren't told not to verify checksums, and if checksums are
+	 * enabled for this cluster, and if this is a relation file, then verify
+	 * the checksum.
 	 */
-	if (!noverify_checksums && RelFileNumberIsValid(relfilenumber) &&
-		backup_checksums_verifiable(sink->bbs_state->startptr))
+	if (!noverify_checksums && DataChecksumsEnabled() &&
+		RelFileNumberIsValid(relfilenumber))
 		verify_checksum = true;
 
 	/*
@@ -1756,9 +1746,7 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
 		 * If the amount of data we were able to read was not a multiple of
 		 * BLCKSZ, we cannot verify checksums, which are block-level.
 		 */
-		if (verify_checksum &&
-			backup_checksums_verifiable(sink->bbs_state->startptr) &&
-			(cnt % BLCKSZ != 0))
+		if (verify_checksum && (cnt % BLCKSZ != 0))
 		{
 			ereport(WARNING,
 					(errmsg("could not verify checksum in file \"%s\", block "
@@ -1853,10 +1841,9 @@ sendFile(bbsink *sink, const char *readfilename, const char *tarfilename,
  * 'blkno' is the block number of the first page in the bbsink's buffer
  * relative to the start of the relation.
  *
- * 'verify_checksum' determines if the user has asked to verify checksums, but
- * since data checksums can be disabled, or become disabled, we need to check
- * state before verifying individual pages.  If we do this, we'll update
- * *checksum_failures and issue warnings as appropriate.
+ * 'verify_checksum' indicates whether we should try to verify checksums
+ * for the blocks we read. If we do this, we'll update *checksum_failures
+ * and issue warnings as appropriate.
  */
 static off_t
 read_file_data_into_buffer(bbsink *sink, const char *readfilename, int fd,
@@ -1882,13 +1869,6 @@ read_file_data_into_buffer(bbsink *sink, const char *readfilename, int fd,
 		int			reread_cnt;
 		uint16		expected_checksum;
 
-		/*
-		 * The data checksum state can change at any point, so we need to
-		 * re-check before each page.
-		 */
-		if (!backup_checksums_verifiable(sink->bbs_state->startptr))
-			return cnt;
-
 		page = sink->bbs_buffer + BLCKSZ * i;
 
 		/* If the page is OK, go on to the next one. */
@@ -1911,12 +1891,7 @@ read_file_data_into_buffer(bbsink *sink, const char *readfilename, int fd,
 		 * allows us to wait until we can be certain that no write to the
 		 * block is in progress. Since we don't have any such thing right now,
 		 * we just do this and hope for the best.
-		 *
-		 * The data checksum state may also have changed concurrently so check
-		 * again.
 		 */
-		if (!backup_checksums_verifiable(sink->bbs_state->startptr))
-			return cnt;
 		reread_cnt =
 			basebackup_read_file(fd, sink->bbs_buffer + BLCKSZ * i,
 								 BLCKSZ, offset + BLCKSZ * i,
@@ -2007,27 +1982,6 @@ push_to_sink(bbsink *sink, pg_checksum_context *checksum_ctx,
 }
 
 /*
- * Check whether data checksums can be verified for a backup started at
- * start_lsn.
- *
- * Checksums are verified only while they have been continuously enabled
- * since the checkpoint the backup started from: the state must be "on" and
- * the last state change must predate the backup start.  Such a checkpoint
- * guarantees that every page flushed before it has a checksum written.  Any
- * later state change ends verification for the rest of the backup: pages
- * written while checksums were off can lack checksums yet keep LSNs older
- * than the backup start, and re-enabling completes before the rewritten
- * pages are flushed, so observing the "on" state again is not enough to
- * resume.
- */
-static bool
-backup_checksums_verifiable(XLogRecPtr start_lsn)
-{
-	return DataChecksumsNeedVerify() &&
-		GetLastChecksumChangeRecPtr() <= start_lsn;
-}
-
-/*
  * Try to verify the checksum for the provided page, if it seems appropriate
  * to do so.
  *
@@ -2052,34 +2006,8 @@ verify_page_checksum(Page page, XLogRecPtr start_lsn, BlockNumber blkno,
 	if (PageIsNew(page) || PageGetLSN(page) >= start_lsn)
 		return true;
 
-	if (!backup_checksums_verifiable(start_lsn))
-		return true;
-
 	/* Perform the actual checksum calculation. */
 	checksum = pg_checksum_page(page, blkno);
-
-#ifdef USE_INJECTION_POINTS
-	{
-		/*
-		 * Make it possible to test checksum verification failure without
-		 * having to destroy data on disk.  There is cap on how many times we
-		 * want to cause verification failure to make tests more interesting
-		 * and less log intensive.  This makes it easy to test pg_basebackup
-		 * with the command_checks_all test function.
-		 */
-		static int	hit = 0;
-
-		if (IS_INJECTION_POINT_ATTACHED("basebackup-fail-checksum-verification"))
-		{
-			if (hit++ < 5)
-			{
-				checksum = 0;
-				INJECTION_POINT_CACHED("basebackup-fail-checksum-verification",
-									   NULL);
-			}
-		}
-	}
-#endif
 
 	/* See whether it matches the value from the page. */
 	phdr = (PageHeader) page;
