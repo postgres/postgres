@@ -2642,8 +2642,16 @@ MultiXactMemberFreezeThreshold(void)
 static void
 PerformMembersTruncation(MultiXactOffset newOldestOffset)
 {
+	/*
+	 * We step back one entry to avoid passing a cutoff page that hasn't been
+	 * created yet in the rare case that oldestOffset would be the first item
+	 * on a page and oldestOffset == nextOffset.  In that case, if we didn't
+	 * subtract one, we'd trigger SimpleLruTruncate's wraparound detection.
+	 */
+	if (newOldestOffset <= 1)
+		return;
 	SimpleLruTruncate(MultiXactMemberCtl,
-					  MXOffsetToMemberPage(newOldestOffset));
+					  MXOffsetToMemberPage(newOldestOffset - 1));
 }
 
 /*
@@ -2653,11 +2661,8 @@ static void
 PerformOffsetsTruncation(MultiXactId newOldestMulti)
 {
 	/*
-	 * We step back one multixact to avoid passing a cutoff page that hasn't
-	 * been created yet in the rare case that oldestMulti would be the first
-	 * item on a page and oldestMulti == nextMulti.  In that case, if we
-	 * didn't subtract one, we'd trigger SimpleLruTruncate's wraparound
-	 * detection.
+	 * Like in PerformMembersTruncation(), step back one entry to avoid
+	 * passing a cutoff page that hasn't been created yet.
 	 */
 	SimpleLruTruncate(MultiXactOffsetCtl,
 					  MultiXactIdToOffsetPage(PreviousMultiXactId(newOldestMulti)));
