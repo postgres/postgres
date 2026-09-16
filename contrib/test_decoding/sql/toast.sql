@@ -325,14 +325,19 @@ commit;
 SELECT substr(data, 1, 200) FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 
 -- Test decoding of TOAST values with oid8
+-- Use pglz to ensure consistent results.
+SET default_toast_compression = 'pglz';
 CREATE TABLE toasted_oid8 (id serial primary key, data text)
   WITH (toast_value_type = 'oid8');
 -- uncompressed external toast data
 ALTER TABLE toasted_oid8 ALTER COLUMN data SET STORAGE EXTERNAL;
-INSERT INTO toasted_oid8(data) VALUES (repeat('1234567890', 20000));
+INSERT INTO toasted_oid8(data) SELECT repeat(string_agg(to_char(g.i, 'FM0000'), ''), 50) FROM generate_series(1, 500) g(i);
 -- compressed external toast data
 ALTER TABLE toasted_oid8 ALTER COLUMN data SET STORAGE EXTENDED;
-INSERT INTO toasted_oid8(data) VALUES (repeat('1234567890', 20000));
+INSERT INTO toasted_oid8(data) SELECT repeat(string_agg(to_char(g.i, 'FM0000'), ''), 50) FROM generate_series(1, 500) g(i);
+SELECT id, pg_column_compression(data) AS compression,
+  pg_column_toast_chunk_id(data) IS NOT NULL AS has_chunk
+  FROM toasted_oid8 ORDER BY id;
 -- update without changing the toasted column, reported as unchanged
 UPDATE toasted_oid8 SET id = id + 10 WHERE id = 1;
 -- update changing the toasted column
@@ -343,5 +348,6 @@ SELECT regexp_replace(data, '^(.{60}).*(.{20})$', '\1..\2') AS shortened,
        length(data) AS len
   FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
 DROP TABLE toasted_oid8;
+RESET default_toast_compression;
 
 SELECT pg_drop_replication_slot('regression_slot');

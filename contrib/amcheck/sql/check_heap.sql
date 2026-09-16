@@ -113,22 +113,26 @@ SELECT * FROM verify_heapam('test_partition',
 							endblock := NULL);
 
 -- Check TOAST relations of both chunk_id: oid and oid8
+-- Use pglz to ensure consistent results.
+SET default_toast_compression = 'pglz';
 CREATE TABLE test_toast_oid (a int, b text) WITH (toast_value_type = 'oid');
 CREATE TABLE test_toast_oid8 (a int, b text) WITH (toast_value_type = 'oid8');
 -- Uncompressed out-of-line values
 ALTER TABLE test_toast_oid ALTER COLUMN b SET STORAGE EXTERNAL;
 ALTER TABLE test_toast_oid8 ALTER COLUMN b SET STORAGE EXTERNAL;
-INSERT INTO test_toast_oid (a, b)
-	(SELECT gs, repeat('xyzzy', 20000) FROM generate_series(1,5) gs);
-INSERT INTO test_toast_oid8 (a, b)
-	(SELECT gs, repeat('xyzzy', 20000) FROM generate_series(1,5) gs);
+INSERT INTO test_toast_oid SELECT 1, repeat(string_agg(to_char(g.i, 'FM0000'), ''), 50) FROM generate_series(1, 500) g(i);
+INSERT INTO test_toast_oid8 SELECT 1, repeat(string_agg(to_char(g.i, 'FM0000'), ''), 50) FROM generate_series(1, 500) g(i);
 -- Compressed out-of-line values.
 ALTER TABLE test_toast_oid ALTER COLUMN b SET STORAGE EXTENDED;
 ALTER TABLE test_toast_oid8 ALTER COLUMN b SET STORAGE EXTENDED;
-INSERT INTO test_toast_oid (a, b)
-	(SELECT gs, repeat('xyzzy', 20000) FROM generate_series(6,10) gs);
-INSERT INTO test_toast_oid8 (a, b)
-	(SELECT gs, repeat('xyzzy', 20000) FROM generate_series(6,10) gs);
+INSERT INTO test_toast_oid SELECT 2, repeat(string_agg(to_char(g.i, 'FM0000'), ''), 50) FROM generate_series(1, 500) g(i);
+INSERT INTO test_toast_oid8 SELECT 2, repeat(string_agg(to_char(g.i, 'FM0000'), ''), 50) FROM generate_series(1, 500) g(i);
+SELECT a, pg_column_compression(b) AS compression,
+       pg_column_toast_chunk_id(b) IS NOT NULL AS has_chunk
+   FROM test_toast_oid ORDER BY a;
+SELECT a, pg_column_compression(b) AS compression,
+       pg_column_toast_chunk_id(b) IS NOT NULL AS has_chunk
+   FROM test_toast_oid8 ORDER BY a;
 SELECT c.relname, a.atttypid::regtype AS chunk_id_type
 	FROM pg_class AS c, pg_attribute AS a
 	WHERE c.relname IN ('test_toast_oid', 'test_toast_oid8') AND
@@ -136,6 +140,7 @@ SELECT c.relname, a.atttypid::regtype AS chunk_id_type
 	ORDER BY c.relname COLLATE "C";
 SELECT * FROM verify_heapam('test_toast_oid', check_toast := true);
 SELECT * FROM verify_heapam('test_toast_oid8', check_toast := true);
+RESET default_toast_compression;
 
 -- Check that indexes are rejected
 CREATE INDEX test_index ON test_partition (a);
