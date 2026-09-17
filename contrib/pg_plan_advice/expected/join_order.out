@@ -181,7 +181,210 @@ SELECT * FROM jo_fact f
                      ->  Seq Scan on jo_dim2 d2
                            Filter: (val2 = 1)
  Supplied Plan Advice:
-   JOIN_ORDER(f {d1 d2}) /* matched, failed */
+   JOIN_ORDER(f {d1 d2}) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f (d1 d2))
+   NESTED_LOOP_MATERIALIZE(d2)
+   HASH_JOIN((d1 d2))
+   SEQ_SCAN(f d1 d2)
+   NO_GATHER(f d1 d2)
+(18 rows)
+
+COMMIT;
+-- Test cases for initial sublists, which require special handling in the code.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'join_order((f d1) d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+                QUERY PLAN                
+------------------------------------------
+ Hash Join
+   Hash Cond: (f.dim2_id = d2.id)
+   ->  Hash Join
+         Hash Cond: (f.dim1_id = d1.id)
+         ->  Seq Scan on jo_fact f
+         ->  Hash
+               ->  Seq Scan on jo_dim1 d1
+                     Filter: (val1 = 1)
+   ->  Hash
+         ->  Seq Scan on jo_dim2 d2
+               Filter: (val2 = 1)
+ Supplied Plan Advice:
+   JOIN_ORDER((f d1) d2) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d1 d2)
+   HASH_JOIN(d1 d2)
+   SEQ_SCAN(f d1 d2)
+   NO_GATHER(f d1 d2)
+(18 rows)
+
+SET LOCAL pg_plan_advice.advice = 'join_order({f d1} d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+                QUERY PLAN                
+------------------------------------------
+ Hash Join
+   Hash Cond: (f.dim2_id = d2.id)
+   ->  Hash Join
+         Hash Cond: (f.dim1_id = d1.id)
+         ->  Seq Scan on jo_fact f
+         ->  Hash
+               ->  Seq Scan on jo_dim1 d1
+                     Filter: (val1 = 1)
+   ->  Hash
+         ->  Seq Scan on jo_dim2 d2
+               Filter: (val2 = 1)
+ Supplied Plan Advice:
+   JOIN_ORDER({f d1} d2) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d1 d2)
+   HASH_JOIN(d1 d2)
+   SEQ_SCAN(f d1 d2)
+   NO_GATHER(f d1 d2)
+(18 rows)
+
+COMMIT;
+-- Test cases for single-element groupings. The extra grouping levels should
+-- be ignored.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'join_order((f) d1 d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+                QUERY PLAN                
+------------------------------------------
+ Hash Join
+   Hash Cond: (f.dim2_id = d2.id)
+   ->  Hash Join
+         Hash Cond: (f.dim1_id = d1.id)
+         ->  Seq Scan on jo_fact f
+         ->  Hash
+               ->  Seq Scan on jo_dim1 d1
+                     Filter: (val1 = 1)
+   ->  Hash
+         ->  Seq Scan on jo_dim2 d2
+               Filter: (val2 = 1)
+ Supplied Plan Advice:
+   JOIN_ORDER((f) d1 d2) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d1 d2)
+   HASH_JOIN(d1 d2)
+   SEQ_SCAN(f d1 d2)
+   NO_GATHER(f d1 d2)
+(18 rows)
+
+SET LOCAL pg_plan_advice.advice = 'join_order({f} d1 d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+                QUERY PLAN                
+------------------------------------------
+ Hash Join
+   Hash Cond: (f.dim2_id = d2.id)
+   ->  Hash Join
+         Hash Cond: (f.dim1_id = d1.id)
+         ->  Seq Scan on jo_fact f
+         ->  Hash
+               ->  Seq Scan on jo_dim1 d1
+                     Filter: (val1 = 1)
+   ->  Hash
+         ->  Seq Scan on jo_dim2 d2
+               Filter: (val2 = 1)
+ Supplied Plan Advice:
+   JOIN_ORDER({f} d1 d2) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d1 d2)
+   HASH_JOIN(d1 d2)
+   SEQ_SCAN(f d1 d2)
+   NO_GATHER(f d1 d2)
+(18 rows)
+
+SET LOCAL pg_plan_advice.advice = 'join_order(f (d1) d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+                QUERY PLAN                
+------------------------------------------
+ Hash Join
+   Hash Cond: (f.dim2_id = d2.id)
+   ->  Hash Join
+         Hash Cond: (f.dim1_id = d1.id)
+         ->  Seq Scan on jo_fact f
+         ->  Hash
+               ->  Seq Scan on jo_dim1 d1
+                     Filter: (val1 = 1)
+   ->  Hash
+         ->  Seq Scan on jo_dim2 d2
+               Filter: (val2 = 1)
+ Supplied Plan Advice:
+   JOIN_ORDER(f (d1) d2) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d1 d2)
+   HASH_JOIN(d1 d2)
+   SEQ_SCAN(f d1 d2)
+   NO_GATHER(f d1 d2)
+(18 rows)
+
+SET LOCAL pg_plan_advice.advice = 'join_order(f {d1} d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+                QUERY PLAN                
+------------------------------------------
+ Hash Join
+   Hash Cond: (f.dim2_id = d2.id)
+   ->  Hash Join
+         Hash Cond: (f.dim1_id = d1.id)
+         ->  Seq Scan on jo_fact f
+         ->  Hash
+               ->  Seq Scan on jo_dim1 d1
+                     Filter: (val1 = 1)
+   ->  Hash
+         ->  Seq Scan on jo_dim2 d2
+               Filter: (val2 = 1)
+ Supplied Plan Advice:
+   JOIN_ORDER(f {d1} d2) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(f d1 d2)
+   HASH_JOIN(d1 d2)
+   SEQ_SCAN(f d1 d2)
+   NO_GATHER(f d1 d2)
+(18 rows)
+
+SET LOCAL pg_plan_advice.advice = 'join_order(f ({d1 d2}))';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Hash Join
+   Hash Cond: ((f.dim1_id = d1.id) AND (f.dim2_id = d2.id))
+   ->  Seq Scan on jo_fact f
+   ->  Hash
+         ->  Nested Loop
+               ->  Seq Scan on jo_dim1 d1
+                     Filter: (val1 = 1)
+               ->  Materialize
+                     ->  Seq Scan on jo_dim2 d2
+                           Filter: (val2 = 1)
+ Supplied Plan Advice:
+   JOIN_ORDER(f ({d1 d2})) /* matched */
  Generated Plan Advice:
    JOIN_ORDER(f (d1 d2))
    NESTED_LOOP_MATERIALIZE(d2)

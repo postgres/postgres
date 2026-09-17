@@ -274,6 +274,64 @@ SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
 (51 rows)
 
 COMMIT;
+-- Test use of join order for the partitionwise join case.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 pt2)) JOIN_ORDER({pt1 pt2} pt3)';
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
+   AND val1 = 1 AND val2 = 1 AND val3 = 1;
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Hash Join
+   Hash Cond: (pt1.id = pt3.id)
+   ->  Append
+         ->  Hash Join
+               Hash Cond: (pt1_1.id = pt2_1.id)
+               ->  Seq Scan on pt1a pt1_1
+                     Filter: (val1 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt2a pt2_1
+                           Filter: (val2 = 1)
+         ->  Hash Join
+               Hash Cond: (pt1_2.id = pt2_2.id)
+               ->  Seq Scan on pt1b pt1_2
+                     Filter: (val1 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt2b pt2_2
+                           Filter: (val2 = 1)
+         ->  Hash Join
+               Hash Cond: (pt1_3.id = pt2_3.id)
+               ->  Seq Scan on pt1c pt1_3
+                     Filter: (val1 = 1)
+               ->  Hash
+                     ->  Seq Scan on pt2c pt2_3
+                           Filter: (val2 = 1)
+   ->  Hash
+         ->  Append
+               ->  Seq Scan on pt3a pt3_1
+                     Filter: (val3 = 1)
+               ->  Seq Scan on pt3b pt3_2
+                     Filter: (val3 = 1)
+               ->  Seq Scan on pt3c pt3_3
+                     Filter: (val3 = 1)
+ Supplied Plan Advice:
+   JOIN_ORDER({pt1 pt2} pt3) /* matched */
+   PARTITIONWISE((pt1 pt2)) /* matched */
+ Generated Plan Advice:
+   JOIN_ORDER(pt1/public.pt1a pt2/public.pt2a)
+   JOIN_ORDER(pt1/public.pt1b pt2/public.pt2b)
+   JOIN_ORDER(pt1/public.pt1c pt2/public.pt2c)
+   JOIN_ORDER({pt1 pt2} pt3)
+   HASH_JOIN(pt2/public.pt2a pt2/public.pt2b pt2/public.pt2c pt3)
+   SEQ_SCAN(pt1/public.pt1a pt2/public.pt2a pt1/public.pt1b pt2/public.pt2b
+    pt1/public.pt1c pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b
+    pt3/public.pt3c)
+   PARTITIONWISE((pt1 pt2) pt3)
+   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
+    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
+(47 rows)
+
+COMMIT;
 -- Can't force a partitionwise join with a mismatched table.
 BEGIN;
 SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 ptmismatch))';
