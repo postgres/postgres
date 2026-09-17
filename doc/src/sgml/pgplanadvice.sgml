@@ -223,11 +223,10 @@ alias_name#occurrence_number/partition_schema.partition_name@plan_name
    and are included only when required. When a component is omitted, the
    preceding punctuation must also be omitted. For the first occurrence of a
    relation within a given subquery, generated advice will omit the occurrence
-   number, but it is legal to write <literal>#1</literal>, if desired. The
-   partition schema and partition name are included only for children of
-   partitioned tables. In generated advice, <literal>pg_plan_advice</literal>
-   always includes both, but it is legal to omit the schema. The plan name is
-   omitted for the top-level plan, and must be included for any subplan.
+   number, but it is legal to write <literal>#1</literal>, if desired. For
+   children of partitioned tables, the partition schema and partition name are
+   required; otherwise, both are omitted. The plan name is omitted for the
+   top-level plan, and must be included for any subplan.
   </para>
 
   <para>

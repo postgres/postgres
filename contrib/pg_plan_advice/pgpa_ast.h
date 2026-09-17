@@ -52,8 +52,8 @@ typedef struct pgpa_advice_target
 	 * This field is meaningful when ttype is PGPA_TARGET_IDENTIFIER.
 	 *
 	 * All identifiers must have an alias name and an occurrence number; the
-	 * remaining fields can be NULL. Note that it's possible to specify a
-	 * partition name without a partition schema, but not the reverse.
+	 * remaining fields can be NULL. Note that a partition name and a
+	 * partition schema must either both be specified or both be omitted.
 	 */
 	pgpa_identifier rid;
 
