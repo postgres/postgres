@@ -554,7 +554,7 @@ VARDATA_COMPRESSED_GET_COMPRESS_METHOD(const void *PTR)
 }
 
 /*
- * Same for external Datums, saved into an va_extinfo.
+ * Same for external Datums, saved into a va_extinfo.
  */
 static inline Size
 VARATT_EXTINFO_GET_EXTSIZE(uint32 extinfo)

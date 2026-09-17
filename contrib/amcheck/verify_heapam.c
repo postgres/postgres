@@ -1891,8 +1891,8 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 
 	/*
 	 * Take the chunk_id type from the TOAST table's own definition, not from
-	 * from the vartag in the main table as that pointer is the very thing
-	 * under scrutiny here.  The two must agree.
+	 * the vartag in the main table as that pointer is the very thing under
+	 * scrutiny here.  The two must agree.
 	 */
 	toast_typid = TupleDescAttr(ctx->toast_rel->rd_att, 0)->atttypid;
 	if (toast_typid == OID8OID)

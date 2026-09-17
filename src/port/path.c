@@ -408,7 +408,7 @@ canonicalize_path_enc(char *path, int encoding)
 	 *
 	 * This loop overwrites the path in-place.  This is safe since we'll never
 	 * make the path longer.  "unparse" points to where we are reading the
-	 * path, "parse" to where we are writing.
+	 * path, "parsed" to where we are writing.
 	 */
 	spath = skip_drive(path);
 	if (*spath == '\0')

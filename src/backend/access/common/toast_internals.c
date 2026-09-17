@@ -454,9 +454,9 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 		return;
 
 	/*
-	 * Decode the pointer to get the toast relation OID and value ID. The
-	 * vartag tells us everything we need - no TOAST table schema lookup
-	 * required.
+	 * Decode the pointer to get the toast relation OID and value ID.  The
+	 * vartag tells us everything we need; no lookup of the TOAST table
+	 * definition lookup is required.
 	 */
 	toast_external_info_get(attr, &toast_ext_data);
 

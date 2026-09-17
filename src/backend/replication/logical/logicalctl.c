@@ -28,7 +28,7 @@
  * Asynchronous deactivation also avoids excessive toggling of the logical
  * decoding status in workloads that repeatedly create and drop a single
  * logical slot. On the other hand, this lazy approach can delay changes
- * to effective_wal_level and the disabling logical decoding, especially
+ * to effective_wal_level and the disabling of logical decoding, especially
  * when the checkpointer is busy with other tasks. We chose this lazy approach
  * in all deactivation paths to keep the implementation simple, even though
  * laziness is strictly required only for end-of-recovery cases. Future work
@@ -325,7 +325,7 @@ EnsureLogicalDecodingEnabled(void)
 	}
 
 	/*
-	 * Ensure to abort the activation process in cases where there in an
+	 * Ensure to abort the activation process in cases where there is an
 	 * interruption during the wait.
 	 */
 	PG_ENSURE_ERROR_CLEANUP(abort_logical_decoding_activation, (Datum) 0);
@@ -354,9 +354,9 @@ EnableLogicalDecoding(void)
 	}
 
 	/*
-	 * Set logical info WAL logging in shmem. All process starts after this
-	 * point will include the information required by logical decoding to WAL
-	 * records.
+	 * Set logical info WAL logging in shmem. All processes starting after
+	 * this point will include the information required by logical decoding in
+	 * WAL records.
 	 */
 	LogicalDecodingCtl->xlog_logical_info = true;
 
@@ -382,7 +382,7 @@ EnableLogicalDecoding(void)
 	 * to decode the transaction during the logical decoding initialization.
 	 *
 	 * There is a theoretical case where a transaction decides whether to
-	 * include logical-info to WAL records before getting an XID. In this
+	 * include logical-info in WAL records before getting an XID. In this
 	 * case, the transaction won't appear in xl_running_xacts.
 	 *
 	 * For operations that do not require an XID assignment, the process

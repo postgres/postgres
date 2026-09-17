@@ -55,7 +55,7 @@ SET test_extensible.repeat_count = 3;
 SELECT id, val FROM test_extensible_tbl ORDER BY id;
 RESET test_extensible.repeat_count;
 
--- TABLESAMPLE is uses a core scan
+-- TABLESAMPLE uses a core scan
 EXPLAIN (COSTS OFF) SELECT id FROM test_extensible_tbl TABLESAMPLE SYSTEM (0);
 SELECT count(*) FROM test_extensible_tbl TABLESAMPLE SYSTEM (0);
 

@@ -255,7 +255,7 @@ typedef struct RelationData
 	 * OIDOID or OID8OID.
 	 *
 	 * This data is filled on demand by RelationGetToastChunkIdType(), not at
-	 * relcache build time, so as to save in syscache lookups.
+	 * relcache build time, so as to save on syscache lookups.
 	 */
 	Oid			rd_toastchunkidtype;
 

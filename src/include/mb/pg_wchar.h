@@ -110,7 +110,7 @@ typedef enum pg_enc
 	PG_KOI8U,					/* KOI8-U */
 	/* PG_ENCODING_BE_LAST points to the above entry */
 
-	/* followings are for client encoding only */
+	/* The following are for client encoding only */
 	PG_SJIS,					/* Shift JIS (Windows-932) */
 	PG_BIG5,					/* Big5 (Windows-950) */
 	PG_GBK,						/* GBK (Windows-936) */
