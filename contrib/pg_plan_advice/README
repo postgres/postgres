@@ -71,12 +71,10 @@ alias_name#occurrence_number/partition_schema.partition_name@plan_name
 All components except for the alias_name are optional and included only
 when required. When a component is omitted, the associated punctuation
 must also be omitted. Occurrence numbers are counted ignoring children of
-partitioned tables. When the generated occurrence number is 1, we omit
-the occurrence number. The partition schema and partition name are included
-only for children of partitioned tables. In generated advice, the
-partition_schema is always included whenever there is a partition_name,
-but user-written advice may mention the name and omit the schema. The
-plan_name is omitted for the top-level PlannerInfo.
+partitioned tables. When the generated occurrence number is 1, we omit the
+occurrence number. For children of partitioned tables, both the partition
+schema and partition name must be included; in other cases, both are
+omitted. The plan_name is omitted for the top-level PlannerInfo.
 
 Scan Advice
 ===========

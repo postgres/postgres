@@ -59,18 +59,12 @@ struct pgpa_trove
 /*
  * We're going to build a hash table to allow clients of this module to find
  * relevant advice for a given part of the query quickly. However, we're going
- * to use only three of the five key fields as hash keys. There are two reasons
- * for this.
- *
- * First, it's allowable to set partition_schema to NULL to match a partition
- * with the correct name in any schema.
- *
- * Second, we expect the "occurrence" and "partition_schema" portions of the
- * relation identifiers to be mostly uninteresting. Most of the time, the
- * occurrence field will be 1 and the partition_schema values will all be the
- * same. Even when there is some variation, the absolute number of entries
- * that have the same values for all three of these key fields should be
- * quite small.
+ * to use only three of the five key fields as hash keys. That's because we
+ * expect the "occurrence" and "partition_schema" portions of the relation
+ * identifiers to be mostly uninteresting. Most of the time, the occurrence
+ * field will be 1 and the partition_schema values will all be the same. Even
+ * when there is some variation, the absolute number of entries that have the
+ * same values for all three of these key fields should be quite small.
  */
 typedef struct
 {

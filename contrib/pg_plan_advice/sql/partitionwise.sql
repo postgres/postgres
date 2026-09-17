@@ -85,14 +85,9 @@ EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, ptmismatch WHERE pt1.id = ptmismatch.id;
 COMMIT;
 
--- Force join order for a particular branch of the partitionwise join with
--- and without mentioning the schema name.
+-- Force join order for a particular branch of the partitionwise join.
 BEGIN;
 SET LOCAL pg_plan_advice.advice = 'JOIN_ORDER(pt3/public.pt3a pt2/public.pt2a pt1/public.pt1a)';
-EXPLAIN (PLAN_ADVICE, COSTS OFF)
-SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
-   AND val1 = 1 AND val2 = 1 AND val3 = 1;
-SET LOCAL pg_plan_advice.advice = 'JOIN_ORDER(pt3/pt3a pt2/pt2a pt1/pt1a)';
 EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    AND val1 = 1 AND val2 = 1 AND val3 = 1;

@@ -257,19 +257,17 @@ pgpa_identifier_matches_target(pgpa_identifier *rid, pgpa_advice_target *target)
 		return false;
 
 	/*
-	 * If a relation identifier mentions a partition name, it should also
-	 * specify a partition schema. But the target may leave the schema NULL to
-	 * match anything.
+	 * A relation identifier should either include both of partition name and
+	 * partition schema, or neither one.
 	 */
-	Assert(rid->partnsp != NULL || rid->partrel == NULL);
-	if (rid->partnsp != NULL && target->rid.partnsp != NULL &&
-		strcmp(rid->partnsp, target->rid.partnsp) != 0)
-		return false;
+	Assert((rid->partnsp == NULL) == (rid->partrel == NULL));
 
 	/*
 	 * These fields can be NULL on either side, but NULL only matches another
 	 * NULL.
 	 */
+	if (!strings_equal_or_both_null(rid->partnsp, target->rid.partnsp))
+		return false;
 	if (!strings_equal_or_both_null(rid->partrel, target->rid.partrel))
 		return false;
 	if (!strings_equal_or_both_null(rid->plan_name, target->rid.plan_name))

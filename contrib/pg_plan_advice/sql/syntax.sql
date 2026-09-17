@@ -21,8 +21,6 @@ SET pg_plan_advice.advice = 'SEQ_scan(x#2)';
 EXPLAIN (COSTS OFF) SELECT 1;
 SET pg_plan_advice.advice = 'SEQ_SCAN(x#1_0)';
 EXPLAIN (COSTS OFF) SELECT 1;
-SET pg_plan_advice.advice = 'SEQ_SCAN (x/y)';
-EXPLAIN (COSTS OFF) SELECT 1;
 SET pg_plan_advice.advice = '  SEQ_SCAN ( x / y . z )  ';
 EXPLAIN (COSTS OFF) SELECT 1;
 SET pg_plan_advice.advice = 'SEQ_SCAN("x"#2/"y"."z"@"t")';
@@ -43,6 +41,9 @@ SET pg_plan_advice.advice = '123';
 -- Out of range values.
 SET pg_plan_advice.advice = 'SEQ_SCAN(x#99999999999_99)';
 
+-- Partition schema is missing.
+SET pg_plan_advice.advice = 'SEQ_SCAN(x/y)';
+
 -- Tags like SEQ_SCAN and NO_GATHER don't allow sublists at all; other tags,
 -- except for JOIN_ORDER, allow at most one level of sublist. Hence, these
 -- examples should error out.
@@ -57,7 +58,7 @@ SET pg_plan_advice.advice = 'HASH_JOIN(_)/***/';
 EXPLAIN (COSTS OFF) SELECT 1;
 SET pg_plan_advice.advice = '/* comment */ HASH_JOIN(/*x*/y)';
 EXPLAIN (COSTS OFF) SELECT 1;
-SET pg_plan_advice.advice = '/* comment */ HASH_JOIN(y//*x*/z)';
+SET pg_plan_advice.advice = '/* comment */ HASH_JOIN(y//*x*/z.zz)';
 EXPLAIN (COSTS OFF) SELECT 1;
 
 -- Unterminated comments.

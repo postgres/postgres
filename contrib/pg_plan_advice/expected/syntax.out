@@ -74,15 +74,6 @@ EXPLAIN (COSTS OFF) SELECT 1;
    SEQ_SCAN(x#10) /* not matched */
 (3 rows)
 
-SET pg_plan_advice.advice = 'SEQ_SCAN (x/y)';
-EXPLAIN (COSTS OFF) SELECT 1;
-            QUERY PLAN             
------------------------------------
- Result
- Supplied Plan Advice:
-   SEQ_SCAN(x/y) /* not matched */
-(3 rows)
-
 SET pg_plan_advice.advice = '  SEQ_SCAN ( x / y . z )  ';
 EXPLAIN (COSTS OFF) SELECT 1;
              QUERY PLAN              
@@ -136,6 +127,10 @@ DETAIL:  Could not parse advice: syntax error at or near "123"
 SET pg_plan_advice.advice = 'SEQ_SCAN(x#99999999999_99)';
 ERROR:  invalid value for parameter "pg_plan_advice.advice": "SEQ_SCAN(x#99999999999_99)"
 DETAIL:  Could not parse advice: integer out of range at or near "99999999999_99"
+-- Partition schema is missing.
+SET pg_plan_advice.advice = 'SEQ_SCAN(x/y)';
+ERROR:  invalid value for parameter "pg_plan_advice.advice": "SEQ_SCAN(x/y)"
+DETAIL:  Could not parse advice: syntax error at or near ")"
 -- Tags like SEQ_SCAN and NO_GATHER don't allow sublists at all; other tags,
 -- except for JOIN_ORDER, allow at most one level of sublist. Hence, these
 -- examples should error out.
@@ -174,13 +169,13 @@ EXPLAIN (COSTS OFF) SELECT 1;
    HASH_JOIN(y) /* not matched */
 (3 rows)
 
-SET pg_plan_advice.advice = '/* comment */ HASH_JOIN(y//*x*/z)';
+SET pg_plan_advice.advice = '/* comment */ HASH_JOIN(y//*x*/z.zz)';
 EXPLAIN (COSTS OFF) SELECT 1;
-             QUERY PLAN             
-------------------------------------
+              QUERY PLAN               
+---------------------------------------
  Result
  Supplied Plan Advice:
-   HASH_JOIN(y/z) /* not matched */
+   HASH_JOIN(y/z.zz) /* not matched */
 (3 rows)
 
 -- Unterminated comments.

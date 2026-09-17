@@ -253,7 +253,7 @@ COMMIT;
 -- jo_fact is not partitioned, but let's try pretending that it is and
 -- verifying that the advice does not apply.
 BEGIN;
-SET LOCAL pg_plan_advice.advice = 'join_order(f/d1 d1 d2)';
+SET LOCAL pg_plan_advice.advice = 'join_order(f/public.d1 d1 d2)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM jo_fact f
 	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
@@ -273,7 +273,7 @@ SELECT * FROM jo_fact f
          Index Cond: (id = f.dim2_id)
          Filter: (val2 = 1)
  Supplied Plan Advice:
-   JOIN_ORDER(f/d1 d1 d2) /* partially matched */
+   JOIN_ORDER(f/public.d1 d1 d2) /* partially matched */
  Generated Plan Advice:
    JOIN_ORDER(f d1 d2)
    NESTED_LOOP_PLAIN(d1 d2)
@@ -282,7 +282,7 @@ SELECT * FROM jo_fact f
    NO_GATHER(f d1 d2)
 (19 rows)
 
-SET LOCAL pg_plan_advice.advice = 'join_order(f/d1 (d1 d2))';
+SET LOCAL pg_plan_advice.advice = 'join_order(f/public.d1 (d1 d2))';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM jo_fact f
 	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
@@ -301,7 +301,7 @@ SELECT * FROM jo_fact f
                      Filter: (val2 = 1)
    ->  Seq Scan on jo_fact f
  Supplied Plan Advice:
-   JOIN_ORDER(f/d1 (d1 d2)) /* partially matched */
+   JOIN_ORDER(f/public.d1 (d1 d2)) /* partially matched */
  Generated Plan Advice:
    JOIN_ORDER(d1 d2 f)
    NESTED_LOOP_PLAIN(f)

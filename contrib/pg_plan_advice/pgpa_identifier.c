@@ -20,11 +20,10 @@
  * within the same subquery, child_table_name is omitted for relations that
  * are not child tables, and subquery_name is omitted for the topmost
  * query level. Whenever an item is omitted, the preceding punctuation mark
- * is also omitted.  Identifier-style escaping is applied to alias_name and
- * subquery_name.  In generated advice, child table names are always
- * schema-qualified, but users can supply advice where the schema name is
- * not mentioned. Identifier-style escaping is applied to the schema and to
- * the relation name separately.
+ * is also omitted. Identifier-style escaping is applied to alias_name and
+ * subquery_name. Child table names are always schema-qualified.
+ * Identifier-style escaping is applied to the schema and to the relation
+ * name separately.
  *
  * The upshot of all of these rules is that in simple cases, the relation
  * identifier is textually identical to the alias name, making life easier
@@ -88,16 +87,11 @@ pgpa_identifier_string(const pgpa_identifier *rid)
 	if (rid->occurrence > 1)
 		result = psprintf("%s#%d", result, rid->occurrence);
 
+	Assert((rid->partnsp == NULL) == (rid->partrel == NULL));
 	if (rid->partrel != NULL)
-	{
-		if (rid->partnsp == NULL)
-			result = psprintf("%s/%s", result,
-							  quote_identifier(rid->partrel));
-		else
-			result = psprintf("%s/%s.%s", result,
-							  quote_identifier(rid->partnsp),
-							  quote_identifier(rid->partrel));
-	}
+		result = psprintf("%s/%s.%s", result,
+						  quote_identifier(rid->partnsp),
+						  quote_identifier(rid->partrel));
 
 	if (rid->plan_name != NULL)
 		result = psprintf("%s@%s", result, quote_identifier(rid->plan_name));
@@ -364,14 +358,13 @@ pgpa_compute_rti_from_identifier(int rtable_length,
 			continue;
 
 		/*
-		 * If it matches, return this RTI. As usual, an omitted partition
-		 * schema matches anything, but partition and plan names must either
-		 * match exactly or be omitted on both sides.
+		 * If it matches, return this RTI. The partition schema, partition
+		 * name, and plan name must either match exactly or be omitted on both
+		 * sides.
 		 */
 		if (strcmp(rid->alias_name, rti_rid->alias_name) == 0 &&
 			rid->occurrence == rti_rid->occurrence &&
-			(rid->partnsp == NULL || rti_rid->partnsp == NULL ||
-			 strcmp(rid->partnsp, rti_rid->partnsp) == 0) &&
+			strings_equal_or_both_null(rid->partnsp, rti_rid->partnsp) &&
 			strings_equal_or_both_null(rid->partrel, rti_rid->partrel) &&
 			strings_equal_or_both_null(rid->plan_name, rti_rid->plan_name))
 		{

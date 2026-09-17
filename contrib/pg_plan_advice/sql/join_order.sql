@@ -85,13 +85,13 @@ COMMIT;
 -- jo_fact is not partitioned, but let's try pretending that it is and
 -- verifying that the advice does not apply.
 BEGIN;
-SET LOCAL pg_plan_advice.advice = 'join_order(f/d1 d1 d2)';
+SET LOCAL pg_plan_advice.advice = 'join_order(f/public.d1 d1 d2)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM jo_fact f
 	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
 	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
 	WHERE val1 = 1 AND val2 = 1;
-SET LOCAL pg_plan_advice.advice = 'join_order(f/d1 (d1 d2))';
+SET LOCAL pg_plan_advice.advice = 'join_order(f/public.d1 (d1 d2))';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM jo_fact f
 	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
