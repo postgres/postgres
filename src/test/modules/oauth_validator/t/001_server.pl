@@ -101,7 +101,7 @@ is( $contents,
 $node->append_conf('postgresql.conf', "oauth_validator_libraries = '   '");
 $node->reload;
 $log_start = $node->wait_for_log(
-	qr/parameter "oauth_validator_libraries" must be set for authentication/,
+	qr/oauth_validator_libraries must be set for authentication/,
 	$log_start);
 $bgconn->query_safe('SELECT 1');
 
