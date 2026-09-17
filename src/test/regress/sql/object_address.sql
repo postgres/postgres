@@ -103,7 +103,8 @@ BEGIN
         ('text search template'), ('text search configuration'),
         ('policy'), ('user mapping'), ('default acl'), ('transform'),
         ('operator of access method'), ('function of access method'),
-        ('publication namespace'), ('publication relation')
+        ('publication namespace'), ('publication relation'),
+        ('publication excluded relation')
     LOOP
         FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
         LOOP
@@ -224,6 +225,23 @@ FROM objects,
      pg_identify_object_as_address(classid, objid, objsubid) AS ioa (typ, nms, args),
      pg_get_object_address(typ, nms, ioa.args) AS addr2
 ORDER BY addr1.classid, addr1.objid, addr1.objsubid;
+
+-- A FOR ALL TABLES publication is listed by \d for every table in the
+-- database, which would disturb the other tests running concurrently in this
+-- parallel group.  Create it in a transaction that is rolled back, so that it
+-- is never visible to another session.
+BEGIN;
+SET LOCAL client_min_messages = 'ERROR';
+CREATE PUBLICATION addr_pub_except FOR ALL TABLES EXCEPT (TABLE addr_nsp.gentable);
+SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
+       ROW(pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)) =
+         ROW(pg_identify_object(addr2.classid, addr2.objid, addr2.objsubid)) AS roundtrip
+FROM pg_get_object_address('publication excluded relation',
+                           '{addr_nsp, gentable}',
+                           '{addr_pub_except}') AS addr1,
+     pg_identify_object_as_address(classid, objid, objsubid) AS ioa (typ, nms, args),
+     pg_get_object_address(typ, nms, ioa.args) AS addr2;
+ROLLBACK;
 
 ---
 --- Cleanup resources
