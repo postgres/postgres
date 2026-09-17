@@ -48,18 +48,18 @@ static bool desirable_join(PlannerInfo *root,
 /*
  * geqo_eval
  *
- * Returns cost of a query tree as an individual of the population.
+ * Returns the fitness of a query tree as an individual of the population.
  *
- * If no legal join order can be extracted from the proposed tour,
- * returns DBL_MAX.
+ * If no legal join order can be extracted from the proposed tour, returns
+ * the invalid fitness described in geqo_gene.h.
  */
-Cost
+Fitness
 geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 {
 	MemoryContext mycontext;
 	MemoryContext oldcxt;
 	RelOptInfo *joinrel;
-	Cost		fitness;
+	Fitness		fitness;
 	int			savelength;
 	struct HTAB *savehash;
 
@@ -112,10 +112,14 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 	{
 		Path	   *best_path = joinrel->cheapest_total_path;
 
-		fitness = best_path->total_cost;
+		fitness.disabled_nodes = best_path->disabled_nodes;
+		fitness.cost = best_path->total_cost;
 	}
 	else
-		fitness = DBL_MAX;
+	{
+		fitness.disabled_nodes = INT_MAX;
+		fitness.cost = DBL_MAX;
+	}
 
 	/*
 	 * Restore join_rel_list to its former state, and put back original

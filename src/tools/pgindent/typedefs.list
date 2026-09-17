@@ -859,6 +859,7 @@ First
 FixedParallelExecutorState
 FixedParallelState
 FixedParamState
+Fitness
 FlagMode
 Float
 FlushPosition

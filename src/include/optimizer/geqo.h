@@ -95,7 +95,7 @@ extern RelOptInfo *geqo(PlannerInfo *root,
 						int number_of_rels, List *initial_rels);
 
 /* routines in geqo_eval.c */
-extern Cost geqo_eval(PlannerInfo *root, Gene *tour, int num_gene);
+extern Fitness geqo_eval(PlannerInfo *root, Gene *tour, int num_gene);
 extern RelOptInfo *gimme_tree(PlannerInfo *root, Gene *tour, int num_gene);
 
 #endif							/* GEQO_H */

@@ -133,10 +133,12 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 								 * future (-> geqo_pool.c:spread_chromo ) */
 
 #ifdef GEQO_DEBUG
-	elog(DEBUG1, "GEQO selected %d pool entries, best %.2f, worst %.2f",
+	elog(DEBUG1, "GEQO selected %d pool entries, best %.2f<%d>, worst %.2f<%d>",
 		 pool_size,
-		 pool->data[0].worth,
-		 pool->data[pool_size - 1].worth);
+		 pool->data[0].worth.cost,
+		 pool->data[0].worth.disabled_nodes,
+		 pool->data[pool_size - 1].worth.cost,
+		 pool->data[pool_size - 1].worth.disabled_nodes);
 #endif
 
 /* allocate chromosome momma and daddy memory */
@@ -267,8 +269,9 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 #endif
 
 #ifdef GEQO_DEBUG
-	elog(DEBUG1, "GEQO best is %.2f after %d generations",
-		 pool->data[0].worth, number_generations);
+	elog(DEBUG1, "GEQO best is %.2f<%d> after %d generations",
+		 pool->data[0].worth.cost, pool->data[0].worth.disabled_nodes,
+		 number_generations);
 #endif
 
 
