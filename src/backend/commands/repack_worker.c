@@ -21,6 +21,7 @@
 #include "access/xlogwait.h"
 #include "commands/repack.h"
 #include "commands/repack_internal.h"
+#include "libpq/libpq.h"
 #include "libpq/pqmq.h"
 #include "replication/snapbuild.h"
 #include "storage/ipc.h"
@@ -43,9 +44,6 @@ static bool am_repack_worker = false;
 
 /* The WAL segment being decoded. */
 static XLogSegNo repack_current_segment = 0;
-
-/* Our DSM segment, for shutting down */
-static dsm_segment *worker_dsm_segment = NULL;
 
 /*
  * Keep track of the table we're processing, to skip logical decoding of data
@@ -76,12 +74,11 @@ RepackWorkerMain(Datum main_arg)
 		ereport(ERROR,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg("could not map dynamic shared memory segment"));
-	worker_dsm_segment = seg;
 
 	shared = (DecodingWorkerShared *) dsm_segment_address(seg);
 
-	/* Arrange to signal the leader if we exit. */
-	before_shmem_exit(RepackWorkerShutdown, PointerGetDatum(shared));
+	/* Arrange to signal the steering process if we exit. */
+	before_shmem_exit(RepackWorkerShutdown, PointerGetDatum(seg));
 
 	/*
 	 * Join locking group - see the comments around the call of
@@ -161,27 +158,43 @@ RepackWorkerMain(Datum main_arg)
 
 		if (stop)
 			break;
-
 	}
 
-	/* Cleanup. */
+	/* Clean up and report termination to our steering process */
 	repack_cleanup_logical_decoding(decoding_ctx);
 	CommitTransactionCommand();
+	pq_putmessage(PqRepackMsg_Terminate, NULL, 0);
 }
 
 /*
- * See ParallelWorkerShutdown for details.
+ * Make sure the repack steering process tries to read from our error queue one
+ * more time.  This guards against the case where we exit uncleanly without
+ * sending an ErrorResponse to the leader, for example because some code calls
+ * proc_exit directly.
  */
 static void
 RepackWorkerShutdown(int code, Datum arg)
 {
-	DecodingWorkerShared *shared = (DecodingWorkerShared *) DatumGetPointer(arg);
+	dsm_segment *seg;
+	DecodingWorkerShared *shared;
+	pid_t		pid;
+	ProcNumber	procno;
 
-	SendProcSignal(shared->backend_pid,
-				   PROCSIG_REPACK_MESSAGE,
-				   shared->backend_proc_number);
+	seg = (dsm_segment *) DatumGetPointer(arg);
+	shared = (DecodingWorkerShared *) dsm_segment_address(seg);
+	pid = shared->backend_pid;
+	procno = shared->backend_proc_number;
 
-	dsm_detach(worker_dsm_segment);
+	/*
+	 * Detach from the shared memory segment before we signal the backend.
+	 * Detaching also detaches the error message queue, and the backend learns
+	 * that we are gone by reading that queue when it handles our signal. If
+	 * we signaled first, the backend could read the queue while it still
+	 * looks attached, and nothing would make it read again.
+	 */
+	dsm_detach(seg);
+
+	SendProcSignal(pid, PROCSIG_REPACK_MESSAGE, procno);
 }
 
 bool
