@@ -312,7 +312,9 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
    <parameter>mode</parameter>. The <literal>standby_replay</literal> mode
    waits for the LSN to be replayed (applied to the database), which is
    useful to achieve read-your-writes consistency while using an async
-   replica for reads and the primary for writes. The
+   replica for reads and the primary for writes, provided that the target
+   <acronym>LSN</acronym> is at or after the end of the relevant write
+   transaction's <literal>COMMIT</literal> record on the primary. The
    <literal>standby_flush</literal> mode waits for the WAL to be flushed
    to durable storage on the replica, or to have already been replayed
    from WAL present on the standby. The <literal>standby_write</literal> mode
@@ -370,9 +372,13 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
   <para>
    You can use the <command>WAIT</command> command to wait for
    the <type>pg_lsn</type> value.  For example, an application could update
-   the <literal>movie</literal> table and get the <acronym>lsn</acronym> after
-   changes just made.  This example uses <function>pg_current_wal_insert_lsn</function>
-   on primary server to get the <acronym>lsn</acronym> given that
+   the <literal>movie</literal> table and get an <acronym>lsn</acronym> that
+   is at or after the end of the relevant write transaction's
+   <literal>COMMIT</literal> record.  In the default autocommit mode shown
+   here, the <command>UPDATE</command> commits before the subsequent
+   <command>SELECT</command>.  This example uses
+   <function>pg_current_wal_insert_lsn</function> on primary server to get
+   the <acronym>lsn</acronym> given that
    <varname>synchronous_commit</varname> could be set to
    <literal>off</literal>.
 
@@ -387,8 +393,9 @@ postgres=# SELECT pg_current_wal_insert_lsn();
 </programlisting>
 
    Then an application could run <command>WAIT</command>
-   with the <parameter>lsn</parameter> obtained from primary.  After that the
-   changes made on primary should be guaranteed to be visible on replica.
+   with the <parameter>lsn</parameter> obtained from the primary after the
+   commit.  After that, the changes made on the primary should be guaranteed
+   to be visible on the replica.
 
 <programlisting>
 postgres=# WAIT FOR LSN '0/0306EE20';

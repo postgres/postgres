@@ -1409,9 +1409,9 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    </para>
 
    <para>
-    This is achieved by the following steps.  After performing write
-    operations, the application retrieves the current WAL location using a
-    function call like this.
+    This is achieved by the following steps.  Once the write transaction
+    has committed, the application retrieves a WAL location from the
+    primary using a function call like this.
 
 <programlisting>
 postgres=# SELECT pg_current_wal_insert_lsn();
@@ -1438,8 +1438,9 @@ postgres=# WAIT FOR LSN '0/306EE20';
 (1 row)
 </programlisting>
     Once the command returns a status of success, it guarantees that all
-    changes up to the provided <acronym>LSN</acronym> have been applied,
-    ensuring that subsequent read queries will reflect the latest updates.
+    changes up to the provided <acronym>LSN</acronym> have been applied.
+    Therefore, if that <acronym>LSN</acronym> was retrieved from the primary
+    after the commit, subsequent read queries will reflect those updates.
    </para>
   </sect2>
 
