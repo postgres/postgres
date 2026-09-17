@@ -54,8 +54,8 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
    (<literal>standby_replay</literal>, <literal>standby_write</literal>,
    <literal>standby_flush</literal>), an error is also emitted if the
    server is promoted before the <parameter>lsn</parameter> is reached.
-   If <parameter>NO_THROW</parameter> is specified, the command returns
-   a status string instead of throwing errors.
+   If <parameter>NO_THROW</parameter> is specified, the command reports
+   these outcomes as a status string instead of raising an error.
   </para>
 
   <para>
@@ -171,6 +171,39 @@ WAIT FOR LSN '<replaceable class="parameter">lsn</replaceable>'
           Specify to not throw an error in the case of timeout or
           running on the primary.  In this case the result status can be
           obtained from the return value.
+         </para>
+
+         <para>
+          Use this option when <literal>timeout</literal> or
+          <literal>not in recovery</literal> is an expected result that the
+          application intends to handle, for example by retrying the wait,
+          reporting replication delay, or choosing another server for a
+          subsequent operation.  The command then returns the result as a
+          status, which the application must check before assuming that the
+          target <acronym>LSN</acronym> was reached.  Omit the option when
+          the application must not proceed unless the target
+          <acronym>LSN</acronym> is reached, so that an unsuccessful wait
+          stops normal execution with an error.
+         </para>
+
+         <para>
+          Returning a status also leaves an explicit transaction usable;
+          without this option, the corresponding error requires rolling back
+          the transaction, or rolling back to a savepoint, before further
+          commands can be issued.
+         </para>
+
+         <para>
+          This option changes only how <literal>timeout</literal> and
+          <literal>not in recovery</literal> are reported.  Other errors are
+          still raised.  That covers invalid input, such as a malformed
+          <acronym>LSN</acronym> or an unrecognized option value, and every
+          condition that is checked before the wait begins, such as
+          requesting <literal>primary_flush</literal> during recovery or
+          holding a lock while waiting for a standby
+          <acronym>LSN</acronym>.  The option also does not limit the
+          duration of the wait; specify <literal>TIMEOUT</literal> for that
+          purpose.
          </para>
         </listitem>
        </varlistentry>
