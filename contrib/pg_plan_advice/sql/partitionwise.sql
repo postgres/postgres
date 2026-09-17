@@ -78,6 +78,14 @@ SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    AND val1 = 1 AND val2 = 1 AND val3 = 1;
 COMMIT;
 
+-- Test use of join order for the partitionwise join case.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 pt2)) JOIN_ORDER({pt1 pt2} pt3)';
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
+   AND val1 = 1 AND val2 = 1 AND val3 = 1;
+COMMIT;
+
 -- Can't force a partitionwise join with a mismatched table.
 BEGIN;
 SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 ptmismatch))';

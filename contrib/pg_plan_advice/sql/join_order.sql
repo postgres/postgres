@@ -66,6 +66,57 @@ SELECT * FROM jo_fact f
 	WHERE val1 = 1 AND val2 = 1;
 COMMIT;
 
+-- Test cases for initial sublists, which require special handling in the code.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'join_order((f d1) d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+SET LOCAL pg_plan_advice.advice = 'join_order({f d1} d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+COMMIT;
+
+-- Test cases for single-element groupings. The extra grouping levels should
+-- be ignored.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'join_order((f) d1 d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+SET LOCAL pg_plan_advice.advice = 'join_order({f} d1 d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+SET LOCAL pg_plan_advice.advice = 'join_order(f (d1) d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+SET LOCAL pg_plan_advice.advice = 'join_order(f {d1} d2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+SET LOCAL pg_plan_advice.advice = 'join_order(f ({d1 d2}))';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM jo_fact f
+	LEFT JOIN jo_dim1 d1 ON f.dim1_id = d1.id
+	LEFT JOIN jo_dim2 d2 ON f.dim2_id = d2.id
+	WHERE val1 = 1 AND val2 = 1;
+COMMIT;
+
 -- Force a join order by mentioning just a prefix of the join list.
 BEGIN;
 SET LOCAL pg_plan_advice.advice = 'join_order(d2)';

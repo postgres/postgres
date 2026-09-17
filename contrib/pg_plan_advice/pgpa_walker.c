@@ -17,6 +17,7 @@
 #include "pgpa_walker.h"
 
 #include "access/tsmapi.h"
+#include "miscadmin.h"
 #include "nodes/plannodes.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
@@ -38,15 +39,16 @@ static void pgpa_qf_add_rtis(List *active_query_features, Bitmapset *relids);
 static void pgpa_qf_add_plan_rtis(List *active_query_features, Plan *plan,
 								  List *rtable);
 
-static bool pgpa_walker_join_order_matches(pgpa_unrolled_join *ujoin,
-										   Index rtable_length,
-										   pgpa_identifier *rt_identifiers,
-										   pgpa_advice_target *target,
-										   bool toplevel);
-static bool pgpa_walker_join_order_matches_member(pgpa_join_member *member,
-												  Index rtable_length,
-												  pgpa_identifier *rt_identifiers,
-												  pgpa_advice_target *target);
+static unsigned pgpa_walker_join_order_matches(pgpa_unrolled_join *ujoin,
+											   Index rtable_length,
+											   pgpa_identifier *rt_identifiers,
+											   pgpa_advice_target *target);
+static bool pgpa_walker_join_order_matches_members(pgpa_unrolled_join *ujoin,
+												   unsigned *match_position,
+												   Index rtable_length,
+												   pgpa_identifier *rt_identifiers,
+												   pgpa_advice_target *target);
+static Bitmapset *pgpa_walker_join_member_relids(pgpa_join_member *member);
 static pgpa_scan *pgpa_walker_find_scan(pgpa_plan_walker_context *walker,
 										pgpa_scan_strategy strategy,
 										Bitmapset *relids);
@@ -741,8 +743,12 @@ pgpa_walker_would_advise(pgpa_plan_walker_context *walker,
 	{
 		foreach_ptr(pgpa_unrolled_join, ujoin, walker->toplevel_unrolled_joins)
 		{
+			/*
+			 * The advice need not account for every member of the join, so
+			 * any non-zero result is good enough.
+			 */
 			if (pgpa_walker_join_order_matches(ujoin, rtable_length,
-											   rt_identifiers, target, true))
+											   rt_identifiers, target) != 0)
 				return true;
 		}
 
@@ -936,83 +942,149 @@ pgpa_walker_index_target_matches_plan(pgpa_index_target *itarget, Plan *plan)
 
 /*
  * Does an unrolled join match the join order specified by an advice target?
+ *
+ * The return value is the number of join members matched, or 0 if they do not
+ * match. This allows the caller to distinguish between a complete match
+ * (where the return value will be ujoin->ninner + 1) and a partial match
+ * (where the return value will be some smaller positive integer), if desired.
  */
-static bool
+static unsigned
 pgpa_walker_join_order_matches(pgpa_unrolled_join *ujoin,
 							   Index rtable_length,
 							   pgpa_identifier *rt_identifiers,
-							   pgpa_advice_target *target,
-							   bool toplevel)
+							   pgpa_advice_target *target)
 {
-	int			nchildren = list_length(target->children);
+	unsigned	match_position = 0;
 
 	Assert(target->ttype == PGPA_TARGET_ORDERED_LIST);
 
-	/* At toplevel, we allow a prefix match. */
-	if (toplevel)
+	foreach_ptr(pgpa_advice_target, child_target, target->children)
 	{
-		if (nchildren > ujoin->ninner + 1)
-			return false;
-	}
-	else
-	{
-		if (nchildren != ujoin->ninner + 1)
-			return false;
-	}
-
-	/* Outermost rel must match. */
-	if (!pgpa_walker_join_order_matches_member(&ujoin->outer,
-											   rtable_length,
-											   rt_identifiers,
-											   linitial(target->children)))
-		return false;
-
-	/* Each inner rel must match. */
-	for (int n = 0; n < nchildren - 1; ++n)
-	{
-		pgpa_advice_target *child_target = list_nth(target->children, n + 1);
-
-		if (!pgpa_walker_join_order_matches_member(&ujoin->inner[n],
-												   rtable_length,
-												   rt_identifiers,
-												   child_target))
-			return false;
+		if (match_position > ujoin->ninner)
+			return 0;
+		if (!pgpa_walker_join_order_matches_members(ujoin, &match_position,
+													rtable_length,
+													rt_identifiers,
+													child_target))
+			return 0;
 	}
 
-	return true;
+	return match_position;
 }
 
 /*
- * Does one member of an unrolled join match an advice target?
+ * Does the specified portion of an unrolled join match an advice target?
+ *
+ * We'll look for a match within ujoin beginning at *match_position, where 0
+ * means a match starting with the outer member, and a positive value of N
+ * means a match starting with the inner member at index N - 1. If a match is
+ * found, returns true and *match_position is incremented by the number of
+ * pgpa_join_member objects consumed; if not, returns false and the value
+ * of *match_position is undefined.
  */
 static bool
-pgpa_walker_join_order_matches_member(pgpa_join_member *member,
-									  Index rtable_length,
-									  pgpa_identifier *rt_identifiers,
-									  pgpa_advice_target *target)
+pgpa_walker_join_order_matches_members(pgpa_unrolled_join *ujoin,
+									   unsigned *match_position,
+									   Index rtable_length,
+									   pgpa_identifier *rt_identifiers,
+									   pgpa_advice_target *target)
 {
-	Bitmapset  *relids = NULL;
+	pgpa_join_member *member;
 
-	if (member->unrolled_join != NULL)
+	check_stack_depth();
+
+	/*
+	 * Find the pgpa_join_member to which *match_position refers.
+	 */
+	if (*match_position == 0)
+		member = &ujoin->outer;
+	else
 	{
-		if (target->ttype != PGPA_TARGET_ORDERED_LIST)
-			return false;
-		return pgpa_walker_join_order_matches(member->unrolled_join,
-											  rtable_length,
-											  rt_identifiers,
-											  target,
-											  false);
+		Assert(*match_position <= ujoin->ninner);
+		member = &ujoin->inner[*match_position - 1];
 	}
 
-	Assert(member->scan != NULL);
+	/*
+	 * Single-element lists within a join order specification have no clear
+	 * meaning, since a join intrinsically involves at least two tables, but
+	 * enforcement treats them as if the extra list levels were not present.
+	 * That is, JOIN_ORDER((({a})) b) is elsewhere treated as synonymous with
+	 * JOIN_ORDER(a b), so we do that here as well.
+	 */
+	while (target->ttype != PGPA_TARGET_IDENTIFIER &&
+		   list_length(target->children) == 1)
+		target = linitial(target->children);
+
+	/* Now do the real work. */
 	switch (target->ttype)
 	{
 		case PGPA_TARGET_ORDERED_LIST:
-			/* Could only match an unrolled join */
+
+			/*
+			 * Since outer-deep joins are flattened, a sublist that begins at
+			 * the outer member describes the start of this unrolled join. For
+			 * instance, JOIN_ORDER((a b) c d) is a less-convenient but still
+			 * acceptable way of writing JOIN_ORDER(a b c d).
+			 */
+			if (*match_position == 0)
+			{
+				unsigned	nmatched;
+
+				nmatched = pgpa_walker_join_order_matches(ujoin,
+														  rtable_length,
+														  rt_identifiers,
+														  target);
+				if (nmatched == 0)
+					return false;
+				*match_position += nmatched;
+				return true;
+			}
+
+			/*
+			 * In contrast, a sublist being matched to an inner member can
+			 * only ever match that one member, which must therefore be an
+			 * unrolled join.
+			 */
+			if (member->unrolled_join != NULL)
+			{
+				pgpa_unrolled_join *nested = member->unrolled_join;
+				unsigned	nmatched;
+
+				nmatched = pgpa_walker_join_order_matches(nested,
+														  rtable_length,
+														  rt_identifiers,
+														  target);
+
+				/*
+				 * Only a complete match suffices. Something like JOIN_ORDER(a
+				 * (b c d) e) still matches if, after those five tables are
+				 * joined as shown, there are additional joins to other
+				 * tables. But table a must be joined first to a three-way
+				 * join between exactly b, c, and d: no additional tables are
+				 * allowed beyond those named in the sublist.
+				 */
+				if (nmatched == nested->ninner + 1)
+				{
+					*match_position += 1;
+					return true;
+				}
+			}
+
 			return false;
 
 		case PGPA_TARGET_UNORDERED_LIST:
 			{
+				Bitmapset  *relids = NULL;
+				Bitmapset  *member_relids;
+				Bitmapset  *accumulated_relids;
+				BMS_Comparison comparison;
+				unsigned	ninner = 0;
+
+				/*
+				 * Convert this unordered sublist to a set of RTIs; but, if
+				 * any relation identifier can't be mapped to an RTI, then
+				 * there is no match.
+				 */
 				foreach_ptr(pgpa_advice_target, child_target, target->children)
 				{
 					Index		rti;
@@ -1024,24 +1096,122 @@ pgpa_walker_join_order_matches_member(pgpa_join_member *member,
 						return false;
 					relids = bms_add_member(relids, rti);
 				}
-				break;
+
+				/* See whether it matches the set of RTIs for this member. */
+				member_relids = pgpa_walker_join_member_relids(member);
+				comparison = bms_subset_compare(member_relids, relids);
+				if (comparison == BMS_EQUAL)
+				{
+					/* Exact match: we're done! */
+					*match_position += 1;
+					return true;
+				}
+
+				/*
+				 * If we're matching this target against an inner member, the
+				 * target must match exactly one member, or else it's not a
+				 * match at all.
+				 */
+				if (*match_position != 0)
+					return false;
+
+				/*
+				 * Since outer-deep joins are flattened, a sublist that begins
+				 * at the outer member describes the start of this unrolled
+				 * join.
+				 *
+				 * For instance, JOIN_ORDER({a b} c d) allows for an unrolled
+				 * join with either a or b as the outer rel and the other as
+				 * the first inner rel.
+				 *
+				 * This means we need to iterate to figure out how many inner
+				 * members this advice target matches (or to discover that
+				 * there is no match).
+				 */
+				accumulated_relids = bms_copy(member_relids);
+				while (comparison == BMS_SUBSET1 && ninner < ujoin->ninner)
+				{
+					member = &ujoin->inner[ninner++];
+					member_relids = pgpa_walker_join_member_relids(member);
+					accumulated_relids = bms_add_members(accumulated_relids,
+														 member_relids);
+					comparison = bms_subset_compare(accumulated_relids,
+													relids);
+				}
+
+				/*
+				 * If we found a number of inner members such that the union
+				 * of all their RTIs exactly matches the set that the advice
+				 * target must cover, then consume them all and return true.
+				 * If not, it's not a match, so return false.
+				 */
+				if (comparison == BMS_EQUAL)
+				{
+					*match_position += 1 + ninner;
+					return true;
+				}
+				return false;
 			}
 
 		case PGPA_TARGET_IDENTIFIER:
 			{
 				Index		rti;
+				int			scan_rti;
+
+				/* Could only match a scan */
+				if (member->unrolled_join != NULL)
+					return false;
 
 				rti = pgpa_compute_rti_from_identifier(rtable_length,
 													   rt_identifiers,
 													   &target->rid);
 				if (rti == 0)
 					return false;
-				relids = bms_make_singleton(rti);
-				break;
+
+				if (!bms_get_singleton_member(member->scan->relids, &scan_rti))
+					return false;
+				if (rti != (Index) scan_rti)
+					return false;
+
+				*match_position += 1;
+				return true;
 			}
 	}
 
-	return bms_equal(member->scan->relids, relids);
+	pg_unreachable();
+	return false;
+}
+
+/*
+ * Compute the set of relations covered by one member of an unrolled join.
+ */
+static Bitmapset *
+pgpa_walker_join_member_relids(pgpa_join_member *member)
+{
+	pgpa_unrolled_join *ujoin;
+	Bitmapset  *all_relids;
+
+	check_stack_depth();
+
+	/* If it's a scan, this is easy. */
+	if (member->scan != NULL)
+		return member->scan->relids;
+
+	/* Otherwise, it's an unrolled join. */
+	ujoin = member->unrolled_join;
+	Assert(ujoin != NULL);
+
+	/* Collect outer relids (which must be from a scan). */
+	Assert(ujoin->outer.unrolled_join == NULL);
+	all_relids = bms_copy(ujoin->outer.scan->relids);
+
+	/* Collect each set of inner relids. */
+	for (unsigned k = 0; k < ujoin->ninner; ++k)
+		all_relids =
+			bms_add_members(all_relids,
+							pgpa_walker_join_member_relids(&ujoin->inner[k]));
+
+	return all_relids;
 }
 
 /*
