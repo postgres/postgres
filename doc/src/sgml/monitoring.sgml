@@ -3902,14 +3902,9 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Number of data page checksum failures detected in this
-       database (or on a shared object).  Detected failures are not reset if
-       the <xref linkend="guc-data-checksums"/> setting changes.  Clusters
-       which are initialized without data checksums will show this as
-       <literal>0</literal>. In <productname>PostgreSQL</productname> version
-       18 and earlier, this was set to <literal>NULL</literal> for clusters
-       with data checksums disabled.
-      </para>
-     </entry>
+       database (or on a shared object), or NULL if data checksums are
+       disabled.
+      </para></entry>
      </row>
 
      <row>
@@ -3918,8 +3913,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Time at which the last data page checksum failure was detected in
-       this database (or on a shared object). Last failure is reported
-       regardless of the <xref linkend="guc-data-checksums"/> setting.
+       this database (or on a shared object), or NULL if data checksums are
+       disabled.
       </para></entry>
      </row>
 

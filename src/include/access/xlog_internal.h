@@ -308,7 +308,6 @@ typedef struct xl_end_of_recovery
 typedef struct xl_checkpoint_redo
 {
 	int			wal_level;
-	uint32		data_checksum_version;
 } xl_checkpoint_redo;
 
 /*
