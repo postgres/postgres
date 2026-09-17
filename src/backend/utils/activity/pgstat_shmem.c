@@ -828,6 +828,15 @@ pgstat_gc_entry_refs(void)
 		Assert(!entry_ref->shared_stats ||
 			   entry_ref->shared_stats->magic == 0xdeadbeef);
 
+		/* A NULL shared_entry marks a partial reference. */
+		if (entry_ref->shared_entry == NULL)
+		{
+			Assert(entry_ref->shared_stats == NULL);
+			Assert(entry_ref->pending == NULL);
+			pgstat_release_entry_ref(ent->key, entry_ref, false);
+			continue;
+		}
+
 		/*
 		 * "generation" checks for the case of entries being reinitialized,
 		 * and "dropped" for the case where these are..  dropped.
