@@ -44,10 +44,11 @@ avg_pool(Pool *pool)
 	 * Since the pool may contain multiple occurrences of DBL_MAX, divide by
 	 * pool->size before summing, not after, to avoid overflow.  This loses a
 	 * little in speed and accuracy, but this routine is only used for debug
-	 * printouts, so we don't care that much.
+	 * printouts, so we don't care that much.  For the same reason, we simply
+	 * ignore disabled_nodes here.
 	 */
 	for (i = 0; i < pool->size; i++)
-		cumulative += pool->data[i].worth / pool->size;
+		cumulative += pool->data[i].worth.cost / pool->size;
 
 	return cumulative;
 }
@@ -79,7 +80,8 @@ print_pool(FILE *fp, Pool *pool, int start, int stop)
 		fprintf(fp, "%d)\t", i);
 		for (j = 0; j < pool->string_length; j++)
 			fprintf(fp, "%d ", pool->data[i].string[j]);
-		fprintf(fp, "%g\n", pool->data[i].worth);
+		fprintf(fp, "%g<%d>\n", pool->data[i].worth.cost,
+				pool->data[i].worth.disabled_nodes);
 	}
 
 	fflush(fp);
@@ -100,11 +102,14 @@ print_gen(FILE *fp, Pool *pool, int generation)
 	lowest = pool->size > 1 ? pool->size - 2 : 0;
 
 	fprintf(fp,
-			"%5d | Best: %g  Worst: %g  Mean: %g  Avg: %g\n",
+			"%5d | Best: %g<%d>  Worst: %g<%d>  Mean: %g<%d>  Avg: %g\n",
 			generation,
-			pool->data[0].worth,
-			pool->data[lowest].worth,
-			pool->data[pool->size / 2].worth,
+			pool->data[0].worth.cost,
+			pool->data[0].worth.disabled_nodes,
+			pool->data[lowest].worth.cost,
+			pool->data[lowest].worth.disabled_nodes,
+			pool->data[pool->size / 2].worth.cost,
+			pool->data[pool->size / 2].worth.disabled_nodes,
 			avg_pool(pool));
 
 	fflush(fp);
