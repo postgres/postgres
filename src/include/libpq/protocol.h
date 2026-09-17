@@ -69,6 +69,9 @@
 
 #define PqParallelMsg_Progress		'P'
 
+/* Additional codes sent by repack workers to their steering process */
+
+#define PqRepackMsg_Terminate		'X'
 
 /* Replication codes sent by the primary (wrapped in CopyData messages). */
 
