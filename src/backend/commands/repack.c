@@ -3769,9 +3769,12 @@ start_repack_decoding_worker(Oid relid)
 	shared->roleid = GetUserId();
 	shared->relid = relid;
 	ConditionVariableInit(&shared->cv);
-	shared->backend_proc = MyProc;
 	shared->backend_pid = MyProcPid;
 	shared->backend_proc_number = MyProcNumber;
+
+	/* Transmit our timeouts to the worker too */
+	shared->lock_timeout = LockTimeout;
+	shared->transaction_timeout = TransactionTimeout;
 
 	mq = shm_mq_create((char *) BUFFERALIGN(shared->error_queue),
 					   REPACK_ERROR_QUEUE_SIZE);
