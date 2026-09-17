@@ -95,6 +95,10 @@ typedef struct DecodingWorkerShared
 	/* Role to connect as. */
 	Oid			roleid;
 
+	/* Timeouts to use in the worker */
+	int			lock_timeout;
+	int			transaction_timeout;
+
 	/* Relation from which data changes to decode. */
 	Oid			relid;
 
@@ -102,7 +106,6 @@ typedef struct DecodingWorkerShared
 	ConditionVariable cv;
 
 	/* Info to signal the backend. */
-	PGPROC	   *backend_proc;
 	pid_t		backend_pid;
 	ProcNumber	backend_proc_number;
 

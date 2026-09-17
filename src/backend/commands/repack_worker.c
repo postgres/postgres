@@ -27,6 +27,7 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 
 #define PGREPACK_PLUGIN   "pgrepack"
@@ -64,6 +65,7 @@ RepackWorkerMain(Datum main_arg)
 	LogicalDecodingContext *decoding_ctx;
 	SharedFileSet *sfs;
 	Snapshot	snapshot;
+	char		buf[32];
 
 	am_repack_worker = true;
 
@@ -84,7 +86,8 @@ RepackWorkerMain(Datum main_arg)
 	 * Join locking group - see the comments around the call of
 	 * start_repack_decoding_worker().
 	 */
-	if (!BecomeLockGroupMember(shared->backend_proc, shared->backend_pid))
+	if (!BecomeLockGroupMember(GetPGProcByNumber(shared->backend_proc_number),
+							   shared->backend_pid))
 		return;					/* The leader is not running anymore. */
 
 	/*
@@ -107,6 +110,12 @@ RepackWorkerMain(Datum main_arg)
 	BackgroundWorkerInitializeConnectionByOid(shared->dbid, shared->roleid,
 											  BGWORKER_BYPASS_ALLOWCONN |
 											  BGWORKER_BYPASS_ROLELOGINCHECK);
+
+	/* Adopt the steering backend's relevant timeouts. */
+	snprintf(buf, sizeof(buf), "%d", shared->lock_timeout);
+	SetConfigOption("lock_timeout", buf, PGC_SUSET, PGC_S_OVERRIDE);
+	snprintf(buf, sizeof(buf), "%d", shared->transaction_timeout);
+	SetConfigOption("transaction_timeout", buf, PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
 	 * Transaction is needed to open relation, and it also provides us with a
