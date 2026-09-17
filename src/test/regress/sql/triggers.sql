@@ -1576,6 +1576,31 @@ select * from parted;
 drop table parted;
 drop function parted_trigfunc();
 
+-- Test exception handling in a deferred constraint trigger at COMMIT.
+create table deferred_trigger_test (a int);
+create function deferred_trigger_func() returns trigger
+  language plpgsql as $$
+begin
+  perform 1 / 0;
+  return new;
+exception when division_by_zero then
+  raise notice 'caught division_by_zero';
+  return new;
+end;
+$$;
+create constraint trigger deferred_trigger
+  after insert on deferred_trigger_test
+  deferrable initially deferred
+  for each row execute function deferred_trigger_func();
+
+begin;
+insert into deferred_trigger_test values (1);
+commit;
+select * from deferred_trigger_test;
+
+drop table deferred_trigger_test;
+drop function deferred_trigger_func();
+
 --
 -- Constraint triggers and partitioned tables
 create table parted_constr_ancestor (a int, b text)

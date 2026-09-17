@@ -4848,6 +4848,8 @@ RollbackAndReleaseCurrentSubTransaction(void)
 		   s->blockState == TBLOCK_INPROGRESS ||
 		   s->blockState == TBLOCK_IMPLICIT_INPROGRESS ||
 		   s->blockState == TBLOCK_PARALLEL_INPROGRESS ||
+		   s->blockState == TBLOCK_END ||
+		   s->blockState == TBLOCK_PREPARE ||
 		   s->blockState == TBLOCK_STARTED);
 }
 
