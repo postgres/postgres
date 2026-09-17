@@ -134,6 +134,24 @@ is( $contents,
 3|oauth|\{issuer=$issuer/param,"scope=openid postgres",validator=validator\}},
 	"pg_hba_file_rules recreates OAuth HBA settings");
 
+# An all-whitespace library list parses as an empty list.  Reject it without
+# crashing the postmaster during HBA reload.
+$node->append_conf('postgresql.conf', "oauth_validator_libraries = '   '");
+$node->reload;
+$log_start = $node->wait_for_log(
+	qr/parameter "oauth_validator_libraries" must be set for authentication/,
+	$log_start);
+$bgconn->query_safe('SELECT 1');
+
+$node->append_conf('postgresql.conf',
+	"oauth_validator_libraries = 'validator'");
+$node->reload;
+$log_start = $node->wait_for_log(
+	qr/parameter "oauth_validator_libraries" changed to "validator"/,
+	$log_start);
+is($bgconn->query_safe('SHOW oauth_validator_libraries'),
+	'validator', 'oauth_validator_libraries restored');
+
 {
 	# Make sure PGOAUTHDEBUG=UNSAFE doesn't disable certificate verification.
 	local $ENV{PGOAUTHDEBUG} = "UNSAFE";
