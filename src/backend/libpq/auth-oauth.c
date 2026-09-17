@@ -826,20 +826,8 @@ check_oauth_validator(HbaLine *hbaline, int elevel, char **err_msg)
 
 	*err_msg = NULL;
 
-	if (oauth_validator_libraries_string[0] == '\0')
-	{
-		ereport(elevel,
-				errcode(ERRCODE_CONFIG_FILE_ERROR),
-				errmsg("oauth_validator_libraries must be set for authentication method %s",
-					   "oauth"),
-				errcontext("line %d of configuration file \"%s\"",
-						   line_num, file_name));
-		*err_msg = psprintf("oauth_validator_libraries must be set for authentication method %s",
-							"oauth");
-		return false;
-	}
-
 	/* SplitDirectoriesString needs a modifiable copy */
+	Assert(oauth_validator_libraries_string != NULL);
 	rawstring = pstrdup(oauth_validator_libraries_string);
 
 	if (!SplitDirectoriesString(rawstring, ',', &elemlist))
@@ -851,6 +839,19 @@ check_oauth_validator(HbaLine *hbaline, int elevel, char **err_msg)
 					   "oauth_validator_libraries"));
 		*err_msg = psprintf("invalid list syntax in parameter \"%s\"",
 							"oauth_validator_libraries");
+		goto done;
+	}
+
+	if (elemlist == NIL)
+	{
+		ereport(elevel,
+				errcode(ERRCODE_CONFIG_FILE_ERROR),
+				errmsg("oauth_validator_libraries must be set for authentication method %s",
+					   "oauth"),
+				errcontext("line %d of configuration file \"%s\"",
+						   line_num, file_name));
+		*err_msg = psprintf("oauth_validator_libraries must be set for authentication method %s",
+							"oauth");
 		goto done;
 	}
 
