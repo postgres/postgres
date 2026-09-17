@@ -123,6 +123,35 @@ CREATE PUBLICATION testpub_foralltables_excepttable1 FOR ALL TABLES EXCEPT (TABL
 -- Check that the table description shows the publications where it is listed
 -- in the EXCEPT clause
 \d testpub_tbl1
+-- Check object address handling for an EXCEPT entry.
+\a\t
+SELECT (pg_identify_object('pg_publication_rel'::regclass, pr.oid, 0)).*
+FROM pg_publication_rel pr
+JOIN pg_publication p ON p.oid = pr.prpubid
+JOIN pg_class c ON c.oid = pr.prrelid
+WHERE p.pubname = 'testpub_foralltables_excepttable1'
+  AND c.relname = 'testpub_tbl1';
+-- testpub_describe publishes testpub_tbl1, testpub_foralltables_excepttable1
+-- excludes it; an entry of one kind must not be resolved as the other.
+CREATE PUBLICATION testpub_describe FOR TABLE testpub_tbl1;
+SELECT pg_get_object_address('publication excluded relation',
+                             '{public, testpub_tbl1}', '{testpub_describe}');
+SELECT pg_get_object_address('publication relation',
+                             '{public, testpub_tbl1}',
+                             '{testpub_foralltables_excepttable1}');
+-- No entry of either kind.  testpub_default publishes nothing.
+SELECT pg_get_object_address('publication excluded relation',
+                             '{public, testpub_tbl1}', '{testpub_default}');
+-- Check pg_describe_object output for both included and excluded entries
+SELECT p.pubname,
+       pg_describe_object('pg_publication_rel'::regclass, pr.oid, 0) AS description,
+       pr.prexcept
+FROM pg_publication_rel pr
+JOIN pg_publication p ON p.oid = pr.prpubid
+WHERE p.pubname IN ('testpub_describe', 'testpub_foralltables_excepttable1')
+ORDER BY p.pubname;
+DROP PUBLICATION testpub_describe;
+\a\t
 -- fail - first table in the EXCEPT list should use TABLE keyword
 CREATE PUBLICATION testpub_foralltables_excepttable2 FOR ALL TABLES EXCEPT (testpub_tbl1, testpub_tbl2);
 
