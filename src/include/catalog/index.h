@@ -140,6 +140,9 @@ extern bool CompareIndexInfo(const IndexInfo *info1, const IndexInfo *info2,
 
 extern void BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii);
 
+extern bool IsIndexCompatibleAsArbiter(Relation indexRel1,
+									   Relation indexRel2);
+
 extern void FormIndexDatum(IndexInfo *indexInfo,
 						   TupleTableSlot *slot,
 						   EState *estate,

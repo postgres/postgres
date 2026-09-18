@@ -2102,6 +2102,34 @@ DETAIL:  Key (x)=(ABC) already exists.
 CREATE UNIQUE INDEX ON test3ci (x);  -- error
 ERROR:  could not create unique index "test3ci_x_idx"
 DETAIL:  Key (x)=(abc) is duplicated.
+-- ON CONFLICT ON CONSTRAINT must not use an index that differs from the
+-- named constraint's index in collation
+CREATE TABLE test_arbiter_ci (x text, y text);
+ALTER TABLE test_arbiter_ci ADD CONSTRAINT test_arbiter_ci_x_key UNIQUE (x);
+CREATE UNIQUE INDEX test_arbiter_ci_x_ci
+  ON test_arbiter_ci (x COLLATE case_insensitive);
+INSERT INTO test_arbiter_ci VALUES ('abc', 'first');
+INSERT INTO test_arbiter_ci VALUES ('ABC', 'second')
+  ON CONFLICT ON CONSTRAINT test_arbiter_ci_x_key
+  DO UPDATE SET y = excluded.y;  -- error
+ERROR:  duplicate key value violates unique constraint "test_arbiter_ci_x_ci"
+DETAIL:  Key (x)=(ABC) already exists.
+INSERT INTO test_arbiter_ci VALUES ('ABC', 'third')
+  ON CONFLICT ON CONSTRAINT test_arbiter_ci_x_key DO NOTHING;  -- error
+ERROR:  duplicate key value violates unique constraint "test_arbiter_ci_x_ci"
+DETAIL:  Key (x)=(ABC) already exists.
+INSERT INTO test_arbiter_ci VALUES ('ABC', 'fourth')
+  ON CONFLICT ON CONSTRAINT test_arbiter_ci_x_key
+  DO SELECT RETURNING *;  -- error
+ERROR:  duplicate key value violates unique constraint "test_arbiter_ci_x_ci"
+DETAIL:  Key (x)=(ABC) already exists.
+SELECT x, y FROM test_arbiter_ci;
+  x  |   y   
+-----+-------
+ abc | first
+(1 row)
+
+DROP TABLE test_arbiter_ci;
 SELECT string_to_array('ABC,DEF,GHI' COLLATE case_insensitive, ',', 'abc');
  string_to_array 
 -----------------

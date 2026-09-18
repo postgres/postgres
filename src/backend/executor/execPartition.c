@@ -494,65 +494,6 @@ ExecFindPartition(ModifyTableState *mtstate,
 }
 
 /*
- * IsIndexCompatibleAsArbiter
- *		Return true if two indexes are identical for INSERT ON CONFLICT
- *		purposes.
- *
- * Only indexes of the same relation are supported.
- */
-static bool
-IsIndexCompatibleAsArbiter(Relation arbiterIndexRelation,
-						   IndexInfo *arbiterIndexInfo,
-						   Relation indexRelation,
-						   IndexInfo *indexInfo)
-{
-	Assert(arbiterIndexRelation->rd_index->indrelid == indexRelation->rd_index->indrelid);
-
-	/* must match whether they're unique */
-	if (arbiterIndexInfo->ii_Unique != indexInfo->ii_Unique)
-		return false;
-
-	/* No support currently for comparing exclusion indexes. */
-	if (arbiterIndexInfo->ii_ExclusionOps != NULL ||
-		indexInfo->ii_ExclusionOps != NULL)
-		return false;
-
-	/* the "nulls not distinct" criterion must match */
-	if (arbiterIndexInfo->ii_NullsNotDistinct !=
-		indexInfo->ii_NullsNotDistinct)
-		return false;
-
-	/* number of key attributes must match */
-	if (arbiterIndexInfo->ii_NumIndexKeyAttrs !=
-		indexInfo->ii_NumIndexKeyAttrs)
-		return false;
-
-	for (int i = 0; i < arbiterIndexInfo->ii_NumIndexKeyAttrs; i++)
-	{
-		if (arbiterIndexRelation->rd_indcollation[i] !=
-			indexRelation->rd_indcollation[i])
-			return false;
-
-		if (arbiterIndexRelation->rd_opfamily[i] !=
-			indexRelation->rd_opfamily[i])
-			return false;
-
-		if (arbiterIndexRelation->rd_index->indkey.values[i] !=
-			indexRelation->rd_index->indkey.values[i])
-			return false;
-	}
-
-	if (list_difference(RelationGetIndexExpressions(arbiterIndexRelation),
-						RelationGetIndexExpressions(indexRelation)) != NIL)
-		return false;
-
-	if (list_difference(RelationGetIndexPredicate(arbiterIndexRelation),
-						RelationGetIndexPredicate(indexRelation)) != NIL)
-		return false;
-	return true;
-}
-
-/*
  * ExecInitPartitionInfo
  *		Lock the partition and initialize ResultRelInfo.  Also setup other
  *		information for the partition and store it in the next empty slot in
@@ -846,19 +787,15 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 					foreach_int(arbiter_i, arbiters_listidxs)
 					{
 						Relation	arbiter_rel;
-						IndexInfo  *arbiter_ii;
 
 						arbiter_rel = leaf_part_rri->ri_IndexRelationDescs[arbiter_i];
-						arbiter_ii = leaf_part_rri->ri_IndexRelationInfo[arbiter_i];
 
 						/*
 						 * If the non-ancestor index is compatible with the
 						 * arbiter, use the non-ancestor as arbiter too.
 						 */
 						if (IsIndexCompatibleAsArbiter(arbiter_rel,
-													   arbiter_ii,
-													   unparented_rel,
-													   unparented_ii))
+													   unparented_rel))
 						{
 							arbiterIndexes = lappend_oid(arbiterIndexes,
 														 unparented_rel->rd_index->indexrelid);

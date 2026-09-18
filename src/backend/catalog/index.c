@@ -2753,6 +2753,80 @@ BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
 }
 
 /* ----------------
+ * IsIndexCompatibleAsArbiter
+ *		Return true if two indexes of the same table are interchangeable as
+ *		speculative insertion arbiters for INSERT ON CONFLICT.
+ *
+ * To be interchangeable, the two indexes must agree on which tuples conflict,
+ * so every property bearing on that must be identical.  Indexes that merely
+ * index the same columns can each have their own notion of what a duplicate
+ * is, and treating one as arbiter in place of the other would resolve
+ * conflicts the other does not have.
+ *
+ * This is built for REINDEX CONCURRENTLY: while it processes an arbiter
+ * index, an exact copy of it built by index_create_copy() exists alongside,
+ * and both copies must arbitrate together for all concurrent sessions to
+ * agree on the set of arbiters.
+ *
+ * Properties that do not affect which tuples conflict, such as validity,
+ * are deliberately not examined here; callers must check them as needed.
+ * ----------------
+ */
+bool
+IsIndexCompatibleAsArbiter(Relation indexRel1, Relation indexRel2)
+{
+	Form_pg_index indexForm1 = indexRel1->rd_index;
+	Form_pg_index indexForm2 = indexRel2->rd_index;
+
+	/* Only indexes of the same relation can be compared. */
+	Assert(indexForm1->indrelid == indexForm2->indrelid);
+
+	/* must match whether they're unique */
+	if (indexForm1->indisunique != indexForm2->indisunique)
+		return false;
+
+	/* No support currently for comparing exclusion indexes. */
+	if (indexForm1->indisexclusion || indexForm2->indisexclusion)
+		return false;
+
+	/* a deferrable index detects conflicts at a different time */
+	if (indexForm1->indimmediate != indexForm2->indimmediate)
+		return false;
+
+	/* the "nulls not distinct" criterion must match */
+	if (indexForm1->indnullsnotdistinct != indexForm2->indnullsnotdistinct)
+		return false;
+
+	/* number of key attributes must match */
+	if (indexForm1->indnkeyatts != indexForm2->indnkeyatts)
+		return false;
+
+	/* key columns, and their collations and opfamilies, must match */
+	for (int i = 0; i < indexForm1->indnkeyatts; i++)
+	{
+		if (indexForm1->indkey.values[i] != indexForm2->indkey.values[i])
+			return false;
+
+		if (indexRel1->rd_indcollation[i] != indexRel2->rd_indcollation[i])
+			return false;
+
+		if (indexRel1->rd_opfamily[i] != indexRel2->rd_opfamily[i])
+			return false;
+	}
+
+	/* index expressions and predicate must match */
+	if (!equal(RelationGetIndexExpressions(indexRel1),
+			   RelationGetIndexExpressions(indexRel2)))
+		return false;
+
+	if (!equal(RelationGetIndexPredicate(indexRel1),
+			   RelationGetIndexPredicate(indexRel2)))
+		return false;
+
+	return true;
+}
+
+/* ----------------
  *		FormIndexDatum
  *			Construct values[] and isnull[] arrays for a new index tuple.
  *
