@@ -249,6 +249,9 @@ CREATE PUBLICATION testpub8 FOR ALL TABLES EXCEPT (TABLE testpub_root);
 \d testpub_part1
 \d testpub_root
 CREATE PUBLICATION testpub9 FOR ALL TABLES EXCEPT (TABLE testpub_part1);
+-- A name that needs quoting must not be quoted twice in the message.
+CREATE TABLE "testpub Part2" PARTITION OF testpub_root FOR VALUES FROM (100) TO (200);
+CREATE PUBLICATION testpub9 FOR ALL TABLES EXCEPT (TABLE "testpub Part2");
 
 CREATE TABLE tab_main (a int) PARTITION BY RANGE(a);
 -- Attaching a partition is not allowed if the partitioned table appears in a
@@ -256,7 +259,7 @@ CREATE TABLE tab_main (a int) PARTITION BY RANGE(a);
 ALTER TABLE tab_main ATTACH PARTITION testpub_root FOR VALUES FROM (0) TO (200);
 
 RESET client_min_messages;
-DROP TABLE testpub_root, testpub_part1, tab_main;
+DROP TABLE testpub_root, testpub_part1, "testpub Part2", tab_main;
 DROP PUBLICATION testpub8;
 
 --- Tests for publications with SEQUENCES
