@@ -2860,34 +2860,6 @@ MultiXactMemberIoErrorDetail(const void *opaque_data)
 						 context->offset);
 }
 
-/*
- * Decide which of two MultiXactIds is earlier.
- *
- * XXX do we need to do something special for InvalidMultiXactId?
- * (Doesn't look like it.)
- */
-bool
-MultiXactIdPrecedes(MultiXactId multi1, MultiXactId multi2)
-{
-	int32		diff = (int32) (multi1 - multi2);
-
-	return (diff < 0);
-}
-
-/*
- * MultiXactIdPrecedesOrEquals -- is multi1 logically <= multi2?
- *
- * XXX do we need to do something special for InvalidMultiXactId?
- * (Doesn't look like it.)
- */
-bool
-MultiXactIdPrecedesOrEquals(MultiXactId multi1, MultiXactId multi2)
-{
-	int32		diff = (int32) (multi1 - multi2);
-
-	return (diff <= 0);
-}
-
 
 /*
  * Write a TRUNCATE xlog record

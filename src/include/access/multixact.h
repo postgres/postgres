@@ -29,6 +29,34 @@
 #define MultiXactIdIsValid(multi) ((multi) != InvalidMultiXactId)
 
 /*
+ * Decide which of two MultiXactIds is earlier.
+ *
+ * XXX do we need to do something special for InvalidMultiXactId?
+ * (Doesn't look like it.)
+ */
+static inline bool
+MultiXactIdPrecedes(MultiXactId multi1, MultiXactId multi2)
+{
+	int32		diff = (int32) (multi1 - multi2);
+
+	return (diff < 0);
+}
+
+/*
+ * MultiXactIdPrecedesOrEquals -- is multi1 logically <= multi2?
+ *
+ * XXX do we need to do something special for InvalidMultiXactId?
+ * (Doesn't look like it.)
+ */
+static inline bool
+MultiXactIdPrecedesOrEquals(MultiXactId multi1, MultiXactId multi2)
+{
+	int32		diff = (int32) (multi1 - multi2);
+
+	return (diff <= 0);
+}
+
+/*
  * Possible multixact lock modes ("status").  The first four modes are for
  * tuple locks (FOR KEY SHARE, FOR SHARE, FOR NO KEY UPDATE, FOR UPDATE); the
  * next two are used for update and delete modes.
@@ -110,9 +138,6 @@ extern int	GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 extern void GetMultiXactInfo(uint32 *multixacts, MultiXactOffset *nextOffset,
 							 MultiXactId *oldestMultiXactId,
 							 MultiXactOffset *oldestOffset);
-extern bool MultiXactIdPrecedes(MultiXactId multi1, MultiXactId multi2);
-extern bool MultiXactIdPrecedesOrEquals(MultiXactId multi1,
-										MultiXactId multi2);
 
 extern int	multixactoffsetssyncfiletag(const FileTag *ftag, char *path);
 extern int	multixactmemberssyncfiletag(const FileTag *ftag, char *path);

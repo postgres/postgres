@@ -9,6 +9,8 @@
 
 #include "postgres_fe.h"
 
+#include "access/multixact.h"
+#include "access/transam.h"
 #include "catalog/pg_am_d.h"
 #include "catalog/pg_authid_d.h"
 #include "catalog/pg_class_d.h"
@@ -36,6 +38,7 @@ static void check_new_cluster_subscription_configuration(void);
 static void check_old_cluster_for_valid_slots(void);
 static void check_old_cluster_subscription_state(void);
 static void check_old_cluster_global_names(ClusterInfo *cluster);
+static void check_for_oldestxid_consistency(ClusterInfo *cluster);
 
 /*
  * DataTypesUsageChecks - definitions of data type checks for the old cluster
@@ -570,6 +573,7 @@ check_and_dump_old_cluster(void)
 	 */
 	check_is_install_user(&old_cluster);
 	check_for_prepared_transactions(&old_cluster);
+	check_for_oldestxid_consistency(&old_cluster);
 	check_for_isn_and_int8_passing_mismatch(&old_cluster);
 
 	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 1700)
@@ -2569,4 +2573,71 @@ check_old_cluster_global_names(ClusterInfo *cluster)
 	}
 	else
 		check_ok();
+}
+
+/*
+ * check_for_oldestxid_consistency()
+ *
+ * Check that the oldestXid and oldestMultiXID values in the control file are
+ * consistent with the 'datfrozenxid' and 'datminmxid' values in pg_database.
+ *
+ * The invariant is that all 'datfrozenxid' and 'datminmxid' values must be
+ * greater than or equal to the values in the control file.  Otherwise you
+ * might already have truncated away clog or multixids that are still needed.
+ * If that has happened, we refuse the upgrade and require the administrator
+ * to deal with the situation first.
+ *
+ * One scenario where that is known to happen is if the cluster was upgraded
+ * in the past to version 9.3 with a buggy pg_upgrade version that didn't copy
+ * the oldestMulti value from the old cluster.  See commit a61daa14d5.
+ * That was a long time ago, though, so you're not very likely to encounter
+ * that bug in the wild anymore.  Therefore we don't assume that's the cause
+ * or try to do anything clever here.  In any case, it's still good to check
+ * to prevent further damage.
+ */
+static void
+check_for_oldestxid_consistency(ClusterInfo *cluster)
+{
+	PGconn	   *conn_template1;
+	PGresult   *dbres;
+	int			ntups;
+	int			i_datname;
+	int			i_datfrozenxid;
+	int			i_datminmxid;
+
+	prep_status("Checking oldestXID and oldestMultiXid consistency");
+
+	conn_template1 = connectToServer(cluster, "template1");
+
+	dbres = executeQueryOrDie(conn_template1,
+							  "SELECT datname, datfrozenxid, datminmxid "
+							  "FROM	pg_catalog.pg_database");
+
+	i_datname = PQfnumber(dbres, "datname");
+	i_datfrozenxid = PQfnumber(dbres, "datfrozenxid");
+	i_datminmxid = PQfnumber(dbres, "datminmxid");
+
+	ntups = PQntuples(dbres);
+	for (int dbnum = 0; dbnum < ntups; dbnum++)
+	{
+		char	   *datname = PQgetvalue(dbres, dbnum, i_datname);
+		TransactionId datfrozenxid = (TransactionId) str2uint(PQgetvalue(dbres, dbnum, i_datfrozenxid));
+		MultiXactId datminmxid = (MultiXactId) str2uint(PQgetvalue(dbres, dbnum, i_datminmxid));
+
+		if (TransactionIdPrecedes(datfrozenxid, cluster->controldata.chkpnt_oldstxid))
+		{
+			pg_fatal("oldestXID (%u) in the control file is newer than the datfrozenxid (%u) of database \"%s\"",
+					 cluster->controldata.chkpnt_oldstxid, datfrozenxid, datname);
+		}
+		if (MultiXactIdPrecedes(datminmxid, cluster->controldata.chkpnt_oldstMulti))
+		{
+			pg_fatal("oldestMultiXid (%u) in control file is newer than the datminmxid (%u) of database \"%s\"",
+					 cluster->controldata.chkpnt_oldstMulti, datminmxid, datname);
+		}
+	}
+
+	PQclear(dbres);
+	PQfinish(conn_template1);
+
+	check_ok();
 }
