@@ -282,13 +282,38 @@ $node_standby->psql(
 ok($stderr =~ /recovery is in progress/,
 	"get an error when running primary_flush on the standby");
 
+# A transaction-snapshot-mode transaction has no snapshot until its first
+# query, so WAIT FOR is allowed before that point.  The target is already
+# replayed here, so the command returns immediately.
+$output = $node_standby->safe_psql('postgres',
+	"BEGIN ISOLATION LEVEL REPEATABLE READ; WAIT FOR LSN '${lsn2}'; COMMIT;");
+ok($output eq "success",
+	"WAIT FOR is allowed before the transaction snapshot is taken");
+
 $node_standby->psql(
 	'postgres',
 	"BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT 1; WAIT FOR LSN '${lsn3}';",
 	stderr => \$stderr);
-ok( $stderr =~ /WAIT must be called without an active or registered snapshot/,
+ok( $stderr =~
+	  /WAIT cannot be executed while the current transaction holds a snapshot/,
 	"get an error when running in a transaction with an isolation level higher than REPEATABLE READ"
 );
+ok( $stderr =~
+	  /isolation level higher than READ COMMITTED, so it holds a snapshot/,
+	"the isolation level is given as the reason when it is the reason");
+
+# The same error at READ COMMITTED must not blame the isolation level.
+$node_standby->psql(
+	'postgres',
+	"BEGIN; DECLARE c CURSOR FOR SELECT 1; WAIT FOR LSN '${lsn3}';",
+	stderr => \$stderr);
+ok( $stderr =~
+	  /WAIT cannot be executed while the current transaction holds a snapshot/,
+	"get an error when a cursor holds a snapshot");
+unlike(
+	$stderr,
+	qr/isolation level/,
+	"the isolation level is not blamed at READ COMMITTED");
 
 # Test wrapping WAIT FOR into function, procedure, and anonymous DO block --
 # should error
