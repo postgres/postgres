@@ -46,7 +46,6 @@ AssertCouldGetRelation(void)
 }
 #endif
 extern Relation RelationIdGetRelation(Oid relationId);
-extern char *RelationGetQualifiedRelationName(Relation rel);
 extern void RelationClose(Relation relation);
 
 /*

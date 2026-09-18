@@ -62,7 +62,13 @@ check_publication_add_relation(PublicationRelInfo *pri)
 
 	if (pri->except)
 	{
-		relname = RelationGetQualifiedRelationName(targetrel);
+		/*
+		 * The name parts must not be quoted here, because the message already
+		 * encloses the whole name in double quotes.
+		 */
+		relname = psprintf("%s.%s",
+						   get_namespace_name(RelationGetNamespace(targetrel)),
+						   RelationGetRelationName(targetrel));
 		errormsg = gettext_noop("cannot specify relation \"%s\" in the publication EXCEPT clause");
 	}
 	else
