@@ -220,7 +220,7 @@ typedef struct PGOutputTxnData
 static HTAB *RelationSyncCache = NULL;
 
 static void init_rel_sync_cache(MemoryContext cachectx);
-static void cleanup_rel_sync_cache(TransactionId xid, bool is_commit);
+static void cleanup_rel_sync_cache(TransactionId xid, bool mark_schema_sent);
 static RelationSyncEntry *get_rel_sync_entry(PGOutputData *data,
 											 Relation relation);
 static void send_relation_and_attrs(Relation relation, TransactionId xid,
@@ -1963,6 +1963,9 @@ pgoutput_stream_prepare_txn(LogicalDecodingContext *ctx,
 	OutputPluginPrepareWrite(ctx, true);
 	logicalrep_write_stream_prepare(ctx->out, txn, prepare_lsn);
 	OutputPluginWrite(ctx, true);
+
+	/* Schema cache updates at PREPARE survive ROLLBACK PREPARED. */
+	cleanup_rel_sync_cache(txn->xid, true);
 }
 
 /*
@@ -2372,16 +2375,16 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 /*
  * Cleanup list of streamed transactions and update the schema_sent flag.
  *
- * When a streamed transaction commits or aborts, we need to remove the
- * toplevel XID from the schema cache. If the transaction aborted, the
- * subscriber will simply throw away the schema records we streamed, so
- * we don't need to do anything else.
+ * When a streamed transaction commits, aborts or prepares, we need to remove
+ * the toplevel XID from the schema cache. If the transaction aborted, the
+ * subscriber will simply throw away the schema records we streamed, so we
+ * don't need to do anything else.
  *
- * If the transaction is committed, the subscriber will update the relation
- * cache - so tweak the schema_sent flag accordingly.
+ * If the transaction is committed or prepared, the subscriber will update
+ * the relation cache - so tweak the schema_sent flag accordingly.
  */
 static void
-cleanup_rel_sync_cache(TransactionId xid, bool is_commit)
+cleanup_rel_sync_cache(TransactionId xid, bool mark_schema_sent)
 {
 	HASH_SEQ_STATUS hash_seq;
 	RelationSyncEntry *entry;
@@ -2392,16 +2395,16 @@ cleanup_rel_sync_cache(TransactionId xid, bool is_commit)
 	while ((entry = hash_seq_search(&hash_seq)) != NULL)
 	{
 		/*
-		 * We can set the schema_sent flag for an entry that has committed xid
-		 * in the list as that ensures that the subscriber would have the
-		 * corresponding schema and we don't need to send it unless there is
-		 * any invalidation for that relation.
+		 * We can set the schema_sent flag for an entry that has a committed
+		 * or prepared xid in the list as that ensures that the subscriber
+		 * would have the corresponding schema and we don't need to send it
+		 * unless there is any invalidation for that relation.
 		 */
 		foreach_xid(streamed_txn, entry->streamed_txns)
 		{
 			if (xid == streamed_txn)
 			{
-				if (is_commit)
+				if (mark_schema_sent)
 					entry->schema_sent = true;
 
 				entry->streamed_txns =
