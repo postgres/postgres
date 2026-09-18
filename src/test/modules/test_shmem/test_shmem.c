@@ -35,12 +35,11 @@ typedef struct TestShmemData
 
 static TestShmemData *TestShmem;
 
-#define MIN_TEST_AREA_BYTES sizeof(TestShmemData)
-#define DEFAULT_TEST_AREA_BYTES MIN_TEST_AREA_BYTES
+#define DEFAULT_TEST_AREA_BYTES sizeof(TestShmemData)
 #define MAX_TEST_AREA_BYTES 1000000
 
 static bool attached_or_initialized = false;
-static int	test_shmem_area_size = MIN_TEST_AREA_BYTES;
+static int	test_shmem_area_size = DEFAULT_TEST_AREA_BYTES;
 static bool test_shmem_guc_defined = false;
 
 static void test_shmem_request(void *arg);
@@ -100,12 +99,16 @@ _PG_init(void)
 
 	if (!test_shmem_guc_defined)
 	{
+		/*
+		 * The minimum size that makes sense is sizeof(TestShmemData), but we
+		 * allow -1 so that we can test passing SHMEM_ATTACH_UNKNOWN_SIZE.
+		 */
 		DefineCustomIntVariable("test_shmem.area_size",
 								"Size of the shmem area to request.",
 								NULL,
 								&test_shmem_area_size,
 								DEFAULT_TEST_AREA_BYTES,
-								MIN_TEST_AREA_BYTES,
+								-1,
 								MAX_TEST_AREA_BYTES,
 								PGC_USERSET,
 								GUC_UNIT_BYTE,

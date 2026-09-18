@@ -3745,6 +3745,16 @@ my_shmem_init(void *arg)
       areas are left in an abandoned state and any attempt to attach or
       re-initialize them will fail until the server is restarted.
      </para>
+     <para>
+      A backend attaching to an already allocated shared memory area must
+      normally pass the same <literal>size</literal> that was used to allocate
+      it to <function>ShmemRequestStruct()</function>; a mismatch results in
+      an error.  If the attaching backend does not know the size in advance,
+      it can pass <literal>SHMEM_ATTACH_UNKNOWN_SIZE</literal> instead, to
+      skip this cross-check.  <literal>SHMEM_ATTACH_UNKNOWN_SIZE</literal> can
+      only be used to attach to an area that already exists; using it before
+      allocating the area results in an error.
+     </para>
     </sect3>
 
     <sect3 id="xfunc-shared-addin-dynamic">

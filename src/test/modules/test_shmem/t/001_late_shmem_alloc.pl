@@ -32,6 +32,23 @@ cmp_ok($attach_count2, '>', $attach_count1,
 $node->stop;
 
 ###
+# Test that trying to allocate a new shmem area with size =
+# SHMEM_ATTACH_UNKNOWN_SIZE (-1) fails.
+###
+$node->append_conf('postgresql.conf', "test_shmem.area_size = -1");
+$node->start;
+
+my (undef, undef, $stderr) =
+  $node->psql("postgres", "SELECT get_test_shmem_attach_count();");
+like(
+	$stderr,
+	qr/cannot attach to shared memory struct "test_shmem area" because it does not exist/,
+	"unknown size request for a nonexistent area fails");
+
+$node->stop;
+$node->adjust_conf('postgresql.conf', 'test_shmem.area_size', undef);
+
+###
 # Test allocating memory after startup in single-user mode
 ###
 SKIP:
