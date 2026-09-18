@@ -401,23 +401,13 @@ get_db_infos(ClusterInfo *cluster)
 	int			ntups;
 	int			tupnum;
 	DbInfo	   *dbinfos;
-	int			i_datname,
-				i_oid,
+	int			i_oid,
+				i_datname,
 				i_spclocation;
 	char		query[QUERY_ALLOC];
 
 	snprintf(query, sizeof(query),
-			 "SELECT d.oid, d.datname, d.encoding, d.datcollate, d.datctype, ");
-	if (GET_MAJOR_VERSION(cluster->major_version) >= 1700)
-		snprintf(query + strlen(query), sizeof(query) - strlen(query),
-				 "datlocprovider, datlocale, ");
-	else if (GET_MAJOR_VERSION(cluster->major_version) >= 1500)
-		snprintf(query + strlen(query), sizeof(query) - strlen(query),
-				 "datlocprovider, daticulocale AS datlocale, ");
-	else
-		snprintf(query + strlen(query), sizeof(query) - strlen(query),
-				 "'c' AS datlocprovider, NULL AS datlocale, ");
-	snprintf(query + strlen(query), sizeof(query) - strlen(query),
+			 "SELECT d.oid, d.datname, "
 			 "pg_catalog.pg_tablespace_location(t.oid) AS spclocation "
 			 "FROM pg_catalog.pg_database d "
 			 " LEFT OUTER JOIN pg_catalog.pg_tablespace t "
