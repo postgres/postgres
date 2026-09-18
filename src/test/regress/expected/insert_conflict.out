@@ -1064,6 +1064,102 @@ insert into parted_conflict_1 values (40, 'cuarenta')
   on conflict (a) do update set b = excluded.b;
 ERROR:  there is no unique or exclusion constraint matching the ON CONFLICT specification
 drop table parted_conflict;
+-- a partition-local deferrable unique constraint on the arbiter columns
+-- must not be picked up as an additional arbiter for routed inserts
+create table parted_conflict (a int, b text, primary key (a)) partition by range (a);
+create table parted_conflict_1 partition of parted_conflict for values from (0) to (1000);
+alter table parted_conflict_1 add constraint parted_conflict_1_a_def unique (a) deferrable;
+insert into parted_conflict values (40, 'forty');
+insert into parted_conflict values (40, 'cuarenta')
+  on conflict (a) do update set b = excluded.b;
+insert into parted_conflict values (41, 'forty-one')
+  on conflict (a) do update set b = excluded.b;
+insert into parted_conflict values (42, 'forty-two') on conflict (a) do nothing;
+select * from parted_conflict order by a;
+ a  |     b     
+----+-----------
+ 40 | cuarenta
+ 41 | forty-one
+ 42 | forty-two
+(3 rows)
+
+drop table parted_conflict;
+-- ON CONFLICT ON CONSTRAINT has the same hazard: an index that merely covers
+-- the same columns as the named constraint's index, but is deferrable or
+-- disagrees with it about duplicates, must not join the arbiter set
+create table namedconstraint (a int, b text, c text);
+alter table namedconstraint add constraint namedconstraint_a_key unique (a);
+alter table namedconstraint add constraint namedconstraint_a_def unique (a) deferrable;
+create unique index namedconstraint_b_nnd on namedconstraint (b) nulls not distinct;
+alter table namedconstraint add constraint namedconstraint_b_key unique (b);
+insert into namedconstraint values (1, 'x', 'first');
+insert into namedconstraint values (2, null, 'first');
+insert into namedconstraint values (1, 'y', 'second')
+  on conflict on constraint namedconstraint_a_key do update set c = excluded.c;
+insert into namedconstraint values (3, null, 'second')
+  on conflict on constraint namedconstraint_b_key do update set c = excluded.c;  -- error
+ERROR:  duplicate key value violates unique constraint "namedconstraint_b_nnd"
+DETAIL:  Key (b)=(null) already exists.
+insert into namedconstraint values (4, 'z', 'third')
+  on conflict on constraint namedconstraint_a_key do nothing;
+insert into namedconstraint values (5, null, 'third')
+  on conflict on constraint namedconstraint_b_key do nothing;  -- error
+ERROR:  duplicate key value violates unique constraint "namedconstraint_b_nnd"
+DETAIL:  Key (b)=(null) already exists.
+select * from namedconstraint order by a;
+ a | b |   c    
+---+---+--------
+ 1 | x | second
+ 2 |   | first
+ 4 | z | third
+(3 rows)
+
+drop table namedconstraint;
+-- same, with the indexes created in the opposite order
+create table namedconstraint2 (a int, b text, c text);
+alter table namedconstraint2 add constraint namedconstraint2_a_def unique (a) deferrable;
+alter table namedconstraint2 add constraint namedconstraint2_a_key unique (a);
+alter table namedconstraint2 add constraint namedconstraint2_b_key unique (b);
+create unique index namedconstraint2_b_nnd on namedconstraint2 (b) nulls not distinct;
+insert into namedconstraint2 values (1, 'x', 'first');
+insert into namedconstraint2 values (2, null, 'first');
+insert into namedconstraint2 values (1, 'y', 'second')
+  on conflict on constraint namedconstraint2_a_key do update set c = excluded.c;
+insert into namedconstraint2 values (3, 'z', 'second')
+  on conflict on constraint namedconstraint2_a_key do nothing;
+insert into namedconstraint2 values (4, null, 'second')
+  on conflict on constraint namedconstraint2_b_key do nothing;  -- error
+ERROR:  duplicate key value violates unique constraint "namedconstraint2_b_nnd"
+DETAIL:  Key (b)=(null) already exists.
+-- ON CONFLICT DO SELECT reaches the same code
+insert into namedconstraint2 values (1, 'w', 'third')
+  on conflict on constraint namedconstraint2_a_key do select returning *;
+ a | b |   c    
+---+---+--------
+ 1 | x | second
+(1 row)
+
+insert into namedconstraint2 values (5, 'v', 'third')
+  on conflict on constraint namedconstraint2_a_key do select returning *;
+ a | b |   c   
+---+---+-------
+ 5 | v | third
+(1 row)
+
+insert into namedconstraint2 values (6, null, 'fourth')
+  on conflict on constraint namedconstraint2_b_key do select returning *;  -- error
+ERROR:  duplicate key value violates unique constraint "namedconstraint2_b_nnd"
+DETAIL:  Key (b)=(null) already exists.
+select * from namedconstraint2 order by a;
+ a | b |   c    
+---+---+--------
+ 1 | x | second
+ 2 |   | first
+ 3 | z | second
+ 5 | v | third
+(4 rows)
+
+drop table namedconstraint2;
 -- test whole-row Vars in ON CONFLICT expressions
 create table parted_conflict (a int, b text, c int) partition by range (a);
 create table parted_conflict_1 (drp text, c int, a int, b text);

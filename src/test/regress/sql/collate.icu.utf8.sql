@@ -748,6 +748,24 @@ SELECT x, row_number() OVER (ORDER BY x), rank() OVER (ORDER BY x) FROM test3ci 
 CREATE UNIQUE INDEX ON test1ci (x);  -- ok
 INSERT INTO test1ci VALUES ('ABC');  -- error
 CREATE UNIQUE INDEX ON test3ci (x);  -- error
+
+-- ON CONFLICT ON CONSTRAINT must not use an index that differs from the
+-- named constraint's index in collation
+CREATE TABLE test_arbiter_ci (x text, y text);
+ALTER TABLE test_arbiter_ci ADD CONSTRAINT test_arbiter_ci_x_key UNIQUE (x);
+CREATE UNIQUE INDEX test_arbiter_ci_x_ci
+  ON test_arbiter_ci (x COLLATE case_insensitive);
+INSERT INTO test_arbiter_ci VALUES ('abc', 'first');
+INSERT INTO test_arbiter_ci VALUES ('ABC', 'second')
+  ON CONFLICT ON CONSTRAINT test_arbiter_ci_x_key
+  DO UPDATE SET y = excluded.y;  -- error
+INSERT INTO test_arbiter_ci VALUES ('ABC', 'third')
+  ON CONFLICT ON CONSTRAINT test_arbiter_ci_x_key DO NOTHING;  -- error
+INSERT INTO test_arbiter_ci VALUES ('ABC', 'fourth')
+  ON CONFLICT ON CONSTRAINT test_arbiter_ci_x_key
+  DO SELECT RETURNING *;  -- error
+SELECT x, y FROM test_arbiter_ci;
+DROP TABLE test_arbiter_ci;
 SELECT string_to_array('ABC,DEF,GHI' COLLATE case_insensitive, ',', 'abc');
 SELECT string_to_array('ABCDEFGHI' COLLATE case_insensitive, NULL, 'b');
 

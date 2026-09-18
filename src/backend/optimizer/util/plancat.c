@@ -27,6 +27,7 @@
 #include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
+#include "catalog/index.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_statistic_ext.h"
@@ -795,6 +796,13 @@ find_relation_notnullatts(PlannerInfo *root, Oid relid)
  * the purposes of inference.  If no opclass (or collation) is specified, then
  * all matching indexes (that may or may not match the default in terms of
  * each attribute opclass/collation) are used for inference.
+ *
+ * If a named constraint was specified, none of that matching happens: the
+ * constraint's index is used, along with any index that is an exact
+ * structural equivalent of it.  Such equivalents exist transiently while
+ * REINDEX CONCURRENTLY processes the constraint's index, and they must all
+ * arbitrate together so that every concurrent session resolves conflicts
+ * against the same set of indexes.
  */
 List *
 infer_arbiter_indexes(PlannerInfo *root)
@@ -804,18 +812,13 @@ infer_arbiter_indexes(PlannerInfo *root)
 	/* Iteration state */
 	Index		varno;
 	RangeTblEntry *rte;
-	Relation	relation;
+	Relation	relation,
+				indexRelFromConstraint = NULL;
 	Oid			indexOidFromConstraint = InvalidOid;
 	List	   *indexList;
 	List	   *indexRelList = NIL;
 
-	/*
-	 * Required attributes and expressions used to match indexes to the clause
-	 * given by the user.  In the ON CONFLICT ON CONSTRAINT case, we compute
-	 * these from that constraint's index to match all other indexes, to
-	 * account for the case where that index is being concurrently reindexed.
-	 */
-	List	   *inferIndexExprs = (List *) onconflict->arbiterWhere;
+	/* Normalized inference attributes and inference expressions: */
 	Bitmapset  *inferAttrs = NULL;
 	List	   *inferElems = NIL;
 
@@ -911,39 +914,21 @@ infer_arbiter_indexes(PlannerInfo *root)
 					 errmsg("constraint in ON CONFLICT clause has no associated index")));
 
 		/*
-		 * Find the named constraint index to extract its attributes and
-		 * predicates.
+		 * Find that index in the list, so that candidate indexes can be
+		 * compared against it below.
 		 */
 		foreach_ptr(RelationData, idxRel, indexRelList)
 		{
-			Form_pg_index idxForm = idxRel->rd_index;
-
-			if (indexOidFromConstraint == idxForm->indexrelid)
+			if (indexOidFromConstraint == RelationGetRelid(idxRel))
 			{
-				/* Found it. */
-				Assert(idxForm->indisready);
-
-				/*
-				 * Set up inferElems and inferIndexExprs to match the
-				 * constraint index, so that we can match them in the loop
-				 * below.
-				 */
-				for (int natt = 0; natt < idxForm->indnkeyatts; natt++)
-				{
-					int			attno;
-
-					attno = idxRel->rd_index->indkey.values[natt];
-					if (attno != InvalidAttrNumber)
-						inferAttrs =
-							bms_add_member(inferAttrs,
-										   attno - FirstLowInvalidHeapAttributeNumber);
-				}
-
-				inferElems = RelationGetIndexExpressions(idxRel);
-				inferIndexExprs = RelationGetIndexPredicate(idxRel);
+				Assert(idxRel->rd_index->indisready);
+				indexRelFromConstraint = idxRel;
 				break;
 			}
 		}
+		if (indexRelFromConstraint == NULL)
+			elog(ERROR, "could not find index %u of ON CONFLICT constraint",
+				 indexOidFromConstraint);
 	}
 
 	/*
@@ -1017,8 +1002,10 @@ infer_arbiter_indexes(PlannerInfo *root)
 				 onconflict->action == ONCONFLICT_SELECT))
 				ereport(ERROR,
 						errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						errmsg("ON CONFLICT DO %s not supported with exclusion constraints",
-							   onconflict->action == ONCONFLICT_UPDATE ? "UPDATE" : "SELECT"));
+				/* translator: %s is an ON CONFLICT clause */
+						errmsg("%s not supported with exclusion constraints",
+							   onconflict->action == ONCONFLICT_UPDATE ?
+							   "ON CONFLICT DO UPDATE" : "ON CONFLICT DO SELECT"));
 
 			/* Consider this one a match already */
 			results = lappend_oid(results, idxForm->indexrelid);
@@ -1028,13 +1015,16 @@ infer_arbiter_indexes(PlannerInfo *root)
 		else if (indexOidFromConstraint != InvalidOid)
 		{
 			/*
-			 * In the case of "ON constraint_name DO SELECT/UPDATE" we need to
-			 * skip non-unique candidates.
+			 * When a constraint is named, the only other index that may
+			 * arbitrate is an exact structural equivalents of its index,
+			 * which exists while REINDEX CONCURRENTLY is processing it.
 			 */
-			if (!idxForm->indisunique &&
-				(onconflict->action == ONCONFLICT_UPDATE ||
-				 onconflict->action == ONCONFLICT_SELECT))
-				continue;
+			if (IsIndexCompatibleAsArbiter(indexRelFromConstraint, idxRel))
+			{
+				results = lappend_oid(results, idxForm->indexrelid);
+				foundValid |= idxForm->indisvalid;
+			}
+			continue;
 		}
 		else
 		{
@@ -1079,10 +1069,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 			idxExprs = (List *) eval_const_expressions(root, (Node *) idxExprs);
 		}
 
-		/*
-		 * If arbiterElems are present, check them.  (Note that if a
-		 * constraint name was given in the command line, this list is NIL.)
-		 */
+		/* Check the arbiterElems against this index. */
 		match = true;
 		foreach_ptr(InferenceElem, elem, onconflict->arbiterElems)
 		{
@@ -1125,14 +1112,11 @@ infer_arbiter_indexes(PlannerInfo *root)
 			continue;
 
 		/*
-		 * In case of inference from an attribute list, ensure that the
+		 * Now that all inference elements were matched, ensure that the
 		 * expression elements from inference clause are not missing any
 		 * cataloged expressions.  This does the right thing when unique
 		 * indexes redundantly repeat the same attribute, or if attributes
 		 * redundantly appear multiple times within an inference clause.
-		 *
-		 * In case a constraint was named, ensure the candidate has an equal
-		 * set of expressions as the named constraint's index.
 		 */
 		if (list_difference(idxExprs, inferElems) != NIL)
 			continue;
@@ -1150,21 +1134,12 @@ infer_arbiter_indexes(PlannerInfo *root)
 		}
 
 		/*
-		 * Partial indexes affect each form of ON CONFLICT differently: if a
-		 * constraint was named, then the predicates must be identical.  In
-		 * conventional inference, the index's predicate must be implied by
-		 * the WHERE clause.
+		 * If it's a partial index, its predicate must be implied by the ON
+		 * CONFLICT's WHERE clause.
 		 */
-		if (OidIsValid(indexOidFromConstraint))
-		{
-			if (list_difference(predExprs, inferIndexExprs) != NIL)
-				continue;
-		}
-		else
-		{
-			if (!predicate_implied_by(predExprs, inferIndexExprs, false))
-				continue;
-		}
+		if (!predicate_implied_by(predExprs,
+								  (List *) onconflict->arbiterWhere, false))
+			continue;
 
 		/* All good -- consider this index a match */
 		results = lappend_oid(results, idxForm->indexrelid);
@@ -1202,7 +1177,9 @@ infer_arbiter_indexes(PlannerInfo *root)
  *
  * At least historically, Postgres has not offered collations or opclasses
  * with alternative-to-default notions of equality, so these additional
- * criteria should only be required infrequently.
+ * criteria should only be required infrequently.  XXX That is no longer
+ * true: nondeterministic collations, supported since PostgreSQL 12, do
+ * equate values that the default notion of equality keeps distinct.
  *
  * Don't give up immediately when an inference element matches some attribute
  * cataloged as indexed but not matching additional opclass/collation
