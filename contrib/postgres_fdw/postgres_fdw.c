@@ -6003,12 +6003,23 @@ fetch_attstats(PGconn *conn, int server_version_num,
 	StringInfoData sql;
 	PGresult   *res;
 
-	/* The caller guarantees the remote server is v9.1 or later. */
+	/*
+	 * The caller guarantees the remote server is v9.1, which supported
+	 * COLLATE "C", or later
+	 */
 	Assert(server_version_num >= 90100);
 
 	initStringInfo(&sql);
+
+	/* Type name is collatable since Postgres 12 */
+	if (server_version_num >= 120000)
+		appendStringInfoString(&sql,
+							   "SELECT DISTINCT ON (attname COLLATE \"C\") attname,");
+	else
+		appendStringInfoString(&sql,
+							   "SELECT DISTINCT ON (attname::text COLLATE \"C\") attname,");
+
 	appendStringInfoString(&sql,
-						   "SELECT DISTINCT ON (attname COLLATE \"C\") attname,"
 						   " null_frac,"
 						   " avg_width,"
 						   " n_distinct,"
@@ -6018,7 +6029,7 @@ fetch_attstats(PGconn *conn, int server_version_num,
 						   " correlation,");
 
 	/* Elements stats are supported since Postgres 9.2 */
-	if (server_version_num >= 92000)
+	if (server_version_num >= 90200)
 		appendStringInfoString(&sql,
 							   " most_common_elems,"
 							   " most_common_elem_freqs,"
@@ -6049,11 +6060,15 @@ fetch_attstats(PGconn *conn, int server_version_num,
 					 column_list);
 
 	/*
-	 * inherited and COLLATE are supported since Postgres 9.0 and 9.1,
-	 * respectively.
+	 * Type name is collatable since Postgres 12  (inherited is supported
+	 * since Postgres 9.0)
 	 */
-	appendStringInfoString(&sql,
-						   " ORDER BY attname COLLATE \"C\", inherited DESC");
+	if (server_version_num >= 120000)
+		appendStringInfoString(&sql,
+							   " ORDER BY attname COLLATE \"C\", inherited DESC");
+	else
+		appendStringInfoString(&sql,
+							   " ORDER BY attname::text COLLATE \"C\", inherited DESC");
 
 	res = pgfdw_exec_query(conn, sql.data, NULL);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
