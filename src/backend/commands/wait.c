@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/xact.h"
 #include "access/xlog.h"
 #include "access/xlogrecovery.h"
 #include "access/xlogwait.h"
@@ -155,8 +156,9 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 	if (HaveRegisteredOrActiveSnapshot())
 		ereport(ERROR,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				errmsg("WAIT must be called without an active or registered snapshot"),
-				errdetail("WAIT cannot be executed within a transaction with an isolation level higher than READ COMMITTED."));
+				errmsg("WAIT cannot be executed while the current transaction holds a snapshot"),
+				IsolationUsesXactSnapshot() ?
+				errdetail("This transaction runs at an isolation level higher than READ COMMITTED, so it holds a snapshot from its first query until it ends.") : 0);
 
 	/*
 	 * As the result we should hold no snapshot, and correspondingly our xmin
