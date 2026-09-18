@@ -415,6 +415,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 										   sizeof(int64),
 										   Int64GetDatum(1), false,
 										   true);
+	parse->limitOption = LIMIT_OPTION_COUNT;
 
 	/*
 	 * Generate the best paths for this query, telling query_planner that we
