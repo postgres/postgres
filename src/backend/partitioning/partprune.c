@@ -2502,6 +2502,8 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 	/* Actually, recursion would be limited by PARTITION_MAX_KEYS. */
 	check_stack_depth();
 
+	CHECK_FOR_INTERRUPTS();
+
 	Assert(start != NULL);
 	cur_keyno = ((PartClauseInfo *) lfirst(start))->keyno;
 	final_keyno = ((PartClauseInfo *) llast(prefix))->keyno;
