@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * wait.c
- *	  Implements WAIT FOR, which allows waiting for events such as
+ *	  Implements WAIT, which allows waiting for events such as
  *	  time passing or LSN having been replayed, flushed, or written.
  *
  * Portions Copyright (c) 2025-2026, PostgreSQL Global Development Group
@@ -48,7 +48,7 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 	bool		mode_specified = false;
 
 	/*
-	 * WAIT FOR must not be run as a non-top-level statement (e.g., inside a
+	 * WAIT must not be run as a non-top-level statement (e.g., inside a
 	 * function, procedure, or DO block). Forbid this case upfront.
 	 */
 	if (!isTopLevel)
@@ -136,7 +136,7 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 	 * We are going to wait for the LSN.  We should first care that we don't
 	 * hold a snapshot and correspondingly our MyProc->xmin is invalid.
 	 * Otherwise, our snapshot could prevent the replay of WAL records
-	 * implying a kind of self-deadlock.  This is the reason why WAIT FOR is a
+	 * implying a kind of self-deadlock.  This is the reason why WAIT is a
 	 * command, not a procedure or function.
 	 *
 	 * Non-top-level contexts are rejected above, but be defensive and pop any
@@ -229,7 +229,7 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 					 errmsg("cannot wait for a standby LSN while holding locks"),
 					 errdetail("This session holds a lock on %s, which could make recovery wait for this session while this session waits for recovery.",
 							   locktagbuf.data),
-					 errhint("Release the locks, or execute WAIT FOR before acquiring them.")));
+					 errhint("Release the locks, or execute WAIT before acquiring them.")));
 		}
 	}
 
