@@ -3145,9 +3145,17 @@ get_matching_range_bounds(PartitionPruneContext *context,
 
 					/*
 					 * off + 1, then would be the offset of the greatest bound
-					 * to be included in the result.
+					 * to be included in the result.  The exception is the
+					 * mirror image of the MINVALUE case above: if the matched
+					 * bound is exactly (prefix, MAXVALUE), no row carrying
+					 * this prefix can sort above it, so the key space beyond
+					 * it need not be considered.
 					 */
-					maxoff = off + 1;
+					if (boundinfo->kind[off][nvalues] ==
+						PARTITION_RANGE_DATUM_MAXVALUE)
+						maxoff = off;
+					else
+						maxoff = off + 1;
 				}
 
 				Assert(minoff >= 0 && maxoff >= 0);
@@ -3338,43 +3346,45 @@ get_matching_range_bounds(PartitionPruneContext *context,
 	Assert(minoff >= 0 && minoff <= boundinfo->ndatums);
 	Assert(maxoff >= 0 && maxoff <= boundinfo->ndatums);
 
-	/*
-	 * If the smallest partition to return has MINVALUE (negative infinity) as
-	 * its lower bound, increment it to point to the next finite bound
-	 * (supposedly its upper bound), so that we don't inadvertently end up
-	 * scanning the default partition.
-	 */
-	if (minoff < boundinfo->ndatums && partindices[minoff] < 0)
-	{
-		int			lastkey = nvalues - 1;
 
-		if (boundinfo->kind[minoff][lastkey] ==
-			PARTITION_RANGE_DATUM_MINVALUE)
+	/*
+	 * Check for cases that we're scanning the DEFAULT partition when no rows
+	 * can exist there for the given value.  This can happen when the first or
+	 * final bound for partitions we're scanning have a MINVALUE or MAXVALUE
+	 * clause respectively.  We needn't scan the DEFAULT partition for values
+	 * beyond the bound since the MINVALUE / MAXVALUE bound handles up to
+	 * negative or positive infinity.  The BTEqualStrategyNumber code above
+	 * handled doing this for subsequent partition keys, so all that's left to
+	 * handle here is the same for the first partition key.  We needn't
+	 * perform this for all steps as the intersected results from the
+	 * recursive processing of pruning steps for leading keys means we only
+	 * scan the partitions common to all steps in the intersected set of
+	 * steps.
+	 */
+	if (nvalues == 1)
+	{
+		/*
+		 * Check if we're scanning the default and if a MINVALUE bound covers
+		 * the key space for the lower end.
+		 */
+		if (minoff < boundinfo->ndatums && partindices[minoff] < 0 &&
+			boundinfo->kind[minoff][0] == PARTITION_RANGE_DATUM_MINVALUE)
 		{
 			minoff++;
 			Assert(boundinfo->indexes[minoff] >= 0);
 		}
-	}
 
-	/*
-	 * If the previous greatest partition has MAXVALUE (positive infinity) as
-	 * its upper bound (something only possible to do with multi-column range
-	 * partitioning), we scan switch to it as the greatest partition to
-	 * return.  Again, so that we don't inadvertently end up scanning the
-	 * default partition.
-	 */
-	if (maxoff >= 1 && partindices[maxoff] < 0)
-	{
-		int			lastkey = nvalues - 1;
-
-		if (boundinfo->kind[maxoff - 1][lastkey] ==
-			PARTITION_RANGE_DATUM_MAXVALUE)
+		/*
+		 * Likewise, do the same check for the upper range partition if the
+		 * prior bound is a MAXVALUE kind.
+		 */
+		if (maxoff >= 1 && partindices[maxoff] < 0 &&
+			boundinfo->kind[maxoff - 1][0] == PARTITION_RANGE_DATUM_MAXVALUE)
 		{
 			maxoff--;
 			Assert(boundinfo->indexes[maxoff] >= 0);
 		}
 	}
-
 	Assert(minoff >= 0 && maxoff >= 0);
 	if (minoff <= maxoff)
 		result->bound_offsets = bms_add_range(NULL, minoff, maxoff);
