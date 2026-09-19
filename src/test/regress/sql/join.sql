@@ -2350,6 +2350,41 @@ from (select case when false then remov.id else (select i41.f1) end as c1
       from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
      right join int4_tbl i42 on true;
 
+-- likewise, where the pushed-down PHV's expression contains another PHV of
+-- the same level, which must not be preprocessed separately from its parent
+explain (verbose, costs off)
+select ss3.c2
+from int4_tbl i41
+     left join (select coalesce(ss1.c1, 0) as c1
+                from int4_tbl i42
+                     left join (select (select i43.f1) as c1
+                                from int4_tbl i43) ss1 on true) ss2
+       on true,
+     lateral (select ss2.c1 as c2 from int4_tbl i44 offset 0) ss3;
+
+-- likewise, where the PHV copy is only inserted into the LATERAL subquery by
+-- expanding a join alias Var of the outer level
+explain (verbose, costs off)
+select ss2.c2
+from ((select (select i41.f1) as c1 from int4_tbl i41) ss1
+      full join int4_tbl i42(c1) using (c1)) j,
+     lateral (select j.c1 as c2 from int4_tbl i43 offset 0) ss2;
+
+-- likewise, where the join alias is expanded within a SubLink's subselect
+explain (verbose, costs off)
+select (select j.c1 from int4_tbl i43 offset 0) as c2
+from ((select (select i41.f1) as c1 from int4_tbl i41) ss1
+      full join int4_tbl i42(c1) using (c1)) j;
+
+-- likewise, where the SubLink holding the copy ends up in the translated
+-- Vars of an appendrel child pulled up from a LATERAL UNION ALL subquery
+explain (verbose, costs off)
+select ss2.c2
+from (select case when false then remov.id end as c1
+      from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
+     right join int4_tbl i42 on true,
+     lateral ((select (select ss1.c1) as c2) union all (select (select ss1.c1))) ss2;
+
 -- More tests of correct placement of pseudoconstant quals
 
 -- simple constant-false condition

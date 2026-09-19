@@ -2070,9 +2070,10 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	/*
 	 * Don't recurse into the arguments of an outer PHV, Aggref, GroupingFunc,
 	 * or ReturningExpr here.  Any SubLinks in the arguments have to be dealt
-	 * with at the outer query level; they'll be handled when build_subplan
-	 * collects the PHV, Aggref, GroupingFunc, or ReturningExpr into the
-	 * arguments to be passed down to the current subplan.
+	 * with at the outer query level; for an Aggref, GroupingFunc, or
+	 * ReturningExpr they'll be handled when build_subplan collects it into
+	 * the arguments to be passed down to the current subplan, while an outer
+	 * PHV's expression has already been preprocessed by its owning level.
 	 */
 	if (IsA(node, PlaceHolderVar))
 	{
