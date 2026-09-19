@@ -868,11 +868,10 @@ flatten_join_alias_vars_mutator(Node *node,
 			return node;		/* no need to copy, really */
 
 		/*
-		 * A pushed-down copy of a target-level PHV was already preprocessed
-		 * by preprocess_subquery_phvs, so it may contain SubPlans and holds
-		 * no unflattened target-level aliases; shallow-copy it instead of
-		 * recursing.  Any other PHV is recursed into, as it may still hold
-		 * target-level aliases.
+		 * A pushed-down copy of a target-level PHV is preprocessed by
+		 * preprocess_subquery_phvs, which handles its target-level aliases
+		 * and may leave SubPlans in it; so don't recurse into it.  Any other
+		 * PHV may still hold target-level aliases, so recurse.
 		 */
 		if (phv->phlevelsup == context->sublevels_up &&
 			context->sublevels_up > 0)
