@@ -20,6 +20,12 @@ $node_primary->append_conf(
 	'postgresql.conf', qq(
 wal_level = logical
 ));
+
+# Move the OID counter past 2^32.
+my $next_oid = '4295067296';    # 2^32 + 100000
+command_ok(
+	[ 'pg_resetwal', '--next-oid' => $next_oid, $node_primary->data_dir ],
+	'set an 8-byte OID counter');
 $node_primary->start;
 
 $node_primary->safe_psql('postgres',
@@ -274,6 +280,29 @@ is( $node_primary->safe_psql(
 	qq(t),
 	qq(Check that reset timestamp is later after resetting stats for slot '$stats_test_slot1' again.)
 );
+
+# Tests with oid8 TOAST tables.
+$node_primary->safe_psql(
+	'postgres', qq[
+	CREATE TABLE toasted_oid8 (id int PRIMARY KEY, data text)
+	  WITH (toast_value_type = 'oid8');
+	ALTER TABLE toasted_oid8 ALTER COLUMN data SET STORAGE EXTERNAL;
+	SELECT pg_create_logical_replication_slot('oid8_slot', 'test_decoding');
+	INSERT INTO toasted_oid8 VALUES (1, repeat('1234567890', 2000));
+]);
+is( $node_primary->safe_psql(
+		'postgres',
+		"SELECT pg_column_toast_chunk_id(data) > '$next_oid'::oid8 FROM toasted_oid8"
+	),
+	't',
+	'oid8 TOAST value has an ID past 2^32');
+$result = $node_primary->safe_psql('postgres',
+	"SELECT data FROM pg_logical_slot_get_changes('oid8_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1')"
+);
+like(
+	$result,
+	qr/data\[text\]:'(?:1234567890){2000}'/,
+	'oid8 TOAST value past 2^32 is decoded in full');
 
 # done with the node
 $node_primary->stop;
