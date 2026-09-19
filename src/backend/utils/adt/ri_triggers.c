@@ -2602,7 +2602,7 @@ get_ri_constraint_root(Oid constrOid)
 }
 
 /*
- * Callback for pg_constraint inval events
+ * Callback for pg_constraint and pg_amop inval events
  *
  * While most syscache callbacks just flush all their entries, pg_constraint
  * gets enough update traffic that it's probably worth being smarter.
@@ -2626,6 +2626,17 @@ InvalidateConstraintCacheCallBack(Datum arg, SysCacheIdentifier cacheid,
 	dlist_mutable_iter iter;
 
 	Assert(ri_constraint_cache != NULL);
+
+	/*
+	 * pg_amop changes can affect any constraint's fast-path metadata, and
+	 * this pg_amop hashvalue can't be matched against the pg_constraint-keyed
+	 * cache entries, so flush them all via the match-everything path below as
+	 * the large-list reset below does.  Being selective would mean mapping
+	 * the change back to the affected constraints, not worth it for DDL this
+	 * rare.
+	 */
+	if (cacheid == AMOPOPID)
+		hashvalue = 0;
 
 	/*
 	 * If the list of currently valid entries gets excessively large, we mark
@@ -3567,6 +3578,33 @@ ri_check_fastpath_index(RI_ConstraintInfo *riinfo,
 		}
 	}
 
+	/*
+	 * The equality operator stored in pg_constraint must still be an equality
+	 * member of the index opfamily.  When it is not, the direct fast-path
+	 * probe errors, so mark the fast path unusable and fall back to SPI,
+	 * which uses the same operator in a query where the planner simply
+	 * declines the index.
+	 */
+	for (int i = 0; i < riinfo->nkeys; i++)
+	{
+		int			idx_col;
+
+		for (idx_col = 0; idx_col < idx_rel->rd_index->indnkeyatts; idx_col++)
+		{
+			if (idx_rel->rd_index->indkey.values[idx_col] ==
+				riinfo->pk_attnums[i])
+				break;
+		}
+		Assert(idx_col < idx_rel->rd_index->indnkeyatts);
+
+		if (get_op_opfamily_strategy(riinfo->pf_eq_oprs[i],
+									 idx_rel->rd_opfamily[idx_col]) != BTEqualStrategyNumber)
+		{
+			riinfo->fastpath_state = RI_FASTPATH_UNUSABLE;
+			return false;
+		}
+	}
+
 	riinfo->fastpath_state = RI_FASTPATH_USABLE;
 	return true;
 }
@@ -4047,8 +4085,11 @@ ri_InitHashTables(void)
 									  RI_INIT_CONSTRAINTHASHSIZE,
 									  &ctl, HASH_ELEM | HASH_BLOBS);
 
-	/* Arrange to flush cache on pg_constraint changes */
+	/* Arrange to flush cache on pg_constraint or pg_amop changes */
 	CacheRegisterSyscacheCallback(CONSTROID,
+								  InvalidateConstraintCacheCallBack,
+								  (Datum) 0);
+	CacheRegisterSyscacheCallback(AMOPOPID,
 								  InvalidateConstraintCacheCallBack,
 								  (Datum) 0);
 

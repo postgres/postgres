@@ -1081,6 +1081,73 @@ CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY 
 ptest3) REFERENCES pktable);
 ERROR:  foreign key constraint "pktable_ptest4_ptest3_fkey" cannot be implemented
 DETAIL:  Key columns "ptest4" of the referencing table and "ptest1" of the referenced table are of incompatible types: inet and integer.
+-- Replace the equality operator the FK recorded with an identical
+-- implementation, so only opfamily membership changes.  The recorded operator
+-- is now absent from the family; the fast path must fall back to SPI instead
+-- of probing with it.
+create schema fk_opfamily;
+set search_path = fk_opfamily, pg_catalog;
+create operator family fam using btree;
+create operator class int_ops for type integer using btree family fam as
+  operator 1 <(integer,integer), operator 2 <=(integer,integer),
+  operator 3 =(integer,integer), operator 4 >=(integer,integer),
+  operator 5 >(integer,integer), function 1 btint4cmp(integer,integer);
+alter operator family fam using btree add
+  operator 1 <(integer,bigint), operator 2 <=(integer,bigint),
+  operator 3 =(integer,bigint), operator 4 >=(integer,bigint),
+  operator 5 >(integer,bigint),
+  operator 1 <(bigint,integer), operator 2 <=(bigint,integer),
+  operator 3 =(bigint,integer), operator 4 >=(bigint,integer),
+  operator 5 >(bigint,integer),
+  operator 1 <(bigint,bigint), operator 2 <=(bigint,bigint),
+  operator 3 =(bigint,bigint), operator 4 >=(bigint,bigint),
+  operator 5 >(bigint,bigint),
+  function 1 (integer,bigint) btint48cmp(integer,bigint),
+  function 1 (bigint,integer) btint84cmp(bigint,integer),
+  function 1 (bigint,bigint) btint8cmp(bigint,bigint);
+create operator =#= (leftarg=integer, rightarg=bigint, function=int48eq);
+create table p(k integer);
+create unique index p_idx on p(k int_ops);
+-- Two identical FKs to exercise both cache states: warm gets a row now so its
+-- fast-path metadata is built and cached; cold is left empty and has none.
+create table warm(k bigint references p(k));
+create table cold(k bigint references p(k));
+insert into p values (1), (2);
+insert into warm values (1);
+-- Change only pg_amop.  warm's cached metadata now names an operator the
+-- opfamily no longer contains; cold is still evaluated fresh.
+begin;
+alter operator family fam using btree drop operator 3(integer,bigint);
+alter operator family fam using btree add operator 3 =#=(integer,bigint);
+commit;
+-- A present key must be accepted and a missing one rejected, via SPI.
+insert into warm values (2);
+insert into warm values (99);
+ERROR:  insert or update on table "warm" violates foreign key constraint "warm_k_fkey"
+DETAIL:  Key (k)=(99) is not present in table "p".
+insert into cold values (2);
+insert into cold values (99);
+ERROR:  insert or update on table "cold" violates foreign key constraint "cold_k_fkey"
+DETAIL:  Key (k)=(99) is not present in table "p".
+select * from warm order by k;
+ k 
+---
+ 1
+ 2
+(2 rows)
+
+select * from cold order by k;
+ k 
+---
+ 2
+(1 row)
+
+reset search_path;
+drop table fk_opfamily.warm, fk_opfamily.cold, fk_opfamily.p;
+drop operator class fk_opfamily.int_ops using btree;
+drop operator family fk_opfamily.fam using btree;
+drop operator fk_opfamily.=#=(integer,bigint);
+drop schema fk_opfamily;
 --
 -- Now some cases with inheritance
 -- Basic 2 table case: 1 column of matching types.
