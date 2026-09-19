@@ -153,13 +153,13 @@ typedef struct
 
 /* Local functions */
 static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
-static void preprocess_subquery_phvs(PlannerInfo *root);
-static bool preprocess_subquery_phvs_walker(Node *node,
-											preprocess_subquery_phvs_context *context);
 static void preprocess_qual_conditions(PlannerInfo *root, Node *jtnode);
 static Bitmapset *find_having_conflicts(Query *parse, Index group_rtindex);
 static Oid	having_var_grouping_eqop(Var *var, void *context);
 static Oid	group_var_eqop(Query *parse, Var *var);
+static void preprocess_subquery_phvs(PlannerInfo *root, Node *node);
+static bool preprocess_subquery_phvs_walker(Node *node,
+											preprocess_subquery_phvs_context *context);
 static void grouping_planner(PlannerInfo *root, double tuple_fraction,
 							 SetOperationStmt *setops);
 static grouping_sets_data *preprocess_grouping_sets(PlannerInfo *root);
@@ -1005,14 +1005,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 	root->hasHavingQual = (parse->havingQual != NULL);
 
 	/*
-	 * Preprocess any PlaceHolderVars of our level that were pushed down into
-	 * subqueries.  This must happen before anything can consume those copies,
-	 * in particular before SubLinks below are turned into SubPlans.
-	 */
-	if (root->glob->lastPHId != 0)
-		preprocess_subquery_phvs(root);
-
-	/*
 	 * Do expression preprocessing on targetlist and quals, as well as other
 	 * random expressions in the querytree.  Note that we do not need to
 	 * handle sort/group expressions explicitly, because they are actually
@@ -1129,6 +1121,14 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 				rte->subquery = (Query *)
 					flatten_join_alias_vars(root, root->parse,
 											(Node *) rte->subquery);
+
+			/*
+			 * Likewise for copies of our PlaceHolderVars in the subquery.
+			 * This must be done after the alias expansion above, which can
+			 * insert such copies.
+			 */
+			if (rte->lateral && root->glob->lastPHId != 0)
+				preprocess_subquery_phvs(root, (Node *) rte->subquery);
 		}
 		else if (rte->rtekind == RTE_FUNCTION)
 		{
@@ -1463,6 +1463,15 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 		convert_saop_to_hashed_saop(expr);
 	}
 
+	/*
+	 * Preprocess any copies of our PlaceHolderVars within SubLink subselects.
+	 * This must be done after join alias expansion, which can insert such
+	 * copies, and before the SubLinks are turned into SubPlans, which collect
+	 * those copies as SubPlan arguments.
+	 */
+	if (root->parse->hasSubLinks && root->glob->lastPHId != 0)
+		preprocess_subquery_phvs(root, expr);
+
 	/* Expand SubLinks to SubPlans */
 	if (root->parse->hasSubLinks)
 		expr = SS_process_sublinks(root, expr, (kind == EXPRKIND_QUAL));
@@ -1625,24 +1634,25 @@ group_var_eqop(Query *parse, Var *var)
 /*
  * preprocess_subquery_phvs
  *		Preprocess copies of this level's PlaceHolderVars that were pushed
- *		down into subqueries.
+ *		down into subqueries within the given tree.
  *
  * When a subquery (a LATERAL RTE or a SubLink's subselect) references a
  * pulled-up output that must be wrapped in a PlaceHolderVar, the PHV
  * expression is pushed down into the subquery.  The subquery's own planning
  * leaves that copy alone, since it belongs to our level, so we need to
  * preprocess it.  We modify the PHVs in place, temporarily adjusting each to
- * our level, and handle nested copies innermost-first.
+ * our level.  Preprocessing a copy's expression takes care of everything
+ * within it, including any further copies nested inside SubLinks there, so
+ * we don't look inside a copy ourselves.
  */
 static void
-preprocess_subquery_phvs(PlannerInfo *root)
+preprocess_subquery_phvs(PlannerInfo *root, Node *node)
 {
 	preprocess_subquery_phvs_context context;
 
 	context.root = root;
 	context.sublevels_up = 0;
-	(void) query_tree_walker(root->parse, preprocess_subquery_phvs_walker,
-							 &context, 0);
+	(void) preprocess_subquery_phvs_walker(node, &context);
 }
 
 static bool
@@ -1666,9 +1676,9 @@ preprocess_subquery_phvs_walker(Node *node,
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
 
-		/* Handle any nested copies within the expression first */
-		(void) expression_tree_walker(node, preprocess_subquery_phvs_walker,
-									  context);
+		/* A PHV of an upper level can't contain anything of our level */
+		if (phv->phlevelsup > context->sublevels_up)
+			return false;
 
 		/*
 		 * Is this a copy of one of our PHVs that is pushed down into a
@@ -1686,8 +1696,10 @@ preprocess_subquery_phvs_walker(Node *node,
 			expr = preprocess_expression(context->root, expr, EXPRKIND_PHV);
 			IncrementVarSublevelsUp(expr, levelsup, 0);
 			phv->phexpr = (Expr *) expr;
+			return false;
 		}
-		return false;
+
+		/* Otherwise, it's ours or a lower level's; look inside it */
 	}
 	return expression_tree_walker(node, preprocess_subquery_phvs_walker,
 								  context);
