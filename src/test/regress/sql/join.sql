@@ -2287,6 +2287,10 @@ select c.id, ss.a from c
   left join (select d.a from onerow, d left join b on d.a = b.id) ss
   on c.id = ss.a;
 
+-- check join removal when Vars reference the removed join via its alias
+explain (verbose, costs off)
+select j.b_id, (select j.b_id) from (a left join b on a.b_id = b.id) j;
+
 CREATE TEMP TABLE parted_b (id int PRIMARY KEY) partition by range(id);
 CREATE TEMP TABLE parted_b1 partition of parted_b for values from (0) to (10);
 
