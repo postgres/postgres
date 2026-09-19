@@ -3346,10 +3346,14 @@ JsonItemFromDatum(Datum val, Oid typid, int32 typmod, JsonbValue *res)
 			break;
 		case TEXTOID:
 		case VARCHAROID:
-			res->type = jbvString;
-			res->val.string.val = VARDATA_ANY(DatumGetPointer(val));
-			res->val.string.len = VARSIZE_ANY_EXHDR(DatumGetPointer(val));
-			break;
+			{
+				text	   *txt = DatumGetTextPP(val);
+
+				res->type = jbvString;
+				res->val.string.val = VARDATA_ANY(txt);
+				res->val.string.len = VARSIZE_ANY_EXHDR(txt);
+				break;
+			}
 		case DATEOID:
 		case TIMEOID:
 		case TIMETZOID:
