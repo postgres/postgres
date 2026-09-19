@@ -301,7 +301,8 @@ static bool ri_LockPKTuple(Relation pk_rel, TupleTableSlot *slot, Snapshot snap,
 static bool ri_fastpath_is_applicable(const RI_ConstraintInfo *riinfo);
 static bool ri_check_fastpath_index(RI_ConstraintInfo *riinfo,
 									Relation pk_rel, Relation idx_rel);
-static void ri_CheckPermissions(Relation query_rel);
+static void ri_CheckPermissions(const RI_ConstraintInfo *riinfo,
+								Relation query_rel);
 static bool recheck_matched_pk_tuple(Relation idxrel, ScanKeyData *skeys,
 									 int nkeys, TupleTableSlot *new_slot);
 static void build_index_scankeys(const RI_ConstraintInfo *riinfo,
@@ -2819,7 +2820,7 @@ ri_FastPathCheck(RI_ConstraintInfo *riinfo,
 						   saved_sec_context |
 						   SECURITY_LOCAL_USERID_CHANGE |
 						   SECURITY_NOFORCE_RLS);
-	ri_CheckPermissions(pk_rel);
+	ri_CheckPermissions(riinfo, pk_rel);
 
 	/*
 	 * Begin the scan under the switched user id, so that any access method
@@ -3053,13 +3054,16 @@ ri_check_fastpath_index(RI_ConstraintInfo *riinfo,
 
 /*
  * ri_CheckPermissions
- *   Check that the current user has permissions to look into the schema of
- *   and SELECT from 'query_rel'
+ *		Check permissions for the SELECT ... FOR KEY SHARE used by the SPI
+ *		path, as the referenced table's owner.
  */
 static void
-ri_CheckPermissions(Relation query_rel)
+ri_CheckPermissions(const RI_ConstraintInfo *riinfo, Relation query_rel)
 {
 	AclResult	aclresult;
+	AclMode		requiredPerms = ACL_SELECT | ACL_SELECT_FOR_UPDATE;
+	RTEPermissionInfo *perminfo;
+	bool		result;
 
 	/* USAGE on schema. */
 	aclresult = object_aclcheck(NamespaceRelationId,
@@ -3069,11 +3073,32 @@ ri_CheckPermissions(Relation query_rel)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(RelationGetNamespace(query_rel)));
 
-	/* SELECT on relation. */
-	aclresult = pg_class_aclcheck(RelationGetRelid(query_rel), GetUserId(),
-								  ACL_SELECT);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, OBJECT_TABLE,
+	/* Avoid building the column bitmap when table privileges suffice. */
+	if (pg_class_aclmask(RelationGetRelid(query_rel), GetUserId(),
+						 requiredPerms, ACLMASK_ALL) == requiredPerms)
+		return;
+
+	/*
+	 * SELECT is needed only on the referenced key columns.  FOR KEY SHARE
+	 * also needs UPDATE privilege, which may be granted on any column.  Use
+	 * the executor's checks for both, leaving updatedCols empty as the SPI
+	 * query does.
+	 */
+	perminfo = makeNode(RTEPermissionInfo);
+	perminfo->relid = RelationGetRelid(query_rel);
+	perminfo->requiredPerms = requiredPerms;
+	for (int i = 0; i < riinfo->nkeys; i++)
+	{
+		int			attno = riinfo->pk_attnums[i] - FirstLowInvalidHeapAttributeNumber;
+
+		perminfo->selectedCols = bms_add_member(perminfo->selectedCols, attno);
+	}
+
+	result = ExecCheckOneRelPerms(perminfo);
+	bms_free(perminfo->selectedCols);
+	pfree(perminfo);
+	if (!result)
+		aclcheck_error(ACLCHECK_NO_PRIV, OBJECT_TABLE,
 					   RelationGetRelationName(query_rel));
 }
 
