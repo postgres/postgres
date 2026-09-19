@@ -547,7 +547,9 @@ offset_relid_set(Relids relids, int offset)
  * Also, new_index can be INVALID_VAR to indicate that we are deleting the
  * given relid from the tree.  In this case we expect to find rt_index only
  * in Relids fields (varnullingrels, phnullingrels, phrels), never in any
- * field that identifies a single relation.
+ * field that identifies a single relation.  The exception is varnosyn,
+ * which may name an aliased join being removed; the join's RTE remains in
+ * the rangetable, so we leave such syntactic references unchanged.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.  The given expression tree should have been copied
@@ -577,11 +579,10 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			var->varnullingrels = adjust_relid_set(var->varnullingrels,
 												   context->rt_index,
 												   context->new_index);
-			if (var->varnosyn == context->rt_index)
-			{
-				Assert(context->new_index != INVALID_VAR);
+			/* when deleting, leave syntactic refs to a removed join alone */
+			if (var->varnosyn == context->rt_index &&
+				context->new_index != INVALID_VAR)
 				var->varnosyn = context->new_index;
-			}
 		}
 		return false;
 	}
