@@ -4021,10 +4021,18 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
      handle errors when evaluating the top-level
      <replaceable>path_expression</replaceable>.  Use <literal>ERROR</literal>
      if you want the errors to be thrown and <literal>EMPTY</literal> to
-     return an empty table, that is, a table containing 0 rows.  Note that
-     this clause does not affect the errors that occur when evaluating
-     columns, for which the behavior depends on whether the
-     <literal>ON ERROR</literal> clause is specified against a given column.
+     return an empty table, that is, a table containing 0 rows.
+    </para>
+    <para>
+     This clause also provides the default error behavior for the individual
+     columns: a regular or formatted column that does not specify its own
+     <literal>ON ERROR</literal> clause uses <literal>ERROR ON ERROR</literal>
+     when <literal>ERROR</literal> is specified here, and
+     <literal>NULL ON ERROR</literal> otherwise (including when this clause is
+     omitted, in which case <literal>EMPTY</literal> is the default).  A column
+     that specifies its own <literal>ON ERROR</literal> clause is unaffected.
+     <literal>EXISTS</literal> columns are an exception: they always default to
+     <literal>FALSE ON ERROR</literal> regardless of this clause.
     </para>
     </listitem>
    </varlistentry>

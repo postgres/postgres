@@ -49,7 +49,8 @@ static JsonTablePlan *transformJsonTableNestedColumns(JsonTableParseContext *cxt
 													  List *columns);
 static JsonFuncExpr *transformJsonTableColumn(JsonTableColumn *jtc,
 											  Node *contextItemExpr,
-											  List *passingArgs);
+											  List *passingArgs,
+											  bool errorOnError);
 static bool isCompositeType(Oid typid);
 static JsonTablePlan *makeJsonTablePathScan(JsonTableParseContext *cxt,
 											JsonTablePathSpec *pathspec,
@@ -68,7 +69,8 @@ static JsonTablePlan *makeJsonTableSiblingJoin(bool cross,
 											   JsonTablePlan *lplan,
 											   JsonTablePlan *rplan);
 static void
-			appendJsonTableColumns(JsonTableParseContext *cxt, List *columns, List *passingArgs);
+			appendJsonTableColumns(JsonTableParseContext *cxt, List *columns,
+								   List *passingArgs, bool errorOnError);
 
 /*
  * transformJsonTable -
@@ -344,7 +346,7 @@ transformJsonTableColumns(JsonTableParseContext *cxt,
 		validateJsonTableChildPlan(cxt, childPlanSpec, columns);
 	}
 
-	appendJsonTableColumns(cxt, columns, passingArgs);
+	appendJsonTableColumns(cxt, columns, passingArgs, errorOnError);
 
 	/* End of column range. */
 	if (list_length(tf->colvalexprs) == colMin)
@@ -375,7 +377,8 @@ transformJsonTableColumns(JsonTableParseContext *cxt,
 
 /* Append transformed non-nested JSON_TABLE columns to the TableFunc node */
 static void
-appendJsonTableColumns(JsonTableParseContext *cxt, List *columns, List *passingArgs)
+appendJsonTableColumns(JsonTableParseContext *cxt, List *columns,
+					   List *passingArgs, bool errorOnError)
 {
 	ListCell   *col;
 	ParseState *pstate = cxt->pstate;
@@ -439,7 +442,7 @@ appendJsonTableColumns(JsonTableParseContext *cxt, List *columns, List *passingA
 					param->typeMod = -1;
 
 					jfe = transformJsonTableColumn(rawc, (Node *) param,
-												   passingArgs);
+												   passingArgs, errorOnError);
 
 					colexpr = transformExpr(pstate, (Node *) jfe,
 											EXPR_KIND_FROM_FUNCTION);
@@ -494,7 +497,7 @@ isCompositeType(Oid typid)
  */
 static JsonFuncExpr *
 transformJsonTableColumn(JsonTableColumn *jtc, Node *contextItemExpr,
-						 List *passingArgs)
+						 List *passingArgs, bool errorOnError)
 {
 	Node	   *pathspec;
 	JsonFuncExpr *jfexpr = makeNode(JsonFuncExpr);
@@ -536,6 +539,20 @@ transformJsonTableColumn(JsonTableColumn *jtc, Node *contextItemExpr,
 	jfexpr->output->returning->format = jtc->format;
 	jfexpr->on_empty = jtc->on_empty;
 	jfexpr->on_error = jtc->on_error;
+
+	/*
+	 * Per the SQL/JSON standard, a regular or formatted column that does not
+	 * specify its own ON ERROR clause inherits ERROR ON ERROR from a
+	 * table-level ERROR ON ERROR clause; otherwise it defaults to NULL ON
+	 * ERROR (applied downstream in transformJsonExprCommon()).  See ISO/IEC
+	 * 9075-2:2023, 7.11 <JSON table>, Syntax Rules 1)e)iv) (regular columns)
+	 * and 1)f)xi) (formatted columns).  EXISTS columns are not covered by the
+	 * standard, so they keep their own default (FALSE ON ERROR).
+	 */
+	if (jfexpr->on_error == NULL && errorOnError &&
+		jfexpr->op != JSON_EXISTS_OP)
+		jfexpr->on_error = makeJsonBehavior(JSON_BEHAVIOR_ERROR, NULL, -1);
+
 	jfexpr->quotes = jtc->quotes;
 	jfexpr->wrapper = jtc->wrapper;
 	jfexpr->location = jtc->location;

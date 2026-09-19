@@ -269,22 +269,29 @@ FROM
 	JSON_TABLE(vals.js::jsonb, '$' COLUMNS (a int PATH '$' ERROR ON ERROR)) jt
 		ON true;
 
--- TABLE-level ERROR ON ERROR is not propagated to columns
+-- TABLE-level ERROR ON ERROR is propagated to a column without its own
+-- ON ERROR clause (per SQL standard), so "err" raises instead of yielding NULL.
 SELECT *
 FROM
 	(VALUES ('1'), ('"err"')) vals(js)
 		LEFT OUTER JOIN
-	JSON_TABLE(vals.js::jsonb, '$' COLUMNS (a int PATH '$' ERROR ON ERROR)) jt
+	JSON_TABLE(vals.js::jsonb, '$' COLUMNS (a int PATH '$') ERROR ON ERROR) jt
 		ON true;
 
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int PATH '$.a' ERROR ON EMPTY)) jt;
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int PATH 'strict $.a' ERROR ON ERROR) ERROR ON ERROR) jt;
 SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int PATH 'lax $.a' ERROR ON EMPTY) ERROR ON ERROR) jt;
 
--- Table-level ERROR ON ERROR is not propagated to a column lacking its own
--- ON ERROR clause: the column keeps the default NULL ON ERROR behavior, so a
--- conversion failure yields NULL rather than raising an error.
+-- Table-level ERROR ON ERROR is propagated to a column lacking its own ON ERROR
+-- clause, so a conversion failure raises an error rather than yielding NULL
+-- (ISO/IEC 9075-2:2023, 7.11 <JSON table>, SR 1)e)iv)).
 SELECT * FROM JSON_TABLE(jsonb '"err"', '$' COLUMNS (a int PATH '$') ERROR ON ERROR) jt;
+-- ... but an explicit column-level ON ERROR still wins over the table-level one.
+SELECT * FROM JSON_TABLE(jsonb '"err"', '$' COLUMNS (a int PATH '$' NULL ON ERROR) ERROR ON ERROR) jt;
+-- Propagation likewise applies to formatted columns (SR 1)f)xi)), but not to
+-- EXISTS columns, which are not part of the standard and keep FALSE ON ERROR.
+SELECT * FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a int[] PATH '$.a') ERROR ON ERROR) jt;
+SELECT * FROM JSON_TABLE(jsonb '{}', 'strict $' COLUMNS (a int EXISTS PATH 'strict $.x') ERROR ON ERROR) jt;
 
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int PATH '$'   DEFAULT 1 ON EMPTY DEFAULT 2 ON ERROR)) jt;
 SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int PATH 'strict $.a' DEFAULT 1 ON EMPTY DEFAULT 2 ON ERROR)) jt;
