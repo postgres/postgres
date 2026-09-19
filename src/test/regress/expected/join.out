@@ -7855,6 +7855,18 @@ select c.id, ss.a from c
          ->  Seq Scan on c
 (7 rows)
 
+-- check join removal when Vars reference the removed join via its alias
+explain (verbose, costs off)
+select j.b_id, (select j.b_id) from (a left join b on a.b_id = b.id) j;
+             QUERY PLAN             
+------------------------------------
+ Seq Scan on pg_temp.a
+   Output: a.b_id, (SubPlan expr_1)
+   SubPlan expr_1
+     ->  Result
+           Output: a.b_id
+(5 rows)
+
 -- check the case when the placeholder relates to an outer join and its
 -- inner in the press field but actually uses only the outer side of the join
 explain (costs off)

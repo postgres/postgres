@@ -2901,6 +2901,10 @@ select c.id, ss.a from c
   left join (select d.a from onerow, d left join b on d.a = b.id) ss
   on c.id = ss.a;
 
+-- check join removal when Vars reference the removed join via its alias
+explain (verbose, costs off)
+select j.b_id, (select j.b_id) from (a left join b on a.b_id = b.id) j;
+
 -- check the case when the placeholder relates to an outer join and its
 -- inner in the press field but actually uses only the outer side of the join
 explain (costs off)
