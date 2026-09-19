@@ -1473,6 +1473,32 @@ SELECT JSON_QUERY(jsonb 'null', '$"Xyz"' PASSING 1 AS "Xyz");
  1
 (1 row)
 
+-- Test PASSING and toasted values
+CREATE TABLE test_passing_toast (t text);
+ALTER TABLE test_passing_toast ALTER COLUMN t SET STORAGE EXTENDED;
+INSERT INTO test_passing_toast(t)
+  SELECT repeat(string_agg(to_char(g.i, 'FM0000'), ''), 50)
+  FROM generate_series(1, 500) g(i);
+ALTER TABLE test_passing_toast ALTER COLUMN t SET STORAGE EXTERNAL;
+INSERT INTO test_passing_toast(t)
+  SELECT repeat(string_agg(to_char(g.i, 'FM0000'), ''), 50)
+  FROM generate_series(1, 500) g(i);
+SELECT count(*) AS toasted_chunks
+  FROM test_passing_toast WHERE pg_column_toast_chunk_id(t) IS NOT NULL;
+ toasted_chunks 
+----------------
+              2
+(1 row)
+
+SELECT JSON_VALUE(jsonb 'null', '$a' PASSING t AS a) = t AS ok
+  FROM test_passing_toast;
+ ok 
+----
+ t
+ t
+(2 rows)
+
+DROP TABLE test_passing_toast;
 -- Test ON ERROR / EMPTY value validity for the function; all fail.
 SELECT JSON_EXISTS(jsonb '1', '$' DEFAULT 1 ON ERROR);
 ERROR:  invalid ON ERROR behavior
