@@ -1084,7 +1084,12 @@ DETAIL:  Key columns "ptest4" of the referencing table and "ptest1" of the refer
 -- Replace the equality operator the FK recorded with an identical
 -- implementation, so only opfamily membership changes.  The recorded operator
 -- is now absent from the family; the fast path must fall back to SPI instead
--- of probing with it.
+-- of probing with it.  Run inside a transaction that is rolled back: the
+-- family holds built-in integer operators, and the planner finds btree
+-- opfamilies by content (get_mergejoin_opfamilies), not by schema, so if it
+-- were committed it would be visible to concurrent tests and disturb their
+-- plans.
+begin;
 create schema fk_opfamily;
 set search_path = fk_opfamily, pg_catalog;
 create operator family fam using btree;
@@ -1116,19 +1121,21 @@ insert into p values (1), (2);
 insert into warm values (1);
 -- Change only pg_amop.  warm's cached metadata now names an operator the
 -- opfamily no longer contains; cold is still evaluated fresh.
-begin;
 alter operator family fam using btree drop operator 3(integer,bigint);
 alter operator family fam using btree add operator 3 =#=(integer,bigint);
-commit;
 -- A present key must be accepted and a missing one rejected, via SPI.
 insert into warm values (2);
+savepoint s;
 insert into warm values (99);
 ERROR:  insert or update on table "warm" violates foreign key constraint "warm_k_fkey"
 DETAIL:  Key (k)=(99) is not present in table "p".
+rollback to s;
 insert into cold values (2);
+savepoint s;
 insert into cold values (99);
 ERROR:  insert or update on table "cold" violates foreign key constraint "cold_k_fkey"
 DETAIL:  Key (k)=(99) is not present in table "p".
+rollback to s;
 select * from warm order by k;
  k 
 ---
@@ -1143,11 +1150,7 @@ select * from cold order by k;
 (1 row)
 
 reset search_path;
-drop table fk_opfamily.warm, fk_opfamily.cold, fk_opfamily.p;
-drop operator class fk_opfamily.int_ops using btree;
-drop operator family fk_opfamily.fam using btree;
-drop operator fk_opfamily.=#=(integer,bigint);
-drop schema fk_opfamily;
+rollback;
 --
 -- Now some cases with inheritance
 -- Basic 2 table case: 1 column of matching types.

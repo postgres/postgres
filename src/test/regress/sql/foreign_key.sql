@@ -750,7 +750,12 @@ ptest3) REFERENCES pktable);
 -- Replace the equality operator the FK recorded with an identical
 -- implementation, so only opfamily membership changes.  The recorded operator
 -- is now absent from the family; the fast path must fall back to SPI instead
--- of probing with it.
+-- of probing with it.  Run inside a transaction that is rolled back: the
+-- family holds built-in integer operators, and the planner finds btree
+-- opfamilies by content (get_mergejoin_opfamilies), not by schema, so if it
+-- were committed it would be visible to concurrent tests and disturb their
+-- plans.
+begin;
 create schema fk_opfamily;
 set search_path = fk_opfamily, pg_catalog;
 create operator family fam using btree;
@@ -784,24 +789,22 @@ insert into warm values (1);
 
 -- Change only pg_amop.  warm's cached metadata now names an operator the
 -- opfamily no longer contains; cold is still evaluated fresh.
-begin;
 alter operator family fam using btree drop operator 3(integer,bigint);
 alter operator family fam using btree add operator 3 =#=(integer,bigint);
-commit;
 
 -- A present key must be accepted and a missing one rejected, via SPI.
 insert into warm values (2);
+savepoint s;
 insert into warm values (99);
+rollback to s;
 insert into cold values (2);
+savepoint s;
 insert into cold values (99);
+rollback to s;
 select * from warm order by k;
 select * from cold order by k;
 reset search_path;
-drop table fk_opfamily.warm, fk_opfamily.cold, fk_opfamily.p;
-drop operator class fk_opfamily.int_ops using btree;
-drop operator family fk_opfamily.fam using btree;
-drop operator fk_opfamily.=#=(integer,bigint);
-drop schema fk_opfamily;
+rollback;
 
 --
 -- Now some cases with inheritance
