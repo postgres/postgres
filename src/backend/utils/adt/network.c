@@ -738,13 +738,8 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 
 	/* Hash abbreviated key */
 	if (uss->estimating)
-	{
-		uint32		tmp;
-
-		tmp = DatumGetUInt32(res) ^ (uint32) (DatumGetUInt64(res) >> 32);
-
-		addHyperLogLog(&uss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
-	}
+		addHyperLogLog(&uss->abbr_card,
+					   (uint32) murmurhash64(DatumGetUInt64(res)));
 
 	return res;
 }

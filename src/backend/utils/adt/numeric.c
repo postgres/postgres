@@ -2404,12 +2404,8 @@ numeric_abbrev_convert_var(const NumericVar *var, NumericSortSupport *nss)
 		result = -result;
 
 	if (nss->estimating)
-	{
-		uint32		tmp = ((uint32) result
-						   ^ (uint32) ((uint64) result >> 32));
-
-		addHyperLogLog(&nss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
-	}
+		addHyperLogLog(&nss->abbr_card,
+					   (uint32) murmurhash64((uint64) result));
 
 	return NumericAbbrevGetDatum(result);
 }

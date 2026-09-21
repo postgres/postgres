@@ -1110,17 +1110,12 @@ bytea_abbrev_convert(Datum original, SortSupport ssup)
 								   Min(len, PG_CACHE_LINE_SIZE)));
 
 	if (len > PG_CACHE_LINE_SIZE)
-		hash ^= DatumGetUInt32(hash_uint32((uint32) len));
+		hash ^= murmurhash32((uint32) len);
 
 	addHyperLogLog(&bss->full_card, hash);
 
 	/* Hash abbreviated key */
-	{
-		uint32		tmp;
-
-		tmp = DatumGetUInt32(res) ^ (uint32) (DatumGetUInt64(res) >> 32);
-		hash = DatumGetUInt32(hash_uint32(tmp));
-	}
+	hash = (uint32) murmurhash64(DatumGetUInt64(res));
 
 	addHyperLogLog(&bss->abbr_card, hash);
 
