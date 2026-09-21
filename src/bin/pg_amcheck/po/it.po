@@ -5,52 +5,129 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_amcheck (PostgreSQL) 15\n"
+"Project-Id-Version: pg_amcheck (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-26 08:20+0000\n"
-"PO-Revision-Date: 2023-09-05 08:02+0200\n"
+"POT-Creation-Date: 2026-08-03 08:56+0000\n"
+"PO-Revision-Date: 2026-08-04 10:27+0200\n"
+"Last-Translator: Domenico Sgarbossa <sgarbossa.domenico@gmail.com>\n"
+"Language-Team: https://github.com/sbraaa\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Last-Translator: Domenico Sgarbossa <sgarbossa.domenico@gmail.com>\n"
-"Language-Team: \n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "errore: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
-msgstr "avvertimento: "
+msgstr "attenzione: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "dettaglio: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "suggerimento: "
 
-#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "memoria esaurita\n"
+
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "impossibile duplicare un puntatore nullo (errore interno)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "dimensione della richiesta di allocazione di memoria non valida %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "dimensione della richiesta di allocazione di memoria non valida %zu * %zu\n"
+
+#: ../../common/file_utils.c:69 ../../common/file_utils.c:370
+#: ../../common/file_utils.c:428 ../../common/file_utils.c:502
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "apertura del file \"%s\" non riuscita: %m"
+
+#: ../../common/file_utils.c:75
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "sincronizzazione del file system per il file \"%s\" non riuscita: %m"
+
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "lettura delle informazioni sul file \"%s\" non riuscita: %m"
+
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "questa build non supporta il metodo di sincronizzazione \"%s\""
+
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "apertura della directory \"%s\" non riuscita: %m"
+
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "lettura della directory \"%s\" non riuscita: %m"
+
+#: ../../common/file_utils.c:440 ../../common/file_utils.c:510
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "fsync del file \"%s\" non riuscito: %m"
+
+#: ../../common/file_utils.c:520
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "non è stato possibile rinominare il file \"%s\" in \"%s\": %m"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "ricerca dell'ID utente effettivo %ld non riuscita: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "l'utente non esiste"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "ricerca del nome utente non riuscita: codice di errore %lu"
+
+#: ../../fe_utils/cancel.c:186 ../../fe_utils/cancel.c:235
 msgid "Cancel request sent\n"
 msgstr "Richiesta di annullamento inviata\n"
 
-#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
+#: ../../fe_utils/cancel.c:187 ../../fe_utils/cancel.c:236
 msgid "Could not send cancel request: "
 msgstr "Impossibile inviare la richiesta di annullamento: "
 
 #: ../../fe_utils/connect_utils.c:91
 #, c-format
 msgid "could not connect to database %s: out of memory"
-msgstr "impossibile connettersi al database %s: memoria insufficiente"
+msgstr "connessione al database %s non riuscita: memoria esaurita"
 
-#: ../../fe_utils/connect_utils.c:117
+#: ../../fe_utils/connect_utils.c:116
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -65,193 +142,246 @@ msgstr "valore \"%s\" non valido per l'opzione %s"
 msgid "%s must be in range %d..%d"
 msgstr "%s deve essere compreso nell'intervallo %d..%d"
 
-#: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
-#: pg_amcheck.c:1647 pg_amcheck.c:2092
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "metodo di sincronizzazione sconosciuto: %s"
+
+#: ../../fe_utils/option_utils.c:139
+#, c-format
+msgid "options %s and %s cannot be used together"
+msgstr "le opzioni %s e %s non possono essere usate insieme"
+
+#: ../../fe_utils/parallel_slot.c:316
+#, c-format
+msgid "too many jobs for this platform: %d"
+msgstr "troppi job per questa piattaforma: %d"
+
+# userei intervallo al posto di range (GB)
+#: ../../fe_utils/parallel_slot.c:325
+#, c-format
+msgid "socket file descriptor out of range for select(): %d"
+msgstr "descrittore di file di socket fuori intervallo per select(): %d"
+
+#: ../../fe_utils/parallel_slot.c:327
+#, c-format
+msgid "Try fewer jobs."
+msgstr "Prova con meno job."
+
+#: ../../fe_utils/parallel_slot.c:551
+#, c-format
+msgid "processing of database \"%s\" failed: %s"
+msgstr "elaborazione del database \"%s\" non riuscita: %s"
+
+#: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58 pg_amcheck.c:1695
+#: pg_amcheck.c:2155
 #, c-format
 msgid "query failed: %s"
-msgstr "query fallita: %s"
+msgstr "query non riuscita: %s"
 
-#: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
-#: pg_amcheck.c:571 pg_amcheck.c:1102 pg_amcheck.c:1648 pg_amcheck.c:2093
+#: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59 pg_amcheck.c:579
+#: pg_amcheck.c:1149 pg_amcheck.c:1696 pg_amcheck.c:2156
 #, c-format
 msgid "Query was: %s"
-msgstr "La richiesta era: %s"
+msgstr "La query era: %s"
 
-#: pg_amcheck.c:399
+#: ../../fe_utils/string_utils.c:585
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr ""
+"l'argomento del comando shell contiene un ritorno a capo o un avanzamento riga: "
+"\"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:758
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr ""
+"il nome del database contiene un ritorno a capo o un avanzamento riga: \"%s\"\n"
+
+#: pg_amcheck.c:404
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "argomento non valido per l'opzione %s"
 
-#: pg_amcheck.c:405
+#: pg_amcheck.c:410
 #, c-format
 msgid "invalid start block"
-msgstr "blocco di avvio non valido"
+msgstr "blocco iniziale non valido"
 
-#: pg_amcheck.c:407
+#: pg_amcheck.c:412
 #, c-format
 msgid "start block out of bounds"
-msgstr "blocco di partenza fuori limite"
+msgstr "blocco iniziale fuori intervallo"
 
-#: pg_amcheck.c:414
+#: pg_amcheck.c:419
 #, c-format
 msgid "invalid end block"
 msgstr "blocco finale non valido"
 
-#: pg_amcheck.c:416
+#: pg_amcheck.c:421
 #, c-format
 msgid "end block out of bounds"
-msgstr "blocco finale fuori limite"
+msgstr "blocco finale fuori intervallo"
 
-#: pg_amcheck.c:439 pg_amcheck.c:461
+#: pg_amcheck.c:447 pg_amcheck.c:469
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Prova \"%s --help\" per maggiori informazioni."
 
-#: pg_amcheck.c:445
+#: pg_amcheck.c:453
 #, c-format
 msgid "end block precedes start block"
 msgstr "il blocco finale precede il blocco iniziale"
 
-#: pg_amcheck.c:459
+#: pg_amcheck.c:467
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "troppi argomenti della riga di comando (il primo è \"%s\")"
+msgstr "troppi argomenti sulla riga di comando (il primo è \"%s\")"
 
-#: pg_amcheck.c:479
+#: pg_amcheck.c:487
 #, c-format
 msgid "cannot specify a database name with --all"
 msgstr "non è possibile specificare un nome di database con --all"
 
-#: pg_amcheck.c:485
+#: pg_amcheck.c:493
 #, c-format
 msgid "cannot specify both a database name and database patterns"
-msgstr "non è possibile specificare sia il nome del database che i modelli del database"
+msgstr "non è possibile specificare sia un nome di database che pattern di database"
 
-#: pg_amcheck.c:513
+#: pg_amcheck.c:521
 #, c-format
 msgid "no databases to check"
 msgstr "nessun database da controllare"
 
-#: pg_amcheck.c:569
+#: pg_amcheck.c:577
 #, c-format
 msgid "database \"%s\": %s"
 msgstr "database \"%s\": %s"
 
-#: pg_amcheck.c:580
-#, c-format
-msgid "skipping database \"%s\": amcheck is not installed"
-msgstr "saltando il database \"%s\": amcheck non è installato"
-
 #: pg_amcheck.c:588
 #, c-format
-msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
-msgstr "nel database \"%s\": utilizzando la versione amcheck \"%s\" nello schema \"%s\""
+msgid "skipping database \"%s\": amcheck is not installed"
+msgstr "database \"%s\" saltato: amcheck non è installato"
 
-#: pg_amcheck.c:610
+#: pg_amcheck.c:597
+#, c-format
+msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
+msgstr "nel database \"%s\": uso della versione \"%s\" di amcheck nello schema \"%s\""
+
+#: pg_amcheck.c:626
+#, c-format
+msgid "option %s is not supported by amcheck version %s"
+msgstr "l'opzione %s non è supportata dalla versione %s di amcheck"
+
+#: pg_amcheck.c:652
 #, c-format
 msgid "no heap tables to check matching \"%s\""
-msgstr "nessuna tabella heap per verificare la corrispondenza \"%s\""
+msgstr "nessuna tabella heap da controllare corrispondente a \"%s\""
 
-#: pg_amcheck.c:613
+#: pg_amcheck.c:655
 #, c-format
 msgid "no btree indexes to check matching \"%s\""
-msgstr "nessun indice btree per verificare la corrispondenza \"%s\""
+msgstr "nessun indice btree da controllare corrispondente a \"%s\""
 
-#: pg_amcheck.c:616
+#: pg_amcheck.c:658
 #, c-format
 msgid "no relations to check in schemas matching \"%s\""
-msgstr "nessuna relazione da archiviare negli schemi corrispondenti a \"%s\""
+msgstr "nessuna relazione da controllare negli schemi corrispondenti a \"%s\""
 
-#: pg_amcheck.c:619
+#: pg_amcheck.c:661
 #, c-format
 msgid "no relations to check matching \"%s\""
-msgstr "nessuna relazione da verificare corrispondente a \"%s\""
+msgstr "nessuna relazione da controllare corrispondente a \"%s\""
 
-#: pg_amcheck.c:647
+#: pg_amcheck.c:689
 #, c-format
 msgid "no relations to check"
 msgstr "nessuna relazione da controllare"
 
-#: pg_amcheck.c:730
+#: pg_amcheck.c:772
 #, c-format
 msgid "checking heap table \"%s.%s.%s\""
-msgstr "controllo della tabella heap \"%s.%s.%s\""
+msgstr "controllo della tabella heap \"%s.%s.%s\" in corso"
 
-#: pg_amcheck.c:746
+#: pg_amcheck.c:788
 #, c-format
 msgid "checking btree index \"%s.%s.%s\""
-msgstr "controllo dell'indice btree \"%s.%s.%s\""
+msgstr "controllo dell'indice btree \"%s.%s.%s\" in corso"
 
-#: pg_amcheck.c:893
+#: pg_amcheck.c:939
 #, c-format
 msgid "error sending command to database \"%s\": %s"
-msgstr "errore durante l'invio del comando al database \"%s\": %s"
+msgstr "errore nell'invio del comando al database \"%s\": %s"
 
-#: pg_amcheck.c:896
+#: pg_amcheck.c:942
 #, c-format
 msgid "Command was: %s"
 msgstr "Il comando era: %s"
 
-#: pg_amcheck.c:1015
+#: pg_amcheck.c:1062
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s, attribute %s:\n"
 msgstr "tabella heap \"%s.%s.%s\", blocco %s, offset %s, attributo %s:\n"
 
-#: pg_amcheck.c:1022
+#: pg_amcheck.c:1069
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s:\n"
 msgstr "tabella heap \"%s.%s.%s\", blocco %s, offset %s:\n"
 
-#: pg_amcheck.c:1028
+#: pg_amcheck.c:1075
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s:\n"
 msgstr "tabella heap \"%s.%s.%s\", blocco %s:\n"
 
-#: pg_amcheck.c:1033 pg_amcheck.c:1044
+#: pg_amcheck.c:1080 pg_amcheck.c:1091
 #, c-format
 msgid "heap table \"%s.%s.%s\":\n"
 msgstr "tabella heap \"%s.%s.%s\":\n"
 
-#: pg_amcheck.c:1048 pg_amcheck.c:1117
+#: pg_amcheck.c:1095 pg_amcheck.c:1164
 #, c-format
 msgid "query was: %s\n"
 msgstr "la query era: %s\n"
 
-#: pg_amcheck.c:1099
+#: pg_amcheck.c:1146
 #, c-format
-msgid "btree index \"%s.%s.%s\": btree checking function returned unexpected number of rows: %d"
-msgstr "btree index \"%s.%s.%s\": la funzione di controllo btree ha restituito un numero imprevisto di righe: %d"
+msgid ""
+"btree index \"%s.%s.%s\": btree checking function returned unexpected number of "
+"rows: %d"
+msgstr ""
+"indice btree \"%s.%s.%s\": la funzione di controllo btree ha restituito un numero "
+"di righe inatteso: %d"
 
-#: pg_amcheck.c:1103
+#: pg_amcheck.c:1150
 #, c-format
 msgid "Are %s's and amcheck's versions compatible?"
-msgstr "Le versioni di %s e amcheck sono compatibili?"
+msgstr "Le versioni di %s e di amcheck sono compatibili?"
 
-#: pg_amcheck.c:1113
+#: pg_amcheck.c:1160
 #, c-format
 msgid "btree index \"%s.%s.%s\":\n"
-msgstr "btree index \"%s.%s.%s\":\n"
+msgstr "indice btree \"%s.%s.%s\":\n"
 
-#: pg_amcheck.c:1138
+#: pg_amcheck.c:1185
 #, c-format
 msgid ""
 "%s checks objects in a PostgreSQL database for corruption.\n"
 "\n"
 msgstr ""
-"%s verifica la corruzione degli oggetti in un database PostgreSQL.\n"
+"%s controlla gli oggetti di un database PostgreSQL alla ricerca di corruzione.\n"
 "\n"
 
-#: pg_amcheck.c:1139
+#: pg_amcheck.c:1186
 #, c-format
 msgid "Usage:\n"
-msgstr "Utilizzo:\n"
+msgstr "Uso:\n"
 
-#: pg_amcheck.c:1140
+#: pg_amcheck.c:1187
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPZIONE]... [NOMEDB]\n"
 
-#: pg_amcheck.c:1141
+#: pg_amcheck.c:1188
 #, c-format
 msgid ""
 "\n"
@@ -260,135 +390,174 @@ msgstr ""
 "\n"
 "Opzioni di destinazione:\n"
 
-#: pg_amcheck.c:1142
+#: pg_amcheck.c:1189
 #, c-format
 msgid "  -a, --all                       check all databases\n"
 msgstr "  -a, --all                       controlla tutti i database\n"
 
-#: pg_amcheck.c:1143
+#: pg_amcheck.c:1190
 #, c-format
 msgid "  -d, --database=PATTERN          check matching database(s)\n"
 msgstr "  -d, --database=PATTERN          controlla i database corrispondenti\n"
 
-#: pg_amcheck.c:1144
+#: pg_amcheck.c:1191
 #, c-format
 msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
-msgstr "  -D, --exclude-database=PATTERN  Non controlla i database corrispondenti\n"
+msgstr "  -D, --exclude-database=PATTERN  NON controllare i database corrispondenti\n"
 
-#: pg_amcheck.c:1145
+#: pg_amcheck.c:1192
 #, c-format
 msgid "  -i, --index=PATTERN             check matching index(es)\n"
 msgstr "  -i, --index=PATTERN             controlla gli indici corrispondenti\n"
 
-#: pg_amcheck.c:1146
+#: pg_amcheck.c:1193
 #, c-format
 msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
-msgstr "  -I, --exclude-index=PATTERN     Non controlla gli indici corrispondenti\n"
+msgstr "  -I, --exclude-index=PATTERN     NON controllare gli indici corrispondenti\n"
 
-#: pg_amcheck.c:1147
+#: pg_amcheck.c:1194
 #, c-format
 msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
-msgstr "  -r, --relation=PATTERN          controlla le relazioni di corrispondenza\n"
+msgstr "  -r, --relation=PATTERN          controlla le relazioni corrispondenti\n"
 
-#: pg_amcheck.c:1148
+#: pg_amcheck.c:1195
 #, c-format
 msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
-msgstr "  -R, --exclude-relation=PATTERN  Non controlla le relazioni corrispondenti\n"
+msgstr ""
+"  -R, --exclude-relation=PATTERN  NON controllare le relazioni corrispondenti\n"
 
-#: pg_amcheck.c:1149
+#: pg_amcheck.c:1196
 #, c-format
 msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
 msgstr "  -s, --schema=PATTERN            controlla gli schemi corrispondenti\n"
 
-#: pg_amcheck.c:1150
+#: pg_amcheck.c:1197
 #, c-format
 msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
-msgstr "  -S, --exclude-schema=PATTERN    Non controlla gli schemi corrispondenti\n"
+msgstr "  -S, --exclude-schema=PATTERN    NON controllare gli schemi corrispondenti\n"
 
-#: pg_amcheck.c:1151
+#: pg_amcheck.c:1198
 #, c-format
 msgid "  -t, --table=PATTERN             check matching table(s)\n"
 msgstr "  -t, --table=PATTERN             controlla le tabelle corrispondenti\n"
 
-#: pg_amcheck.c:1152
+#: pg_amcheck.c:1199
 #, c-format
 msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
-msgstr "  -T, --exclude-table=PATTERN     Non controlla le tabelle corrispondenti\n"
+msgstr "  -T, --exclude-table=PATTERN     NON controllare le tabelle corrispondenti\n"
 
-#: pg_amcheck.c:1153
+#: pg_amcheck.c:1200
 #, c-format
-msgid "      --no-dependent-indexes      do NOT expand list of relations to include indexes\n"
-msgstr "      --no-dependent-indexes      Non espande l'elenco di relazioni per includere gli indici\n"
+msgid ""
+"      --no-dependent-indexes      do NOT expand list of relations to include "
+"indexes\n"
+msgstr ""
+"      --no-dependent-indexes      NON espandere la lista delle relazioni includendo "
+"gli indici\n"
 
-#: pg_amcheck.c:1154
+#: pg_amcheck.c:1201
 #, c-format
-msgid "      --no-dependent-toast        do NOT expand list of relations to include TOAST tables\n"
-msgstr "      --no-dependent-toast        Non espande l'elenco delle relazioni per includere le tabelle TOAST\n"
+msgid ""
+"      --no-dependent-toast        do NOT expand list of relations to include TOAST "
+"tables\n"
+msgstr ""
+"      --no-dependent-toast        NON espandere la lista delle relazioni includendo "
+"le tabelle TOAST\n"
 
-#: pg_amcheck.c:1155
+#: pg_amcheck.c:1202
 #, c-format
 msgid "      --no-strict-names           do NOT require patterns to match objects\n"
-msgstr "      --no-strict-names           Non richiede modelli per abbinare gli oggetti\n"
+msgstr ""
+"      --no-strict-names           NON richiedere che i pattern corrispondano a "
+"oggetti\n"
 
-#: pg_amcheck.c:1156
+#: pg_amcheck.c:1203
 #, c-format
 msgid ""
 "\n"
 "Table checking options:\n"
 msgstr ""
 "\n"
-"Opzioni di controllo della tabella:\n"
+"Opzioni per il controllo delle tabelle:\n"
 
-#: pg_amcheck.c:1157
+#: pg_amcheck.c:1204
 #, c-format
 msgid "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
-msgstr "      --exclude-toast-pointers    NON seguono i puntatori TOAST di relazione\n"
+msgstr ""
+"      --exclude-toast-pointers    NON seguire i puntatori TOAST della relazione\n"
 
-#: pg_amcheck.c:1158
+#: pg_amcheck.c:1205
 #, c-format
 msgid "      --on-error-stop             stop checking at end of first corrupt page\n"
-msgstr "      --on-error-stop             interrompe il controllo alla fine della prima pagina danneggiata\n"
+msgstr ""
+"      --on-error-stop             ferma il controllo alla fine della prima pagina "
+"corrotta\n"
 
-#: pg_amcheck.c:1159
+#: pg_amcheck.c:1206
 #, c-format
-msgid "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" blocks\n"
-msgstr "      --skip=OPZIONE              Non controlla i blocchi \"tutto congelato\" o \"tutto visibile\".\n"
+msgid ""
+"      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" "
+"blocks\n"
+msgstr ""
+"      --skip=OPZIONE               NON controllare i blocchi \"all-frozen\" oppure "
+"\"all-visible\"\n"
 
-#: pg_amcheck.c:1160
+#: pg_amcheck.c:1207
 #, c-format
-msgid "      --startblock=BLOCK          begin checking table(s) at the given block number\n"
-msgstr "      --startblock=BLOCCO         inizia a controllare le tabelle al numero di blocco dato\n"
+msgid ""
+"      --startblock=BLOCK          begin checking table(s) at the given block "
+"number\n"
+msgstr ""
+"      --startblock=BLOCCO          inizia il controllo delle tabelle dal numero di "
+"blocco indicato\n"
 
-#: pg_amcheck.c:1161
+#: pg_amcheck.c:1208
 #, c-format
-msgid "      --endblock=BLOCK            check table(s) only up to the given block number\n"
-msgstr "      --endblock=BLOCCO           controlla le tabelle solo fino al numero di blocco specificato\n"
+msgid ""
+"      --endblock=BLOCK            check table(s) only up to the given block number\n"
+msgstr ""
+"      --endblock=BLOCCO            controlla le tabelle solo fino al numero di "
+"blocco indicato\n"
 
-#: pg_amcheck.c:1162
+#: pg_amcheck.c:1209
 #, c-format
 msgid ""
 "\n"
 "B-tree index checking options:\n"
 msgstr ""
 "\n"
-"Opzioni di controllo dell'indice B-tree:\n"
+"Opzioni per il controllo degli indici B-tree:\n"
 
-#: pg_amcheck.c:1163
+#: pg_amcheck.c:1210
 #, c-format
-msgid "      --heapallindexed            check that all heap tuples are found within indexes\n"
-msgstr "      --heapallindexed            controlla che tutte le tuple dell'heap si trovino all'interno degli indici\n"
+msgid "      --checkunique               check unique constraint if index is unique\n"
+msgstr ""
+"      --checkunique               controlla il vincolo di unicità se l'indice è "
+"unico\n"
 
-#: pg_amcheck.c:1164
+#: pg_amcheck.c:1211
+#, c-format
+msgid ""
+"      --heapallindexed            check that all heap tuples are found within "
+"indexes\n"
+msgstr ""
+"      --heapallindexed             controlla che tutte le tuple heap siano presenti "
+"negli indici\n"
+
+#: pg_amcheck.c:1212
 #, c-format
 msgid "      --parent-check              check index parent/child relationships\n"
-msgstr "      --parent-check              controlla le relazioni genitore/figlio dell'indice\n"
+msgstr ""
+"      --parent-check               controlla le relazioni padre/figlio dell'indice\n"
 
-#: pg_amcheck.c:1165
+#: pg_amcheck.c:1213
 #, c-format
 msgid "      --rootdescend               search from root page to refind tuples\n"
-msgstr "      --rootdescend               cerca dalla pagina principale per trovare le tuple\n"
+msgstr ""
+"      --rootdescend                cerca dalla pagina radice per ritrovare le "
+"tuple\n"
 
-#: pg_amcheck.c:1166
+#: pg_amcheck.c:1214
 #, c-format
 msgid ""
 "\n"
@@ -397,37 +566,38 @@ msgstr ""
 "\n"
 "Opzioni di connessione:\n"
 
-#: pg_amcheck.c:1167
+#: pg_amcheck.c:1215
 #, c-format
 msgid "  -h, --host=HOSTNAME             database server host or socket directory\n"
-msgstr "  -h, --host=HOSTNAME             host del database  o directory socket\n"
+msgstr ""
+"  -h, --host=HOSTNAME             host del server database o directory dei socket\n"
 
-#: pg_amcheck.c:1168
+#: pg_amcheck.c:1216
 #, c-format
 msgid "  -p, --port=PORT                 database server port\n"
-msgstr "  -p, --port=PORT                 porta del server del database\n"
+msgstr "  -p, --port=PORTA                porta del server database\n"
 
-#: pg_amcheck.c:1169
+#: pg_amcheck.c:1217
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
-msgstr "  -U, --username=USERNAME         nome utente con cui connettersi\n"
+msgstr "  -U, --username=NOMEUTENTE       nome utente con cui connettersi\n"
 
-#: pg_amcheck.c:1170
+#: pg_amcheck.c:1218
 #, c-format
 msgid "  -w, --no-password               never prompt for password\n"
-msgstr "  -w, --no-password               non richiede mai la password\n"
+msgstr "  -w, --no-password               non chiedere mai la password\n"
 
-#: pg_amcheck.c:1171
+#: pg_amcheck.c:1219
 #, c-format
 msgid "  -W, --password                  force password prompt\n"
-msgstr "  -W, --password                  forza la richiesta della password\n"
+msgstr "  -W, --password                  richiedi sempre la password\n"
 
-#: pg_amcheck.c:1172
+#: pg_amcheck.c:1220
 #, c-format
 msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
-msgstr "      --maintenance-db=DBNAME     database di manutenzione alternativo\n"
+msgstr "      --maintenance-db=NOMEDB     database di manutenzione alternativo\n"
 
-#: pg_amcheck.c:1173
+#: pg_amcheck.c:1221
 #, c-format
 msgid ""
 "\n"
@@ -436,42 +606,47 @@ msgstr ""
 "\n"
 "Altre opzioni:\n"
 
-#: pg_amcheck.c:1174
+#: pg_amcheck.c:1222
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                      mostra i comandi inviati al server\n"
 
-#: pg_amcheck.c:1175
+#: pg_amcheck.c:1223
 #, c-format
-msgid "  -j, --jobs=NUM                  use this many concurrent connections to the server\n"
-msgstr "  -j, --jobs=NUM                  usa questo numero di connessioni simultanee al server\n"
+msgid ""
+"  -j, --jobs=NUM                  use this many concurrent connections to the "
+"server\n"
+msgstr ""
+"  -j, --jobs=NUM                  usa questo numero di connessioni concorrenti al "
+"server\n"
 
-#: pg_amcheck.c:1176
+#: pg_amcheck.c:1224
 #, c-format
 msgid "  -P, --progress                  show progress information\n"
-msgstr "  -P, --progress                  mostra le informazioni sullo stato di avanzamento\n"
+msgstr "  -P, --progress                  mostra le informazioni di avanzamento\n"
 
-#: pg_amcheck.c:1177
+#: pg_amcheck.c:1225
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
-msgstr "  -v, --verbose                   mostra molti messaggi\n"
+msgstr "  -v, --verbose                   genera molto output\n"
 
-#: pg_amcheck.c:1178
+#: pg_amcheck.c:1226
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
-msgstr "  -V, --version                   mostra informazioni sulla versione ed esci\n"
+msgstr ""
+"  -V, --version                   mostra le informazioni sulla versione, poi esci\n"
 
-#: pg_amcheck.c:1179
+#: pg_amcheck.c:1227
 #, c-format
 msgid "      --install-missing           install missing extensions\n"
 msgstr "      --install-missing           installa le estensioni mancanti\n"
 
-#: pg_amcheck.c:1180
+#: pg_amcheck.c:1228
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
-msgstr "  -?, --help                      mostra questo aiuto ed esci\n"
+msgstr "  -?, --help                      mostra questo aiuto, poi esci\n"
 
-#: pg_amcheck.c:1182
+#: pg_amcheck.c:1230
 #, c-format
 msgid ""
 "\n"
@@ -480,52 +655,52 @@ msgstr ""
 "\n"
 "Segnala i bug a <%s>.\n"
 
-#: pg_amcheck.c:1183
+#: pg_amcheck.c:1231
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Pagina iniziale di %s: <%s>\n"
 
-#: pg_amcheck.c:1236
+#: pg_amcheck.c:1284
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"
 msgstr "%*s/%s relazioni (%d%%), %*s/%s pagine (%d%%) %*s"
 
-#: pg_amcheck.c:1247
+#: pg_amcheck.c:1295
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"
 msgstr "%*s/%s relazioni (%d%%), %*s/%s pagine (%d%%) (%s%-*.*s)"
 
-#: pg_amcheck.c:1262
+#: pg_amcheck.c:1310
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
 msgstr "%*s/%s relazioni (%d%%), %*s/%s pagine (%d%%)"
 
-#: pg_amcheck.c:1321 pg_amcheck.c:1354
+#: pg_amcheck.c:1369 pg_amcheck.c:1402
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
-msgstr "nome qualificato improprio (troppi nomi puntati): %s"
+msgstr "nome qualificato non corretto (troppi nomi puntati): %s"
 
-#: pg_amcheck.c:1399
+#: pg_amcheck.c:1447
 #, c-format
 msgid "improper relation name (too many dotted names): %s"
-msgstr "nome di relazione improprio (troppi nomi puntati): %s"
+msgstr "nome di relazione non corretto (troppi nomi puntati): %s"
 
-#: pg_amcheck.c:1552 pg_amcheck.c:1691
+#: pg_amcheck.c:1600 pg_amcheck.c:1739
 #, c-format
 msgid "including database \"%s\""
-msgstr "incluso il database \"%s\""
+msgstr "inclusione del database \"%s\" in corso"
 
-#: pg_amcheck.c:1673
+#: pg_amcheck.c:1721
 #, c-format
 msgid "internal error: received unexpected database pattern_id %d"
-msgstr "errore interno: ricevuto database imprevisto pattern_id %d"
+msgstr "errore interno: ricevuto un pattern_id di database inatteso %d"
 
-#: pg_amcheck.c:1675
+#: pg_amcheck.c:1723
 #, c-format
 msgid "no connectable databases to check matching \"%s\""
-msgstr "nessun database collegabile per verificare la corrispondenza \"%s\""
+msgstr "nessun database connettibile da controllare corrispondente a \"%s\""
 
-#: pg_amcheck.c:2133
+#: pg_amcheck.c:2196
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
-msgstr "errore interno: ricevuta relazione imprevista pattern_id %d"
+msgstr "errore interno: ricevuto un pattern_id di relazione inatteso %d"

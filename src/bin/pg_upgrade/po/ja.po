@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL 19)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-07-03 14:13+0900\n"
-"PO-Revision-Date: 2026-07-06 15:03+0900\n"
+"POT-Creation-Date: 2026-09-15 10:55+0900\n"
+"PO-Revision-Date: 2026-09-15 14:35+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -65,15 +65,15 @@ msgstr "ユーザー名の参照に失敗: エラーコード %lu"
 msgid "options %s and %s cannot be used together"
 msgstr "オプション %s と %s は同時には使用できません"
 
-#: ../../fe_utils/string_utils.c:585
+#: ../../fe_utils/string_utils.c:584
 #, c-format
-msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
-msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+msgid "shell command argument contains a newline or carriage return: \"%s\""
+msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含まれています: \"%s\""
 
-#: ../../fe_utils/string_utils.c:758
+#: ../../fe_utils/string_utils.c:752
 #, c-format
-msgid "database name contains a newline or carriage return: \"%s\"\n"
-msgstr "データベース名に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+msgid "database name contains a newline or carriage return: \"%s\""
+msgstr "データベース名に改行文字(LF)または復帰文字(CR)が含まれています: \"%s\""
 
 #: ../../fe_utils/version.c:57
 #, c-format
@@ -222,9 +222,9 @@ msgstr "問題の列の一覧は以下のファイルにあります:"
 
 #: check.c:373 check.c:976 check.c:1127 check.c:1191 check.c:1265 check.c:1351
 #: check.c:1439 check.c:1567 check.c:1636 check.c:1721 check.c:1797
-#: check.c:1877 check.c:2227 check.c:2246 check.c:2262 check.c:2306
-#: check.c:2359 check.c:2472 file.c:214 file.c:251 function.c:214 option.c:519
-#: slru_io.c:113 version.c:51
+#: check.c:1877 check.c:2186 check.c:2306 check.c:2325 check.c:2341
+#: check.c:2385 check.c:2438 check.c:2551 file.c:214 file.c:251 function.c:214
+#: option.c:519 slru_io.c:113 version.c:51
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
@@ -426,8 +426,8 @@ msgid "template0 must not allow connections, i.e. its pg_database.datallowconn m
 msgstr "template0 には接続を許可してはなりません。すなわち、pg_database.datallowconn は false である必要があります"
 
 #: check.c:1141 check.c:1202 check.c:1317 check.c:1410 check.c:1533
-#: check.c:1607 check.c:1690 check.c:1765 check.c:1846 check.c:2275
-#: check.c:2415 check.c:2484 function.c:235
+#: check.c:1607 check.c:1690 check.c:1765 check.c:1846 check.c:2198
+#: check.c:2354 check.c:2494 check.c:2563 function.c:235
 #, c-format
 msgid "fatal"
 msgstr "致命的"
@@ -605,7 +605,7 @@ msgstr "gist_inet_ops/gist_cidr_ops が使用されているかどうかを確�
 #: check.c:1766
 #, c-format
 msgid ""
-"Your installation contains indexes that use btree_gist extension's\n"
+"Your installation contains indexes that use the btree_gist extension's\n"
 "gist_inet_ops or gist_cidr_ops operator classes, which cannot be\n"
 "binary-upgraded.  Replace them with indexes that use the built-in GiST\n"
 "inet_ops operator class.\n"
@@ -663,62 +663,84 @@ msgstr ""
 "影響を受ける可能性があるリレーションの一覧は以下のファイルにあります:\n"
 "    %s"
 
-#: check.c:2082
+#: check.c:2083
 #, c-format
 msgid "Checking new cluster replication slots"
 msgstr "新しいクラスタのレプリケーションスロットを確認しています"
 
-#: check.c:2094
+#: check.c:2095
 #, c-format
 msgid "could not count the number of replication slots"
 msgstr "レプリケーションスロットの数を数えられませんでした"
 
-#: check.c:2104
+#: check.c:2105
 #, c-format
 msgid "expected 0 logical replication slots but found %d"
 msgstr "論理レプリケーションスロット数は0であることを期待していましたが、%d個ありました"
 
-#: check.c:2113
+#: check.c:2114
 #, c-format
 msgid "replication slot \"%s\" already exists in the new cluster"
 msgstr "レプリケーションスロット\"%s\"は新シクラスタにすでに存在します"
 
-#: check.c:2123 check.c:2182
+#: check.c:2124 check.c:2261
 #, c-format
 msgid "could not determine parameter settings on new cluster"
 msgstr "新クラスタ上のパラメータ設定を決定できませんでした"
 
-#: check.c:2129
+#: check.c:2130
 #, c-format
 msgid "\"wal_level\" must be \"replica\" or \"logical\" but is set to \"%s\""
 msgstr "\"wal_level\"は\"replica\"または\"logical\"でなければなりませんが、\"%s\"に設定されています"
 
-#: check.c:2136
+#: check.c:2152
+#, c-format
+msgid "could not parse \"output_plugin_libraries\" setting '%s'"
+msgstr "\"output_plugin_libraries\"の設定'%s'をパースできませんでした"
+
+#: check.c:2199
+#, c-format
+msgid ""
+"Your installation contains logical replication slots with plugins\n"
+"that are not allowed by the new cluster's output_plugin_libraries\n"
+"setting. You can add trusted plugins to output_plugin_libraries\n"
+"and/or remove affected slots, and then restart the upgrade.\n"
+"A list of the problematic slots is in the file:\n"
+"    %s"
+msgstr ""
+"このクラスタには、新クラスタのoutput_plugin_librariesの設定では、\n"
+"使用できないプラグインを使用している論理レプリケーションスロットがあります。\n"
+"信頼するプラグインのoutput_plugin_librariesへの追加と、問題のスロットの削除の\n"
+"一方または両方を行った後に、アップグレードを再実行してください。\n"
+"問題のあるスロットの一覧は、以下のファイルにあります:\n"
+"    %s"
+
+#: check.c:2215
 #, c-format
 msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots in the old cluster plus one additional slot required for retaining conflict detection information (%d)"
 msgstr "\"max_replication_slots\" (%d) は、旧クラスタの論理レプリケーションスロット数に、衝突検出情報を保持するために必要な追加スロット1つを加えた合計(%d)以上である必要があります。"
 
-#: check.c:2142
+#: check.c:2221
 #, c-format
 msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) in the old cluster"
 msgstr "\"max_replication_slots\" (%d) は旧クラスタの論理レプリケーションスロットの数(%d)以上でなければなりません"
 
-#: check.c:2174
+#: check.c:2253
 #, c-format
 msgid "Checking new cluster configuration for subscriptions"
 msgstr "新しいクラスタでのサブスクリプション構成を確認しています"
 
-#: check.c:2186
+#: check.c:2265
 #, c-format
 msgid "\"max_active_replication_origins\" (%d) must be greater than or equal to the number of subscriptions (%d) in the old cluster"
 msgstr "\"max_active_replication_origins\" (%d) は旧クラスタのサブスクリプションの数(%d)以上でなければなりません"
 
-#: check.c:2208
+#: check.c:2287
 #, c-format
 msgid "Checking logical replication slots"
 msgstr "論理レプリケーションスロットを確認しています"
 
-#: check.c:2276
+#: check.c:2355
 #, c-format
 msgid ""
 "Your installation contains logical replication slots that cannot be upgraded.\n"
@@ -733,12 +755,12 @@ msgstr ""
 "問題のある列の一覧は、以下のファイルにあります: \n"
 "    %s"
 
-#: check.c:2334
+#: check.c:2413
 #, c-format
 msgid "Checking subscription state"
 msgstr "サブスクリプションの状態を確認しています"
 
-#: check.c:2416
+#: check.c:2495
 #, c-format
 msgid ""
 "Your installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state.\n"
@@ -752,12 +774,12 @@ msgstr ""
 "問題のあるサブスクリプションの一覧は、以下のファイルにあります: \n"
 "    %s"
 
-#: check.c:2442
+#: check.c:2521
 #, c-format
 msgid "Checking names of databases, roles, and tablespaces"
 msgstr "データベース、ロール、およびテーブルスペースの名前を確認しています"
 
-#: check.c:2485
+#: check.c:2564
 #, c-format
 msgid ""
 "Your installation contains databases, roles, or tablespaces with names\n"
@@ -1010,37 +1032,42 @@ msgstr "新旧の pg_controldata における日付/時刻型データの保存�
 
 #: controldata.c:662
 #, c-format
-msgid "checksums are being enabled in the old cluster"
-msgstr "古いクラスタではチェックサムの有効化中です"
+msgid "data checksums are being enabled in the old cluster"
+msgstr "古いクラスタではデータチェックサムの有効化中です"
 
-#: controldata.c:670
+#: controldata.c:664
+#, c-format
+msgid "data checksums are being disabled in the old cluster"
+msgstr "古いクラスタではデータチェックサムの無効化処理中です"
+
+#: controldata.c:672
 #, c-format
 msgid "old cluster does not use data checksums but the new one does"
 msgstr "旧クラスタではデータチェックサムを使用していませんが、新クラスタでは使用しています"
 
-#: controldata.c:673
+#: controldata.c:675
 #, c-format
 msgid "old cluster uses data checksums but the new one does not"
 msgstr "旧クラスタではデータチェックサムを使用していますが、新クラスタでは使用していません"
 
-#: controldata.c:675
+#: controldata.c:677
 #, c-format
 msgid "old and new cluster pg_controldata checksum versions do not match"
 msgstr "新旧の pg_controldata 間でチェックサムのバージョンが一致しません"
 
 #. translator: %s is the file path of the control file
-#: controldata.c:687
+#: controldata.c:689
 #, c-format
 msgid "Adding \".old\" suffix to old \"%s\""
 msgstr "古い \"%s\" に \".old\" サフィックスを追加します"
 
-#: controldata.c:692 relfilenumber.c:385 relfilenumber.c:412
+#: controldata.c:694 relfilenumber.c:385 relfilenumber.c:412
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした: %m"
 
 #. translator: %s/%s is the file path of the control file
-#: controldata.c:698
+#: controldata.c:700
 #, c-format
 msgid ""
 "\n"
@@ -1055,7 +1082,7 @@ msgstr ""
 "いるため、一度新クラスタを起動してしまうと旧クラスタは安全に起動\n"
 "することができなくなります。"
 
-#: controldata.c:705
+#: controldata.c:707
 #, c-format
 msgid ""
 "\n"
@@ -1065,7 +1092,7 @@ msgstr ""
 "\n"
 "\"swap\"モードが使用されているため, 古いクラスタは今後安全に起動できません"
 
-#: controldata.c:709 file.c:291
+#: controldata.c:711 file.c:291
 #, c-format
 msgid "unrecognized transfer mode"
 msgstr "識別できない転送モード"
@@ -2103,8 +2130,8 @@ msgstr "ファイル\"%s\"の読み込みに失敗しました: %m"
 
 #: slru_io.c:136
 #, c-format
-msgid "unexpected EOF reading file \"%s\" at offset %u, reading as zeros"
-msgstr "ファイル\"%s\"、オフセット %u を読み込み中に想定外のEOF、残りを0として読み取ります"
+msgid "unexpected EOF reading file \"%s\" at offset %lld, reading as zeros"
+msgstr "ファイル\"%s\"、オフセット %lld を読み込み中に想定外のEOF、残りを0として読み取ります"
 
 #: slru_io.c:229 slru_io.c:253
 #, c-format
@@ -2302,3 +2329,6 @@ msgstr ""
 
 #~ msgid "rewriting \"%s\" to \"%s\""
 #~ msgstr "\"%s\"を\"%s\"に書き換えています"
+
+#~ msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+#~ msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"

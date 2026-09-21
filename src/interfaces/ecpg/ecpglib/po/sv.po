@@ -1,14 +1,14 @@
 # SWEDISH message translation file for ecpglib
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 18\n"
+"Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-07-12 11:10+0000\n"
-"PO-Revision-Date: 2025-07-29 19:44+0200\n"
+"POT-Creation-Date: 2026-08-12 10:10+0000\n"
+"PO-Revision-Date: 2026-08-12 18:32+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: connect.c:221
+#: connect.c:226
 msgid "empty message text"
 msgstr "tom meddelandetext"
 
-#: connect.c:386 connect.c:645
+#: connect.c:393 connect.c:665
 msgid "<DEFAULT>"
 msgstr "<DEFAULT>"
 
-#: descriptor.c:866 misc.c:88
+#: descriptor.c:485 descriptor.c:883 misc.c:88
 msgid "NULL"
 msgstr "NULL"
 
@@ -122,78 +122,84 @@ msgstr "sätta in en array med variabler stöds inte på rad %d"
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:137
 #, c-format
+msgid "invalid input syntax for type bytea: \"%s\", on line %d"
+msgstr "ogiltig inputsyntax för typ bytea: \"%s\", på rad %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
+#, c-format
 msgid "connection \"%s\" does not exist on line %d"
 msgstr "anslutning \"%s\" funns inte på rad %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:144
+#: error.c:151
 #, c-format
 msgid "not connected to connection \"%s\" on line %d"
 msgstr "ej ansluten till anslutning \"%s\" på rad %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:151
+#: error.c:158
 #, c-format
 msgid "invalid statement name \"%s\" on line %d"
 msgstr "ogiltigt satsnamn \"%s\" på rad %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:158
+#: error.c:165
 #, c-format
 msgid "descriptor \"%s\" not found on line %d"
 msgstr "deskriptor \"%s\" hittades inte på rad %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:165
+#: error.c:172
 #, c-format
 msgid "descriptor index out of range on line %d"
 msgstr "deskriptor-index utanför sitt intervall på rad %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:172
+#: error.c:179
 #, c-format
 msgid "unrecognized descriptor item \"%s\" on line %d"
 msgstr "okänd deskriptor-post \"%s\" på rad %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:179
+#: error.c:186
 #, c-format
 msgid "variable does not have a numeric type on line %d"
 msgstr "variabel har ej numerisk typ på rad %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:186
+#: error.c:193
 #, c-format
 msgid "variable does not have a character type on line %d"
 msgstr "variabel har ej character-typ på rad %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:193
+#: error.c:200
 #, c-format
 msgid "error in transaction processing on line %d"
 msgstr "fel i transaktionsprocessande på rad %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:200
+#: error.c:207
 #, c-format
 msgid "could not connect to database \"%s\" on line %d"
 msgstr "kunde inte ansluta till databas \"%s\" på rad %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:207
+#: error.c:214
 #, c-format
 msgid "SQL error %d on line %d"
 msgstr "SQL-fel %d på rad %d"
 
-#: error.c:253
+#: error.c:260
 msgid "the connection to the server was lost"
 msgstr "anslutningen till servern tappades"
 
-#: error.c:345
+#: error.c:352
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "SQL-fel: %s\n"
 
-#: execute.c:2186 execute.c:2193
+#: execute.c:2209 execute.c:2216
 msgid "<empty>"
 msgstr "<tom>"

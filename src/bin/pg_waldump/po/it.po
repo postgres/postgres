@@ -5,87 +5,248 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_waldump (PostgreSQL) 15\n"
+"Project-Id-Version: pg_waldump (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-26 08:17+0000\n"
-"PO-Revision-Date: 2022-10-02 19:21+0200\n"
-"Last-Translator: \n"
-"Language-Team: \n"
+"POT-Creation-Date: 2026-08-03 08:53+0000\n"
+"PO-Revision-Date: 2026-08-04 10:14+0200\n"
+"Last-Translator: Domenico Sgarbossa <sgarbossa.domenico@gmail.com>\n"
+"Language-Team: https://github.com/sbraaa\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.4.2\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "errore: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "avvertimento: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "dettaglio: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "suggerimento: "
 
-#: pg_waldump.c:160
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "memoria esaurita\n"
+
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "impossibile duplicare il puntatore nullo (errore interno)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "dimensione della richiesta di allocazione di memoria non valida %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "dimensione della richiesta di allocazione di memoria non valida %zu * %zu\n"
+
+#: ../../common/file_utils.c:69 ../../common/file_utils.c:370
+#: ../../common/file_utils.c:428 ../../common/file_utils.c:502 pg_waldump.c:193
+#: pg_waldump.c:648
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "apertura del file \"%s\" fallita: %m"
 
-#: pg_waldump.c:216
+#: ../../common/file_utils.c:75
 #, c-format
-msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
-msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
-msgstr[0] "La dimensione del segmento WAL deve essere una potenza di due tra 1 MB e 1 GB, ma l'intestazione del file WAL \"%s\" specifica %d byte"
-msgstr[1] "La dimensione dei segmenti WAL deve essere una potenza di due tra 1 MB e 1 GB, ma l'intestazione del file WAL \"%s\" specifica %d byte"
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "impossibile sincronizzare il file system per il file \"%s\": %m"
 
-#: pg_waldump.c:222
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "non è stato possibile ottenere informazioni sul file \"%s\": %m"
+
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "questa build non supporta il metodo di sincronizzazione \"%s\""
+
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
+#: pg_waldump.c:1252 pg_waldump.c:1286
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "apertura della directory \"%s\" fallita: %m"
+
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "lettura della directory \"%s\" fallita: %m"
+
+#: ../../common/file_utils.c:440 ../../common/file_utils.c:510
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "fsync del file \"%s\" fallito: %m"
+
+#: ../../common/file_utils.c:520
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "non è stato possibile rinominare il file \"%s\" in \"%s\": %m"
+
+#: archive_waldump.c:143 pg_waldump.c:1299 pg_waldump.c:1329
+#, c-format
+msgid "could not open file \"%s\""
+msgstr "impossibile aprire il file \"%s\""
+
+#: archive_waldump.c:188
+#, c-format
+msgid "could not find WAL in archive \"%s\""
+msgstr "non è stato possibile trovare i WAL nell'archivio \"%s\""
+
+#: archive_waldump.c:205
+#, c-format
+msgid "invalid WAL segment size in WAL file from archive \"%s\" (%u byte)"
+msgid_plural "invalid WAL segment size in WAL file from archive \"%s\" (%u bytes)"
+msgstr[0] "dimensione del segmento WAL non valida nel file WAL dall'archivio \"%s\" (%u byte)"
+msgstr[1] "dimensione del segmento WAL non valida nel file WAL dall'archivio \"%s\" (%u byte)"
+
+#: archive_waldump.c:209 pg_waldump.c:252
+#, c-format
+msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
+msgstr "La dimensione del segmento WAL deve essere una potenza di due tra 1 MB e 1 GB."
+
+#: archive_waldump.c:291 pg_waldump.c:654
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "chiusura del file \"%s\" fallita: %m"
+
+#: archive_waldump.c:367
+#, c-format
+msgid "WAL segment \"%s\" in archive \"%s\" is too short: read %zu of %zu bytes"
+msgstr "il segmento WAL \"%s\" nell'archivio \"%s\" è troppo corto: letti %zu byte su %zu"
+
+#: archive_waldump.c:371
+#, c-format
+msgid "unexpected end of archive \"%s\" while reading \"%s\": read %zu of %zu bytes"
+msgstr "fine inattesa dell'archivio \"%s\" durante la lettura di \"%s\": letti %zu byte su %zu"
+
+#: archive_waldump.c:503
+#, c-format
+msgid "could not close file \"%s/%s\": %m"
+msgstr "non è stato possibile chiudere il file \"%s/%s\": %m"
+
+#: archive_waldump.c:516
+#, c-format
+msgid "could not find WAL \"%s\" in archive \"%s\""
+msgstr "non è stato possibile trovare il WAL \"%s\" nell'archivio \"%s\""
+
+#: archive_waldump.c:548 pg_waldump.c:259
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "lettura del file \"%s\" fallita: %m"
 
-#: pg_waldump.c:225
+#: archive_waldump.c:595 pg_waldump.c:131
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "creazione della directory \"%s\" fallita: %m"
+
+#: archive_waldump.c:622
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "creazione del file \"%s\" fallita: %m"
+
+#: archive_waldump.c:626
+#, c-format
+msgid "could not set permissions on file \"%s\": %m"
+msgstr "impossibile impostare i permessi sul file \"%s\": %m"
+
+#: archive_waldump.c:651
+#, c-format
+msgid "could not write to file \"%s/%s\": %m"
+msgstr "non è stato possibile scrivere nel file \"%s/%s\": %m"
+
+#: archive_waldump.c:743
+#, c-format
+msgid "ignoring duplicate WAL \"%s\" found in archive \"%s\""
+msgstr "WAL duplicato \"%s\" trovato nell'archivio \"%s\" ignorato"
+
+#: archive_waldump.c:779
+#, c-format
+msgid "unexpected state while parsing tar file"
+msgstr "stato imprevisto durante l'analisi del file tar"
+
+#: pg_waldump.c:140
+#, c-format
+msgid "directory \"%s\" exists but is not empty"
+msgstr "la directory \"%s\" esiste ma non è vuota"
+
+#: pg_waldump.c:144
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "accesso alla directory \"%s\" fallito: %m"
+
+#: pg_waldump.c:248
+#, c-format
+msgid "invalid WAL segment size in WAL file \"%s\" (%u byte)"
+msgid_plural "invalid WAL segment size in WAL file \"%s\" (%u bytes)"
+msgstr[0] "dimensione del segmento WAL non valida nel file WAL \"%s\" (%u byte)"
+msgstr[1] "dimensione del segmento WAL non valida nel file WAL \"%s\" (%u byte)"
+
+#: pg_waldump.c:262
 #, c-format
 msgid "could not read file \"%s\": read %d of %d"
 msgstr "lettura del file \"%s\" fallita: letti %d di %d"
 
-#: pg_waldump.c:286
+#: pg_waldump.c:324
 #, c-format
 msgid "could not locate WAL file \"%s\""
 msgstr "impossibile individuare il file WAL \"%s\""
 
-#: pg_waldump.c:288
+#: pg_waldump.c:326
 #, c-format
 msgid "could not find any WAL file"
 msgstr "non è stato possibile trovare alcun file WAL"
 
-#: pg_waldump.c:329
+#: pg_waldump.c:393
 #, c-format
 msgid "could not find file \"%s\": %m"
 msgstr "impossibile trovare il file \"%s\": %m"
 
-#: pg_waldump.c:378
+#: pg_waldump.c:433
 #, c-format
-msgid "could not read from file %s, offset %d: %m"
-msgstr "impossibile leggere dal file %s, offset %d: %m"
+msgid "could not read from file \"%s\", offset %d: %m"
+msgstr "non è stato possibile leggere dal file \"%s\", offset %d: %m"
 
-#: pg_waldump.c:382
+#: pg_waldump.c:437
 #, c-format
-msgid "could not read from file %s, offset %d: read %d of %d"
-msgstr "impossibile leggere dal file %s, offset %d: leggere %d di %d"
+msgid "could not read from file \"%s\", offset %d: read %d of %d"
+msgstr "non è stato possibile leggere dal file \"%s\", offset %d: letti %d di %d"
 
-#: pg_waldump.c:658
+#: pg_waldump.c:631
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_waldump.c:639
+#, c-format
+msgid "invalid fork number: %u"
+msgstr "numero di fork non valido: %u"
+
+#: pg_waldump.c:651
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "scrittura nel file \"%s\" fallita: %m"
+
+#: pg_waldump.c:895
 #, c-format
 msgid ""
 "%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
@@ -94,17 +255,17 @@ msgstr ""
 "%s decodifica e visualizza i registri write-ahead di PostgreSQL per il debug.\n"
 "\n"
 
-#: pg_waldump.c:660
+#: pg_waldump.c:897
 #, c-format
 msgid "Usage:\n"
 msgstr "Utilizzo:\n"
 
-#: pg_waldump.c:661
+#: pg_waldump.c:898
 #, c-format
 msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
 msgstr "  %s [OPZIONE]... [STARTSEG [ENDSEG]]\n"
 
-#: pg_waldump.c:662
+#: pg_waldump.c:899
 #, c-format
 msgid ""
 "\n"
@@ -113,114 +274,119 @@ msgstr ""
 "\n"
 "Opzioni:\n"
 
-#: pg_waldump.c:663
+#: pg_waldump.c:900
 #, c-format
 msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
-msgstr "  -b, --bkp-details restituisce informazioni dettagliate sui blocchi di backup\n"
+msgstr "  -b, --bkp-details      restituisce informazioni dettagliate sui blocchi di backup\n"
 
-#: pg_waldump.c:664
+#: pg_waldump.c:901
 #, c-format
 msgid "  -B, --block=N          with --relation, only show records that modify block N\n"
-msgstr "  -B, --block=N con --relation, mostra solo i record che modificano il blocco N\n"
+msgstr "  -B, --block=N          con --relation, mostra solo i record che modificano il blocco N\n"
 
-#: pg_waldump.c:665
+#: pg_waldump.c:902
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
-msgstr "  -e, --end=RECPTR interrompe la lettura nella posizione WAL RECPTR\n"
+msgstr "  -e, --end=RECPTR       interrompe la lettura nella posizione WAL RECPTR\n"
 
-#: pg_waldump.c:666
+#: pg_waldump.c:903
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
-msgstr "  -f, --follow continua a riprovare dopo aver raggiunto la fine del WAL\n"
+msgstr "  -f, --follow           continua a riprovare dopo aver raggiunto la fine del WAL\n"
 
-#: pg_waldump.c:667
+#: pg_waldump.c:904
 #, c-format
 msgid ""
 "  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
 "                         valid names are main, fsm, vm, init\n"
 msgstr ""
-"  -F, --fork=FORK mostra solo i record che modificano i blocchi nel fork FORK;\n"
+"  -F, --fork=FORK        mostra solo i record che modificano i blocchi nel fork FORK;\n"
 "                         i nomi validi sono main, fsm, vm, init\n"
 
-#: pg_waldump.c:669
+#: pg_waldump.c:906
 #, c-format
 msgid "  -n, --limit=N          number of records to display\n"
-msgstr "  -n, --limit=N numero di record da visualizzare\n"
+msgstr "  -n, --limit=N          numero di record da visualizzare\n"
 
-#: pg_waldump.c:670
+#: pg_waldump.c:907
 #, c-format
 msgid ""
-"  -p, --path=PATH        directory in which to find log segment files or a\n"
-"                         directory with a ./pg_wal that contains such files\n"
+"  -p, --path=PATH        a tar archive or a directory in which to find WAL segment files or\n"
+"                         a directory with a pg_wal subdirectory containing such files\n"
 "                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"
 msgstr ""
-"   -p, --path=PATH directory in cui trovare i file del segmento di log o a\n"
-"                         directory con un ./pg_wal che contiene tali file\n"
+"  -p, --path=PATH        un archivio tar o una directory in cui trovare i file dei segmenti WAL,\n"
+"                         oppure una directory con una sottodirectory pg_wal che li contiene\n"
 "                         (predefinito: directory corrente, ./pg_wal, $PGDATA/pg_wal)\n"
 
-#: pg_waldump.c:673
+#: pg_waldump.c:910
 #, c-format
 msgid "  -q, --quiet            do not print any output, except for errors\n"
-msgstr "  -q, --quiet non stampa alcun output, ad eccezione degli errori\n"
+msgstr "  -q, --quiet            non stampa alcun output, ad eccezione degli errori\n"
 
-#: pg_waldump.c:674
+#: pg_waldump.c:911
 #, c-format
 msgid ""
 "  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
 "                         use --rmgr=list to list valid resource manager names\n"
 msgstr ""
-"   -r, --rmgr=RMGR mostra solo i record generati dal gestore risorse RMGR;\n"
+"  -r, --rmgr=RMGR        mostra solo i record generati dal gestore risorse RMGR;\n"
 "                         usa --rmgr=list per elencare i nomi validi del gestore risorse\n"
 
-#: pg_waldump.c:676
+#: pg_waldump.c:913
 #, c-format
 msgid "  -R, --relation=T/D/R   only show records that modify blocks in relation T/D/R\n"
-msgstr "  -R, --relation=T/D/R mostra solo i record che modificano i blocchi in relazione a T/D/R\n"
+msgstr "  -R, --relation=T/D/R   mostra solo i record che modificano i blocchi in relazione a T/D/R\n"
 
-#: pg_waldump.c:677
+#: pg_waldump.c:914
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
-msgstr "  -s, --start=RECPTR inizia a leggere nella posizione WAL RECPTR\n"
+msgstr "  -s, --start=RECPTR     inizia a leggere nella posizione WAL RECPTR\n"
 
-#: pg_waldump.c:678
+#: pg_waldump.c:915
 #, c-format
 msgid ""
-"  -t, --timeline=TLI     timeline from which to read log records\n"
+"  -t, --timeline=TLI     timeline from which to read WAL records\n"
 "                         (default: 1 or the value used in STARTSEG)\n"
 msgstr ""
-"  -t, --timeline=timeline TLI da cui leggere i record di registro\n"
+"  -t, --timeline=TLI     timeline da cui leggere i record WAL\n"
 "                         (predefinito: 1 o il valore utilizzato in STARTSEG)\n"
 
-#: pg_waldump.c:680
+#: pg_waldump.c:917
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          mostra informazioni sulla versione ed esci\n"
 
-#: pg_waldump.c:681
+#: pg_waldump.c:918
 #, c-format
 msgid "  -w, --fullpage         only show records with a full page write\n"
-msgstr "  -w, --fullpage mostra solo i record con una scrittura a pagina intera\n"
+msgstr "  -w, --fullpage         mostra solo i record con una scrittura a pagina intera\n"
 
-#: pg_waldump.c:682
+#: pg_waldump.c:919
 #, c-format
 msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
-msgstr "  -x, --xid=XID mostra solo i record con ID transazione XID\n"
+msgstr "  -x, --xid=XID          mostra solo i record con ID transazione XID\n"
 
-#: pg_waldump.c:683
+#: pg_waldump.c:920
 #, c-format
 msgid ""
 "  -z, --stats[=record]   show statistics instead of records\n"
 "                         (optionally, show per-record statistics)\n"
 msgstr ""
-"  -z, --stats[=record] mostra le statistiche invece dei record\n"
+"  -z, --stats[=record]   mostra le statistiche invece dei record\n"
 "                         (facoltativamente, mostra le statistiche per record)\n"
 
-#: pg_waldump.c:685
+#: pg_waldump.c:922
+#, c-format
+msgid "  --save-fullpage=DIR    save full page images to DIR\n"
+msgstr "  --save-fullpage=DIR    salva le immagini a pagina intera in DIR\n"
+
+#: pg_waldump.c:923
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             mostra questo aiuto ed esci\n"
 
-#: pg_waldump.c:686
+#: pg_waldump.c:924
 #, c-format
 msgid ""
 "\n"
@@ -229,304 +395,320 @@ msgstr ""
 "\n"
 "Segnala i bug a <%s>.\n"
 
-#: pg_waldump.c:687
+#: pg_waldump.c:925
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Pagina iniziale di %s: <%s>\n"
 
-#: pg_waldump.c:781
+#: pg_waldump.c:1027
 #, c-format
 msgid "no arguments specified"
 msgstr "nessun argomento specificato"
 
-#: pg_waldump.c:797
+#: pg_waldump.c:1043
 #, c-format
 msgid "invalid block number: \"%s\""
 msgstr "numero di blocco non valido: \"%s\""
 
-#: pg_waldump.c:806 pg_waldump.c:904
+#: pg_waldump.c:1052 pg_waldump.c:1150
 #, c-format
 msgid "invalid WAL location: \"%s\""
 msgstr "posizione WAL non valida: \"%s\""
 
-#: pg_waldump.c:819
+#: pg_waldump.c:1065
 #, c-format
 msgid "invalid fork name: \"%s\""
 msgstr "nome fork non valido: \"%s\""
 
-#: pg_waldump.c:827
+#: pg_waldump.c:1073 pg_waldump.c:1176
 #, c-format
 msgid "invalid value \"%s\" for option %s"
 msgstr "valore \"%s\" non valido per l'opzione %s"
 
-#: pg_waldump.c:858
+#: pg_waldump.c:1104
 #, c-format
 msgid "custom resource manager \"%s\" does not exist"
 msgstr "il gestore risorse personalizzato \"%s\" non esiste"
 
-#: pg_waldump.c:879
+#: pg_waldump.c:1125
 #, c-format
 msgid "resource manager \"%s\" does not exist"
 msgstr "il gestore risorse \"%s\" non esiste"
 
-#: pg_waldump.c:894
+#: pg_waldump.c:1140
 #, c-format
 msgid "invalid relation specification: \"%s\""
 msgstr "specifica relazione non valida: \"%s\""
 
-#: pg_waldump.c:895
+#: pg_waldump.c:1141
 #, c-format
 msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
 msgstr "In attesa di \"tablespace OID/database OID/relation filenode\"."
 
-#: pg_waldump.c:914
+#: pg_waldump.c:1183
 #, c-format
-msgid "invalid timeline specification: \"%s\""
-msgstr "specifica della sequenza temporale non valida: \"%s\""
+msgid "%s must be in range %u..%u"
+msgstr "%s deve essere compreso nell'intervallo %u..%u"
 
-#: pg_waldump.c:924
+#: pg_waldump.c:1198
 #, c-format
 msgid "invalid transaction ID specification: \"%s\""
 msgstr "specificazione ID transazione non valida: \"%s\""
 
-#: pg_waldump.c:939
+#: pg_waldump.c:1213
 #, c-format
 msgid "unrecognized value for option %s: %s"
 msgstr "unrecognized value for option %s: %s"
 
-#: pg_waldump.c:953
+#: pg_waldump.c:1230
 #, c-format
 msgid "option %s requires option %s to be specified"
 msgstr "l'opzione %s richiede che sia specificata l'opzione %s"
 
-#: pg_waldump.c:960
+#: pg_waldump.c:1237
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "troppi argomenti della riga di comando (il primo è \"%s\")"
 
-#: pg_waldump.c:970 pg_waldump.c:990
+#: pg_waldump.c:1274
 #, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "apertura della directory \"%s\" fallita: %m"
+msgid "unnecessary command-line arguments specified with tar archive (first is \"%s\")"
+msgstr "argomenti della riga di comando non necessari specificati con l'archivio tar (il primo è \"%s\")"
 
-#: pg_waldump.c:996 pg_waldump.c:1026
+#: pg_waldump.c:1309
 #, c-format
-msgid "could not open file \"%s\""
-msgstr "impossibile aprire il file \"%s\""
+msgid "start WAL location %X/%08X is not inside file \"%s\""
+msgstr "la posizione WAL iniziale %X/%08X non si trova all'interno del file \"%s\""
 
-#: pg_waldump.c:1006
-#, c-format
-msgid "start WAL location %X/%X is not inside file \"%s\""
-msgstr "avviare la posizione WAL %X/%X non è all'interno del file \"%s\""
-
-#: pg_waldump.c:1033
+#: pg_waldump.c:1336
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "ENDSEG %s è prima di STARTSEG %s"
 
-#: pg_waldump.c:1048
+#: pg_waldump.c:1350
 #, c-format
-msgid "end WAL location %X/%X is not inside file \"%s\""
-msgstr "posizione WAL finale %X/%X non è all'interno del file \"%s\""
+msgid "end WAL location %X/%08X is not inside file \"%s\""
+msgstr "la posizione WAL finale %X/%08X non si trova all'interno del file \"%s\""
 
-#: pg_waldump.c:1060
+#: pg_waldump.c:1363
 #, c-format
 msgid "no start WAL location given"
 msgstr "nessuna posizione iniziale WAL fornita"
 
-#: pg_waldump.c:1074
+#: pg_waldump.c:1370
+#, c-format
+msgid "--follow is not supported when reading from a tar archive"
+msgstr "--follow non è supportato durante la lettura da un archivio tar"
+
+#: pg_waldump.c:1408
 #, c-format
 msgid "out of memory while allocating a WAL reading processor"
 msgstr "memoria insufficiente durante l'allocazione di un processore di lettura WAL"
 
-#: pg_waldump.c:1080
+#: pg_waldump.c:1424
 #, c-format
-msgid "could not find a valid record after %X/%X"
-msgstr "impossibile trovare un record valido dopo %X/%X"
+msgid "could not find a valid record after %X/%08X: %s"
+msgstr "non è stato possibile trovare un record valido dopo %X/%08X: %s"
 
-#: pg_waldump.c:1090
+#: pg_waldump.c:1427
 #, c-format
-msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
-msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
-msgstr[0] "il primo record è dopo %X/%X, a %X/%X, saltando %u byte\n"
-msgstr[1] "i primi records sono dopo %X/%X, a %X/%X, saltando  %u byte\n"
+msgid "could not find a valid record after %X/%08X"
+msgstr "non è stato possibile trovare un record valido dopo %X/%08X"
 
-#: pg_waldump.c:1171
+#: pg_waldump.c:1438
 #, c-format
-msgid "error in WAL record at %X/%X: %s"
-msgstr "errore nel record WAL a %X/%X: %s"
+msgid "first record is after %X/%08X, at %X/%08X, skipping over %u byte"
+msgid_plural "first record is after %X/%08X, at %X/%08X, skipping over %u bytes"
+msgstr[0] "il primo record è dopo %X/%08X, a %X/%08X, saltando %u byte"
+msgstr[1] "il primo record è dopo %X/%08X, a %X/%08X, saltando %u byte"
 
-#: pg_waldump.c:1180
+#: pg_waldump.c:1526
+#, c-format
+msgid "error in WAL record at %X/%08X: %s"
+msgstr "errore nel record WAL a %X/%08X: %s"
+
+#: pg_waldump.c:1544
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Prova \"%s --help\" per maggiori informazioni."
 
-#: xlogreader.c:625
+#: xlogreader.c:621
 #, c-format
-msgid "invalid record offset at %X/%X"
-msgstr "offset del record non valido a %X/%X"
+msgid "invalid record offset at %X/%08X: expected at least %u, got %u"
+msgstr "offset del record non valido a %X/%08X: atteso almeno %u, ricevuto %u"
 
-#: xlogreader.c:633
+#: xlogreader.c:630
 #, c-format
-msgid "contrecord is requested by %X/%X"
-msgstr "contrecord richiesto da %X/%X"
+msgid "contrecord is requested by %X/%08X"
+msgstr "contrecord richiesto da %X/%08X"
 
-#: xlogreader.c:674 xlogreader.c:1121
+#: xlogreader.c:671 xlogreader.c:1146
 #, c-format
-msgid "invalid record length at %X/%X: wanted %u, got %u"
-msgstr "lunghezza del record a %X/%X non valida: atteso %u, ricevuto %u"
+msgid "invalid record length at %X/%08X: expected at least %u, got %u"
+msgstr "lunghezza del record non valida a %X/%08X: attesa almeno %u, ricevuta %u"
 
-#: xlogreader.c:703
+#: xlogreader.c:761
 #, c-format
-msgid "out of memory while trying to decode a record of length %u"
-msgstr "memoria insufficiente durante il tentativo di decodificare un record di lunghezza %u"
-
-#: xlogreader.c:725
-#, c-format
-msgid "record length %u at %X/%X too long"
-msgstr "lunghezza del record %u a %X/%X eccessiva"
+msgid "there is no contrecord flag at %X/%08X"
+msgstr "non c'è alcun flag di contrecord a %X/%08X"
 
 #: xlogreader.c:774
 #, c-format
-msgid "there is no contrecord flag at %X/%X"
-msgstr "non c'è un flag di contrecord a %X/%X"
+msgid "invalid contrecord length %u (expected %lld) at %X/%08X"
+msgstr "lunghezza di contrecord non valida %u (attesa %lld) a %X/%08X"
 
-#: xlogreader.c:787
+#: xlogreader.c:1154
 #, c-format
-msgid "invalid contrecord length %u (expected %lld) at %X/%X"
-msgstr "lunghezza contrada non valida %u (prevista %lld) a %X/%X"
+msgid "invalid resource manager ID %u at %X/%08X"
+msgstr "ID del gestore di risorse non valido %u a %X/%08X"
 
-#: xlogreader.c:922
+#: xlogreader.c:1167 xlogreader.c:1183
 #, c-format
-msgid "missing contrecord at %X/%X"
-msgstr "missing contrecord at %X/%X"
+msgid "record with incorrect prev-link %X/%08X at %X/%08X"
+msgstr "record con prev-link %X/%08X non corretto a %X/%08X"
 
-#: xlogreader.c:1129
+#: xlogreader.c:1221
 #, c-format
-msgid "invalid resource manager ID %u at %X/%X"
-msgstr "l'ID di gestione risorse %u non è valido a %X/%X"
+msgid "incorrect resource manager data checksum in record at %X/%08X"
+msgstr "checksum dei dati del gestore di risorse non corretto nel record a %X/%08X"
 
-#: xlogreader.c:1142 xlogreader.c:1158
+#: xlogreader.c:1255
 #, c-format
-msgid "record with incorrect prev-link %X/%X at %X/%X"
-msgstr "record con link-precedente %X/%X non corretto a %X/%X"
+msgid "invalid magic number %04X in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "numero magico non valido %04X nel segmento WAL %s, LSN %X/%08X, offset %u"
 
-#: xlogreader.c:1194
+#: xlogreader.c:1270 xlogreader.c:1312
 #, c-format
-msgid "incorrect resource manager data checksum in record at %X/%X"
-msgstr "checksum dei dati del manager di risorse non corretto nel record a %X/%X"
+msgid "invalid info bits %04X in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "bit info non validi %04X nel segmento WAL %s, LSN %X/%08X, offset %u"
 
-#: xlogreader.c:1231
+#: xlogreader.c:1286
 #, c-format
-msgid "invalid magic number %04X in log segment %s, offset %u"
-msgstr "numero magico %04X non valido nel segmento di log %s, offset %u"
+msgid "WAL file is from different database system: WAL file database system identifier is %<PRIu64>, pg_control database system identifier is %<PRIu64>"
+msgstr "il file WAL proviene da un sistema di database diverso: l'identificatore del sistema di database del file WAL è %<PRIu64>, l'identificatore del sistema di database di pg_control è %<PRIu64>"
 
-#: xlogreader.c:1245 xlogreader.c:1286
-#, c-format
-msgid "invalid info bits %04X in log segment %s, offset %u"
-msgstr "bit di info %04X non validi nel segmento di log %s, offset %u"
-
-#: xlogreader.c:1260
-#, c-format
-msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
-msgstr "Il file WAL proviene da un sistema di database diverso: l'identificatore del sistema del database del file WAL è %llu, l'identificatore del sistema del database pg_control è %llu"
-
-#: xlogreader.c:1268
+#: xlogreader.c:1294
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "il file di WAL è di un diverso database: dimensione del segmento sbagliata nell'header di pagina"
 
-#: xlogreader.c:1274
+#: xlogreader.c:1300
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "il file di WAL è di un database diverso: XLOG_BLCKSZ non corretto nell'header di pagina"
 
-#: xlogreader.c:1305
+#: xlogreader.c:1332
 #, c-format
-msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
-msgstr "pageaddr inaspettato %X/%X nel segmento di log %s, offset %u"
+msgid "unexpected pageaddr %X/%08X in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "pageaddr imprevisto %X/%08X nel segmento WAL %s, LSN %X/%08X, offset %u"
 
-#: xlogreader.c:1330
+#: xlogreader.c:1358
 #, c-format
-msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
-msgstr "l'ID della timeline %u (dopo %u) è fuori sequenza nel segmento di log %s, offset %u"
+msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "ID timeline fuori sequenza %u (dopo %u) nel segmento WAL %s, LSN %X/%08X, offset %u"
 
-#: xlogreader.c:1735
+#: xlogreader.c:1790
 #, c-format
-msgid "out-of-order block_id %u at %X/%X"
-msgstr "block_id fuori sequenza %u a %X/%X"
+msgid "out-of-order block_id %u at %X/%08X"
+msgstr "block_id fuori ordine %u a %X/%08X"
 
-#: xlogreader.c:1759
+#: xlogreader.c:1814
 #, c-format
-msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
-msgstr "BKPBLOCK_HAS_DATA impostato, ma dati non inclusi a %X/%X"
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%08X"
+msgstr "BKPBLOCK_HAS_DATA impostato, ma nessun dato incluso a %X/%08X"
 
-#: xlogreader.c:1766
+#: xlogreader.c:1821
 #, c-format
-msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
-msgstr "BKPBLOCK_HAS_DATA non impostato, ma la lunghezza dei dati è %u a %X/%X"
+msgid "BKPBLOCK_HAS_DATA not set, but data length is %d at %X/%08X"
+msgstr "BKPBLOCK_HAS_DATA non impostato, ma la lunghezza dei dati è %d a %X/%08X"
 
-#: xlogreader.c:1802
+#: xlogreader.c:1857
 #, c-format
-msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE impostato, ma offset buco %u lunghezza %u lunghezza dell'immagine del blocco %u a %X/%X"
+msgid "BKPIMAGE_HAS_HOLE set, but hole offset %d length %d block image length %d at %X/%08X"
+msgstr "BKPIMAGE_HAS_HOLE impostato, ma offset buco %d, lunghezza %d, lunghezza immagine blocco %d a %X/%08X"
 
-#: xlogreader.c:1818
+#: xlogreader.c:1873
 #, c-format
-msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE non impostato, ma offset buco %u lunghezza %u a %X/%X"
+msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %d length %d at %X/%08X"
+msgstr "BKPIMAGE_HAS_HOLE non impostato, ma offset buco %d, lunghezza %d a %X/%08X"
 
-#: xlogreader.c:1832
+#: xlogreader.c:1887
 #, c-format
-msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
-msgstr "BKPIMAGE_COMPRESSED impostato, ma blocca la lunghezza dell'immagine %u a %X/%X"
+msgid "BKPIMAGE_COMPRESSED set, but block image length %d at %X/%08X"
+msgstr "BKPIMAGE_COMPRESSED impostato, ma lunghezza immagine blocco %d a %X/%08X"
 
-#: xlogreader.c:1847
+#: xlogreader.c:1902
 #, c-format
-msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
-msgstr "né BKPIMAGE_HAS_HOLE né BKPIMAGE_COMPRESSED impostati, ma la lunghezza dell'immagine del blocco è %u a %X/%X"
+msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %d at %X/%08X"
+msgstr "né BKPIMAGE_HAS_HOLE né BKPIMAGE_COMPRESSED impostati, ma la lunghezza dell'immagine del blocco è %d a %X/%08X"
 
-#: xlogreader.c:1863
+#: xlogreader.c:1918
 #, c-format
-msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
-msgstr "BKPBLOCK_SAME_REL impostato ma non c'è un rel precedente a %X/%X"
+msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%08X"
+msgstr "BKPBLOCK_SAME_REL impostato ma nessuna rel precedente a %X/%08X"
 
-#: xlogreader.c:1875
+#: xlogreader.c:1930
 #, c-format
-msgid "invalid block_id %u at %X/%X"
-msgstr "block_id %u non valido a %X/%X"
+msgid "invalid block_id %u at %X/%08X"
+msgstr "block_id non valido %u a %X/%08X"
 
-#: xlogreader.c:1942
+#: xlogreader.c:1997
 #, c-format
-msgid "record with invalid length at %X/%X"
-msgstr "record con lunghezza non valida a %X/%X"
+msgid "record with invalid length at %X/%08X"
+msgstr "record con lunghezza non valida a %X/%08X"
 
-#: xlogreader.c:1967
+#: xlogreader.c:2023
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "impossibile individuare il blocco di backup con ID %d nel record WAL"
 
-#: xlogreader.c:2051
+#: xlogreader.c:2107
 #, c-format
-msgid "could not restore image at %X/%X with invalid block %d specified"
-msgstr "impossibile ripristinare l'immagine in %X/%X con il blocco %d non valido specificato"
+msgid "could not restore image at %X/%08X with invalid block %d specified"
+msgstr "non è stato possibile ripristinare l'immagine a %X/%08X con blocco non valido %d specificato"
 
-#: xlogreader.c:2058
+#: xlogreader.c:2114
 #, c-format
-msgid "could not restore image at %X/%X with invalid state, block %d"
-msgstr "impossibile ripristinare l'immagine in %X/%X con stato non valido, blocco %d"
+msgid "could not restore image at %X/%08X with invalid state, block %d"
+msgstr "non è stato possibile ripristinare l'immagine a %X/%08X con stato non valido, blocco %d"
 
-#: xlogreader.c:2085 xlogreader.c:2102
+#: xlogreader.c:2141 xlogreader.c:2158
 #, c-format
-msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
-msgstr "impossibile ripristinare l'immagine in %X/%X compressa con %s non supportata da build, blocco %d"
+msgid "could not restore image at %X/%08X compressed with %s not supported by build, block %d"
+msgstr "non è stato possibile ripristinare l'immagine a %X/%08X compressa con %s non supportata dalla build, blocco %d"
 
-#: xlogreader.c:2111
+#: xlogreader.c:2167
 #, c-format
-msgid "could not restore image at %X/%X compressed with unknown method, block %d"
-msgstr "impossibile ripristinare l'immagine in %X/%X compressa con metodo sconosciuto, blocco %d"
+msgid "could not restore image at %X/%08X compressed with unknown method, block %d"
+msgstr "non è stato possibile ripristinare l'immagine a %X/%08X compressa con metodo sconosciuto, blocco %d"
 
-#: xlogreader.c:2119
+#: xlogreader.c:2175
 #, c-format
-msgid "could not decompress image at %X/%X, block %d"
-msgstr "impossibile decomprimere l'immagine in %X/%X, blocco %d"
+msgid "could not decompress image at %X/%08X, block %d"
+msgstr "non è stato possibile decomprimere l'immagine a %X/%08X, blocco %d"
+
+#, c-format
+#~ msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
+#~ msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
+#~ msgstr[0] "La dimensione del segmento WAL deve essere una potenza di due tra 1 MB e 1 GB, ma l'intestazione del file WAL \"%s\" specifica %d byte"
+#~ msgstr[1] "La dimensione dei segmenti WAL deve essere una potenza di due tra 1 MB e 1 GB, ma l'intestazione del file WAL \"%s\" specifica %d byte"
+
+#, c-format
+#~ msgid "invalid record offset at %X/%X"
+#~ msgstr "offset del record non valido a %X/%X"
+
+#, c-format
+#~ msgid "invalid timeline specification: \"%s\""
+#~ msgstr "specifica della sequenza temporale non valida: \"%s\""
+
+#, c-format
+#~ msgid "missing contrecord at %X/%X"
+#~ msgstr "missing contrecord at %X/%X"
+
+#, c-format
+#~ msgid "out of memory while trying to decode a record of length %u"
+#~ msgstr "memoria insufficiente durante il tentativo di decodificare un record di lunghezza %u"
+
+#, c-format
+#~ msgid "record length %u at %X/%X too long"
+#~ msgstr "lunghezza del record %u a %X/%X eccessiva"

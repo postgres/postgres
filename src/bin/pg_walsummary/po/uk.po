@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-04-01 10:54+0000\n"
-"PO-Revision-Date: 2026-01-02 15:22\n"
+"POT-Creation-Date: 2026-09-05 00:57+0000\n"
+"PO-Revision-Date: 2026-09-05 17:30\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,39 +14,48 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_18_STABLE/pg_walsummary.pot\n"
-"X-Crowdin-File-ID: 1049\n"
+"X-Crowdin-File: /REL_19_STABLE/pg_walsummary.pot\n"
 
-#: ../../../src/common/logging.c:279
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "помилка: "
 
-#: ../../../src/common/logging.c:286
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "попередження: "
 
-#: ../../../src/common/logging.c:297
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "деталі: "
 
-#: ../../../src/common/logging.c:304
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "підказка: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "недостатньо пам'яті\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "неправильний розмір запиту на виділення пам'яті %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "неправильний розмір запиту на виділення пам'яті %zu * %zu\n"
 
 #: ../../common/file_utils.c:69 ../../common/file_utils.c:370
 #: ../../common/file_utils.c:428 ../../common/file_utils.c:502
@@ -106,6 +115,11 @@ msgstr "%s має бути в діапазоні %d..%d"
 msgid "unrecognized sync method: %s"
 msgstr "нерозпізнаний метод синхронізації: %s"
 
+#: ../../fe_utils/option_utils.c:139
+#, c-format
+msgid "options %s and %s cannot be used together"
+msgstr "параметри %s і %s не можна використовувати разом"
+
 #: pg_walsummary.c:86 pg_walsummary.c:94
 #, c-format
 msgid "Try \"%s --help\" for more information."
@@ -156,12 +170,12 @@ msgstr "  -q, --quiet не друкувати нічого, просто роз�
 #: pg_walsummary.c:272
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
-msgstr "  -V, --version            вивести інформацію про версію і вийти\n"
+msgstr "  -V, --version             вивести інформацію про версію і вийти\n"
 
 #: pg_walsummary.c:273
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
-msgstr "  -?, --help               показати цю довідку, потім вийти\n"
+msgstr "  -?, --help                показати цю довідку, потім вийти\n"
 
 #: pg_walsummary.c:275
 #, c-format

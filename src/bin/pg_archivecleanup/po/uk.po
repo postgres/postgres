@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-04-01 10:53+0000\n"
-"PO-Revision-Date: 2026-01-02 15:22\n"
+"POT-Creation-Date: 2026-09-05 00:56+0000\n"
+"PO-Revision-Date: 2026-09-05 17:30\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,39 +14,48 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_18_STABLE/pg_archivecleanup.pot\n"
-"X-Crowdin-File-ID: 1077\n"
+"X-Crowdin-File: /REL_19_STABLE/pg_archivecleanup.pot\n"
 
-#: ../../../src/common/logging.c:279
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "помилка: "
 
-#: ../../../src/common/logging.c:286
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "попередження: "
 
-#: ../../../src/common/logging.c:297
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "деталі: "
 
-#: ../../../src/common/logging.c:304
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "підказка: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "недостатньо пам'яті\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "неправильний розмір запиту на виділення пам'яті %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "неправильний розмір запиту на виділення пам'яті %zu * %zu\n"
 
 #: pg_archivecleanup.c:69
 #, c-format
@@ -126,7 +135,7 @@ msgstr "  -n, --dry-run               сухий запуск, показати 
 #: pg_archivecleanup.c:268
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
-msgstr "  -V, --version                вивести інформацію про версію, потім вийти\n"
+msgstr "  -V, --version               вивести інформацію про версію, потім вийти\n"
 
 #: pg_archivecleanup.c:269
 #, c-format
@@ -138,7 +147,7 @@ msgstr "  -x, --strip-extension=EXT   вилучати це розширення
 #: pg_archivecleanup.c:271
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
-msgstr "  -?, --help                   показати цю довідку, потім вийти\n"
+msgstr "  -?, --help                  показати цю довідку, потім вийти\n"
 
 #: pg_archivecleanup.c:272
 #, c-format
@@ -190,4 +199,14 @@ msgstr "необхідно вказати найдавніший збереже�
 #, c-format
 msgid "too many command-line arguments"
 msgstr "занадто багато аргументів командного рядка"
+
+#: pg_archivecleanup.c:380
+#, c-format
+msgid "executing in dry-run mode"
+msgstr "виконується у пробному режимі"
+
+#: pg_archivecleanup.c:381
+#, c-format
+msgid "No files will be removed."
+msgstr "Жодні файли не будуть видалені."
 

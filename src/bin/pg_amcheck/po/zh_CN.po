@@ -3,234 +3,381 @@
 # This file is distributed under the same license as the pg_amcheck (PostgreSQL) package.
 # Jie Zhang <zhangjie2@fujitsu.com>, 2021.
 #
+# Recalibrated and completed via the pgsql.cc NLS review workbench.
+# Feng Ruohang <rh@vonng.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_amcheck (PostgreSQL) 14\n"
+"Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 05:48+0000\n"
-"PO-Revision-Date: 2021-08-15 18:00+0800\n"
-"Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
-"Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
+"POT-Creation-Date: 2026-09-17 05:55+0000\n"
+"PO-Revision-Date: 2026-09-17 16:00+0800\n"
+"Last-Translator: Feng Ruohang <rh@vonng.com>\n"
+"Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../../src/common/logging.c:259
-#, c-format
-msgid "fatal: "
-msgstr "致命的:"
-
-#: ../../../src/common/logging.c:266
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "错误: "
 
-#: ../../../src/common/logging.c:273
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
-msgid "Cancel request sent\n"
-msgstr "取消发送的请求\n"
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
+#, c-format
+msgid "detail: "
+msgstr "详情: "
 
-#: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
+#, c-format
+msgid "hint: "
+msgstr "提示: "
+
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "内存不足\n"
+
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能复制空指针（内部错误）\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "无效的内存分配请求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "无效的内存分配请求大小 %zu * %zu\n"
+
+#: ../../common/file_utils.c:69 ../../common/file_utils.c:370
+#: ../../common/file_utils.c:428 ../../common/file_utils.c:502
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "无法打开文件 \"%s\": %m"
+
+#: ../../common/file_utils.c:75
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "无法同步文件 \"%s\" 所在的文件系统: %m"
+
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "无法获取文件 \"%s\" 的状态: %m"
+
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "此构建版本不支持同步方法 \"%s\""
+
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "无法打开目录 \"%s\": %m"
+
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "无法读取目录 \"%s\": %m"
+
+#: ../../common/file_utils.c:440 ../../common/file_utils.c:510
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "无法对文件 \"%s\" 执行 fsync: %m"
+
+#: ../../common/file_utils.c:520
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "无法把文件 \"%s\" 重命名为 \"%s\": %m"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "无法查找有效用户 ID %ld: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "用户不存在"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "用户名查找失败: 错误码 %lu"
+
+#: ../../fe_utils/cancel.c:186 ../../fe_utils/cancel.c:235
+msgid "Cancel request sent\n"
+msgstr "已发送取消请求\n"
+
+#: ../../fe_utils/cancel.c:187 ../../fe_utils/cancel.c:236
 msgid "Could not send cancel request: "
 msgstr "无法发送取消请求: "
 
-#: ../../fe_utils/connect_utils.c:92
+#: ../../fe_utils/connect_utils.c:91
 #, c-format
 msgid "could not connect to database %s: out of memory"
-msgstr "无法连接到数据库 %s：内存不足"
+msgstr "无法连接到数据库 %s: 内存不足"
 
-#: ../../fe_utils/connect_utils.c:120
+#: ../../fe_utils/connect_utils.c:116
 #, c-format
 msgid "%s"
 msgstr "%s"
 
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "选项 %2$s 的值 \"%1$s\" 无效"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s 必须位于 %d..%d 的范围内"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "无法识别的同步方法: %s"
+
+#: ../../fe_utils/option_utils.c:139
+#, c-format
+msgid "options %s and %s cannot be used together"
+msgstr "选项 %s 和 %s 不能同时使用"
+
+#: ../../fe_utils/parallel_slot.c:316
+#, c-format
+msgid "too many jobs for this platform: %d"
+msgstr "此平台的并行作业数过多: %d"
+
+#: ../../fe_utils/parallel_slot.c:325
+#, c-format
+msgid "socket file descriptor out of range for select(): %d"
+msgstr "套接字文件描述符超出 select() 的范围: %d"
+
+#: ../../fe_utils/parallel_slot.c:327
+#, c-format
+msgid "Try fewer jobs."
+msgstr "尝试减少并行作业数。"
+
+#: ../../fe_utils/parallel_slot.c:551
+#, c-format
+msgid "processing of database \"%s\" failed: %s"
+msgstr "处理数据库 \"%s\" 失败: %s"
+
 #: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
-#: pg_amcheck.c:1646 pg_amcheck.c:2085
+#: pg_amcheck.c:1695 pg_amcheck.c:2155
 #, c-format
 msgid "query failed: %s"
 msgstr "查询失败: %s"
 
 #: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
-#: pg_amcheck.c:597 pg_amcheck.c:1116 pg_amcheck.c:1647 pg_amcheck.c:2086
+#: pg_amcheck.c:579 pg_amcheck.c:1149 pg_amcheck.c:1696 pg_amcheck.c:2156
 #, c-format
-msgid "query was: %s"
-msgstr "查询是: %s"
+msgid "Query was: %s"
+msgstr "查询为: %s"
 
-#: pg_amcheck.c:332
+#: ../../fe_utils/string_utils.c:585
 #, c-format
-msgid "number of parallel jobs must be at least 1"
-msgstr "并行工作的数量必须至少为1"
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "shell 命令参数包含换行符或回车符: \"%s\"\n"
 
-#: pg_amcheck.c:405
+#: ../../fe_utils/string_utils.c:758
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "数据库名包含换行符或回车符: \"%s\"\n"
+
+#: pg_amcheck.c:404
 #, c-format
 msgid "invalid argument for option %s"
-msgstr "选项%s的参数无效"
+msgstr "选项 %s 的参数无效"
 
-#: pg_amcheck.c:413
+#: pg_amcheck.c:410
 #, c-format
 msgid "invalid start block"
 msgstr "起始块无效"
 
-#: pg_amcheck.c:418
+#: pg_amcheck.c:412
 #, c-format
 msgid "start block out of bounds"
 msgstr "起始块超出范围"
 
-#: pg_amcheck.c:426
+#: pg_amcheck.c:419
 #, c-format
 msgid "invalid end block"
-msgstr "无效的结束块"
+msgstr "结束块无效"
 
-#: pg_amcheck.c:431
+#: pg_amcheck.c:421
 #, c-format
 msgid "end block out of bounds"
 msgstr "结束块超出范围"
 
-#: pg_amcheck.c:455 pg_amcheck.c:481
+#: pg_amcheck.c:447 pg_amcheck.c:469
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "运行 \"%s --help\" 获取更多信息。"
 
-#: pg_amcheck.c:463
+#: pg_amcheck.c:453
 #, c-format
 msgid "end block precedes start block"
-msgstr "结束块在开始块之前"
+msgstr "结束块在起始块之前"
 
-#: pg_amcheck.c:479
+#: pg_amcheck.c:467
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "命令行参数太多 (第一个是 \"%s\")"
+msgstr "命令行参数过多（第一个多余参数是 \"%s\"）"
 
-#: pg_amcheck.c:500
+#: pg_amcheck.c:487
 #, c-format
 msgid "cannot specify a database name with --all"
-msgstr "无法使用--all指定数据库名称"
+msgstr "使用 --all 时不能指定数据库名"
 
-#: pg_amcheck.c:509
+#: pg_amcheck.c:493
 #, c-format
 msgid "cannot specify both a database name and database patterns"
-msgstr "不能同时指定数据库名称和数据库模式"
+msgstr "不能同时指定数据库名和数据库名匹配模式"
 
-#: pg_amcheck.c:539
+#: pg_amcheck.c:521
 #, c-format
 msgid "no databases to check"
 msgstr "没有要检查的数据库"
 
-#: pg_amcheck.c:595
+#: pg_amcheck.c:577
 #, c-format
 msgid "database \"%s\": %s"
 msgstr "数据库 \"%s\": %s"
 
-#: pg_amcheck.c:606
+#: pg_amcheck.c:588
 #, c-format
 msgid "skipping database \"%s\": amcheck is not installed"
-msgstr "正在跳过数据库\"%s\"：未安装amcheck"
+msgstr "正在跳过数据库 \"%s\": 未安装 amcheck"
 
-#: pg_amcheck.c:614
+#: pg_amcheck.c:597
 #, c-format
 msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
-msgstr "在数据库\"%1$s\"中：在模式\"%3$s\"中使用amcheck版本\"%2$s\""
+msgstr "在数据库 \"%1$s\" 中: 在模式 \"%3$s\" 中使用 amcheck 版本 \"%2$s\""
 
-#: pg_amcheck.c:638
+#: pg_amcheck.c:626
+#, c-format
+msgid "option %s is not supported by amcheck version %s"
+msgstr "amcheck 版本 %2$s 不支持选项 %1$s"
+
+#: pg_amcheck.c:652
+#, c-format
 msgid "no heap tables to check matching \"%s\""
-msgstr "没有要检查匹配\"%s\"的堆表"
+msgstr "没有与 \"%s\" 匹配的待检查堆表"
 
-#: pg_amcheck.c:641
+#: pg_amcheck.c:655
 #, c-format
 msgid "no btree indexes to check matching \"%s\""
-msgstr "没有要检查匹配\"%s\"的B树索引"
+msgstr "没有与 \"%s\" 匹配的待检查 btree 索引"
 
-#: pg_amcheck.c:644
+#: pg_amcheck.c:658
+#, c-format
 msgid "no relations to check in schemas matching \"%s\""
-msgstr "在模式中没有要检查匹配\"%s\"的关系"
+msgstr "与 \"%s\" 匹配的模式中没有待检查的关系"
 
-#: pg_amcheck.c:647
+#: pg_amcheck.c:661
+#, c-format
 msgid "no relations to check matching \"%s\""
-msgstr "没有要检查匹配\"%s\"的关系"
+msgstr "没有与 \"%s\" 匹配的待检查关系"
 
-#: pg_amcheck.c:676
+#: pg_amcheck.c:689
 #, c-format
 msgid "no relations to check"
 msgstr "没有要检查的关系"
 
-#: pg_amcheck.c:762
+#: pg_amcheck.c:772
+#, c-format
 msgid "checking heap table \"%s.%s.%s\""
-msgstr "正在检查堆表\"%s.%s.%s\""
+msgstr "正在检查堆表 \"%s.%s.%s\""
 
-#: pg_amcheck.c:778
+#: pg_amcheck.c:788
+#, c-format
 msgid "checking btree index \"%s.%s.%s\""
-msgstr "检查B树索引\"%s.%s.%s\""
+msgstr "正在检查 btree 索引 \"%s.%s.%s\""
 
-#: pg_amcheck.c:911
+#: pg_amcheck.c:939
 #, c-format
 msgid "error sending command to database \"%s\": %s"
-msgstr "向数据库\"%s\"发送命令时出错: %s"
+msgstr "向数据库 \"%s\" 发送命令时出错: %s"
 
-#: pg_amcheck.c:914
+#: pg_amcheck.c:942
 #, c-format
-msgid "command was: %s"
-msgstr "命令是: %s"
+msgid "Command was: %s"
+msgstr "命令为: %s"
 
-#: pg_amcheck.c:1031
+#: pg_amcheck.c:1062
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s, attribute %s:\n"
-msgstr "堆表\"%s.%s.%s\"，块%s，偏移量%s，属性%s:\n"
+msgstr "堆表 \"%s.%s.%s\", 块 %s, 偏移号 %s, 属性 %s:\n"
 
-#: pg_amcheck.c:1038
+#: pg_amcheck.c:1069
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s:\n"
-msgstr "堆表\"%s.%s.%s\"，块%s，偏移量%s:\n"
+msgstr "堆表 \"%s.%s.%s\", 块 %s, 偏移号 %s:\n"
 
-#: pg_amcheck.c:1044
+#: pg_amcheck.c:1075
+#, c-format
 msgid "heap table \"%s.%s.%s\", block %s:\n"
-msgstr "堆表\"%s.%s.%s\",块%s:\n"
+msgstr "堆表 \"%s.%s.%s\", 块 %s:\n"
 
-#: pg_amcheck.c:1049 pg_amcheck.c:1060
+#: pg_amcheck.c:1080 pg_amcheck.c:1091
+#, c-format
 msgid "heap table \"%s.%s.%s\":\n"
-msgstr "堆表\"%s.%s.%s\":\n"
+msgstr "堆表 \"%s.%s.%s\":\n"
 
-#: pg_amcheck.c:1064 pg_amcheck.c:1131
+#: pg_amcheck.c:1095 pg_amcheck.c:1164
+#, c-format
 msgid "query was: %s\n"
-msgstr "查询是: %s\n"
+msgstr "查询为: %s\n"
 
-#: pg_amcheck.c:1113
-msgid "btree index \"%s.%s.%s\": btree checking function returned unexpected number of rows: %d"
-msgstr "B树索引\"%s.%s.%s\":B树检查函数返回了意外的行数: %d"
+#: pg_amcheck.c:1146
+#, c-format
+msgid ""
+"btree index \"%s.%s.%s\": btree checking function returned unexpected number "
+"of rows: %d"
+msgstr "btree 索引 \"%s.%s.%s\": btree 检查函数返回意外的行数: %d"
 
-#: pg_amcheck.c:1117
+#: pg_amcheck.c:1150
 #, c-format
 msgid "Are %s's and amcheck's versions compatible?"
-msgstr "%s和amcheck的版本兼容吗?"
+msgstr "%s 与 amcheck 的版本是否兼容？"
 
-#: pg_amcheck.c:1127
+#: pg_amcheck.c:1160
+#, c-format
 msgid "btree index \"%s.%s.%s\":\n"
-msgstr "B树索引\"%s.%s.%s\":\n"
+msgstr "btree 索引 \"%s.%s.%s\":\n"
 
-#: pg_amcheck.c:1152
+#: pg_amcheck.c:1185
 #, c-format
 msgid ""
 "%s checks objects in a PostgreSQL database for corruption.\n"
 "\n"
 msgstr ""
-"%s检查PostgreSQL数据库中的对象是否损坏.\n"
+"%s 检查 PostgreSQL 数据库中的对象是否损坏。\n"
 "\n"
 
-#: pg_amcheck.c:1153
+#: pg_amcheck.c:1186
 #, c-format
 msgid "Usage:\n"
-msgstr "使用方法:\n"
+msgstr "用法:\n"
 
-#: pg_amcheck.c:1154
+#: pg_amcheck.c:1187
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
-msgstr "  %s [选项]... [数据库名字]\n"
+msgstr "  %s [选项]... [数据库名]\n"
 
-#: pg_amcheck.c:1155
+#: pg_amcheck.c:1188
 #, c-format
 msgid ""
 "\n"
@@ -239,77 +386,82 @@ msgstr ""
 "\n"
 "目标选项:\n"
 
-#: pg_amcheck.c:1156
+#: pg_amcheck.c:1189
 #, c-format
 msgid "  -a, --all                       check all databases\n"
 msgstr "  -a, --all                       检查所有数据库\n"
 
-#: pg_amcheck.c:1157
+#: pg_amcheck.c:1190
 #, c-format
 msgid "  -d, --database=PATTERN          check matching database(s)\n"
 msgstr "  -d, --database=PATTERN          检查匹配的数据库\n"
 
-#: pg_amcheck.c:1158
+#: pg_amcheck.c:1191
 #, c-format
 msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
 msgstr "  -D, --exclude-database=PATTERN  不检查匹配的数据库\n"
 
-#: pg_amcheck.c:1159
+#: pg_amcheck.c:1192
 #, c-format
 msgid "  -i, --index=PATTERN             check matching index(es)\n"
 msgstr "  -i, --index=PATTERN             检查匹配的索引\n"
 
-#: pg_amcheck.c:1160
+#: pg_amcheck.c:1193
 #, c-format
 msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
 msgstr "  -I, --exclude-index=PATTERN     不检查匹配的索引\n"
 
-#: pg_amcheck.c:1161
+#: pg_amcheck.c:1194
 #, c-format
 msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
 msgstr "  -r, --relation=PATTERN          检查匹配的关系\n"
 
-#: pg_amcheck.c:1162
+#: pg_amcheck.c:1195
 #, c-format
 msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
 msgstr "  -R, --exclude-relation=PATTERN  不检查匹配的关系\n"
 
-#: pg_amcheck.c:1163
+#: pg_amcheck.c:1196
 #, c-format
 msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
 msgstr "  -s, --schema=PATTERN            检查匹配的模式\n"
 
-#: pg_amcheck.c:1164
+#: pg_amcheck.c:1197
 #, c-format
 msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
-msgstr "  -S, --exclude-schema=PATTERN    不检查匹配模式\n"
+msgstr "  -S, --exclude-schema=PATTERN    不检查匹配的模式\n"
 
-#: pg_amcheck.c:1165
+#: pg_amcheck.c:1198
 #, c-format
 msgid "  -t, --table=PATTERN             check matching table(s)\n"
 msgstr "  -t, --table=PATTERN             检查匹配的表\n"
 
-#: pg_amcheck.c:1166
+#: pg_amcheck.c:1199
 #, c-format
 msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
-msgstr "  -T, --exclude-table=PATTERN     不检查匹的配表\n"
+msgstr "  -T, --exclude-table=PATTERN     不检查匹配的表\n"
 
-#: pg_amcheck.c:1167
+#: pg_amcheck.c:1200
 #, c-format
-msgid "      --no-dependent-indexes      do NOT expand list of relations to include indexes\n"
-msgstr "      --no-dependent-indexes      不要展开关系列表以包含索引\n"
+msgid ""
+"      --no-dependent-indexes      do NOT expand list of relations to include "
+"indexes\n"
+msgstr "      --no-dependent-indexes      不扩展关系列表以包含索引\n"
 
-#: pg_amcheck.c:1168
+#: pg_amcheck.c:1201
 #, c-format
-msgid "      --no-dependent-toast        do NOT expand list of relations to include TOAST tables\n"
-msgstr "      --no-dependent-toast        不要展开关系列表以包括TOAST表\n"
+msgid ""
+"      --no-dependent-toast        do NOT expand list of relations to include "
+"TOAST tables\n"
+msgstr "      --no-dependent-toast        不扩展关系列表以包含 TOAST 表\n"
 
-#: pg_amcheck.c:1169
+#: pg_amcheck.c:1202
 #, c-format
-msgid "      --no-strict-names           do NOT require patterns to match objects\n"
-msgstr "      --no-strict-names           不需要模式来匹配对象\n"
+msgid ""
+"      --no-strict-names           do NOT require patterns to match objects\n"
+msgstr "      --no-strict-names           匹配模式不需要匹配到对象\n"
 
-#: pg_amcheck.c:1170
+#: pg_amcheck.c:1203
 #, c-format
 msgid ""
 "\n"
@@ -318,94 +470,118 @@ msgstr ""
 "\n"
 "表检查选项:\n"
 
-#: pg_amcheck.c:1171
+#: pg_amcheck.c:1204
 #, c-format
-msgid "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
-msgstr "      --exclude-toast-pointers    不要遵循关系TOAST指示\n"
+msgid ""
+"      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
+msgstr "      --exclude-toast-pointers    不沿关系的 TOAST 指针检查\n"
 
-#: pg_amcheck.c:1172
+#: pg_amcheck.c:1205
 #, c-format
-msgid "      --on-error-stop             stop checking at end of first corrupt page\n"
-msgstr "      --on-error-stop             在第一个损坏页的末尾停止检查\n"
+msgid ""
+"      --on-error-stop             stop checking at end of first corrupt "
+"page\n"
+msgstr "      --on-error-stop             在第一个损坏页末尾停止检查\n"
 
-#: pg_amcheck.c:1173
+#: pg_amcheck.c:1206
 #, c-format
-msgid "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" blocks\n"
-msgstr "      --skip=OPTION               不要检查\"all-frozen\"或\"all-visible\"块\n"
+msgid ""
+"      --skip=OPTION               do NOT check \"all-frozen\" or \"all-"
+"visible\" blocks\n"
+msgstr ""
+"      --skip=OPTION               不检查 \"all-frozen\" 或 \"all-visible\" "
+"块\n"
 
-#: pg_amcheck.c:1174
+#: pg_amcheck.c:1207
 #, c-format
-msgid "      --startblock=BLOCK          begin checking table(s) at the given block number\n"
+msgid ""
+"      --startblock=BLOCK          begin checking table(s) at the given block "
+"number\n"
 msgstr "      --startblock=BLOCK          在给定的块编号处开始检查表\n"
 
-#: pg_amcheck.c:1175
+#: pg_amcheck.c:1208
 #, c-format
-msgid "      --endblock=BLOCK            check table(s) only up to the given block number\n"
-msgstr "      --endblock=BLOCK            检查表仅限于给定的块编号\n"
+msgid ""
+"      --endblock=BLOCK            check table(s) only up to the given block "
+"number\n"
+msgstr "      --endblock=BLOCK            检查表时以给定的块编号为终点\n"
 
-#: pg_amcheck.c:1176
+#: pg_amcheck.c:1209
 #, c-format
 msgid ""
 "\n"
 "B-tree index checking options:\n"
 msgstr ""
 "\n"
-"B树索引检查选项:\n"
+"btree 索引检查选项:\n"
 
-#: pg_amcheck.c:1177
-msgid "      --heapallindexed            check that all heap tuples are found within indexes\n"
-msgstr "      --heapallindexed            检查是否在索引中找到所有堆元组\n"
-
-#: pg_amcheck.c:1178
+#: pg_amcheck.c:1210
 #, c-format
-msgid "      --parent-check              check index parent/child relationships\n"
+msgid ""
+"      --checkunique               check unique constraint if index is "
+"unique\n"
+msgstr "      --checkunique               若索引是唯一索引，则检查唯一约束\n"
+
+#: pg_amcheck.c:1211
+#, c-format
+msgid ""
+"      --heapallindexed            check that all heap tuples are found "
+"within indexes\n"
+msgstr "      --heapallindexed            检查所有堆元组是否都能在索引中找到\n"
+
+#: pg_amcheck.c:1212
+#, c-format
+msgid ""
+"      --parent-check              check index parent/child relationships\n"
 msgstr "      --parent-check              检查索引父/子关系\n"
 
-#: pg_amcheck.c:1179
+#: pg_amcheck.c:1213
 #, c-format
-msgid "      --rootdescend               search from root page to refind tuples\n"
-msgstr "      --rootdescend               从根页搜索到重新填充元组\n"
+msgid ""
+"      --rootdescend               search from root page to refind tuples\n"
+msgstr "      --rootdescend               从根页开始搜索以重新找到元组\n"
 
-#: pg_amcheck.c:1180
+#: pg_amcheck.c:1214
 #, c-format
 msgid ""
 "\n"
 "Connection options:\n"
 msgstr ""
 "\n"
-"联接选项:\n"
+"连接选项:\n"
 
-#: pg_amcheck.c:1181
+#: pg_amcheck.c:1215
 #, c-format
-msgid "  -h, --host=HOSTNAME             database server host or socket directory\n"
+msgid ""
+"  -h, --host=HOSTNAME             database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME             数据库服务器主机或套接字目录\n"
 
-#: pg_amcheck.c:1182
+#: pg_amcheck.c:1216
 #, c-format
 msgid "  -p, --port=PORT                 database server port\n"
 msgstr "  -p, --port=PORT                 数据库服务器端口\n"
 
-#: pg_amcheck.c:1183
+#: pg_amcheck.c:1217
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
-msgstr "  -U, --username=USERNAME         要连接的用户名\n"
+msgstr "  -U, --username=USERNAME         连接所用的用户名\n"
 
-#: pg_amcheck.c:1184
+#: pg_amcheck.c:1218
 #, c-format
 msgid "  -w, --no-password               never prompt for password\n"
-msgstr "  -w, --no-password               从不提示输入密码\n"
+msgstr "  -w, --no-password               永远不提示输入密码\n"
 
-#: pg_amcheck.c:1185
+#: pg_amcheck.c:1219
 #, c-format
 msgid "  -W, --password                  force password prompt\n"
-msgstr "  -W, --password                  强制密码提示\n"
+msgstr "  -W, --password                  强制提示输入密码\n"
 
-#: pg_amcheck.c:1186
+#: pg_amcheck.c:1220
 #, c-format
 msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
-msgstr "      --maintenance-db=DBNAME     备用维护数据库\n"
+msgstr "      --maintenance-db=DBNAME     指定另一个维护数据库\n"
 
-#: pg_amcheck.c:1187
+#: pg_amcheck.c:1221
 #, c-format
 msgid ""
 "\n"
@@ -414,87 +590,121 @@ msgstr ""
 "\n"
 "其它选项:\n"
 
-#: pg_amcheck.c:1188
+#: pg_amcheck.c:1222
 #, c-format
-msgid "  -e, --echo                      show the commands being sent to the server\n"
-msgstr "  -e, --echo                      显示发送到服务端的命令\n"
+msgid ""
+"  -e, --echo                      show the commands being sent to the "
+"server\n"
+msgstr "  -e, --echo                      显示发送到服务器的命令\n"
 
-#: pg_amcheck.c:1189
+#: pg_amcheck.c:1223
 #, c-format
-msgid "  -j, --jobs=NUM                  use this many concurrent connections to the server\n"
-msgstr "  -j, --jobs=NUM                  使用这么多到服务器的并发连接\n"
+msgid ""
+"  -j, --jobs=NUM                  use this many concurrent connections to "
+"the server\n"
+msgstr "  -j, --jobs=NUM                  使用指定数量的服务器并发连接\n"
 
-#: pg_amcheck.c:1190
-#, c-format
-msgid "  -q, --quiet                     don't write any messages\n"
-msgstr "  -q, --quiet                     不写任何信息\n"
-
-#: pg_amcheck.c:1191
+#: pg_amcheck.c:1224
 #, c-format
 msgid "  -P, --progress                  show progress information\n"
 msgstr "  -P, --progress                  显示进度信息\n"
 
-#: pg_amcheck.c:1192
+#: pg_amcheck.c:1225
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
-msgstr "  -v, --verbose                   写大量的输出\n"
+msgstr "  -v, --verbose                   输出详细信息\n"
 
-#: pg_amcheck.c:1193
+#: pg_amcheck.c:1226
 #, c-format
-msgid "  -V, --version                   output version information, then exit\n"
-msgstr "  -V, --version                   输出版本信息, 然后退出\n"
+msgid ""
+"  -V, --version                   output version information, then exit\n"
+msgstr "  -V, --version                   输出版本信息，然后退出\n"
 
-#: pg_amcheck.c:1194
+#: pg_amcheck.c:1227
 #, c-format
 msgid "      --install-missing           install missing extensions\n"
 msgstr "      --install-missing           安装缺少的扩展\n"
 
-#: pg_amcheck.c:1195
+#: pg_amcheck.c:1228
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
-msgstr "  -?, --help                      显示此帮助信息, 然后退出\n"
+msgstr "  -?, --help                      显示此帮助，然后退出\n"
 
-#: pg_amcheck.c:1197
+#: pg_amcheck.c:1230
 #, c-format
 msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
 "\n"
-"臭虫报告至<%s>.\n"
+"请向 <%s> 报告缺陷。\n"
 
-#: pg_amcheck.c:1198
+#: pg_amcheck.c:1231
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 主页: <%s>\n"
 
-#: pg_amcheck.c:1256
+#: pg_amcheck.c:1284
+#, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"
-msgstr "%*s/%s 关系 (%d%%), %*s/%s 页 (%d%%) %*s"
+msgstr "%*s/%s 个关系（%d%%）, %*s/%s 页（%d%%） %*s"
 
-#: pg_amcheck.c:1267
+#: pg_amcheck.c:1295
+#, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"
-msgstr "%*s/%s 关系 (%d%%), %*s/%s 页 (%d%%) (%s%-*.*s)"
+msgstr "%*s/%s 个关系（%d%%）, %*s/%s 页（%d%%） （%s%-*.*s）"
 
-#: pg_amcheck.c:1282
+#: pg_amcheck.c:1310
+#, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
-msgstr "%*s/%s 关系 (%d%%), %*s/%s 页 (%d%%)"
+msgstr "%*s/%s 个关系（%d%%）, %*s/%s 页（%d%%）"
 
-#: pg_amcheck.c:1551 pg_amcheck.c:1693
+#: pg_amcheck.c:1369 pg_amcheck.c:1402
+#, c-format
+msgid "improper qualified name (too many dotted names): %s"
+msgstr "限定名不正确（点号分隔的名称部分过多）: %s"
+
+#: pg_amcheck.c:1447
+#, c-format
+msgid "improper relation name (too many dotted names): %s"
+msgstr "关系名不正确（点号分隔的名称部分过多）: %s"
+
+#: pg_amcheck.c:1600 pg_amcheck.c:1739
 #, c-format
 msgid "including database \"%s\""
-msgstr "包含的数据库\"%s\""
+msgstr "正在纳入数据库 \"%s\""
 
-#: pg_amcheck.c:1673
+#: pg_amcheck.c:1721
 #, c-format
 msgid "internal error: received unexpected database pattern_id %d"
-msgstr "内部错误:收到意外的数据库pattern_id %d"
+msgstr "内部错误: 收到意外的数据库 pattern_id %d"
 
-#: pg_amcheck.c:1677
+#: pg_amcheck.c:1723
+#, c-format
 msgid "no connectable databases to check matching \"%s\""
-msgstr "没有可连接的数据库来检查匹配的\"%s\""
+msgstr "没有与 \"%s\" 匹配且可连接的待检查数据库"
 
-#: pg_amcheck.c:2127
+#: pg_amcheck.c:2196
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
-msgstr "内部错误:收到意外的关系pattern_id %d"
+msgstr "内部错误: 收到意外的关系 pattern_id %d"
+
+#, c-format
+#~ msgid "  -q, --quiet                     don't write any messages\n"
+#~ msgstr "  -q, --quiet                     不写任何信息\n"
+
+#, c-format
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+
+#, c-format
+#~ msgid "command was: %s"
+#~ msgstr "命令是: %s"
+
+#, c-format
+#~ msgid "fatal: "
+#~ msgstr "致命的:"
+
+#, c-format
+#~ msgid "number of parallel jobs must be at least 1"
+#~ msgstr "并行工作的数量必须至少为1"

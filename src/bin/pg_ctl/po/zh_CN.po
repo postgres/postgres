@@ -2,83 +2,111 @@
 # This file is put in the public domain.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+# Recalibrated and completed via the pgsql.cc NLS review workbench.
+# Feng Ruohang <rh@vonng.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_ctl (PostgreSQL) 14\n"
+"Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-04-24 03:48+0000\n"
-"PO-Revision-Date: 2023-04-24 09:26+0200\n"
-"Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
-"Language-Team: Chinese (Simplified)<zhangjie2@fujitsu.com>\n"
+"POT-Creation-Date: 2026-09-17 05:52+0000\n"
+"PO-Revision-Date: 2026-09-17 16:00+0800\n"
+"Last-Translator: Feng Ruohang <rh@vonng.com>\n"
+"Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.7\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../common/exec.c:172
-#, fuzzy, c-format
-#| msgid "invalid binary \"%s\""
+#: ../../common/controldata_utils.c:169
+msgid "byte ordering mismatch"
+msgstr "字节序不匹配"
+
+#: ../../common/exec.c:175
+#, c-format
 msgid "invalid binary \"%s\": %m"
-msgstr "无效的二进制码 \"%s\""
+msgstr "无效的可执行文件 \"%s\": %m"
 
-#: ../../common/exec.c:215
-#, fuzzy, c-format
-#| msgid "could not read binary \"%s\""
+#: ../../common/exec.c:218
+#, c-format
 msgid "could not read binary \"%s\": %m"
-msgstr "无法读取二进制码 \"%s\""
+msgstr "无法读取可执行文件 \"%s\": %m"
 
-#: ../../common/exec.c:223
+#: ../../common/exec.c:226
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "未能找到一个 \"%s\" 来执行"
+msgstr "无法找到可执行的 \"%s\""
 
-#: ../../common/exec.c:250
-#, fuzzy, c-format
-#| msgid "could not reopen file \"%s\" as stderr: %m"
+#: ../../common/exec.c:253
+#, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
-msgstr "无法作为标准错误重新打开文件 \"%s\": %m"
+msgstr "无法将路径 \"%s\" 解析为绝对路径格式: %m"
 
-#: ../../common/exec.c:412
+#: ../../common/exec.c:364
+#, c-format
+msgid "could not execute command \"%s\": %m"
+msgstr "无法执行命令 \"%s\": %m"
+
+#: ../../common/exec.c:376
+#, c-format
+msgid "could not read from command \"%s\": %m"
+msgstr "无法读取命令 \"%s\" 的输出: %m"
+
+#: ../../common/exec.c:379
+#, c-format
+msgid "no data was returned by command \"%s\""
+msgstr "命令 \"%s\" 未返回数据"
+
+#: ../../common/exec.c:406
 #, c-format
 msgid "%s() failed: %m"
-msgstr "%s()失败: %m"
+msgstr "%s() 失败: %m"
 
-#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
+#: ../../common/exec.c:544 ../../common/exec.c:589 ../../common/exec.c:681
 msgid "out of memory"
 msgstr "内存不足"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
-#: ../../port/path.c:753 ../../port/path.c:791 ../../port/path.c:808
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#: ../../port/path.c:848 ../../port/path.c:885 ../../port/path.c:902
 #, c-format
 msgid "out of memory\n"
 msgstr "内存不足\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "无法复制空指针 (内部错误)\n"
+msgstr "不能复制空指针（内部错误）\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "无效的内存分配请求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "无效的内存分配请求大小 %zu * %zu\n"
 
 #: ../../common/wait_error.c:55
 #, c-format
 msgid "command not executable"
-msgstr "无法执行命令"
+msgstr "命令不可执行"
 
 #: ../../common/wait_error.c:59
 #, c-format
 msgid "command not found"
-msgstr "命令没有找到"
+msgstr "未找到命令"
 
 #: ../../common/wait_error.c:64
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "子进程已退出, 退出码为 %d"
+msgstr "子进程已退出，退出码为 %d"
 
 #: ../../common/wait_error.c:72
 #, c-format
 msgid "child process was terminated by exception 0x%X"
-msgstr "子进程被例外(exception) 0x%X 终止"
+msgstr "子进程被异常 0x%X 终止"
 
 #: ../../common/wait_error.c:76
 #, c-format
@@ -88,440 +116,431 @@ msgstr "子进程被信号 %d 终止: %s"
 #: ../../common/wait_error.c:82
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "子进程已退出, 未知状态 %d"
+msgstr "子进程已退出，状态 %d 无法识别"
 
-#: ../../port/path.c:775
+#: ../../port/path.c:870
 #, c-format
-msgid "could not get current working directory: %s\n"
-msgstr "无法得到当前工作目录: %s\n"
+msgid "could not get current working directory: %m\n"
+msgstr "无法获取当前工作目录: %m\n"
 
-#: pg_ctl.c:255
+#: pg_ctl.c:256
 #, c-format
 msgid "%s: directory \"%s\" does not exist\n"
 msgstr "%s: 目录 \"%s\" 不存在\n"
 
-#: pg_ctl.c:258
+#: pg_ctl.c:259
 #, c-format
-msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: 无法访问目录 \"%s\": %s\n"
+msgid "%s: could not access directory \"%s\": %m\n"
+msgstr "%s: 无法访问目录 \"%s\": %m\n"
 
-#: pg_ctl.c:271
+#: pg_ctl.c:272
 #, c-format
 msgid "%s: directory \"%s\" is not a database cluster directory\n"
-msgstr "%s: 目录 \"%s\"不是一个数据库集群目录\n"
+msgstr "%s: 目录 \"%s\" 不是数据库集簇目录\n"
 
-#: pg_ctl.c:284
+#: pg_ctl.c:285
 #, c-format
-msgid "%s: could not open PID file \"%s\": %s\n"
-msgstr "%s: 无法打开 PID 文件 \"%s\": %s\n"
+msgid "%s: could not open PID file \"%s\": %m\n"
+msgstr "%s: 无法打开 PID 文件 \"%s\": %m\n"
 
-#: pg_ctl.c:293
+#: pg_ctl.c:294
 #, c-format
 msgid "%s: the PID file \"%s\" is empty\n"
 msgstr "%s: PID 文件 \"%s\" 为空\n"
 
-#: pg_ctl.c:296
+#: pg_ctl.c:297
 #, c-format
 msgid "%s: invalid data in PID file \"%s\"\n"
-msgstr "%s: PID文件 \"%s\" 中存在无效数据\n"
+msgstr "%s: PID 文件 \"%s\" 中存在无效数据\n"
 
-#: pg_ctl.c:458 pg_ctl.c:500
+#: pg_ctl.c:459 pg_ctl.c:501
 #, c-format
-msgid "%s: could not start server: %s\n"
-msgstr "%s: 无法启动服务器：%s\n"
+msgid "%s: could not start server: %m\n"
+msgstr "%s: 无法启动服务器: %m\n"
 
-#: pg_ctl.c:478
+#: pg_ctl.c:479
 #, c-format
-msgid "%s: could not start server due to setsid() failure: %s\n"
-msgstr "%s: 由于setsid()调用失败无法启动服务器：%s\n"
+msgid "%s: could not start server due to setsid() failure: %m\n"
+msgstr "%s: 由于 setsid() 失败，无法启动服务器: %m\n"
 
 # command.c:1148
-#: pg_ctl.c:548
+#: pg_ctl.c:549
 #, c-format
-msgid "%s: could not open log file \"%s\": %s\n"
-msgstr "%s：无法开启日志文件 \"%s\"：%s\n"
+msgid "%s: could not open log file \"%s\": %m\n"
+msgstr "%s: 无法打开日志文件 \"%s\": %m\n"
 
-#: pg_ctl.c:565
+#: pg_ctl.c:566
 #, c-format
 msgid "%s: could not start server: error code %lu\n"
-msgstr "%s：无法启动服务器：错误代码%lu\n"
+msgstr "%s: 无法启动服务器: 错误码 %lu\n"
 
-#: pg_ctl.c:782
+#: pg_ctl.c:790
 #, c-format
 msgid "%s: cannot set core file size limit; disallowed by hard limit\n"
-msgstr "%s: 不能设置核心文件大小的限制;磁盘限额不允许\n"
+msgstr "%s: 受硬限制约束，不能设置核心转储文件大小限制\n"
 
-#: pg_ctl.c:808
+#: pg_ctl.c:816
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
 msgstr "%s: 无法读取文件 \"%s\"\n"
 
-#: pg_ctl.c:813
+#: pg_ctl.c:821
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
-msgstr "%s: 选项文件 \"%s\" 只能有一行\n"
+msgstr "%s: 选项文件 \"%s\" 必须有且仅有一行\n"
 
-#: pg_ctl.c:855 pg_ctl.c:1039 pg_ctl.c:1107
+#: pg_ctl.c:863 pg_ctl.c:1051 pg_ctl.c:1118
 #, c-format
-msgid "%s: could not send stop signal (PID: %d): %s\n"
-msgstr "%s: 无法发送停止信号 (PID: %d): %s\n"
+msgid "%s: could not send stop signal (PID: %d): %m\n"
+msgstr "%s: 无法发送停止信号（PID: %d）: %m\n"
 
-#: pg_ctl.c:883
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" is needed by %s but was not found in the\n"
-#| "same directory as \"%s\".\n"
-#| "Check your installation."
-msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\"\n"
-msgstr ""
-"%2$s需要程序\"%1$s\"\n"
-"但在与\"%3$s\"相同的目录中找不到该程序.\n"
-"检查您的安装."
+#: pg_ctl.c:891
+#, c-format
+msgid ""
+"program \"%s\" is needed by %s but was not found in the same directory as "
+"\"%s\"\n"
+msgstr "%2$s 需要程序 \"%1$s\"，但在与 \"%3$s\" 相同的目录中找不到该程序\n"
 
-#: pg_ctl.c:886
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" was found by \"%s\"\n"
-#| "but was not the same version as %s.\n"
-#| "Check your installation."
+#: pg_ctl.c:894
+#, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s\n"
-msgstr ""
-"程序\"%s\"是由\"%s\"找到的\n"
-"但与%s的版本不同.\n"
-"检查您的安装."
+msgstr "程序 \"%s\" 已由 \"%s\" 找到，但与 %s 版本不一致\n"
 
-#: pg_ctl.c:918
+#: pg_ctl.c:926
 #, c-format
 msgid "%s: database system initialization failed\n"
 msgstr "%s: 数据库系统初始化失败\n"
 
-#: pg_ctl.c:933
+#: pg_ctl.c:941
 #, c-format
 msgid "%s: another server might be running; trying to start server anyway\n"
-msgstr "%s: 其他服务器进程可能正在运行; 尝试启动服务器进程\n"
+msgstr "%s: 另一个服务器可能正在运行；仍尝试启动服务器\n"
 
-#: pg_ctl.c:981
+#: pg_ctl.c:989
 msgid "waiting for server to start..."
-msgstr "等待服务器进程启动 ..."
+msgstr "正在等待服务器启动..."
 
-#: pg_ctl.c:986 pg_ctl.c:1063 pg_ctl.c:1126 pg_ctl.c:1238
+#: pg_ctl.c:994 pg_ctl.c:1004 pg_ctl.c:1074 pg_ctl.c:1136 pg_ctl.c:1248
 msgid " done\n"
 msgstr " 完成\n"
 
-#: pg_ctl.c:987
+#: pg_ctl.c:995
 msgid "server started\n"
-msgstr "服务器进程已经启动\n"
+msgstr "服务器已启动\n"
 
-#: pg_ctl.c:990 pg_ctl.c:996 pg_ctl.c:1243
+#: pg_ctl.c:998 pg_ctl.c:1008 pg_ctl.c:1253
 msgid " stopped waiting\n"
 msgstr " 已停止等待\n"
 
-#: pg_ctl.c:991
+#: pg_ctl.c:999
 #, c-format
 msgid "%s: server did not start in time\n"
-msgstr "%s: 服务没有及时启动\n"
+msgstr "%s: 服务器未在等待时间内启动\n"
 
-#: pg_ctl.c:997
+#: pg_ctl.c:1005
+msgid "server shut down because of recovery target settings\n"
+msgstr "服务器已因恢复目标设置而关闭\n"
+
+#: pg_ctl.c:1009
 #, c-format
 msgid ""
 "%s: could not start server\n"
 "Examine the log output.\n"
 msgstr ""
-"%s: 无法启动服务器进程\n"
-"检查日志输出.\n"
+"%s: 无法启动服务器\n"
+"检查日志输出。\n"
 
-#: pg_ctl.c:1005
+#: pg_ctl.c:1017
 msgid "server starting\n"
-msgstr "正在启动服务器进程\n"
+msgstr "正在启动服务器\n"
 
-#: pg_ctl.c:1024 pg_ctl.c:1083 pg_ctl.c:1147 pg_ctl.c:1186 pg_ctl.c:1267
+#: pg_ctl.c:1036 pg_ctl.c:1094 pg_ctl.c:1157 pg_ctl.c:1196 pg_ctl.c:1277
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
 msgstr "%s: PID 文件 \"%s\" 不存在\n"
 
-#: pg_ctl.c:1025 pg_ctl.c:1085 pg_ctl.c:1148 pg_ctl.c:1187 pg_ctl.c:1268
+#: pg_ctl.c:1037 pg_ctl.c:1096 pg_ctl.c:1158 pg_ctl.c:1197 pg_ctl.c:1278
 msgid "Is server running?\n"
-msgstr "服务器进程是否正在运行?\n"
+msgstr "服务器是否正在运行？\n"
 
-#: pg_ctl.c:1031
+#: pg_ctl.c:1043
 #, c-format
 msgid "%s: cannot stop server; single-user server is running (PID: %d)\n"
-msgstr "%s: 无法停止服务器进程; 正在运行 单用户模式服务器进程(PID: %d)\n"
+msgstr "%s: 不能停止服务器；单用户模式服务器正在运行（PID: %d）\n"
 
-#: pg_ctl.c:1046
+#: pg_ctl.c:1057
 msgid "server shutting down\n"
-msgstr "正在关闭服务器进程\n"
+msgstr "正在关闭服务器\n"
 
-#: pg_ctl.c:1051 pg_ctl.c:1112
+#: pg_ctl.c:1062 pg_ctl.c:1122
 msgid "waiting for server to shut down..."
-msgstr "等待服务器进程关闭 ..."
+msgstr "正在等待服务器关闭..."
 
-#: pg_ctl.c:1055 pg_ctl.c:1117
+#: pg_ctl.c:1066 pg_ctl.c:1127
 msgid " failed\n"
 msgstr " 失败\n"
 
-#: pg_ctl.c:1057 pg_ctl.c:1119
+#: pg_ctl.c:1068 pg_ctl.c:1129
 #, c-format
 msgid "%s: server does not shut down\n"
-msgstr "%s: server进程没有关闭\n"
+msgstr "%s: 服务器未能完成关闭\n"
 
-#: pg_ctl.c:1059 pg_ctl.c:1121
+#: pg_ctl.c:1070 pg_ctl.c:1131
 msgid ""
 "HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
 "waiting for session-initiated disconnection.\n"
 msgstr ""
-"提示: \"-m fast\" 选项可以立即断开会话, 而不用\n"
-"等待会话发起的断连.\n"
+"提示: \"-m fast\" 选项会立即断开会话，\n"
+"无需等待会话主动断开连接。\n"
 
-#: pg_ctl.c:1065 pg_ctl.c:1127
+#: pg_ctl.c:1076 pg_ctl.c:1137
 msgid "server stopped\n"
-msgstr "服务器进程已经关闭\n"
+msgstr "服务器已停止\n"
 
-#: pg_ctl.c:1086
+#: pg_ctl.c:1097
 msgid "trying to start server anyway\n"
-msgstr "尝试启动服务器进程\n"
+msgstr "仍然尝试启动服务器\n"
 
-#: pg_ctl.c:1095
+#: pg_ctl.c:1106
 #, c-format
 msgid "%s: cannot restart server; single-user server is running (PID: %d)\n"
-msgstr "%s: 无法重启服务器进程; 单用户模式服务器进程正在运行 (PID: %d)\n"
+msgstr "%s: 不能重启服务器；单用户模式服务器正在运行（PID: %d）\n"
 
-#: pg_ctl.c:1098 pg_ctl.c:1157
+#: pg_ctl.c:1109 pg_ctl.c:1167
 msgid "Please terminate the single-user server and try again.\n"
-msgstr "请终止单用户模式服务器进程，然后再重试.\n"
+msgstr "请终止单用户模式服务器，然后重试。\n"
 
-#: pg_ctl.c:1131
+#: pg_ctl.c:1141
 #, c-format
 msgid "%s: old server process (PID: %d) seems to be gone\n"
-msgstr "%s: 原有的进程(PID: %d)可能已经不存在了\n"
+msgstr "%s: 原有的服务器进程（PID: %d）似乎已不存在\n"
 
-#: pg_ctl.c:1133
+#: pg_ctl.c:1143
 msgid "starting server anyway\n"
-msgstr "正在启动服务器进程\n"
+msgstr "仍启动服务器\n"
 
-#: pg_ctl.c:1154
+#: pg_ctl.c:1164
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %d)\n"
-msgstr "%s: 无法重新加载服务器进程；正在运行单用户模式的服务器进程 (PID: %d)\n"
+msgstr "%s: 不能重新加载服务器配置；单用户模式服务器正在运行（PID: %d）\n"
 
-#: pg_ctl.c:1163
+#: pg_ctl.c:1173
 #, c-format
-msgid "%s: could not send reload signal (PID: %d): %s\n"
-msgstr "%s: 无法发送重载信号 (PID: %d): %s\n"
+msgid "%s: could not send reload signal (PID: %d): %m\n"
+msgstr "%s: 无法发送重新加载配置的信号（PID: %d）: %m\n"
 
-#: pg_ctl.c:1168
+#: pg_ctl.c:1178
 msgid "server signaled\n"
-msgstr "服务器进程发出信号\n"
+msgstr "已向服务器发送信号\n"
 
-#: pg_ctl.c:1193
+#: pg_ctl.c:1203
 #, c-format
 msgid "%s: cannot promote server; single-user server is running (PID: %d)\n"
-msgstr "%s: 无法重新加载服务器进程；正在运行单用户模式的服务器进程 (PID: %d)\n"
-
-#: pg_ctl.c:1201
-#, c-format
-msgid "%s: cannot promote server; server is not in standby mode\n"
-msgstr "%s: 无法重新加载服务器进程；服务器没有运行在standby模式下\n"
+msgstr "%s: 不能将服务器提升为主库；单用户模式服务器正在运行（PID: %d）\n"
 
 #: pg_ctl.c:1211
 #, c-format
-msgid "%s: could not create promote signal file \"%s\": %s\n"
-msgstr "%s: 无法创建重新加载信号文件 \"%s\": %s\n"
+msgid "%s: cannot promote server; server is not in standby mode\n"
+msgstr "%s: 不能将服务器提升为主库；服务器未处于备库模式\n"
 
-#: pg_ctl.c:1217
+#: pg_ctl.c:1221
 #, c-format
-msgid "%s: could not write promote signal file \"%s\": %s\n"
-msgstr "%s: 无法写入重新加载文件 \"%s\": %s\n"
+msgid "%s: could not create promote signal file \"%s\": %m\n"
+msgstr "%s: 无法创建提升为主库的信号文件 \"%s\": %m\n"
 
-#: pg_ctl.c:1225
+#: pg_ctl.c:1227
 #, c-format
-msgid "%s: could not send promote signal (PID: %d): %s\n"
-msgstr "%s: 无法发送重载信号(PID: %d): %s\n"
-
-#: pg_ctl.c:1228
-#, c-format
-msgid "%s: could not remove promote signal file \"%s\": %s\n"
-msgstr "%s: 无法移动重新加载信号文件 \"%s\": %s\n"
+msgid "%s: could not write promote signal file \"%s\": %m\n"
+msgstr "%s: 无法写入提升为主库的信号文件 \"%s\": %m\n"
 
 #: pg_ctl.c:1235
+#, c-format
+msgid "%s: could not send promote signal (PID: %d): %m\n"
+msgstr "%s: 无法发送提升为主库的信号（PID: %d）: %m\n"
+
+#: pg_ctl.c:1238
+#, c-format
+msgid "%s: could not remove promote signal file \"%s\": %m\n"
+msgstr "%s: 无法删除提升为主库的信号文件 \"%s\": %m\n"
+
+#: pg_ctl.c:1245
 msgid "waiting for server to promote..."
-msgstr "等待服务器进程加载 ..."
+msgstr "正在等待服务器提升为主库..."
 
-#: pg_ctl.c:1239
+#: pg_ctl.c:1249
 msgid "server promoted\n"
-msgstr "服务器加载完毕\n"
+msgstr "服务器已提升为主库\n"
 
-#: pg_ctl.c:1244
+#: pg_ctl.c:1254
 #, c-format
 msgid "%s: server did not promote in time\n"
-msgstr "%s: 服务进程没有及时加载\n"
+msgstr "%s: 服务器未能及时提升为主库\n"
 
-#: pg_ctl.c:1250
+#: pg_ctl.c:1260
 msgid "server promoting\n"
-msgstr "服务器重新加载中\n"
-
-#: pg_ctl.c:1274
-#, c-format
-msgid "%s: cannot rotate log file; single-user server is running (PID: %d)\n"
-msgstr "%s: 无法轮换日志文件；正在运行单用户模式的服务器进程 (PID: %d)\n"
+msgstr "正在将服务器提升为主库\n"
 
 #: pg_ctl.c:1284
 #, c-format
-msgid "%s: could not create log rotation signal file \"%s\": %s\n"
-msgstr "%s: 无法创建日志轮换信号文件 \"%s\": %s\n"
+msgid "%s: cannot rotate log file; single-user server is running (PID: %d)\n"
+msgstr "%s: 不能轮换日志文件；单用户模式服务器正在运行（PID: %d）\n"
 
-#: pg_ctl.c:1290
+#: pg_ctl.c:1294
 #, c-format
-msgid "%s: could not write log rotation signal file \"%s\": %s\n"
-msgstr "%s: 无法写入日志轮换信号文件 \"%s\": %s\n"
+msgid "%s: could not create log rotation signal file \"%s\": %m\n"
+msgstr "%s: 无法创建日志轮换信号文件 \"%s\": %m\n"
 
-#: pg_ctl.c:1298
+#: pg_ctl.c:1300
 #, c-format
-msgid "%s: could not send log rotation signal (PID: %d): %s\n"
-msgstr "%s: 无法发送日志轮换信号 (PID: %d): %s\n"
+msgid "%s: could not write log rotation signal file \"%s\": %m\n"
+msgstr "%s: 无法写入日志轮换信号文件 \"%s\": %m\n"
 
-#: pg_ctl.c:1301
+#: pg_ctl.c:1308
 #, c-format
-msgid "%s: could not remove log rotation signal file \"%s\": %s\n"
-msgstr "%s: 无法删除日志轮换信号文件 \"%s\": %s\n"
+msgid "%s: could not send log rotation signal (PID: %d): %m\n"
+msgstr "%s: 无法发送日志轮换信号（PID: %d）: %m\n"
 
-#: pg_ctl.c:1306
+#: pg_ctl.c:1311
+#, c-format
+msgid "%s: could not remove log rotation signal file \"%s\": %m\n"
+msgstr "%s: 无法删除日志轮换信号文件 \"%s\": %m\n"
+
+#: pg_ctl.c:1316
 msgid "server signaled to rotate log file\n"
-msgstr "服务器发出轮换日志文件的信号\n"
+msgstr "已向服务器发送日志轮换信号\n"
 
-#: pg_ctl.c:1353
+#: pg_ctl.c:1363
 #, c-format
 msgid "%s: single-user server is running (PID: %d)\n"
-msgstr "%s: 正在运行单用户模式服务器进程 (PID: %d)\n"
+msgstr "%s: 单用户模式服务器正在运行（PID: %d）\n"
 
-#: pg_ctl.c:1367
-#, fuzzy, c-format
-#| msgid "%s: server is running (PID: %ld)\n"
+#: pg_ctl.c:1377
+#, c-format
 msgid "%s: server is running (PID: %d)\n"
-msgstr "%s: 正在运行服务器进程(PID: %ld)\n"
+msgstr "%s: 服务器正在运行（PID: %d）\n"
 
-#: pg_ctl.c:1383
+#: pg_ctl.c:1393
 #, c-format
 msgid "%s: no server running\n"
-msgstr "%s:没有服务器进程正在运行\n"
+msgstr "%s: 服务器未运行\n"
 
-#: pg_ctl.c:1400
+#: pg_ctl.c:1410
 #, c-format
-msgid "%s: could not send signal %d (PID: %d): %s\n"
-msgstr "%s: 无法发送信号 %d (PID: %d): %s\n"
-
-#: pg_ctl.c:1431
-#, c-format
-msgid "%s: could not find own program executable\n"
-msgstr "%s: 无法找到执行文件\n"
+msgid "%s: could not send signal %d (PID: %d): %m\n"
+msgstr "%s: 无法发送信号 %d（PID: %d）: %m\n"
 
 #: pg_ctl.c:1441
 #, c-format
-msgid "%s: could not find postgres program executable\n"
-msgstr "%s: 无法找到postgres程序的执行文件\n"
+msgid "%s: could not find own program executable\n"
+msgstr "%s: 无法找到程序自身的可执行文件\n"
 
-#: pg_ctl.c:1511 pg_ctl.c:1545
+#: pg_ctl.c:1451
+#, c-format
+msgid "%s: could not find postgres program executable\n"
+msgstr "%s: 无法找到 postgres 程序的可执行文件\n"
+
+#: pg_ctl.c:1521 pg_ctl.c:1555
 #, c-format
 msgid "%s: could not open service manager\n"
 msgstr "%s: 无法打开服务管理器\n"
 
-#: pg_ctl.c:1517
+#: pg_ctl.c:1527
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
-msgstr "%s: 服务 \"%s\" 已经注册了\n"
+msgstr "%s: 服务 \"%s\" 已注册\n"
 
-#: pg_ctl.c:1528
+#: pg_ctl.c:1538
 #, c-format
 msgid "%s: could not register service \"%s\": error code %lu\n"
 msgstr "%s: 无法注册服务 \"%s\": 错误码 %lu\n"
 
-#: pg_ctl.c:1551
+#: pg_ctl.c:1561
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
-msgstr "%s: 服务 \"%s\" 没有注册\n"
+msgstr "%s: 服务 \"%s\" 未注册\n"
 
-#: pg_ctl.c:1558
+#: pg_ctl.c:1568
 #, c-format
 msgid "%s: could not open service \"%s\": error code %lu\n"
 msgstr "%s: 无法打开服务 \"%s\": 错误码 %lu\n"
 
-#: pg_ctl.c:1567
+#: pg_ctl.c:1577
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %lu\n"
 msgstr "%s: 无法注销服务 \"%s\": 错误码 %lu\n"
 
-#: pg_ctl.c:1654
+#: pg_ctl.c:1664
 msgid "Waiting for server startup...\n"
-msgstr "等待服务器进程启动 ...\n"
+msgstr "正在等待服务器启动...\n"
 
-#: pg_ctl.c:1657
+#: pg_ctl.c:1667
 msgid "Timed out waiting for server startup\n"
-msgstr "在等待服务器启动时超时\n"
+msgstr "等待服务器启动超时\n"
 
-#: pg_ctl.c:1661
+#: pg_ctl.c:1671
 msgid "Server started and accepting connections\n"
-msgstr "服务器进程已启动并且接受连接\n"
+msgstr "服务器已启动并开始接受连接\n"
 
-#: pg_ctl.c:1716
+#: pg_ctl.c:1726
 #, c-format
 msgid "%s: could not start service \"%s\": error code %lu\n"
 msgstr "%s: 无法启动服务 \"%s\": 错误码 %lu\n"
 
-#: pg_ctl.c:1789
+#: pg_ctl.c:1799
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
-msgstr "%s: 无法打开进程令牌 (token): 错误码 %lu\n"
+msgstr "%s: 无法打开进程令牌: 错误码 %lu\n"
 
-#: pg_ctl.c:1803
+#: pg_ctl.c:1813
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
-msgstr "%s: 无法分配SID: 错误码 %lu\n"
+msgstr "%s: 无法分配 SID: 错误码 %lu\n"
 
-#: pg_ctl.c:1829
+#: pg_ctl.c:1839
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
-msgstr "%s: 无法创建继承套接字: 错误码为 %lu\n"
+msgstr "%s: 无法创建受限令牌: 错误码 %lu\n"
 
-#: pg_ctl.c:1911
+#: pg_ctl.c:1920
 #, c-format
 msgid "%s: could not get LUIDs for privileges: error code %lu\n"
-msgstr "%s: 由于权限无法获取LUID: 错误码 %lu\n"
+msgstr "%s: 无法获取特权对应的 LUID: 错误码 %lu\n"
 
-#: pg_ctl.c:1919 pg_ctl.c:1934
+#: pg_ctl.c:1928 pg_ctl.c:1943
 #, c-format
 msgid "%s: could not get token information: error code %lu\n"
-msgstr "%s: 无法获得令牌信息: 错误码 %lu\n"
+msgstr "%s: 无法获取令牌信息: 错误码 %lu\n"
 
-#: pg_ctl.c:1928
+#: pg_ctl.c:1937
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: 内存不足\n"
 
-#: pg_ctl.c:1958
+#: pg_ctl.c:1967
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+msgstr "运行 \"%s --help\" 获取更多信息。\n"
 
-#: pg_ctl.c:1966
+#: pg_ctl.c:1975
 #, c-format
 msgid ""
 "%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s 是一个用于初始化、启动、停止或控制PostgreSQL服务器的工具.\n"
+"%s 是用于初始化、启动、停止或控制 PostgreSQL 服务器的工具。\n"
 "\n"
 
-#: pg_ctl.c:1967
+#: pg_ctl.c:1976
 #, c-format
 msgid "Usage:\n"
-msgstr "使用方法:\n"
+msgstr "用法:\n"
 
-#: pg_ctl.c:1968
+#: pg_ctl.c:1977
 #, c-format
 msgid "  %s init[db]   [-D DATADIR] [-s] [-o OPTIONS]\n"
 msgstr "  %s init[db]   [-D 数据目录] [-s] [-o 选项]\n"
 
-#: pg_ctl.c:1969
+#: pg_ctl.c:1978
 #, c-format
 msgid ""
 "  %s start      [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
@@ -530,114 +549,116 @@ msgstr ""
 "  %s start      [-D 数据目录] [-l 文件名] [-W] [-t 秒数] [-s]\n"
 "                    [-o 选项] [-p 路径] [-c]\n"
 
-#: pg_ctl.c:1971
+#: pg_ctl.c:1980
 #, c-format
 msgid "  %s stop       [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
-msgstr "  %s stop       [-D 数据目录] [-m SHUTDOWN-MODE] [-W] [-t 秒数] [-s]\n"
+msgstr "  %s stop       [-D 数据目录] [-m 关闭模式] [-W] [-t 秒数] [-s]\n"
 
-#: pg_ctl.c:1972
+#: pg_ctl.c:1981
 #, c-format
 msgid ""
 "  %s restart    [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
 "                    [-o OPTIONS] [-c]\n"
 msgstr ""
-"  %s restart    [-D 数据目录] [-m SHUTDOWN-MODE] [-W] [-t 秒数] [-s]\n"
+"  %s restart    [-D 数据目录] [-m 关闭模式] [-W] [-t 秒数] [-s]\n"
 "                    [-o 选项] [-c]\n"
 
-#: pg_ctl.c:1974
+#: pg_ctl.c:1983
 #, c-format
 msgid "  %s reload     [-D DATADIR] [-s]\n"
 msgstr "  %s reload     [-D 数据目录] [-s]\n"
 
-#: pg_ctl.c:1975
+#: pg_ctl.c:1984
 #, c-format
 msgid "  %s status     [-D DATADIR]\n"
 msgstr "  %s status     [-D 数据目录]\n"
 
-#: pg_ctl.c:1976
+#: pg_ctl.c:1985
 #, c-format
 msgid "  %s promote    [-D DATADIR] [-W] [-t SECS] [-s]\n"
 msgstr "  %s promote    [-D 数据目录] [-W] [-t 秒数] [-s]\n"
 
-#: pg_ctl.c:1977
+#: pg_ctl.c:1986
 #, c-format
 msgid "  %s logrotate  [-D DATADIR] [-s]\n"
 msgstr "  %s logrotate  [-D 数据目录] [-s]\n"
 
-#: pg_ctl.c:1978
+#: pg_ctl.c:1987
 #, c-format
 msgid "  %s kill       SIGNALNAME PID\n"
 msgstr "  %s kill       信号名称 进程号\n"
 
-#: pg_ctl.c:1980
+#: pg_ctl.c:1989
 #, c-format
 msgid ""
 "  %s register   [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
-"                    [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
+"                    [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o "
+"OPTIONS]\n"
 msgstr ""
-"  %s register   [-D 数据目录] [-N 服务名称] [-U 用户名] [-P 口令]\n"
-"                    [-S 启动类型] [-e 源] [-W] [-t 秒数] [-s] [-o 选项]\n"
+"  %s register   [-D 数据目录] [-N 服务名称] [-U 用户名] [-P 密码]\n"
+"                    [-S 启动类型] [-e 事件源] [-W] [-t 秒数] [-s] [-o 选项]\n"
 
-#: pg_ctl.c:1982
+#: pg_ctl.c:1991
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
 msgstr "  %s unregister [-N 服务名称]\n"
 
-#: pg_ctl.c:1985
+#: pg_ctl.c:1994
 #, c-format
 msgid ""
 "\n"
 "Common options:\n"
 msgstr ""
 "\n"
-"普通选项:\n"
-
-#: pg_ctl.c:1986
-#, c-format
-msgid "  -D, --pgdata=DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata=数据目录  数据库存储区域的位置\n"
-
-#: pg_ctl.c:1988
-#, c-format
-msgid "  -e SOURCE              event source for logging when running as a service\n"
-msgstr "  -e SOURCE              当作为一个服务运行时要记录的事件的来源\n"
-
-#: pg_ctl.c:1990
-#, c-format
-msgid "  -s, --silent           only print errors, no informational messages\n"
-msgstr "  -s, --silent           只打印错误信息, 没有其他信息\n"
-
-#: pg_ctl.c:1991
-#, c-format
-msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
-msgstr "  -t, --timeout=SECS     当使用-w 选项时需要等待的秒数\n"
-
-#: pg_ctl.c:1992
-#, c-format
-msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version          输出版本信息, 然后退出\n"
-
-#: pg_ctl.c:1993
-#, c-format
-msgid "  -w, --wait             wait until operation completes (default)\n"
-msgstr "  -w, --wait             等待直到操作完成(默认)\n"
-
-#: pg_ctl.c:1994
-#, c-format
-msgid "  -W, --no-wait          do not wait until operation completes\n"
-msgstr "  -W, --no-wait          不用等待操作完成\n"
+"通用选项:\n"
 
 #: pg_ctl.c:1995
 #, c-format
-msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help             显示此帮助, 然后退出\n"
+msgid "  -D, --pgdata=DATADIR   location of the database storage area\n"
+msgstr "  -D, --pgdata=DATADIR   数据库存储区域的位置\n"
 
-#: pg_ctl.c:1996
+#: pg_ctl.c:1997
+#, c-format
+msgid ""
+"  -e SOURCE              event source for logging when running as a service\n"
+msgstr "  -e SOURCE              作为服务运行时用于日志记录的事件源\n"
+
+#: pg_ctl.c:1999
+#, c-format
+msgid "  -s, --silent           only print errors, no informational messages\n"
+msgstr "  -s, --silent           只输出错误消息，不输出一般信息\n"
+
+#: pg_ctl.c:2000
+#, c-format
+msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
+msgstr "  -t, --timeout=SECS     使用 -w 选项时的最长等待时间（秒）\n"
+
+#: pg_ctl.c:2001
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version          输出版本信息，然后退出\n"
+
+#: pg_ctl.c:2002
+#, c-format
+msgid "  -w, --wait             wait until operation completes (default)\n"
+msgstr "  -w, --wait             等待操作完成（默认）\n"
+
+#: pg_ctl.c:2003
+#, c-format
+msgid "  -W, --no-wait          do not wait until operation completes\n"
+msgstr "  -W, --no-wait          不等待操作完成\n"
+
+#: pg_ctl.c:2004
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help             显示此帮助，然后退出\n"
+
+#: pg_ctl.c:2005
 #, c-format
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
-msgstr "如果省略了 -D 选项, 将使用 PGDATA 环境变量.\n"
+msgstr "如果省略 -D 选项，将使用 PGDATA 环境变量。\n"
 
-#: pg_ctl.c:1998
+#: pg_ctl.c:2007
 #, c-format
 msgid ""
 "\n"
@@ -646,36 +667,36 @@ msgstr ""
 "\n"
 "启动或重启的选项:\n"
 
-#: pg_ctl.c:2000
+#: pg_ctl.c:2009
 #, c-format
 msgid "  -c, --core-files       allow postgres to produce core files\n"
-msgstr "  -c, --core-files       允许postgres进程产生核心文件\n"
+msgstr "  -c, --core-files       允许 postgres 生成核心转储文件\n"
 
-#: pg_ctl.c:2002
+#: pg_ctl.c:2011
 #, c-format
 msgid "  -c, --core-files       not applicable on this platform\n"
-msgstr "  -c, --core-files       在这种平台上不可用\n"
+msgstr "  -c, --core-files       不适用于此平台\n"
 
-#: pg_ctl.c:2004
+#: pg_ctl.c:2013
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
-msgstr "  -l, --log=FILENAME     写入 (或追加) 服务器日志到文件FILENAME\n"
+msgstr "  -l, --log=FILENAME     将服务器日志写入（或追加）到 FILENAME\n"
 
-#: pg_ctl.c:2005
+#: pg_ctl.c:2014
 #, c-format
 msgid ""
 "  -o, --options=OPTIONS  command line options to pass to postgres\n"
 "                         (PostgreSQL server executable) or initdb\n"
 msgstr ""
-"  -o, --options=OPTIONS  传递给postgres的命令行选项\n"
-"                         (PostgreSQL 服务器执行文件)或initdb\n"
+"  -o, --options=OPTIONS  传给 postgres 或 initdb 的命令行选项\n"
+"                         （postgres 为 PostgreSQL 服务器可执行文件）\n"
 
-#: pg_ctl.c:2007
+#: pg_ctl.c:2016
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
-msgstr "  -p PATH-TO-POSTMASTER  正常情况不必要\n"
+msgstr "  -p PATH-TO-POSTGRES    通常不需要\n"
 
-#: pg_ctl.c:2008
+#: pg_ctl.c:2017
 #, c-format
 msgid ""
 "\n"
@@ -684,171 +705,178 @@ msgstr ""
 "\n"
 "停止或重启的选项:\n"
 
-#: pg_ctl.c:2009
+#: pg_ctl.c:2018
 #, c-format
-msgid "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr "  -m, --mode=MODE        可以是 \"smart\", \"fast\", 或者 \"immediate\"\n"
+msgid ""
+"  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
+msgstr ""
+"  -m, --mode=MODE        MODE 可以为 \"smart\", \"fast\" 或 \"immediate\"\n"
 
-#: pg_ctl.c:2011
+#: pg_ctl.c:2020
 #, c-format
 msgid ""
 "\n"
 "Shutdown modes are:\n"
 msgstr ""
 "\n"
-"关闭模式有如下几种:\n"
+"关闭模式:\n"
 
-#: pg_ctl.c:2012
+#: pg_ctl.c:2021
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
 msgstr "  smart       所有客户端断开连接后退出\n"
 
-#: pg_ctl.c:2013
+#: pg_ctl.c:2022
 #, c-format
 msgid "  fast        quit directly, with proper shutdown (default)\n"
-msgstr "  fast        直接退出, 正确的关闭（默认）\n"
+msgstr "  fast        直接正常关闭并退出（默认）\n"
 
-#: pg_ctl.c:2014
+#: pg_ctl.c:2023
 #, c-format
-msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
-msgstr "  immediate   不完全的关闭退出; 重启后恢复\n"
+msgid ""
+"  immediate   quit without complete shutdown; will lead to recovery on "
+"restart\n"
+msgstr "  immediate   不执行完整关闭即退出；重启时需要崩溃恢复\n"
 
-#: pg_ctl.c:2016
+#: pg_ctl.c:2025
 #, c-format
 msgid ""
 "\n"
 "Allowed signal names for kill:\n"
 msgstr ""
 "\n"
-"允许关闭的信号名称:\n"
+"kill 允许使用的信号名:\n"
 
-#: pg_ctl.c:2020
+#: pg_ctl.c:2029
 #, c-format
 msgid ""
 "\n"
 "Options for register and unregister:\n"
 msgstr ""
 "\n"
-"注册或注销的选项:\n"
+"服务注册和注销选项:\n"
 
-#: pg_ctl.c:2021
+#: pg_ctl.c:2030
 #, c-format
-msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
-msgstr "  -N 服务名称     注册到 PostgreSQL 服务器的服务名称\n"
+msgid ""
+"  -N SERVICENAME  service name with which to register PostgreSQL server\n"
+msgstr "  -N SERVICENAME  注册 PostgreSQL 服务器时使用的服务名\n"
 
-#: pg_ctl.c:2022
+#: pg_ctl.c:2031
 #, c-format
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
-msgstr "  -P 口令         注册到 PostgreSQL 服务器帐户的口令\n"
+msgstr "  -P PASSWORD     注册 PostgreSQL 服务器所用账户的密码\n"
 
-#: pg_ctl.c:2023
+#: pg_ctl.c:2032
 #, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
-msgstr "  -U 用户名       注册到 PostgreSQL 服务器帐户的用户名\n"
+msgstr "  -U USERNAME     注册 PostgreSQL 服务器所用账户的用户名\n"
 
-#: pg_ctl.c:2024
+#: pg_ctl.c:2033
 #, c-format
 msgid "  -S START-TYPE   service start type to register PostgreSQL server\n"
-msgstr "  -S START-TYPE   注册到PostgreSQL服务器的服务启动类型\n"
+msgstr "  -S START-TYPE   注册 PostgreSQL 服务器时使用的服务启动类型\n"
 
-#: pg_ctl.c:2026
+#: pg_ctl.c:2035
 #, c-format
 msgid ""
 "\n"
 "Start types are:\n"
 msgstr ""
 "\n"
-"启动类型有:\n"
+"启动类型:\n"
 
-#: pg_ctl.c:2027
+#: pg_ctl.c:2036
 #, c-format
-msgid "  auto       start service automatically during system startup (default)\n"
-msgstr "  auto       在系统启动时自动启动服务(默认选项)\n"
+msgid ""
+"  auto       start service automatically during system startup (default)\n"
+msgstr "  auto       在系统启动时自动启动服务（默认）\n"
 
-#: pg_ctl.c:2028
+#: pg_ctl.c:2037
 #, c-format
 msgid "  demand     start service on demand\n"
 msgstr "  demand     按需启动服务\n"
 
-#: pg_ctl.c:2031
+#: pg_ctl.c:2040
 #, c-format
 msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
 "\n"
-"臭虫报告至<%s>.\n"
+"请向 <%s> 报告缺陷。\n"
 
-#: pg_ctl.c:2032
+#: pg_ctl.c:2041
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 主页: <%s>\n"
 
-#: pg_ctl.c:2057
+#: pg_ctl.c:2066
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
-msgstr "%s: 无效的关闭模式 \"%s\"\n"
+msgstr "%s: 无法识别的关闭模式 \"%s\"\n"
 
-#: pg_ctl.c:2086
+#: pg_ctl.c:2095
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
-msgstr "%s: 无效信号名称 \"%s\"\n"
+msgstr "%s: 无法识别的信号名 \"%s\"\n"
 
-#: pg_ctl.c:2103
+#: pg_ctl.c:2112
 #, c-format
 msgid "%s: unrecognized start type \"%s\"\n"
 msgstr "%s: 无法识别的启动类型 \"%s\"\n"
 
-#: pg_ctl.c:2159
+#: pg_ctl.c:2168
 #, c-format
 msgid "%s: could not determine the data directory using command \"%s\"\n"
-msgstr "%s: 使用命令 \"%s\"无法确定数据目录\n"
+msgstr "%s: 无法通过命令 \"%s\" 确定数据目录\n"
 
-#: pg_ctl.c:2182
+#: pg_ctl.c:2191
 #, c-format
 msgid "%s: control file appears to be corrupt\n"
 msgstr "%s: 控制文件似乎已损坏\n"
 
-#: pg_ctl.c:2250
+#: pg_ctl.c:2259
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
 msgstr ""
-"%s: 无法以 root 用户运行\n"
-"请以服务器进程所属用户 (非特权用户) 登录 (或使用 \"su\")\n"
-"\n"
+"%s: 不能以 root 身份运行\n"
+"请以将拥有服务器进程的非特权用户身份登录\n"
+"（例如使用 \"su\"）。\n"
 
-#: pg_ctl.c:2333
+#: pg_ctl.c:2331
 #, c-format
 msgid "%s: -S option not supported on this platform\n"
-msgstr "%s: -S 选项在该平台上不支持\n"
+msgstr "%s: 此平台不支持 -S 选项\n"
 
-#: pg_ctl.c:2370
-#, c-format
-msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: 命令行参数太多 (第一个是 \"%s\")\n"
-
-#: pg_ctl.c:2396
+#: pg_ctl.c:2387
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
-msgstr "%s: 缺少 kill 模式参数\n"
+msgstr "%s: 缺少 kill 模式所需的参数\n"
+
+#: pg_ctl.c:2405
+#, c-format
+msgid "%s: unrecognized operation mode \"%s\"\n"
+msgstr "%s: 无法识别的操作模式 \"%s\"\n"
 
 #: pg_ctl.c:2414
 #, c-format
-msgid "%s: unrecognized operation mode \"%s\"\n"
-msgstr "%s: 无效的操作模式 \"%s\"\n"
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 命令行参数过多（第一个多余参数是 \"%s\"）\n"
 
-#: pg_ctl.c:2424
+#: pg_ctl.c:2421
 #, c-format
 msgid "%s: no operation specified\n"
-msgstr "%s: 没有指定操作\n"
+msgstr "%s: 未指定操作\n"
 
-#: pg_ctl.c:2445
+#: pg_ctl.c:2442
 #, c-format
-msgid "%s: no database directory specified and environment variable PGDATA unset\n"
-msgstr "%s: 没有指定数据目录, 并且没有设置 PGDATA 环境变量\n"
+msgid ""
+"%s: no database directory specified and environment variable PGDATA unset\n"
+msgstr "%s: 未指定数据目录，并且未设置 PGDATA 环境变量\n"
 
 #, c-format
 #~ msgid ""

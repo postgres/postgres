@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_test_timing
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 17\n"
+"Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-07-12 14:21+0000\n"
-"PO-Revision-Date: 2024-07-12 19:07+0200\n"
+"POT-Creation-Date: 2026-08-26 21:24+0000\n"
+"PO-Revision-Date: 2026-08-27 07:22+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -17,78 +17,180 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
 
-#: pg_test_timing.c:59
+#: ../../common/fe_memutils.c:209
 #, c-format
-msgid "Usage: %s [-d DURATION]\n"
-msgstr "Användning: %s [-d TID]\n"
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ogiltig storlek %zu + %zu för minnesallokering\n"
 
-#: pg_test_timing.c:81
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ogiltig storlek %zu * %zu för minnesallokering\n"
+
+#: pg_test_timing.c:79
+#, c-format
+msgid "Usage: %s [-c CUTOFF] [-d DURATION]\n"
+msgstr "Användning: %s [-c BRYTPUNKT] [-d TID]\n"
+
+#: pg_test_timing.c:100 pg_test_timing.c:121
 #, c-format
 msgid "%s: invalid argument for option %s\n"
 msgstr "%s: ogiltigt argument för flaggan %s\n"
 
-#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
+#: pg_test_timing.c:102 pg_test_timing.c:123 pg_test_timing.c:137
+#: pg_test_timing.c:149
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: pg_test_timing.c:90
+#: pg_test_timing.c:108 pg_test_timing.c:130
 #, c-format
 msgid "%s: %s must be in range %u..%u\n"
 msgstr "%s: %s måste vara i intervallet %u..%u\n"
 
-#: pg_test_timing.c:107
+#: pg_test_timing.c:147
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
 
-#: pg_test_timing.c:115
+#: pg_test_timing.c:154
 #, c-format
-msgid "Testing timing overhead for %u second.\n"
-msgid_plural "Testing timing overhead for %u seconds.\n"
-msgstr[0] "Testar timingoverhead under %u sekund.\n"
-msgstr[1] "Testar timingoverhead under %u sekunder.\n"
+msgid ""
+"Testing timing overhead for %u second.\n"
+"\n"
+msgid_plural ""
+"Testing timing overhead for %u seconds.\n"
+"\n"
+msgstr[0] "Testar timingoverhead under %u sekund.\n\n"
+msgstr[1] "Testar timingoverhead under %u sekunder.\n\n"
 
-#: pg_test_timing.c:151
+#: pg_test_timing.c:209
+#, c-format
+msgid "TSC frequency source: %s\n"
+msgstr "TSC-frekvenskälla: %s\n"
+
+#: pg_test_timing.c:210
+#, c-format
+msgid "TSC frequency in use: %d kHz\n"
+msgstr "TSC-frekvens som används: %d kHz\n"
+
+#: pg_test_timing.c:216
+#, c-format
+msgid "TSC frequency from calibration: %d kHz\n"
+msgstr "TSC-frekvens från kalibrering: %d kHz\n"
+
+#: pg_test_timing.c:223
+#, c-format
+msgid "WARNING: Calibrated TSC frequency differs by %.1f%% from the TSC frequency in use\n"
+msgstr "VARNING: Kalibrerad TSC-frekvens skiljer %.1f%% från TSC-frekvensen som används\n"
+
+#: pg_test_timing.c:225
+#, c-format
+msgid "HINT: Consider setting timing_clock_source to 'system'. Report bugs to <%s>.\n"
+msgstr "TIPS: Sätt eventuellt timing_clock_source till 'system'. Rapportera buggar till <%s>.\n"
+
+#: pg_test_timing.c:230
+#, c-format
+msgid "TSC calibration did not converge\n"
+msgstr "TSC-kalibrering konvergerade inte\n"
+
+#: pg_test_timing.c:240
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will be used by default, unless timing_clock_source is set to 'system'.\n"
+msgstr "\nKlockkällan TSC används som standard om inte timing_clock_source är satt till 'system'.\n"
+
+#: pg_test_timing.c:242
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will not be used by default, unless timing_clock_source is set to 'tsc'.\n"
+msgstr "\nKlockkällan TSC används ej som standard om inte timing_clock_source är satt till 'tsc'.\n"
+
+#: pg_test_timing.c:245
+#, c-format
+msgid ""
+"\n"
+"TSC clock source is not usable. Likely unable to determine TSC frequency. Are you running in an unsupported virtualized environment?\n"
+msgstr "\nKlockkällan TSC fungerar inte. Vi kan troligen inte fastställa TSC-frekvensen. Kör du i en virtuell miljö som inte stöds?\n"
+
+#: pg_test_timing.c:270
+#, c-format
+msgid "Fast clock source: %s\n"
+msgstr "Snabb klockkälla: %s\n"
+
+#: pg_test_timing.c:272
+#, c-format
+msgid "System clock source: %s\n"
+msgstr "Systemets klockkälla: %s\n"
+
+#: pg_test_timing.c:274
+#, c-format
+msgid "Clock source: %s\n"
+msgstr "Klockkälla: %s\n"
+
+#: pg_test_timing.c:312
 #, c-format
 msgid "Detected clock going backwards in time.\n"
 msgstr "Upptäckte att klockan gått bakåt i tiden.\n"
 
-#: pg_test_timing.c:152
+#: pg_test_timing.c:313
 #, c-format
-msgid "Time warp: %d ms\n"
-msgstr "Tidsförskjutning: %d ms\n"
+msgid "Time warp: %<PRId64> ns\n"
+msgstr "Tidsförskjutning: %<PRId64> ms\n"
 
-#: pg_test_timing.c:175
+#: pg_test_timing.c:351
 #, c-format
-msgid "Per loop time including overhead: %0.2f ns\n"
-msgstr "Tid per varv inklusive overhead: %0.2f ns\n"
+msgid "Average loop time including overhead: %0.2f ns\n"
+msgstr "Genomsnittlig tid per varv inklusive overhead: %0.2f ns\n"
 
-#: pg_test_timing.c:186
-msgid "< us"
-msgstr "< us"
+#: pg_test_timing.c:361
+msgid "<= ns"
+msgstr "<= ns"
 
-#: pg_test_timing.c:187
+#: pg_test_timing.c:362
+msgid "ns"
+msgstr "ns"
+
+#: pg_test_timing.c:363
 #, no-c-format
 msgid "% of total"
 msgstr "% av totalt"
 
-#: pg_test_timing.c:188
+#: pg_test_timing.c:364
+#, no-c-format
+msgid "running %"
+msgstr "kör %s"
+
+#: pg_test_timing.c:365
 msgid "count"
 msgstr "antal"
 
-#: pg_test_timing.c:197
+#: pg_test_timing.c:375
+#, c-format
+msgid "WARNING: No timing measurements collected. Report this as a bug to <%s>.\n"
+msgstr "VARNING: Inga tidsmätningar samlades in. Reportera denna bugg till <%s>.\n"
+
+#: pg_test_timing.c:389
 #, c-format
 msgid "Histogram of timing durations:\n"
 msgstr "Histogram över tider:\n"
+
+#: pg_test_timing.c:409
+#, c-format
+msgid ""
+"\n"
+"Observed timing durations up to %.4f%%:\n"
+msgstr "\nObserverade tidtagningsintervaller upp till %.4f%%:\n"

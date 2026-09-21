@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-07-25 01:54+0000\n"
-"PO-Revision-Date: 2026-07-25 04:34+0200\n"
+"POT-Creation-Date: 2026-08-17 01:24+0000\n"
+"PO-Revision-Date: 2026-08-17 08:32+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -272,9 +272,9 @@ msgstr "პრობლემური სვეტების სია არ
 
 #: check.c:435 check.c:1070 check.c:1221 check.c:1285 check.c:1359 check.c:1445
 #: check.c:1533 check.c:1663 check.c:1732 check.c:1817 check.c:1906
-#: check.c:1950 check.c:2030 check.c:2380 check.c:2399 check.c:2415
-#: check.c:2459 check.c:2512 check.c:2625 file.c:378 file.c:415 function.c:214
-#: option.c:519 slru_io.c:113 version.c:97 version.c:178
+#: check.c:1950 check.c:2030 check.c:2339 check.c:2459 check.c:2478
+#: check.c:2494 check.c:2538 check.c:2591 check.c:2704 file.c:378 file.c:415
+#: function.c:214 option.c:519 slru_io.c:113 version.c:97 version.c:178
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
@@ -482,7 +482,7 @@ msgstr "template0-თან დაკავშირება შეუძლე
 
 #: check.c:1235 check.c:1296 check.c:1411 check.c:1504 check.c:1629
 #: check.c:1703 check.c:1786 check.c:1861 check.c:1919 check.c:1999
-#: check.c:2428 check.c:2568 check.c:2637 function.c:235
+#: check.c:2351 check.c:2507 check.c:2647 check.c:2716 function.c:235
 #, c-format
 msgid "fatal"
 msgstr "ფატალური"
@@ -733,62 +733,85 @@ msgstr ""
 "პოტენციურად გავლენის ქვეშ მოქცეული ურთიერთობების სია იხილეთ ფაილში:\n"
 "    %s"
 
-#: check.c:2235
+#: check.c:2236
 #, c-format
 msgid "Checking new cluster replication slots"
 msgstr "ახალი კლასტერის რეპლიკაციის სლოტების შემოწმება"
 
-#: check.c:2247
+#: check.c:2248
 #, c-format
 msgid "could not count the number of replication slots"
 msgstr "რეპლიკაციის სლოტების რაოდენობის დათვლა შეუძლებელია"
 
-#: check.c:2257
+#: check.c:2258
 #, c-format
 msgid "expected 0 logical replication slots but found %d"
 msgstr "მოველოდი 0 ლოგიკური რეპლიკაციის სლოტს, მაგრამ, მივიღე %d"
 
-#: check.c:2266
+#: check.c:2267
 #, c-format
 msgid "replication slot \"%s\" already exists in the new cluster"
 msgstr "რეპლიკაციის სლოტი \"%s\" უკვე არსებობს ახალ კლასტერში"
 
-#: check.c:2276 check.c:2335
+#: check.c:2277 check.c:2414
 #, c-format
 msgid "could not determine parameter settings on new cluster"
 msgstr "ახალ კლასტერზე პარამეტრის მნიშვნელობების დადგენა შეუძლებელია"
 
-#: check.c:2282
+#: check.c:2283
 #, c-format
 msgid "\"wal_level\" must be \"replica\" or \"logical\" but is set to \"%s\""
 msgstr "\"wal_level\" უნდა იყოს \"replica\", ან \"logical\", მაგრამ მნიშვნელობაა \"%s\"."
 
-#: check.c:2289
+#: check.c:2305
+#, c-format
+#| msgid "could not parse connection string: %s"
+msgid "could not parse \"output_plugin_libraries\" setting '%s'"
+msgstr "პარამეტრის \"output_plugin_libraries\" '%s' დამუშავება შეუძლებელია"
+
+#: check.c:2352
+#, c-format
+msgid ""
+"Your installation contains logical replication slots with plugins\n"
+"that are not allowed by the new cluster's output_plugin_libraries\n"
+"setting. You can add trusted plugins to output_plugin_libraries\n"
+"and/or remove affected slots, and then restart the upgrade.\n"
+"A list of the problematic slots is in the file:\n"
+"    %s"
+msgstr ""
+"პროგრამის თქვენი ვერსია შეიცავს ლოგიკური რეპლიკაციის სლოტებს\n"
+"დამატებებით, რომლებიც დაშვებული არაა ახალი კლასტერის პარამეტრის\n"
+"output_plugin_libraries მიერ. შეგიძლიათ, დაამატოთ სანდო დამატებები\n"
+"output_plugin_libraries-ში, ან/და წაშალოთ მისი სლოტები და თავიდან გაუშვათ\n"
+"ვერსიის აწევა. პრობლემული სლოტების სიის პოვნა შეგიძლიათ ფაილში:\n"
+"     %s"
+
+#: check.c:2368
 #, c-format
 msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots in the old cluster plus one additional slot required for retaining conflict detection information (%d)"
 msgstr "\"max_replication_slots\" (%d) ძველი კლასტერის ლოგიკური რეპლიკაციების სლოტების რაოდენობაზე მეტი ან ტოლი უნდა იყოს. პლუს საჭიროა კიდევ ერთი დამატებითი სლოტი კონფლიქტის შესახებ ინფორმაციის შესანახად (%d)"
 
-#: check.c:2295
+#: check.c:2374
 #, c-format
 msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) in the old cluster"
 msgstr "\"max_replication_slots\" (%d) ძველი კლასტერის ლოგიკური რეპლიკაციების სლოტების რაოდენობაზე (%d) მეტი ან ტოლი უნდა იყოს"
 
-#: check.c:2327
+#: check.c:2406
 #, c-format
 msgid "Checking new cluster configuration for subscriptions"
 msgstr "ახალი კლასტერის კონფიგურაციის შემოწმება გამოწერებზე"
 
-#: check.c:2339
+#: check.c:2418
 #, c-format
 msgid "\"max_active_replication_origins\" (%d) must be greater than or equal to the number of subscriptions (%d) in the old cluster"
 msgstr "\"max_active_replication_origins\" (%d) ძველი კლასტერის გამოწერების რაოდენობაზე (%d) მეტი, ან ტოლი უნდა იყოს"
 
-#: check.c:2361
+#: check.c:2440
 #, c-format
 msgid "Checking logical replication slots"
 msgstr "ლოგიკური რეპლიკაციის სლოტების შემოწმება"
 
-#: check.c:2429
+#: check.c:2508
 #, c-format
 msgid ""
 "Your installation contains logical replication slots that cannot be upgraded.\n"
@@ -803,12 +826,12 @@ msgstr ""
 "პრობლემური სლოტების ნახვა შეგიძლიათ ფაილში:\n"
 "    %s"
 
-#: check.c:2487
+#: check.c:2566
 #, c-format
 msgid "Checking subscription state"
 msgstr "გამოწერის მდგომარეობის შემოწმება"
 
-#: check.c:2569
+#: check.c:2648
 #, c-format
 msgid ""
 "Your installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state.\n"
@@ -821,12 +844,12 @@ msgstr ""
 "პრობლემური სვეტების ნახვა შეგიძლიათ ფაილში:\n"
 "    %s"
 
-#: check.c:2595
+#: check.c:2674
 #, c-format
 msgid "Checking names of databases, roles, and tablespaces"
 msgstr "მონაცემთა ბაზების, როლებისა და ცხრილის სივრცის სახელების შემოწმება"
 
-#: check.c:2638
+#: check.c:2717
 #, c-format
 msgid ""
 "Your installation contains databases, roles, or tablespaces with names\n"

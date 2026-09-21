@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpglib (PostgreSQL 17)\n"
+"Project-Id-Version: ecpglib (PostgreSQL 19)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-09 10:07+0900\n"
-"PO-Revision-Date: 2019-06-11 09:04+0900\n"
+"POT-Creation-Date: 2026-08-17 11:06+0900\n"
+"PO-Revision-Date: 2026-08-17 14:52+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.13\n"
 
 #: connect.c:226
 msgid "empty message text"
@@ -25,7 +25,7 @@ msgstr "メッセージテキストが空です"
 msgid "<DEFAULT>"
 msgstr "<デフォルト>"
 
-#: descriptor.c:874 misc.c:88
+#: descriptor.c:485 descriptor.c:883 misc.c:88
 msgid "NULL"
 msgstr "ヌル"
 
@@ -63,31 +63,31 @@ msgstr "行番号%dにおいて引数が少なすぎます"
 #: error.c:68
 #, c-format
 msgid "invalid input syntax for type int: \"%s\", on line %d"
-msgstr "行番号%2$dにおいて、整数型に対して無効な入力構文があります:\"%1$s\""
+msgstr "整数型に対して無効な入力構文があります: \"%s\"、行番号 %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:75
 #, c-format
 msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
-msgstr "行番号%2$dにおいて、符号無し整数型に対して無効な入力構文があります:\"%1$s\""
+msgstr "符号なし整数型に対して無効な入力構文があります: \"%s\"、行番号 %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:82
 #, c-format
 msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
-msgstr "行番号%2$dにおいて、浮動小数点型に対して無効な入力構文があります:\"%1$s\""
+msgstr "浮動小数点型に対して無効な入力構文があります: \"%s\"、行番号 %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:90
 #, c-format
 msgid "invalid syntax for type boolean: \"%s\", on line %d"
-msgstr "行番号%2$dにおいて、論理型に対して無効な入力構文があります:\"%1$s\""
+msgstr "真偽値型に対して無効な入力構文があります: \"%s\"、行番号 %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:95
 #, c-format
 msgid "could not convert boolean value: size mismatch, on line %d"
-msgstr "行番号%dにおいて、論理型に変換できませんでした。サイズが合っていません"
+msgstr "真偽値を変換できませんでした: サイズが合っていません、行番号 %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:102
@@ -122,78 +122,84 @@ msgstr "行番号%dにおいて、変数の配列への挿入はサポートさ�
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:137
 #, c-format
+msgid "invalid input syntax for type bytea: \"%s\", on line %d"
+msgstr "bytea型に対して無効な入力構文があります: \"%s\"、行番号 %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
+#, c-format
 msgid "connection \"%s\" does not exist on line %d"
 msgstr "行番号%2$dにおいて、接続\"%1$s\"は存在しません"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:144
+#: error.c:151
 #, c-format
 msgid "not connected to connection \"%s\" on line %d"
 msgstr "行番号%2$dにおいて、接続\"%1$s\"に接続していません"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:151
+#: error.c:158
 #, c-format
 msgid "invalid statement name \"%s\" on line %d"
 msgstr "行番号%2$dにおいて、文の名前\"%1$s\"が無効です"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:158
+#: error.c:165
 #, c-format
 msgid "descriptor \"%s\" not found on line %d"
 msgstr "行番号%2$dにおいて、記述子\"%1$s\"がありません"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:165
+#: error.c:172
 #, c-format
 msgid "descriptor index out of range on line %d"
 msgstr "行番号%dにおいて、記述子のインデックスが範囲外です"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:172
+#: error.c:179
 #, c-format
 msgid "unrecognized descriptor item \"%s\" on line %d"
 msgstr "行番号%2$dにおいて、記述子項目\"%1$s\"が認識できません"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:179
+#: error.c:186
 #, c-format
 msgid "variable does not have a numeric type on line %d"
 msgstr "行番号%dにおいて、変数は数値型ではありません"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:186
+#: error.c:193
 #, c-format
 msgid "variable does not have a character type on line %d"
 msgstr "行番号%dにおいて、変数は文字型ではありません"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:193
+#: error.c:200
 #, c-format
 msgid "error in transaction processing on line %d"
 msgstr "行番号%dにおいて、トランザクション処理がエラーになりました"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:200
+#: error.c:207
 #, c-format
 msgid "could not connect to database \"%s\" on line %d"
 msgstr "行番号%2$dにおいて、データベース\"%1$s\"に接続できませんでした"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:207
+#: error.c:214
 #, c-format
 msgid "SQL error %d on line %d"
 msgstr "行番号%2$dにおいて、SQLエラー%1$dがあります"
 
-#: error.c:253
+#: error.c:260
 msgid "the connection to the server was lost"
 msgstr "サーバーへの接続が切れました"
 
-#: error.c:345
+#: error.c:352
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "SQLエラー: %s\n"
 
-#: execute.c:2205 execute.c:2212
+#: execute.c:2209 execute.c:2216
 msgid "<empty>"
 msgstr "<空>"

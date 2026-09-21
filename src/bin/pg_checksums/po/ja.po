@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_checksums (PostgreSQL 18)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-05-15 13:37+0900\n"
-"PO-Revision-Date: 2026-05-15 14:53+0900\n"
+"POT-Creation-Date: 2026-09-15 10:55+0900\n"
+"PO-Revision-Date: 2026-09-15 14:15+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -49,8 +49,8 @@ msgstr "ファイル\"%s\"の読み込みに失敗しました: %m"
 
 #: ../../common/controldata_utils.c:120
 #, c-format
-msgid "could not read file \"%s\": read %d of %zu"
-msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$zuバイトのうち%2$dバイトを読み込みました"
+msgid "could not read file \"%s\": read %zd of %zu"
+msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$zuバイト中%2$zdバイト読み込みました"
 
 #: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
 #, c-format
@@ -119,7 +119,7 @@ msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "ファイル\"%s\"に対してファイルシステムを同期できませんでした: %m"
 
 #: ../../common/file_utils.c:123 ../../common/file_utils.c:588
-#: ../../fe_utils/version.c:60 pg_checksums.c:338 pg_checksums.c:407
+#: ../../fe_utils/version.c:60 pg_checksums.c:339 pg_checksums.c:408
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "ファイル\"%s\"のstatに失敗しました: %m"
@@ -131,7 +131,7 @@ msgid "this build does not support sync method \"%s\""
 msgstr "このビルドでは同期方式\"%s\"をサポートしていません"
 
 #: ../../common/file_utils.c:156 ../../common/file_utils.c:304
-#: pg_checksums.c:310
+#: pg_checksums.c:311
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"をオープンできませんでした: %m"
@@ -291,172 +291,200 @@ msgstr "%s ホームページ: <%s>\n"
 msgid "%<PRId64>/%<PRId64> MB (%d%%) computed"
 msgstr "%<PRId64>/%<PRId64> MB (%d%%) 完了"
 
-#: pg_checksums.c:206
+#: pg_checksums.c:207
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
 msgstr "ファイル\"%2$s\"で%1$uブロックを読み取れませんでした: %3$m"
 
-#: pg_checksums.c:209
+#: pg_checksums.c:210
 #, c-format
-msgid "could not read block %u in file \"%s\": read %d of %d"
-msgstr " ファイル\"%2$s\"のブロック%1$uが読み込めませんでした: %4$d中%3$d読み込み済み"
+msgid "could not read block %u in file \"%s\": read %zd of %zu"
+msgstr " ファイル\"%2$s\"のブロック%1$uが読み込めませんでした: %4$zuバイト中%3$zdバイト読み込みました"
 
-#: pg_checksums.c:232
+#: pg_checksums.c:233
 #, c-format
 msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
 msgstr "ファイル\"%s\" ブロック%uでチェックサム検証が失敗: 算出したチェックサムは%X 、しかしブロック上の値は%X"
 
-#: pg_checksums.c:255
+#: pg_checksums.c:256
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
 msgstr "ファイル\"%2$s\" ブロック%1$uへのシーク失敗: %3$m"
 
-#: pg_checksums.c:262
+#: pg_checksums.c:263
 #, c-format
 msgid "could not write block %u in file \"%s\": %m"
 msgstr "ファイル\"%2$s\"で%1$uブロックが書き出せませんでした: %3$m"
 
-#: pg_checksums.c:265
+#: pg_checksums.c:266
 #, c-format
-msgid "could not write block %u in file \"%s\": wrote %d of %d"
-msgstr "ファイル\"%2$s\"のブロック%1$uの書き込みに失敗しました: %4$dバイト中%3$dバイトのみ書き込みました"
+msgid "could not write block %u in file \"%s\": wrote %zd of %zu"
+msgstr "ファイル\"%2$s\"のブロック%1$uの書き込みに失敗しました: %4$zuバイト中%3$zdバイト書き込みました"
 
-#: pg_checksums.c:277
+#: pg_checksums.c:278
 #, c-format
 msgid "checksums verified in file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムは検証されました"
 
-#: pg_checksums.c:279
+#: pg_checksums.c:280
 #, c-format
 msgid "checksums enabled in file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムは有効化されました"
 
-#: pg_checksums.c:362
+#: pg_checksums.c:363
 #, c-format
 msgid "invalid segment number %d in file name \"%s\""
 msgstr "ファイル名\"%2$s\"の不正なセグメント番号%1$d"
 
-#: pg_checksums.c:511 pg_checksums.c:527 pg_checksums.c:537 pg_checksums.c:545
+#: pg_checksums.c:512 pg_checksums.c:528 pg_checksums.c:538 pg_checksums.c:546
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細については\"%s --help\"を実行してください。"
 
-#: pg_checksums.c:526
+#: pg_checksums.c:527
 #, c-format
 msgid "no data directory specified"
 msgstr "データディレクトリが指定されていません"
 
-#: pg_checksums.c:535
+#: pg_checksums.c:536
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "コマンドライン引数が多すぎます (最初は\"%s\")"
 
-#: pg_checksums.c:544
+#: pg_checksums.c:545
 #, c-format
 msgid "option -f/--filenode can only be used with --check"
 msgstr "オプション-f/--filenodeは--checkを指定したときのみ指定可能"
 
-#: pg_checksums.c:557
+#: pg_checksums.c:558
 #, c-format
 msgid "data directory is of wrong version"
 msgstr "データディレクトリのバージョンが違います"
 
-#: pg_checksums.c:558
+#: pg_checksums.c:559
 #, c-format
 msgid "File \"%s\" contains \"%s\", which is not compatible with this program's version \"%s\"."
 msgstr "ファイル\"%s\"では\"%s\"となっています、これはこのプログラムのバージョン\"%s\"と互換性がありません"
 
-#: pg_checksums.c:566
+#: pg_checksums.c:567
 #, c-format
 msgid "pg_control CRC value is incorrect"
 msgstr "pg_controlのCRC値が正しくありません"
 
-#: pg_checksums.c:569
+#: pg_checksums.c:570
 #, c-format
 msgid "cluster is not compatible with this version of pg_checksums"
 msgstr "クラスタはこのバージョンのpg_checksumsと互換性がありません"
 
-#: pg_checksums.c:573
+#: pg_checksums.c:574
 #, c-format
 msgid "database cluster is not compatible"
 msgstr "データベースクラスタが非互換です"
 
-#: pg_checksums.c:574
+#: pg_checksums.c:575
 #, c-format
 msgid "The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u."
 msgstr "データベースクラスタはブロックサイズ%uで初期化されています、しかしpg_checksumsはブロックサイズ%uでコンパイルされています。"
 
-#: pg_checksums.c:586
+#: pg_checksums.c:587
 #, c-format
 msgid "cluster must be shut down"
 msgstr "クラスタはシャットダウンされていなければなりません"
 
-#: pg_checksums.c:590
+#: pg_checksums.c:599
+#, c-format
+msgid "an online data checksum state transition was interrupted"
+msgstr "データチェックサム状態のの変更処理が中断されました"
+
+#: pg_checksums.c:600
+#, c-format
+msgid "Start and cleanly shut down the cluster once to reset the data checksum state, then retry. On a standby, let replication complete the transition first."
+msgstr "一度クラスタを起動して正常に終了させ、データチェックサム状態をリセットしてから再実行してください。スタンバイでは、まずレプリケーションによる状態遷移を完了させてください。"
+
+#: pg_checksums.c:606
 #, c-format
 msgid "data checksums are not enabled in cluster"
 msgstr "クラスタのデータチェックサムは有効になっていません"
 
-#: pg_checksums.c:594
+#: pg_checksums.c:610
 #, c-format
 msgid "data checksums are already disabled in cluster"
 msgstr "クラスタのデータチェックサムはすでに無効になっています"
 
-#: pg_checksums.c:598
+#: pg_checksums.c:614
 #, c-format
 msgid "data checksums are already enabled in cluster"
 msgstr "クラスタのデータチェックサムはすでに有効になっています"
 
-#: pg_checksums.c:622
+#: pg_checksums.c:638
 #, c-format
 msgid "Checksum operation completed\n"
 msgstr "チェックサム操作が完了しました\n"
 
-#: pg_checksums.c:623
+#: pg_checksums.c:639
 #, c-format
 msgid "Files scanned:   %<PRId64>\n"
 msgstr "スキャンしたファイル数:  %<PRId64>\n"
 
-#: pg_checksums.c:624
+#: pg_checksums.c:640
 #, c-format
 msgid "Blocks scanned:  %<PRId64>\n"
 msgstr "スキャンしたブロック数: %<PRId64>\n"
 
-#: pg_checksums.c:627
+#: pg_checksums.c:643
 #, c-format
 msgid "Bad checksums:  %<PRId64>\n"
 msgstr "不正なチェックサム数:  %<PRId64>\n"
 
-#: pg_checksums.c:628 pg_checksums.c:660
+#: pg_checksums.c:644 pg_checksums.c:686
 #, c-format
 msgid "Data checksum version: %u\n"
 msgstr "データチェックサムバージョン: %u\n"
 
-#: pg_checksums.c:635
+#: pg_checksums.c:651
 #, c-format
 msgid "Files written:  %<PRId64>\n"
 msgstr "スキャンしたファイル数:  %<PRId64>\n"
 
-#: pg_checksums.c:636
+#: pg_checksums.c:652
 #, c-format
 msgid "Blocks written: %<PRId64>\n"
 msgstr "スキャンしたブロック数: %<PRId64>\n"
 
-#: pg_checksums.c:652
+#: pg_checksums.c:678
 #, c-format
 msgid "syncing data directory"
 msgstr "データディレクトリを同期しています"
 
-#: pg_checksums.c:656
+#: pg_checksums.c:682
 #, c-format
 msgid "updating control file"
 msgstr "コントロールファイルを更新しています"
 
-#: pg_checksums.c:662
+#: pg_checksums.c:688
 #, c-format
 msgid "Checksums enabled in cluster\n"
 msgstr "クラスタのチェックサムが有効化されました\n"
 
-#: pg_checksums.c:664
+#: pg_checksums.c:690
 #, c-format
 msgid "Checksums disabled in cluster\n"
 msgstr "クラスタのチェックサムが無効化されました\n"
+
+#: pg_checksums.c:692
+#, c-format
+msgid "This change applies to this data directory only.\n"
+msgstr "この変更はこのデータディレクトリにのみ適用されます。\n"
+
+#: pg_checksums.c:694
+#, c-format
+msgid "This node appears to be a standby; apply the same change to the primary and all other standbys.\n"
+msgstr "このノードはスタンバイのようです; プライマリと他のすべてのスタンバイにも同じ変更を行ってください。\n"
+
+#: pg_checksums.c:696
+#, c-format
+msgid "In a replication setup, apply the same change to every node while all are stopped, before restarting any of them.\n"
+msgstr "レプリケーション構成では、全ノードを停止した状態ですべてのノードに同じ変更を適用し、すべての適用が完了してから再起動してください。\n"
+
+#~ msgid "could not read file \"%s\": read %d of %zu"
+#~ msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$zuバイトのうち%2$dバイトを読み込みました"

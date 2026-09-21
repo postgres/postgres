@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-08-07 15:55+0000\n"
-"PO-Revision-Date: 2026-07-04 01:15+0200\n"
+"POT-Creation-Date: 2026-08-21 04:25+0000\n"
+"PO-Revision-Date: 2026-08-21 09:07+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -176,7 +176,7 @@ msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
 msgid "this build does not support sync method \"%s\""
 msgstr "diese Installation unterstützt Sync-Methode »%s« nicht"
 
-#: ../../common/file_utils.c:156 ../../common/file_utils.c:304 dumputils.c:951
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304 dumputils.c:843
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
@@ -480,15 +480,20 @@ msgstr "Sanity-Check fehlgeschlagen, Eltern-OID %u von Tabelle »%s« (OID %u) n
 msgid "invalid number of parents %d for table \"%s\""
 msgstr "ungültige Anzahl Eltern %d für Tabelle »%s«"
 
-#: common.c:1131
+#: common.c:1152 common.c:1222
 #, c-format
 msgid "could not parse numeric array \"%s\": too many numbers"
 msgstr "konnte numerisches Array »%s« nicht parsen: zu viele Zahlen"
 
-#: common.c:1143
+#: common.c:1164 common.c:1234
 #, c-format
 msgid "could not parse numeric array \"%s\": invalid character in number"
 msgstr "konnte numerisches Array »%s« nicht parsen: ungültiges Zeichen in Zahl"
+
+#: common.c:1170 common.c:1240
+#, c-format
+msgid "could not parse numeric array \"%s\": too few numbers"
+msgstr "konnte numerisches Array »%s« nicht parsen: zu wenige Zahlen"
 
 #: compress_gzip.c:78 compress_gzip.c:192
 #, c-format
@@ -664,17 +669,17 @@ msgstr "Anfrage fehlgeschlagen: %s"
 msgid "Query was: %s"
 msgstr "Anfrage war: %s"
 
-#: dumputils.c:956
+#: dumputils.c:848
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht erzeugen: %m"
 
-#: dumputils.c:961
+#: dumputils.c:853
 #, c-format
 msgid "could not change permissions of directory \"%s\": %m"
 msgstr "konnte Rechte des Verzeichnisses »%s« nicht ändern: %m"
 
-#: dumputils.c:966
+#: dumputils.c:858
 #, c-format
 msgid "directory \"%s\" is not empty"
 msgstr "Verzeichnis »%s« ist nicht leer"
@@ -2269,8 +2274,8 @@ msgstr "lese Policys für Sicherheit auf Zeilenebene"
 msgid "unexpected policy command type: %c"
 msgstr "unerwarteter Policy-Befehlstyp: %c"
 
-#: pg_dump.c:4984 pg_dump.c:5600 pg_dump.c:8271 pg_dump.c:13826 pg_dump.c:20378
-#: pg_dump.c:20380 pg_dump.c:21021
+#: pg_dump.c:4984 pg_dump.c:5600 pg_dump.c:8263 pg_dump.c:13818 pg_dump.c:20368
+#: pg_dump.c:20370 pg_dump.c:21011
 #, c-format
 msgid "could not parse %s array"
 msgstr "konnte %s-Array nicht interpretieren"
@@ -2300,333 +2305,333 @@ msgstr "konnte Erweiterung, zu der %s %s gehört, nicht finden"
 msgid "schema with OID %u does not exist"
 msgstr "Schema mit OID %u existiert nicht"
 
-#: pg_dump.c:7261
+#: pg_dump.c:7254
 #, c-format
 msgid "cannot dump statistics for relation kind \"%c\""
 msgstr "für Relationstyp »%c« können keine Statistiken ausgegeben werden"
 
-#: pg_dump.c:7805 pg_dump.c:19705
+#: pg_dump.c:7798 pg_dump.c:19695
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "Sanity-Check fehlgeschlagen, Elterntabelle mit OID %u von Sequenz mit OID %u nicht gefunden"
 
-#: pg_dump.c:7950
+#: pg_dump.c:7943
 #, c-format
 msgid "failed sanity check, table OID %u appearing in pg_partitioned_table not found"
 msgstr "Sanity-Check fehlgeschlagen, Tabellen-OID %u, die in pg_partitioned_table erscheint, nicht gefunden"
 
-#: pg_dump.c:8213 pg_dump.c:8511 pg_dump.c:8974 pg_dump.c:9642 pg_dump.c:9786
-#: pg_dump.c:9931 pg_dump.c:10031
+#: pg_dump.c:8206 pg_dump.c:8503 pg_dump.c:8966 pg_dump.c:9634 pg_dump.c:9778
+#: pg_dump.c:9923 pg_dump.c:10023
 #, c-format
 msgid "unrecognized table OID %u"
 msgstr "unbekannte Tabellen-OID %u"
 
-#: pg_dump.c:8217
+#: pg_dump.c:8210
 #, c-format
 msgid "unexpected index data for table \"%s\""
 msgstr "unerwartete Indexdaten für Tabelle »%s«"
 
-#: pg_dump.c:8761
+#: pg_dump.c:8753
 #, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found"
 msgstr "Sanity-Check fehlgeschlagen, Elterntabelle mit OID %u von pg_rewrite-Eintrag mit OID %u nicht gefunden"
 
-#: pg_dump.c:9649
+#: pg_dump.c:9641
 #, c-format
 msgid "unexpected column data for table \"%s\""
 msgstr "unerwartete Spaltendaten für Tabelle »%s«"
 
-#: pg_dump.c:9683
+#: pg_dump.c:9675
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "ungültige Spaltennummerierung in Tabelle »%s«"
 
-#: pg_dump.c:9748
+#: pg_dump.c:9740
 #, c-format
 msgid "finding table default expressions"
 msgstr "finde Tabellenvorgabeausdrücke"
 
-#: pg_dump.c:9790
+#: pg_dump.c:9782
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "ungültiger adnum-Wert %d für Tabelle »%s«"
 
-#: pg_dump.c:9883
+#: pg_dump.c:9875
 #, c-format
 msgid "finding invalid not-null constraints"
 msgstr "finde ungültige Not-Null-Constraints"
 
-#: pg_dump.c:9981
+#: pg_dump.c:9973
 #, c-format
 msgid "finding table check constraints"
 msgstr "finde Tabellen-Check-Constraints"
 
-#: pg_dump.c:10035
+#: pg_dump.c:10027
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
 msgstr[0] "%d Check-Constraint für Tabelle %s erwartet, aber %d gefunden"
 msgstr[1] "%d Check-Constraints für Tabelle %s erwartet, aber %d gefunden"
 
-#: pg_dump.c:10039
+#: pg_dump.c:10031
 #, c-format
 msgid "The system catalogs might be corrupted."
 msgstr "Die Systemkataloge sind wahrscheinlich verfälscht."
 
-#: pg_dump.c:10854
+#: pg_dump.c:10846
 #, c-format
 msgid "role with OID %u does not exist"
 msgstr "Rolle mit OID %u existiert nicht"
 
-#: pg_dump.c:10966 pg_dump.c:10995
+#: pg_dump.c:10958 pg_dump.c:10987
 #, c-format
 msgid "unsupported pg_init_privs entry: %u %u %d"
 msgstr "nicht unterstützter pg_init_privs-Eintrag: %u %u %d"
 
-#: pg_dump.c:11317
+#: pg_dump.c:11309
 #, c-format
 msgid "statistics dumped out of order (current: %d %s %s, expected: %d %s %s)"
 msgstr "Statistiken in falscher Reihenfolge ausgegeben (aktuell: %d %s %s, erwartet: %d %s %s)"
 
-#: pg_dump.c:11472
+#: pg_dump.c:11464
 #, c-format
 msgid "unexpected null attname"
 msgstr "unerwarteter atttname mit NULL-Wert"
 
-#: pg_dump.c:11501
+#: pg_dump.c:11493
 #, c-format
 msgid "could not find index attname \"%s\""
 msgstr "konnte Index-Attname »%s« nicht finden"
 
-#: pg_dump.c:11988
+#: pg_dump.c:11980
 #, c-format
 msgid "missing metadata for large objects \"%s\""
 msgstr "fehlende Metadaten für Large Objects »%s«"
 
-#: pg_dump.c:12269
+#: pg_dump.c:12261
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "typtype des Datentypen »%s« scheint ungültig zu sein"
 
-#: pg_dump.c:13897
+#: pg_dump.c:13887
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "ungültiger provolatile-Wert für Funktion »%s«"
 
-#: pg_dump.c:13947 pg_dump.c:15847
+#: pg_dump.c:13937 pg_dump.c:15837
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "ungültiger proparallel-Wert für Funktion »%s«"
 
-#: pg_dump.c:14081 pg_dump.c:14187 pg_dump.c:14194
+#: pg_dump.c:14071 pg_dump.c:14177 pg_dump.c:14184
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "konnte Funktionsdefinition für Funktion mit OID %u nicht finden"
 
-#: pg_dump.c:14120
+#: pg_dump.c:14110
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "unsinniger Wert in Feld pg_cast.castfunc oder pg_cast.castmethod"
 
-#: pg_dump.c:14123
+#: pg_dump.c:14113
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "unsinniger Wert in Feld pg_cast.castmethod"
 
-#: pg_dump.c:14213
+#: pg_dump.c:14203
 #, c-format
 msgid "bogus transform definition, at least one of trffromsql and trftosql should be nonzero"
 msgstr "unsinnige Transformationsdefinition, mindestens eins von trffromsql und trftosql sollte nicht null sein"
 
-#: pg_dump.c:14230
+#: pg_dump.c:14220
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "unsinniger Wert in Feld pg_transform.trffromsql"
 
-#: pg_dump.c:14251
+#: pg_dump.c:14241
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "unsinniger Wert in Feld pg_transform.trftosql"
 
-#: pg_dump.c:14396
+#: pg_dump.c:14386
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "Postfix-Operatoren werden nicht mehr unterstützt (Operator »%s«)"
 
-#: pg_dump.c:14566
+#: pg_dump.c:14556
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "konnte Operator mit OID %s nicht finden"
 
-#: pg_dump.c:14634
+#: pg_dump.c:14624
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "ungültiger Typ »%c« für Zugriffsmethode »%s«"
 
-#: pg_dump.c:15308 pg_dump.c:15376
+#: pg_dump.c:15298 pg_dump.c:15366
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "unbekannter Sortierfolgen-Provider: %s"
 
-#: pg_dump.c:15317 pg_dump.c:15324 pg_dump.c:15335 pg_dump.c:15345
-#: pg_dump.c:15360
+#: pg_dump.c:15307 pg_dump.c:15314 pg_dump.c:15325 pg_dump.c:15335
+#: pg_dump.c:15350
 #, c-format
 msgid "invalid collation \"%s\""
 msgstr "ungültige Sortierfolge »%s«"
 
-#: pg_dump.c:15766
+#: pg_dump.c:15756
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "unbekannter aggfinalmodify-Wert für Aggregat »%s«"
 
-#: pg_dump.c:15822
+#: pg_dump.c:15812
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "unbekannter aggmfinalmodify-Wert für Aggregat »%s«"
 
-#: pg_dump.c:16545
+#: pg_dump.c:16535
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "unbekannter Objekttyp in den Vorgabeprivilegien: %d"
 
-#: pg_dump.c:16561
+#: pg_dump.c:16551
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "konnte Vorgabe-ACL-Liste (%s) nicht interpretieren"
 
-#: pg_dump.c:16645
+#: pg_dump.c:16635
 #, c-format
 msgid "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "konnte initiale ACL-Liste (%s) oder Default (%s) für Objekt »%s« (%s) nicht interpretieren"
 
-#: pg_dump.c:16670
+#: pg_dump.c:16660
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "konnte ACL-Liste (%s) oder Default (%s) für Objekt »%s« (%s) nicht interpretieren"
 
-#: pg_dump.c:17225
+#: pg_dump.c:17215
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "Anfrage um die Definition der Sicht »%s« zu ermitteln lieferte keine Daten"
 
-#: pg_dump.c:17228
+#: pg_dump.c:17218
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "Anfrage um die Definition der Sicht »%s« zu ermitteln lieferte mehr als eine Definition"
 
-#: pg_dump.c:17235
+#: pg_dump.c:17225
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "Definition der Sicht »%s« scheint leer zu sein (Länge null)"
 
-#: pg_dump.c:17320
+#: pg_dump.c:17310
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDS wird nicht mehr unterstützt (Tabelle »%s«)"
 
-#: pg_dump.c:17383
+#: pg_dump.c:17373
 #, c-format
 msgid "query to obtain definition of property graph \"%s\" returned no data"
-msgstr "Anfrage um die Definition des Property Graph »%s« zu ermitteln lieferte keine Daten"
+msgstr "Anfrage um die Definition des Eigenschaftsgraphen »%s« zu ermitteln lieferte keine Daten"
 
-#: pg_dump.c:17386
+#: pg_dump.c:17376
 #, c-format
 msgid "query to obtain definition of property graph \"%s\" returned more than one definition"
-msgstr "Anfrage um die Definition des Property Graph »%s« zu ermitteln lieferte mehr als eine Definition"
+msgstr "Anfrage um die Definition des Eigenschaftsgraphen »%s« zu ermitteln lieferte mehr als eine Definition"
 
-#: pg_dump.c:17393
+#: pg_dump.c:17383
 #, c-format
 msgid "definition of property graph \"%s\" appears to be empty (length zero)"
-msgstr "Definition des Property Graph »%s« scheint leer zu sein (Länge null)"
+msgstr "Definition des Eigenschaftsgraphen »%s« scheint leer zu sein (Länge null)"
 
-#: pg_dump.c:18502
+#: pg_dump.c:18492
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "ungültige Spaltennummer %d in Tabelle »%s«"
 
-#: pg_dump.c:18580
+#: pg_dump.c:18570
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "konnte Indexstatistikspalten nicht interpretieren"
 
-#: pg_dump.c:18582
+#: pg_dump.c:18572
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "konnte Indexstatistikwerte nicht interpretieren"
 
-#: pg_dump.c:18584
+#: pg_dump.c:18574
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "Anzahl Spalten und Werte für Indexstatistiken stimmt nicht überein"
 
-#: pg_dump.c:18996
+#: pg_dump.c:18986
 #, c-format
 msgid "inherited cannot be NULL"
 msgstr "inherited kann nicht NULL sein"
 
-#: pg_dump.c:19093
+#: pg_dump.c:19083
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "fehlender Index für Constraint »%s«"
 
-#: pg_dump.c:19362
+#: pg_dump.c:19352
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "unbekannter Constraint-Typ: %c"
 
-#: pg_dump.c:19415
+#: pg_dump.c:19405
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "unbekannter Sequenztyp: %s"
 
-#: pg_dump.c:19548 pg_dump.c:19786
+#: pg_dump.c:19538 pg_dump.c:19776
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "Anfrage nach Daten der Sequenz %s ergab %d Zeile (erwartete 1)"
 msgstr[1] "Anfrage nach Daten der Sequenz %s ergab %d Zeilen (erwartete 1)"
 
-#: pg_dump.c:19584
+#: pg_dump.c:19574
 #, c-format
 msgid "unrecognized sequence type: %d"
 msgstr "unbekannter Sequenztyp: %d"
 
-#: pg_dump.c:19809
+#: pg_dump.c:19799
 #, c-format
 msgid "failed to get data for sequence \"%s\"; user may lack SELECT privilege on the sequence or the sequence may have been concurrently dropped"
 msgstr "konnte Daten für Sequenz »%s« nicht ermitteln; möglicherweise hat der Anwender nicht das SELECT-Privileg für die Sequenz oder die Sequenz würde möglicherweise gleichzeitig gelöscht"
 
-#: pg_dump.c:20130
+#: pg_dump.c:20120
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "Anfrage nach Regel »%s« der Tabelle »%s« fehlgeschlagen: falsche Anzahl Zeilen zurückgegeben"
 
-#: pg_dump.c:20283
+#: pg_dump.c:20273
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "konnte referenzierte Erweiterung %u nicht finden"
 
-#: pg_dump.c:20382
+#: pg_dump.c:20372
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "Anzahl Konfigurationen und Bedingungen für Erweiterung stimmt nicht überein"
 
-#: pg_dump.c:20514
+#: pg_dump.c:20504
 #, c-format
 msgid "reading dependency data"
 msgstr "lese Abhängigkeitsdaten"
 
-#: pg_dump.c:20611
+#: pg_dump.c:20601
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "kein referenzierendes Objekt %u %u"
 
-#: pg_dump.c:20622
+#: pg_dump.c:20612
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "kein referenziertes Objekt %u %u"
 
-#: pg_dump.c:21055 pg_dump.c:21093 pg_dumpall.c:1858 pg_restore.c:642
+#: pg_dump.c:21045 pg_dump.c:21083 pg_dumpall.c:1858 pg_restore.c:642
 #: pg_restore.c:688
 #, c-format
 msgid "%s filter for \"%s\" is not allowed"

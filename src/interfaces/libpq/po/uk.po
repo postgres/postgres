@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-12-31 02:10+0000\n"
-"PO-Revision-Date: 2026-01-02 14:40\n"
+"POT-Creation-Date: 2026-09-05 00:40+0000\n"
+"PO-Revision-Date: 2026-09-05 17:30\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,209 +14,214 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_18_STABLE/libpq.pot\n"
-"X-Crowdin-File-ID: 1073\n"
+"X-Crowdin-File: /REL_19_STABLE/libpq.pot\n"
 
-#: ../libpq-oauth/oauth-curl.c:308 ../libpq-oauth/oauth-curl.c:2011
+#: ../libpq-oauth/oauth-curl.c:309
 #, c-format
-msgid "libcurl easy handle removal failed: %s"
-msgstr "не вдалося видалити easy-дескриптор libcurl: %s"
+msgid "WARNING: libcurl easy handle removal failed: %s\n"
+msgstr "ПОПЕРЕДЖЕННЯ: не вдалося видалити easy-дескриптор libcurl: %s\n"
 
-#: ../libpq-oauth/oauth-curl.c:328
+#: ../libpq-oauth/oauth-curl.c:329
 #, c-format
-msgid "libcurl multi handle cleanup failed: %s"
-msgstr "не вдалося очистити multi-дескриптор libcurl: %s"
+msgid "WARNING: libcurl multi handle cleanup failed: %s\n"
+msgstr "ПОПЕРЕДЖЕННЯ: не вдалося очистити multi-дескриптор libcurl: %s\n"
 
-#: ../libpq-oauth/oauth-curl.c:394 ../libpq-oauth/oauth-curl.c:405
-#, c-format
-msgid "failed to set %s on OAuth connection: %s"
-msgstr "не вдалося встановити %s для OAuth підключення: %s"
-
-#: ../libpq-oauth/oauth-curl.c:416
-#, c-format
-msgid "failed to get %s from OAuth response: %s"
-msgstr "не вдалося отримати %s з OAuth відповіді: %s"
-
-#: ../libpq-oauth/oauth-curl.c:485 fe-auth-oauth.c:209 fe-auth-oauth.c:271
-#: fe-auth-oauth.c:333
-#, c-format
-msgid "field \"%s\" must be a string"
-msgstr "поле \"%s\" має бути рядком"
-
-#: ../libpq-oauth/oauth-curl.c:489
-#, c-format
-msgid "field \"%s\" must be a number"
-msgstr "поле \"%s\" має бути числом"
-
-#: ../libpq-oauth/oauth-curl.c:493
-#, c-format
-msgid "field \"%s\" must be an array of strings"
-msgstr "поле \"%s\" має бути масивом рядків"
-
-#: ../libpq-oauth/oauth-curl.c:498
-#, c-format
-msgid "field \"%s\" has unexpected type"
-msgstr "поле \"%s\" має неочікуваний тип"
-
-#: ../libpq-oauth/oauth-curl.c:522 ../libpq-oauth/oauth-curl.c:632
-#: fe-auth-oauth.c:215 fe-auth-oauth.c:277
-#, c-format
-msgid "JSON is too deeply nested"
-msgstr "JSON має занадто глибокий рівень вкладеності"
-
-#: ../libpq-oauth/oauth-curl.c:574 fe-auth-oauth.c:324
-#, c-format
-msgid "field \"%s\" is duplicated"
-msgstr "поле \"%s\" дублюється"
-
-#: ../libpq-oauth/oauth-curl.c:614 ../libpq-oauth/oauth-curl.c:674
-#: fe-auth-oauth.c:264 fe-auth-oauth.c:298
-#, c-format
-msgid "top-level element must be an object"
-msgstr "елемент верхнього рівня має бути об'єктом"
-
-#: ../libpq-oauth/oauth-curl.c:777
-#, c-format
-msgid "no content type was provided"
-msgstr "тип вмісту не було надано"
-
-#: ../libpq-oauth/oauth-curl.c:816
-#, c-format
-msgid "unexpected content type: \"%s\""
-msgstr "неочікуваний тип вмісту: \"%s\""
-
-#: ../libpq-oauth/oauth-curl.c:841
-#, c-format
-msgid "response contains embedded NULLs"
-msgstr "відповідь містить вбудовані NULL-символи"
-
-#: ../libpq-oauth/oauth-curl.c:851
-#, c-format
-msgid "response is not valid UTF-8"
-msgstr "відповідь не є коректним UTF-8"
-
-#: ../libpq-oauth/oauth-curl.c:891
-#, c-format
-msgid "field \"%s\" is missing"
-msgstr "поле \"%s\" відсутнє"
-
-#: ../libpq-oauth/oauth-curl.c:1097
-msgid "failed to parse token error response"
-msgstr "не вдалося розібрати відповідь з помилкою токену"
-
-#: ../libpq-oauth/oauth-curl.c:1125
-#, c-format
-msgid "provider rejected the oauth_client_secret"
-msgstr "провайдер відхилив oauth_client_secret"
-
-#: ../libpq-oauth/oauth-curl.c:1126
-#, c-format
-msgid "provider requires client authentication, and no oauth_client_secret is set"
-msgstr "провайдер вимагає автентифікації клієнта, але oauth_client_secret не встановлено"
-
-#: ../libpq-oauth/oauth-curl.c:1559
-#, c-format
-msgid "checking timer expiration: %m"
-msgstr "перевірка завершення таймеру: %m"
-
-#: ../libpq-oauth/oauth-curl.c:1721
-#, c-format
-msgid "failed to create libcurl multi handle"
-msgstr "не вдалося створити multi-дескриптор libcurl"
-
-#: ../libpq-oauth/oauth-curl.c:1741
-#, c-format
-msgid "failed to create libcurl handle"
-msgstr "не вдалося створити дескриптор libcurl"
-
-#: ../libpq-oauth/oauth-curl.c:1825 ../libpq-oauth/oauth-curl.c:1866
-#: ../libpq-oauth/oauth-curl.c:2184 ../libpq-oauth/oauth-curl.c:2345
-#: ../libpq-oauth/oauth-curl.c:2406 ../libpq-oauth/oauth-curl.c:2495
-#: ../libpq-oauth/oauth-curl.c:2789 ../libpq-oauth/oauth-curl.c:3006
-#: fe-auth-oauth.c:146 fe-auth-oauth.c:489 fe-auth-oauth.c:561
-#: fe-auth-oauth.c:723 fe-auth-oauth.c:1016 fe-auth-oauth.c:1029
-#: fe-auth-oauth.c:1117 fe-auth-oauth.c:1130 fe-auth-oauth.c:1266
+#: ../libpq-oauth/oauth-curl.c:394 ../libpq-oauth/oauth-curl.c:1858
+#: ../libpq-oauth/oauth-curl.c:1899 ../libpq-oauth/oauth-curl.c:2217
+#: ../libpq-oauth/oauth-curl.c:2378 ../libpq-oauth/oauth-curl.c:2438
+#: ../libpq-oauth/oauth-curl.c:2526 ../libpq-oauth/oauth-curl.c:3193
+#: fe-auth-oauth.c:153 fe-auth-oauth.c:496 fe-auth-oauth.c:568
+#: fe-auth-oauth.c:776 fe-auth-oauth.c:1065 fe-auth-oauth.c:1077
+#: fe-auth-oauth.c:1163 fe-auth-oauth.c:1176 fe-auth-oauth.c:1312
 #: fe-auth-scram.c:374 fe-auth-scram.c:447 fe-auth-scram.c:599
 #: fe-auth-scram.c:619 fe-auth-scram.c:643 fe-auth-scram.c:657
 #: fe-auth-scram.c:703 fe-auth-scram.c:739 fe-auth-scram.c:931 fe-auth.c:308
 #: fe-auth.c:382 fe-auth.c:416 fe-auth.c:694 fe-auth.c:827 fe-auth.c:1330
-#: fe-auth.c:1493 fe-cancel.c:178 fe-connect.c:1012 fe-connect.c:1052
-#: fe-connect.c:2172 fe-connect.c:2334 fe-connect.c:3727 fe-connect.c:5183
-#: fe-connect.c:5496 fe-connect.c:5765 fe-connect.c:5883 fe-connect.c:6130
-#: fe-connect.c:6210 fe-connect.c:6308 fe-connect.c:6559 fe-connect.c:6586
-#: fe-connect.c:6662 fe-connect.c:6685 fe-connect.c:6709 fe-connect.c:6744
-#: fe-connect.c:6830 fe-connect.c:6838 fe-connect.c:7195 fe-connect.c:7377
-#: fe-exec.c:530 fe-exec.c:1331 fe-exec.c:3270 fe-exec.c:4341 fe-exec.c:4534
-#: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:212 fe-protocol3.c:235
-#: fe-protocol3.c:258 fe-protocol3.c:275 fe-protocol3.c:296 fe-protocol3.c:370
-#: fe-protocol3.c:751 fe-protocol3.c:991 fe-protocol3.c:1556
-#: fe-protocol3.c:1610 fe-protocol3.c:1656 fe-protocol3.c:1677
-#: fe-protocol3.c:1934 fe-protocol3.c:2335 fe-secure-common.c:110
-#: fe-secure-gssapi.c:508 fe-secure-gssapi.c:699 fe-secure-openssl.c:405
-#: fe-secure-openssl.c:1135
+#: fe-auth.c:1493 fe-cancel.c:178 fe-connect.c:1021 fe-connect.c:1061
+#: fe-connect.c:2190 fe-connect.c:2352 fe-connect.c:3745 fe-connect.c:5203
+#: fe-connect.c:5517 fe-connect.c:5795 fe-connect.c:5913 fe-connect.c:6186
+#: fe-connect.c:6229 fe-connect.c:6293 fe-connect.c:6391 fe-connect.c:6642
+#: fe-connect.c:6669 fe-connect.c:6745 fe-connect.c:6768 fe-connect.c:6792
+#: fe-connect.c:6827 fe-connect.c:6913 fe-connect.c:6921 fe-connect.c:7278
+#: fe-connect.c:7460 fe-connect.c:8073 fe-connect.c:8114 fe-exec.c:531
+#: fe-exec.c:1332 fe-exec.c:3285 fe-exec.c:4340 fe-exec.c:4533
+#: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:214 fe-protocol3.c:237
+#: fe-protocol3.c:260 fe-protocol3.c:277 fe-protocol3.c:298 fe-protocol3.c:372
+#: fe-protocol3.c:753 fe-protocol3.c:993 fe-protocol3.c:1571
+#: fe-protocol3.c:1625 fe-protocol3.c:1671 fe-protocol3.c:1692
+#: fe-protocol3.c:1956 fe-protocol3.c:2368 fe-secure-common.c:110
+#: fe-secure-gssapi.c:515 fe-secure-gssapi.c:706 fe-secure-openssl.c:436
+#: fe-secure-openssl.c:1167
 #, c-format
 msgid "out of memory"
 msgstr "недостатньо пам'яті"
 
-#: ../libpq-oauth/oauth-curl.c:1853
+#: ../libpq-oauth/oauth-curl.c:439 ../libpq-oauth/oauth-curl.c:450
+#, c-format
+msgid "could not set libcurl option \"%s\" on OAuth connection: %s"
+msgstr "не вдалося встановити параметр libcurl \"%s\" для OAuth підключення: %s"
+
+#: ../libpq-oauth/oauth-curl.c:461
+#, c-format
+msgid "could not get libcurl info \"%s\" from OAuth response: %s"
+msgstr "не вдалося отримати інформацію libcurl \"%s\" з OAuth відповіді: %s"
+
+#: ../libpq-oauth/oauth-curl.c:530 fe-auth-oauth.c:216 fe-auth-oauth.c:278
+#: fe-auth-oauth.c:340
+#, c-format
+msgid "field \"%s\" must be a string"
+msgstr "поле \"%s\" має бути рядком"
+
+#: ../libpq-oauth/oauth-curl.c:534
+#, c-format
+msgid "field \"%s\" must be a number"
+msgstr "поле \"%s\" має бути числом"
+
+#: ../libpq-oauth/oauth-curl.c:538
+#, c-format
+msgid "field \"%s\" must be an array of strings"
+msgstr "поле \"%s\" має бути масивом рядків"
+
+#: ../libpq-oauth/oauth-curl.c:543
+#, c-format
+msgid "field \"%s\" has unexpected type"
+msgstr "поле \"%s\" має неочікуваний тип"
+
+#: ../libpq-oauth/oauth-curl.c:567 ../libpq-oauth/oauth-curl.c:677
+#: fe-auth-oauth.c:222 fe-auth-oauth.c:284
+#, c-format
+msgid "JSON is too deeply nested"
+msgstr "JSON має занадто глибокий рівень вкладеності"
+
+#: ../libpq-oauth/oauth-curl.c:619 fe-auth-oauth.c:331
+#, c-format
+msgid "field \"%s\" is duplicated"
+msgstr "поле \"%s\" дублюється"
+
+#: ../libpq-oauth/oauth-curl.c:659 ../libpq-oauth/oauth-curl.c:719
+#: fe-auth-oauth.c:271 fe-auth-oauth.c:305
+#, c-format
+msgid "top-level element must be an object"
+msgstr "елемент верхнього рівня має бути об'єктом"
+
+#: ../libpq-oauth/oauth-curl.c:822
+#, c-format
+msgid "no content type was provided"
+msgstr "тип вмісту не було надано"
+
+#: ../libpq-oauth/oauth-curl.c:861
+#, c-format
+msgid "unexpected content type: \"%s\""
+msgstr "неочікуваний тип вмісту: \"%s\""
+
+#: ../libpq-oauth/oauth-curl.c:886
+#, c-format
+msgid "response contains embedded null"
+msgstr "відповідь містить вбудований null"
+
+#: ../libpq-oauth/oauth-curl.c:896
+#, c-format
+msgid "response is not valid UTF-8"
+msgstr "відповідь не є коректним UTF-8"
+
+#: ../libpq-oauth/oauth-curl.c:936
+#, c-format
+msgid "field \"%s\" is missing"
+msgstr "поле \"%s\" відсутнє"
+
+#: ../libpq-oauth/oauth-curl.c:1142
+msgid "could not parse token error response"
+msgstr "не вдалося розібрати відповідь з помилкою токену"
+
+#: ../libpq-oauth/oauth-curl.c:1170
+#, c-format
+msgid "provider rejected the oauth_client_secret"
+msgstr "провайдер відхилив oauth_client_secret"
+
+#: ../libpq-oauth/oauth-curl.c:1171
+#, c-format
+msgid "provider requires client authentication, and no oauth_client_secret is set"
+msgstr "провайдер вимагає автентифікації клієнта, але oauth_client_secret не встановлено"
+
+#: ../libpq-oauth/oauth-curl.c:1604
+#, c-format
+msgid "could not check timer expiration: %m"
+msgstr "не вдалося перевірити завершення таймеру: %m"
+
+#: ../libpq-oauth/oauth-curl.c:1766
+#, c-format
+msgid "could not create libcurl multi handle"
+msgstr "не вдалося створити multi-дескриптор libcurl"
+
+#: ../libpq-oauth/oauth-curl.c:1786
+#, c-format
+msgid "could not create libcurl handle"
+msgstr "не вдалося створити дескриптор libcurl"
+
+#: ../libpq-oauth/oauth-curl.c:1886
 #, c-format
 msgid "response is too large"
 msgstr "відповідь занадто велика"
 
-#: ../libpq-oauth/oauth-curl.c:1895
+#: ../libpq-oauth/oauth-curl.c:1928
 #, c-format
-msgid "failed to queue HTTP request: %s"
+msgid "could not queue HTTP request: %s"
 msgstr "не вдалося поставити HTTP запит у чергу: %s"
 
-#: ../libpq-oauth/oauth-curl.c:1912 ../libpq-oauth/oauth-curl.c:1970
+#: ../libpq-oauth/oauth-curl.c:1945 ../libpq-oauth/oauth-curl.c:2003
 #, c-format
 msgid "asynchronous HTTP request failed: %s"
 msgstr "асинхронний HTTP запит не вдався: %s"
 
-#: ../libpq-oauth/oauth-curl.c:2022
+#: ../libpq-oauth/oauth-curl.c:2044
+#, c-format
+msgid "libcurl easy handle removal failed: %s"
+msgstr "не вдалося видалити easy-дескриптор libcurl: %s"
+
+#: ../libpq-oauth/oauth-curl.c:2055
 #, c-format
 msgid "no result was retrieved for the finished handle"
 msgstr "не отримано результату для завершеного дескриптора"
 
-#: ../libpq-oauth/oauth-curl.c:2155 ../libpq-oauth/oauth-curl.c:2461
-#: ../libpq-oauth/oauth-curl.c:2540
+#: ../libpq-oauth/oauth-curl.c:2188 ../libpq-oauth/oauth-curl.c:2493
+#: ../libpq-oauth/oauth-curl.c:2571
 #, c-format
 msgid "unexpected response code %ld"
 msgstr "неочікуваний код відповіді %ld"
 
-#: ../libpq-oauth/oauth-curl.c:2162
-msgid "failed to parse OpenID discovery document"
+#: ../libpq-oauth/oauth-curl.c:2195
+msgid "could not parse OpenID discovery document"
 msgstr "не вдалося розібрати документ виявлення OpenID"
 
-#: ../libpq-oauth/oauth-curl.c:2227
+#: ../libpq-oauth/oauth-curl.c:2260
 #, c-format
-msgid "the issuer identifier (%s) does not match oauth_issuer (%s)"
+msgid "issuer identifier (%s) does not match oauth_issuer (%s)"
 msgstr "ідентифікатор видавця (%s) не відповідає oauth_issuer (%s)"
 
-#: ../libpq-oauth/oauth-curl.c:2254
+#: ../libpq-oauth/oauth-curl.c:2287
 #, c-format
 msgid "issuer \"%s\" does not provide a device authorization endpoint"
 msgstr "видавець \"%s\" не надає кінцеву точку авторизації пристрою"
 
-#: ../libpq-oauth/oauth-curl.c:2280
+#: ../libpq-oauth/oauth-curl.c:2313
 #, c-format
 msgid "device authorization endpoint \"%s\" must use HTTPS"
 msgstr "кінцева точка авторизації пристрою \"%s\" має використовувати HTTPS"
 
-#: ../libpq-oauth/oauth-curl.c:2289
+#: ../libpq-oauth/oauth-curl.c:2322
 #, c-format
 msgid "token endpoint \"%s\" must use HTTPS"
 msgstr "кінцева точка токену \"%s\" має використовувати HTTPS"
 
-#: ../libpq-oauth/oauth-curl.c:2430
-msgid "failed to parse device authorization"
+#: ../libpq-oauth/oauth-curl.c:2462
+msgid "could not parse device authorization"
 msgstr "не вдалося розібрати авторизацію пристрою"
 
-#: ../libpq-oauth/oauth-curl.c:2518
-msgid "failed to parse access token response"
+#: ../libpq-oauth/oauth-curl.c:2549
+msgid "could not parse access token response"
 msgstr "не вдалося розібрати відповідь токена доступу"
 
-#: ../libpq-oauth/oauth-curl.c:2598
+#: ../libpq-oauth/oauth-curl.c:2626
 #, c-format
 msgid "slow_down interval overflow"
 msgstr "переповнення інтервалу slow_down"
@@ -224,28 +229,25 @@ msgstr "переповнення інтервалу slow_down"
 #. translator: The first %s is a URL for the user to visit in a
 #. browser, and the second %s is a code to be copy-pasted there.
 #.
-#: ../libpq-oauth/oauth-curl.c:2634
+#: ../libpq-oauth/oauth-curl.c:2662
 #, c-format
 msgid "Visit %s and enter the code: %s\n"
 msgstr "Відвідайте %s і введіть код: %s\n"
 
-#: ../libpq-oauth/oauth-curl.c:2639
+#: ../libpq-oauth/oauth-curl.c:2667
 #, c-format
 msgid "device prompt failed"
 msgstr "помилка запиту пристрою"
 
-#: ../libpq-oauth/oauth-curl.c:2695
-#, c-format
+#: ../libpq-oauth/oauth-curl.c:2720
 msgid "curl_global_init previously failed during OAuth setup"
 msgstr "curl_global_init раніше не вдалася під час налаштування OAuth"
 
-#: ../libpq-oauth/oauth-curl.c:2714
-#, c-format
+#: ../libpq-oauth/oauth-curl.c:2738
 msgid "curl_global_init failed during OAuth setup"
 msgstr "curl_global_init не вдалася під час налаштування OAuth"
 
-#: ../libpq-oauth/oauth-curl.c:2735
-#, c-format
+#: ../libpq-oauth/oauth-curl.c:2760
 msgid "libcurl is no longer thread-safe\n"
 "\tCurl initialization was reported thread-safe when libpq\n"
 "\twas compiled, but the currently installed version of\n"
@@ -258,148 +260,146 @@ msgstr "libcurl більше не є потокобезпечною\n"
 "\tповідомляє, що вона не є. Перекомпілюйте libpq\n"
 "\tдля встановленої версії libcurl."
 
-#: ../libpq-oauth/oauth-curl.c:2897
-msgid "failed to fetch OpenID discovery document"
+#: ../libpq-oauth/oauth-curl.c:2900
+msgid "could not fetch OpenID discovery document"
 msgstr "не вдалося отримати документ виявлення OpenID"
 
-#: ../libpq-oauth/oauth-curl.c:2911
+#: ../libpq-oauth/oauth-curl.c:2914
 msgid "cannot run OAuth device authorization"
 msgstr "не можна запустити авторизацію пристрою OAuth"
 
-#: ../libpq-oauth/oauth-curl.c:2915
-msgid "failed to obtain device authorization"
+#: ../libpq-oauth/oauth-curl.c:2918
+msgid "could not obtain device authorization"
 msgstr "не вдалося отримати авторизацію пристрою"
 
-#: ../libpq-oauth/oauth-curl.c:2926 ../libpq-oauth/oauth-curl.c:2977
-msgid "failed to obtain access token"
+#: ../libpq-oauth/oauth-curl.c:2929 ../libpq-oauth/oauth-curl.c:2997
+msgid "could not obtain access token"
 msgstr "не вдалося отримати токен доступу"
 
-#: fe-auth-oauth.c:133
+#: fe-auth-oauth.c:140
 #, c-format
 msgid "internal error: no OAuth token was set for the connection"
 msgstr "внутрішня помилка: OAuth токен не був встановлений для підключення"
 
-#: fe-auth-oauth.c:396
+#: fe-auth-oauth.c:403
 #, c-format
 msgid "OAuth discovery URI \"%s\" must use HTTPS"
 msgstr "URI виявлення OAuth \"%s\" має використовувати HTTPS"
 
-#: fe-auth-oauth.c:413
+#: fe-auth-oauth.c:420
 #, c-format
 msgid "OAuth discovery URI \"%s\" must not contain query or fragment components"
 msgstr "URI виявлення OAuth \"%s\" не має містити компоненти запиту чи фрагменти"
 
-#: fe-auth-oauth.c:428
+#: fe-auth-oauth.c:435
 #, c-format
 msgid "OAuth discovery URI \"%s\" is not a .well-known URI"
 msgstr "URI виявлення OAuth \"%s\" не є .well-known URI"
 
-#: fe-auth-oauth.c:454
+#: fe-auth-oauth.c:461
 #, c-format
 msgid "OAuth discovery URI \"%s\" uses an unsupported .well-known suffix"
 msgstr "URI виявлення OAuth \"%s\" використовує непідтримуваний суфікс .well-known"
 
-#: fe-auth-oauth.c:479
+#: fe-auth-oauth.c:486
 #, c-format
 msgid "OAuth discovery URI \"%s\" uses an invalid format"
 msgstr "URI виявлення OAuth \"%s\" використовує неправильний формат"
 
-#: fe-auth-oauth.c:528
+#: fe-auth-oauth.c:535
 #, c-format
 msgid "server's error message contained an embedded NULL, and was discarded"
 msgstr "повідомлення про помилку сервера містило вбудований NULL і було відкинуто"
 
-#: fe-auth-oauth.c:539
+#: fe-auth-oauth.c:546
 #, c-format
 msgid "server's error response is not valid UTF-8"
 msgstr "відповідь сервера про помилку не є коректним UTF-8"
 
-#: fe-auth-oauth.c:579
+#: fe-auth-oauth.c:586
 #, c-format
 msgid "failed to parse server's error response: %s"
 msgstr "не вдалося розібрати відповідь сервера про помилку: %s"
 
-#: fe-auth-oauth.c:610
+#: fe-auth-oauth.c:617
 #, c-format
 msgid "server's discovery document at %s (issuer \"%s\") is incompatible with oauth_issuer (%s)"
 msgstr "документ виявлення сервера за адресою %s (видавець \"%s\") несумісний з oauth_issuer (%s)"
 
-#: fe-auth-oauth.c:631
+#: fe-auth-oauth.c:638
 #, c-format
 msgid "server's discovery document has moved to %s (previous location was %s)"
 msgstr "документ виявлення сервера переміщено до %s (попереднє місцезнаходження: %s)"
 
-#: fe-auth-oauth.c:652
+#: fe-auth-oauth.c:659
 #, c-format
 msgid "server sent error response without a status"
 msgstr "сервер надіслав відповідь про помилку без статусу"
 
-#: fe-auth-oauth.c:663
+#: fe-auth-oauth.c:670
 #, c-format
 msgid "server rejected OAuth bearer token: %s"
 msgstr "сервер відхилив OAuth bearer токен: %s"
 
-#: fe-auth-oauth.c:696
+#: fe-auth-oauth.c:717
+msgid "user-defined OAuth flow failed"
+msgstr "користувацький OAuth потік не вдався"
+
+#: fe-auth-oauth.c:747
 #, c-format
 msgid "user-defined OAuth flow provided neither a token nor an async callback"
 msgstr "користувацький OAuth потік не надав ні токену, ні асинхронного зворотного виклику"
 
-#: fe-auth-oauth.c:703 fe-auth-oauth.c:1041
-#, c-format
-msgid "user-defined OAuth flow failed"
-msgstr "користувацький OAuth потік не вдався"
-
-#: fe-auth-oauth.c:716
+#: fe-auth-oauth.c:769
 #, c-format
 msgid "user-defined OAuth flow did not provide a token"
 msgstr "користувацький OAuth потік не надав токен"
 
-#: fe-auth-oauth.c:734
+#: fe-auth-oauth.c:788
 #, c-format
 msgid "user-defined OAuth flow did not provide a socket for polling"
 msgstr "користувацький OAuth потік не надав сокет для опитування"
 
-#: fe-auth-oauth.c:917
-#, c-format
-msgid "failed to lock mutex (%d)"
-msgstr "не вдалося блокувати м'ютекс (%d)"
+#: fe-auth-oauth.c:932
+msgid "could not find entry point for libpq-oauth"
+msgstr "не вдалося знайти точку входу для libpq-oauth"
 
-#: fe-auth-oauth.c:1046
+#: fe-auth-oauth.c:1097
 #, c-format
 msgid "no OAuth flows are available (try installing the libpq-oauth package)"
 msgstr "OAuth потоки недоступні (спробуйте встановити пакунок libpq-oauth)"
 
-#: fe-auth-oauth.c:1095
+#: fe-auth-oauth.c:1141
 #, c-format
 msgid "server requires OAuth authentication, but oauth_issuer and oauth_client_id are not both set"
 msgstr "сервер вимагає OAuth автентифікації, але oauth_issuer і oauth_client_id обидва не встановлені"
 
-#: fe-auth-oauth.c:1255
+#: fe-auth-oauth.c:1301
 #, c-format
 msgid "server sent unexpected additional OAuth data"
 msgstr "сервер надіслав неочікувані додаткові дані OAuth"
 
-#: fe-auth-oauth.c:1295
+#: fe-auth-oauth.c:1341
 #, c-format
 msgid "server requires OAuth authentication, but no discovery metadata was provided"
 msgstr "сервер вимагає OAuth автентифікації, але метадані виявлення не надано"
 
-#: fe-auth-oauth.c:1333
+#: fe-auth-oauth.c:1379
 #, c-format
 msgid "internal error: OAuth flow did not set a token"
 msgstr "внутрішня помилка: OAuth потік не встановив токен"
 
-#: fe-auth-oauth.c:1351
+#: fe-auth-oauth.c:1397
 #, c-format
 msgid "server sent additional OAuth data after error"
 msgstr "сервер надіслав додаткові дані OAuth після помилки"
 
-#: fe-auth-oauth.c:1355
+#: fe-auth-oauth.c:1401
 #, c-format
 msgid "invalid OAuth exchange state"
 msgstr "неправильний стан обміну OAuth"
 
-#: fe-auth-oauth.c:1368
+#: fe-auth-oauth.c:1414
 #, c-format
 msgid "retrying connection with new bearer token"
 msgstr "повторна спроба підключення з новим bearer токеном"
@@ -709,7 +709,7 @@ msgstr "нерозпізнаний алгоритм шифрування пар�
 msgid "connection pointer is NULL"
 msgstr "нульове значення вказівника підключення"
 
-#: fe-cancel.c:85 fe-misc.c:613
+#: fe-cancel.c:85 fe-misc.c:621
 #, c-format
 msgid "connection not open"
 msgstr "підключення не відкрито"
@@ -729,706 +729,716 @@ msgstr "запит на скасування вже надсилається п�
 msgid "unexpected response from server"
 msgstr "неочікувана відповідь сервера"
 
-#: fe-connect.c:1309
+#: fe-connect.c:1318
 #, c-format
 msgid "could not match %d host names to %d hostaddr values"
 msgstr "не вдалося зіставити імена хостів %d для значень %d hostaddr"
 
-#: fe-connect.c:1389
+#: fe-connect.c:1398
 #, c-format
 msgid "could not match %d port numbers to %d hosts"
 msgstr "не вдалося зіставити %d номерів портів з %d хостами"
 
-#: fe-connect.c:1517
-#, c-format
-msgid "negative require_auth method \"%s\" cannot be mixed with non-negative methods"
-msgstr "від'ємний метод require_auth \"%s\" не може бути змішаний з позитивними методами"
-
-#: fe-connect.c:1530
-#, c-format
-msgid "require_auth method \"%s\" cannot be mixed with negative methods"
-msgstr "метод require_auth \"%s\" не може бути змішаний з негативними методами"
-
-#: fe-connect.c:1606 fe-connect.c:1735 fe-connect.c:1777 fe-connect.c:1820
-#: fe-connect.c:1923 fe-connect.c:1969 fe-connect.c:2009 fe-connect.c:2076
-#: fe-connect.c:8263
-#, c-format
-msgid "invalid %s value: \"%s\""
-msgstr "неприпустиме значення %s: \"%s\""
-
-#: fe-connect.c:1648
-#, c-format
-msgid "internal error: no space in allowed_sasl_mechs"
-msgstr "внутрішня помилка: неприпустимий пробіл в allowed_sasl_mechs"
-
-#: fe-connect.c:1687
-#, c-format
-msgid "require_auth method \"%s\" is specified more than once"
-msgstr "require_auth метод \"%s\" вказаний неодноразово"
-
-#: fe-connect.c:1758 fe-connect.c:1797 fe-connect.c:1829 fe-connect.c:1931
-#, c-format
-msgid "%s value \"%s\" invalid when SSL support is not compiled in"
-msgstr "%s значення \"%s\" неприпустиме, якщо підтримку протоколу SSL не скомпільовано"
-
-#: fe-connect.c:1849
-#, c-format
-msgid "weak sslmode \"%s\" may not be used with sslnegotiation=direct (use \"require\", \"verify-ca\", or \"verify-full\")"
-msgstr "слабкий sslmode \"%s\" не може використовуватися з sslnegotiation=direct (використовуйте \"require\", \"verify-ca\" або \"verify-full\")"
-
-#: fe-connect.c:1871
-#, c-format
-msgid "weak sslmode \"%s\" may not be used with sslrootcert=system (use \"verify-full\")"
-msgstr "слабкий sslmode \"%s\" не може використовуватися з sslrootcert=system (використайте \"verify-full\")"
-
-#: fe-connect.c:1884 fe-connect.c:1892
-#, c-format
-msgid "invalid \"%s\" value: \"%s\""
-msgstr "неприпустиме значення \"%s\": \"%s\""
-
-#: fe-connect.c:1909
-#, c-format
-msgid "invalid SSL protocol version range"
-msgstr "неприпустимий діапазон версії протоколу SSL"
-
-#: fe-connect.c:1946
-#, c-format
-msgid "%s value \"%s\" is not supported (check OpenSSL version)"
-msgstr "%s значення \"%s\" не підтримується (перевірте версію OpenSSL)"
-
-#: fe-connect.c:1976
-#, c-format
-msgid "gssencmode value \"%s\" invalid when GSSAPI support is not compiled in"
-msgstr "значення gssencmode \"%s\" неприпустиме, якщо підтримку протоколу GSSAPI не скомпільовано"
-
-#: fe-connect.c:2030
-#, c-format
-msgid "invalid SCRAM client key"
-msgstr "неприпустимий ключ клієнта SCRAM"
-
-#: fe-connect.c:2035
-#, c-format
-msgid "invalid SCRAM client key length: %d"
-msgstr "неприпустима довжина ключа SCRAM: %d"
-
-#: fe-connect.c:2053
-#, c-format
-msgid "invalid SCRAM server key"
-msgstr "неприпустимий ключ сервера SCRAM"
-
-#: fe-connect.c:2058
-#, c-format
-msgid "invalid SCRAM server key length: %d"
-msgstr "неприпустима довжина ключа SCRAM: %d"
-
-#: fe-connect.c:2145
-#, c-format
-msgid "\"%s\" is greater than \"%s\""
-msgstr "\"%s\" більше за \"%s\""
-
-#: fe-connect.c:2357
-#, c-format
-msgid "could not set socket to TCP no delay mode: %s"
-msgstr "не вдалося встановити сокет у TCP-режим без затримки: %s"
-
-#: fe-connect.c:2416
-#, c-format
-msgid "connection to server on socket \"%s\" failed: "
-msgstr "помилка при з'єднанні з сервером через сокет \"%s\": "
-
-#: fe-connect.c:2442
-#, c-format
-msgid "connection to server at \"%s\" (%s), port %s failed: "
-msgstr "підключення до серверу \"%s\" (%s), порт %s провалено: "
-
-#: fe-connect.c:2447
-#, c-format
-msgid "connection to server at \"%s\", port %s failed: "
-msgstr "підключення до серверу \"%s\", порт %s провалено: "
-
-#: fe-connect.c:2470
-#, c-format
-msgid "\tIs the server running locally and accepting connections on that socket?"
-msgstr "\tЧи працює сервер локально і приймає підключення до цього сокету?"
-
-#: fe-connect.c:2472
-#, c-format
-msgid "\tIs the server running on that host and accepting TCP/IP connections?"
-msgstr "\tЧи працює сервер на цьому хості і приймає TCP/IP підключення?"
-
-#: fe-connect.c:2518 fe-connect.c:2552 fe-connect.c:2587 fe-connect.c:2685
-#: fe-connect.c:3411
-#, c-format
-msgid "%s(%s) failed: %s"
-msgstr "%s(%s) помилка: %s"
-
-#: fe-connect.c:2651
-#, c-format
-msgid "%s(%s) failed: error code %d"
-msgstr "%s(%s) помилка: код помилки %d"
-
-#: fe-connect.c:2963
-#, c-format
-msgid "invalid connection state, probably indicative of memory corruption"
-msgstr "неприпустимий стан підключення, можливо, пошкоджена пам'ять"
-
-#: fe-connect.c:3046
-#, c-format
-msgid "invalid port number: \"%s\""
-msgstr "неприпустимий номер порту: \"%s\""
-
-#: fe-connect.c:3060
-#, c-format
-msgid "could not translate host name \"%s\" to address: %s"
-msgstr "не вдалося перекласти ім’я хоста \"%s\" в адресу: %s"
-
-#: fe-connect.c:3072
-#, c-format
-msgid "could not parse network address \"%s\": %s"
-msgstr "не вдалося проаналізувати адресу мережі \"%s\": %s"
-
-#: fe-connect.c:3083
-#, c-format
-msgid "Unix-domain socket path \"%s\" is too long (maximum %d bytes)"
-msgstr "Шлях Unix-сокету \"%s\" занадто довгий (максимум %d байтів)"
-
-#: fe-connect.c:3097
-#, c-format
-msgid "could not translate Unix-domain socket path \"%s\" to address: %s"
-msgstr "не вдалося перекласти шлях Unix-сокету \"%s\" в адресу: %s"
-
-#: fe-connect.c:3263 fe-connect.c:4710
-#, c-format
-msgid "GSSAPI encryption required but it is not supported over a local socket"
-msgstr "Потрібне шифрування GSSAPI, але воно не підтримується над локальним сокетом"
-
-#: fe-connect.c:3271 fe-connect.c:4839
-#, c-format
-msgid "GSSAPI encryption required but no credential cache"
-msgstr "Шифрування GSSAPI необхідне, але немає кешу облікових даних"
-
-#: fe-connect.c:3339
-#, c-format
-msgid "could not create socket: %s"
-msgstr "не вдалося створити сокет: %s"
-
-#: fe-connect.c:3370
-#, c-format
-msgid "could not set socket to nonblocking mode: %s"
-msgstr "не вдалося встановити сокет у режим без блокування: %s"
-
-#: fe-connect.c:3381
-#, c-format
-msgid "could not set socket to close-on-exec mode: %s"
-msgstr "не вдалося встановити сокет у режим закриття по виконанню: %s"
-
-#: fe-connect.c:3538
-#, c-format
-msgid "could not get socket error status: %s"
-msgstr "не вдалося отримати статус помилки сокету: %s"
-
-#: fe-connect.c:3565
-#, c-format
-msgid "could not get client address from socket: %s"
-msgstr "не вдалося отримати адресу клієнта з сокету: %s"
-
-#: fe-connect.c:3591
-#, c-format
-msgid "requirepeer parameter is not supported on this platform"
-msgstr "параметр requirepeer не підтримується на цій платформі"
-
-#: fe-connect.c:3593
-#, c-format
-msgid "could not get peer credentials: %s"
-msgstr "не вдалось отримати облікові дані учасника: %s"
-
-#: fe-connect.c:3606
-#, c-format
-msgid "requirepeer specifies \"%s\", but actual peer user name is \"%s\""
-msgstr "requirepeer вказує на \"%s\", але фактичне ім'я вузла \"%s\""
-
-#: fe-connect.c:3644
-#, c-format
-msgid "could not send GSSAPI negotiation packet: %s"
-msgstr "не вдалося передати пакет узгодження протоколу GSSAPI: %s"
-
-#: fe-connect.c:3683
-#, c-format
-msgid "could not send SSL negotiation packet: %s"
-msgstr "не вдалося передати пакет узгодження протоколу SSL: %s"
-
-#: fe-connect.c:3709
-#, c-format
-msgid "could not send cancel packet: %s"
-msgstr "не вдалося надіслати запит на скасування: %s"
-
-#: fe-connect.c:3739
-#, c-format
-msgid "could not send startup packet: %s"
-msgstr "не вдалося передати стартовий пакет: %s"
-
-#: fe-connect.c:3812
-msgid "server does not support SSL, but SSL was required"
-msgstr "сервер не підтримує протокол SSL, але протокол SSL вимагається"
-
-#: fe-connect.c:3822
-#, c-format
-msgid "server sent an error response during SSL exchange"
-msgstr "сервер відповів помилкою під час обміну SSL"
-
-#: fe-connect.c:3827
-#, c-format
-msgid "received invalid response to SSL negotiation: %c"
-msgstr "отримано неприпустиму відповідь на узгодження SSL: %c"
-
-#: fe-connect.c:3847
-#, c-format
-msgid "received unencrypted data after SSL response"
-msgstr "отримані незашифровані дані після відповіді SSL"
-
-#: fe-connect.c:3910
-#, c-format
-msgid "server sent an error response during GSS encryption exchange"
-msgstr "сервер відповів помилкою під час обміну шифруванням GSS"
-
-#: fe-connect.c:3928
-msgid "server doesn't support GSSAPI encryption, but it was required"
-msgstr "сервер не підтримує шифрування GSSAPI, але це було необхідно"
-
-#: fe-connect.c:3932
-#, c-format
-msgid "received invalid response to GSSAPI negotiation: %c"
-msgstr "отримано неприпустиму відповідь на узгодження GSSAPI: %c"
-
-#: fe-connect.c:3954
-#, c-format
-msgid "received unencrypted data after GSSAPI encryption response"
-msgstr "отримані незашифровані дані після відповіді шифрування GSSAPI"
-
-#: fe-connect.c:4015
-#, c-format
-msgid "expected authentication request from server, but received %c"
-msgstr "очікувався запит автентифікації від сервера, але отримано %c"
-
-#: fe-connect.c:4043 fe-connect.c:4175
-#, c-format
-msgid "received invalid authentication request"
-msgstr "отримано неприпустимий запит на аутентифікацію"
-
-#: fe-connect.c:4049
-#, c-format
-msgid "received invalid protocol negotiation message"
-msgstr "отримано неприпустиме повідомлення узгодження протоколу"
-
-#: fe-connect.c:4068 fe-connect.c:4122
-#, c-format
-msgid "received invalid error message"
-msgstr "отримано неприпустиме повідомлення про помилку"
-
-#: fe-connect.c:4152
-#, c-format
-msgid "received duplicate protocol negotiation message"
-msgstr "отримано дубльоване повідомлення про узгодження протоколу"
-
-#: fe-connect.c:4254
-#, c-format
-msgid "internal error: async authentication has no handler"
-msgstr "внутрішня помилка: асинхронна автентифікація не має обробника"
-
-#: fe-connect.c:4279
-#, c-format
-msgid "internal error: async cleanup did not release polling socket"
-msgstr "внутрішня помилка: асинхронне очищення не звільнило приймальний сокет"
-
-#: fe-connect.c:4302
-#, c-format
-msgid "internal error: async authentication did not set a socket for polling"
-msgstr "внутрішня помилка: асинхронна автентифікація не встановила сокет для приймання"
-
-#: fe-connect.c:4335
-#, c-format
-msgid "unexpected message from server during startup"
-msgstr "неочікуване повідомлення від сервера під час запуску"
-
-#: fe-connect.c:4426
-#, c-format
-msgid "session is read-only"
-msgstr "сесія доступна тільки для читання"
-
-#: fe-connect.c:4428
-#, c-format
-msgid "session is not read-only"
-msgstr "сесія доступна не лише для читання"
-
-#: fe-connect.c:4481
-#, c-format
-msgid "server is in hot standby mode"
-msgstr "сервер знаходиться у режимі hot standby"
-
-#: fe-connect.c:4483
-#, c-format
-msgid "server is not in hot standby mode"
-msgstr "сервер не в режимі hot standby"
-
-#: fe-connect.c:4608 fe-connect.c:4658
-#, c-format
-msgid "\"%s\" failed"
-msgstr "\"%s\" помилка"
-
-#: fe-connect.c:4672
-#, c-format
-msgid "invalid connection state %d, probably indicative of memory corruption"
-msgstr "неприпустимий стан підключення %d, можливо, пошкоджена пам'ять"
-
-#: fe-connect.c:5509
-#, c-format
-msgid "invalid LDAP URL \"%s\": scheme must be ldap://"
-msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": схема має бути ldap://"
-
-#: fe-connect.c:5524
-#, c-format
-msgid "invalid LDAP URL \"%s\": missing distinguished name"
-msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": відсутнє унікальне ім'я"
-
-#: fe-connect.c:5536 fe-connect.c:5594
-#, c-format
-msgid "invalid LDAP URL \"%s\": must have exactly one attribute"
-msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": має бути лише один атрибут"
-
-#: fe-connect.c:5548 fe-connect.c:5610
-#, c-format
-msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)"
-msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": відсутня область пошуку (base/one/sub)"
-
-#: fe-connect.c:5560
-#, c-format
-msgid "invalid LDAP URL \"%s\": no filter"
-msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": відсутній фільтр"
-
-#: fe-connect.c:5582
-#, c-format
-msgid "invalid LDAP URL \"%s\": invalid port number"
-msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": неприпустимий номер порту"
-
-#: fe-connect.c:5619
-#, c-format
-msgid "could not create LDAP structure"
-msgstr "не вдалось створити структуру LDAP"
-
-#: fe-connect.c:5694
-#, c-format
-msgid "lookup on LDAP server failed: %s"
-msgstr "помилка підстановки на сервері протоколу LDAP: %s"
-
-#: fe-connect.c:5704
-#, c-format
-msgid "more than one entry found on LDAP lookup"
-msgstr "знайдено більше одного входження при підстановці протоколу LDAP"
-
-#: fe-connect.c:5706 fe-connect.c:5717
-#, c-format
-msgid "no entry found on LDAP lookup"
-msgstr "не знайдено входження при підстановці протоколу LDAP"
-
-#: fe-connect.c:5727 fe-connect.c:5739
-#, c-format
-msgid "attribute has no values on LDAP lookup"
-msgstr "атрибут не має значення при підстановці протоколу LDAP"
-
-#: fe-connect.c:5753
-#, c-format
-msgid "connection info string size exceeds the maximum allowed (%d)"
-msgstr "розмір рядка з'єднання з інформацією перевищує максимально дозволену (%d)"
-
-#: fe-connect.c:5804 fe-connect.c:5823 fe-connect.c:6347
-#, c-format
-msgid "missing \"=\" after \"%s\" in connection info string"
-msgstr "відсутній \"=\" після \"%s\" у рядку інформації про підключення"
-
-#: fe-connect.c:5894 fe-connect.c:6530 fe-connect.c:7360
-#, c-format
-msgid "invalid connection option \"%s\""
-msgstr "неприпустимий параметр підключення \"%s\""
-
-#: fe-connect.c:5909 fe-connect.c:6395
-#, c-format
-msgid "unterminated quoted string in connection info string"
-msgstr "відкриті лапки у рядку інформації про підключення"
-
-#: fe-connect.c:5989
-#, c-format
-msgid "definition of service \"%s\" not found"
-msgstr "не знайдено визначення сервера \"%s\""
-
-#: fe-connect.c:6015
-#, c-format
-msgid "service file \"%s\" not found"
-msgstr "не знайдено сервісний файл \"%s\""
-
-#: fe-connect.c:6028
-#, c-format
-msgid "line %d too long in service file \"%s\""
-msgstr "рядок %d занадто довгий у сервісному файлі \"%s\""
-
-#: fe-connect.c:6099 fe-connect.c:6142
-#, c-format
-msgid "syntax error in service file \"%s\", line %d"
-msgstr "синтаксична помилка у сервісному файлі \"%s\", рядок %d"
-
-#: fe-connect.c:6110
-#, c-format
-msgid "nested service specifications not supported in service file \"%s\", line %d"
-msgstr "вкладені сервісні специфікації не підтримуються у сервісному файлі \"%s\", рядок %d"
-
-#: fe-connect.c:6849
-#, c-format
-msgid "invalid URI propagated to internal parser routine: \"%s\""
-msgstr "у внутрішню процедуру аналізу рядка передано помилковий URI: \"%s\""
-
-#: fe-connect.c:6926
-#, c-format
-msgid "end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\""
-msgstr "досягнуто кінця рядка під час пошуку відповідного \"]\" в адресі IPv6 URI: \"%s\""
-
-#: fe-connect.c:6933
-#, c-format
-msgid "IPv6 host address may not be empty in URI: \"%s\""
-msgstr "IPv6 адреса хоста не може бути порожньою в URI: \"%s\""
-
-#: fe-connect.c:6948
-#, c-format
-msgid "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\""
-msgstr "неочікуваний символ \"%c\" на позиції %d в URI (очікувалося \":\" або \"/\"): \"%s\""
-
-#: fe-connect.c:7077
-#, c-format
-msgid "extra key/value separator \"=\" in URI query parameter: \"%s\""
-msgstr "зайвий розділювач ключа/значення \"=\" в параметрі запиту URI: \"%s\""
-
-#: fe-connect.c:7097
-#, c-format
-msgid "missing key/value separator \"=\" in URI query parameter: \"%s\""
-msgstr "відсутній розділювач ключа/значення \"=\" у параметрі запиту URI: \"%s\""
-
-#: fe-connect.c:7149
-#, c-format
-msgid "invalid URI query parameter: \"%s\""
-msgstr "неприпустимий параметр запиту URI: \"%s\""
-
-#: fe-connect.c:7233
-#, c-format
-msgid "invalid percent-encoded token: \"%s\""
-msgstr "неприпустимий токен, закодований відсотками: \"%s\""
-
-#: fe-connect.c:7243
-#, c-format
-msgid "forbidden value %%00 in percent-encoded value: \"%s\""
-msgstr "неприпустиме значення %%00 в відсотковому значенні: \"%s\""
-
-#: fe-connect.c:7265
-#, c-format
-msgid "unexpected spaces found in \"%s\", use percent-encoded spaces (%%20) instead"
-msgstr "знайдено неочікувані пробіли в \"%s\", використовуйте пробіли, закодовані відсотками (%%20)"
-
-#: fe-connect.c:7641
-msgid "connection pointer is NULL\n"
-msgstr "нульове значення вказівника підключення \n"
-
-#: fe-connect.c:7649 fe-exec.c:718 fe-exec.c:980 fe-exec.c:3475
-#: fe-protocol3.c:1006 fe-protocol3.c:1039
-msgid "out of memory\n"
-msgstr "недостатньо пам'яті\n"
-
-#: fe-connect.c:7951
-#, c-format
-msgid "WARNING: password file \"%s\" is not a plain file\n"
-msgstr "ПОПЕРЕДЖЕННЯ: файл паролів \"%s\" не є простим файлом\n"
-
-#: fe-connect.c:7961
-#, c-format
-msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
-msgstr "ПОПЕРЕДЖЕННЯ: до файлу паролів \"%s\" мають доступ група або всі; дозволи мають бути u=rw (0600) або менше\n"
-
-#: fe-connect.c:8065
-#, c-format
-msgid "password retrieved from file \"%s\""
-msgstr "пароль отримано з файлу \"%s\""
-
-#: fe-connect.c:8231
-#, c-format
-msgid "invalid integer value \"%s\" for connection option \"%s\""
-msgstr "неприпустиме ціле значення \"%s\" для параметра з'єднання \"%s\""
-
-#: fe-exec.c:469 fe-exec.c:3549
-#, c-format
-msgid "row number %d is out of range 0..%d"
-msgstr "число рядків %d поза діапазоном 0..%d"
-
-#: fe-exec.c:531 fe-protocol3.c:2140
+#: fe-connect.c:1479 fe-exec.c:532 fe-protocol3.c:2162
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: fe-exec.c:839
+#: fe-connect.c:1535
+#, c-format
+msgid "negative require_auth method \"%s\" cannot be mixed with non-negative methods"
+msgstr "від'ємний метод require_auth \"%s\" не може бути змішаний з позитивними методами"
+
+#: fe-connect.c:1548
+#, c-format
+msgid "require_auth method \"%s\" cannot be mixed with negative methods"
+msgstr "метод require_auth \"%s\" не може бути змішаний з негативними методами"
+
+#: fe-connect.c:1624 fe-connect.c:1753 fe-connect.c:1795 fe-connect.c:1838
+#: fe-connect.c:1941 fe-connect.c:1987 fe-connect.c:2027 fe-connect.c:2094
+#: fe-connect.c:8357
+#, c-format
+msgid "invalid %s value: \"%s\""
+msgstr "неприпустиме значення %s: \"%s\""
+
+#: fe-connect.c:1666
+#, c-format
+msgid "internal error: no space in allowed_sasl_mechs"
+msgstr "внутрішня помилка: неприпустимий пробіл в allowed_sasl_mechs"
+
+#: fe-connect.c:1705
+#, c-format
+msgid "require_auth method \"%s\" is specified more than once"
+msgstr "require_auth метод \"%s\" вказаний неодноразово"
+
+#: fe-connect.c:1776 fe-connect.c:1815 fe-connect.c:1847 fe-connect.c:1949
+#, c-format
+msgid "%s value \"%s\" invalid when SSL support is not compiled in"
+msgstr "%s значення \"%s\" неприпустиме, якщо підтримку протоколу SSL не скомпільовано"
+
+#: fe-connect.c:1867
+#, c-format
+msgid "weak sslmode \"%s\" may not be used with sslnegotiation=direct (use \"require\", \"verify-ca\", or \"verify-full\")"
+msgstr "слабкий sslmode \"%s\" не може використовуватися з sslnegotiation=direct (використовуйте \"require\", \"verify-ca\" або \"verify-full\")"
+
+#: fe-connect.c:1889
+#, c-format
+msgid "weak sslmode \"%s\" may not be used with sslrootcert=system (use \"verify-full\")"
+msgstr "слабкий sslmode \"%s\" не може використовуватися з sslrootcert=system (використайте \"verify-full\")"
+
+#: fe-connect.c:1902 fe-connect.c:1910
+#, c-format
+msgid "invalid \"%s\" value: \"%s\""
+msgstr "неприпустиме значення \"%s\": \"%s\""
+
+#: fe-connect.c:1927
+#, c-format
+msgid "invalid SSL protocol version range"
+msgstr "неприпустимий діапазон версії протоколу SSL"
+
+#: fe-connect.c:1964
+#, c-format
+msgid "%s value \"%s\" is not supported (check OpenSSL version)"
+msgstr "%s значення \"%s\" не підтримується (перевірте версію OpenSSL)"
+
+#: fe-connect.c:1994
+#, c-format
+msgid "gssencmode value \"%s\" invalid when GSSAPI support is not compiled in"
+msgstr "значення gssencmode \"%s\" неприпустиме, якщо підтримку протоколу GSSAPI не скомпільовано"
+
+#: fe-connect.c:2048
+#, c-format
+msgid "invalid SCRAM client key"
+msgstr "неприпустимий ключ клієнта SCRAM"
+
+#: fe-connect.c:2053
+#, c-format
+msgid "invalid SCRAM client key length: %d"
+msgstr "неприпустима довжина ключа SCRAM: %d"
+
+#: fe-connect.c:2071
+#, c-format
+msgid "invalid SCRAM server key"
+msgstr "неприпустимий ключ сервера SCRAM"
+
+#: fe-connect.c:2076
+#, c-format
+msgid "invalid SCRAM server key length: %d"
+msgstr "неприпустима довжина ключа SCRAM: %d"
+
+#: fe-connect.c:2163
+#, c-format
+msgid "\"%s\" is greater than \"%s\""
+msgstr "\"%s\" більше за \"%s\""
+
+#: fe-connect.c:2375
+#, c-format
+msgid "could not set socket to TCP no delay mode: %s"
+msgstr "не вдалося встановити сокет у TCP-режим без затримки: %s"
+
+#: fe-connect.c:2434
+#, c-format
+msgid "connection to server on socket \"%s\" failed: "
+msgstr "помилка при з'єднанні з сервером через сокет \"%s\": "
+
+#: fe-connect.c:2460
+#, c-format
+msgid "connection to server at \"%s\" (%s), port %s failed: "
+msgstr "підключення до серверу \"%s\" (%s), порт %s провалено: "
+
+#: fe-connect.c:2465
+#, c-format
+msgid "connection to server at \"%s\", port %s failed: "
+msgstr "підключення до серверу \"%s\", порт %s провалено: "
+
+#: fe-connect.c:2488
+#, c-format
+msgid "\tIs the server running locally and accepting connections on that socket?"
+msgstr "\tЧи працює сервер локально і приймає підключення до цього сокету?"
+
+#: fe-connect.c:2490
+#, c-format
+msgid "\tIs the server running on that host and accepting TCP/IP connections?"
+msgstr "\tЧи працює сервер на цьому хості і приймає TCP/IP підключення?"
+
+#: fe-connect.c:2536 fe-connect.c:2570 fe-connect.c:2605 fe-connect.c:2703
+#: fe-connect.c:3429
+#, c-format
+msgid "%s(%s) failed: %s"
+msgstr "%s(%s) помилка: %s"
+
+#: fe-connect.c:2669
+#, c-format
+msgid "%s(%s) failed: error code %d"
+msgstr "%s(%s) помилка: код помилки %d"
+
+#: fe-connect.c:2981
+#, c-format
+msgid "invalid connection state, probably indicative of memory corruption"
+msgstr "неприпустимий стан підключення, можливо, пошкоджена пам'ять"
+
+#: fe-connect.c:3064
+#, c-format
+msgid "invalid port number: \"%s\""
+msgstr "неприпустимий номер порту: \"%s\""
+
+#: fe-connect.c:3078
+#, c-format
+msgid "could not translate host name \"%s\" to address: %s"
+msgstr "не вдалося перекласти ім’я хоста \"%s\" в адресу: %s"
+
+#: fe-connect.c:3090
+#, c-format
+msgid "could not parse network address \"%s\": %s"
+msgstr "не вдалося проаналізувати адресу мережі \"%s\": %s"
+
+#: fe-connect.c:3101
+#, c-format
+msgid "Unix-domain socket path \"%s\" is too long (maximum %zu bytes)"
+msgstr "Шлях Unix-сокету \"%s\" занадто довгий (максимум %zu байтів)"
+
+#: fe-connect.c:3115
+#, c-format
+msgid "could not translate Unix-domain socket path \"%s\" to address: %s"
+msgstr "не вдалося перекласти шлях Unix-сокету \"%s\" в адресу: %s"
+
+#: fe-connect.c:3281 fe-connect.c:4728
+#, c-format
+msgid "GSSAPI encryption required but it is not supported over a local socket"
+msgstr "Потрібне шифрування GSSAPI, але воно не підтримується над локальним сокетом"
+
+#: fe-connect.c:3289 fe-connect.c:4857
+#, c-format
+msgid "GSSAPI encryption required but no credential cache"
+msgstr "Шифрування GSSAPI необхідне, але немає кешу облікових даних"
+
+#: fe-connect.c:3357
+#, c-format
+msgid "could not create socket: %s"
+msgstr "не вдалося створити сокет: %s"
+
+#: fe-connect.c:3388
+#, c-format
+msgid "could not set socket to nonblocking mode: %s"
+msgstr "не вдалося встановити сокет у режим без блокування: %s"
+
+#: fe-connect.c:3399
+#, c-format
+msgid "could not set socket to close-on-exec mode: %s"
+msgstr "не вдалося встановити сокет у режим закриття по виконанню: %s"
+
+#: fe-connect.c:3556
+#, c-format
+msgid "could not get socket error status: %s"
+msgstr "не вдалося отримати статус помилки сокету: %s"
+
+#: fe-connect.c:3583
+#, c-format
+msgid "could not get client address from socket: %s"
+msgstr "не вдалося отримати адресу клієнта з сокету: %s"
+
+#: fe-connect.c:3609
+#, c-format
+msgid "requirepeer parameter is not supported on this platform"
+msgstr "параметр requirepeer не підтримується на цій платформі"
+
+#: fe-connect.c:3611
+#, c-format
+msgid "could not get peer credentials: %s"
+msgstr "не вдалось отримати облікові дані учасника: %s"
+
+#: fe-connect.c:3624
+#, c-format
+msgid "requirepeer specifies \"%s\", but actual peer user name is \"%s\""
+msgstr "requirepeer вказує на \"%s\", але фактичне ім'я вузла \"%s\""
+
+#: fe-connect.c:3662
+#, c-format
+msgid "could not send GSSAPI negotiation packet: %s"
+msgstr "не вдалося передати пакет узгодження протоколу GSSAPI: %s"
+
+#: fe-connect.c:3701
+#, c-format
+msgid "could not send SSL negotiation packet: %s"
+msgstr "не вдалося передати пакет узгодження протоколу SSL: %s"
+
+#: fe-connect.c:3727
+#, c-format
+msgid "could not send cancel packet: %s"
+msgstr "не вдалося надіслати запит на скасування: %s"
+
+#: fe-connect.c:3757
+#, c-format
+msgid "could not send startup packet: %s"
+msgstr "не вдалося передати стартовий пакет: %s"
+
+#: fe-connect.c:3830
+msgid "server does not support SSL, but SSL was required"
+msgstr "сервер не підтримує протокол SSL, але протокол SSL вимагається"
+
+#: fe-connect.c:3840
+#, c-format
+msgid "server sent an error response during SSL exchange"
+msgstr "сервер відповів помилкою під час обміну SSL"
+
+#: fe-connect.c:3845
+#, c-format
+msgid "received invalid response to SSL negotiation: %c"
+msgstr "отримано неприпустиму відповідь на узгодження SSL: %c"
+
+#: fe-connect.c:3865
+#, c-format
+msgid "received unencrypted data after SSL response"
+msgstr "отримані незашифровані дані після відповіді SSL"
+
+#: fe-connect.c:3928
+#, c-format
+msgid "server sent an error response during GSS encryption exchange"
+msgstr "сервер відповів помилкою під час обміну шифруванням GSS"
+
+#: fe-connect.c:3946
+msgid "server doesn't support GSSAPI encryption, but it was required"
+msgstr "сервер не підтримує шифрування GSSAPI, але це було необхідно"
+
+#: fe-connect.c:3950
+#, c-format
+msgid "received invalid response to GSSAPI negotiation: %c"
+msgstr "отримано неприпустиму відповідь на узгодження GSSAPI: %c"
+
+#: fe-connect.c:3972
+#, c-format
+msgid "received unencrypted data after GSSAPI encryption response"
+msgstr "отримані незашифровані дані після відповіді шифрування GSSAPI"
+
+#: fe-connect.c:4033
+#, c-format
+msgid "expected authentication request from server, but received %c"
+msgstr "очікувався запит автентифікації від сервера, але отримано %c"
+
+#: fe-connect.c:4061 fe-connect.c:4193
+#, c-format
+msgid "received invalid authentication request"
+msgstr "отримано неприпустимий запит на аутентифікацію"
+
+#: fe-connect.c:4067
+#, c-format
+msgid "received invalid protocol negotiation message"
+msgstr "отримано неприпустиме повідомлення узгодження протоколу"
+
+#: fe-connect.c:4086 fe-connect.c:4140
+#, c-format
+msgid "received invalid error message"
+msgstr "отримано неприпустиме повідомлення про помилку"
+
+#: fe-connect.c:4170
+#, c-format
+msgid "received duplicate protocol negotiation message"
+msgstr "отримано дубльоване повідомлення про узгодження протоколу"
+
+#: fe-connect.c:4272
+#, c-format
+msgid "internal error: async authentication has no handler"
+msgstr "внутрішня помилка: асинхронна автентифікація не має обробника"
+
+#: fe-connect.c:4297
+#, c-format
+msgid "internal error: async cleanup did not release polling socket"
+msgstr "внутрішня помилка: асинхронне очищення не звільнило приймальний сокет"
+
+#: fe-connect.c:4320
+#, c-format
+msgid "internal error: async authentication did not set a socket for polling"
+msgstr "внутрішня помилка: асинхронна автентифікація не встановила сокет для приймання"
+
+#: fe-connect.c:4353
+#, c-format
+msgid "unexpected message from server during startup"
+msgstr "неочікуване повідомлення від сервера під час запуску"
+
+#: fe-connect.c:4444
+#, c-format
+msgid "session is read-only"
+msgstr "сесія доступна тільки для читання"
+
+#: fe-connect.c:4446
+#, c-format
+msgid "session is not read-only"
+msgstr "сесія доступна не лише для читання"
+
+#: fe-connect.c:4499
+#, c-format
+msgid "server is in hot standby mode"
+msgstr "сервер знаходиться у режимі hot standby"
+
+#: fe-connect.c:4501
+#, c-format
+msgid "server is not in hot standby mode"
+msgstr "сервер не в режимі hot standby"
+
+#: fe-connect.c:4626 fe-connect.c:4676
+#, c-format
+msgid "\"%s\" failed"
+msgstr "\"%s\" помилка"
+
+#: fe-connect.c:4690
+#, c-format
+msgid "invalid connection state %d, probably indicative of memory corruption"
+msgstr "неприпустимий стан підключення %d, можливо, пошкоджена пам'ять"
+
+#: fe-connect.c:5530
+#, c-format
+msgid "invalid LDAP URL \"%s\": scheme must be ldap://"
+msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": схема має бути ldap://"
+
+#: fe-connect.c:5545
+#, c-format
+msgid "invalid LDAP URL \"%s\": missing distinguished name"
+msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": відсутнє унікальне ім'я"
+
+#: fe-connect.c:5557 fe-connect.c:5615
+#, c-format
+msgid "invalid LDAP URL \"%s\": must have exactly one attribute"
+msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": має бути лише один атрибут"
+
+#: fe-connect.c:5569 fe-connect.c:5631
+#, c-format
+msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)"
+msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": відсутня область пошуку (base/one/sub)"
+
+#: fe-connect.c:5581
+#, c-format
+msgid "invalid LDAP URL \"%s\": no filter"
+msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": відсутній фільтр"
+
+#: fe-connect.c:5603
+#, c-format
+msgid "invalid LDAP URL \"%s\": invalid port number"
+msgstr "неприпустима URL-адреса протоколу LDAP \"%s\": неприпустимий номер порту"
+
+#: fe-connect.c:5640
+#, c-format
+msgid "could not create LDAP structure"
+msgstr "не вдалось створити структуру LDAP"
+
+#: fe-connect.c:5647
+#, c-format
+msgid "could not set LDAP protocol version: %s"
+msgstr "не вдалося встановити версію протоколу LDAP: %s"
+
+#: fe-connect.c:5724
+#, c-format
+msgid "lookup on LDAP server failed: %s"
+msgstr "помилка підстановки на сервері протоколу LDAP: %s"
+
+#: fe-connect.c:5734
+#, c-format
+msgid "more than one entry found on LDAP lookup"
+msgstr "знайдено більше одного входження при підстановці протоколу LDAP"
+
+#: fe-connect.c:5736 fe-connect.c:5747
+#, c-format
+msgid "no entry found on LDAP lookup"
+msgstr "не знайдено входження при підстановці протоколу LDAP"
+
+#: fe-connect.c:5757 fe-connect.c:5769
+#, c-format
+msgid "attribute has no values on LDAP lookup"
+msgstr "атрибут не має значення при підстановці протоколу LDAP"
+
+#: fe-connect.c:5783
+#, c-format
+msgid "connection info string size exceeds the maximum allowed (%d)"
+msgstr "розмір рядка з'єднання з інформацією перевищує максимально дозволену (%d)"
+
+#: fe-connect.c:5834 fe-connect.c:5853 fe-connect.c:6430
+#, c-format
+msgid "missing \"=\" after \"%s\" in connection info string"
+msgstr "відсутній \"=\" після \"%s\" у рядку інформації про підключення"
+
+#: fe-connect.c:5924 fe-connect.c:6613 fe-connect.c:7443
+#, c-format
+msgid "invalid connection option \"%s\""
+msgstr "неприпустимий параметр підключення \"%s\""
+
+#: fe-connect.c:5939 fe-connect.c:6478
+#, c-format
+msgid "unterminated quoted string in connection info string"
+msgstr "відкриті лапки у рядку інформації про підключення"
+
+#: fe-connect.c:6035
+#, c-format
+msgid "definition of service \"%s\" not found"
+msgstr "не знайдено визначення сервера \"%s\""
+
+#: fe-connect.c:6061
+#, c-format
+msgid "service file \"%s\" not found"
+msgstr "не знайдено сервісний файл \"%s\""
+
+#: fe-connect.c:6074
+#, c-format
+msgid "line %d too long in service file \"%s\""
+msgstr "рядок %d занадто довгий у сервісному файлі \"%s\""
+
+#: fe-connect.c:6145 fe-connect.c:6198
+#, c-format
+msgid "syntax error in service file \"%s\", line %d"
+msgstr "синтаксична помилка у сервісному файлі \"%s\", рядок %d"
+
+#: fe-connect.c:6156
+#, c-format
+msgid "nested \"service\" specifications not supported in service file \"%s\", line %d"
+msgstr "вкладені специфікації \"service\" не підтримуються у сервісному файлі \"%s\", рядок %d"
+
+#: fe-connect.c:6166
+#, c-format
+msgid "nested \"servicefile\" specifications not supported in service file \"%s\", line %d"
+msgstr "вкладені специфікації \"servicefile\" не підтримуються у сервісному файлі \"%s\", рядок %d"
+
+#: fe-connect.c:6932
+#, c-format
+msgid "invalid URI propagated to internal parser routine: \"%s\""
+msgstr "у внутрішню процедуру аналізу рядка передано помилковий URI: \"%s\""
+
+#: fe-connect.c:7009
+#, c-format
+msgid "end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\""
+msgstr "досягнуто кінця рядка під час пошуку відповідного \"]\" в адресі IPv6 URI: \"%s\""
+
+#: fe-connect.c:7016
+#, c-format
+msgid "IPv6 host address may not be empty in URI: \"%s\""
+msgstr "IPv6 адреса хоста не може бути порожньою в URI: \"%s\""
+
+#: fe-connect.c:7031
+#, c-format
+msgid "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\""
+msgstr "неочікуваний символ \"%c\" на позиції %d в URI (очікувалося \":\" або \"/\"): \"%s\""
+
+#: fe-connect.c:7160
+#, c-format
+msgid "extra key/value separator \"=\" in URI query parameter: \"%s\""
+msgstr "зайвий розділювач ключа/значення \"=\" в параметрі запиту URI: \"%s\""
+
+#: fe-connect.c:7180
+#, c-format
+msgid "missing key/value separator \"=\" in URI query parameter: \"%s\""
+msgstr "відсутній розділювач ключа/значення \"=\" у параметрі запиту URI: \"%s\""
+
+#: fe-connect.c:7232
+#, c-format
+msgid "invalid URI query parameter: \"%s\""
+msgstr "неприпустимий параметр запиту URI: \"%s\""
+
+#: fe-connect.c:7316
+#, c-format
+msgid "invalid percent-encoded token: \"%s\""
+msgstr "неприпустимий токен, закодований відсотками: \"%s\""
+
+#: fe-connect.c:7326
+#, c-format
+msgid "forbidden value %%00 in percent-encoded value: \"%s\""
+msgstr "неприпустиме значення %%00 в відсотковому значенні: \"%s\""
+
+#: fe-connect.c:7348
+#, c-format
+msgid "unexpected spaces found in \"%s\", use percent-encoded spaces (%%20) instead"
+msgstr "знайдено неочікувані пробіли в \"%s\", використовуйте пробіли, закодовані відсотками (%%20)"
+
+#: fe-connect.c:7724
+msgid "connection pointer is NULL\n"
+msgstr "нульове значення вказівника підключення\n"
+
+#: fe-connect.c:7732 fe-exec.c:719 fe-exec.c:981 fe-exec.c:3490
+#: fe-protocol3.c:1008 fe-protocol3.c:1041
+msgid "out of memory\n"
+msgstr "недостатньо пам'яті\n"
+
+#: fe-connect.c:8042
+#, c-format
+msgid "WARNING: password file \"%s\" is not a plain file\n"
+msgstr "ПОПЕРЕДЖЕННЯ: файл паролів \"%s\" не є простим файлом\n"
+
+#: fe-connect.c:8052
+#, c-format
+msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
+msgstr "ПОПЕРЕДЖЕННЯ: до файлу паролів \"%s\" мають доступ група або всі; дозволи мають бути u=rw (0600) або менше\n"
+
+#: fe-connect.c:8159
+#, c-format
+msgid "password retrieved from file \"%s\""
+msgstr "пароль отримано з файлу \"%s\""
+
+#: fe-connect.c:8325
+#, c-format
+msgid "invalid integer value \"%s\" for connection option \"%s\""
+msgstr "неприпустиме ціле значення \"%s\" для параметра з'єднання \"%s\""
+
+#: fe-exec.c:470 fe-exec.c:3564
+#, c-format
+msgid "row number %d is out of range 0..%d"
+msgstr "число рядків %d поза діапазоном 0..%d"
+
+#: fe-exec.c:840
 #, c-format
 msgid "write to server failed"
 msgstr "не вдалося записати на сервер"
 
-#: fe-exec.c:879
+#: fe-exec.c:880
 #, c-format
 msgid "no error text available"
 msgstr "немає доступного тексту помилки"
 
-#: fe-exec.c:968
+#: fe-exec.c:969
 msgid "NOTICE"
 msgstr "ПОВІДОМЛЕННЯ"
 
-#: fe-exec.c:1026
+#: fe-exec.c:1027
 msgid "PGresult cannot support more than INT_MAX tuples"
 msgstr "PGresult не може підтримувати більше ніж INT_MAX кортежів"
 
-#: fe-exec.c:1038
+#: fe-exec.c:1039
 msgid "size_t overflow"
 msgstr "переповнення size_t"
 
-#: fe-exec.c:1454 fe-exec.c:1523 fe-exec.c:1569
+#: fe-exec.c:1455 fe-exec.c:1524 fe-exec.c:1570
 #, c-format
 msgid "command string is a null pointer"
 msgstr "рядок команди є нульовим вказівником"
 
-#: fe-exec.c:1460 fe-exec.c:3019
+#: fe-exec.c:1461 fe-exec.c:3034
 #, c-format
 msgid "%s not allowed in pipeline mode"
 msgstr "%s не дозволено в режимі конвеєра"
 
-#: fe-exec.c:1528 fe-exec.c:1574 fe-exec.c:1668
+#: fe-exec.c:1529 fe-exec.c:1575 fe-exec.c:1669
 #, c-format
 msgid "number of parameters must be between 0 and %d"
 msgstr "кількість параметрів має бути між 0 і %d"
 
-#: fe-exec.c:1564 fe-exec.c:1663
+#: fe-exec.c:1565 fe-exec.c:1664
 #, c-format
 msgid "statement name is a null pointer"
 msgstr "ім’я оператора є пустим вказівником"
 
-#: fe-exec.c:1705 fe-exec.c:3395
+#: fe-exec.c:1706 fe-exec.c:3410
 #, c-format
 msgid "no connection to the server"
 msgstr "немає з'єднання з сервером"
 
-#: fe-exec.c:1713 fe-exec.c:3403
+#: fe-exec.c:1714 fe-exec.c:3418
 #, c-format
 msgid "another command is already in progress"
 msgstr "інша команда вже виконується"
 
-#: fe-exec.c:1743
+#: fe-exec.c:1744
 #, c-format
 msgid "cannot queue commands during COPY"
 msgstr "не можна поставити в чергу команди під час COPY"
 
-#: fe-exec.c:1862
+#: fe-exec.c:1863
 #, c-format
 msgid "length must be given for binary parameter"
 msgstr "для бінарного параметра має бути надана довжина"
 
-#: fe-exec.c:2221
+#: fe-exec.c:2222
 #, c-format
 msgid "unexpected asyncStatus: %d"
 msgstr "неочікуваний asyncStatus: %d"
 
-#: fe-exec.c:2377
+#: fe-exec.c:2378
 #, c-format
 msgid "synchronous command execution functions are not allowed in pipeline mode"
 msgstr "функції синхронного виконання команд заборонені в режимі конвеєра"
 
-#: fe-exec.c:2394
+#: fe-exec.c:2395
 msgid "COPY terminated by new PQexec"
 msgstr "COPY завершено новим PQexec"
 
-#: fe-exec.c:2410
+#: fe-exec.c:2411
 #, c-format
 msgid "PQexec not allowed during COPY BOTH"
 msgstr "PQexec не дозволяється під час COPY BOTH"
 
-#: fe-exec.c:2646
+#: fe-exec.c:2647
 #, c-format
 msgid "unrecognized message type \"%c\""
 msgstr "нерозпізнаний тип повідомлення \"%c\""
 
-#: fe-exec.c:2718 fe-exec.c:2772 fe-exec.c:2840 fe-protocol3.c:2071
+#: fe-exec.c:2719 fe-exec.c:2773 fe-exec.c:2841 fe-protocol3.c:2093
 #, c-format
 msgid "no COPY in progress"
 msgstr "немає COPY у процесі"
 
-#: fe-exec.c:3026
+#: fe-exec.c:3041
 #, c-format
 msgid "connection in wrong state"
 msgstr "підключення у неправильному стані"
 
-#: fe-exec.c:3069
+#: fe-exec.c:3084
 #, c-format
 msgid "cannot enter pipeline mode, connection not idle"
 msgstr "не можна увійти в режим конвеєра, підключення не в очікуванні"
 
-#: fe-exec.c:3105 fe-exec.c:3126
+#: fe-exec.c:3120 fe-exec.c:3141
 #, c-format
 msgid "cannot exit pipeline mode with uncollected results"
 msgstr "не можна вийти з режиму конвеєра з незібраними результатами"
 
-#: fe-exec.c:3109
+#: fe-exec.c:3124
 #, c-format
 msgid "cannot exit pipeline mode while busy"
 msgstr "не можна вийти з режиму конвеєра, коли зайнято"
 
-#: fe-exec.c:3120
+#: fe-exec.c:3135
 #, c-format
 msgid "cannot exit pipeline mode while in COPY"
 msgstr "не можна вийти з режиму конвеєра під час COPY"
 
-#: fe-exec.c:3319
+#: fe-exec.c:3334
 #, c-format
 msgid "cannot send pipeline when not in pipeline mode"
 msgstr "неможливо скористатися конвеєром не у режимі конвеєра"
 
-#: fe-exec.c:3438
+#: fe-exec.c:3453
 msgid "invalid ExecStatusType code"
 msgstr "неприпустимий код ExecStatusType"
 
-#: fe-exec.c:3465
+#: fe-exec.c:3480
 msgid "PGresult is not an error result\n"
 msgstr "PGresult не є помилковим результатом\n"
 
-#: fe-exec.c:3533 fe-exec.c:3556
+#: fe-exec.c:3548 fe-exec.c:3571
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "число стовпців %d поза діапазоном 0..%d"
 
-#: fe-exec.c:3571
+#: fe-exec.c:3586
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "число параметрів %d поза діапазоном 0..%d"
 
-#: fe-exec.c:3882
+#: fe-exec.c:3897
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "не вдалося інтерпретувати результат від сервера: %s"
 
-#: fe-exec.c:4157 fe-exec.c:4292
+#: fe-exec.c:4177 fe-exec.c:4291
 #, c-format
 msgid "incomplete multibyte character"
 msgstr "неповний мультибайтний символ"
 
-#: fe-exec.c:4159 fe-exec.c:4311
+#: fe-exec.c:4179 fe-exec.c:4310
 #, c-format
 msgid "invalid multibyte character"
 msgstr "неприпустимий мультибайтний символ"
 
-#: fe-exec.c:4413
+#: fe-exec.c:4412
 #, c-format
 msgid "escaped string size exceeds the maximum allowed (%zu)"
 msgstr "довжина екранованого рядка перевищує максимально допустиму (%zu)"
 
-#: fe-exec.c:4590
+#: fe-exec.c:4589
 #, c-format
 msgid "escaped bytea size exceeds the maximum allowed (%zu)"
 msgstr "розмір bytea перевищує максимальний допустимий розмір (%zu)"
@@ -1479,18 +1489,18 @@ msgstr "неможливо записати до файлу \"%s\": %s"
 msgid "query to initialize large object functions did not return data"
 msgstr "запит на ініціалізацію функцій для великих об’єктів не повернув дані"
 
-#: fe-misc.c:239
+#: fe-misc.c:241
 #, c-format
-msgid "integer of size %lu not supported by pqGetInt"
-msgstr "pqGetInt не підтримує ціле число розміром %lu"
+msgid "integer of size %zu not supported by pqGetInt"
+msgstr "pqGetInt не підтримує ціле число розміром %zu"
 
-#: fe-misc.c:272
+#: fe-misc.c:274
 #, c-format
-msgid "integer of size %lu not supported by pqPutInt"
-msgstr "pqPutInt не підтримує ціле число розміром %lu"
+msgid "integer of size %zu not supported by pqPutInt"
+msgstr "pqPutInt не підтримує ціле число розміром %zu"
 
-#: fe-misc.c:791 fe-secure-openssl.c:181 fe-secure-openssl.c:287
-#: fe-secure.c:222 fe-secure.c:389
+#: fe-misc.c:833 fe-secure-openssl.c:182 fe-secure-openssl.c:318
+#: fe-secure.c:222 fe-secure.c:413
 #, c-format
 msgid "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -1498,215 +1508,230 @@ msgid "server closed the connection unexpectedly\n"
 msgstr "сервер неочікувано закрив підключення\n"
 " Це може означати, що сервер завершив роботу ненормально до або під час обробки запиту."
 
-#: fe-misc.c:858
+#: fe-misc.c:942
+#, c-format
+msgid "drained only %zd of %zd pending bytes in transport buffer"
+msgstr "звільнено лише %zd з %zd байтів, що очікують у транспортному буфері"
+
+#: fe-misc.c:1004
 msgid "connection not open\n"
 msgstr "підключення не відкрито\n"
 
-#: fe-misc.c:1046
+#: fe-misc.c:1192
 #, c-format
 msgid "timeout expired"
 msgstr "час очікування минув"
 
-#: fe-misc.c:1098
+#: fe-misc.c:1244
 #, c-format
 msgid "invalid socket"
 msgstr "неприпустимий сокет"
 
-#: fe-misc.c:1121
+#: fe-misc.c:1265
 #, c-format
 msgid "%s() failed: %s"
 msgstr "%s() помилка: %s"
 
-#: fe-protocol3.c:190
+#: fe-protocol3.c:192
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "отримано тип повідомлення 0x%02x від сервера під час бездіяльності"
 
-#: fe-protocol3.c:403
+#: fe-protocol3.c:405
 #, c-format
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
 msgstr "сервер передав дані (повідомлення \"D\") без попереднього опису рядка (повідомлення \"T\")"
 
-#: fe-protocol3.c:445
+#: fe-protocol3.c:447
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\""
 msgstr "неочікувана відповідь від сервера; перший отриманий символ був \"%c\""
 
-#: fe-protocol3.c:469
+#: fe-protocol3.c:471
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\""
 msgstr "вміст повідомлення не відповідає довжині у типі повідомлення \"%c\""
 
-#: fe-protocol3.c:504
+#: fe-protocol3.c:506
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d"
 msgstr "втрачено синхронізацію з сервером: отримано тип повідомлення \"%c\", довжина %d"
 
-#: fe-protocol3.c:551 fe-protocol3.c:591
+#: fe-protocol3.c:553 fe-protocol3.c:593
 msgid "insufficient data in \"T\" message"
 msgstr "недостатньо даних у повідомленні \"T\""
 
-#: fe-protocol3.c:662 fe-protocol3.c:868
+#: fe-protocol3.c:664 fe-protocol3.c:870
 msgid "out of memory for query result"
 msgstr "недостатньо пам'яті для результату запиту"
 
-#: fe-protocol3.c:731
+#: fe-protocol3.c:733
 msgid "insufficient data in \"t\" message"
 msgstr "недостатньо даних у повідомленні \"t\""
 
-#: fe-protocol3.c:790 fe-protocol3.c:822 fe-protocol3.c:840
+#: fe-protocol3.c:792 fe-protocol3.c:824 fe-protocol3.c:842
 msgid "insufficient data in \"D\" message"
 msgstr "зайві дані у повідомленні \"D\""
 
-#: fe-protocol3.c:796
+#: fe-protocol3.c:798
 msgid "unexpected field count in \"D\" message"
 msgstr "неочікувана кількість полів у повідомленні \"D\""
 
-#: fe-protocol3.c:1052
+#: fe-protocol3.c:1054
 msgid "no error message available\n"
 msgstr "немає доступного повідомлення про помилку\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1100 fe-protocol3.c:1119
+#: fe-protocol3.c:1102 fe-protocol3.c:1121
 #, c-format
 msgid " at character %s"
 msgstr " в символі %s"
 
-#: fe-protocol3.c:1132
+#: fe-protocol3.c:1134
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "ДЕТАЛІ:   %s\n"
 
-#: fe-protocol3.c:1135
+#: fe-protocol3.c:1137
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "ПІДКАЗКА:  %s\n"
 
-#: fe-protocol3.c:1138
+#: fe-protocol3.c:1140
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "ЗАПИТ:  %s\n"
 
-#: fe-protocol3.c:1145
+#: fe-protocol3.c:1147
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "КОНТЕКСТ:  %s\n"
 
-#: fe-protocol3.c:1154
+#: fe-protocol3.c:1156
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "ІМ'Я СХЕМИ:  %s\n"
 
-#: fe-protocol3.c:1158
+#: fe-protocol3.c:1160
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "ІМ'Я ТАБЛИЦІ:  %s\n"
 
-#: fe-protocol3.c:1162
+#: fe-protocol3.c:1164
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "ІМ'Я СТОВПЦЯ:  %s\n"
 
-#: fe-protocol3.c:1166
+#: fe-protocol3.c:1168
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "ІМ'Я ТИПУ ДАНИХ:  %s\n"
 
-#: fe-protocol3.c:1170
+#: fe-protocol3.c:1172
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "ІМ'Я ОБМЕЖЕННЯ:  %s\n"
 
-#: fe-protocol3.c:1182
+#: fe-protocol3.c:1184
 msgid "LOCATION:  "
 msgstr "РОЗТАШУВАННЯ:  "
 
-#: fe-protocol3.c:1184
+#: fe-protocol3.c:1186
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1186
+#: fe-protocol3.c:1188
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1394
+#: fe-protocol3.c:1396
 #, c-format
 msgid "LINE %d: "
 msgstr "РЯДОК %d: "
 
-#: fe-protocol3.c:1456
+#: fe-protocol3.c:1464
+#, c-format
+msgid "received invalid protocol negotiation message: server requested \"grease\" protocol version 3.9999"
+msgstr "отримано неправильне повідомлення про узгодження протоколу: сервер запросив \"grease\" версію протоколу 3.9999"
+
+#: fe-protocol3.c:1470
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to a higher-numbered version"
 msgstr "отримано неправильне повідомлення про узгодження протоколу: сервер запросив пониження до вищої версії"
 
-#: fe-protocol3.c:1462
+#: fe-protocol3.c:1476
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to pre-3.0 protocol version"
 msgstr "отримано неправильне повідомлення про узгодження протоколу: сервер запросив пониження до протоколу версії 3.0 і раніше"
 
-#: fe-protocol3.c:1469
+#: fe-protocol3.c:1483
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to non-existent 3.1 protocol version"
 msgstr "отримано неправильне повідомлення про узгодження протоколу: сервер запросив пониження до неіснуючої версії 3.1 протоколу"
 
-#: fe-protocol3.c:1475
+#: fe-protocol3.c:1489
 #, c-format
 msgid "received invalid protocol negotiation message: server reported negative number of unsupported parameters"
 msgstr "отримано неправильне повідомлення про узгодження протоколу: сервер повідомив негативну кількість непідтримуваних параметрів"
 
-#: fe-protocol3.c:1481
+#: fe-protocol3.c:1495
 #, c-format
 msgid "received invalid protocol negotiation message: server negotiated but asks for no changes"
 msgstr "отримано неправильне повідомлення про узгодження протоколу: сервер провів узгодження, але не просить жодних змін"
 
-#: fe-protocol3.c:1487
+#: fe-protocol3.c:1501
 #, c-format
 msgid "server only supports protocol version %d.%d, but \"%s\" was set to %d.%d"
 msgstr "сервер підтримує лише версію протоколу %d.%d, але \"%s\" було встановлено на %d.%d"
 
-#: fe-protocol3.c:1512
+#: fe-protocol3.c:1526
 #, c-format
 msgid "received invalid protocol negotiation message: server reported unsupported parameter name without a \"%s\" prefix (\"%s\")"
 msgstr "отримано неправильне повідомлення про узгодження протоколу: сервер повідомив непідтримувану назву параметра без префіксу \"%s\" (\"%s\")"
 
-#: fe-protocol3.c:1515
+#: fe-protocol3.c:1529
 #, c-format
 msgid "received invalid protocol negotiation message: server reported an unsupported parameter that was not requested (\"%s\")"
 msgstr "отримано неправильне повідомлення про узгодження протоколу: сервер повідомив непідтримуваний параметр, який не був запитаний (\"%s\")"
 
-#: fe-protocol3.c:1522
+#: fe-protocol3.c:1537
 #, c-format
 msgid "received invalid protocol negotiation message: message too short"
 msgstr "отримано неправильне повідомлення про узгодження протоколу: повідомлення занадто коротке"
 
-#: fe-protocol3.c:1588
+#: fe-protocol3.c:1603
 #, c-format
 msgid "received invalid BackendKeyData message: cancel key with length %d not allowed in protocol version 3.0 (must be 4 bytes)"
 msgstr "отримано неправильне повідомлення BackendKeyData: ключ скасування з довжиною %d не дозволено для протоколу версії 3.0 (має бути 4 байти)"
 
-#: fe-protocol3.c:1595
+#: fe-protocol3.c:1610
 #, c-format
 msgid "received invalid BackendKeyData message: cancel key with length %d is too short (minimum 4 bytes)"
 msgstr "отримано неправильне повідомлення BackendKeyData: ключ скасування з довжиною %d занадто короткий (мінімум 4 байти)"
 
-#: fe-protocol3.c:1602
+#: fe-protocol3.c:1617
 #, c-format
 msgid "received invalid BackendKeyData message: cancel key with length %d is too long (maximum 256 bytes)"
 msgstr "отримано неправильне повідомлення BackendKeyData: ключ скасування з довжиною %d занадто довгий (максимум 256 байтів)"
 
-#: fe-protocol3.c:1966
+#: fe-protocol3.c:1988
 #, c-format
 msgid "PQgetline: not doing text COPY OUT"
 msgstr "PQgetline: не викликати для текстового COPY OUT"
 
-#: fe-protocol3.c:2341
+#: fe-protocol3.c:2319
+#, c-format
+msgid "server returned too much data"
+msgstr "сервер повернув забагато даних"
+
+#: fe-protocol3.c:2374
 #, c-format
 msgid "protocol error: no function result"
 msgstr "помилка протоколу: результат функції відсутній"
 
-#: fe-protocol3.c:2353
+#: fe-protocol3.c:2386
 #, c-format
 msgid "protocol error: id=0x%x"
 msgstr "помилка протоколу: id=0x%x"
@@ -1759,12 +1784,12 @@ msgstr "помилка при згортанні GSSAPI"
 msgid "outgoing GSSAPI message would not use confidentiality"
 msgstr "вихідне повідомлення GSSAPI не буде використовувати конфіденційність"
 
-#: fe-secure-gssapi.c:215 fe-secure-gssapi.c:726
+#: fe-secure-gssapi.c:215 fe-secure-gssapi.c:733
 #, c-format
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)"
 msgstr "клієнт намагався відправити переповнений пакет GSSAPI (%zu > %zu)"
 
-#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:602
+#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:609
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)"
 msgstr "переповнений пакет GSSAPI відправлений сервером (%zu > %zu)"
@@ -1778,244 +1803,254 @@ msgstr "помилка при розгортанні GSSAPI"
 msgid "incoming GSSAPI message did not use confidentiality"
 msgstr "вхідне повідомлення GSSAPI не використовувало конфіденційність"
 
-#: fe-secure-gssapi.c:665
+#: fe-secure-gssapi.c:672
 msgid "could not initiate GSSAPI security context"
 msgstr "не вдалося ініціювати контекст безпеки GSSAPI"
 
-#: fe-secure-gssapi.c:715
+#: fe-secure-gssapi.c:722
 msgid "GSSAPI size check error"
 msgstr "помилка перевірки розміру GSSAPI"
 
-#: fe-secure-openssl.c:185 fe-secure-openssl.c:291 fe-secure-openssl.c:1382
+#: fe-secure-openssl.c:186 fe-secure-openssl.c:322 fe-secure-openssl.c:1414
 #, c-format
 msgid "SSL SYSCALL error: %s"
 msgstr "Помилка SSL SYSCALL: %s"
 
-#: fe-secure-openssl.c:191 fe-secure-openssl.c:297 fe-secure-openssl.c:1385
+#: fe-secure-openssl.c:192 fe-secure-openssl.c:328 fe-secure-openssl.c:1417
 #, c-format
 msgid "SSL SYSCALL error: EOF detected"
 msgstr "Помилка SSL SYSCALL: виявлено EOF"
 
-#: fe-secure-openssl.c:201 fe-secure-openssl.c:307 fe-secure-openssl.c:1393
+#: fe-secure-openssl.c:202 fe-secure-openssl.c:338 fe-secure-openssl.c:1425
 #, c-format
 msgid "SSL error: %s"
 msgstr "Помилка SSL: %s"
 
-#: fe-secure-openssl.c:215 fe-secure-openssl.c:321
+#: fe-secure-openssl.c:216 fe-secure-openssl.c:352
 #, c-format
 msgid "SSL connection has been closed unexpectedly"
 msgstr "SSL-з'єднання було несподівано перервано"
 
-#: fe-secure-openssl.c:220 fe-secure-openssl.c:326 fe-secure-openssl.c:1440
+#: fe-secure-openssl.c:221 fe-secure-openssl.c:357 fe-secure-openssl.c:1472
 #, c-format
 msgid "unrecognized SSL error code: %d"
 msgstr "нерозпізнаний код помилки SSL: %d"
 
-#: fe-secure-openssl.c:368
+#: fe-secure-openssl.c:251
+#, c-format
+msgid "OpenSSL reports negative bytes pending"
+msgstr "OpenSSL повідомляє про від'ємну кількість байтів в очікуванні"
+
+#: fe-secure-openssl.c:263
+#, c-format
+msgid "OpenSSL reports INT_MAX bytes pending"
+msgstr "OpenSSL повідомляє про INT_MAX байтів в очікуванні"
+
+#: fe-secure-openssl.c:399
 #, c-format
 msgid "could not determine server certificate signature algorithm"
 msgstr "не вдалося визначити алгоритм підпису сервера сертифіката"
 
-#: fe-secure-openssl.c:388
+#: fe-secure-openssl.c:419
 #, c-format
 msgid "could not find digest for NID %s"
 msgstr "не вдалося знайти дайджест для NID %s"
 
-#: fe-secure-openssl.c:397
+#: fe-secure-openssl.c:428
 #, c-format
 msgid "could not generate peer certificate hash"
 msgstr "не вдалося згенерувати хеш сертифікату вузла"
 
-#: fe-secure-openssl.c:479
+#: fe-secure-openssl.c:511
 #, c-format
 msgid "SSL certificate's name entry is missing"
 msgstr "Відсутня ім'я в сертифікаті SSL"
 
-#: fe-secure-openssl.c:509
+#: fe-secure-openssl.c:541
 #, c-format
 msgid "SSL certificate's address entry is missing"
 msgstr "відсутній елемент адреси SSL-сертифікату"
 
-#: fe-secure-openssl.c:715
+#: fe-secure-openssl.c:747
 #, c-format
 msgid "WARNING: could not open SSL key logging file \"%s\": %m\n"
 msgstr "ПОПЕРЕДЖЕННЯ: не вдалося відкрити файл логування SSL ключів \"%s\": %m\n"
 
-#: fe-secure-openssl.c:723
+#: fe-secure-openssl.c:755
 #, c-format
 msgid "WARNING: could not write to SSL key logging file \"%s\": %m\n"
 msgstr "ПОПЕРЕДЖЕННЯ: не вдалося записати до файлу логування SSL ключів \"%s\": %m\n"
 
-#: fe-secure-openssl.c:776
+#: fe-secure-openssl.c:808
 #, c-format
 msgid "could not create SSL context: %s"
 msgstr "не вдалося створити контекст SSL: %s"
 
-#: fe-secure-openssl.c:818
+#: fe-secure-openssl.c:850
 #, c-format
 msgid "invalid value \"%s\" for minimum SSL protocol version"
 msgstr "неприпустиме значення \"%s\" для мінімальної версії протоколу SSL"
 
-#: fe-secure-openssl.c:828
+#: fe-secure-openssl.c:860
 #, c-format
 msgid "could not set minimum SSL protocol version: %s"
 msgstr "не вдалося встановити мінімальну версію протоколу SSL: %s"
 
-#: fe-secure-openssl.c:844
+#: fe-secure-openssl.c:876
 #, c-format
 msgid "invalid value \"%s\" for maximum SSL protocol version"
 msgstr "неприпустиме значення \"%s\" для максимальної версії протоколу SSL"
 
-#: fe-secure-openssl.c:854
+#: fe-secure-openssl.c:886
 #, c-format
 msgid "could not set maximum SSL protocol version: %s"
 msgstr "не вдалося встановити максимальну версію протоколу SSL: %s"
 
-#: fe-secure-openssl.c:892
+#: fe-secure-openssl.c:924
 #, c-format
 msgid "could not load system root certificate paths: %s"
 msgstr "не вдалося завантажити шляхи кореневого сертифікату системи: %s"
 
-#: fe-secure-openssl.c:909
+#: fe-secure-openssl.c:941
 #, c-format
 msgid "could not read root certificate file \"%s\": %s"
 msgstr "не вдалося прочитати файл кореневого сертифікату \"%s\": %s"
 
-#: fe-secure-openssl.c:961
+#: fe-secure-openssl.c:993
 #, c-format
 msgid "could not get home directory to locate root certificate file\n"
 "Either provide the file, use the system's trusted roots with sslrootcert=system, or change sslmode to disable server certificate verification."
 msgstr "не вдалося отримати домашній каталог, щоб знайти файл кореневого сертифікату\n"
 "Надайте файл, використайте системні кореневі за допомогою sslrootcert=system, або змініть sslmode, щоб вимкнути перевірку серверного сертифікату."
 
-#: fe-secure-openssl.c:964
+#: fe-secure-openssl.c:996
 #, c-format
 msgid "root certificate file \"%s\" does not exist\n"
 "Either provide the file, use the system's trusted roots with sslrootcert=system, or change sslmode to disable server certificate verification."
 msgstr "файл кореневого сертифікату \"%s\" не існує\n"
 "Надайте файл, використайте системні кореневі за допомогою sslrootcert=system, або змініть sslmode, щоб вимкнути перевірку серверного сертифікату."
 
-#: fe-secure-openssl.c:999
+#: fe-secure-openssl.c:1031
 #, c-format
 msgid "could not open certificate file \"%s\": %s"
 msgstr "не вдалося відкрити файл сертифікату \"%s\": %s"
 
-#: fe-secure-openssl.c:1017
+#: fe-secure-openssl.c:1049
 #, c-format
 msgid "could not read certificate file \"%s\": %s"
 msgstr "не вдалося прочитати файл сертифікату \"%s\": %s"
 
-#: fe-secure-openssl.c:1041
+#: fe-secure-openssl.c:1073
 #, c-format
 msgid "could not establish SSL connection: %s"
 msgstr "не вдалося встановити SSL-підключення: %s"
 
-#: fe-secure-openssl.c:1058
+#: fe-secure-openssl.c:1090
 #, c-format
 msgid "WARNING: sslkeylogfile support requires OpenSSL\n"
 msgstr "ПОПЕРЕДЖЕННЯ: підтримка sslkeylogfile вимагає OpenSSL\n"
 
-#: fe-secure-openssl.c:1060
+#: fe-secure-openssl.c:1092
 #, c-format
 msgid "WARNING: libpq was not built with sslkeylogfile support\n"
 msgstr "ПОПЕРЕДЖЕННЯ: libpq було скомпільовано без підтримки sslkeylogfile\n"
 
-#: fe-secure-openssl.c:1090
+#: fe-secure-openssl.c:1122
 #, c-format
 msgid "could not set SSL Server Name Indication (SNI): %s"
 msgstr "не вдалося встановити позначку назви сервера SSL (SNI): %s"
 
-#: fe-secure-openssl.c:1107
+#: fe-secure-openssl.c:1139
 #, c-format
 msgid "could not set SSL ALPN extension: %s"
 msgstr "не вдалося встановити розширення SSL ALPN: %s"
 
-#: fe-secure-openssl.c:1150
+#: fe-secure-openssl.c:1182
 #, c-format
 msgid "could not load SSL engine \"%s\": %s"
 msgstr "не вдалося завантажити модуль SSL \"%s\": %s"
 
-#: fe-secure-openssl.c:1161
+#: fe-secure-openssl.c:1193
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s"
 msgstr "не вдалося ініціалізувати модуль SSL \"%s\": %s"
 
-#: fe-secure-openssl.c:1176
+#: fe-secure-openssl.c:1208
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s"
 msgstr "не вдалося прочитати закритий ключ SSL \"%s\" з модуля \"%s\": %s"
 
-#: fe-secure-openssl.c:1189
+#: fe-secure-openssl.c:1221
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s"
 msgstr "не вдалося завантажити закритий ключ SSL \"%s\" з модуля \"%s\": %s"
 
-#: fe-secure-openssl.c:1226
+#: fe-secure-openssl.c:1258
 #, c-format
 msgid "certificate present, but not private key file \"%s\""
 msgstr "сертифікат присутній, але файл закритого ключа \"%s\" ні"
 
-#: fe-secure-openssl.c:1229
+#: fe-secure-openssl.c:1261
 #, c-format
 msgid "could not stat private key file \"%s\": %m"
 msgstr "не вдалося отримати інформацію про файл закритого ключа\"%s\": %m"
 
-#: fe-secure-openssl.c:1237
+#: fe-secure-openssl.c:1269
 #, c-format
 msgid "private key file \"%s\" is not a regular file"
 msgstr "файл закритого ключа \"%s\" не є звичайним"
 
-#: fe-secure-openssl.c:1270
+#: fe-secure-openssl.c:1302
 #, c-format
 msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root"
 msgstr "файл закритого ключа \"%s\" має груповий або загальний доступ; файл повинен мати права u=rw (0600) або менше, якщо він належить поточному користувачу, або права u=rw,g=r (0640) або менше, якщо належить root"
 
-#: fe-secure-openssl.c:1294
+#: fe-secure-openssl.c:1326
 #, c-format
 msgid "could not load private key file \"%s\": %s"
 msgstr "не вдалось завантажити файл закритого ключа \"%s\": %s"
 
-#: fe-secure-openssl.c:1310
+#: fe-secure-openssl.c:1342
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s"
 msgstr "сертифікат не відповідає файлу закритого ключа \"%s\": %s"
 
-#: fe-secure-openssl.c:1379
+#: fe-secure-openssl.c:1411
 #, c-format
 msgid "SSL error: certificate verify failed: %s"
 msgstr "помилка SSL: помилка перевірки сертифіката %s"
 
-#: fe-secure-openssl.c:1424
+#: fe-secure-openssl.c:1456
 #, c-format
 msgid "This may indicate that the server does not support any SSL protocol version between %s and %s."
 msgstr "Це може вказувати, що сервер не підтримує жодної версії протоколу SSL між %s і %s."
 
-#: fe-secure-openssl.c:1456
+#: fe-secure-openssl.c:1488
 #, c-format
 msgid "direct SSL connection was established without ALPN protocol negotiation extension"
 msgstr "пряме SSL підключення було встановлено без розширення протоколу ALPN"
 
-#: fe-secure-openssl.c:1468
+#: fe-secure-openssl.c:1500
 #, c-format
 msgid "SSL connection was established with unexpected ALPN protocol"
 msgstr "SSL підключення було встановлено з неочікуваним протоколом ALPN"
 
-#: fe-secure-openssl.c:1485
+#: fe-secure-openssl.c:1517
 #, c-format
 msgid "certificate could not be obtained: %s"
 msgstr "не вдалося отримати сертифікат: %s"
 
-#: fe-secure-openssl.c:1564
+#: fe-secure-openssl.c:1596
 #, c-format
 msgid "no SSL error reported"
 msgstr "немає повідомлення про помилку SSL"
 
-#: fe-secure-openssl.c:1607
+#: fe-secure-openssl.c:1639
 #, c-format
 msgid "SSL error code %lu"
 msgstr "Код помилки SSL %lu"
 
-#: fe-secure-openssl.c:1909
+#: fe-secure-openssl.c:1941
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "ПОПЕРЕДЖЕННЯ: sslpassword скорочено\n"
@@ -2025,7 +2060,7 @@ msgstr "ПОПЕРЕДЖЕННЯ: sslpassword скорочено\n"
 msgid "could not receive data from server: %s"
 msgstr "не вдалося отримати дані з серверу: %s"
 
-#: fe-secure.c:404
+#: fe-secure.c:428
 #, c-format
 msgid "could not send data to server: %s"
 msgstr "не вдалося передати дані серверу: %s"
@@ -2034,4 +2069,3 @@ msgstr "не вдалося передати дані серверу: %s"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "нерозпізнана помилка сокету: 0x%08X/%d"
-

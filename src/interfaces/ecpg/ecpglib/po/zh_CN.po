@@ -3,28 +3,31 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
 #
+# Recalibrated and completed via the pgsql.cc NLS review workbench.
+# Feng Ruohang <rh@vonng.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpglib (PostgreSQL) 14\n"
+"Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 05:39+0000\n"
-"PO-Revision-Date: 2021-08-15 18:50+0800\n"
-"Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
-"Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
+"POT-Creation-Date: 2026-09-17 05:40+0000\n"
+"PO-Revision-Date: 2026-09-17 16:00+0800\n"
+"Last-Translator: Feng Ruohang <rh@vonng.com>\n"
+"Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-#: connect.c:237
+#: connect.c:226
 msgid "empty message text"
 msgstr "消息文本为空"
 
-#: connect.c:405 connect.c:627
+#: connect.c:393 connect.c:665
 msgid "<DEFAULT>"
 msgstr "<DEFAULT>"
 
-#: descriptor.c:871 misc.c:119
+#: descriptor.c:485 descriptor.c:883 misc.c:88
 msgid "NULL"
 msgstr "NULL"
 
@@ -32,168 +35,173 @@ msgstr "NULL"
 #: error.c:33
 #, c-format
 msgid "no data found on line %d"
-msgstr "在第%d行上没有找到数据"
+msgstr "第 %d 行: 未找到数据"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:40
 #, c-format
 msgid "out of memory on line %d"
-msgstr "在第%d行上内存用尽"
+msgstr "第 %d 行: 内存不足"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:47
 #, c-format
 msgid "unsupported type \"%s\" on line %d"
-msgstr "在第%2$d上出现不支持的类型\"%1$s\""
+msgstr "第 %2$d 行: 不支持类型 \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:54
 #, c-format
 msgid "too many arguments on line %d"
-msgstr "在第%d行上的参数多于指定的数量"
+msgstr "第 %d 行: 参数过多"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:61
 #, c-format
 msgid "too few arguments on line %d"
-msgstr "在第%d行上的参数少于指定的数量"
+msgstr "第 %d 行: 参数过少"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:68
 #, c-format
 msgid "invalid input syntax for type int: \"%s\", on line %d"
-msgstr "对于整数类型的输入语法无效: \"%s\" ,在第%d行"
+msgstr "第 %2$d 行: int 类型的输入语法无效: \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:75
 #, c-format
 msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
-msgstr "对于无符号整数类型的输入语法无效: \"%s\" 在第%d行"
+msgstr "第 %2$d 行: unsigned int 类型的输入语法无效: \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:82
 #, c-format
 msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
-msgstr "对于浮点类型的输入语法无效: \"%s\"，在第%d行"
+msgstr "第 %2$d 行: 浮点类型的输入语法无效: \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:90
 #, c-format
 msgid "invalid syntax for type boolean: \"%s\", on line %d"
-msgstr "对于布尔类型语法无效: \"%s\"，在第%d行上"
+msgstr "第 %2$d 行: boolean 类型的语法无效: \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:95
 #, c-format
 msgid "could not convert boolean value: size mismatch, on line %d"
-msgstr "在第%d行上无法转换布尔类型值: 大小不匹配"
+msgstr "第 %d 行: 无法转换布尔值，大小不匹配"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:102
 #, c-format
 msgid "empty query on line %d"
-msgstr "在第%d行上查询是空的"
+msgstr "第 %d 行: 查询为空"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:109
 #, c-format
 msgid "null value without indicator on line %d"
-msgstr "在第%d行上的空值没有标志"
+msgstr "第 %d 行: NULL 值缺少指示符变量"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:116
 #, c-format
 msgid "variable does not have an array type on line %d"
-msgstr "在第%d行上的变量没有数组类型"
+msgstr "第 %d 行: 变量不是数组类型"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:123
 #, c-format
 msgid "data read from server is not an array on line %d"
-msgstr "在第%d行上从服务器读取的数据不是数组"
+msgstr "第 %d 行: 从服务器读取的数据不是数组"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:130
 #, c-format
 msgid "inserting an array of variables is not supported on line %d"
-msgstr "在第%d行上不支持正在插入一个的变量数组"
+msgstr "第 %d 行: 不支持插入变量数组"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:137
 #, c-format
-msgid "connection \"%s\" does not exist on line %d"
-msgstr "在第%2$d行上连接\"%1$s\"不存在"
+msgid "invalid input syntax for type bytea: \"%s\", on line %d"
+msgstr "第 %2$d 行: bytea 类型的输入语法无效: \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:144
 #, c-format
-msgid "not connected to connection \"%s\" on line %d"
-msgstr "在第%2$d行上没有连接到\"%1$s\"连接"
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "第 %2$d 行: 连接 \"%1$s\" 不存在"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:151
 #, c-format
-msgid "invalid statement name \"%s\" on line %d"
-msgstr "在第%2$d行上的语句名称\"%1$s\"无效"
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "第 %2$d 行: 尚未连接到连接 \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:158
 #, c-format
-msgid "descriptor \"%s\" not found on line %d"
-msgstr "在第%2$d行上没有找到描述符\"%1$s\""
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "第 %2$d 行: 语句名 \"%1$s\" 无效"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:165
 #, c-format
-msgid "descriptor index out of range on line %d"
-msgstr "在第%d行上的描述符索引超出范围"
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "第 %2$d 行: 未找到描述符 \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:172
 #, c-format
-msgid "unrecognized descriptor item \"%s\" on line %d"
-msgstr "在第%2$d行上出现无法识别的描述符成员\"%1$s\""
+msgid "descriptor index out of range on line %d"
+msgstr "第 %d 行: 描述符索引超出范围"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:179
 #, c-format
-msgid "variable does not have a numeric type on line %d"
-msgstr "在第%d上的变量没有数值类型"
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "第 %2$d 行: 无法识别的描述符项 \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:186
 #, c-format
-msgid "variable does not have a character type on line %d"
-msgstr "在第%d行上的变量没有字符类型"
+msgid "variable does not have a numeric type on line %d"
+msgstr "第 %d 行: 变量不是数值类型"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:193
 #, c-format
-msgid "error in transaction processing on line %d"
-msgstr "在第%d行上的事务处理中发生错误"
+msgid "variable does not have a character type on line %d"
+msgstr "第 %d 行: 变量不是字符类型"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:200
 #, c-format
-msgid "could not connect to database \"%s\" on line %d"
-msgstr "在第%2$d行上无法连接数据库\"%1$s\""
+msgid "error in transaction processing on line %d"
+msgstr "第 %d 行: 事务处理发生错误"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:207
 #, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "第 %2$d 行: 无法连接到数据库 \"%1$s\""
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:214
+#, c-format
 msgid "SQL error %d on line %d"
-msgstr "在第%2$d行上的SQL命令发生错误 代码%1$d"
+msgstr "第 %2$d 行: SQL 错误 %1$d"
 
-#: error.c:254
+#: error.c:260
 msgid "the connection to the server was lost"
-msgstr "与服务器的连接丢失"
+msgstr "与服务器的连接已丢失"
 
-#: error.c:346
+#: error.c:352
 #, c-format
 msgid "SQL error: %s\n"
-msgstr "SQL语句错误: %s\n"
+msgstr "SQL 错误: %s\n"
 
-#: execute.c:2196 execute.c:2203
+#: execute.c:2209 execute.c:2216
 msgid "<empty>"
 msgstr "<空>"
-

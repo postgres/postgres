@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-03-20 22:39+0000\n"
+"POT-Creation-Date: 2026-08-17 01:09+0000\n"
 "PO-Revision-Date: 2026-03-09 16:41+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
@@ -113,7 +113,7 @@ msgstr "ცვლადის \"%s\" ტიპი ფსევდო ტიპ�
 msgid "type \"%s\" is only a shell"
 msgstr "ტიპი \"%s\" მხოლოდ გარსია"
 
-#: pl_comp.c:2088 pl_exec.c:7186
+#: pl_comp.c:2088 pl_exec.c:7188
 #, c-format
 msgid "type %s is not composite"
 msgstr "ტიპი %s კომპოზიტური არაა"
@@ -149,12 +149,12 @@ msgstr "კონტროლმა ფუნქციის დასასრ�
 msgid "while casting return value to function's return type"
 msgstr "დაბრუნებული მნიშვნელობის ფუნქციის დაბრუნების ტიპში კასტისას"
 
-#: pl_exec.c:660 pl_exec.c:3712
+#: pl_exec.c:660 pl_exec.c:3714
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "ფუნქცია, რომელიც სეტს აბრუნებს, გამოძახებულია კონტექსტში, რომელიც სეტებს ვერ იღებს"
 
-#: pl_exec.c:665 pl_exec.c:3718
+#: pl_exec.c:665 pl_exec.c:3720
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "საჭიროა მატერიალიზებული რეჟიმი, მაგრამ ამ კონტექსტში ეს დაუშვებელია"
@@ -163,7 +163,7 @@ msgstr "საჭიროა მატერიალიზებული რ�
 msgid "during function exit"
 msgstr "ფუნქციიდან გამოსვლისას"
 
-#: pl_exec.c:847 pl_exec.c:911 pl_exec.c:3511
+#: pl_exec.c:847 pl_exec.c:911 pl_exec.c:3512
 msgid "returned record type does not match expected record type"
 msgstr "დაბრუნებული ჩანაწერის ტიპი მოსალოდნელი ჩანაწერის ტიპს არ ემთხვევა"
 
@@ -274,17 +274,17 @@ msgstr "FOR მარყუჟის BY-ის მნიშვნელობა
 msgid "BY value of FOR loop must be greater than zero"
 msgstr "FOR მარყუჟის BY-ის მნიშვნელობა ნულზე მეტი უნდა იყოს"
 
-#: pl_exec.c:2928 pl_exec.c:4784
+#: pl_exec.c:2928 pl_exec.c:4786
 #, c-format
 msgid "cursor \"%s\" already in use"
 msgstr "კურსორი \"%s\" უკვე გამოიყენება"
 
-#: pl_exec.c:2951 pl_exec.c:4854
+#: pl_exec.c:2951 pl_exec.c:4856
 #, c-format
 msgid "arguments given for cursor without arguments"
 msgstr "კურსორისთვის გადმოცემული არგუმენტები არგუმენტების გარეშეა"
 
-#: pl_exec.c:2970 pl_exec.c:4873
+#: pl_exec.c:2970 pl_exec.c:4875
 #, c-format
 msgid "arguments required for cursor"
 msgstr "კურსორისთვის საჭირო არგუმენტები"
@@ -314,7 +314,7 @@ msgstr "FOREACH ... SLICE მარყუჟის ცვლადი მას�
 msgid "FOREACH loop variable must not be of an array type"
 msgstr "FOREACH მარყუჟის ცვლადი მასივის ტიპის უნდა იყოს"
 
-#: pl_exec.c:3286 pl_exec.c:3329 pl_exec.c:3504
+#: pl_exec.c:3286 pl_exec.c:3329 pl_exec.c:3505
 #, c-format
 msgid "cannot return non-composite value from function returning composite type"
 msgstr "ფუნქცია, რომელიც კომპოზიტურ ტიპს აბრუნებს, არაკომპოზიტურ ტიპს ვერ დააბრუნებს"
@@ -324,214 +324,219 @@ msgstr "ფუნქცია, რომელიც კომპოზიტუ
 msgid "cannot use RETURN NEXT in a non-SETOF function"
 msgstr "არა-SETOF ფუნქციაში RETURN NEXT-ს ვერ გამოიყენებთ"
 
-#: pl_exec.c:3409 pl_exec.c:3541
+#: pl_exec.c:3409 pl_exec.c:3542
 #, c-format
 msgid "wrong result type supplied in RETURN NEXT"
 msgstr "არასწორი შედეგის ტიპი, რომელიც მიეწოდება RETURN NEXT- ში"
 
-#: pl_exec.c:3447 pl_exec.c:3468
+#: pl_exec.c:3448 pl_exec.c:3469
 #, c-format
 msgid "wrong record type supplied in RETURN NEXT"
 msgstr "არასწორი ჩანაწერის ტიპი, რომელიც მიეწოდება RETURN NEXT- ში"
 
-#: pl_exec.c:3560
+#: pl_exec.c:3562
 #, c-format
 msgid "RETURN NEXT must have a parameter"
 msgstr "RETURN NEXT უნდა ჰქონდეს პარამეტრი"
 
-#: pl_exec.c:3588 pl_gram.y:3512
+#: pl_exec.c:3590 pl_gram.y:3512
 #, c-format
 msgid "cannot use RETURN QUERY in a non-SETOF function"
 msgstr "არა-SETOF ფუნქციაში RETURN QUERY-ს ვერ გამოიყენებთ"
 
-#: pl_exec.c:3606
+#: pl_exec.c:3608
 msgid "structure of query does not match function result type"
 msgstr "მოთხოვნის სტრუქტურა ფუნქციის შედეგის ტიპს არ ემთხვევა"
 
-#: pl_exec.c:3661 pl_exec.c:4560 pl_exec.c:9082
+#: pl_exec.c:3663 pl_exec.c:4562 pl_exec.c:9092
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "\"EXECUTE\"-ის მოთხოვნის სტრიქონის არგუმენტი ნულოვანია"
 
-#: pl_exec.c:3746 pl_exec.c:3884
+#: pl_exec.c:3748 pl_exec.c:3886
 #, c-format
 msgid "RAISE option already specified: %s"
 msgstr "პარამეტრი RAISE უკვე მითითებულია: %s"
 
-#: pl_exec.c:3780
+#: pl_exec.c:3782
 #, c-format
 msgid "RAISE without parameters cannot be used outside an exception handler"
 msgstr "ოპერატორ RAISE -ს გამონაკლისის დამმუშავებლის გარეთ პარამეტრების გარეშე ვერ გამოიყენებთ"
 
-#: pl_exec.c:3874
+#: pl_exec.c:3876
 #, c-format
 msgid "RAISE statement option cannot be null"
 msgstr "RAISE ოპერატორის პარამეტრი ნულოვანი ვერ იქნება"
 
-#: pl_exec.c:3944
+#: pl_exec.c:3946
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pl_exec.c:3999
+#: pl_exec.c:4001
 #, c-format
 msgid "assertion failed"
 msgstr "მტკიცება ვერ მოხერხდა"
 
-#: pl_exec.c:4433 pl_exec.c:4623
+#: pl_exec.c:4435 pl_exec.c:4625
 #, c-format
 msgid "cannot COPY to/from client in PL/pgSQL"
 msgstr "pl/pgSQL-ში COPY კლიენტიდან/ში შეუძლებელია"
 
-#: pl_exec.c:4439
+#: pl_exec.c:4441
 #, c-format
 msgid "unsupported transaction command in PL/pgSQL"
 msgstr "\"PL/pgSQL\"-ში მხარდაუჭერელი ტრანზაქციის ბრძანება"
 
-#: pl_exec.c:4462 pl_exec.c:4652
+#: pl_exec.c:4464 pl_exec.c:4654
 #, c-format
 msgid "INTO used with a command that cannot return data"
 msgstr "INTO-ს გამოყენება ბრძანებაში, რომელსაც მონაცემების დაბრუნება არ შეუძლია"
 
-#: pl_exec.c:4485 pl_exec.c:4675
+#: pl_exec.c:4487 pl_exec.c:4677
 #, c-format
 msgid "query returned no rows"
 msgstr "მოთხოვნას მწკრივი არ დაუმატებია"
 
-#: pl_exec.c:4507 pl_exec.c:4694 pl_exec.c:5832
+#: pl_exec.c:4509 pl_exec.c:4696 pl_exec.c:5834
 #, c-format
 msgid "query returned more than one row"
 msgstr "მოთხოვნამ ერთზე მეტი მწკრივი დააბრუნა"
 
-#: pl_exec.c:4509
+#: pl_exec.c:4511
 #, c-format
 msgid "Make sure the query returns a single row, or use LIMIT 1."
 msgstr "დარწმუნდით, რომ მოთხოვნა ერთ მწკრივს აბრუნებს, ან LIMIT 1 გამოიყენეთ."
 
-#: pl_exec.c:4525
+#: pl_exec.c:4527
 #, c-format
 msgid "query has no destination for result data"
 msgstr "მოთხოვნას არ აქვს დანიშნულების ადგილი შედეგის მონაცემებისთვის"
 
-#: pl_exec.c:4526
+#: pl_exec.c:4528
 #, c-format
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "თუ გსურთ SELECT-ის შედეგების მოცილება, შეგიძლიათ მის ნაცვლად PERFORM გამოიყენოთ."
 
-#: pl_exec.c:4615
+#: pl_exec.c:4617
 #, c-format
 msgid "EXECUTE of SELECT ... INTO is not implemented"
 msgstr "ბრძანება EXECUTE \"SELECT ... INTO\" განხორციელებული არაა"
 
-#: pl_exec.c:4616
+#: pl_exec.c:4618
 #, c-format
 msgid "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead."
 msgstr "შეიძლება სამაგიეროდ ამჯობინოთ EXECUTE … INTO ან EXECUTE CREATE TABLE .. AS -ის გამოყენება."
 
-#: pl_exec.c:4629
+#: pl_exec.c:4631
 #, c-format
 msgid "EXECUTE of transaction commands is not implemented"
 msgstr "ტრანზაქციების ბრძანებების EXECUTE განხორციელებული არაა"
 
-#: pl_exec.c:4939 pl_exec.c:5027
+#: pl_exec.c:4941 pl_exec.c:5029
 #, c-format
 msgid "cursor variable \"%s\" is null"
 msgstr "კურსორი ცვლადი \"%s\" ნულოვანია"
 
-#: pl_exec.c:4950 pl_exec.c:5038
+#: pl_exec.c:4952 pl_exec.c:5040
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "კურსორი \"%s\" არ არსებობს"
 
-#: pl_exec.c:4963
+#: pl_exec.c:4965
 #, c-format
 msgid "relative or absolute cursor position is null"
 msgstr "შედარებითი ან აბსოლუტური კურსორის პოზიცია ნულოვანია"
 
-#: pl_exec.c:5187 pl_exec.c:5282
+#: pl_exec.c:5189 pl_exec.c:5284
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
 msgstr "ცვლადი \"%s\", აღწერილი, როგორც NOT NULL, ნულოვანი ვერ იქნება"
 
-#: pl_exec.c:5263
+#: pl_exec.c:5265
 #, c-format
 msgid "cannot assign non-composite value to a row variable"
 msgstr "მწკრივის ცვლადისთვის არაკომპოზიტური მნიშვნელობის მინიჭება შეუძლებელია"
 
-#: pl_exec.c:5295
+#: pl_exec.c:5297
 #, c-format
 msgid "cannot assign non-composite value to a record variable"
 msgstr "ჩანაწერის ცვლადისთვის არაკომპოზიტური მნიშვნელობის მინიჭება შეუძლებელია"
 
-#: pl_exec.c:5337 pl_exec.c:5510 pl_exec.c:5597 pl_exec.c:5688 pl_exec.c:6885
+#: pl_exec.c:5339 pl_exec.c:5512 pl_exec.c:5599 pl_exec.c:5690 pl_exec.c:6887
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "ჩანაწერს \"%s\" ველი \"%s\" არ გააჩნია"
 
-#: pl_exec.c:5346
+#: pl_exec.c:5348
 #, c-format
 msgid "cannot assign to system column \"%s\""
 msgstr "სისტემური სვეტზე (%s) მინიჭება შეუძლებელია"
 
-#: pl_exec.c:5795
+#: pl_exec.c:5797
 #, c-format
 msgid "query did not return data"
 msgstr "მოთხოვნამ მონაცემები არ დააბრუნა"
 
-#: pl_exec.c:5796 pl_exec.c:5808 pl_exec.c:5833 pl_exec.c:5913 pl_exec.c:5918
+#: pl_exec.c:5798 pl_exec.c:5810 pl_exec.c:5835 pl_exec.c:5915 pl_exec.c:5920
 #, c-format
 msgid "query: %s"
 msgstr "მოთხოვნა: %s"
 
-#: pl_exec.c:5804
+#: pl_exec.c:5806
 #, c-format
 msgid "query returned %d column"
 msgid_plural "query returned %d columns"
 msgstr[0] "მოთხოვნამ %d სვეტი დააბრუნა"
 msgstr[1] "მოთხოვნამ %d სვეტი დააბრუნა"
 
-#: pl_exec.c:5912
+#: pl_exec.c:5914
 #, c-format
 msgid "query is SELECT INTO, but it should be plain SELECT"
 msgstr "მოთხოვნა SELECT INTO-ა, როცა ის უბრალოდ SELECT-ი უნდა იყოს"
 
-#: pl_exec.c:5917
+#: pl_exec.c:5919
 #, c-format
 msgid "query is not a SELECT"
 msgstr "მოთხოვნა SELECT-ი არაა"
 
-#: pl_exec.c:6899 pl_exec.c:6939 pl_exec.c:6979
+#: pl_exec.c:6901 pl_exec.c:6941 pl_exec.c:6981
 #, c-format
 msgid "type of parameter %d (%s) does not match that when preparing the plan (%s)"
 msgstr "პარამეტრის %d (%s) ტიპი არ ემთხვევა იმას, რომლითაც გეგმა მზადდებოდა (%s)"
 
-#: pl_exec.c:7390 pl_exec.c:7424 pl_exec.c:7498 pl_exec.c:7524
+#: pl_exec.c:7392 pl_exec.c:7426 pl_exec.c:7500 pl_exec.c:7526
 #, c-format
 msgid "number of source and target fields in assignment does not match"
 msgstr "ტოლობაში საწყისი და სამიზნე ველების რაოდენობა არ ემთხვევა"
 
 #. translator: %s represents a name of an extra check
-#: pl_exec.c:7392 pl_exec.c:7426 pl_exec.c:7500 pl_exec.c:7526
+#: pl_exec.c:7394 pl_exec.c:7428 pl_exec.c:7502 pl_exec.c:7528
 #, c-format
 msgid "%s check of %s is active."
 msgstr "აქტიურია %s შემოწმება %s -დან."
 
-#: pl_exec.c:7396 pl_exec.c:7430 pl_exec.c:7504 pl_exec.c:7530
+#: pl_exec.c:7398 pl_exec.c:7432 pl_exec.c:7506 pl_exec.c:7532
 #, c-format
 msgid "Make sure the query returns the exact list of columns."
 msgstr "დარწმუნდით, რომ მოთხოვნა სვეტების ზუსტ ჩამონათვალს აბრუნებს."
 
-#: pl_exec.c:7917
+#: pl_exec.c:7919
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "ჩანაწერი %s ჯერ მიუნიჭებელია"
 
-#: pl_exec.c:7918
+#: pl_exec.c:7920
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr "ჩანაწერის , რომელსაც მნიშვნელობა ჯერ მინიჭებული არ აქვს, კორტეჟის სტრუქტურა გაურკვეველია."
 
-#: pl_exec.c:8671 pl_gram.y:3572
+#: pl_exec.c:8159
+#, c-format
+msgid "cannot cast type %s to %s"
+msgstr "%s ტიპის %s-ში გადაყვანა შეუძლებელია"
+
+#: pl_exec.c:8681 pl_gram.y:3572
 #, c-format
 msgid "variable \"%s\" is declared CONSTANT"
 msgstr "ცვლადი \"%s\" გამოცხადდა, როგორც CONSTANT"
@@ -871,4 +876,3 @@ msgstr "%s შეყვანის ბოლოს"
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s \"%s\"-სთან ან ახლოს"
-

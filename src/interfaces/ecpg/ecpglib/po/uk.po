@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-02-24 00:09+0000\n"
-"PO-Revision-Date: 2024-09-23 19:38\n"
+"POT-Creation-Date: 2026-09-05 00:40+0000\n"
+"PO-Revision-Date: 2026-09-05 17:30\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,18 +14,17 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_17_STABLE/ecpglib.pot\n"
-"X-Crowdin-File-ID: 1022\n"
+"X-Crowdin-File: /REL_19_STABLE/ecpglib.pot\n"
 
-#: connect.c:221
+#: connect.c:226
 msgid "empty message text"
 msgstr "пусте повідомлення"
 
-#: connect.c:386 connect.c:645
+#: connect.c:393 connect.c:665
 msgid "<DEFAULT>"
 msgstr "<ЗА_ЗАМОВЧУВАННЯМ>"
 
-#: descriptor.c:866 misc.c:88
+#: descriptor.c:485 descriptor.c:883 misc.c:88
 msgid "NULL"
 msgstr "NULL"
 
@@ -122,79 +121,85 @@ msgstr "вставлення масиву змінних не підтримує
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:137
 #, c-format
+msgid "invalid input syntax for type bytea: \"%s\", on line %d"
+msgstr "неприпустимий синтаксис для типу bytea: \"%s\" в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
+#, c-format
 msgid "connection \"%s\" does not exist on line %d"
 msgstr "підключення \"%s\" не існує в рядку %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:144
+#: error.c:151
 #, c-format
 msgid "not connected to connection \"%s\" on line %d"
 msgstr "не підключено до підключення \"%s\" в рядку %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:151
+#: error.c:158
 #, c-format
 msgid "invalid statement name \"%s\" on line %d"
 msgstr "неприпустимий оператор \"%s\" в рядку %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:158
+#: error.c:165
 #, c-format
 msgid "descriptor \"%s\" not found on line %d"
 msgstr "дескриптор \"%s\" не знайдено в рядку %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:165
+#: error.c:172
 #, c-format
 msgid "descriptor index out of range on line %d"
 msgstr "індекс дескриптора поза діапазоном в рядку %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:172
+#: error.c:179
 #, c-format
 msgid "unrecognized descriptor item \"%s\" on line %d"
 msgstr "нерозпізнаний елемент дескриптора \"%s\" в рядку %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:179
+#: error.c:186
 #, c-format
 msgid "variable does not have a numeric type on line %d"
 msgstr "змінна не має числового типу в рядку %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:186
+#: error.c:193
 #, c-format
 msgid "variable does not have a character type on line %d"
 msgstr "змінна не має символьного типу в рядку %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:193
+#: error.c:200
 #, c-format
 msgid "error in transaction processing on line %d"
 msgstr "помилка в транзакції в рядку %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:200
+#: error.c:207
 #, c-format
 msgid "could not connect to database \"%s\" on line %d"
 msgstr "неможливо під'єднатися до бази даних %s в рядку %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:207
+#: error.c:214
 #, c-format
 msgid "SQL error %d on line %d"
 msgstr "помилка SQL %d в рядку %d"
 
-#: error.c:253
+#: error.c:260
 msgid "the connection to the server was lost"
 msgstr "з'єднання із сервером втрачено"
 
-#: error.c:345
+#: error.c:352
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "помилка SQL: %s\n"
 
-#: execute.c:2186 execute.c:2193
+#: execute.c:2209 execute.c:2216
 msgid "<empty>"
 msgstr "<пусто>"
 

@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-10 18:24-0300\n"
-"PO-Revision-Date: 2009-02-09 13:00-0200\n"
+"POT-Creation-Date: 2026-09-05 00:40+0000\n"
+"PO-Revision-Date: 2026-09-06 18:19+0200\n"
 "Last-Translator: Fernando Ike de Oliveira <fike@midstorm.org>\n"
 "Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
@@ -19,15 +19,15 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: connect.c:243
+#: connect.c:226
 msgid "empty message text"
 msgstr "mensagem vazia"
 
-#: connect.c:410 connect.c:675
+#: connect.c:393 connect.c:665
 msgid "<DEFAULT>"
 msgstr "<PADRÃO>"
 
-#: descriptor.c:876 misc.c:119
+#: descriptor.c:485 descriptor.c:883 misc.c:88
 msgid "NULL"
 msgstr "NULL"
 
@@ -123,79 +123,86 @@ msgstr "inserir uma matriz de variáveis não é suportado na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:137
+#, fuzzy, c-format
+#| msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgid "invalid input syntax for type bytea: \"%s\", on line %d"
+msgstr "sintaxe de entrada é inválida para tipo inteiro: \"%s\", na linha %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
 #, c-format
 msgid "connection \"%s\" does not exist on line %d"
 msgstr "conexão \"%s\" não existe na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:144
+#: error.c:151
 #, c-format
 msgid "not connected to connection \"%s\" on line %d"
 msgstr "não está conectado a conexão \"%s\" na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:151
+#: error.c:158
 #, c-format
 msgid "invalid statement name \"%s\" on line %d"
 msgstr "nome de comando \"%s\" é inválido na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:158
+#: error.c:165
 #, c-format
 msgid "descriptor \"%s\" not found on line %d"
 msgstr "descritor \"%s\" não foi encontrado na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:165
+#: error.c:172
 #, c-format
 msgid "descriptor index out of range on line %d"
 msgstr "índice do descritor está fora do intervalo na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:172
+#: error.c:179
 #, c-format
 msgid "unrecognized descriptor item \"%s\" on line %d"
 msgstr "item do descritor \"%s\" é desconhecido na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:179
+#: error.c:186
 #, c-format
 msgid "variable does not have a numeric type on line %d"
 msgstr "variável não tem um tipo numérico na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:186
+#: error.c:193
 #, c-format
 msgid "variable does not have a character type on line %d"
 msgstr "variável não tem um tipo caracter na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:193
+#: error.c:200
 #, c-format
 msgid "error in transaction processing on line %d"
 msgstr "erro ao processar transação na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:200
+#: error.c:207
 #, c-format
 msgid "could not connect to database \"%s\" on line %d"
 msgstr "não pôde connectar  ao banco de dados \"%s\" na linha %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:207
+#: error.c:214
 #, c-format
 msgid "SQL error %d on line %d"
 msgstr "Erro SQL %d na linha %d"
 
-#: error.c:253
+#: error.c:260
 msgid "the connection to the server was lost"
 msgstr "a conexão com servidor foi perdida"
 
-#: error.c:345
+#: error.c:352
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "Erro SQL: %s\n"
 
-#: execute.c:2189 execute.c:2196
+#: execute.c:2209 execute.c:2216
 msgid "<empty>"
 msgstr "<vazio>"

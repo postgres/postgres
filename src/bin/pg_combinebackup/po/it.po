@@ -1,0 +1,1003 @@
+# LANGUAGE message translation file for pg_combinebackup
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_combinebackup (PostgreSQL) package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_combinebackup (PostgreSQL) 19\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2026-08-03 08:56+0000\n"
+"PO-Revision-Date: 2026-08-04 10:19+0200\n"
+"Last-Translator: Domenico Sgarbossa <sgarbossa.domenico@gmail.com>\n"
+"Language-Team: https://github.com/sbraaa\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
+#, c-format
+msgid "error: "
+msgstr "errore: "
+
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
+#, c-format
+msgid "warning: "
+msgstr "attenzione: "
+
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
+#, c-format
+msgid "detail: "
+msgstr "dettaglio: "
+
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
+#, c-format
+msgid "hint: "
+msgstr "suggerimento: "
+
+#: ../../common/controldata_utils.c:98
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "apertura del file \"%s\" in lettura non riuscita: %m"
+
+#: ../../common/controldata_utils.c:111 copy_file.c:164 load_manifest.c:161
+#: load_manifest.c:199 pg_combinebackup.c:1369 reconstruct.c:542
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "lettura del file \"%s\" non riuscita: %m"
+
+#: ../../common/controldata_utils.c:120
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "lettura del file \"%s\" non riuscita: letti %d di %zu"
+
+#: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
+#: backup_label.c:174 copy_file.c:71 pg_combinebackup.c:560 reconstruct.c:369
+#: reconstruct.c:745 write_manifest.c:187
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "chiusura del file \"%s\" non riuscita: %m"
+
+#: ../../common/controldata_utils.c:169
+msgid "byte ordering mismatch"
+msgstr "mancata corrispondenza dell'ordine dei byte"
+
+#: ../../common/controldata_utils.c:171
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"possibile mancata corrispondenza dell'ordine dei byte\n"
+"L'ordine dei byte usato per memorizzare il file pg_control potrebbe non "
+"corrispondere a\n"
+"quello usato da questo programma. In tal caso, i risultati seguenti sarebbero "
+"errati e\n"
+"l'installazione di PostgreSQL sarebbe incompatibile con questa directory dei dati."
+
+#: ../../common/controldata_utils.c:231 ../../common/file_utils.c:69
+#: ../../common/file_utils.c:370 ../../common/file_utils.c:428
+#: ../../common/file_utils.c:502 backup_label.c:143 copy_file.c:69 copy_file.c:153
+#: copy_file.c:185 copy_file.c:189 copy_file.c:239 copy_file.c:282
+#: load_manifest.c:128 pg_combinebackup.c:545 reconstruct.c:525 reconstruct.c:640
+#: write_manifest.c:250
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "apertura del file \"%s\" non riuscita: %m"
+
+#: ../../common/controldata_utils.c:250 backup_label.c:160 reconstruct.c:764
+#: write_manifest.c:260
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "scrittura del file \"%s\" non riuscita: %m"
+
+#: ../../common/controldata_utils.c:269 ../../common/file_utils.c:440
+#: ../../common/file_utils.c:510
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "fsync del file \"%s\" non riuscito: %m"
+
+#: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
+#: ../../common/jsonapi.c:2459 ../../common/parse_manifest.c:157
+#: ../../common/parse_manifest.c:852
+#, c-format
+msgid "out of memory"
+msgstr "memoria esaurita"
+
+#: ../../common/cryptohash.c:266 ../../common/cryptohash.c:272
+#: ../../common/cryptohash_openssl.c:368 ../../common/cryptohash_openssl.c:376
+msgid "success"
+msgstr "successo"
+
+#: ../../common/cryptohash.c:268 ../../common/cryptohash_openssl.c:370
+msgid "destination buffer too small"
+msgstr "buffer di destinazione troppo piccolo"
+
+#: ../../common/cryptohash_openssl.c:372
+msgid "OpenSSL failure"
+msgstr "errore di OpenSSL"
+
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "memoria esaurita\n"
+
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "impossibile duplicare un puntatore nullo (errore interno)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "dimensione della richiesta di allocazione di memoria non valida %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "dimensione della richiesta di allocazione di memoria non valida %zu * %zu\n"
+
+#: ../../common/file_utils.c:75
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "sincronizzazione del file system per il file \"%s\" non riuscita: %m"
+
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
+#: ../../fe_utils/version.c:60 backup_label.c:187 load_manifest.c:133
+#: pg_combinebackup.c:697 pg_combinebackup.c:1153 pg_combinebackup.c:1352
+#: reconstruct.c:204 reconstruct.c:422
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "lettura delle informazioni sul file \"%s\" non riuscita: %m"
+
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "questa build non supporta il metodo di sincronizzazione \"%s\""
+
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
+#: pg_combinebackup.c:955 pg_combinebackup.c:1225
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "apertura della directory \"%s\" non riuscita: %m"
+
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "lettura della directory \"%s\" non riuscita: %m"
+
+#: ../../common/file_utils.c:520
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "non è stato possibile rinominare il file \"%s\" in \"%s\": %m"
+
+#: ../../common/jsonapi.c:2484
+msgid "Recursive descent parser cannot use incremental lexer."
+msgstr "L'analizzatore a discesa ricorsiva non può usare un lexer incrementale."
+
+#: ../../common/jsonapi.c:2486
+msgid "Incremental parser requires incremental lexer."
+msgstr "L'analizzatore incrementale richiede un lexer incrementale."
+
+#: ../../common/jsonapi.c:2488
+msgid "JSON nested too deep, maximum permitted depth is 6400."
+msgstr ""
+"JSON annidato troppo in profondità, la profondità massima consentita è 6400."
+
+#: ../../common/jsonapi.c:2490
+#, c-format
+msgid "Escape sequence \"\\%.*s\" is invalid."
+msgstr "La sequenza di escape \"\\%.*s\" non è valida."
+
+#: ../../common/jsonapi.c:2494
+#, c-format
+msgid "Character with value 0x%02x must be escaped."
+msgstr "Il carattere con valore 0x%02x deve essere preceduto da escape."
+
+#: ../../common/jsonapi.c:2498
+#, c-format
+msgid "Expected end of input, but found \"%.*s\"."
+msgstr "Atteso la fine dell'input, ma trovato \"%.*s\"."
+
+#: ../../common/jsonapi.c:2501
+#, c-format
+msgid "Expected array element or \"]\", but found \"%.*s\"."
+msgstr "Atteso un elemento dell'array oppure \"]\", ma trovato \"%.*s\"."
+
+#: ../../common/jsonapi.c:2504
+#, c-format
+msgid "Expected \",\" or \"]\", but found \"%.*s\"."
+msgstr "Atteso \",\" oppure \"]\", ma trovato \"%.*s\"."
+
+#: ../../common/jsonapi.c:2507
+#, c-format
+msgid "Expected \":\", but found \"%.*s\"."
+msgstr "Atteso \":\", ma trovato \"%.*s\"."
+
+#: ../../common/jsonapi.c:2510
+#, c-format
+msgid "Expected JSON value, but found \"%.*s\"."
+msgstr "Atteso un valore JSON, ma trovato \"%.*s\"."
+
+#: ../../common/jsonapi.c:2513
+msgid "The input string ended unexpectedly."
+msgstr "La stringa di input è terminata inaspettatamente."
+
+#: ../../common/jsonapi.c:2515
+#, c-format
+msgid "Expected string or \"}\", but found \"%.*s\"."
+msgstr "Attesa una stringa oppure \"}\", ma trovato \"%.*s\"."
+
+#: ../../common/jsonapi.c:2518
+#, c-format
+msgid "Expected \",\" or \"}\", but found \"%.*s\"."
+msgstr "Atteso \",\" oppure \"}\", ma trovato \"%.*s\"."
+
+#: ../../common/jsonapi.c:2521
+#, c-format
+msgid "Expected string, but found \"%.*s\"."
+msgstr "Attesa una stringa, ma trovato \"%.*s\"."
+
+#: ../../common/jsonapi.c:2524
+#, c-format
+msgid "Token \"%.*s\" is invalid."
+msgstr "Il token \"%.*s\" non è valido."
+
+#: ../../common/jsonapi.c:2530
+msgid "\\u0000 cannot be converted to text."
+msgstr "\\u0000 non può essere convertito in testo."
+
+#: ../../common/jsonapi.c:2532
+msgid "\"\\u\" must be followed by four hexadecimal digits."
+msgstr "\"\\u\" deve essere seguito da quattro cifre esadecimali."
+
+#: ../../common/jsonapi.c:2535
+msgid ""
+"Unicode escape values cannot be used for code point values above 007F when the "
+"encoding is not UTF8."
+msgstr ""
+"I valori di escape Unicode non possono essere usati per code point superiori a "
+"007F quando la codifica non è UTF8."
+
+#: ../../common/jsonapi.c:2544
+#, c-format
+msgid "Unicode escape value could not be translated to the server's encoding %s."
+msgstr ""
+"Il valore di escape Unicode non è stato tradotto nella codifica del server %s."
+
+#: ../../common/jsonapi.c:2551
+msgid "Unicode high surrogate must not follow a high surrogate."
+msgstr "Un surrogato alto Unicode non deve seguire un altro surrogato alto."
+
+#: ../../common/jsonapi.c:2553
+msgid "Unicode low surrogate must follow a high surrogate."
+msgstr "Un surrogato basso Unicode deve seguire un surrogato alto."
+
+#: ../../common/jsonapi.c:2575
+msgid "out of memory while constructing error description"
+msgstr "memoria esaurita durante la costruzione della descrizione dell'errore"
+
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
+#, c-format
+msgid "could not initialize checksum of manifest"
+msgstr "inizializzazione del checksum del manifest non riuscita"
+
+#: ../../common/parse_manifest.c:203 ../../common/parse_manifest.c:260
+msgid "manifest ended unexpectedly"
+msgstr "il manifest è terminato inaspettatamente"
+
+#: ../../common/parse_manifest.c:209 ../../common/parse_manifest.c:861
+#, c-format
+msgid "could not update checksum of manifest"
+msgstr "aggiornamento del checksum del manifest non riuscito"
+
+#: ../../common/parse_manifest.c:301
+msgid "unexpected object start"
+msgstr "inizio di oggetto inatteso"
+
+#: ../../common/parse_manifest.c:336
+msgid "unexpected object end"
+msgstr "fine di oggetto inattesa"
+
+#: ../../common/parse_manifest.c:365
+msgid "unexpected array start"
+msgstr "inizio di array inatteso"
+
+#: ../../common/parse_manifest.c:390
+msgid "unexpected array end"
+msgstr "fine di array inattesa"
+
+#: ../../common/parse_manifest.c:417
+msgid "expected version indicator"
+msgstr "atteso un indicatore di versione"
+
+#: ../../common/parse_manifest.c:453
+msgid "unrecognized top-level field"
+msgstr "campo di primo livello non riconosciuto"
+
+#: ../../common/parse_manifest.c:472
+msgid "unexpected file field"
+msgstr "campo file inatteso"
+
+#: ../../common/parse_manifest.c:486
+msgid "unexpected WAL range field"
+msgstr "campo di intervallo WAL inatteso"
+
+#: ../../common/parse_manifest.c:492
+msgid "unexpected object field"
+msgstr "campo oggetto inatteso"
+
+#: ../../common/parse_manifest.c:582
+msgid "unexpected scalar"
+msgstr "scalare inatteso"
+
+#: ../../common/parse_manifest.c:608
+msgid "manifest version not an integer"
+msgstr "la versione del manifest non è un intero"
+
+#: ../../common/parse_manifest.c:612
+msgid "unexpected manifest version"
+msgstr "versione del manifest inattesa"
+
+#: ../../common/parse_manifest.c:636
+msgid "system identifier in manifest not an integer"
+msgstr "l'identificatore di sistema nel manifest non è un intero"
+
+#: ../../common/parse_manifest.c:661
+msgid "missing path name"
+msgstr "nome del percorso mancante"
+
+#: ../../common/parse_manifest.c:664
+msgid "both path name and encoded path name"
+msgstr "presenti sia il nome del percorso sia il nome del percorso codificato"
+
+#: ../../common/parse_manifest.c:666
+msgid "missing size"
+msgstr "dimensione mancante"
+
+#: ../../common/parse_manifest.c:669
+msgid "checksum without algorithm"
+msgstr "checksum senza algoritmo"
+
+#: ../../common/parse_manifest.c:683
+msgid "could not decode file name"
+msgstr "impossibile decodificare il nome del file"
+
+#: ../../common/parse_manifest.c:693
+msgid "file size is not an integer"
+msgstr "la dimensione del file non è un intero"
+
+#: ../../common/parse_manifest.c:699 pg_combinebackup.c:205
+#, c-format
+msgid "unrecognized checksum algorithm: \"%s\""
+msgstr "algoritmo di checksum non riconosciuto: \"%s\""
+
+#: ../../common/parse_manifest.c:718
+#, c-format
+msgid "invalid checksum for file \"%s\": \"%s\""
+msgstr "checksum non valido per il file \"%s\": \"%s\""
+
+#: ../../common/parse_manifest.c:761
+msgid "missing timeline"
+msgstr "timeline mancante"
+
+#: ../../common/parse_manifest.c:763
+msgid "missing start LSN"
+msgstr "LSN di inizio mancante"
+
+#: ../../common/parse_manifest.c:765
+msgid "missing end LSN"
+msgstr "LSN di fine mancante"
+
+#: ../../common/parse_manifest.c:771
+msgid "timeline is not an integer"
+msgstr "la timeline non è un intero"
+
+#: ../../common/parse_manifest.c:774
+msgid "could not parse start LSN"
+msgstr "analisi dell'LSN di inizio non riuscita"
+
+#: ../../common/parse_manifest.c:777
+msgid "could not parse end LSN"
+msgstr "analisi dell'LSN di fine non riuscita"
+
+#: ../../common/parse_manifest.c:842
+msgid "expected at least 2 lines"
+msgstr "attese almeno 2 righe"
+
+#: ../../common/parse_manifest.c:845
+msgid "last line not newline-terminated"
+msgstr "l'ultima riga non termina con un ritorno a capo"
+
+#: ../../common/parse_manifest.c:864
+#, c-format
+msgid "could not finalize checksum of manifest"
+msgstr "finalizzazione del checksum del manifest non riuscita"
+
+#: ../../common/parse_manifest.c:868
+#, c-format
+msgid "manifest has no checksum"
+msgstr "il manifest non ha un checksum"
+
+#: ../../common/parse_manifest.c:872
+#, c-format
+msgid "invalid manifest checksum: \"%s\""
+msgstr "checksum del manifest non valido: \"%s\""
+
+#: ../../common/parse_manifest.c:876
+#, c-format
+msgid "manifest checksum mismatch"
+msgstr "mancata corrispondenza del checksum del manifest"
+
+#: ../../common/parse_manifest.c:891
+#, c-format
+msgid "could not parse backup manifest: %s"
+msgstr "analisi del manifest di backup non riuscita: %s"
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "valore \"%s\" non valido per l'opzione %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s deve essere compreso nell'intervallo %d..%d"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "metodo di sincronizzazione sconosciuto: %s"
+
+#: ../../fe_utils/option_utils.c:139
+#, c-format
+msgid "options %s and %s cannot be used together"
+msgstr "le opzioni %s e %s non possono essere usate insieme"
+
+#: ../../fe_utils/version.c:57
+#, c-format
+msgid "could not open version file \"%s\": %m"
+msgstr "apertura del file di versione \"%s\" non riuscita: %m"
+
+#: ../../fe_utils/version.c:62 pg_combinebackup.c:1354
+#, c-format
+msgid "file \"%s\" is too large"
+msgstr "il file \"%s\" è troppo grande"
+
+#: ../../fe_utils/version.c:66
+#, c-format
+msgid "could not parse version file \"%s\""
+msgstr "analisi del file di versione \"%s\" non riuscita"
+
+#: backup_label.c:66 backup_label.c:85 backup_label.c:95
+#, c-format
+msgid "%s: could not parse %s"
+msgstr "%s: analisi di %s non riuscita"
+
+#: backup_label.c:69 backup_label.c:88
+#, c-format
+msgid "%s: improper terminator for %s"
+msgstr "%s: terminatore errato per %s"
+
+#: backup_label.c:76
+#, c-format
+msgid "%s: could not parse TLI for %s"
+msgstr "%s: analisi del TLI per %s non riuscita"
+
+#: backup_label.c:79 backup_label.c:98
+#, c-format
+msgid "%s: invalid TLI"
+msgstr "%s: TLI non valido"
+
+#: backup_label.c:106 backup_label.c:108
+#, c-format
+msgid "%s: could not find %s"
+msgstr "%s: impossibile trovare %s"
+
+#: backup_label.c:110 backup_label.c:113
+#, c-format
+msgid "%s: %s requires %s"
+msgstr "%s: %s richiede %s"
+
+#: backup_label.c:162 reconstruct.c:766
+#, c-format
+msgid "could not write file \"%s\": wrote %d of %d"
+msgstr "scrittura del file \"%s\" non riuscita: scritti %d di %d"
+
+#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:726
+#: reconstruct.c:772 write_manifest.c:270
+#, c-format
+msgid "could not update checksum of file \"%s\""
+msgstr "aggiornamento del checksum del file \"%s\" non riuscito"
+
+#: copy_file.c:200
+#, c-format
+msgid "could not write to file \"%s\": %m"
+msgstr "scrittura nel file \"%s\" non riuscita: %m"
+
+#: copy_file.c:202
+#, c-format
+msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
+msgstr "scrittura nel file \"%s\" non riuscita, offset %u: scritti %d di %d"
+
+#: copy_file.c:213 reconstruct.c:789
+#, c-format
+msgid "could not read from file \"%s\": %m"
+msgstr "lettura dal file \"%s\" non riuscita: %m"
+
+#: copy_file.c:232
+#, c-format
+msgid "error while cloning file \"%s\" to \"%s\": %m"
+msgstr "errore durante la clonazione del file \"%s\" in \"%s\": %m"
+
+#: copy_file.c:243 copy_file.c:286
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "creazione del file \"%s\" non riuscita: %m"
+
+#: copy_file.c:251
+#, c-format
+msgid "error while cloning file \"%s\" to \"%s\": %s"
+msgstr "errore durante la clonazione del file \"%s\" in \"%s\": %s"
+
+#: copy_file.c:259 pg_combinebackup.c:263
+#, c-format
+msgid "file cloning not supported on this platform"
+msgstr "la clonazione dei file non è supportata su questa piattaforma"
+
+#: copy_file.c:292 reconstruct.c:706
+#, c-format
+msgid "error while copying file range from \"%s\" to \"%s\": %m"
+msgstr "errore durante la copia dell'intervallo di file da \"%s\" a \"%s\": %m"
+
+#: copy_file.c:299 pg_combinebackup.c:276 reconstruct.c:729
+#, c-format
+msgid "copy_file_range not supported on this platform"
+msgstr "copy_file_range non è supportata su questa piattaforma"
+
+#: copy_file.c:314
+#, c-format
+msgid "could not copy file \"%s\" to \"%s\": %m"
+msgstr "copia del file \"%s\" in \"%s\" non riuscita: %m"
+
+#: copy_file.c:333
+#, c-format
+msgid "could not create link from \"%s\" to \"%s\": %m"
+msgstr "creazione del link da \"%s\" a \"%s\" non riuscita: %m"
+
+#: load_manifest.c:125
+#, c-format
+msgid "file \"%s\" does not exist"
+msgstr "il file \"%s\" non esiste"
+
+#: load_manifest.c:163
+#, c-format
+msgid "could not read file \"%s\": read %d of %lld"
+msgstr "lettura del file \"%s\" non riuscita: letti %d di %lld"
+
+#: load_manifest.c:201
+#, c-format
+msgid "could not read file \"%s\": read %lld of %lld"
+msgstr "lettura del file \"%s\" non riuscita: letti %lld di %lld"
+
+#: load_manifest.c:248
+#, c-format
+msgid "backup manifest version 1 does not support incremental backup"
+msgstr "la versione 1 del manifest di backup non supporta il backup incrementale"
+
+#: load_manifest.c:280
+#, c-format
+msgid "duplicate path name in backup manifest: \"%s\""
+msgstr "nome di percorso duplicato nel manifest di backup: \"%s\""
+
+#: pg_combinebackup.c:226 pg_combinebackup.c:234
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "Prova \"%s --help\" per maggiori informazioni."
+
+#: pg_combinebackup.c:233
+#, c-format
+msgid "no input directories specified"
+msgstr "nessuna directory di input specificata"
+
+#: pg_combinebackup.c:239
+#, c-format
+msgid "no output directory specified"
+msgstr "nessuna directory di output specificata"
+
+#: pg_combinebackup.c:247
+#, c-format
+msgid "executing in dry-run mode"
+msgstr "esecuzione in modalità dry-run in corso"
+
+#: pg_combinebackup.c:248
+#, c-format
+msgid "The target directory will not be modified."
+msgstr "La directory di destinazione non sarà modificata."
+
+#: pg_combinebackup.c:284
+#, c-format
+msgid "server version too old"
+msgstr "versione del server troppo vecchia"
+
+#: pg_combinebackup.c:318
+#, c-format
+msgid "%s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
+msgstr ""
+"%s: l'identificatore di sistema nel manifest è %<PRIu64>, ma il file di controllo "
+"ha %<PRIu64>"
+
+#: pg_combinebackup.c:357
+#, c-format
+msgid ""
+"cannot generate a manifest because no manifest is available for the final input "
+"backup"
+msgstr ""
+"impossibile generare un manifest perché non è disponibile nessun manifest per "
+"l'ultimo backup di input"
+
+#: pg_combinebackup.c:404
+#, c-format
+msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
+msgstr "creazione del link simbolico da \"%s\" a \"%s\" non riuscita: %m"
+
+#: pg_combinebackup.c:416 pg_combinebackup.c:751 pg_combinebackup.c:949
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "creazione della directory \"%s\" non riuscita: %m"
+
+#: pg_combinebackup.c:446
+#, c-format
+msgid ""
+"--link mode was used; any modifications to the output directory might "
+"destructively modify input directories"
+msgstr ""
+"è stata usata la modalità --link; eventuali modifiche alla directory di output "
+"potrebbero modificare in modo distruttivo le directory di input"
+
+#: pg_combinebackup.c:476
+#, c-format
+msgid "directory name too long"
+msgstr "nome della directory troppo lungo"
+
+#: pg_combinebackup.c:483
+#, c-format
+msgid "multiple \"=\" signs in tablespace mapping"
+msgstr "più segni \"=\" nella mappatura del tablespace"
+
+#: pg_combinebackup.c:491
+#, c-format
+msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
+msgstr ""
+"formato della mappatura del tablespace non valido \"%s\", deve essere "
+"\"VECCHIADIR=NUOVADIR\""
+
+#: pg_combinebackup.c:502
+#, c-format
+msgid "old directory is not an absolute path in tablespace mapping: %s"
+msgstr ""
+"la vecchia directory non è un percorso assoluto nella mappatura del tablespace: %s"
+
+#: pg_combinebackup.c:506
+#, c-format
+msgid "new directory is not an absolute path in tablespace mapping: %s"
+msgstr ""
+"la nuova directory non è un percorso assoluto nella mappatura del tablespace: %s"
+
+#: pg_combinebackup.c:575
+#, c-format
+msgid ""
+"backup at \"%s\" is a full backup, but only the first backup should be a full "
+"backup"
+msgstr ""
+"il backup in \"%s\" è un backup completo, ma solo il primo backup dovrebbe essere "
+"completo"
+
+#: pg_combinebackup.c:578
+#, c-format
+msgid ""
+"backup at \"%s\" is an incremental backup, but the first backup should be a full "
+"backup"
+msgstr ""
+"il backup in \"%s\" è un backup incrementale, ma il primo backup dovrebbe essere "
+"completo"
+
+#: pg_combinebackup.c:581
+#, c-format
+msgid "backup at \"%s\" starts on timeline %u, but expected %u"
+msgstr "il backup in \"%s\" inizia sulla timeline %u, ma era attesa %u"
+
+#: pg_combinebackup.c:584
+#, c-format
+msgid "backup at \"%s\" starts at LSN %X/%08X, but expected %X/%08X"
+msgstr "il backup in \"%s\" inizia all'LSN %X/%08X, ma era atteso %X/%08X"
+
+#: pg_combinebackup.c:636
+#, c-format
+msgid "%s: CRC is incorrect"
+msgstr "%s: il CRC non è corretto"
+
+#: pg_combinebackup.c:640
+#, c-format
+msgid "%s: unexpected control file version"
+msgstr "%s: versione del file di controllo inattesa"
+
+#: pg_combinebackup.c:647
+#, c-format
+msgid "%s: expected system identifier %<PRIu64>, but found %<PRIu64>"
+msgstr "%s: atteso l'identificatore di sistema %<PRIu64>, ma trovato %<PRIu64>"
+
+#: pg_combinebackup.c:678
+#, c-format
+msgid "only some backups have checksums enabled"
+msgstr "solo alcuni backup hanno i checksum abilitati"
+
+#: pg_combinebackup.c:679
+#, c-format
+msgid ""
+"Disable, and optionally reenable, checksums on the output directory to avoid "
+"failures."
+msgstr ""
+"Disabilita, ed eventualmente riabilita, i checksum sulla directory di output per "
+"evitare errori."
+
+#: pg_combinebackup.c:714
+#, c-format
+msgid "removing output directory \"%s\""
+msgstr "rimozione della directory di output \"%s\""
+
+#: pg_combinebackup.c:716
+#, c-format
+msgid "failed to remove output directory"
+msgstr "rimozione della directory di output non riuscita"
+
+#: pg_combinebackup.c:720
+#, c-format
+msgid "removing contents of output directory \"%s\""
+msgstr "rimozione del contenuto della directory di output \"%s\""
+
+#: pg_combinebackup.c:723
+#, c-format
+msgid "failed to remove contents of output directory"
+msgstr "rimozione del contenuto della directory di output non riuscita"
+
+#: pg_combinebackup.c:763
+#, c-format
+msgid "directory \"%s\" exists but is not empty"
+msgstr "la directory \"%s\" esiste ma non è vuota"
+
+#: pg_combinebackup.c:766
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "accesso alla directory \"%s\" non riuscito: %m"
+
+#: pg_combinebackup.c:780
+#, c-format
+msgid ""
+"%s reconstructs full backups from incrementals.\n"
+"\n"
+msgstr ""
+"%s ricostruisce backup completi a partire da backup incrementali.\n"
+"\n"
+
+#: pg_combinebackup.c:781
+#, c-format
+msgid "Usage:\n"
+msgstr "Uso:\n"
+
+#: pg_combinebackup.c:782
+#, c-format
+msgid "  %s [OPTION]... DIRECTORY...\n"
+msgstr "  %s [OPZIONE]... DIRECTORY...\n"
+
+#: pg_combinebackup.c:783
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Opzioni:\n"
+
+#: pg_combinebackup.c:784
+#, c-format
+msgid "  -d, --debug               generate lots of debugging output\n"
+msgstr "  -d, --debug               genera molto output di debug\n"
+
+#: pg_combinebackup.c:785
+#, c-format
+msgid "  -k, --link                link files instead of copying\n"
+msgstr "  -k, --link                collega i file invece di copiarli\n"
+
+#: pg_combinebackup.c:786
+#, c-format
+msgid "  -n, --dry-run             do not actually do anything\n"
+msgstr "  -n, --dry-run             non eseguire effettivamente nessuna azione\n"
+
+#: pg_combinebackup.c:787
+#, c-format
+msgid ""
+"  -N, --no-sync             do not wait for changes to be written safely to disk\n"
+msgstr ""
+"  -N, --no-sync             non attendere che le modifiche siano scritte in modo "
+"sicuro sul disco\n"
+
+#: pg_combinebackup.c:788
+#, c-format
+msgid "  -o, --output=DIRECTORY    output directory\n"
+msgstr "  -o, --output=DIRECTORY    directory di output\n"
+
+#: pg_combinebackup.c:789
+#, c-format
+msgid ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                            relocate tablespace in OLDDIR to NEWDIR\n"
+msgstr ""
+"  -T, --tablespace-mapping=VECCHIADIR=NUOVADIR\n"
+"                            sposta il tablespace da VECCHIADIR a NUOVADIR\n"
+
+#: pg_combinebackup.c:791
+#, c-format
+msgid "      --clone               clone (reflink) files instead of copying\n"
+msgstr "      --clone               clona (reflink) i file invece di copiarli\n"
+
+#: pg_combinebackup.c:792
+#, c-format
+msgid "      --copy                copy files (default)\n"
+msgstr "      --copy                copia i file (predefinito)\n"
+
+#: pg_combinebackup.c:793
+#, c-format
+msgid "      --copy-file-range     copy using copy_file_range() system call\n"
+msgstr "      --copy-file-range     copia usando la system call copy_file_range()\n"
+
+#: pg_combinebackup.c:794
+#, c-format
+msgid ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                            use algorithm for manifest checksums\n"
+msgstr ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                            usa l'algoritmo indicato per i checksum del manifest\n"
+
+#: pg_combinebackup.c:796
+#, c-format
+msgid "      --no-manifest         suppress generation of backup manifest\n"
+msgstr "      --no-manifest         non generare il manifest di backup\n"
+
+#: pg_combinebackup.c:797
+#, c-format
+msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
+msgstr ""
+"      --sync-method=METODO  imposta il metodo per sincronizzare i file su disco\n"
+
+#: pg_combinebackup.c:798
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr ""
+"  -V, --version             mostra le informazioni sulla versione, poi esci\n"
+
+#: pg_combinebackup.c:799
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                mostra questo aiuto, poi esci\n"
+
+#: pg_combinebackup.c:801
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Segnala i bug a <%s>.\n"
+
+#: pg_combinebackup.c:802
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "Pagina iniziale di %s: <%s>\n"
+
+#: pg_combinebackup.c:1017
+#, c-format
+msgid "skipping symbolic link \"%s\""
+msgstr "link simbolico \"%s\" saltato"
+
+#: pg_combinebackup.c:1019
+#, c-format
+msgid "skipping special file \"%s\""
+msgstr "file speciale \"%s\" saltato"
+
+#: pg_combinebackup.c:1095 reconstruct.c:305
+#, c-format
+msgid "manifest file \"%s\" contains no entry for file \"%s\""
+msgstr "il file manifest \"%s\" non contiene nessuna voce per il file \"%s\""
+
+#: pg_combinebackup.c:1278
+#, c-format
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "lettura del link simbolico \"%s\" non riuscita: %m"
+
+#: pg_combinebackup.c:1281
+#, c-format
+msgid "target of symbolic link \"%s\" is too long"
+msgstr "la destinazione del link simbolico \"%s\" è troppo lunga"
+
+#: pg_combinebackup.c:1284
+#, c-format
+msgid "target of symbolic link \"%s\" is relative"
+msgstr "la destinazione del link simbolico \"%s\" è relativa"
+
+#: pg_combinebackup.c:1306
+#, c-format
+msgid "tablespace at \"%s\" has no tablespace mapping"
+msgstr "il tablespace in \"%s\" non ha nessuna mappatura del tablespace"
+
+#: pg_combinebackup.c:1324
+#, c-format
+msgid "tablespaces with OIDs %u and %u both point at directory \"%s\""
+msgstr "i tablespace con OID %u e %u puntano entrambi alla directory \"%s\""
+
+#: pg_combinebackup.c:1333
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "chiusura della directory \"%s\" non riuscita: %m"
+
+#: pg_combinebackup.c:1371
+#, c-format
+msgid "could not read file \"%s\": read %zd of %lld"
+msgstr "lettura del file \"%s\" non riuscita: letti %zd di %lld"
+
+#: reconstruct.c:339
+#, c-format
+msgid "full backup contains unexpected incremental file \"%s\""
+msgstr "il backup completo contiene un file incrementale inatteso \"%s\""
+
+#: reconstruct.c:424
+#, c-format
+msgid "file \"%s\" is too short: expected %llu, found %llu"
+msgstr "il file \"%s\" è troppo corto: atteso %llu, trovato %llu"
+
+#: reconstruct.c:466
+#, c-format
+msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
+msgstr "il file \"%s\" ha un numero magico incrementale errato (0x%x, atteso 0x%x)"
+
+#: reconstruct.c:472
+#, c-format
+msgid "file \"%s\" has block count %u in excess of segment size %u"
+msgstr ""
+"il file \"%s\" ha un numero di blocchi %u superiore alla dimensione del segmento "
+"%u"
+
+#: reconstruct.c:479
+#, c-format
+msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
+msgstr ""
+"il file \"%s\" ha una lunghezza di blocco di troncamento %u superiore alla "
+"dimensione del segmento %u"
+
+#: reconstruct.c:544
+#, c-format
+msgid "could not read file \"%s\": read %d of %u"
+msgstr "lettura del file \"%s\" non riuscita: letti %d di %u"
+
+#: reconstruct.c:709
+#, c-format
+msgid "unexpected end of file while copying file range from \"%s\" to \"%s\""
+msgstr ""
+"fine del file inattesa durante la copia dell'intervallo di file da \"%s\" a \"%s\""
+
+#: reconstruct.c:791
+#, c-format
+msgid "could not read from file \"%s\", offset %llu: read %d of %d"
+msgstr "lettura dal file \"%s\" non riuscita, offset %llu: letti %d di %d"
+
+#: write_manifest.c:262
+#, c-format
+msgid "could not write file \"%s\": wrote %zd of %d"
+msgstr "scrittura del file \"%s\" non riuscita: scritti %zd di %d"

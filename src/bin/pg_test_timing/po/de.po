@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-07-04 06:24+0000\n"
+"POT-Creation-Date: 2026-09-04 10:24+0000\n"
 "PO-Revision-Date: 2026-08-04 14:02+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -98,12 +98,12 @@ msgstr "TSC-Frequenz aus Kalibrierung: %d kHz\n"
 #: pg_test_timing.c:223
 #, c-format
 msgid "WARNING: Calibrated TSC frequency differs by %.1f%% from the TSC frequency in use\n"
-msgstr ""
+msgstr "WARNUNG: Kalibrierte TSC-Frequenz weicht um %.1f%% von der TSC-Frequenz in Benutzung ab\n"
 
 #: pg_test_timing.c:225
 #, c-format
 msgid "HINT: Consider setting timing_clock_source to 'system'. Report bugs to <%s>.\n"
-msgstr ""
+msgstr "HINWEIS: Erwägen Sie, timing_clock_source auf »system« zu setzen. Berichten Sie Fehler an <%s>.\n"
 
 #: pg_test_timing.c:230
 #, c-format
@@ -192,7 +192,7 @@ msgstr "Anzahl"
 #: pg_test_timing.c:375
 #, c-format
 msgid "WARNING: No timing measurements collected. Report this as a bug to <%s>.\n"
-msgstr ""
+msgstr "WARNUNG: Keine Zeitmessungen gesammelt. Berichten Sie dies als Fehler an <%s>.\n"
 
 #: pg_test_timing.c:389
 #, c-format

@@ -1,0 +1,979 @@
+# LANGUAGE message translation file for pg_combinebackup
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_combinebackup (PostgreSQL) package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+# Recalibrated and completed via the pgsql.cc NLS review workbench.
+# Feng Ruohang <rh@vonng.com>, 2026.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 19\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2026-09-17 05:55+0000\n"
+"PO-Revision-Date: 2026-09-17 16:00+0800\n"
+"Last-Translator: Feng Ruohang <rh@vonng.com>\n"
+"Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
+#, c-format
+msgid "error: "
+msgstr "错误: "
+
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
+#, c-format
+msgid "warning: "
+msgstr "警告: "
+
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
+#, c-format
+msgid "detail: "
+msgstr "详情: "
+
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
+#, c-format
+msgid "hint: "
+msgstr "提示: "
+
+#: ../../common/controldata_utils.c:98
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "无法打开文件 \"%s\" 进行读取: %m"
+
+#: ../../common/controldata_utils.c:111 copy_file.c:164 load_manifest.c:161
+#: load_manifest.c:199 pg_combinebackup.c:1369 reconstruct.c:542
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "无法读取文件 \"%s\": %m"
+
+#: ../../common/controldata_utils.c:120
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "无法读取文件 \"%1$s\": 应读取 %3$zu，实际读取 %2$d"
+
+#: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
+#: backup_label.c:174 copy_file.c:71 pg_combinebackup.c:560 reconstruct.c:369
+#: reconstruct.c:745 write_manifest.c:187
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "无法关闭文件 \"%s\": %m"
+
+#: ../../common/controldata_utils.c:169
+msgid "byte ordering mismatch"
+msgstr "字节序不匹配"
+
+#: ../../common/controldata_utils.c:171
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, "
+"and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"可能存在字节序不匹配\n"
+"存储 pg_control 文件时使用的字节序可能与本程序使用的\n"
+"字节序不一致。若确实如此，下列结果将不正确，且\n"
+"安装的 PostgreSQL 将与此数据目录不兼容。"
+
+#: ../../common/controldata_utils.c:231 ../../common/file_utils.c:69
+#: ../../common/file_utils.c:370 ../../common/file_utils.c:428
+#: ../../common/file_utils.c:502 backup_label.c:143 copy_file.c:69
+#: copy_file.c:153 copy_file.c:185 copy_file.c:189 copy_file.c:239
+#: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:545 reconstruct.c:525
+#: reconstruct.c:640 write_manifest.c:250
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "无法打开文件 \"%s\": %m"
+
+#: ../../common/controldata_utils.c:250 backup_label.c:160 reconstruct.c:764
+#: write_manifest.c:260
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "无法写入文件 \"%s\": %m"
+
+#: ../../common/controldata_utils.c:269 ../../common/file_utils.c:440
+#: ../../common/file_utils.c:510
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "无法对文件 \"%s\" 执行 fsync: %m"
+
+#: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
+#: ../../common/jsonapi.c:2459 ../../common/parse_manifest.c:157
+#: ../../common/parse_manifest.c:852
+#, c-format
+msgid "out of memory"
+msgstr "内存不足"
+
+#: ../../common/cryptohash.c:266 ../../common/cryptohash.c:272
+#: ../../common/cryptohash_openssl.c:368 ../../common/cryptohash_openssl.c:376
+msgid "success"
+msgstr "成功"
+
+#: ../../common/cryptohash.c:268 ../../common/cryptohash_openssl.c:370
+msgid "destination buffer too small"
+msgstr "目标缓冲区过小"
+
+#: ../../common/cryptohash_openssl.c:372
+msgid "OpenSSL failure"
+msgstr "OpenSSL 失败"
+
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "内存不足\n"
+
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能复制空指针（内部错误）\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "无效的内存分配请求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "无效的内存分配请求大小 %zu * %zu\n"
+
+#: ../../common/file_utils.c:75
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "无法同步文件 \"%s\" 所在的文件系统: %m"
+
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
+#: ../../fe_utils/version.c:60 backup_label.c:187 load_manifest.c:133
+#: pg_combinebackup.c:697 pg_combinebackup.c:1153 pg_combinebackup.c:1352
+#: reconstruct.c:204 reconstruct.c:422
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "无法获取文件 \"%s\" 的状态: %m"
+
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "此构建版本不支持同步方法 \"%s\""
+
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
+#: pg_combinebackup.c:955 pg_combinebackup.c:1225
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "无法打开目录 \"%s\": %m"
+
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "无法读取目录 \"%s\": %m"
+
+#: ../../common/file_utils.c:520
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "无法把文件 \"%s\" 重命名为 \"%s\": %m"
+
+#: ../../common/jsonapi.c:2484
+msgid "Recursive descent parser cannot use incremental lexer."
+msgstr "递归下降解析器不能使用增量词法分析器。"
+
+#: ../../common/jsonapi.c:2486
+msgid "Incremental parser requires incremental lexer."
+msgstr "增量解析器需要增量词法分析器。"
+
+#: ../../common/jsonapi.c:2488
+msgid "JSON nested too deep, maximum permitted depth is 6400."
+msgstr "JSON 嵌套过深，允许的最大深度为 6400。"
+
+#: ../../common/jsonapi.c:2490
+#, c-format
+msgid "Escape sequence \"\\%.*s\" is invalid."
+msgstr "转义序列 \"\\%.*s\" 无效。"
+
+#: ../../common/jsonapi.c:2494
+#, c-format
+msgid "Character with value 0x%02x must be escaped."
+msgstr "值为 0x%02x 的字符必须进行转义处理。"
+
+#: ../../common/jsonapi.c:2498
+#, c-format
+msgid "Expected end of input, but found \"%.*s\"."
+msgstr "预期为输入结束，实际为 \"%.*s\"。"
+
+#: ../../common/jsonapi.c:2501
+#, c-format
+msgid "Expected array element or \"]\", but found \"%.*s\"."
+msgstr "预期为数组元素或 \"]\"，实际为 \"%.*s\"。"
+
+#: ../../common/jsonapi.c:2504
+#, c-format
+msgid "Expected \",\" or \"]\", but found \"%.*s\"."
+msgstr "预期为 \",\" 或 \"]\"，实际为 \"%.*s\"。"
+
+#: ../../common/jsonapi.c:2507
+#, c-format
+msgid "Expected \":\", but found \"%.*s\"."
+msgstr "预期为 \":\"，实际为 \"%.*s\"。"
+
+#: ../../common/jsonapi.c:2510
+#, c-format
+msgid "Expected JSON value, but found \"%.*s\"."
+msgstr "预期为 JSON 值，实际为 \"%.*s\"。"
+
+#: ../../common/jsonapi.c:2513
+msgid "The input string ended unexpectedly."
+msgstr "输入字符串意外结束。"
+
+#: ../../common/jsonapi.c:2515
+#, c-format
+msgid "Expected string or \"}\", but found \"%.*s\"."
+msgstr "预期为字符串或 \"}\"，实际为 \"%.*s\"。"
+
+#: ../../common/jsonapi.c:2518
+#, c-format
+msgid "Expected \",\" or \"}\", but found \"%.*s\"."
+msgstr "预期为 \",\" 或 \"}\"，实际为 \"%.*s\"。"
+
+#: ../../common/jsonapi.c:2521
+#, c-format
+msgid "Expected string, but found \"%.*s\"."
+msgstr "预期为字符串，实际为 \"%.*s\"。"
+
+#: ../../common/jsonapi.c:2524
+#, c-format
+msgid "Token \"%.*s\" is invalid."
+msgstr "词元 \"%.*s\" 无效。"
+
+#: ../../common/jsonapi.c:2530
+msgid "\\u0000 cannot be converted to text."
+msgstr "\\u0000 不能转换为文本。"
+
+#: ../../common/jsonapi.c:2532
+msgid "\"\\u\" must be followed by four hexadecimal digits."
+msgstr "\"\\u\" 后必须跟随四个十六进制数字。"
+
+#: ../../common/jsonapi.c:2535
+msgid ""
+"Unicode escape values cannot be used for code point values above 007F when "
+"the encoding is not UTF8."
+msgstr "当编码不是 UTF8 时，不能对大于 007F 的码位值使用 Unicode 转义值。"
+
+#: ../../common/jsonapi.c:2544
+#, c-format
+msgid ""
+"Unicode escape value could not be translated to the server's encoding %s."
+msgstr "Unicode 转义值无法转换为服务器编码 %s。"
+
+#: ../../common/jsonapi.c:2551
+msgid "Unicode high surrogate must not follow a high surrogate."
+msgstr "Unicode 高位代理项不得紧随高位代理项。"
+
+#: ../../common/jsonapi.c:2553
+msgid "Unicode low surrogate must follow a high surrogate."
+msgstr "Unicode 低位代理项必须紧随高位代理项。"
+
+#: ../../common/jsonapi.c:2575
+msgid "out of memory while constructing error description"
+msgstr "构造错误描述时内存不足"
+
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
+#, c-format
+msgid "could not initialize checksum of manifest"
+msgstr "无法初始化清单的校验和"
+
+#: ../../common/parse_manifest.c:203 ../../common/parse_manifest.c:260
+msgid "manifest ended unexpectedly"
+msgstr "清单意外结束"
+
+#: ../../common/parse_manifest.c:209 ../../common/parse_manifest.c:861
+#, c-format
+msgid "could not update checksum of manifest"
+msgstr "无法更新清单的校验和"
+
+#: ../../common/parse_manifest.c:301
+msgid "unexpected object start"
+msgstr "意外的对象开始"
+
+#: ../../common/parse_manifest.c:336
+msgid "unexpected object end"
+msgstr "意外的对象结束"
+
+#: ../../common/parse_manifest.c:365
+msgid "unexpected array start"
+msgstr "意外的数组开始"
+
+#: ../../common/parse_manifest.c:390
+msgid "unexpected array end"
+msgstr "意外的数组结束"
+
+#: ../../common/parse_manifest.c:417
+msgid "expected version indicator"
+msgstr "预期为版本标识"
+
+#: ../../common/parse_manifest.c:453
+msgid "unrecognized top-level field"
+msgstr "无法识别的顶层字段"
+
+#: ../../common/parse_manifest.c:472
+msgid "unexpected file field"
+msgstr "意外的文件字段"
+
+#: ../../common/parse_manifest.c:486
+msgid "unexpected WAL range field"
+msgstr "意外的 WAL 范围字段"
+
+#: ../../common/parse_manifest.c:492
+msgid "unexpected object field"
+msgstr "意外的对象字段"
+
+#: ../../common/parse_manifest.c:582
+msgid "unexpected scalar"
+msgstr "意外的标量"
+
+#: ../../common/parse_manifest.c:608
+msgid "manifest version not an integer"
+msgstr "清单版本不是整数"
+
+#: ../../common/parse_manifest.c:612
+msgid "unexpected manifest version"
+msgstr "意外的清单版本"
+
+#: ../../common/parse_manifest.c:636
+msgid "system identifier in manifest not an integer"
+msgstr "清单中的系统标识符不是整数"
+
+#: ../../common/parse_manifest.c:661
+msgid "missing path name"
+msgstr "缺少路径名"
+
+#: ../../common/parse_manifest.c:664
+msgid "both path name and encoded path name"
+msgstr "同时出现路径名和编码后的路径名"
+
+#: ../../common/parse_manifest.c:666
+msgid "missing size"
+msgstr "缺少大小"
+
+#: ../../common/parse_manifest.c:669
+msgid "checksum without algorithm"
+msgstr "校验和缺少算法"
+
+#: ../../common/parse_manifest.c:683
+msgid "could not decode file name"
+msgstr "无法解码文件名"
+
+#: ../../common/parse_manifest.c:693
+msgid "file size is not an integer"
+msgstr "文件大小不是整数"
+
+#: ../../common/parse_manifest.c:699 pg_combinebackup.c:205
+#, c-format
+msgid "unrecognized checksum algorithm: \"%s\""
+msgstr "无法识别的校验和算法: \"%s\""
+
+#: ../../common/parse_manifest.c:718
+#, c-format
+msgid "invalid checksum for file \"%s\": \"%s\""
+msgstr "文件 \"%s\" 的校验和无效: \"%s\""
+
+#: ../../common/parse_manifest.c:761
+msgid "missing timeline"
+msgstr "缺少时间线"
+
+#: ../../common/parse_manifest.c:763
+msgid "missing start LSN"
+msgstr "缺少起始 LSN"
+
+#: ../../common/parse_manifest.c:765
+msgid "missing end LSN"
+msgstr "缺少结束 LSN"
+
+#: ../../common/parse_manifest.c:771
+msgid "timeline is not an integer"
+msgstr "时间线不是整数"
+
+#: ../../common/parse_manifest.c:774
+msgid "could not parse start LSN"
+msgstr "无法解析起始 LSN"
+
+#: ../../common/parse_manifest.c:777
+msgid "could not parse end LSN"
+msgstr "无法解析结束 LSN"
+
+#: ../../common/parse_manifest.c:842
+msgid "expected at least 2 lines"
+msgstr "预期为至少 2 行"
+
+#: ../../common/parse_manifest.c:845
+msgid "last line not newline-terminated"
+msgstr "最后一行未以换行符结尾"
+
+#: ../../common/parse_manifest.c:864
+#, c-format
+msgid "could not finalize checksum of manifest"
+msgstr "无法完成清单的校验和计算"
+
+#: ../../common/parse_manifest.c:868
+#, c-format
+msgid "manifest has no checksum"
+msgstr "清单没有校验和"
+
+#: ../../common/parse_manifest.c:872
+#, c-format
+msgid "invalid manifest checksum: \"%s\""
+msgstr "清单校验和无效: \"%s\""
+
+#: ../../common/parse_manifest.c:876
+#, c-format
+msgid "manifest checksum mismatch"
+msgstr "清单校验和不匹配"
+
+#: ../../common/parse_manifest.c:891
+#, c-format
+msgid "could not parse backup manifest: %s"
+msgstr "无法解析备份清单: %s"
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "选项 %2$s 的值 \"%1$s\" 无效"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s 必须位于 %d..%d 的范围内"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "无法识别的同步方法: %s"
+
+#: ../../fe_utils/option_utils.c:139
+#, c-format
+msgid "options %s and %s cannot be used together"
+msgstr "选项 %s 和 %s 不能同时使用"
+
+#: ../../fe_utils/version.c:57
+#, c-format
+msgid "could not open version file \"%s\": %m"
+msgstr "无法打开版本文件 \"%s\": %m"
+
+#: ../../fe_utils/version.c:62 pg_combinebackup.c:1354
+#, c-format
+msgid "file \"%s\" is too large"
+msgstr "文件 \"%s\" 过大"
+
+#: ../../fe_utils/version.c:66
+#, c-format
+msgid "could not parse version file \"%s\""
+msgstr "无法解析版本文件 \"%s\""
+
+#: backup_label.c:66 backup_label.c:85 backup_label.c:95
+#, c-format
+msgid "%s: could not parse %s"
+msgstr "%s: 无法解析 %s"
+
+#: backup_label.c:69 backup_label.c:88
+#, c-format
+msgid "%s: improper terminator for %s"
+msgstr "%s: %s 的终止符不正确"
+
+#: backup_label.c:76
+#, c-format
+msgid "%s: could not parse TLI for %s"
+msgstr "%s: 无法解析 %s 的 TLI"
+
+#: backup_label.c:79 backup_label.c:98
+#, c-format
+msgid "%s: invalid TLI"
+msgstr "%s: 无效的 TLI"
+
+#: backup_label.c:106 backup_label.c:108
+#, c-format
+msgid "%s: could not find %s"
+msgstr "%s: 无法找到 %s"
+
+#: backup_label.c:110 backup_label.c:113
+#, c-format
+msgid "%s: %s requires %s"
+msgstr "%s: %s 需要 %s"
+
+#: backup_label.c:162 reconstruct.c:766
+#, c-format
+msgid "could not write file \"%s\": wrote %d of %d"
+msgstr "无法写入文件 \"%1$s\": 应写入 %3$d，实际写入 %2$d"
+
+#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:726
+#: reconstruct.c:772 write_manifest.c:270
+#, c-format
+msgid "could not update checksum of file \"%s\""
+msgstr "无法更新文件 \"%s\" 的校验和"
+
+#: copy_file.c:200
+#, c-format
+msgid "could not write to file \"%s\": %m"
+msgstr "无法写入文件 \"%s\": %m"
+
+#: copy_file.c:202
+#, c-format
+msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
+msgstr "无法在文件 \"%1$s\" 的偏移量 %2$u 处写入: 应写入 %4$d，实际写入 %3$d"
+
+#: copy_file.c:213 reconstruct.c:789
+#, c-format
+msgid "could not read from file \"%s\": %m"
+msgstr "无法读取文件 \"%s\": %m"
+
+#: copy_file.c:232
+#, c-format
+msgid "error while cloning file \"%s\" to \"%s\": %m"
+msgstr "将文件 \"%s\" 克隆到 \"%s\" 时出错: %m"
+
+#: copy_file.c:243 copy_file.c:286
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "无法创建文件 \"%s\": %m"
+
+#: copy_file.c:251
+#, c-format
+msgid "error while cloning file \"%s\" to \"%s\": %s"
+msgstr "将文件 \"%s\" 克隆到 \"%s\" 时出错: %s"
+
+#: copy_file.c:259 pg_combinebackup.c:263
+#, c-format
+msgid "file cloning not supported on this platform"
+msgstr "此平台不支持文件克隆"
+
+#: copy_file.c:292 reconstruct.c:706
+#, c-format
+msgid "error while copying file range from \"%s\" to \"%s\": %m"
+msgstr "将文件范围从 \"%s\" 复制到 \"%s\" 时出错: %m"
+
+#: copy_file.c:299 pg_combinebackup.c:276 reconstruct.c:729
+#, c-format
+msgid "copy_file_range not supported on this platform"
+msgstr "此平台不支持 copy_file_range"
+
+#: copy_file.c:314
+#, c-format
+msgid "could not copy file \"%s\" to \"%s\": %m"
+msgstr "无法把文件 \"%s\" 复制到 \"%s\": %m"
+
+#: copy_file.c:333
+#, c-format
+msgid "could not create link from \"%s\" to \"%s\": %m"
+msgstr "无法创建从 \"%s\" 到 \"%s\" 的链接: %m"
+
+#: load_manifest.c:125
+#, c-format
+msgid "file \"%s\" does not exist"
+msgstr "文件 \"%s\" 不存在"
+
+#: load_manifest.c:163
+#, c-format
+msgid "could not read file \"%s\": read %d of %lld"
+msgstr "无法读取文件 \"%1$s\": 应读取 %3$lld，实际读取 %2$d"
+
+#: load_manifest.c:201
+#, c-format
+msgid "could not read file \"%s\": read %lld of %lld"
+msgstr "无法读取文件 \"%1$s\": 应读取 %3$lld，实际读取 %2$lld"
+
+#: load_manifest.c:248
+#, c-format
+msgid "backup manifest version 1 does not support incremental backup"
+msgstr "备份清单版本 1 不支持增量备份"
+
+#: load_manifest.c:280
+#, c-format
+msgid "duplicate path name in backup manifest: \"%s\""
+msgstr "备份清单中的路径名重复: \"%s\""
+
+#: pg_combinebackup.c:226 pg_combinebackup.c:234
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "运行 \"%s --help\" 获取更多信息。"
+
+#: pg_combinebackup.c:233
+#, c-format
+msgid "no input directories specified"
+msgstr "未指定输入目录"
+
+#: pg_combinebackup.c:239
+#, c-format
+msgid "no output directory specified"
+msgstr "未指定输出目录"
+
+#: pg_combinebackup.c:247
+#, c-format
+msgid "executing in dry-run mode"
+msgstr "正在以空跑模式运行"
+
+#: pg_combinebackup.c:248
+#, c-format
+msgid "The target directory will not be modified."
+msgstr "不会修改目标目录。"
+
+#: pg_combinebackup.c:284
+#, c-format
+msgid "server version too old"
+msgstr "服务器版本过旧"
+
+#: pg_combinebackup.c:318
+#, c-format
+msgid ""
+"%s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
+msgstr "%s: 清单中的系统标识符为 %<PRIu64>，但控制文件中为 %<PRIu64>"
+
+#: pg_combinebackup.c:357
+#, c-format
+msgid ""
+"cannot generate a manifest because no manifest is available for the final "
+"input backup"
+msgstr "不能生成清单，因为最后一个输入备份没有可用清单"
+
+#: pg_combinebackup.c:404
+#, c-format
+msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
+msgstr "无法创建从 \"%s\" 到 \"%s\" 的符号链接: %m"
+
+#: pg_combinebackup.c:416 pg_combinebackup.c:751 pg_combinebackup.c:949
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "无法创建目录 \"%s\": %m"
+
+#: pg_combinebackup.c:446
+#, c-format
+msgid ""
+"--link mode was used; any modifications to the output directory might "
+"destructively modify input directories"
+msgstr "已使用 --link 模式；对输出目录的任何修改都可能对输入目录造成破坏性改动"
+
+#: pg_combinebackup.c:476
+#, c-format
+msgid "directory name too long"
+msgstr "目录名过长"
+
+#: pg_combinebackup.c:483
+#, c-format
+msgid "multiple \"=\" signs in tablespace mapping"
+msgstr "表空间映射中出现多个 \"=\" 号"
+
+#: pg_combinebackup.c:491
+#, c-format
+msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
+msgstr "表空间映射格式 \"%s\" 无效，必须为 \"OLDDIR=NEWDIR\""
+
+#: pg_combinebackup.c:502
+#, c-format
+msgid "old directory is not an absolute path in tablespace mapping: %s"
+msgstr "表空间映射中的旧目录不是绝对路径: %s"
+
+#: pg_combinebackup.c:506
+#, c-format
+msgid "new directory is not an absolute path in tablespace mapping: %s"
+msgstr "表空间映射中的新目录不是绝对路径: %s"
+
+#: pg_combinebackup.c:575
+#, c-format
+msgid ""
+"backup at \"%s\" is a full backup, but only the first backup should be a "
+"full backup"
+msgstr "\"%s\" 处的备份是完整备份，但只有第一个备份应为完整备份"
+
+#: pg_combinebackup.c:578
+#, c-format
+msgid ""
+"backup at \"%s\" is an incremental backup, but the first backup should be a "
+"full backup"
+msgstr "\"%s\" 处的备份是增量备份，但第一个备份应为完整备份"
+
+#: pg_combinebackup.c:581
+#, c-format
+msgid "backup at \"%s\" starts on timeline %u, but expected %u"
+msgstr "\"%s\" 处的备份起始于时间线 %u，但预期为 %u"
+
+#: pg_combinebackup.c:584
+#, c-format
+msgid "backup at \"%s\" starts at LSN %X/%08X, but expected %X/%08X"
+msgstr "\"%s\" 处的备份起始于 LSN %X/%08X，但预期为 %X/%08X"
+
+#: pg_combinebackup.c:636
+#, c-format
+msgid "%s: CRC is incorrect"
+msgstr "%s: CRC 不正确"
+
+#: pg_combinebackup.c:640
+#, c-format
+msgid "%s: unexpected control file version"
+msgstr "%s: 意外的控制文件版本"
+
+#: pg_combinebackup.c:647
+#, c-format
+msgid "%s: expected system identifier %<PRIu64>, but found %<PRIu64>"
+msgstr "%s: 预期系统标识符为 %<PRIu64>，但实际为 %<PRIu64>"
+
+#: pg_combinebackup.c:678
+#, c-format
+msgid "only some backups have checksums enabled"
+msgstr "只有部分备份已启用校验和"
+
+#: pg_combinebackup.c:679
+#, c-format
+msgid ""
+"Disable, and optionally reenable, checksums on the output directory to avoid "
+"failures."
+msgstr "禁用输出目录上的校验和，并可选择重新启用，以免发生失败。"
+
+#: pg_combinebackup.c:714
+#, c-format
+msgid "removing output directory \"%s\""
+msgstr "正在删除输出目录 \"%s\""
+
+#: pg_combinebackup.c:716
+#, c-format
+msgid "failed to remove output directory"
+msgstr "删除输出目录失败"
+
+#: pg_combinebackup.c:720
+#, c-format
+msgid "removing contents of output directory \"%s\""
+msgstr "正在删除输出目录 \"%s\" 的内容"
+
+#: pg_combinebackup.c:723
+#, c-format
+msgid "failed to remove contents of output directory"
+msgstr "删除输出目录内容失败"
+
+#: pg_combinebackup.c:763
+#, c-format
+msgid "directory \"%s\" exists but is not empty"
+msgstr "目录 \"%s\" 已存在，但不为空"
+
+#: pg_combinebackup.c:766
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "无法访问目录 \"%s\": %m"
+
+#: pg_combinebackup.c:780
+#, c-format
+msgid ""
+"%s reconstructs full backups from incrementals.\n"
+"\n"
+msgstr ""
+"%s 根据增量备份重建完整备份。\n"
+"\n"
+
+#: pg_combinebackup.c:781
+#, c-format
+msgid "Usage:\n"
+msgstr "用法:\n"
+
+#: pg_combinebackup.c:782
+#, c-format
+msgid "  %s [OPTION]... DIRECTORY...\n"
+msgstr "  %s [选项]... 目录...\n"
+
+#: pg_combinebackup.c:783
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"选项:\n"
+
+#: pg_combinebackup.c:784
+#, c-format
+msgid "  -d, --debug               generate lots of debugging output\n"
+msgstr "  -d, --debug               产生大量的调试信息\n"
+
+#: pg_combinebackup.c:785
+#, c-format
+msgid "  -k, --link                link files instead of copying\n"
+msgstr "  -k, --link                链接文件而不是复制文件\n"
+
+#: pg_combinebackup.c:786
+#, c-format
+msgid "  -n, --dry-run             do not actually do anything\n"
+msgstr "  -n, --dry-run             实际不执行任何操作\n"
+
+#: pg_combinebackup.c:787
+#, c-format
+msgid ""
+"  -N, --no-sync             do not wait for changes to be written safely to "
+"disk\n"
+msgstr "  -N, --no-sync             不等待变更安全写入磁盘\n"
+
+#: pg_combinebackup.c:788
+#, c-format
+msgid "  -o, --output=DIRECTORY    output directory\n"
+msgstr "  -o, --output=DIRECTORY    输出目录\n"
+
+#: pg_combinebackup.c:789
+#, c-format
+msgid ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                            relocate tablespace in OLDDIR to NEWDIR\n"
+msgstr ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                            将 OLDDIR 中的表空间重定位到 NEWDIR\n"
+
+#: pg_combinebackup.c:791
+#, c-format
+msgid "      --clone               clone (reflink) files instead of copying\n"
+msgstr "      --clone               克隆（reflink）文件而不是复制文件\n"
+
+#: pg_combinebackup.c:792
+#, c-format
+msgid "      --copy                copy files (default)\n"
+msgstr "      --copy                复制文件（默认）\n"
+
+#: pg_combinebackup.c:793
+#, c-format
+msgid "      --copy-file-range     copy using copy_file_range() system call\n"
+msgstr "      --copy-file-range     使用 copy_file_range() 系统调用复制\n"
+
+#: pg_combinebackup.c:794
+#, c-format
+msgid ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                            use algorithm for manifest checksums\n"
+msgstr ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                            使用指定算法计算清单校验和\n"
+
+#: pg_combinebackup.c:796
+#, c-format
+msgid "      --no-manifest         suppress generation of backup manifest\n"
+msgstr "      --no-manifest         不生成备份清单\n"
+
+#: pg_combinebackup.c:797
+#, c-format
+msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
+msgstr "      --sync-method=METHOD  设置将文件同步到磁盘的方法\n"
+
+#: pg_combinebackup.c:798
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version             输出版本信息，然后退出\n"
+
+#: pg_combinebackup.c:799
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                显示此帮助，然后退出\n"
+
+#: pg_combinebackup.c:801
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"请向 <%s> 报告缺陷。\n"
+
+#: pg_combinebackup.c:802
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 主页: <%s>\n"
+
+#: pg_combinebackup.c:1017
+#, c-format
+msgid "skipping symbolic link \"%s\""
+msgstr "正在跳过符号链接 \"%s\""
+
+#: pg_combinebackup.c:1019
+#, c-format
+msgid "skipping special file \"%s\""
+msgstr "正在跳过特殊文件 \"%s\""
+
+#: pg_combinebackup.c:1095 reconstruct.c:305
+#, c-format
+msgid "manifest file \"%s\" contains no entry for file \"%s\""
+msgstr "清单文件 \"%s\" 中没有文件 \"%s\" 的条目"
+
+#: pg_combinebackup.c:1278
+#, c-format
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "无法读取符号链接 \"%s\": %m"
+
+#: pg_combinebackup.c:1281
+#, c-format
+msgid "target of symbolic link \"%s\" is too long"
+msgstr "符号链接 \"%s\" 的目标过长"
+
+#: pg_combinebackup.c:1284
+#, c-format
+msgid "target of symbolic link \"%s\" is relative"
+msgstr "符号链接 \"%s\" 的目标是相对路径"
+
+#: pg_combinebackup.c:1306
+#, c-format
+msgid "tablespace at \"%s\" has no tablespace mapping"
+msgstr "位于 \"%s\" 的表空间没有表空间映射"
+
+#: pg_combinebackup.c:1324
+#, c-format
+msgid "tablespaces with OIDs %u and %u both point at directory \"%s\""
+msgstr "OID 为 %u 和 %u 的表空间都指向目录 \"%s\""
+
+#: pg_combinebackup.c:1333
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "无法关闭目录 \"%s\": %m"
+
+#: pg_combinebackup.c:1371
+#, c-format
+msgid "could not read file \"%s\": read %zd of %lld"
+msgstr "无法读取文件 \"%1$s\": 应读取 %3$lld，实际读取 %2$zd"
+
+#: reconstruct.c:339
+#, c-format
+msgid "full backup contains unexpected incremental file \"%s\""
+msgstr "完整备份包含意外的增量文件 \"%s\""
+
+#: reconstruct.c:424
+#, c-format
+msgid "file \"%s\" is too short: expected %llu, found %llu"
+msgstr "文件 \"%s\" 过短: 预期为 %llu，实际为 %llu"
+
+#: reconstruct.c:466
+#, c-format
+msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
+msgstr "文件 \"%s\" 的增量魔数不正确（0x%x，预期为 0x%x）"
+
+#: reconstruct.c:472
+#, c-format
+msgid "file \"%s\" has block count %u in excess of segment size %u"
+msgstr "文件 \"%s\" 的块数 %u 超过段大小 %u"
+
+#: reconstruct.c:479
+#, c-format
+msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
+msgstr "文件 \"%s\" 的截断长度为 %u 块，超过段大小 %u"
+
+#: reconstruct.c:544
+#, c-format
+msgid "could not read file \"%s\": read %d of %u"
+msgstr "无法读取文件 \"%1$s\": 应读取 %3$u，实际读取 %2$d"
+
+#: reconstruct.c:709
+#, c-format
+msgid "unexpected end of file while copying file range from \"%s\" to \"%s\""
+msgstr "将文件范围从 \"%s\" 复制到 \"%s\" 时意外到达文件末尾"
+
+#: reconstruct.c:791
+#, c-format
+msgid "could not read from file \"%s\", offset %llu: read %d of %d"
+msgstr ""
+"无法读取文件 \"%1$s\" 的偏移量 %2$llu 处的数据: 应读取 %4$d，实际读取 %3$d"
+
+#: write_manifest.c:262
+#, c-format
+msgid "could not write file \"%s\": wrote %zd of %d"
+msgstr "无法写入文件 \"%1$s\": 应写入 %3$d，实际写入 %2$zd"

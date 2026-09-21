@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: scripts (PostgreSQL 19)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-07-06 09:46+0900\n"
-"PO-Revision-Date: 2026-07-06 15:12+0900\n"
+"POT-Creation-Date: 2026-08-17 11:08+0900\n"
+"PO-Revision-Date: 2026-08-17 15:16+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -117,11 +117,11 @@ msgstr "ユーザーが存在しません"
 msgid "user name lookup failure: error code %lu"
 msgstr "ユーザー名の検索に失敗: エラーコード%lu"
 
-#: ../../fe_utils/cancel.c:186 ../../fe_utils/cancel.c:235
+#: ../../fe_utils/cancel.c:216 ../../fe_utils/cancel.c:265
 msgid "Cancel request sent\n"
 msgstr "キャンセル要求を送信しました\n"
 
-#: ../../fe_utils/cancel.c:187 ../../fe_utils/cancel.c:236
+#: ../../fe_utils/cancel.c:217 ../../fe_utils/cancel.c:266
 msgid "Could not send cancel request: "
 msgstr "キャンセル要求を送信できませんでした: "
 
@@ -179,36 +179,31 @@ msgstr "ジョブ数を減らしてみてください。"
 msgid "processing of database \"%s\" failed: %s"
 msgstr "データベース\"%s\"の処理に失敗しました: %s"
 
-#: ../../fe_utils/print.c:422
+#: ../../fe_utils/print.c:423
 #, c-format
 msgid "(%lu row)"
 msgid_plural "(%lu rows)"
 msgstr[0] "(%lu 行)"
 
-#: ../../fe_utils/print.c:3191
+#: ../../fe_utils/print.c:3192
 #, c-format
 msgid "Interrupted\n"
 msgstr "中断されました\n"
 
-#: ../../fe_utils/print.c:3225
+#: ../../fe_utils/print.c:3228
 #, c-format
-msgid "Cannot print table contents: number of cells %<PRIu64> is equal to or exceeds maximum %zu.\n"
-msgstr "テーブルの内容を表示できません: セル数%<PRIu64>が上限値%zu以上です。\n"
+msgid "cannot print table contents: number of cells %<PRIu64> is equal to or exceeds maximum %zu"
+msgstr "テーブルの内容を表示できません: セル数%<PRIu64>が上限値%zu以上です"
 
-#: ../../fe_utils/print.c:3266
+#: ../../fe_utils/print.c:3261
 #, c-format
-msgid "Cannot add header to table content: column count of %d exceeded.\n"
-msgstr "テーブルの内容に見出しを追加できませんでした：列数の上限値%dを越えています。\n"
+msgid "cannot add header to table content: column count of %d exceeded"
+msgstr "テーブルの内容に見出しを追加できませんでした：列数が上限値%dを越えています"
 
-#: ../../fe_utils/print.c:3309
+#: ../../fe_utils/print.c:3317
 #, c-format
-msgid "Cannot add cell to table content: total cell count of %<PRIu64> exceeded.\n"
-msgstr "テーブルの内容にセルを追加できません: セルの総数%<PRIu64>を超過しています。\n"
-
-#: ../../fe_utils/print.c:3737
-#, c-format
-msgid "invalid output format (internal error): %d"
-msgstr "出力フォーマットが無効(内部エラー)：%d"
+msgid "cannot add cell to table content: total cell count of %<PRIu64> exceeded"
+msgstr "テーブルの内容にセルを追加できません: セルの総数%<PRIu64>が超過しています"
 
 #: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
 #, c-format
@@ -220,15 +215,15 @@ msgstr "問い合わせが失敗しました: %s"
 msgid "Query was: %s"
 msgstr "問い合わせ: %s"
 
-#: ../../fe_utils/string_utils.c:585
+#: ../../fe_utils/string_utils.c:584
 #, c-format
-msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
-msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+msgid "shell command argument contains a newline or carriage return: \"%s\""
+msgstr "シェルコマンドの引数に改行文字(LF)または復帰文字(CR)が含まれています: \"%s\""
 
-#: ../../fe_utils/string_utils.c:758
+#: ../../fe_utils/string_utils.c:752
 #, c-format
-msgid "database name contains a newline or carriage return: \"%s\"\n"
-msgstr "データベース名に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+msgid "database name contains a newline or carriage return: \"%s\""
+msgstr "データベース名に改行文字(LF)または復帰文字(CR)が含まれています: \"%s\""
 
 #: clusterdb.c:113 clusterdb.c:132 createdb.c:149 createdb.c:168
 #: createuser.c:195 createuser.c:210 dropdb.c:104 dropdb.c:113 dropdb.c:121
@@ -954,10 +949,10 @@ msgstr "システムカタログのインデックス再構築では複数ジョ
 msgid "cannot reindex all databases and a specific one at the same time"
 msgstr "全データベースと特定のデータベースは同時に再インデックス化はできません"
 
-#: reindexdb.c:302 reindexdb.c:309 vacuuming.c:200 vacuuming.c:207
-#: vacuuming.c:214 vacuuming.c:221 vacuuming.c:228 vacuuming.c:235
-#: vacuuming.c:242 vacuuming.c:249 vacuuming.c:256 vacuuming.c:263
-#: vacuuming.c:270 vacuuming.c:277
+#: reindexdb.c:302 reindexdb.c:309 vacuuming.c:211 vacuuming.c:218
+#: vacuuming.c:225 vacuuming.c:232 vacuuming.c:239 vacuuming.c:246
+#: vacuuming.c:253 vacuuming.c:260 vacuuming.c:267 vacuuming.c:274
+#: vacuuming.c:281 vacuuming.c:288
 #, c-format
 msgid "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
 msgstr "PostgreSQL %2$sよりも古いサーバーバージョンでは\"%1$s\"オプションは使えません"
@@ -1293,39 +1288,45 @@ msgstr ""
 "\n"
 "詳細はSQLコマンドのVACUUMの説明を参照してください。\n"
 
-#: vacuuming.c:187
+#: vacuuming.c:198
 msgid "Generating minimal optimizer statistics (1 target)"
 msgstr "最適化のための情報を最小限生成します(1対象)"
 
-#: vacuuming.c:188
+#: vacuuming.c:199
 msgid "Generating medium optimizer statistics (10 targets)"
 msgstr "最適化のための情報を複数生成します(10対象)"
 
-#: vacuuming.c:189
+#: vacuuming.c:200
 msgid "Generating default (full) optimizer statistics"
 msgstr "最適化のための情報をデフォルト数(全て)生成します"
 
-#: vacuuming.c:287
+#: vacuuming.c:298
 #, c-format
 msgid "%s: processing database \"%s\": %s\n"
 msgstr "%s: データベース\"%s\"の処理中です: %s\n"
 
-#: vacuuming.c:290
+#: vacuuming.c:301
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: データベース\"%s\"をVACUUMしています\n"
 
-#: vacuuming.c:1029
+#: vacuuming.c:1069
 #, c-format
 msgid "vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "データベース \"%2$s\"のテーブル\"%1$sのVACUUMに失敗しました： %3$s"
 
-#: vacuuming.c:1034
+#: vacuuming.c:1074
 #, c-format
 msgid "vacuuming of database \"%s\" failed: %s"
 msgstr "データベース\"%s\"のVACUUMに失敗しました: %s"
 
-#: vacuuming.c:1050
+#: vacuuming.c:1090
 #, c-format
 msgid "out of memory"
 msgstr "メモリ不足です"
+
+#~ msgid "invalid output format (internal error): %d"
+#~ msgstr "出力フォーマットが無効(内部エラー)：%d"
+
+#~ msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+#~ msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"

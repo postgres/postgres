@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-08-08 19:51+0000\n"
-"PO-Revision-Date: 2026-08-09 22:54+0200\n"
+"POT-Creation-Date: 2026-08-27 19:52+0000\n"
+"PO-Revision-Date: 2026-08-27 22:26+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -49,16 +49,14 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
 
 #: ../../common/fe_memutils.c:209
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu + %zu\n"
-msgstr "ogiltig storlek för stort objects skrivningbegäran: %d"
+msgstr "ogiltig storlek %zu + %zu för minnesallokering\n"
 
 #: ../../common/fe_memutils.c:228
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu * %zu\n"
-msgstr "ogiltig storlek för stort objects skrivningbegäran: %d"
+msgstr "ogiltig storlek %zu * %zu för minnesallokering\n"
 
 #: ../../common/file_utils.c:69 ../../common/file_utils.c:370
 #: ../../common/file_utils.c:428 ../../common/file_utils.c:502 pg_waldump.c:193
@@ -474,10 +472,9 @@ msgid "too many command-line arguments (first is \"%s\")"
 msgstr "för många kommandoradsargument (första är \"%s\")"
 
 #: pg_waldump.c:1274
-#, fuzzy, c-format
-#| msgid "too many command-line arguments (first is \"%s\")"
+#, c-format
 msgid "unnecessary command-line arguments specified with tar archive (first is \"%s\")"
-msgstr "för många kommandoradsargument (första är \"%s\")"
+msgstr "onödigt kommandoradsargument angivet med tar tar-arkiv (första är \"%s\")"
 
 #: pg_waldump.c:1310
 #, c-format

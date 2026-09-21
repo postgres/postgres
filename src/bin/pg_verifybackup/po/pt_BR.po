@@ -1,0 +1,837 @@
+# Brazilian Portuguese message translation file for pg_verifybackup
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_verifybackup (PostgreSQL) package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_verifybackup (PostgreSQL) 19\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2026-09-05 00:51+0000\n"
+"PO-Revision-Date: 2026-09-06 18:19+0200\n"
+"Last-Translator: Pavlo Golub <pavlo.golub@gmail.com>\n"
+"Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
+#, c-format
+msgid "error: "
+msgstr "erro: "
+
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
+#, c-format
+msgid "warning: "
+msgstr "aviso: "
+
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
+#, c-format
+msgid "detail: "
+msgstr "detalhe: "
+
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
+#, c-format
+msgid "hint: "
+msgstr "dica: "
+
+#: ../../common/controldata_utils.c:98
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "não foi possível abrir o arquivo \"%s\" para leitura: %m"
+
+#: ../../common/controldata_utils.c:111 pg_verifybackup.c:455
+#: pg_verifybackup.c:493 pg_verifybackup.c:1051 pg_verifybackup.c:1170
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "não foi possível ler o arquivo \"%s\": %m"
+
+#: ../../common/controldata_utils.c:120
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "não foi possível ler o arquivo \"%s\", lidos %d de %zu"
+
+#: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
+#: pg_verifybackup.c:1056 pg_verifybackup.c:1176
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "não foi possível fechar o arquivo \"%s\": %m"
+
+#: ../../common/controldata_utils.c:169
+msgid "byte ordering mismatch"
+msgstr "ordenação de bytes não corresponde"
+
+#: ../../common/controldata_utils.c:171
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"possível não correspondência da ordenação de bytes\n"
+"A ordenação de bytes usada para armazenar o arquivo pg_control pode não \n"
+"corresponder com a usada por este programa. Neste caso os resultados abaixo\n"
+"seriam incorretos, e a instalação do PostgreSQL seria incompatível com o diretório de dados."
+
+#: ../../common/controldata_utils.c:231 pg_verifybackup.c:423
+#: pg_verifybackup.c:1031 pg_verifybackup.c:1139
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "não foi possível abrir o arquivo \"%s\": %m"
+
+#: ../../common/controldata_utils.c:250
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "não foi possível escrever no arquivo \"%s\": %m"
+
+#: ../../common/controldata_utils.c:269
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "não foi possível executar fsync no arquivo \"%s\": %m"
+
+#: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
+#: ../../common/jsonapi.c:2459 ../../common/parse_manifest.c:157
+#: ../../common/parse_manifest.c:852
+#, c-format
+msgid "out of memory"
+msgstr "sem memória"
+
+#: ../../common/cryptohash.c:266 ../../common/cryptohash.c:272
+#: ../../common/cryptohash_openssl.c:368 ../../common/cryptohash_openssl.c:376
+msgid "success"
+msgstr "sucesso"
+
+#: ../../common/cryptohash.c:268 ../../common/cryptohash_openssl.c:370
+msgid "destination buffer too small"
+msgstr "buffer de destino muito pequeno"
+
+#: ../../common/cryptohash_openssl.c:372
+msgid "OpenSSL failure"
+msgstr "falha de OpenSSL"
+
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "sem memória\n"
+
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "não é possível duplicar ponteiro nulo (erro interno)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr ""
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr ""
+
+#: ../../common/jsonapi.c:2484
+msgid "Recursive descent parser cannot use incremental lexer."
+msgstr "O analisador de descida recursiva não pode usar o analisador léxico incremental."
+
+#: ../../common/jsonapi.c:2486
+msgid "Incremental parser requires incremental lexer."
+msgstr "O analisador incremental requer o analisador léxico incremental."
+
+#: ../../common/jsonapi.c:2488
+msgid "JSON nested too deep, maximum permitted depth is 6400."
+msgstr "JSON aninhado demais, a profundidade máxima permitida é 6400."
+
+#: ../../common/jsonapi.c:2490
+#, c-format
+msgid "Escape sequence \"\\%.*s\" is invalid."
+msgstr "A sequência de escape \"\\%.*s\" é inválida."
+
+#: ../../common/jsonapi.c:2494
+#, c-format
+msgid "Character with value 0x%02x must be escaped."
+msgstr "O caractere com valor 0x%02x deve ser precedido por um caractere de escape."
+
+#: ../../common/jsonapi.c:2498
+#, c-format
+msgid "Expected end of input, but found \"%.*s\"."
+msgstr "Esperado o final da entrada, mas encontrou \"%.*s\"."
+
+#: ../../common/jsonapi.c:2501
+#, c-format
+msgid "Expected array element or \"]\", but found \"%.*s\"."
+msgstr "Esperado elemento de array ou \"]\", mas encontrou \"%.*s\"."
+
+#: ../../common/jsonapi.c:2504
+#, c-format
+msgid "Expected \",\" or \"]\", but found \"%.*s\"."
+msgstr "Esperado \",\" ou \"]\", mas encontrou \"%.*s\"."
+
+#: ../../common/jsonapi.c:2507
+#, c-format
+msgid "Expected \":\", but found \"%.*s\"."
+msgstr "Esperado \":\", mas encontrou \"%.*s\"."
+
+#: ../../common/jsonapi.c:2510
+#, c-format
+msgid "Expected JSON value, but found \"%.*s\"."
+msgstr "Esperado valor JSON, mas encontrou \"%.*s\"."
+
+#: ../../common/jsonapi.c:2513
+msgid "The input string ended unexpectedly."
+msgstr "A cadeia de caracteres de entrada terminou de forma não esperada."
+
+#: ../../common/jsonapi.c:2515
+#, c-format
+msgid "Expected string or \"}\", but found \"%.*s\"."
+msgstr "Esperado string ou \"}\", mas encontrou \"%.*s\"."
+
+#: ../../common/jsonapi.c:2518
+#, c-format
+msgid "Expected \",\" or \"}\", but found \"%.*s\"."
+msgstr "Esperado \",\" ou \"}\", mas encontrou \"%.*s\"."
+
+#: ../../common/jsonapi.c:2521
+#, c-format
+msgid "Expected string, but found \"%.*s\"."
+msgstr "Esperado string, mas encontrou \"%.*s\"."
+
+#: ../../common/jsonapi.c:2524
+#, c-format
+msgid "Token \"%.*s\" is invalid."
+msgstr "O token \"%.*s\" é inválido."
+
+#: ../../common/jsonapi.c:2530
+msgid "\\u0000 cannot be converted to text."
+msgstr "\\u0000 não pode ser convertido em texto."
+
+#: ../../common/jsonapi.c:2532
+msgid "\"\\u\" must be followed by four hexadecimal digits."
+msgstr "\"\\u\" deve ser seguido por quatro dígitos hexadecimais."
+
+#: ../../common/jsonapi.c:2535
+msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
+msgstr "Os valores de escape Unicode não podem ser usados para valores de ponto de código acima de 007F quando a codificação não é UTF8."
+
+#: ../../common/jsonapi.c:2544
+#, c-format
+msgid "Unicode escape value could not be translated to the server's encoding %s."
+msgstr "O valor de escape Unicode não pôde ser convertido para a codificação %s do servidor."
+
+#: ../../common/jsonapi.c:2551
+msgid "Unicode high surrogate must not follow a high surrogate."
+msgstr "Uma substituição alta Unicode não deve seguir uma substituição alta."
+
+#: ../../common/jsonapi.c:2553
+msgid "Unicode low surrogate must follow a high surrogate."
+msgstr "Um «low-surrogate» Unicode deve seguir um «high-surrogate»."
+
+#: ../../common/jsonapi.c:2575
+msgid "out of memory while constructing error description"
+msgstr "sem memória disponível ao construir descrição de erro"
+
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
+#, c-format
+msgid "could not initialize checksum of manifest"
+msgstr "não foi possível inicializar o checksum do manifesto"
+
+#: ../../common/parse_manifest.c:203 ../../common/parse_manifest.c:260
+msgid "manifest ended unexpectedly"
+msgstr "O manifesto terminou inesperadamente"
+
+#: ../../common/parse_manifest.c:209 ../../common/parse_manifest.c:861
+#, c-format
+msgid "could not update checksum of manifest"
+msgstr "não foi possível atualizar o checksum do manifesto"
+
+#: ../../common/parse_manifest.c:301
+msgid "unexpected object start"
+msgstr "Início de objeto inesperado"
+
+#: ../../common/parse_manifest.c:336
+msgid "unexpected object end"
+msgstr "Fim de objeto inesperado"
+
+#: ../../common/parse_manifest.c:365
+msgid "unexpected array start"
+msgstr "Início de array inesperado"
+
+#: ../../common/parse_manifest.c:390
+msgid "unexpected array end"
+msgstr "Fim de array inesperado"
+
+#: ../../common/parse_manifest.c:417
+msgid "expected version indicator"
+msgstr "Indicador de versão esperado"
+
+#: ../../common/parse_manifest.c:453
+msgid "unrecognized top-level field"
+msgstr "Campo de nível superior não reconhecido"
+
+#: ../../common/parse_manifest.c:472
+msgid "unexpected file field"
+msgstr "Campo de arquivo inesperado"
+
+#: ../../common/parse_manifest.c:486
+msgid "unexpected WAL range field"
+msgstr "Campo de faixa WAL inesperado"
+
+#: ../../common/parse_manifest.c:492
+msgid "unexpected object field"
+msgstr "Campo de objeto inesperado"
+
+#: ../../common/parse_manifest.c:582
+msgid "unexpected scalar"
+msgstr "Escalar inesperado"
+
+#: ../../common/parse_manifest.c:608
+msgid "manifest version not an integer"
+msgstr "A versão do manifesto não é um número inteiro"
+
+#: ../../common/parse_manifest.c:612
+msgid "unexpected manifest version"
+msgstr "Versão de manifesto inesperada"
+
+#: ../../common/parse_manifest.c:636
+msgid "system identifier in manifest not an integer"
+msgstr "O identificador do sistema no manifesto não é um número inteiro"
+
+#: ../../common/parse_manifest.c:661
+msgid "missing path name"
+msgstr "Nome de caminho ausente"
+
+#: ../../common/parse_manifest.c:664
+msgid "both path name and encoded path name"
+msgstr "Tanto o nome do caminho quanto o nome do caminho codificado"
+
+#: ../../common/parse_manifest.c:666
+msgid "missing size"
+msgstr "Tamanho ausente"
+
+#: ../../common/parse_manifest.c:669
+msgid "checksum without algorithm"
+msgstr "Checksum sem algoritmo"
+
+#: ../../common/parse_manifest.c:683
+msgid "could not decode file name"
+msgstr "Não foi possível decodificar o nome do arquivo"
+
+#: ../../common/parse_manifest.c:693
+msgid "file size is not an integer"
+msgstr "O tamanho do arquivo não é um número inteiro"
+
+#: ../../common/parse_manifest.c:699
+#, c-format
+msgid "unrecognized checksum algorithm: \"%s\""
+msgstr "algoritmo de soma de verificação não reconhecido: \"%s\""
+
+#: ../../common/parse_manifest.c:718
+#, c-format
+msgid "invalid checksum for file \"%s\": \"%s\""
+msgstr "Checksum inválido para o arquivo \"%s\": \"%s\""
+
+#: ../../common/parse_manifest.c:761
+msgid "missing timeline"
+msgstr "linha do tempo ausente"
+
+#: ../../common/parse_manifest.c:763
+msgid "missing start LSN"
+msgstr "LSN de início ausente"
+
+#: ../../common/parse_manifest.c:765
+msgid "missing end LSN"
+msgstr "LSN de término ausente"
+
+#: ../../common/parse_manifest.c:771
+msgid "timeline is not an integer"
+msgstr "a linha do tempo não é um número inteiro"
+
+#: ../../common/parse_manifest.c:774
+msgid "could not parse start LSN"
+msgstr "não foi possível analisar o LSN de início"
+
+#: ../../common/parse_manifest.c:777
+msgid "could not parse end LSN"
+msgstr "não foi possível analisar o LSN de término"
+
+#: ../../common/parse_manifest.c:842
+msgid "expected at least 2 lines"
+msgstr "esperado pelo menos 2 linhas"
+
+#: ../../common/parse_manifest.c:845
+msgid "last line not newline-terminated"
+msgstr "a última linha não termina com uma nova linha"
+
+#: ../../common/parse_manifest.c:864
+#, c-format
+msgid "could not finalize checksum of manifest"
+msgstr "não foi possível finalizar o checksum do manifesto"
+
+#: ../../common/parse_manifest.c:868
+#, c-format
+msgid "manifest has no checksum"
+msgstr "o manifesto não possui checksum"
+
+#: ../../common/parse_manifest.c:872
+#, c-format
+msgid "invalid manifest checksum: \"%s\""
+msgstr "checksum do manifesto inválido: \"%s\""
+
+#: ../../common/parse_manifest.c:876
+#, c-format
+msgid "manifest checksum mismatch"
+msgstr "incompatibilidade de checksum do manifesto"
+
+#: ../../common/parse_manifest.c:891
+#, c-format
+msgid "could not parse backup manifest: %s"
+msgstr "não foi possível analisar o manifesto de backup: %s"
+
+#: ../../fe_utils/astreamer_gzip.c:115
+#, c-format
+msgid "could not create compressed file \"%s\": %m"
+msgstr "não foi possível criar o arquivo compactado \"%s\": %m"
+
+#: ../../fe_utils/astreamer_gzip.c:127
+#, c-format
+msgid "could not duplicate stdout: %m"
+msgstr "Não foi possível duplicar stdout: %m"
+
+#: ../../fe_utils/astreamer_gzip.c:131
+#, c-format
+msgid "could not open output file: %m"
+msgstr "Não foi possível abrir o arquivo de saída: %m"
+
+#: ../../fe_utils/astreamer_gzip.c:135
+#, c-format
+msgid "could not set compression level %d: %s"
+msgstr "Não foi possível definir o nível de compressão %d: %s"
+
+#: ../../fe_utils/astreamer_gzip.c:140 ../../fe_utils/astreamer_gzip.c:275
+#: ../../fe_utils/astreamer_lz4.c:102 ../../fe_utils/astreamer_lz4.c:302
+#: ../../fe_utils/astreamer_zstd.c:130 ../../fe_utils/astreamer_zstd.c:285
+#, c-format
+msgid "this build does not support compression with %s"
+msgstr "essa construção não oferece suporte a compressão com %s"
+
+#: ../../fe_utils/astreamer_gzip.c:167
+#, c-format
+msgid "could not write to compressed file \"%s\": %s"
+msgstr "Não foi possível escrever no arquivo comprimido \"%s\": %s"
+
+#: ../../fe_utils/astreamer_gzip.c:191
+#, c-format
+msgid "could not close compressed file \"%s\": %m"
+msgstr "Não foi possível fechar o arquivo compactado \"%s\":%m"
+
+#: ../../fe_utils/astreamer_gzip.c:271
+#, c-format
+msgid "could not initialize compression library"
+msgstr "não foi possível inicializar a biblioteca de compressão"
+
+#: ../../fe_utils/astreamer_gzip.c:322 ../../fe_utils/astreamer_lz4.c:358
+#: ../../fe_utils/astreamer_zstd.c:330
+#, c-format
+msgid "could not decompress data: %s"
+msgstr "não foi possível descompactar os dados: %s"
+
+#: ../../fe_utils/astreamer_lz4.c:97
+#, c-format
+msgid "could not create lz4 compression context: %s"
+msgstr "não foi possível criar o contexto de compactação lz4: %s"
+
+#: ../../fe_utils/astreamer_lz4.c:142
+#, c-format
+msgid "could not write lz4 header: %s"
+msgstr "não foi possível gravar o cabeçalho lz4: %s"
+
+#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:182
+#: ../../fe_utils/astreamer_zstd.c:224
+#, c-format
+msgid "could not compress data: %s"
+msgstr "não foi possível compactar os dados: %s"
+
+#: ../../fe_utils/astreamer_lz4.c:243
+#, c-format
+msgid "could not end lz4 compression: %s"
+msgstr "não foi possível finalizar a compactação lz4: %s"
+
+#: ../../fe_utils/astreamer_lz4.c:297
+#, c-format
+msgid "could not initialize compression library: %s"
+msgstr "não foi possível inicializar a biblioteca de compactação: %s"
+
+#: ../../fe_utils/astreamer_tar.c:254 astreamer_verify.c:130
+#, c-format
+msgid "unexpected state while parsing tar archive"
+msgstr "estado inesperado ao analisar o arquivo tar"
+
+#: ../../fe_utils/astreamer_tar.c:300
+#, c-format
+msgid "input file does not appear to be a valid tar archive"
+msgstr ""
+
+#: ../../fe_utils/astreamer_tar.c:307
+#, c-format
+msgid "tar member has empty name"
+msgstr "o membro do tar tem nome vazio"
+
+#: ../../fe_utils/astreamer_tar.c:309
+#, c-format
+msgid "tar member has unsafe path name: \"%s\""
+msgstr ""
+
+#: ../../fe_utils/astreamer_tar.c:332
+#, c-format
+msgid "pax extensions to tar format are not supported"
+msgstr ""
+
+#: ../../fe_utils/astreamer_tar.c:361
+#, c-format
+msgid "COPY stream ended before last file was finished"
+msgstr "O fluxo COPY terminou antes que o último arquivo fosse concluído"
+
+#: ../../fe_utils/astreamer_zstd.c:89
+#, c-format
+msgid "could not create zstd compression context"
+msgstr "não foi possível criar o contexto de compactação zstd"
+
+#: ../../fe_utils/astreamer_zstd.c:95
+#, c-format
+msgid "could not set zstd compression level to %d: %s"
+msgstr "não foi possível definir o nível de compactação zstd para %d: %s"
+
+#: ../../fe_utils/astreamer_zstd.c:109
+#, c-format
+msgid "could not set compression worker count to %d: %s"
+msgstr "não foi possível definir a contagem de processo trabalhador de compressão para %d: %s"
+
+#: ../../fe_utils/astreamer_zstd.c:119
+#, c-format
+msgid "could not enable long-distance mode: %s"
+msgstr "não foi possível ativar o modo de longa distância: %s"
+
+#: ../../fe_utils/astreamer_zstd.c:276
+#, c-format
+msgid "could not create zstd decompression context"
+msgstr "não foi possível criar o contexto de descompactação zstd"
+
+#: astreamer_verify.c:198
+#, c-format
+msgid "file \"%s\" is present in archive \"%s\" but not in the manifest"
+msgstr ""
+
+#: astreamer_verify.c:211
+#, c-format
+msgid "file \"%s\" has size %llu in archive \"%s\" but size %<PRIu64> in the manifest"
+msgstr ""
+
+#: astreamer_verify.c:236
+#, c-format
+msgid "%s: could not initialize checksum of file \"%s\""
+msgstr ""
+
+#: astreamer_verify.c:274 pg_verifybackup.c:1159
+#, c-format
+msgid "could not update checksum of file \"%s\""
+msgstr "não foi possível atualizar o checksum do arquivo \"%s\""
+
+#: astreamer_verify.c:300
+#, c-format
+msgid "file \"%s\" in archive \"%s\" should contain %<PRIu64> bytes, but %<PRIu64> bytes were read"
+msgstr ""
+
+#: astreamer_verify.c:312 pg_verifybackup.c:1205
+#, c-format
+msgid "could not finalize checksum of file \"%s\""
+msgstr "não foi possível finalizar o checksum do arquivo \"%s\""
+
+#: astreamer_verify.c:320
+#, c-format
+msgid "file \"%s\" in archive \"%s\" has checksum of length %d, but expected %d"
+msgstr ""
+
+#: astreamer_verify.c:325
+#, c-format
+msgid "checksum mismatch for file \"%s\" in archive \"%s\""
+msgstr ""
+
+#: astreamer_verify.c:387
+#, c-format
+msgid "unexpected control file size %d, expected %d"
+msgstr "Tamanho inesperado do arquivo de controle %d, esperado %d"
+
+#: astreamer_verify.c:399
+#, c-format
+msgid "%s: %s: CRC is incorrect"
+msgstr ""
+
+#: astreamer_verify.c:405
+#, c-format
+msgid "%s: %s: unexpected control file version"
+msgstr ""
+
+#: astreamer_verify.c:412
+#, c-format
+msgid "%s: %s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
+msgstr ""
+
+#: pg_verifybackup.c:215
+#, c-format
+msgid "invalid backup format \"%s\", must be \"plain\" or \"tar\""
+msgstr "formato de backup inválido \"%s\", deve ser \"plain\" ou \"tar\""
+
+#: pg_verifybackup.c:236 pg_verifybackup.c:245 pg_verifybackup.c:256
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "Tente \"%s --help\" para obter informações adicionais."
+
+#: pg_verifybackup.c:244
+#, c-format
+msgid "no backup directory specified"
+msgstr "nenhum diretório de backup especificado"
+
+#: pg_verifybackup.c:254
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "muitos argumentos de linha de comando (primeiro é \"%s\")"
+
+#: pg_verifybackup.c:262
+#, c-format
+msgid "cannot specify both %s and %s"
+msgstr "não é possível especificar %s e %s"
+
+#: pg_verifybackup.c:282
+#, c-format
+msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
+msgstr "O programa \"%s\" é requerido pelo %s mas não foi encontrado no mesmo diretório que \"%s\""
+
+#: pg_verifybackup.c:285
+#, c-format
+msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
+msgstr "O programa \"%s\" foi encontrado pelo \"%s\" mas não tem a mesma versão que %s"
+
+#: pg_verifybackup.c:307 pg_verifybackup.c:640
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "não foi possível abrir diretório \"%s\": %m"
+
+#: pg_verifybackup.c:326 pg_verifybackup.c:427
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "não foi possível executar stat no arquivo \"%s\": %m"
+
+#: pg_verifybackup.c:379
+#, c-format
+msgid "WAL archive not found"
+msgstr ""
+
+#: pg_verifybackup.c:380
+#, c-format
+msgid "Specify the correct path using the option -w/--wal-path.  Or you must use -n/--no-parse-wal when verifying a tar-format backup."
+msgstr ""
+
+#: pg_verifybackup.c:398
+#, c-format
+msgid "backup successfully verified\n"
+msgstr "backup verificado com sucesso\n"
+
+#: pg_verifybackup.c:457
+#, c-format
+msgid "could not read file \"%s\": read %d of %lld"
+msgstr "não foi possível ler o arquivo \"%s\": lidos %d de %lld"
+
+#: pg_verifybackup.c:495
+#, c-format
+msgid "could not read file \"%s\": read %lld of %lld"
+msgstr "não foi possível ler o arquivo \"%s\": leu %lld de %lld"
+
+#: pg_verifybackup.c:578
+#, c-format
+msgid "duplicate path name in backup manifest: \"%s\""
+msgstr "nome de caminho duplicado no manifesto de backup: \"%s\""
+
+#: pg_verifybackup.c:672 pg_verifybackup.c:844
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "não foi possível fechar o diretório \"%s\": %m"
+
+#: pg_verifybackup.c:693 pg_verifybackup.c:918
+#, c-format
+msgid "could not stat file or directory \"%s\": %m"
+msgstr "não foi possível executar stat no arquivo ou  diretório \"%s\": %m"
+
+#: pg_verifybackup.c:716
+#, c-format
+msgid "\"%s\" is not a regular file or directory"
+msgstr ""
+
+#: pg_verifybackup.c:726
+#, c-format
+msgid "\"%s\" is present on disk but not in the manifest"
+msgstr "\"%s\" está presente no disco, mas não no manifesto"
+
+#: pg_verifybackup.c:738
+#, c-format
+msgid "\"%s\" has size %llu on disk but size %llu in the manifest"
+msgstr "\"%s\" tem tamanho %llu no disco, mas tamanho %llu no manifesto"
+
+#: pg_verifybackup.c:780
+#, c-format
+msgid "%s: CRC is incorrect"
+msgstr ""
+
+#: pg_verifybackup.c:784
+#, c-format
+msgid "%s: unexpected control file version"
+msgstr ""
+
+#: pg_verifybackup.c:789
+#, c-format
+msgid "%s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
+msgstr "%s: o identificador do sistema no manifesto é %<PRIu64>, mas o arquivo de controle tem %<PRIu64>"
+
+#: pg_verifybackup.c:927
+#, c-format
+msgid "file \"%s\" is not a regular file"
+msgstr "arquivo \"%s\" não é um arquivo regular"
+
+#: pg_verifybackup.c:963 pg_verifybackup.c:978
+#, c-format
+msgid "file \"%s\" is not expected in a tar format backup"
+msgstr "o arquivo \"%s\" não é esperado em um backup no formato tar"
+
+#: pg_verifybackup.c:1075
+#, c-format
+msgid "\"%s\" is present in the manifest but not on disk"
+msgstr "\"%s\" está presente no manifesto, mas não no disco"
+
+#: pg_verifybackup.c:1147
+#, c-format
+msgid "could not initialize checksum of file \"%s\""
+msgstr "não foi possível inicializar o checksum do arquivo \"%s\""
+
+#: pg_verifybackup.c:1195
+#, c-format
+msgid "file \"%s\" should contain %<PRIu64> bytes, but read %<PRIu64>"
+msgstr "o arquivo \"%s\" deveria conter %<PRIu64> bytes, mas leu-se %<PRIu64>"
+
+#: pg_verifybackup.c:1213
+#, c-format
+msgid "file \"%s\" has checksum of length %d, but expected %d"
+msgstr "o arquivo \"%s\" tem um checksum de comprimento %d, mas o esperado é %d"
+
+#: pg_verifybackup.c:1217
+#, c-format
+msgid "checksum mismatch for file \"%s\""
+msgstr "incompatibilidade de checksum para o arquivo \"%s\""
+
+#: pg_verifybackup.c:1243
+#, c-format
+msgid "WAL parsing failed for timeline %u"
+msgstr "Falha na análise do WAL para a linha do tempo %u"
+
+#: pg_verifybackup.c:1377
+#, c-format
+msgid "%*s/%s kB (%d%%) verified"
+msgstr "%*s/%s kB (%d%%) verificado"
+
+#: pg_verifybackup.c:1394
+#, c-format
+msgid ""
+"%s verifies a backup against the backup manifest.\n"
+"\n"
+msgstr ""
+"%s verifica um backup em relação ao manifesto de backup.\n"
+"\n"
+
+#: pg_verifybackup.c:1395
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... BACKUPDIR\n"
+"\n"
+msgstr ""
+"Uso:  \n"
+"  %s [OPÇÃO]... DIRETÓRIO_DE_BACKUP\n"
+"\n"
+
+#: pg_verifybackup.c:1396
+#, c-format
+msgid "Options:\n"
+msgstr "Opções:\n"
+
+#: pg_verifybackup.c:1397
+#, c-format
+msgid "  -e, --exit-on-error         exit immediately on error\n"
+msgstr "  -e, --exit-on-error         sair imediatamente em caso de erro\n"
+
+#: pg_verifybackup.c:1398
+#, c-format
+msgid "  -F, --format=p|t            backup format (plain, tar)\n"
+msgstr "  -F, --format=p|t            formato de backup (plain, tar)\n"
+
+#: pg_verifybackup.c:1399
+#, c-format
+msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
+msgstr "  -i, --ignore=CAMINHO_RELATIVO  ignorar o caminho indicado\n"
+
+#: pg_verifybackup.c:1400
+#, c-format
+msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
+msgstr "  -m, --manifest-path=CAMINHO    usar o caminho especificado para o manifesto\n"
+
+#: pg_verifybackup.c:1401
+#, c-format
+msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
+msgstr "  -n, --no-parse-wal          não tentar analisar os arquivos WAL\n"
+
+#: pg_verifybackup.c:1402
+#, c-format
+msgid "  -P, --progress              show progress information\n"
+msgstr "  -P, --progress              exibir informações de progresso\n"
+
+#: pg_verifybackup.c:1403
+#, c-format
+msgid "  -q, --quiet                 do not print any output, except for errors\n"
+msgstr "  -q, --quiet                 não imprimir nenhuma saída, exceto para erros\n"
+
+#: pg_verifybackup.c:1404
+#, c-format
+msgid "  -s, --skip-checksums        skip checksum verification\n"
+msgstr "  -s, --skip-checksums        pular a verificação de checksums\n"
+
+#: pg_verifybackup.c:1405
+#, c-format
+msgid "  -w, --wal-path=PATH         use specified path for WAL files\n"
+msgstr ""
+
+#: pg_verifybackup.c:1406
+#, c-format
+msgid "      --wal-directory=PATH    (same as --wal-path, deprecated)\n"
+msgstr ""
+
+#: pg_verifybackup.c:1407
+#, c-format
+msgid "  -V, --version               output version information, then exit\n"
+msgstr "  -V, --versão               exibir informações da versão e sair\n"
+
+#: pg_verifybackup.c:1408
+#, c-format
+msgid "  -?, --help                  show this help, then exit\n"
+msgstr "  -?, --ajuda                  exibir esta ajuda e sair\n"
+
+#: pg_verifybackup.c:1409
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Relate erros a <%s>.\n"
+
+#: pg_verifybackup.c:1410
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "Página web do %s: <%s>\n"

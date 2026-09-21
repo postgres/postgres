@@ -1,72 +1,95 @@
 # simplified Chinese translation file for pg_controldata and friends
 # Bao Wei <weibao@forevertek.com>, 2002.
 #
+# Recalibrated and completed via the pgsql.cc NLS review workbench.
+# Feng Ruohang <rh@vonng.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata (PostgreSQL) 14\n"
+"Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 05:49+0000\n"
-"PO-Revision-Date: 2021-08-15 18:00+0800\n"
-"Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
-"Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
+"POT-Creation-Date: 2026-09-17 05:56+0000\n"
+"PO-Revision-Date: 2026-09-17 16:00+0800\n"
+"Last-Translator: Feng Ruohang <rh@vonng.com>\n"
+"Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.5.7\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../common/controldata_utils.c:73
+#: ../../common/controldata_utils.c:98
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
-msgstr "为了读取, 无法打开文件 \"%s\": %m"
+msgstr "无法打开文件 \"%s\" 进行读取: %m"
 
-#: ../../common/controldata_utils.c:89
+#: ../../common/controldata_utils.c:111
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "无法读取文件 \"%s\": %m"
 
-#: ../../common/controldata_utils.c:101
+#: ../../common/controldata_utils.c:120
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
-msgstr "无法读取文件\"%1$s\"：读取了%3$zu中的%2$d"
+msgstr "无法读取文件 \"%1$s\": 应读取 %3$zu，实际读取 %2$d"
 
-#: ../../common/controldata_utils.c:117 ../../common/controldata_utils.c:259
+#: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "无法关闭文件 \"%s\": %m"
 
-#: ../../common/controldata_utils.c:135
+#: ../../common/controldata_utils.c:169
 msgid "byte ordering mismatch"
-msgstr "字节排序不匹配"
+msgstr "字节序不匹配"
 
-#: ../../common/controldata_utils.c:137
+#: ../../common/controldata_utils.c:171
 #, c-format
 msgid ""
 "possible byte ordering mismatch\n"
 "The byte ordering used to store the pg_control file might not match the one\n"
-"used by this program.  In that case the results below would be incorrect, and\n"
+"used by this program.  In that case the results below would be incorrect, "
+"and\n"
 "the PostgreSQL installation would be incompatible with this data directory."
 msgstr ""
-"可能字节顺序不匹配\n"
-"用于存储文件pg_control的字节顺序可能与程序使用的不匹配\n"
-"在那种情况下结果将会是不正确的,并且所安装的PostgreSQL\n"
-"将会与这个数据目录不兼容"
+"可能存在字节序不匹配\n"
+"存储 pg_control 文件时使用的字节序可能与本程序使用的\n"
+"字节序不一致。若确实如此，下列结果将不正确，且\n"
+"安装的 PostgreSQL 将与此数据目录不兼容。"
 
-#: ../../common/controldata_utils.c:203
+#: ../../common/controldata_utils.c:231
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "无法打开文件 \"%s\": %m"
 
-#: ../../common/controldata_utils.c:224
+#: ../../common/controldata_utils.c:250
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "无法写入文件 \"%s\": %m"
 
-#: ../../common/controldata_utils.c:245
+#: ../../common/controldata_utils.c:269
 #, c-format
 msgid "could not fsync file \"%s\": %m"
-msgstr "无法 fsync 文件 \"%s\": %m"
+msgstr "无法对文件 \"%s\" 执行 fsync: %m"
+
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "内存不足\n"
+
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能复制空指针（内部错误）\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "无效的内存分配请求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "无效的内存分配请求大小 %zu * %zu\n"
 
 #: pg_controldata.c:35
 #, c-format
@@ -74,18 +97,18 @@ msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s 显示 PostgreSQL 数据库簇控制信息.\n"
+"%s 显示 PostgreSQL 数据库集簇的控制信息。\n"
 "\n"
 
 #: pg_controldata.c:36
 #, c-format
 msgid "Usage:\n"
-msgstr "使用方法:\n"
+msgstr "用法:\n"
 
 #: pg_controldata.c:37
 #, c-format
 msgid "  %s [OPTION] [DATADIR]\n"
-msgstr "  %s [选项][数据目录]\n"
+msgstr "  %s [选项] [数据目录]\n"
 
 #: pg_controldata.c:38
 #, c-format
@@ -104,30 +127,30 @@ msgstr " [-D, --pgdata=]DATADIR  数据目录\n"
 #: pg_controldata.c:40
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version          输出版本信息, 然后退出\n"
+msgstr "  -V, --version          输出版本信息，然后退出\n"
 
 #: pg_controldata.c:41
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help             显示此帮助, 然后退出\n"
+msgstr "  -?, --help             显示此帮助，然后退出\n"
 
 #: pg_controldata.c:42
 #, c-format
 msgid ""
 "\n"
-"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
+"If no data directory (DATADIR) is specified, the environment variable "
+"PGDATA\n"
 "is used.\n"
 "\n"
 msgstr ""
 "\n"
-"如果没有指定数据目录(DATADIR), 将使用\n"
-"环境变量PGDATA.\n"
+"如果没有指定数据目录（DATADIR），将使用环境变量 PGDATA。\n"
 "\n"
 
 #: pg_controldata.c:44
 #, c-format
 msgid "Report bugs to <%s>.\n"
-msgstr "臭虫报告至<%s>.\n"
+msgstr "请向 <%s> 报告缺陷。\n"
 
 #: pg_controldata.c:45
 #, c-format
@@ -140,11 +163,11 @@ msgstr "正在启动"
 
 #: pg_controldata.c:57
 msgid "shut down"
-msgstr "关闭"
+msgstr "已关闭"
 
 #: pg_controldata.c:59
 msgid "shut down in recovery"
-msgstr "在恢复过程中关闭数据库"
+msgstr "已在恢复期间关闭"
 
 #: pg_controldata.c:61
 msgid "shutting down"
@@ -152,354 +175,412 @@ msgstr "正在关闭"
 
 #: pg_controldata.c:63
 msgid "in crash recovery"
-msgstr "在恢复中"
+msgstr "正在进行崩溃恢复"
 
 #: pg_controldata.c:65
 msgid "in archive recovery"
-msgstr "正在归档恢复"
+msgstr "正在进行归档恢复"
 
 #: pg_controldata.c:67
 msgid "in production"
-msgstr "在运行中"
+msgstr "正在运行"
 
 #: pg_controldata.c:69
 msgid "unrecognized status code"
-msgstr "不被认可的状态码"
+msgstr "无法识别的状态码"
 
 #: pg_controldata.c:84
-msgid "unrecognized wal_level"
-msgstr "参数wal_level的值无法识别"
+msgid "unrecognized \"wal_level\""
+msgstr "无法识别的 \"wal_level\" 值"
 
-#: pg_controldata.c:137 pg_controldata.c:155 pg_controldata.c:163
+#: pg_controldata.c:139 pg_controldata.c:157 pg_controldata.c:164
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "运行 \"%s --help\" 获取更多信息。"
 
-#: pg_controldata.c:153
+#: pg_controldata.c:155
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "命令行参数太多 (第一个是 \"%s\")"
+msgstr "命令行参数过多（第一个多余参数是 \"%s\"）"
 
-#: pg_controldata.c:162
+#: pg_controldata.c:163
 #, c-format
 msgid "no data directory specified"
-msgstr "没有指定数据目录"
+msgstr "未指定数据目录"
 
-#: pg_controldata.c:170
+#: pg_controldata.c:172
 #, c-format
 msgid ""
-"WARNING: Calculated CRC checksum does not match value stored in file.\n"
-"Either the file is corrupt, or it has a different layout than this program\n"
-"is expecting.  The results below are untrustworthy.\n"
-"\n"
+"control file version (%u) does not match the version understood by this "
+"program (%u)"
+msgstr "控制文件版本（%u）与此程序支持的版本（%u）不匹配"
+
+#: pg_controldata.c:174
+#, c-format
+msgid ""
+"Either the control file has been created with a different version of "
+"PostgreSQL, or it is corrupt.  The results below are untrustworthy."
 msgstr ""
-"警告: 计算出来的CRC校验值与已保存在文件中的值不匹配.\n"
-"不是文件坏了,就是设计与程序的期望值不同.\n"
-"下面的结果是不可靠的.\n"
-"\n"
+"控制文件可能由不同版本的 PostgreSQL 创建，也可能已损坏。以下结果不可信。"
 
 #: pg_controldata.c:179
 #, c-format
-msgid "WARNING: invalid WAL segment size\n"
-msgstr "警告: 无效的WAL段大小\n"
+msgid "calculated CRC checksum does not match value stored in control file"
+msgstr "计算得到的 CRC 校验和与控制文件中存储的值不匹配"
 
 #: pg_controldata.c:180
 #, c-format
 msgid ""
-"The WAL segment size stored in the file, %d byte, is not a power of two\n"
-"between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
-"untrustworthy.\n"
-"\n"
-msgid_plural ""
-"The WAL segment size stored in the file, %d bytes, is not a power of two\n"
-"between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
-"untrustworthy.\n"
-"\n"
-msgstr[0] ""
-"WAL段的大小保存在文件中，%d字节不是2的幂次方（在1MB至1BG之间）\n"
-"文件已损坏，下面的结果不可信.\n"
-msgstr[1] ""
-"WAL段的大小保存在文件中，%d字节不是2的幂次方（在1MB至1BG之间）\n"
-"文件已损坏，下面的结果不可信.\n"
+"Either the control file is corrupt, or it has a different layout than this "
+"program is expecting.  The results below are untrustworthy."
+msgstr "控制文件可能已损坏，也可能采用了此程序预期之外的布局。以下结果不可信。"
 
-#: pg_controldata.c:222
+#: pg_controldata.c:189
+#, c-format
+msgid "invalid WAL segment size in control file (%d byte)"
+msgid_plural "invalid WAL segment size in control file (%d bytes)"
+msgstr[0] "控制文件中的 WAL 段大小无效（%d 字节）"
+
+#: pg_controldata.c:193
+#, c-format
+msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
+msgstr "WAL 段大小必须是 1 MB 到 1 GB 之间的二的幂。"
+
+#: pg_controldata.c:194
+#, c-format
+msgid "The file is corrupt and the results below are untrustworthy."
+msgstr "文件已损坏，以下结果不可信。"
+
+#: pg_controldata.c:212 pg_controldata.c:220 pg_controldata.c:239
+#, c-format
 msgid "???"
 msgstr "???"
 
-#: pg_controldata.c:228
+#: pg_controldata.c:245
 #, c-format
 msgid "pg_control version number:            %u\n"
-msgstr "pg_control 版本:                      %u\n"
+msgstr "pg_control 版本号:                          %u\n"
 
-#: pg_controldata.c:230
+#: pg_controldata.c:247
 #, c-format
 msgid "Catalog version number:               %u\n"
-msgstr "Catalog 版本:                         %u\n"
+msgstr "系统目录版本号:                             %u\n"
 
-#: pg_controldata.c:232
-msgid "Database system identifier:           %llu\n"
-msgstr "数据库系统标识符:                     %llu\n"
+#: pg_controldata.c:249
+#, c-format
+msgid "Database system identifier:           %<PRIu64>\n"
+msgstr "数据库系统标识符:                           %<PRIu64>\n"
 
-#: pg_controldata.c:234
+#: pg_controldata.c:251
 #, c-format
 msgid "Database cluster state:               %s\n"
-msgstr "数据库簇状态:                         %s\n"
-
-#: pg_controldata.c:236
-#, c-format
-msgid "pg_control last modified:             %s\n"
-msgstr "pg_control 最后修改:                  %s\n"
-
-#: pg_controldata.c:238
-#, c-format
-msgid "Latest checkpoint location:           %X/%X\n"
-msgstr "最新检查点位置:                       %X/%X\n"
-
-#: pg_controldata.c:240
-#, c-format
-msgid "Latest checkpoint's REDO location:    %X/%X\n"
-msgstr "最新检查点的 REDO 位置:               %X/%X\n"
-
-#: pg_controldata.c:242
-#, c-format
-msgid "Latest checkpoint's REDO WAL file:    %s\n"
-msgstr "最新检查点的重做日志文件: %s\n"
-
-#: pg_controldata.c:244
-#, c-format
-msgid "Latest checkpoint's TimeLineID:       %u\n"
-msgstr "最新检查点的 TimeLineID:              %u\n"
-
-#: pg_controldata.c:246
-#, c-format
-msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
-msgstr "最新检查点的PrevTimeLineID: %u\n"
-
-#: pg_controldata.c:248
-#, c-format
-msgid "Latest checkpoint's full_page_writes: %s\n"
-msgstr "最新检查点的full_page_writes: %s\n"
-
-#: pg_controldata.c:249 pg_controldata.c:290 pg_controldata.c:302
-msgid "off"
-msgstr "关闭"
-
-#: pg_controldata.c:249 pg_controldata.c:290 pg_controldata.c:302
-msgid "on"
-msgstr "开启"
-
-#: pg_controldata.c:250
-#, c-format
-msgid "Latest checkpoint's NextXID:          %u:%u\n"
-msgstr "最新检查点的NextXID:          %u:%u\n"
+msgstr "数据库集簇状态:                             %s\n"
 
 #: pg_controldata.c:253
 #, c-format
-msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "最新检查点的 NextOID:                 %u\n"
+msgid "pg_control last modified:             %s\n"
+msgstr "pg_control 最后修改时间:                    %s\n"
 
 #: pg_controldata.c:255
 #, c-format
-msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "最新检查点的NextMultiXactId: %u\n"
+msgid "Latest checkpoint location:           %X/%08X\n"
+msgstr "最新检查点位置:                             %X/%08X\n"
 
 #: pg_controldata.c:257
 #, c-format
-msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "最新检查点的NextMultiOffsetD: %u\n"
+msgid "Latest checkpoint's REDO location:    %X/%08X\n"
+msgstr "最新检查点的 REDO 位置:                     %X/%08X\n"
 
 #: pg_controldata.c:259
 #, c-format
-msgid "Latest checkpoint's oldestXID:        %u\n"
-msgstr "最新检查点的oldestXID:            %u\n"
+msgid "Latest checkpoint's REDO WAL file:    %s\n"
+msgstr "最新检查点的 REDO WAL 文件:                 %s\n"
 
 #: pg_controldata.c:261
 #, c-format
-msgid "Latest checkpoint's oldestXID's DB:   %u\n"
-msgstr "最新检查点的oldestXID所在的数据库：%u\n"
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "最新检查点的 TimeLineID:                    %u\n"
 
 #: pg_controldata.c:263
 #, c-format
-msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "最新检查点的oldestActiveXID:  %u\n"
+msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
+msgstr "最新检查点的 PrevTimeLineID:                %u\n"
 
 #: pg_controldata.c:265
 #, c-format
-msgid "Latest checkpoint's oldestMultiXid:   %u\n"
-msgstr "最新检查点的oldestMultiXid:  %u\n"
+msgid "Latest checkpoint's full_page_writes: %s\n"
+msgstr "最新检查点的 full_page_writes:              %s\n"
+
+#: pg_controldata.c:266 pg_controldata.c:268 pg_controldata.c:309
+#: pg_controldata.c:321
+msgid "off"
+msgstr "关闭"
+
+#: pg_controldata.c:266 pg_controldata.c:268 pg_controldata.c:309
+#: pg_controldata.c:321
+msgid "on"
+msgstr "开启"
 
 #: pg_controldata.c:267
 #, c-format
-msgid "Latest checkpoint's oldestMulti's DB: %u\n"
-msgstr "最新检查点的oldestMulti所在的数据库：%u\n"
+msgid "Latest checkpoint's logical decoding: %s\n"
+msgstr "最新检查点的逻辑解码状态:                   %s\n"
 
 #: pg_controldata.c:269
 #, c-format
-msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
-msgstr "最新检查点的oldestCommitTsXid:%u\n"
+msgid "Latest checkpoint's NextXID:          %u:%u\n"
+msgstr "最新检查点的 NextXID:                       %u:%u\n"
 
-#: pg_controldata.c:271
+#: pg_controldata.c:272
 #, c-format
-msgid "Latest checkpoint's newestCommitTsXid:%u\n"
-msgstr "最新检查点的newestCommitTsXid:%u\n"
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "最新检查点的 NextOID:                       %u\n"
 
-#: pg_controldata.c:273
+#: pg_controldata.c:274
 #, c-format
-msgid "Time of latest checkpoint:            %s\n"
-msgstr "最新检查点的时间:                     %s\n"
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "最新检查点的 NextMultiXactId:               %u\n"
 
-#: pg_controldata.c:275
+#: pg_controldata.c:276
 #, c-format
-msgid "Fake LSN counter for unlogged rels:   %X/%X\n"
-msgstr "不带日志的关系: %X/%X使用虚假的LSN计数器\n"
+msgid "Latest checkpoint's NextMultiOffset:  %<PRIu64>\n"
+msgstr "最新检查点的 NextMultiOffset:               %<PRIu64>\n"
 
-#: pg_controldata.c:277
+#: pg_controldata.c:278
 #, c-format
-msgid "Minimum recovery ending location:     %X/%X\n"
-msgstr "最小恢复结束位置: %X/%X\n"
+msgid "Latest checkpoint's oldestXID:        %u\n"
+msgstr "最新检查点的 oldestXID:                     %u\n"
 
-#: pg_controldata.c:279
+#: pg_controldata.c:280
 #, c-format
-msgid "Min recovery ending loc's timeline:   %u\n"
-msgstr "最小恢复结束位置时间表: %u\n"
+msgid "Latest checkpoint's oldestXID's DB:   %u\n"
+msgstr "最新检查点的 oldestXID 所在的数据库:        %u\n"
 
-#: pg_controldata.c:281
+#: pg_controldata.c:282
 #, c-format
-msgid "Backup start location:                %X/%X\n"
-msgstr "开始进行备份的点位置:                       %X/%X\n"
+msgid "Latest checkpoint's oldestActiveXID:  %u\n"
+msgstr "最新检查点的 oldestActiveXID:               %u\n"
 
-#: pg_controldata.c:283
+#: pg_controldata.c:284
 #, c-format
-msgid "Backup end location:                  %X/%X\n"
-msgstr "备份的最终位置:                  %X/%X\n"
-
-#: pg_controldata.c:285
-#, c-format
-msgid "End-of-backup record required:        %s\n"
-msgstr "需要终止备份的记录:        %s\n"
+msgid "Latest checkpoint's oldestMultiXid:   %u\n"
+msgstr "最新检查点的 oldestMultiXid:                %u\n"
 
 #: pg_controldata.c:286
+#, c-format
+msgid "Latest checkpoint's oldestMulti's DB: %u\n"
+msgstr "最新检查点的 oldestMulti 所在的数据库:      %u\n"
+
+#: pg_controldata.c:288
+#, c-format
+msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
+msgstr "最新检查点的 oldestCommitTsXid:             %u\n"
+
+#: pg_controldata.c:290
+#, c-format
+msgid "Latest checkpoint's newestCommitTsXid:%u\n"
+msgstr "最新检查点的 newestCommitTsXid:             %u\n"
+
+#: pg_controldata.c:292
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "最新检查点的时间:                           %s\n"
+
+#: pg_controldata.c:294
+#, c-format
+msgid "Fake LSN counter for unlogged rels:   %X/%08X\n"
+msgstr "不记录 WAL 的关系所用的伪 LSN 计数器:       %X/%08X\n"
+
+#: pg_controldata.c:296
+#, c-format
+msgid "Minimum recovery ending location:     %X/%08X\n"
+msgstr "恢复必须到达的最小位置:                     %X/%08X\n"
+
+#: pg_controldata.c:298
+#, c-format
+msgid "Min recovery ending loc's timeline:   %u\n"
+msgstr "最小恢复位置所属的时间线:                   %u\n"
+
+#: pg_controldata.c:300
+#, c-format
+msgid "Backup start location:                %X/%08X\n"
+msgstr "备份开始位置:                               %X/%08X\n"
+
+#: pg_controldata.c:302
+#, c-format
+msgid "Backup end location:                  %X/%08X\n"
+msgstr "备份结束位置:                               %X/%08X\n"
+
+#: pg_controldata.c:304
+#, c-format
+msgid "End-of-backup record required:        %s\n"
+msgstr "是否需要备份结束记录:                       %s\n"
+
+#: pg_controldata.c:305
 msgid "no"
 msgstr "否"
 
-#: pg_controldata.c:286
+#: pg_controldata.c:305
 msgid "yes"
 msgstr "是"
 
-#: pg_controldata.c:287
-#, c-format
-msgid "wal_level setting:                    %s\n"
-msgstr "wal_level设置：                    %s\n"
-
-#: pg_controldata.c:289
-#, c-format
-msgid "wal_log_hints setting:                %s\n"
-msgstr "wal_log_hints设置：        %s\n"
-
-#: pg_controldata.c:291
-#, c-format
-msgid "max_connections setting:              %d\n"
-msgstr "max_connections设置：   %d\n"
-
-#: pg_controldata.c:293
-#, c-format
-msgid "max_worker_processes setting:         %d\n"
-msgstr "max_worker_processes设置：   %d\n"
-
-#: pg_controldata.c:295
-#, c-format
-msgid "max_wal_senders setting:              %d\n"
-msgstr "max_wal_senders设置:              %d\n"
-
-#: pg_controldata.c:297
-#, c-format
-msgid "max_prepared_xacts setting:           %d\n"
-msgstr "max_prepared_xacts设置：   %d\n"
-
-#: pg_controldata.c:299
-#, c-format
-msgid "max_locks_per_xact setting:           %d\n"
-msgstr "max_locks_per_xact设置：   %d\n"
-
-#: pg_controldata.c:301
-#, c-format
-msgid "track_commit_timestamp setting:       %s\n"
-msgstr "track_commit_timestamp设置:        %s\n"
-
-#: pg_controldata.c:303
-#, c-format
-msgid "Maximum data alignment:               %u\n"
-msgstr "最大数据校准:     %u\n"
-
 #: pg_controldata.c:306
 #, c-format
-msgid "Database block size:                  %u\n"
-msgstr "数据库块大小:                         %u\n"
+msgid "wal_level setting:                    %s\n"
+msgstr "wal_level 设置:                             %s\n"
 
 #: pg_controldata.c:308
 #, c-format
-msgid "Blocks per segment of large relation: %u\n"
-msgstr "大关系的每段块数:                     %u\n"
+msgid "wal_log_hints setting:                %s\n"
+msgstr "wal_log_hints 设置:                         %s\n"
 
 #: pg_controldata.c:310
 #, c-format
-msgid "WAL block size:                       %u\n"
-msgstr "WAL的块大小:    %u\n"
+msgid "max_connections setting:              %d\n"
+msgstr "max_connections 设置:                       %d\n"
 
 #: pg_controldata.c:312
 #, c-format
-msgid "Bytes per WAL segment:                %u\n"
-msgstr "每一个 WAL 段字节数:                  %u\n"
+msgid "max_worker_processes setting:         %d\n"
+msgstr "max_worker_processes 设置:                  %d\n"
 
 #: pg_controldata.c:314
 #, c-format
-msgid "Maximum length of identifiers:        %u\n"
-msgstr "标识符的最大长度:                     %u\n"
+msgid "max_wal_senders setting:              %d\n"
+msgstr "max_wal_senders 设置:                       %d\n"
 
 #: pg_controldata.c:316
 #, c-format
-msgid "Maximum columns in an index:          %u\n"
-msgstr "在索引中可允许使用最大的列数:    %u\n"
+msgid "max_prepared_xacts setting:           %d\n"
+msgstr "max_prepared_xacts 设置:                    %d\n"
 
 #: pg_controldata.c:318
 #, c-format
-msgid "Maximum size of a TOAST chunk:        %u\n"
-msgstr "TOAST区块的最大长度:                %u\n"
+msgid "max_locks_per_xact setting:           %d\n"
+msgstr "max_locks_per_xact 设置:                    %d\n"
 
 #: pg_controldata.c:320
 #, c-format
-msgid "Size of a large-object chunk:         %u\n"
-msgstr "大对象区块的大小:         %u\n"
+msgid "track_commit_timestamp setting:       %s\n"
+msgstr "track_commit_timestamp 设置:                %s\n"
 
-#: pg_controldata.c:323
+#: pg_controldata.c:322
 #, c-format
-msgid "Date/time type storage:               %s\n"
-msgstr "日期/时间 类型存储:                   %s\n"
-
-#: pg_controldata.c:324
-msgid "64-bit integers"
-msgstr "64位整数"
+msgid "Maximum data alignment:               %u\n"
+msgstr "最大数据对齐值:                             %u\n"
 
 #: pg_controldata.c:325
 #, c-format
-msgid "Float8 argument passing:              %s\n"
-msgstr "正在传递Flloat8类型的参数:                   %s\n"
-
-#: pg_controldata.c:326
-msgid "by reference"
-msgstr "由引用"
-
-#: pg_controldata.c:326
-msgid "by value"
-msgstr "由值"
+msgid "Database block size:                  %u\n"
+msgstr "数据库块大小:                               %u\n"
 
 #: pg_controldata.c:327
 #, c-format
-msgid "Data page checksum version:           %u\n"
-msgstr "数据页校验和版本:  %u\n"
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "大关系的每段块数:                           %u\n"
 
 #: pg_controldata.c:329
 #, c-format
-msgid "Mock authentication nonce:            %s\n"
-msgstr "当前身份验证:            %s\n"
+msgid "Pages per SLRU segment:               %u\n"
+msgstr "每个 SLRU 段的页数:                         %u\n"
 
+#: pg_controldata.c:331
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "WAL 块大小:                                 %u\n"
+
+#: pg_controldata.c:333
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "每个 WAL 段的字节数:                        %u\n"
+
+#: pg_controldata.c:335
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "标识符的最大长度:                           %u\n"
+
+#: pg_controldata.c:337
+#, c-format
+msgid "Maximum columns in an index:          %u\n"
+msgstr "索引的最大列数:                             %u\n"
+
+#: pg_controldata.c:339
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "TOAST 分块的大小上限:                       %u\n"
+
+#: pg_controldata.c:341
+#, c-format
+msgid "Size of a large-object chunk:         %u\n"
+msgstr "大对象分块的大小:                           %u\n"
+
+#: pg_controldata.c:344
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "日期/时间类型的存储方式:                    %s\n"
+
+#: pg_controldata.c:345
+msgid "64-bit integers"
+msgstr "64 位整数"
+
+#: pg_controldata.c:346
+#, c-format
+msgid "Float8 argument passing:              %s\n"
+msgstr "Float8 参数传递方式:                        %s\n"
+
+#: pg_controldata.c:347
+msgid "by reference"
+msgstr "按引用"
+
+#: pg_controldata.c:347
+msgid "by value"
+msgstr "按值"
+
+#: pg_controldata.c:348
+#, c-format
+msgid "Data page checksum version:           %u\n"
+msgstr "数据页校验和版本:                           %u\n"
+
+#: pg_controldata.c:350
+#, c-format
+msgid "Default char data signedness:         %s\n"
+msgstr "char 类型的默认符号属性:                    %s\n"
+
+#: pg_controldata.c:351
+msgid "signed"
+msgstr "有符号"
+
+#: pg_controldata.c:351
+msgid "unsigned"
+msgstr "无符号"
+
+#: pg_controldata.c:352
+#, c-format
+msgid "Mock authentication nonce:            %s\n"
+msgstr "模拟认证 nonce:                             %s\n"
+
+#, c-format
+#~ msgid ""
+#~ "The WAL segment size stored in the file, %d byte, is not a power of two\n"
+#~ "between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
+#~ "untrustworthy.\n"
+#~ "\n"
+#~ msgid_plural ""
+#~ "The WAL segment size stored in the file, %d bytes, is not a power of two\n"
+#~ "between 1 MB and 1 GB.  The file is corrupt and the results below are\n"
+#~ "untrustworthy.\n"
+#~ "\n"
+#~ msgstr[0] ""
+#~ "WAL段的大小保存在文件中，%d字节不是2的幂次方（在1MB至1BG之间）\n"
+#~ "文件已损坏，下面的结果不可信.\n"
+#~ msgstr[1] ""
+#~ "WAL段的大小保存在文件中，%d字节不是2的幂次方（在1MB至1BG之间）\n"
+#~ "文件已损坏，下面的结果不可信.\n"
+
+#, c-format
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+
+#, c-format
+#~ msgid "WARNING: invalid WAL segment size\n"
+#~ msgstr "警告: 无效的WAL段大小\n"

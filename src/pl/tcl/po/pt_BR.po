@@ -7,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-27 13:15-0300\n"
-"PO-Revision-Date: 2009-05-06 18:00-0300\n"
+"POT-Creation-Date: 2026-09-05 00:38+0000\n"
+"PO-Revision-Date: 2026-09-06 18:19+0200\n"
 "Last-Translator: Euler Taveira <euler@eulerto.com>\n"
 "Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
@@ -18,100 +18,109 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pltcl.c:463
+#: pltcl.c:472
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "função PL/Tcl executada quando pltcl for utilizado pela primeira vez."
 
-#: pltcl.c:470
+#: pltcl.c:479
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "função PL/TclU executada quando pltclu for utilizado pela primeira vez."
 
-#: pltcl.c:637
+#: pltcl.c:646
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "função \"%s\" está na linguagem incorreta"
 
-#: pltcl.c:648
+#: pltcl.c:657
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "função \"%s\" não deve ser SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:682
+#: pltcl.c:691
 #, c-format
 msgid "processing %s parameter"
 msgstr "processando parâmetro %s"
 
-#: pltcl.c:835
+#: pltcl.c:843
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "função que tem argumento do tipo conjunto foi chamada em um contexto que não pode aceitar um conjunto"
 
-#: pltcl.c:840
+#: pltcl.c:848
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "modo de materialização é requerido, mas ele não é permitido neste contexto"
 
-#: pltcl.c:1013
+#: pltcl.c:1021
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "função que retorna record foi chamada em um contexto que não pode aceitar tipo record"
 
-#: pltcl.c:1296
+#: pltcl.c:1040
 #, c-format
-msgid "could not split return value from trigger: %s"
-msgstr "não pôde dividir valor retornado do gatilho: %s"
+msgid "could not parse function return value: %s"
+msgstr "não foi possível analisar o valor de retorno da função: %s"
 
-#: pltcl.c:1377 pltcl.c:1807
+#: pltcl.c:1306
+#, c-format
+msgid "could not parse trigger return value: %s"
+msgstr "não foi possível analisar o valor de retorno do gatilho: %s"
+
+#: pltcl.c:1406 pltcl.c:1904
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1378
+#: pltcl.c:1407
 #, c-format
 msgid ""
 "%s\n"
-"in PL/Tcl function \"%s\""
+"in PL/Tcl function %s"
 msgstr ""
 "%s\n"
-"na função PL/Tcl \"%s\""
+"na função PL/Tcl %s"
 
-#: pltcl.c:1542
+#: pltcl.c:1636
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "funções de gatilho só podem ser chamadas como gatilhos"
 
-#: pltcl.c:1546
+#: pltcl.c:1640
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "funções PL/Tcl não podem retornar tipo %s"
 
-#: pltcl.c:1585
+#: pltcl.c:1678
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "funções PL/Tcl não podem aceitar tipo %s"
 
-#: pltcl.c:1699
+#: pltcl.c:1792
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "não pôde criar função interna \"%s\": %s"
 
-#: pltcl.c:3201
+#: pltcl.c:3304
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "lista de nome/valor de colunas deve ter número par de elementos"
 
-#: pltcl.c:3219
+#: pltcl.c:3322
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "lsta de nome/valor de colunas contém nome de coluna inexistente \"%s\""
 
-#: pltcl.c:3226
+#: pltcl.c:3329
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "não pode definir atributo do sistema \"%s\""
 
-#: pltcl.c:3232
+#: pltcl.c:3335
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "não pode definir coluna gerada \"%s\""
+
+#, c-format
+#~ msgid "could not split return value from trigger: %s"
+#~ msgstr "não pôde dividir valor retornado do gatilho: %s"

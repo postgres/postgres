@@ -3,81 +3,216 @@
 # This file is distributed under the same license as the pg_test_timing (PostgreSQL) package.
 # FIRST AUTHOR <zhangjie2@fujitsu.com>, 2019.
 #
+# Recalibrated and completed via the pgsql.cc NLS review workbench.
+# Feng Ruohang <rh@vonng.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_timing (PostgreSQL) 14\n"
+"Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 05:47+0000\n"
-"PO-Revision-Date: 2021-06-10 10:50+0800\n"
-"Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
-"Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
+"POT-Creation-Date: 2026-09-17 05:53+0000\n"
+"PO-Revision-Date: 2026-09-17 16:00+0800\n"
+"Last-Translator: Feng Ruohang <rh@vonng.com>\n"
+"Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-#: pg_test_timing.c:59
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
-msgid "Usage: %s [-d DURATION]\n"
-msgstr "用法: %s [-d 持续时间]\n"
+msgid "out of memory\n"
+msgstr "内存不足\n"
 
-#: pg_test_timing.c:81
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能复制空指针（内部错误）\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "无效的内存分配请求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "无效的内存分配请求大小 %zu * %zu\n"
+
+#: pg_test_timing.c:79
+#, c-format
+msgid "Usage: %s [-c CUTOFF] [-d DURATION]\n"
+msgstr "用法: %s [-c 截止点] [-d 持续时间]\n"
+
+#: pg_test_timing.c:100 pg_test_timing.c:121
 #, c-format
 msgid "%s: invalid argument for option %s\n"
-msgstr "%s: 选项%s的参数无效\n"
+msgstr "%s: 选项 %s 的参数无效\n"
 
-#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
+#: pg_test_timing.c:102 pg_test_timing.c:123 pg_test_timing.c:137
+#: pg_test_timing.c:149
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+msgstr "运行 \"%s --help\" 获取更多信息。\n"
 
-#: pg_test_timing.c:90
+#: pg_test_timing.c:108 pg_test_timing.c:130
 #, c-format
 msgid "%s: %s must be in range %u..%u\n"
-msgstr "%s: %s必须位于%u..%u的范围内\n"
+msgstr "%s: %s 必须位于 %u..%u 的范围内\n"
 
-#: pg_test_timing.c:107
+#: pg_test_timing.c:147
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: 命令行参数太多 (第一个是 \"%s\")\n"
+msgstr "%s: 命令行参数过多（第一个多余参数是 \"%s\"）\n"
 
-#: pg_test_timing.c:115
+#: pg_test_timing.c:154
 #, c-format
-msgid "Testing timing overhead for %u second.\n"
-msgid_plural "Testing timing overhead for %u seconds.\n"
-msgstr[0] "测试%u秒的计时开销.\n"
-msgstr[1] "测试%u秒的计时开销.\n"
+msgid ""
+"Testing timing overhead for %u second.\n"
+"\n"
+msgid_plural ""
+"Testing timing overhead for %u seconds.\n"
+"\n"
+msgstr[0] ""
+"正在测试计时开销，持续 %u 秒。\n"
+"\n"
 
-#: pg_test_timing.c:151
+#: pg_test_timing.c:209
+#, c-format
+msgid "TSC frequency source: %s\n"
+msgstr "TSC 频率来源: %s\n"
+
+#: pg_test_timing.c:210
+#, c-format
+msgid "TSC frequency in use: %d kHz\n"
+msgstr "正在使用的 TSC 频率: %d kHz\n"
+
+#: pg_test_timing.c:216
+#, c-format
+msgid "TSC frequency from calibration: %d kHz\n"
+msgstr "校准得到的 TSC 频率: %d kHz\n"
+
+#: pg_test_timing.c:223
+#, c-format
+msgid ""
+"WARNING: Calibrated TSC frequency differs by %.1f%% from the TSC frequency "
+"in use\n"
+msgstr "警告: 校准的 TSC 频率与正在使用的 TSC 频率相差 %.1f%%\n"
+
+#: pg_test_timing.c:225
+#, c-format
+msgid ""
+"HINT: Consider setting timing_clock_source to 'system'. Report bugs to "
+"<%s>.\n"
+msgstr "提示: 考虑将 timing_clock_source 设为 'system'。请向 <%s> 报告缺陷。\n"
+
+#: pg_test_timing.c:230
+#, c-format
+msgid "TSC calibration did not converge\n"
+msgstr "TSC 校准未收敛\n"
+
+#: pg_test_timing.c:240
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will be used by default, unless timing_clock_source is set "
+"to 'system'.\n"
+msgstr ""
+"\n"
+"默认将使用 TSC 时钟源，除非将 timing_clock_source 设为 'system'。\n"
+
+#: pg_test_timing.c:242
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will not be used by default, unless timing_clock_source is "
+"set to 'tsc'.\n"
+msgstr ""
+"\n"
+"默认将不使用 TSC 时钟源，除非将 timing_clock_source 设为 'tsc'。\n"
+
+#: pg_test_timing.c:245
+#, c-format
+msgid ""
+"\n"
+"TSC clock source is not usable. Likely unable to determine TSC frequency. "
+"Are you running in an unsupported virtualized environment?\n"
+msgstr ""
+"\n"
+"TSC 时钟源不可用。可能无法确定 TSC 频率。是否在不支持的虚拟化环境中运行？\n"
+
+#: pg_test_timing.c:270
+#, c-format
+msgid "Fast clock source: %s\n"
+msgstr "快速时钟源: %s\n"
+
+#: pg_test_timing.c:272
+#, c-format
+msgid "System clock source: %s\n"
+msgstr "系统时钟源: %s\n"
+
+#: pg_test_timing.c:274
+#, c-format
+msgid "Clock source: %s\n"
+msgstr "时钟源: %s\n"
+
+#: pg_test_timing.c:312
 #, c-format
 msgid "Detected clock going backwards in time.\n"
-msgstr "检测到时钟时间倒转.\n"
+msgstr "检测到时钟倒转。\n"
 
-#: pg_test_timing.c:152
+#: pg_test_timing.c:313
 #, c-format
-msgid "Time warp: %d ms\n"
-msgstr "时间错位: %d 毫秒\n"
+msgid "Time warp: %<PRId64> ns\n"
+msgstr "时钟回退: %<PRId64> ns\n"
 
-#: pg_test_timing.c:175
+#: pg_test_timing.c:351
 #, c-format
-msgid "Per loop time including overhead: %0.2f ns\n"
-msgstr "每次循环的平均开销: %0.2f 纳秒\n"
+msgid "Average loop time including overhead: %0.2f ns\n"
+msgstr "含开销的平均循环耗时: %0.2f ns\n"
 
-#: pg_test_timing.c:186
-msgid "< us"
-msgstr "< 微秒"
+#: pg_test_timing.c:361
+msgid "<= ns"
+msgstr "<= ns"
 
-#: pg_test_timing.c:187
+#: pg_test_timing.c:362
+msgid "ns"
+msgstr "ns"
+
+#: pg_test_timing.c:363
 #, no-c-format
 msgid "% of total"
-msgstr "总计的 %"
+msgstr "占比 %"
 
-#: pg_test_timing.c:188
+#: pg_test_timing.c:364
+#, no-c-format
+msgid "running %"
+msgstr "累计 %"
+
+#: pg_test_timing.c:365
 msgid "count"
 msgstr "计数"
 
-#: pg_test_timing.c:197
+#: pg_test_timing.c:375
+#, c-format
+msgid ""
+"WARNING: No timing measurements collected. Report this as a bug to <%s>.\n"
+msgstr "警告: 未收集到计时测量结果。向 <%s> 报告此缺陷。\n"
+
+#: pg_test_timing.c:389
 #, c-format
 msgid "Histogram of timing durations:\n"
-msgstr "持续时间的柱状图:\n"
+msgstr "计时持续时间的直方图:\n"
+
+#: pg_test_timing.c:409
+#, c-format
+msgid ""
+"\n"
+"Observed timing durations up to %.4f%%:\n"
+msgstr ""
+"\n"
+"观测到的计时持续时间（累计占比截至 %.4f%%）:\n"
+
+#~ msgid "< us"
+#~ msgstr "< 微秒"

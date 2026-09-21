@@ -5,75 +5,96 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 15\n"
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-26 08:20+0000\n"
-"PO-Revision-Date: 2022-09-30 14:18+0200\n"
+"POT-Creation-Date: 2026-08-03 08:56+0000\n"
+"PO-Revision-Date: 2026-08-03 11:30+0200\n"
+"Last-Translator: Domenico Sgarbossa <sgarbossa.domenico@gmail.com>\n"
+"Language-Team: https://github.com/sbraaa\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Last-Translator: Domenico Sgarbossa <sgarbossa.domenico@gmail.com>\n"
-"Language-Team: \n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 3.9\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
-msgstr "errore:"
+msgstr "errore: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "avvertimento: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "dettaglio: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "suggerimento: "
 
-#: pg_archivecleanup.c:66
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "memoria esaurita\n"
+
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "impossibile duplicare il puntatore nullo (errore interno)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "dimensione della richiesta di allocazione di memoria non valida %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "dimensione della richiesta di allocazione di memoria non valida %zu * %zu\n"
+
+#: pg_archivecleanup.c:69
 #, c-format
 msgid "archive location \"%s\" does not exist"
 msgstr "il percorso di archiviazione \"%s\" non esiste"
 
-#: pg_archivecleanup.c:151
-#, c-format
-msgid "could not remove file \"%s\": %m"
-msgstr "rimozione del file \"%s\" fallita: %m"
-
-#: pg_archivecleanup.c:157
-#, c-format
-msgid "could not read archive location \"%s\": %m"
-msgstr "impossibile leggere la posizione dell'archivio \"%s\": %m"
-
-#: pg_archivecleanup.c:160
-#, c-format
-msgid "could not close archive location \"%s\": %m"
-msgstr "impossibile chiudere la posizione dell'archivio \"%s\": %m"
-
-#: pg_archivecleanup.c:164
+#: pg_archivecleanup.c:101
 #, c-format
 msgid "could not open archive location \"%s\": %m"
 msgstr "impossibile aprire la posizione dell'archivio \"%s\": %m"
 
-#: pg_archivecleanup.c:237
+#: pg_archivecleanup.c:165
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "rimozione del file \"%s\" fallita: %m"
+
+#: pg_archivecleanup.c:170
+#, c-format
+msgid "could not read archive location \"%s\": %m"
+msgstr "impossibile leggere la posizione dell'archivio \"%s\": %m"
+
+#: pg_archivecleanup.c:173
+#, c-format
+msgid "could not close archive location \"%s\": %m"
+msgstr "impossibile chiudere la posizione dell'archivio \"%s\": %m"
+
+#: pg_archivecleanup.c:246
 #, c-format
 msgid "invalid file name argument"
 msgstr "argomento nome file non valido"
 
-#: pg_archivecleanup.c:238 pg_archivecleanup.c:313 pg_archivecleanup.c:333
-#: pg_archivecleanup.c:345 pg_archivecleanup.c:352
+#: pg_archivecleanup.c:247 pg_archivecleanup.c:335 pg_archivecleanup.c:355
+#: pg_archivecleanup.c:367 pg_archivecleanup.c:374
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Prova \"%s --help\" per maggiori informazioni."
 
-#: pg_archivecleanup.c:251
+#: pg_archivecleanup.c:260
 #, c-format
 msgid ""
 "%s removes older WAL files from PostgreSQL archives.\n"
@@ -82,17 +103,17 @@ msgstr ""
 "%s rimuove i file WAL meno recenti dagli archivi PostgreSQL.\n"
 "\n"
 
-#: pg_archivecleanup.c:252
+#: pg_archivecleanup.c:261
 #, c-format
 msgid "Usage:\n"
 msgstr "Utilizzo:\n"
 
-#: pg_archivecleanup.c:253
+#: pg_archivecleanup.c:262
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
-msgstr "%s [OPZIONE]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+msgstr " %s [OPZIONE]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
 
-#: pg_archivecleanup.c:254
+#: pg_archivecleanup.c:263
 #, c-format
 msgid ""
 "\n"
@@ -101,36 +122,49 @@ msgstr ""
 "\n"
 "Opzioni:\n"
 
-#: pg_archivecleanup.c:255
+#: pg_archivecleanup.c:264
 #, c-format
-msgid "  -d             generate debug output (verbose mode)\n"
-msgstr " -d genera output di debug (modalità dettagliata)\n"
+msgid "  -b, --clean-backup-history  clean up files including backup history files\n"
+msgstr " -b, --clean-backup-history  elimina i file, inclusi i file della cronologia dei backup\n"
 
-#: pg_archivecleanup.c:256
+#: pg_archivecleanup.c:265
 #, c-format
-msgid "  -n             dry run, show the names of the files that would be removed\n"
-msgstr " -n dry run, mostra i nomi dei file che verrebbero rimossi\n"
+msgid "  -d, --debug                 generate debug output (verbose mode)\n"
+msgstr " -d, --debug                 genera output di debug (modalità dettagliata)\n"
 
-#: pg_archivecleanup.c:257
+#: pg_archivecleanup.c:266
 #, c-format
-msgid "  -V, --version  output version information, then exit\n"
-msgstr "  -V --version   mostra informazioni sulla versione ed esci\n"
+msgid ""
+"  -n, --dry-run               dry run, show the names of the files that would be\n"
+"                              removed\n"
+msgstr ""
+" -n, --dry-run               simulazione: mostra i nomi dei file che verrebbero\n"
+"                              rimossi\n"
 
-#: pg_archivecleanup.c:258
+#: pg_archivecleanup.c:268
 #, c-format
-msgid "  -x EXT         clean up files if they have this extension\n"
-msgstr " -x EXT ripulisce i file se hanno questa estensione\n"
+msgid "  -V, --version               output version information, then exit\n"
+msgstr "  -V, --version                restituisce le informazioni sulla versione, quindi esci\n"
 
-#: pg_archivecleanup.c:259
+#: pg_archivecleanup.c:269
 #, c-format
-msgid "  -?, --help     show this help, then exit\n"
-msgstr "  -?, --help     mostra questo aiuto ed esci\n"
+msgid ""
+"  -x, --strip-extension=EXT   strip this extension before identifying files for\n"
+"                              clean up\n"
+msgstr ""
+" -x, --strip-extension=EXT   rimuove questa estensione prima di identificare i file da\n"
+"                              ripulire\n"
 
-#: pg_archivecleanup.c:260
+#: pg_archivecleanup.c:271
+#, c-format
+msgid "  -?, --help                  show this help, then exit\n"
+msgstr "  -?, --help                   mostra questo aiuto, quindi esci\n"
+
+#: pg_archivecleanup.c:272
 #, c-format
 msgid ""
 "\n"
-"For use as archive_cleanup_command in postgresql.conf:\n"
+"For use as \"archive_cleanup_command\" in postgresql.conf:\n"
 "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
 "e.g.\n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
@@ -141,7 +175,7 @@ msgstr ""
 "per esempio.\n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 
-#: pg_archivecleanup.c:265
+#: pg_archivecleanup.c:277
 #, c-format
 msgid ""
 "\n"
@@ -154,7 +188,7 @@ msgstr ""
 "per esempio.\n"
 "  pg_archivecleanup /mnt/server/archiverdir 0000000100000000000000010.00000020.backup\n"
 
-#: pg_archivecleanup.c:269
+#: pg_archivecleanup.c:281
 #, c-format
 msgid ""
 "\n"
@@ -163,22 +197,44 @@ msgstr ""
 "\n"
 "Segnala i bug a <%s>.\n"
 
-#: pg_archivecleanup.c:270
+#: pg_archivecleanup.c:282
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Pagina iniziale di %s: <%s>\n"
 
-#: pg_archivecleanup.c:332
+#: pg_archivecleanup.c:354
 #, c-format
 msgid "must specify archive location"
 msgstr "deve specificare la posizione dell'archivio"
 
-#: pg_archivecleanup.c:344
+#: pg_archivecleanup.c:366
 #, c-format
 msgid "must specify oldest kept WAL file"
 msgstr "deve specificare il file WAL più vecchio conservato"
 
-#: pg_archivecleanup.c:351
+#: pg_archivecleanup.c:373
 #, c-format
 msgid "too many command-line arguments"
 msgstr "troppi argomenti della riga di comando"
+
+#: pg_archivecleanup.c:380
+#, c-format
+msgid "executing in dry-run mode"
+msgstr "esecuzione in modalità dry-run"
+
+#: pg_archivecleanup.c:381
+#, c-format
+msgid "No files will be removed."
+msgstr "Nessun files sarà rimosso."
+
+#, c-format
+#~ msgid "  -?, --help     show this help, then exit\n"
+#~ msgstr "  -?, --help     mostra questo aiuto ed esci\n"
+
+#, c-format
+#~ msgid "  -V, --version  output version information, then exit\n"
+#~ msgstr "  -V --version   mostra informazioni sulla versione ed esci\n"
+
+#, c-format
+#~ msgid "  -x EXT         clean up files if they have this extension\n"
+#~ msgstr "  -x EXT         ripulisce i file se hanno questa estensione\n"

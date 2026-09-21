@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_verifybackup
 # Copyright (C) 2020 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_verifybackup (PostgreSQL) package.
-# Dennis Björklund <db@zigo.dhs.org>, 2020, 2021, 2022, 2023, 2024, 2025.
+# Dennis Björklund <db@zigo.dhs.org>, 2020, 2021, 2022, 2023, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 18\n"
+"Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-05-16 16:18+0000\n"
-"PO-Revision-Date: 2025-05-16 20:33+0200\n"
+"POT-Creation-Date: 2026-08-27 19:51+0000\n"
+"PO-Revision-Date: 2026-08-27 22:24+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -17,53 +17,53 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../../src/common/logging.c:279
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "fel: "
 
-#: ../../../src/common/logging.c:286
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "varning: "
 
-#: ../../../src/common/logging.c:297
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "detalj: "
 
-#: ../../../src/common/logging.c:304
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "tips: "
 
-#: ../../common/controldata_utils.c:97
+#: ../../common/controldata_utils.c:98
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "kunde inte öppna filen \"%s\" för läsning: %m"
 
-#: ../../common/controldata_utils.c:110 pg_verifybackup.c:440
-#: pg_verifybackup.c:478 pg_verifybackup.c:1025 pg_verifybackup.c:1144
+#: ../../common/controldata_utils.c:111 pg_verifybackup.c:455
+#: pg_verifybackup.c:493 pg_verifybackup.c:1051 pg_verifybackup.c:1170
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
 
-#: ../../common/controldata_utils.c:119
+#: ../../common/controldata_utils.c:120
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
 
-#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
-#: pg_verifybackup.c:1030 pg_verifybackup.c:1150
+#: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
+#: pg_verifybackup.c:1056 pg_verifybackup.c:1176
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "kunde inte stänga fil \"%s\": %m"
 
-#: ../../common/controldata_utils.c:168
+#: ../../common/controldata_utils.c:169
 msgid "byte ordering mismatch"
 msgstr "byte-ordning stämmer inte"
 
-#: ../../common/controldata_utils.c:170
+#: ../../common/controldata_utils.c:171
 #, c-format
 msgid ""
 "possible byte ordering mismatch\n"
@@ -76,24 +76,24 @@ msgstr ""
 "inte detta program. I så fall kan nedanstående resultat vara felaktiga\n"
 "och PostgreSQL-installationen vara inkompatibel med databaskatalogen."
 
-#: ../../common/controldata_utils.c:230 pg_verifybackup.c:408
-#: pg_verifybackup.c:1005 pg_verifybackup.c:1113
+#: ../../common/controldata_utils.c:231 pg_verifybackup.c:423
+#: pg_verifybackup.c:1031 pg_verifybackup.c:1139
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: ../../common/controldata_utils.c:249
+#: ../../common/controldata_utils.c:250
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "kunde inte skriva fil \"%s\": %m"
 
-#: ../../common/controldata_utils.c:268
+#: ../../common/controldata_utils.c:269
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "kunde inte fsync:a fil \"%s\": %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/jsonapi.c:2410 ../../common/parse_manifest.c:157
+#: ../../common/jsonapi.c:2459 ../../common/parse_manifest.c:157
 #: ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
@@ -112,114 +112,124 @@ msgstr "destinationsbuffer för liten"
 msgid "OpenSSL failure"
 msgstr "OpenSSL-fel"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
 
-#: ../../common/jsonapi.c:2435
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ogiltig storlek %zu + %zu för minnesallokering\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ogiltig storlek %zu * %zu för minnesallokering\n"
+
+#: ../../common/jsonapi.c:2484
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr "Recursive-descent-parser kan inte använda inkrementell lexer."
 
-#: ../../common/jsonapi.c:2437
+#: ../../common/jsonapi.c:2486
 msgid "Incremental parser requires incremental lexer."
 msgstr "Inkrementell parser kräver en inkrementell lexer."
 
-#: ../../common/jsonapi.c:2439
+#: ../../common/jsonapi.c:2488
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr "JSON nästlad för djupt, maximal tillåtet djup är 6400."
 
-#: ../../common/jsonapi.c:2441
+#: ../../common/jsonapi.c:2490
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "Escape-sekvens \"\\%.*s\" är ogiltig."
 
-#: ../../common/jsonapi.c:2445
+#: ../../common/jsonapi.c:2494
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Tecken med värde 0x%02x måste escape:as."
 
-#: ../../common/jsonapi.c:2449
+#: ../../common/jsonapi.c:2498
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "Förväntade slut på indata, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2452
+#: ../../common/jsonapi.c:2501
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "Färväntade array-element eller \"]\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2455
+#: ../../common/jsonapi.c:2504
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "Förväntade \",\" eller \"]\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2458
+#: ../../common/jsonapi.c:2507
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "Förväntade sig \":\" men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2461
+#: ../../common/jsonapi.c:2510
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "Förväntade JSON-värde, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2464
+#: ../../common/jsonapi.c:2513
 msgid "The input string ended unexpectedly."
 msgstr "Indatasträngen avslutades oväntat."
 
-#: ../../common/jsonapi.c:2466
+#: ../../common/jsonapi.c:2515
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "Färväntade sträng eller \"}\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2469
+#: ../../common/jsonapi.c:2518
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "Förväntade sig \",\" eller \"}\" men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2472
+#: ../../common/jsonapi.c:2521
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "Förväntade sträng, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2475
+#: ../../common/jsonapi.c:2524
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "Token \"%.*s\" är ogiltig."
 
-#: ../../common/jsonapi.c:2481
+#: ../../common/jsonapi.c:2530
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 kan inte konverteras till text."
 
-#: ../../common/jsonapi.c:2483
+#: ../../common/jsonapi.c:2532
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "\"\\u\" måste följas av fyra hexdecimala siffror."
 
-#: ../../common/jsonapi.c:2486
+#: ../../common/jsonapi.c:2535
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Escape-värden för unicode kan inte användas för kodpunkter med värde över 007F när kodningen inte är UTF8."
 
-#: ../../common/jsonapi.c:2495
+#: ../../common/jsonapi.c:2544
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Escape-värde för unicode kan inte översättas till serverns kodning %s."
 
-#: ../../common/jsonapi.c:2502
+#: ../../common/jsonapi.c:2551
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicodes övre surrogathalva får inte komma efter en övre surrogathalva."
 
-#: ../../common/jsonapi.c:2504
+#: ../../common/jsonapi.c:2553
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicodes lägre surrogathalva måste följa en övre surrogathalva."
 
-#: ../../common/jsonapi.c:2526
+#: ../../common/jsonapi.c:2575
 msgid "out of memory while constructing error description"
 msgstr "slut på minne vid skapande av felbeskrivning"
 
@@ -400,9 +410,9 @@ msgstr "kunde inte öppna utdatafilen: %m"
 msgid "could not set compression level %d: %s"
 msgstr "kunde inte sätta komprimeringsnivå %d: %s"
 
-#: ../../fe_utils/astreamer_gzip.c:140 ../../fe_utils/astreamer_gzip.c:273
-#: ../../fe_utils/astreamer_lz4.c:102 ../../fe_utils/astreamer_lz4.c:300
-#: ../../fe_utils/astreamer_zstd.c:133 ../../fe_utils/astreamer_zstd.c:288
+#: ../../fe_utils/astreamer_gzip.c:140 ../../fe_utils/astreamer_gzip.c:275
+#: ../../fe_utils/astreamer_lz4.c:102 ../../fe_utils/astreamer_lz4.c:302
+#: ../../fe_utils/astreamer_zstd.c:130 ../../fe_utils/astreamer_zstd.c:285
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "detta bygge stöder inte komprimering med %s"
@@ -417,13 +427,13 @@ msgstr "kunde inte skriva till komprimerad fil \"%s\": %s"
 msgid "could not close compressed file \"%s\": %m"
 msgstr "kunde inte stänga komprimerad fil \"%s\": %m"
 
-#: ../../fe_utils/astreamer_gzip.c:269
+#: ../../fe_utils/astreamer_gzip.c:271
 #, c-format
 msgid "could not initialize compression library"
 msgstr "kunde inte initierar komprimeringsbibliotek"
 
-#: ../../fe_utils/astreamer_gzip.c:320 ../../fe_utils/astreamer_lz4.c:356
-#: ../../fe_utils/astreamer_zstd.c:333
+#: ../../fe_utils/astreamer_gzip.c:322 ../../fe_utils/astreamer_lz4.c:358
+#: ../../fe_utils/astreamer_zstd.c:330
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "kunde inte dekomprimera data: %s"
@@ -438,8 +448,8 @@ msgstr "kunde inte skapa kontext för lz4-komprimering: %s"
 msgid "could not write lz4 header: %s"
 msgstr "kunde inte skriva lz4-header: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:185
-#: ../../fe_utils/astreamer_zstd.c:227
+#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:182
+#: ../../fe_utils/astreamer_zstd.c:224
 #, c-format
 msgid "could not compress data: %s"
 msgstr "kunde inte komprimera data: %s"
@@ -449,27 +459,37 @@ msgstr "kunde inte komprimera data: %s"
 msgid "could not end lz4 compression: %s"
 msgstr "kunde inte avsluta lz4-komprimering: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:295
+#: ../../fe_utils/astreamer_lz4.c:297
 #, c-format
 msgid "could not initialize compression library: %s"
 msgstr "kunde inte initiera komprimeringsbibliotek: %s"
 
-#: ../../fe_utils/astreamer_tar.c:244
-#, c-format
-msgid "tar file trailer exceeds 2 blocks"
-msgstr "tarfilens slutdel överskred 2 block"
-
-#: ../../fe_utils/astreamer_tar.c:249 astreamer_verify.c:130
+#: ../../fe_utils/astreamer_tar.c:254 astreamer_verify.c:130
 #, c-format
 msgid "unexpected state while parsing tar archive"
 msgstr "oväntat tillstånd vid parsning av tar-arkiv"
 
-#: ../../fe_utils/astreamer_tar.c:292
+#: ../../fe_utils/astreamer_tar.c:300
+#, c-format
+msgid "input file does not appear to be a valid tar archive"
+msgstr "indatafilen verkar inte vara ett korrekt tar-arkiv"
+
+#: ../../fe_utils/astreamer_tar.c:307
 #, c-format
 msgid "tar member has empty name"
 msgstr "tar-medlem har tomt namn"
 
-#: ../../fe_utils/astreamer_tar.c:326
+#: ../../fe_utils/astreamer_tar.c:309
+#, c-format
+msgid "tar member has unsafe path name: \"%s\""
+msgstr "tar-medlem har osäkert sökvägsnamn: \"%s\""
+
+#: ../../fe_utils/astreamer_tar.c:332
+#, c-format
+msgid "pax extensions to tar format are not supported"
+msgstr "pax-utökning av tar-formatet stöds inte"
+
+#: ../../fe_utils/astreamer_tar.c:361
 #, c-format
 msgid "COPY stream ended before last file was finished"
 msgstr "COPY-ström avslutade innan sista filen var klar"
@@ -489,12 +509,12 @@ msgstr "kunde inte sätta zstd-komprimeringsnivå till %d: %s"
 msgid "could not set compression worker count to %d: %s"
 msgstr "kunde inte sätta komprimeringens arbetarantal till %d: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:120
+#: ../../fe_utils/astreamer_zstd.c:119
 #, c-format
 msgid "could not enable long-distance mode: %s"
 msgstr "kunde inte aktivera långdistansläge: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:279
+#: ../../fe_utils/astreamer_zstd.c:276
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "kunde inte skapa kontext för zstd-dekomprimering"
@@ -514,7 +534,7 @@ msgstr "filen \"%s\" har storlek %llu i arkivet \"%s\" men storlek %<PRIu64> i m
 msgid "%s: could not initialize checksum of file \"%s\""
 msgstr "%s: kunde inte initiera kontrollsumma för filen \"%s\""
 
-#: astreamer_verify.c:274 pg_verifybackup.c:1133
+#: astreamer_verify.c:274 pg_verifybackup.c:1159
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "kunde inte uppdatera kontrollsumma för filen \"%s\""
@@ -524,7 +544,7 @@ msgstr "kunde inte uppdatera kontrollsumma för filen \"%s\""
 msgid "file \"%s\" in archive \"%s\" should contain %<PRIu64> bytes, but %<PRIu64> bytes were read"
 msgstr "filen \"%s\" i arkivet \"%s\" skall innehålla %<PRIu64> byte men vi läste %<PRIu64> byte"
 
-#: astreamer_verify.c:312 pg_verifybackup.c:1179
+#: astreamer_verify.c:312 pg_verifybackup.c:1205
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
 msgstr "kunde inte göra klart kontrollsumma för filen \"%s\""
@@ -559,167 +579,167 @@ msgstr "%s: %s: oväntad version på kontrollfil"
 msgid "%s: %s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
 msgstr "%s: %s: manifestets systemidentifierare är %<PRIu64> men kontrollfilern har %<PRIu64>"
 
-#: pg_verifybackup.c:208
+#: pg_verifybackup.c:215
 #, c-format
 msgid "invalid backup format \"%s\", must be \"plain\" or \"tar\""
 msgstr "ogiltigt backupformat \"%s\", måste vara \"plain\" eller \"tar\""
 
-#: pg_verifybackup.c:229 pg_verifybackup.c:238 pg_verifybackup.c:249
+#: pg_verifybackup.c:236 pg_verifybackup.c:245 pg_verifybackup.c:256
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Försök med \"%s --help\" för mer information."
 
-#: pg_verifybackup.c:237
+#: pg_verifybackup.c:244
 #, c-format
 msgid "no backup directory specified"
 msgstr "ingen backup-katalog angiven"
 
-#: pg_verifybackup.c:247
+#: pg_verifybackup.c:254
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "för många kommandoradsargument (första är \"%s\")"
 
-#: pg_verifybackup.c:255
+#: pg_verifybackup.c:262
 #, c-format
 msgid "cannot specify both %s and %s"
 msgstr "kan inte ange både %s och %s"
 
-#: pg_verifybackup.c:275
+#: pg_verifybackup.c:282
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "programmet \"%s\" behövs av %s men hittades inte i samma katalog som \"%s\""
 
-#: pg_verifybackup.c:278
+#: pg_verifybackup.c:285
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "programmet \"%s\" hittades av \"%s\" men är inte av samma version som %s"
 
-#: pg_verifybackup.c:304 pg_verifybackup.c:625
+#: pg_verifybackup.c:307 pg_verifybackup.c:640
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "kunde inte öppna katalog \"%s\": %m"
 
-#: pg_verifybackup.c:323 pg_verifybackup.c:412
+#: pg_verifybackup.c:326 pg_verifybackup.c:427
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
 
-#: pg_verifybackup.c:340
+#: pg_verifybackup.c:379
 #, c-format
-msgid "pg_waldump cannot read tar files"
-msgstr "pg_waldump kan inte läsa tar-filer"
+msgid "WAL archive not found"
+msgstr "WAL-arkiv hittades inte"
 
-#: pg_verifybackup.c:341
+#: pg_verifybackup.c:380
 #, c-format
-msgid "You must use -n/--no-parse-wal when verifying a tar-format backup."
-msgstr "Du måste använda -n/--no-parse-wal för att verifiera en backup i tar-format."
+msgid "Specify the correct path using the option -w/--wal-path.  Or you must use -n/--no-parse-wal when verifying a tar-format backup."
+msgstr "Ange korrekt sökväg med flaggan -w/--wal-path eller så måste du använda -n/--no-parse-wal för att verifiera en backup i tar-format."
 
-#: pg_verifybackup.c:383
+#: pg_verifybackup.c:398
 #, c-format
 msgid "backup successfully verified\n"
 msgstr "korrekt verifierad backup\n"
 
-#: pg_verifybackup.c:442
+#: pg_verifybackup.c:457
 #, c-format
 msgid "could not read file \"%s\": read %d of %lld"
 msgstr "kunde inte läsa fil \"%s\": läste %d av %lld"
 
-#: pg_verifybackup.c:480
+#: pg_verifybackup.c:495
 #, c-format
 msgid "could not read file \"%s\": read %lld of %lld"
 msgstr "kunde inte läsa fil \"%s\": läste %lld av %lld"
 
-#: pg_verifybackup.c:563
+#: pg_verifybackup.c:578
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "duplicerad sökväg i backup-manifest: \"%s\""
 
-#: pg_verifybackup.c:657 pg_verifybackup.c:827
+#: pg_verifybackup.c:672 pg_verifybackup.c:844
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "kunde inte stänga katalog \"%s\": %m"
 
-#: pg_verifybackup.c:678 pg_verifybackup.c:897
+#: pg_verifybackup.c:693 pg_verifybackup.c:918
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "kunde inte ta status på fil eller katalog \"%s\": %m"
 
-#: pg_verifybackup.c:701
+#: pg_verifybackup.c:716
 #, c-format
 msgid "\"%s\" is not a regular file or directory"
 msgstr "\"%s\" är inte en vanlig fil eller katalog"
 
-#: pg_verifybackup.c:711
+#: pg_verifybackup.c:726
 #, c-format
 msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "\"%s\" finns på disk men är inte i manifestet"
 
-#: pg_verifybackup.c:723
+#: pg_verifybackup.c:738
 #, c-format
 msgid "\"%s\" has size %llu on disk but size %llu in the manifest"
 msgstr "\"%s\" har storlek %llu på disk men storlek %llu i manifestet"
 
-#: pg_verifybackup.c:765
+#: pg_verifybackup.c:780
 #, c-format
 msgid "%s: CRC is incorrect"
 msgstr "%s: CRC är inkorrekt"
 
-#: pg_verifybackup.c:769
+#: pg_verifybackup.c:784
 #, c-format
 msgid "%s: unexpected control file version"
 msgstr "%s: oväntad version på kontrollfil"
 
-#: pg_verifybackup.c:774
+#: pg_verifybackup.c:789
 #, c-format
 msgid "%s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
 msgstr "%s: manifestets systemidentifierare är %<PRIu64> men kontrollfilern har %<PRIu64>"
 
-#: pg_verifybackup.c:906
+#: pg_verifybackup.c:927
 #, c-format
 msgid "file \"%s\" is not a regular file"
 msgstr "filen \"%s\" är inte en normal fil"
 
-#: pg_verifybackup.c:936 pg_verifybackup.c:957
+#: pg_verifybackup.c:963 pg_verifybackup.c:978
 #, c-format
 msgid "file \"%s\" is not expected in a tar format backup"
 msgstr "filen \"%s\" förväntades inte vara en backup i tar-format"
 
-#: pg_verifybackup.c:1049
+#: pg_verifybackup.c:1075
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "\"%s\" finns i manifestet men inte på disk"
 
-#: pg_verifybackup.c:1121
+#: pg_verifybackup.c:1147
 #, c-format
 msgid "could not initialize checksum of file \"%s\""
 msgstr "kunde inte initiera kontrollsumma för filen \"%s\""
 
-#: pg_verifybackup.c:1169
+#: pg_verifybackup.c:1195
 #, c-format
 msgid "file \"%s\" should contain %<PRIu64> bytes, but read %<PRIu64>"
 msgstr "filen \"%s\" skall innehålla %<PRIu64> byte men vi läste %<PRIu64> byte"
 
-#: pg_verifybackup.c:1187
+#: pg_verifybackup.c:1213
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "filen \"%s\" har kontrollsumma med längd %d men förväntade %d"
 
-#: pg_verifybackup.c:1191
+#: pg_verifybackup.c:1217
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "kontrollsumman matchar inte för fil \"%s\""
 
-#: pg_verifybackup.c:1217
+#: pg_verifybackup.c:1243
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "WAL-parsning misslyckades för tidslinje %u"
 
-#: pg_verifybackup.c:1351
+#: pg_verifybackup.c:1377
 #, c-format
 msgid "%*s/%s kB (%d%%) verified"
 msgstr "%*s/%s kB (%d%%) verifierad"
 
-#: pg_verifybackup.c:1368
+#: pg_verifybackup.c:1394
 #, c-format
 msgid ""
 "%s verifies a backup against the backup manifest.\n"
@@ -728,7 +748,7 @@ msgstr ""
 "%s verifierar en backup gentemot backup-manifestet.\n"
 "\n"
 
-#: pg_verifybackup.c:1369
+#: pg_verifybackup.c:1395
 #, c-format
 msgid ""
 "Usage:\n"
@@ -739,67 +759,72 @@ msgstr ""
 "  %s [FLAGGOR]... BACKUPKAT\n"
 "\n"
 
-#: pg_verifybackup.c:1370
+#: pg_verifybackup.c:1396
 #, c-format
 msgid "Options:\n"
 msgstr "Flaggor:\n"
 
-#: pg_verifybackup.c:1371
+#: pg_verifybackup.c:1397
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error         avsluta direkt vid fel\n"
 
-#: pg_verifybackup.c:1372
+#: pg_verifybackup.c:1398
 #, c-format
 msgid "  -F, --format=p|t            backup format (plain, tar)\n"
 msgstr "  -F, --format=p|t            backupformat (plain, tar)\n"
 
-#: pg_verifybackup.c:1373
+#: pg_verifybackup.c:1399
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIV_SÖKVÄG hoppa över angiven sökväg\n"
 
-#: pg_verifybackup.c:1374
+#: pg_verifybackup.c:1400
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=SÖKVÄG  använd denna sökväg till manifestet\n"
 
-#: pg_verifybackup.c:1375
+#: pg_verifybackup.c:1401
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal          försök inte parsa WAL-filer\n"
 
-#: pg_verifybackup.c:1376
+#: pg_verifybackup.c:1402
 #, c-format
 msgid "  -P, --progress              show progress information\n"
 msgstr "  -P, --progress              visa förloppsinformation\n"
 
-#: pg_verifybackup.c:1377
+#: pg_verifybackup.c:1403
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet                 skriv inte ut några meddelanden förutom fel\n"
 
-#: pg_verifybackup.c:1378
+#: pg_verifybackup.c:1404
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums        hoppa över verifiering av kontrollsummor\n"
 
-#: pg_verifybackup.c:1379
+#: pg_verifybackup.c:1405
 #, c-format
-msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
-msgstr "  -w, --wal-directory=SÖKVÄG  använd denna sökväg till WAL-filer\n"
+msgid "  -w, --wal-path=PATH         use specified path for WAL files\n"
+msgstr "  -w, --wal-path=SÖKVÄG       använd denna sökväg till WAL-filer\n"
 
-#: pg_verifybackup.c:1380
+#: pg_verifybackup.c:1406
+#, c-format
+msgid "      --wal-directory=PATH    (same as --wal-path, deprecated)\n"
+msgstr "      --wal-directory=SÖKVÄG  (samma som --wal-path, obsolet)\n"
+
+#: pg_verifybackup.c:1407
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version               visa versionsinformation, avsluta sedan\n"
 
-#: pg_verifybackup.c:1381
+#: pg_verifybackup.c:1408
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                  visa denna hjälp, avsluta sedan\n"
 
-#: pg_verifybackup.c:1382
+#: pg_verifybackup.c:1409
 #, c-format
 msgid ""
 "\n"
@@ -808,7 +833,7 @@ msgstr ""
 "\n"
 "Rapportera fel till <%s>.\n"
 
-#: pg_verifybackup.c:1383
+#: pg_verifybackup.c:1410
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "hemsida för %s: <%s>\n"
