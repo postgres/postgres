@@ -836,7 +836,7 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 
 			log_heap_prune_and_freeze(relation, buffer,
 									  conflict_xid,
-									  true, reason,
+									  do_prune, reason,
 									  prstate.frozen, prstate.nfrozen,
 									  prstate.redirected, prstate.nredirected,
 									  prstate.nowdead, prstate.ndead,
