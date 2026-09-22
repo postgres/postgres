@@ -46,7 +46,7 @@ typedef struct
  * Priority of last call to the release callback.
  * This is used to check that the resources are released in correct order.
  */
-static uint32 last_release_priority = 0;
+static uint32 last_release_priority PG_USED_FOR_ASSERTS_ONLY = 0;
 
 /* prototypes for local functions */
 static void ReleaseManyTestResource(Datum res);
