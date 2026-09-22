@@ -443,7 +443,13 @@ prune_freeze_setup(PruneFreezeParams *params,
 	prstate->buffer = params->buffer;
 	prstate->page = BufferGetPage(params->buffer);
 
-	Assert(BufferIsValid(params->vmbuffer));
+	/*
+	 * The caller must have pinned the VM page covering this heap block. If it
+	 * doesn't have the correct page pinned, visibilitymap_get_status() will
+	 * silently release the caller's pin and take its own, leaving the caller
+	 * holding a stale buffer and leaking ours.
+	 */
+	Assert(visibilitymap_pin_ok(prstate->block, params->vmbuffer));
 	prstate->vmbuffer = params->vmbuffer;
 	prstate->new_vmbits = 0;
 	prstate->old_vmbits = visibilitymap_get_status(prstate->relation,
