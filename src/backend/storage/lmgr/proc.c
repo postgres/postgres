@@ -238,7 +238,7 @@ ProcGlobalShmemInit(void *arg)
 	dlist_init(&ProcGlobal->autovacFreeProcs);
 	dlist_init(&ProcGlobal->bgworkerFreeProcs);
 	dlist_init(&ProcGlobal->walsenderFreeProcs);
-	ProcGlobal->startupBufferPinWaitBuf = InvalidBuffer;
+	pg_atomic_init_u32(&ProcGlobal->startupBufferPinWaitBuf, InvalidBuffer);
 	pg_atomic_init_u32(&ProcGlobal->avLauncherProc, INVALID_PROC_NUMBER);
 	pg_atomic_init_u32(&ProcGlobal->walwriterProc, INVALID_PROC_NUMBER);
 	pg_atomic_init_u32(&ProcGlobal->checkpointerProc, INVALID_PROC_NUMBER);
@@ -767,10 +767,7 @@ InitAuxiliaryProcess(void)
 void
 SetStartupBufferPinWaitBuf(Buffer buffer)
 {
-	/* use volatile pointer to prevent code rearrangement */
-	volatile PROC_HDR *procglobal = ProcGlobal;
-
-	procglobal->startupBufferPinWaitBuf = buffer;
+	pg_atomic_write_u32(&ProcGlobal->startupBufferPinWaitBuf, buffer);
 }
 
 /*
@@ -779,10 +776,7 @@ SetStartupBufferPinWaitBuf(Buffer buffer)
 Buffer
 GetStartupBufferPinWaitBuf(void)
 {
-	/* use volatile pointer to prevent code rearrangement */
-	volatile PROC_HDR *procglobal = ProcGlobal;
-
-	return procglobal->startupBufferPinWaitBuf;
+	return pg_atomic_read_u32(&ProcGlobal->startupBufferPinWaitBuf);
 }
 
 /*

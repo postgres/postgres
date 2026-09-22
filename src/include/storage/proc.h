@@ -500,7 +500,7 @@ typedef struct PROC_HDR
 	/* Current shared estimate of appropriate spins_per_delay value */
 	int			spins_per_delay;
 	/* Buffer that Startup process waits for pin on, or InvalidBuffer */
-	Buffer		startupBufferPinWaitBuf;
+	pg_atomic_uint32 startupBufferPinWaitBuf;
 } PROC_HDR;
 
 extern PGDLLIMPORT PROC_HDR *ProcGlobal;
