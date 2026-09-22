@@ -131,6 +131,40 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 	},
 
 	/*
+	 * Array values embed their element type's OID (ARR_ELEMTYPE).  System
+	 * types with auto-assigned OIDs do not keep the same OID across major
+	 * versions, so stored arrays over them would point at the wrong type
+	 * after an upgrade.  As above, the information_schema test covers a
+	 * dropped-and-reloaded information_schema.  typelem alone does not
+	 * identify a true array type (name, point, and int2vector have one too),
+	 * so also require the element's typarray back-link.
+	 *
+	 * The query below hardcodes FirstGenbkiObjectId as 10000 and
+	 * FirstNormalObjectId as 16384 rather than interpolating those C #defines
+	 * into the query because, if either #define is ever changed, the cutoffs
+	 * we want to use are the values used by pre-version 14 servers, not those
+	 * of some future version.
+	 */
+	{
+		.status = gettext_noop("Checking for arrays over system types with auto-assigned OIDs in user tables"),
+		.report_filename = "tables_using_system_arrays.txt",
+		.base_query =
+		"SELECT t.oid FROM pg_catalog.pg_type t "
+		"JOIN pg_catalog.pg_type e ON t.typelem = e.oid "
+		"LEFT JOIN pg_catalog.pg_namespace n ON e.typnamespace = n.oid "
+		"WHERE t.typtype = 'b' AND e.typarray = t.oid AND "
+		"       ((e.oid >= 10000 AND e.oid < 16384) "
+		"        OR n.nspname = 'information_schema')",
+		.report_text =
+		gettext_noop("Your installation contains arrays over system types with auto-assigned\n"
+					 "OIDs in user tables.  Array values embed the element type's OID, which\n"
+					 "is not preserved by pg_upgrade, so this cluster cannot currently be\n"
+					 "upgraded.  You can drop the problem columns, or change them to another\n"
+					 "data type, and restart the upgrade.\n"),
+		.threshold_version = ALL_VERSIONS
+	},
+
+	/*
 	 * pg_upgrade only preserves these system values: pg_class.oid pg_type.oid
 	 * pg_enum.oid
 	 *
