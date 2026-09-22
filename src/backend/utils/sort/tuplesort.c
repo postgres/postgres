@@ -104,6 +104,7 @@
 #include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
+#include "port/atomics.h"
 #include "port/pg_bitutils.h"
 #include "storage/shmem.h"
 #include "utils/guc.h"
@@ -340,9 +341,6 @@ struct Tuplesortstate
  */
 struct Sharedsort
 {
-	/* mutex protects all fields prior to tapes */
-	slock_t		mutex;
-
 	/*
 	 * currentWorker generates ordinal identifier numbers for parallel sort
 	 * workers.  These start from 0, and are always gapless.
@@ -351,8 +349,8 @@ struct Sharedsort
 	 * is equal to state.nParticipants within the leader, leader is ready to
 	 * merge worker runs.
 	 */
-	int			currentWorker;
-	int			workersFinished;
+	pg_atomic_uint32 currentWorker;
+	pg_atomic_uint32 workersFinished;
 
 	/* Temporary file space */
 	SharedFileSet fileset;
@@ -3254,9 +3252,8 @@ tuplesort_initialize_shared(Sharedsort *shared, int nWorkers, dsm_segment *seg)
 
 	Assert(nWorkers > 0);
 
-	SpinLockInit(&shared->mutex);
-	shared->currentWorker = 0;
-	shared->workersFinished = 0;
+	pg_atomic_init_u32(&shared->currentWorker, 0);
+	pg_atomic_init_u32(&shared->workersFinished, 0);
 	SharedFileSetInit(&shared->fileset, seg);
 	shared->nTapes = nWorkers;
 	for (i = 0; i < nWorkers; i++)
@@ -3293,16 +3290,9 @@ tuplesort_attach_shared(Sharedsort *shared, dsm_segment *seg)
 static int
 worker_get_identifier(Tuplesortstate *state)
 {
-	Sharedsort *shared = state->shared;
-	int			worker;
-
 	Assert(WORKER(state));
 
-	SpinLockAcquire(&shared->mutex);
-	worker = shared->currentWorker++;
-	SpinLockRelease(&shared->mutex);
-
-	return worker;
+	return pg_atomic_fetch_add_u32(&state->shared->currentWorker, 1);
 }
 
 /*
@@ -3344,10 +3334,8 @@ worker_freeze_result_tape(Tuplesortstate *state)
 	LogicalTapeFreeze(state->result_tape, &output);
 
 	/* Store properties of output tape, and update finished worker count */
-	SpinLockAcquire(&shared->mutex);
 	shared->tapes[state->worker] = output;
-	shared->workersFinished++;
-	SpinLockRelease(&shared->mutex);
+	pg_atomic_fetch_add_u32(&shared->workersFinished, 1);
 }
 
 /*
@@ -3389,9 +3377,7 @@ leader_takeover_tapes(Tuplesortstate *state)
 	Assert(LEADER(state));
 	Assert(nParticipants >= 1);
 
-	SpinLockAcquire(&shared->mutex);
-	workersFinished = shared->workersFinished;
-	SpinLockRelease(&shared->mutex);
+	workersFinished = pg_atomic_read_membarrier_u32(&shared->workersFinished);
 
 	if (nParticipants != workersFinished)
 		elog(ERROR, "cannot take over tapes before all workers finish");
