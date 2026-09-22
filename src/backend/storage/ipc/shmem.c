@@ -1228,7 +1228,9 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 	Size	   *nodes;
 
 	if (pg_numa_init() == -1)
-		elog(ERROR, "libnuma initialization failed or NUMA is not supported on this platform");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("libnuma initialization failed or NUMA is not supported on this platform")));
 
 	InitMaterializedSRF(fcinfo, 0);
 

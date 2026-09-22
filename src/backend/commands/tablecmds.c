@@ -9621,6 +9621,7 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 				tup = findNotNullConstraint(childrelid, strVal(column));
 				if (!tup)
 					ereport(ERROR,
+							errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 							errmsg("column \"%s\" of table \"%s\" is not marked NOT NULL",
 								   strVal(column), get_rel_name(childrelid)));
 				/* verify it's good enough */

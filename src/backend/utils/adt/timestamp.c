@@ -1186,7 +1186,9 @@ intervaltypmodout(PG_FUNCTION_ARGS)
 			fieldstr = "";
 			break;
 		default:
-			elog(ERROR, "invalid INTERVAL typmod: 0x%x", typmod);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized interval typmod: %d", typmod)));
 			fieldstr = "";
 			break;
 	}
@@ -1246,7 +1248,9 @@ intervaltypmodleastfield(int32 typmod)
 		case INTERVAL_FULL_RANGE:
 			return 0;			/* SECOND */
 		default:
-			elog(ERROR, "invalid INTERVAL typmod: 0x%x", typmod);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized interval typmod: %d", typmod)));
 			break;
 	}
 	return 0;					/* can't get here, but keep compiler quiet */
@@ -1489,7 +1493,9 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod,
 			/* fractional-second rounding will be dealt with below */
 		}
 		else
-			elog(ERROR, "unrecognized interval typmod: %d", typmod);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized interval typmod: %d", typmod)));
 
 		/* Need to adjust sub-second precision? */
 		if (precision != INTERVAL_FULL_PRECISION)

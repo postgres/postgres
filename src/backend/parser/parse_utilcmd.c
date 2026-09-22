@@ -805,8 +805,10 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 					if (constraint->conname &&
 						notnull_constraint->conname &&
 						strcmp(notnull_constraint->conname, constraint->conname) != 0)
-						elog(ERROR, "conflicting not-null constraint names \"%s\" and \"%s\"",
-							 notnull_constraint->conname, constraint->conname);
+						ereport(ERROR,
+								errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								errmsg("conflicting not-null constraint names \"%s\" and \"%s\"",
+									   notnull_constraint->conname, constraint->conname));
 
 					if (notnull_constraint->is_no_inherit != constraint->is_no_inherit)
 						ereport(ERROR,
