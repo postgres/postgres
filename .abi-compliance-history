@@ -18,6 +18,13 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+937a0e68cb55ac38341f242cf3302906e6e2ec42
+#
+# Fix parallel GIN index build with keys larger than 65535 bytes
+# 2026-09-14 16:47:51 +0200
+#
+# The modified type is only used internally and transiently.
+
 9f25197bf27c4c4a02d754842bc4055d83be735b
 #
 # Perform join removal by editing the query's jointree.
