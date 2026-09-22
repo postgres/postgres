@@ -86,7 +86,7 @@ StaticAssertDecl(lengthof(cacheinfo) == SysCacheSize,
 
 static CatCache *SysCache[SysCacheSize];
 
-static bool CacheInitialized = false;
+static bool CacheInitialized PG_USED_FOR_ASSERTS_ONLY = false;
 
 /* Sorted array of OIDs of tables that have caches on them */
 static Oid	SysCacheRelationOid[SysCacheSize];
