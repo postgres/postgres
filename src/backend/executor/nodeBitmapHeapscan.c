@@ -79,7 +79,6 @@ typedef enum
 /* ----------------
  *	 ParallelBitmapHeapState information
  *		tbmiterator				iterator for scanning current pages
- *		mutex					mutual exclusion for state
  *		state					current state of the TIDBitmap
  *		cv						conditional wait variable
  * ----------------
@@ -87,8 +86,7 @@ typedef enum
 typedef struct ParallelBitmapHeapState
 {
 	dsa_pointer tbmiterator;
-	slock_t		mutex;
-	SharedBitmapState state;
+	pg_atomic_uint32 state;
 	ConditionVariable cv;
 } ParallelBitmapHeapState;
 
@@ -228,9 +226,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 static inline void
 BitmapDoneInitializingSharedState(ParallelBitmapHeapState *pstate)
 {
-	SpinLockAcquire(&pstate->mutex);
-	pstate->state = BM_FINISHED;
-	SpinLockRelease(&pstate->mutex);
+	pg_atomic_write_membarrier_u32(&pstate->state, BM_FINISHED);
 	ConditionVariableBroadcast(&pstate->cv);
 }
 
@@ -476,15 +472,12 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 static bool
 BitmapShouldInitializeSharedState(ParallelBitmapHeapState *pstate)
 {
-	SharedBitmapState state;
+	uint32		state;
 
 	while (1)
 	{
-		SpinLockAcquire(&pstate->mutex);
-		state = pstate->state;
-		if (pstate->state == BM_INITIAL)
-			pstate->state = BM_INPROGRESS;
-		SpinLockRelease(&pstate->mutex);
+		state = BM_INITIAL;
+		pg_atomic_compare_exchange_u32(&pstate->state, &state, BM_INPROGRESS);
 
 		/* Exit if bitmap is done, or if we're the leader. */
 		if (state != BM_INPROGRESS)
@@ -538,9 +531,7 @@ ExecBitmapHeapInitializeDSM(BitmapHeapScanState *node,
 
 	pstate->tbmiterator = 0;
 
-	/* Initialize the mutex */
-	SpinLockInit(&pstate->mutex);
-	pstate->state = BM_INITIAL;
+	pg_atomic_init_u32(&pstate->state, BM_INITIAL);
 
 	ConditionVariableInit(&pstate->cv);
 
@@ -565,7 +556,7 @@ ExecBitmapHeapReInitializeDSM(BitmapHeapScanState *node,
 	if (dsa == NULL)
 		return;
 
-	pstate->state = BM_INITIAL;
+	pg_atomic_write_u32(&pstate->state, BM_INITIAL);
 
 	if (DsaPointerIsValid(pstate->tbmiterator))
 		tbm_free_shared_area(dsa, pstate->tbmiterator);
