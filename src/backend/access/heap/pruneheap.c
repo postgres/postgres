@@ -1337,7 +1337,7 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 									  do_set_vm ? prstate.vmbuffer : InvalidBuffer,
 									  do_set_vm ? prstate.new_vmbits : 0,
 									  conflict_xid,
-									  true, /* cleanup lock */
+									  do_prune, /* cleanup lock */
 									  params->reason,
 									  prstate.frozen, prstate.nfrozen,
 									  prstate.redirected, prstate.nredirected,
