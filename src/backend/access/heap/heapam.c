@@ -800,8 +800,14 @@ heapgettup(HeapScanDesc scan,
 		 */
 		if (backward)
 		{
-			finished = (page == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
+			/*
+			 * We're done if the last block is the start position.  No need to
+			 * check if rs_numblocks was set by heap_setscanlimits() as that
+			 * only changes the end block.  The start block is the same with
+			 * or without scan limits.
+			 */
+			finished = (page == scan->rs_startblock);
+
 			if (page == 0)
 				page = scan->rs_nblocks;
 			page--;
@@ -822,8 +828,19 @@ heapgettup(HeapScanDesc scan,
 			page++;
 			if (page >= scan->rs_nblocks)
 				page = 0;
-			finished = (page == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
+
+			if (page == scan->rs_startblock)
+				finished = true;
+			else if (scan->rs_numblocks != InvalidBlockNumber)
+			{
+				BlockNumber endblock;
+
+				endblock = (scan->rs_startblock + scan->rs_numblocks) %
+					scan->rs_nblocks;
+				finished = (page == endblock);
+			}
+			else
+				finished = false;
 
 			/*
 			 * Report our new scan position for synchronization purposes. We
@@ -1109,8 +1126,13 @@ heapgettup_pagemode(HeapScanDesc scan,
 		 */
 		if (backward)
 		{
-			finished = (page == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
+			/*
+			 * We're done if the last block is the start position.  No need to
+			 * check if rs_numblocks was set by heap_setscanlimits() as that
+			 * only changes the end block.  The start block is the same with
+			 * or without scan limits.
+			 */
+			finished = (page == scan->rs_startblock);
 			if (page == 0)
 				page = scan->rs_nblocks;
 			page--;
@@ -1131,8 +1153,18 @@ heapgettup_pagemode(HeapScanDesc scan,
 			page++;
 			if (page >= scan->rs_nblocks)
 				page = 0;
-			finished = (page == scan->rs_startblock) ||
-				(scan->rs_numblocks != InvalidBlockNumber ? --scan->rs_numblocks == 0 : false);
+			if (page == scan->rs_startblock)
+				finished = true;
+			else if (scan->rs_numblocks != InvalidBlockNumber)
+			{
+				BlockNumber endblock;
+
+				endblock = (scan->rs_startblock + scan->rs_numblocks) %
+					scan->rs_nblocks;
+				finished = (page == endblock);
+			}
+			else
+				finished = false;
 
 			/*
 			 * Report our new scan position for synchronization purposes. We
