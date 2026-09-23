@@ -2007,6 +2007,7 @@ pgstat_read_statsfile(void)
 					PgStatShared_HashEntry *p;
 					PgStatShared_Common *header;
 					const PgStat_KindInfo *kind_info = NULL;
+					dsa_pointer chunk;
 
 					CHECK_FOR_INTERRUPTS();
 
@@ -2095,24 +2096,12 @@ pgstat_read_statsfile(void)
 					 * This intentionally doesn't use pgstat_get_entry_ref() -
 					 * putting all stats into checkpointer's
 					 * pgStatEntryRefHash would be wasted effort and memory.
+					 *
+					 * Allocate the DSA body before inserting the hash entry.
 					 */
-					p = dshash_find_or_insert(pgStatLocal.shared_hash, &key, &found);
-
-					/* don't allow duplicate entries */
-					if (found)
+					chunk = pgstat_alloc_entry_body(key.kind);
+					if (chunk == InvalidDsaPointer)
 					{
-						dshash_release_lock(pgStatLocal.shared_hash, p);
-						elog(WARNING, "found duplicate stats entry %u/%u/%" PRIu64 " of type %c",
-							 key.kind, key.dboid,
-							 key.objid, t);
-						goto error;
-					}
-
-					header = pgstat_init_entry(key.kind, p);
-					if (header == NULL)
-					{
-						dshash_delete_entry(pgStatLocal.shared_hash, p);
-
 						/*
 						 * It would be tempting to switch this ERROR to a
 						 * WARNING, but it would mean that all the statistics
@@ -2122,6 +2111,35 @@ pgstat_read_statsfile(void)
 							 key.kind, key.dboid,
 							 key.objid, t);
 					}
+
+					p = dshash_find_or_insert_extended(pgStatLocal.shared_hash,
+													   &key, &found,
+													   DSHASH_INSERT_NO_OOM);
+					if (!p)
+					{
+						dsa_free(pgStatLocal.dsa, chunk);
+
+						/*
+						 * for the same reason as previously, ERROR not
+						 * WARNING
+						 */
+						elog(ERROR, "could not insert entry %u/%u/%" PRIu64 " of type %c",
+							 key.kind, key.dboid,
+							 key.objid, t);
+					}
+
+					/* don't allow duplicate entries */
+					if (found)
+					{
+						dshash_release_lock(pgStatLocal.shared_hash, p);
+						dsa_free(pgStatLocal.dsa, chunk);
+						elog(WARNING, "found duplicate stats entry %u/%u/%" PRIu64 " of type %c",
+							 key.kind, key.dboid,
+							 key.objid, t);
+						goto error;
+					}
+
+					header = pgstat_init_entry(key.kind, p, chunk);
 					dshash_release_lock(pgStatLocal.shared_hash, p);
 
 					if (!read_chunk(fpin,
