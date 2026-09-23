@@ -911,7 +911,11 @@ heapgettup_advance_block(HeapScanDesc scan, BlockNumber block, ScanDirection dir
 		/* check if the limit imposed by heap_setscanlimits() is met */
 		if (scan->rs_numblocks != InvalidBlockNumber)
 		{
-			if (--scan->rs_numblocks == 0)
+			BlockNumber endblock;
+
+			endblock = (scan->rs_startblock + scan->rs_numblocks) %
+				scan->rs_nblocks;
+			if (block == endblock)
 				return InvalidBlockNumber;
 		}
 
@@ -919,16 +923,14 @@ heapgettup_advance_block(HeapScanDesc scan, BlockNumber block, ScanDirection dir
 	}
 	else
 	{
-		/* we're done if the last block is the start position */
+		/*
+		 * We're done if the last block is the start position.  No need to
+		 * check if rs_numblocks was set by heap_setscanlimits() as that only
+		 * changes the end block.  The start block is the same with or without
+		 * scan limits.
+		 */
 		if (block == scan->rs_startblock)
 			return InvalidBlockNumber;
-
-		/* check if the limit imposed by heap_setscanlimits() is met */
-		if (scan->rs_numblocks != InvalidBlockNumber)
-		{
-			if (--scan->rs_numblocks == 0)
-				return InvalidBlockNumber;
-		}
 
 		/* wrap to the end of the heap when the last page was page 0 */
 		if (block == 0)
