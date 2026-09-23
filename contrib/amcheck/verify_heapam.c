@@ -482,6 +482,7 @@ verify_heapam(PG_FUNCTION_ARGS)
 
 	while ((ctx.buffer = read_stream_next_buffer(stream, NULL)) != InvalidBuffer)
 	{
+		uint8		vmbits;
 		OffsetNumber maxoff;
 		OffsetNumber predecessor[MaxOffsetNumber];
 		OffsetNumber successor[MaxOffsetNumber];
@@ -499,6 +500,23 @@ verify_heapam(PG_FUNCTION_ARGS)
 
 		ctx.blkno = BufferGetBlockNumber(ctx.buffer);
 		ctx.page = BufferGetPage(ctx.buffer);
+
+		/*
+		 * It is corruption if PD_ALL_VISIBLE is clear while either VM bit is
+		 * set. Missing VM pages are treated as having no bits set. VM pages
+		 * that fail page verification are read with RBM_ZERO_ON_ERROR, so
+		 * those failures are not reported as corruption rows here.
+		 */
+		vmbits = visibilitymap_get_status(ctx.rel, ctx.blkno, &vmbuffer);
+
+		if (!PageIsAllVisible(ctx.page) &&
+			(vmbits & VISIBILITYMAP_VALID_BITS) != 0)
+		{
+			ctx.offnum = InvalidOffsetNumber;
+			ctx.attnum = -1;
+			report_corruption(&ctx,
+							  psprintf("page is not marked all-visible in page header but visibility map bit is set"));
+		}
 
 		/* Perform tuple checks */
 		maxoff = PageGetMaxOffsetNumber(ctx.page);
