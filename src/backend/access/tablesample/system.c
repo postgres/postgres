@@ -202,8 +202,8 @@ system_nextsampleblock(SampleScanState *node, BlockNumber nblocks)
 
 		hashinput[0] = nextblock;
 
-		hash = DatumGetUInt32(hash_any((const unsigned char *) hashinput,
-									   (int) sizeof(hashinput)));
+		hash = hash_bytes((const unsigned char *) hashinput,
+						  (int) sizeof(hashinput));
 		if (hash < sampler->cutoff)
 			break;
 	}

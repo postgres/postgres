@@ -1451,8 +1451,8 @@ JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 			tmp = 0x01;
 			break;
 		case jbvString:
-			tmp = DatumGetUInt32(hash_any((const unsigned char *) scalarVal->val.string.val,
-										  scalarVal->val.string.len));
+			tmp = hash_bytes((const unsigned char *) scalarVal->val.string.val,
+							 scalarVal->val.string.len);
 			break;
 		case jbvNumeric:
 			/* Must hash equal numerics to equal hash codes */
@@ -1494,9 +1494,9 @@ JsonbHashScalarValueExtended(const JsonbValue *scalarVal, uint64 *hash,
 			tmp = seed + 0x01;
 			break;
 		case jbvString:
-			tmp = DatumGetUInt64(hash_any_extended((const unsigned char *) scalarVal->val.string.val,
-												   scalarVal->val.string.len,
-												   seed));
+			tmp = hash_bytes_extended((const unsigned char *) scalarVal->val.string.val,
+									  scalarVal->val.string.len,
+									  seed);
 			break;
 		case jbvNumeric:
 			tmp = DatumGetUInt64(DirectFunctionCall2(hash_numeric_extended,

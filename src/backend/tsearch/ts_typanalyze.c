@@ -496,8 +496,7 @@ lexeme_hash(const void *key, Size keysize)
 {
 	const LexemeHashKey *l = (const LexemeHashKey *) key;
 
-	return DatumGetUInt32(hash_any((const unsigned char *) l->lexeme,
-								   l->length));
+	return hash_bytes((const unsigned char *) l->lexeme, l->length);
 }
 
 /*

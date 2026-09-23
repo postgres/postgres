@@ -214,8 +214,8 @@ bernoulli_nextsampletuple(SampleScanState *node,
 
 		hashinput[1] = tupoffset;
 
-		hash = DatumGetUInt32(hash_any((const unsigned char *) hashinput,
-									   (int) sizeof(hashinput)));
+		hash = hash_bytes((const unsigned char *) hashinput,
+						  (int) sizeof(hashinput));
 		if (hash < sampler->cutoff)
 			break;
 	}

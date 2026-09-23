@@ -2717,8 +2717,8 @@ Datum
 hash_numeric(PG_FUNCTION_ARGS)
 {
 	Numeric		key = PG_GETARG_NUMERIC(0);
-	Datum		digit_hash;
-	Datum		result;
+	uint32		digit_hash;
+	uint32		result;
 	int			weight;
 	int			start_offset;
 	int			end_offset;
@@ -2780,13 +2780,14 @@ hash_numeric(PG_FUNCTION_ARGS)
 	 * this shouldn't affect correctness.
 	 */
 	hash_len = NUMERIC_NDIGITS(key) - start_offset - end_offset;
-	digit_hash = hash_any((unsigned char *) (NUMERIC_DIGITS(key) + start_offset),
-						  hash_len * sizeof(NumericDigit));
+	digit_hash = hash_bytes((unsigned char *) (NUMERIC_DIGITS(key)
+											   + start_offset),
+							hash_len * sizeof(NumericDigit));
 
 	/* Mix in the weight, via XOR */
 	result = digit_hash ^ weight;
 
-	PG_RETURN_DATUM(result);
+	PG_RETURN_UINT32(result);
 }
 
 /*
@@ -2798,8 +2799,8 @@ hash_numeric_extended(PG_FUNCTION_ARGS)
 {
 	Numeric		key = PG_GETARG_NUMERIC(0);
 	uint64		seed = PG_GETARG_INT64(1);
-	Datum		digit_hash;
-	Datum		result;
+	uint64		digit_hash;
+	uint64		result;
 	int			weight;
 	int			start_offset;
 	int			end_offset;
@@ -2840,14 +2841,14 @@ hash_numeric_extended(PG_FUNCTION_ARGS)
 	Assert(start_offset + end_offset < NUMERIC_NDIGITS(key));
 
 	hash_len = NUMERIC_NDIGITS(key) - start_offset - end_offset;
-	digit_hash = hash_any_extended((unsigned char *) (NUMERIC_DIGITS(key)
-													  + start_offset),
-								   hash_len * sizeof(NumericDigit),
-								   seed);
+	digit_hash = hash_bytes_extended((unsigned char *) (NUMERIC_DIGITS(key)
+														+ start_offset),
+									 hash_len * sizeof(NumericDigit),
+									 seed);
 
-	result = UInt64GetDatum(DatumGetUInt64(digit_hash) ^ weight);
+	result = digit_hash ^ weight;
 
-	PG_RETURN_DATUM(result);
+	PG_RETURN_UINT64(result);
 }
 
 

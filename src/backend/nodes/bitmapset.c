@@ -1546,8 +1546,8 @@ bms_hash_value(const Bitmapset *a)
 
 	if (a == NULL)
 		return 0;				/* All empty sets hash to 0 */
-	return DatumGetUInt32(hash_any((const unsigned char *) a->words,
-								   a->nwords * sizeof(bitmapword)));
+	return hash_bytes((const unsigned char *) a->words,
+					  a->nwords * sizeof(bitmapword));
 }
 
 /*

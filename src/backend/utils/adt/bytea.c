@@ -1106,8 +1106,8 @@ bytea_abbrev_convert(Datum original, SortSupport ssup)
 	 * in order to compensate for cases where differences are past
 	 * PG_CACHE_LINE_SIZE bytes, so as to limit the overhead of hashing.
 	 */
-	hash = DatumGetUInt32(hash_any((unsigned char *) authoritative_data,
-								   Min(len, PG_CACHE_LINE_SIZE)));
+	hash = hash_bytes((unsigned char *) authoritative_data,
+					  Min(len, PG_CACHE_LINE_SIZE));
 
 	if (len > PG_CACHE_LINE_SIZE)
 		hash ^= murmurhash32((uint32) len);

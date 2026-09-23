@@ -158,7 +158,7 @@ freeHyperLogLog(hyperLogLogState *cState)
  * Adds element to the estimator, from caller-supplied hash.
  *
  * It is critical that the hash value passed be an actual hash value, typically
- * generated using hash_any().  The algorithm relies on a specific bit-pattern
+ * generated using hash_bytes().  The algorithm relies on a specific bit-pattern
  * observable in conjunction with stochastic averaging.  There must be a
  * uniform distribution of bits in hash values for each distinct original value
  * observed.

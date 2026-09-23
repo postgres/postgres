@@ -1333,7 +1333,7 @@ make_text_key(char flag, const char *str, int len)
 	{
 		uint32		hashval;
 
-		hashval = DatumGetUInt32(hash_any((const unsigned char *) str, len));
+		hashval = hash_bytes((const unsigned char *) str, len);
 		snprintf(hashbuf, sizeof(hashbuf), "%08x", hashval);
 		str = hashbuf;
 		len = 8;

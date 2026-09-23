@@ -221,9 +221,9 @@ DoJumble(JumbleState *jstate, Node *node)
 		jstate->highest_extern_param_id = 0;
 
 	/* Process the jumble buffer and produce the hash value */
-	return DatumGetInt64(hash_any_extended(jstate->jumble,
-										   jstate->jumble_len,
-										   0));
+	return (int64) hash_bytes_extended(jstate->jumble,
+									   jstate->jumble_len,
+									   0);
 }
 
 /*
@@ -271,8 +271,8 @@ AppendJumbleInternal(JumbleState *jstate, const unsigned char *item,
 		{
 			int64		start_hash;
 
-			start_hash = DatumGetInt64(hash_any_extended(jumble,
-														 JUMBLE_SIZE, 0));
+			start_hash = (int64) hash_bytes_extended(jumble,
+													 JUMBLE_SIZE, 0);
 			memcpy(jumble, &start_hash, sizeof(start_hash));
 			jumble_len = sizeof(start_hash);
 		}

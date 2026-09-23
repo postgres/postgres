@@ -89,13 +89,13 @@ cfunc_hash(const void *key, Size keysize)
 
 	Assert(keysize == sizeof(CachedFunctionHashKey));
 	/* Hash all the fixed fields except callResultType */
-	h = DatumGetUInt32(hash_any((const unsigned char *) k,
-								offsetof(CachedFunctionHashKey, callResultType)));
+	h = hash_bytes((const unsigned char *) k,
+				   offsetof(CachedFunctionHashKey, callResultType));
 	/* Incorporate input argument types */
 	if (k->nargs > 0)
 		h = hash_combine(h,
-						 DatumGetUInt32(hash_any((const unsigned char *) k->argtypes,
-												 k->nargs * sizeof(Oid))));
+						 hash_bytes((const unsigned char *) k->argtypes,
+									k->nargs * sizeof(Oid)));
 	/* Incorporate callResultType if present */
 	if (k->callResultType)
 		h = hash_combine(h, hashRowType(k->callResultType));
