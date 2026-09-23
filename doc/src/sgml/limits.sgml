@@ -123,10 +123,11 @@
   Variable-length fields of
   types such as <type>text</type>, <type>varchar</type>, and <type>char</type>
   can have their values stored out of line in the table's TOAST table when the
-  values are large enough to require it.  Only an 18-byte pointer must remain
-  inside the tuple in the table's heap.  For shorter length variable-length
-  fields, either a 4-byte or 1-byte field header is used and the value is
-  stored inside the heap tuple.
+  values are large enough to require it. Only an 18-byte or 22-byte TOAST
+  pointer must remain inside the tuple in the table's heap, depending on
+  whether the TOAST table uses OID or OID8 values, respectively. For shorter
+  length variable-length fields, either a 4-byte or 1-byte field header is used
+  and the value is stored inside the heap tuple.
  </para>
 
  <para>
@@ -145,5 +146,8 @@
   can become expensive, in turn slowing down INSERT/UPDATE statements.
   Typically, this is only an issue for tables containing many terabytes
   of data; partitioning is a possible workaround.
+  A TOAST table using OID8 values does not have this issue as it can store up
+  to 2^64 out-of-line values. New identifiers are assigned without searching
+  for a free one. See <xref linkend="reloption-toast-value-type"/>.
  </para>
 </appendix>
