@@ -1341,6 +1341,12 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 
 				RemoveSubscriptionRel(sub->oid, relid);
 
+				/*
+				 * A sequence sync worker may already be running with this
+				 * sequence in its to-do list. It does not have to be stopped.
+				 * It notices that the sequence is no longer part of the
+				 * subscription and skips it, see copy_sequence().
+				 */
 				ereport(DEBUG1,
 						errmsg_internal("sequence \"%s.%s\" removed from subscription \"%s\"",
 										get_namespace_name(get_rel_namespace(relid)),
