@@ -485,7 +485,7 @@ FETCH NEXT FROM c_3;
 (1 row)
 
 -- new cursors with pins can be created after subtrans rollback
-SELECT test_temp_pin(10, 94);
+SELECT test_temp_pin(10, 90);
  test_temp_pin 
 ---------------
  

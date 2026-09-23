@@ -369,7 +369,7 @@ ROLLBACK TO SAVEPOINT rescue_me;
 FETCH NEXT FROM c_3;
 
 -- new cursors with pins can be created after subtrans rollback
-SELECT test_temp_pin(10, 94);
+SELECT test_temp_pin(10, 90);
 
 -- Check that read streams deal with lower number of pins available
 SELECT count(*), max(a) max_a, min(a) min_a, max(cnt) max_cnt FROM test_temp;
