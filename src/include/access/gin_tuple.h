@@ -33,7 +33,7 @@ typedef struct GinTuple
 	 * The key value is accessed in place, so it must be aligned well enough
 	 * for any key type.
 	 */
-	char		alignas(MAXIMUM_ALIGNOF) data[FLEXIBLE_ARRAY_MEMBER];
+	alignas(MAXIMUM_ALIGNOF) char data[FLEXIBLE_ARRAY_MEMBER];
 } GinTuple;
 
 static inline ItemPointer
