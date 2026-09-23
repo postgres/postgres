@@ -1773,7 +1773,7 @@ SELECT format('INSERT INTO %I VALUES(%L)', 'Foo bar', E'O\'Reilly');
 <lineannotation>Result: </lineannotation><computeroutput>INSERT INTO "Foo bar" VALUES('O''Reilly')</computeroutput>
 
 SELECT format('INSERT INTO %I VALUES(%L)', 'locations', 'C:\Program Files');
-<lineannotation>Result: </lineannotation><computeroutput>INSERT INTO locations VALUES('C:\Program Files')</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>INSERT INTO locations VALUES(E'C:\\Program Files')</computeroutput>
 </screen>
     </para>
 
