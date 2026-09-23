@@ -96,6 +96,18 @@ FETCH FIRST c;
 FETCH LAST c;
 COMMIT;
 
+-- Ensure TID Range Scans with scrollable cursors count blocks correctly.
+BEGIN;
+DECLARE c SCROLL CURSOR FOR SELECT ctid FROM tidrangescan WHERE ctid >= '(0,1)' AND ctid <= '(2,10)';
+MOVE FORWARD 25 c;
+MOVE BACKWARD 4 c;
+FETCH BACKWARD 1 c;
+MOVE BACKWARD ALL c;
+FETCH FORWARD 1 c;
+MOVE FORWARD ALL c;
+FETCH BACKWARD 1 c;
+COMMIT;
+
 DROP TABLE tidrangescan;
 
 -- Tests for parallel TID Range Scans
