@@ -234,3 +234,161 @@ key|val
 (1 row)
 
 step c2: COMMIT;
+
+starting permutation: delete merge_wnmbs_src2 c1 select2 c2
+step delete: DELETE FROM target t WHERE t.key = 1;
+step merge_wnmbs_src2: 
+  MERGE INTO target t
+    USING (SELECT 2 AS key, 'merge2' AS val) s ON t.key = s.key
+    WHEN MATCHED THEN UPDATE SET key = t.key + 1, val = t.val || ' match updated by ' || s.val
+    WHEN NOT MATCHED BY SOURCE THEN UPDATE SET key = t.key + 1, val = t.val || ' not matched by source'
+    WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val)
+    RETURNING merge_action(), t.*;
+ <waiting ...>
+step c1: COMMIT;
+step merge_wnmbs_src2: <... completed>
+merge_action|key|val   
+------------+---+------
+INSERT      |  2|merge2
+(1 row)
+
+step select2: SELECT * FROM target;
+key|val   
+---+------
+  2|merge2
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: delete_pa merge_wnmbs_src2_pa c1 select2_pa c2
+step delete_pa: DELETE FROM target_pa t WHERE t.key = 1;
+step merge_wnmbs_src2_pa: 
+  MERGE INTO target_pa t
+    USING (SELECT 2 AS key, 'merge2_pa' AS val) s ON t.key = s.key
+    WHEN MATCHED THEN UPDATE SET key = t.key + 1, val = t.val || ' match updated by ' || s.val
+    WHEN NOT MATCHED BY SOURCE THEN UPDATE SET key = t.key + 1, val = t.val || ' not matched by source'
+    WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val)
+    RETURNING merge_action(), t.*;
+ <waiting ...>
+step c1: COMMIT;
+step merge_wnmbs_src2_pa: <... completed>
+merge_action|key|val      
+------------+---+---------
+INSERT      |  2|merge2_pa
+(1 row)
+
+step select2_pa: SELECT * FROM target_pa;
+key|val      
+---+---------
+  2|merge2_pa
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: delete_tg merge_wnmbs_src2_tg c1 select2_tg c2
+s1: NOTICE:  Delete: (1,setup1)
+step delete_tg: DELETE FROM target_tg t WHERE t.key = 1;
+step merge_wnmbs_src2_tg: 
+  MERGE INTO target_tg t
+    USING (SELECT 2 AS key, 'merge2_tg' AS val) s ON t.key = s.key
+    WHEN MATCHED THEN UPDATE SET key = t.key + 1, val = t.val || ' match updated by ' || s.val
+    WHEN NOT MATCHED BY SOURCE THEN UPDATE SET key = t.key + 1, val = t.val || ' not matched by source'
+    WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val)
+    RETURNING merge_action(), t.*;
+ <waiting ...>
+step c1: COMMIT;
+s2: NOTICE:  Insert: (2,merge2_tg)
+step merge_wnmbs_src2_tg: <... completed>
+merge_action|key|val      
+------------+---+---------
+INSERT      |  2|merge2_tg
+(1 row)
+
+step select2_tg: SELECT * FROM target_tg;
+key|val      
+---+---------
+  2|merge2_tg
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: update delete merge_wnmbs_src2 c1 select2 c2
+step update: UPDATE target t SET val = t.val || ' update1' WHERE t.key = 1;
+step delete: DELETE FROM target t WHERE t.key = 1;
+step merge_wnmbs_src2: 
+  MERGE INTO target t
+    USING (SELECT 2 AS key, 'merge2' AS val) s ON t.key = s.key
+    WHEN MATCHED THEN UPDATE SET key = t.key + 1, val = t.val || ' match updated by ' || s.val
+    WHEN NOT MATCHED BY SOURCE THEN UPDATE SET key = t.key + 1, val = t.val || ' not matched by source'
+    WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val)
+    RETURNING merge_action(), t.*;
+ <waiting ...>
+step c1: COMMIT;
+step merge_wnmbs_src2: <... completed>
+merge_action|key|val   
+------------+---+------
+INSERT      |  2|merge2
+(1 row)
+
+step select2: SELECT * FROM target;
+key|val   
+---+------
+  2|merge2
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: update_pa delete_pa merge_wnmbs_src2_pa c1 select2_pa c2
+step update_pa: UPDATE target_pa t SET val = t.val || ' update1' WHERE t.key = 1;
+step delete_pa: DELETE FROM target_pa t WHERE t.key = 1;
+step merge_wnmbs_src2_pa: 
+  MERGE INTO target_pa t
+    USING (SELECT 2 AS key, 'merge2_pa' AS val) s ON t.key = s.key
+    WHEN MATCHED THEN UPDATE SET key = t.key + 1, val = t.val || ' match updated by ' || s.val
+    WHEN NOT MATCHED BY SOURCE THEN UPDATE SET key = t.key + 1, val = t.val || ' not matched by source'
+    WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val)
+    RETURNING merge_action(), t.*;
+ <waiting ...>
+step c1: COMMIT;
+step merge_wnmbs_src2_pa: <... completed>
+merge_action|key|val      
+------------+---+---------
+INSERT      |  2|merge2_pa
+(1 row)
+
+step select2_pa: SELECT * FROM target_pa;
+key|val      
+---+---------
+  2|merge2_pa
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: update_tg delete_tg merge_wnmbs_src2_tg c1 select2_tg c2
+s1: NOTICE:  Update: (1,setup1) -> (1,"setup1 update1")
+step update_tg: UPDATE target_tg t SET val = t.val || ' update1' WHERE t.key = 1;
+s1: NOTICE:  Delete: (1,"setup1 update1")
+step delete_tg: DELETE FROM target_tg t WHERE t.key = 1;
+step merge_wnmbs_src2_tg: 
+  MERGE INTO target_tg t
+    USING (SELECT 2 AS key, 'merge2_tg' AS val) s ON t.key = s.key
+    WHEN MATCHED THEN UPDATE SET key = t.key + 1, val = t.val || ' match updated by ' || s.val
+    WHEN NOT MATCHED BY SOURCE THEN UPDATE SET key = t.key + 1, val = t.val || ' not matched by source'
+    WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val)
+    RETURNING merge_action(), t.*;
+ <waiting ...>
+step c1: COMMIT;
+s2: NOTICE:  Insert: (2,merge2_tg)
+step merge_wnmbs_src2_tg: <... completed>
+merge_action|key|val      
+------------+---+---------
+INSERT      |  2|merge2_tg
+(1 row)
+
+step select2_tg: SELECT * FROM target_tg;
+key|val      
+---+---------
+  2|merge2_tg
+(1 row)
+
+step c2: COMMIT;
