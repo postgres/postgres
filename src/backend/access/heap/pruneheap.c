@@ -991,16 +991,39 @@ heap_page_will_set_vm(PruneState *prstate, PruneReason reason,
 		return false;
 
 	/*
-	 * If this is an on-access call and we're not actually pruning, avoid
-	 * setting the visibility map if it would newly dirty the heap page or, if
-	 * the page is already dirty, if doing so would require including a
-	 * full-page image (FPI) of the heap page in the WAL.
+	 * If this is an on-access call and we're not actually pruning or
+	 * freezing, consider whether setting the VM would cost us an additional
+	 * heap page FPI. If the relation isn't WAL-logged, or if hint bits are
+	 * not WAL-logged, setting the VM won't include a heap page FPI (the
+	 * latter passes REGBUF_NO_IMAGE for the heap page), apart from a page
+	 * that has never been WAL-logged, which we don't bother about here.
 	 */
 	if (reason == PRUNE_ON_ACCESS && !do_prune && !do_freeze &&
-		(!BufferIsDirty(prstate->buffer) || XLogCheckBufferNeedsBackup(prstate->buffer)))
+		RelationNeedsWAL(prstate->relation) && XLogHintBitIsNeeded())
 	{
-		prstate->set_all_visible = prstate->set_all_frozen = false;
-		return false;
+		/*
+		 * Because the page is known to be all-visible, we will clear
+		 * pd_prune_xid regardless of whether we actually set the page
+		 * all-visible in the VM. That clear is a hint update which is not
+		 * WAL-logged, other than an FPI for torn-page protection, so in some
+		 * cases we want to avoid setting the VM if doing so would cost us a
+		 * heap page FPI that clearing pd_prune_xid wouldn't have.
+		 *
+		 * Since hint bits are WAL-logged, if the buffer is clean, clearing
+		 * pd_prune_xid will already emit a heap page FPI if one is needed, so
+		 * there's no reason to avoid setting the VM.
+		 *
+		 * However, if the heap buffer is already dirty, clearing pd_prune_xid
+		 * will never emit an FPI. So avoid setting the VM if the page hasn't
+		 * been WAL-logged since the current checkpoint began, as the record
+		 * setting the VM would then include a heap page FPI.
+		 */
+		if (BufferIsDirty(prstate->buffer) &&
+			XLogCheckBufferNeedsBackup(prstate->buffer))
+		{
+			prstate->set_all_visible = prstate->set_all_frozen = false;
+			return false;
+		}
 	}
 
 	prstate->new_vmbits = VISIBILITYMAP_ALL_VISIBLE;

@@ -114,6 +114,42 @@ SELECT (flags & x'0004'::int) <> 0
 vacuum test_vac_unmodified_heap;
 select pg_visibility_map_summary('test_vac_unmodified_heap');
 
+-- Test that on-access pruning during a read-only scan sets the VM. Temp
+-- tables are used because their visibility horizon depends only on this
+-- backend and no other process can pin their buffers, so the conditional
+-- cleanup lock needed for pruning is always available.
+create temp table test_on_access_vm(a int, b text) with (fillfactor = 90);
+insert into test_on_access_vm select g, repeat('x', 99)
+  from generate_series(1, 500) g;
+-- HOT-update a few rows on every page. The new versions fit in the space
+-- reserved by the fillfactor, and afterwards each page has too little free
+-- space to escape on-access pruning.
+update test_on_access_vm set b = b where a % 20 = 0;
+select pg_visibility_map_summary('test_on_access_vm');
+-- A read-only scan that prunes tuples sets the VM
+select count(*) from test_on_access_vm;
+select pg_visibility_map_summary('test_on_access_vm');
+select * from pg_check_visible('test_on_access_vm');
+-- Test that a read-only scan of newly inserted data sets the VM
+create temp table test_on_access_vm_insert_only(a int, b text);
+insert into test_on_access_vm_insert_only select g, repeat('x', 99)
+  from generate_series(1, 500) g;
+select pg_visibility_map_summary('test_on_access_vm_insert_only');
+select count(*) from test_on_access_vm_insert_only;
+select pg_visibility_map_summary('test_on_access_vm_insert_only');
+select * from pg_check_visible('test_on_access_vm_insert_only');
+-- Test that a scan of an UPDATE's target relation does not set the VM, even
+-- when no rows match.
+create temp table test_on_access_vm_modify(a int, b text) with (fillfactor = 90);
+insert into test_on_access_vm_modify select g, repeat('x', 99)
+  from generate_series(1, 500) g;
+-- Create some dead rows for the next update's on-access pruning to clean up.
+-- We need to actually do pruning to exercise the right code path.
+update test_on_access_vm_modify set b = b where a % 20 = 0;
+-- This matches no rows, but scans every page as the query's result relation.
+update test_on_access_vm_modify set b = b where a = -1;
+select pg_visibility_map_summary('test_on_access_vm_modify');
+
 -- test copy freeze
 create table copyfreeze (a int, b char(1500));
 
