@@ -7601,7 +7601,19 @@ FROM pg_stat_get_backend_idset() AS backendid;
      <entry><literal>initializing</literal></entry>
      <entry>
        The command is preparing to begin scanning the heap.  This phase is
-       expected to be very brief.
+       expected to be very brief, except for
+       <command>REPACK CONCURRENTLY</command>, where it also covers enabling
+       logical decoding and then initializing it.  Enabling has nothing to do
+       if <xref linkend="guc-effective-wal-level"/> is already
+       <literal>logical</literal>; otherwise it waits for all processes to
+       acknowledge that they started writing the additional WAL information
+       that logical decoding requires.  Initializing then waits for the
+       transactions that have been assigned a transaction ID to end, including
+       ones that started while this wait was in progress, so this phase can
+       last longer than the longest transaction running when the command
+       started.  This includes any other
+       <command>REPACK CONCURRENTLY</command>, which holds a transaction ID
+       until it finishes.
      </entry>
     </row>
     <row>
@@ -7633,7 +7645,10 @@ FROM pg_stat_get_backend_idset() AS backendid;
      <entry>
        <command>REPACK CONCURRENTLY</command> is currently processing the DML
        commands that other transactions executed during any of the preceding
-       phases.
+       phases.  This phase also covers waiting for the <literal>ACCESS
+       EXCLUSIVE</literal> lock needed to swap the files, so a command blocked
+       by a conflicting lock stays in this phase.
+       This phase is skipped when not in concurrent mode.
      </entry>
     </row>
     <row>
