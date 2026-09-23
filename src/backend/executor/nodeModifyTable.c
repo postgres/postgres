@@ -3261,10 +3261,11 @@ ExecMerge(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
  * Otherwise, we execute the qualifying action and return its RETURNING
  * result, if any, or NULL.
  *
- * On entry, "*matched" is assumed to be true.  If a concurrent update or
- * delete is detected that causes the join quals to no longer pass, we set it
- * to false, indicating that the caller should process any NOT MATCHED [BY
- * TARGET] actions.
+ * On entry, "*matched" is assumed to be true.  If the join quals originally
+ * passed (MATCHED case) and a concurrent update or delete is detected that
+ * causes the join quals to no longer pass, we set "*matched" to false,
+ * indicating that the caller should process any NOT MATCHED [BY TARGET]
+ * actions.
  *
  * After a concurrent update, we restart from the first action to look for a
  * new qualifying action to execute. If the join quals originally passed, and
@@ -3561,10 +3562,16 @@ lmerge_matched:
 							 errmsg("could not serialize access due to concurrent delete")));
 
 				/*
-				 * If the tuple was already deleted, set matched to false to
-				 * let caller handle it under NOT MATCHED [BY TARGET] clauses.
+				 * The target tuple was concurrently deleted by some other
+				 * transaction.  If this was a MATCHED action, the source row
+				 * still exists, so set *matched to false, to let the caller
+				 * handle it using any NOT MATCHED [BY TARGET] actions.
+				 * Otherwise, for a NOT MATCHED BY SOURCE action, neither the
+				 * source row nor the target row now exists, so there is no
+				 * futher action to execute.
 				 */
-				*matched = false;
+				if (relaction->mas_action->matchKind == MERGE_WHEN_MATCHED)
+					*matched = false;
 				goto out;
 
 			case TM_Updated:
@@ -3717,10 +3724,18 @@ lmerge_matched:
 						case TM_Deleted:
 
 							/*
-							 * tuple already deleted; tell caller to run NOT
-							 * MATCHED [BY TARGET] actions
+							 * The target tuple was concurrently deleted by
+							 * some other transaction.  If this was a MATCHED
+							 * action, the source row still exists, so set
+							 * *matched to false, to let the caller handle it
+							 * using any NOT MATCHED [BY TARGET] actions.
+							 * Otherwise, for a NOT MATCHED BY SOURCE action,
+							 * neither the source row nor the target row now
+							 * exists, so there is no futher action to
+							 * execute.
 							 */
-							*matched = false;
+							if (was_matched)
+								*matched = false;
 							goto out;
 
 						case TM_SelfModified:

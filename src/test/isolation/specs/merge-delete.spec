@@ -50,6 +50,9 @@ setup
 step "delete" { DELETE FROM target t WHERE t.key = 1; }
 step "delete_pa" { DELETE FROM target_pa t WHERE t.key = 1; }
 step "delete_tg" { DELETE FROM target_tg t WHERE t.key = 1; }
+step "update" { UPDATE target t SET val = t.val || ' update1' WHERE t.key = 1; }
+step "update_pa" { UPDATE target_pa t SET val = t.val || ' update1' WHERE t.key = 1; }
+step "update_tg" { UPDATE target_tg t SET val = t.val || ' update1' WHERE t.key = 1; }
 step "c1" { COMMIT; }
 
 session "s2"
@@ -65,6 +68,30 @@ step "merge2_pa" { MERGE INTO target_pa t USING (SELECT 1 as key, 'merge2_pa' as
 step "merge2_tg" { MERGE INTO target_tg t USING (SELECT 1 as key, 'merge2_tg' as val) s ON s.key = t.key WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val) WHEN MATCHED THEN UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val; }
 step "merge_delete2" { MERGE INTO target t USING (SELECT 1 as key, 'merge_delete2' as val) s ON s.key = t.key WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val) WHEN MATCHED THEN DELETE; }
 step "merge_delete2_tg" { MERGE INTO target_tg t USING (SELECT 1 as key, 'merge_delete2_tg' as val) s ON s.key = t.key WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val) WHEN MATCHED THEN DELETE; }
+step "merge_wnmbs_src2" {
+  MERGE INTO target t
+    USING (SELECT 2 AS key, 'merge2' AS val) s ON t.key = s.key
+    WHEN MATCHED THEN UPDATE SET key = t.key + 1, val = t.val || ' match updated by ' || s.val
+    WHEN NOT MATCHED BY SOURCE THEN UPDATE SET key = t.key + 1, val = t.val || ' not matched by source'
+    WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val)
+    RETURNING merge_action(), t.*;
+}
+step "merge_wnmbs_src2_pa" {
+  MERGE INTO target_pa t
+    USING (SELECT 2 AS key, 'merge2_pa' AS val) s ON t.key = s.key
+    WHEN MATCHED THEN UPDATE SET key = t.key + 1, val = t.val || ' match updated by ' || s.val
+    WHEN NOT MATCHED BY SOURCE THEN UPDATE SET key = t.key + 1, val = t.val || ' not matched by source'
+    WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val)
+    RETURNING merge_action(), t.*;
+}
+step "merge_wnmbs_src2_tg" {
+  MERGE INTO target_tg t
+    USING (SELECT 2 AS key, 'merge2_tg' AS val) s ON t.key = s.key
+    WHEN MATCHED THEN UPDATE SET key = t.key + 1, val = t.val || ' match updated by ' || s.val
+    WHEN NOT MATCHED BY SOURCE THEN UPDATE SET key = t.key + 1, val = t.val || ' not matched by source'
+    WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val)
+    RETURNING merge_action(), t.*;
+}
 step "select2" { SELECT * FROM target; }
 step "select2_pa" { SELECT * FROM target_pa; }
 step "select2_tg" { SELECT * FROM target_tg; }
@@ -94,3 +121,13 @@ permutation "delete_pa" "merge2_pa" "c1" "select2_pa" "c2"
 permutation "delete_tg" "merge2_tg" "c1" "select2_tg" "c2"
 permutation "delete" "merge_delete2" "c1" "select2" "c2"
 permutation "delete_tg" "merge_delete2_tg" "c1" "select2_tg" "c2"
+
+# Concurrent DELETE vs MERGE ... WHEN NOT MATCHED BY SOURCE
+permutation "delete" "merge_wnmbs_src2" "c1" "select2" "c2"
+permutation "delete_pa" "merge_wnmbs_src2_pa" "c1" "select2_pa" "c2"
+permutation "delete_tg" "merge_wnmbs_src2_tg" "c1" "select2_tg" "c2"
+
+# Concurrent UPDATE then DELETE vs MERGE ... WHEN NOT MATCHED BY SOURCE
+permutation "update" "delete" "merge_wnmbs_src2" "c1" "select2" "c2"
+permutation "update_pa" "delete_pa" "merge_wnmbs_src2_pa" "c1" "select2_pa" "c2"
+permutation "update_tg" "delete_tg" "merge_wnmbs_src2_tg" "c1" "select2_tg" "c2"
