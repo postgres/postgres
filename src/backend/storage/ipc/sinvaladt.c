@@ -24,7 +24,6 @@
 #include "storage/procsignal.h"
 #include "storage/shmem.h"
 #include "storage/sinvaladt.h"
-#include "storage/spin.h"
 #include "storage/subsystems.h"
 
 /*
@@ -87,19 +86,13 @@
  * has no need to touch anyone's ProcState, except in the infrequent cases
  * when SICleanupQueue is needed.  The only point of overlap is that
  * the writer wants to change maxMsgNum while readers need to read it.
- * We deal with that by having a spinlock that readers must take for just
- * long enough to read maxMsgNum, while writers take it for just long enough
- * to write maxMsgNum.  (The exact rule is that you need the spinlock to
- * read maxMsgNum if you are not holding SInvalWriteLock, and you need the
- * spinlock to write maxMsgNum unless you are holding both locks.)
- *
- * Note: since maxMsgNum is a uint32 and hence presumably atomically readable/
- * writable, the spinlock might seem unnecessary.  The reason it is needed
- * is to provide a memory barrier: we need to be sure that messages written
- * to the array are actually there before maxMsgNum is increased, and that
- * readers will see that data after fetching maxMsgNum.  Multiprocessors
- * that have weak memory-ordering guarantees can fail without the memory
- * barrier instructions that are included in the spinlock sequences.
+ * We deal with that by making maxMsgNum an atomic variable.  (The exact rule
+ * is that you need to use a barrier-providing accessor to read maxMsgNum if
+ * you are not holding SInvalWriteLock, and you need a barrier-providing
+ * accessor to write maxMsgNum unless you are holding both locks.)  The
+ * barriers ensure that messages written to the array are actually there
+ * before maxMsgNum is increased, and that readers will see that data after
+ * fetching maxMsgNum.
  */
 
 
@@ -169,10 +162,8 @@ typedef struct SISeg
 	 * General state information
 	 */
 	uint32		minMsgNum;		/* oldest message still needed */
-	uint32		maxMsgNum;		/* next message number to be assigned */
+	pg_atomic_uint32 maxMsgNum; /* next message number to be assigned */
 	uint32		nextThreshold;	/* # of messages to call SICleanupQueue */
-
-	slock_t		msgnumLock;		/* spinlock protecting maxMsgNum */
 
 	/*
 	 * Circular buffer holding shared-inval messages
@@ -244,11 +235,10 @@ SharedInvalShmemInit(void *arg)
 {
 	int			i;
 
-	/* Clear message counters, init spinlock */
+	/* Clear message counters */
 	shmInvalBuffer->minMsgNum = 0;
-	shmInvalBuffer->maxMsgNum = 0;
+	pg_atomic_init_u32(&shmInvalBuffer->maxMsgNum, 0);
 	shmInvalBuffer->nextThreshold = CLEANUP_MIN;
-	SpinLockInit(&shmInvalBuffer->msgnumLock);
 
 	/* The buffer[] array is initially all unused, so we need not fill it */
 
@@ -306,7 +296,7 @@ SharedInvalBackendInit(bool sendOnly)
 
 	/* mark myself active, with all extant messages already read */
 	stateP->procPid = MyProcPid;
-	stateP->nextMsgNum = segP->maxMsgNum;
+	stateP->nextMsgNum = pg_atomic_read_u32(&segP->maxMsgNum);
 	stateP->resetState = false;
 	stateP->signaled = false;
 	stateP->hasMessages = false;
@@ -402,7 +392,7 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 		 */
 		for (;;)
 		{
-			numMsgs = segP->maxMsgNum - segP->minMsgNum;
+			numMsgs = pg_atomic_read_u32(&segP->maxMsgNum) - segP->minMsgNum;
 			if (numMsgs + nthistime > MAXNUMMESSAGES ||
 				numMsgs >= segP->nextThreshold)
 				SICleanupQueue(true, nthistime);
@@ -413,17 +403,15 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 		/*
 		 * Insert new message(s) into proper slot of circular buffer
 		 */
-		max = segP->maxMsgNum;
+		max = pg_atomic_read_u32(&segP->maxMsgNum);
 		while (nthistime-- > 0)
 		{
 			segP->buffer[max % MAXNUMMESSAGES] = *data++;
 			max++;
 		}
 
-		/* Update current value of maxMsgNum using spinlock */
-		SpinLockAcquire(&segP->msgnumLock);
-		segP->maxMsgNum = max;
-		SpinLockRelease(&segP->msgnumLock);
+		/* Update current value of maxMsgNum using barrier */
+		pg_atomic_write_membarrier_u32(&segP->maxMsgNum, max);
 
 		/*
 		 * Now that the maxMsgNum change is globally visible, we give everyone
@@ -509,10 +497,8 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 	 */
 	stateP->hasMessages = false;
 
-	/* Fetch current value of maxMsgNum using spinlock */
-	SpinLockAcquire(&segP->msgnumLock);
-	max = segP->maxMsgNum;
-	SpinLockRelease(&segP->msgnumLock);
+	/* Fetch current value of maxMsgNum using barrier */
+	max = pg_atomic_read_membarrier_u32(&segP->maxMsgNum);
 
 	if (stateP->resetState)
 	{
@@ -598,7 +584,7 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	 * backends here it is possible for them to keep sending messages without
 	 * a problem even when they are the only active backend.
 	 */
-	min = segP->maxMsgNum;
+	min = pg_atomic_read_u32(&segP->maxMsgNum);
 
 	/* clamp at zero to avoid underflow */
 	if (min > SIG_THRESHOLD)
@@ -654,7 +640,7 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	if (min >= MSGNUMWRAPAROUND)
 	{
 		segP->minMsgNum -= MSGNUMWRAPAROUND;
-		segP->maxMsgNum -= MSGNUMWRAPAROUND;
+		pg_atomic_fetch_sub_u32(&segP->maxMsgNum, MSGNUMWRAPAROUND);
 		for (i = 0; i < segP->numProcs; i++)
 			segP->procState[segP->pgprocnos[i]].nextMsgNum -= MSGNUMWRAPAROUND;
 	}
@@ -663,7 +649,7 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	 * Determine how many messages are still in the queue, and set the
 	 * threshold at which we should repeat SICleanupQueue().
 	 */
-	numMsgs = segP->maxMsgNum - segP->minMsgNum;
+	numMsgs = pg_atomic_read_u32(&segP->maxMsgNum) - segP->minMsgNum;
 	if (numMsgs < CLEANUP_MIN)
 		segP->nextThreshold = CLEANUP_MIN;
 	else
