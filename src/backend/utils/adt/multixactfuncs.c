@@ -17,6 +17,7 @@
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/multixact_internal.h"
+#include "access/xlog.h"
 #include "catalog/pg_authid_d.h"
 #include "funcapi.h"
 #include "miscadmin.h"
@@ -102,6 +103,13 @@ pg_get_multixact_stats(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;
 	Datum		values[4];
 	bool		nulls[4];
+
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("recovery is in progress"),
+				 errhint("%s cannot be executed during recovery.",
+						 "pg_get_multixact_stats()")));
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		ereport(ERROR,
