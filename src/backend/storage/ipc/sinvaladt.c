@@ -93,7 +93,7 @@
  * read maxMsgNum if you are not holding SInvalWriteLock, and you need the
  * spinlock to write maxMsgNum unless you are holding both locks.)
  *
- * Note: since maxMsgNum is an int and hence presumably atomically readable/
+ * Note: since maxMsgNum is a uint32 and hence presumably atomically readable/
  * writable, the spinlock might seem unnecessary.  The reason it is needed
  * is to provide a memory barrier: we need to be sure that messages written
  * to the array are actually there before maxMsgNum is increased, and that
@@ -140,7 +140,7 @@ typedef struct ProcState
 	/* procPid is zero in an inactive ProcState array entry. */
 	pid_t		procPid;		/* PID of backend, for signaling */
 	/* nextMsgNum is meaningless if procPid == 0 or resetState is true. */
-	int			nextMsgNum;		/* next message number to read */
+	uint32		nextMsgNum;		/* next message number to read */
 	bool		resetState;		/* backend needs to reset its state */
 	bool		signaled;		/* backend has been sent catchup signal */
 	bool		hasMessages;	/* backend has unread messages */
@@ -168,9 +168,9 @@ typedef struct SISeg
 	/*
 	 * General state information
 	 */
-	int			minMsgNum;		/* oldest message still needed */
-	int			maxMsgNum;		/* next message number to be assigned */
-	int			nextThreshold;	/* # of messages to call SICleanupQueue */
+	uint32		minMsgNum;		/* oldest message still needed */
+	uint32		maxMsgNum;		/* next message number to be assigned */
+	uint32		nextThreshold;	/* # of messages to call SICleanupQueue */
 
 	slock_t		msgnumLock;		/* spinlock protecting maxMsgNum */
 
@@ -385,8 +385,8 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 	while (n > 0)
 	{
 		int			nthistime = Min(n, WRITE_QUANTUM);
-		int			numMsgs;
-		int			max;
+		uint32		numMsgs;
+		uint32		max;
 		int			i;
 
 		n -= nthistime;
@@ -476,7 +476,7 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 {
 	SISeg	   *segP;
 	ProcState  *stateP;
-	int			max;
+	uint32		max;
 	int			n;
 
 	segP = shmInvalBuffer;
@@ -579,11 +579,11 @@ void
 SICleanupQueue(bool callerHasWriteLock, int minFree)
 {
 	SISeg	   *segP = shmInvalBuffer;
-	int			min,
+	uint32		min,
 				minsig,
 				lowbound,
-				numMsgs,
-				i;
+				numMsgs;
+	int			i;
 	ProcState  *needSig = NULL;
 
 	/* Lock out all writers and readers */
@@ -599,13 +599,23 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 	 * a problem even when they are the only active backend.
 	 */
 	min = segP->maxMsgNum;
-	minsig = min - SIG_THRESHOLD;
-	lowbound = min - MAXNUMMESSAGES + minFree;
+
+	/* clamp at zero to avoid underflow */
+	if (min > SIG_THRESHOLD)
+		minsig = min - SIG_THRESHOLD;
+	else
+		minsig = 0;
+
+	/* clamp at zero to avoid underflow */
+	if (min + minFree > MAXNUMMESSAGES)
+		lowbound = min + minFree - MAXNUMMESSAGES;
+	else
+		lowbound = 0;
 
 	for (i = 0; i < segP->numProcs; i++)
 	{
 		ProcState  *stateP = &segP->procState[segP->pgprocnos[i]];
-		int			n = stateP->nextMsgNum;
+		uint32		n = stateP->nextMsgNum;
 
 		/* Ignore if already in reset state */
 		Assert(stateP->procPid != 0);
