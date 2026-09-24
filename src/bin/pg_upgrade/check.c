@@ -2758,6 +2758,15 @@ check_for_oldestxid_consistency(ClusterInfo *cluster)
 	int			i_datfrozenxid;
 	int			i_datminmxid;
 
+	/*
+	 * Version 9.2 didn't have datminmxid.  We could still cross-check
+	 * datfrozenxid, but doesn't seem worth it since we're primarily worried
+	 * about the rewriting of the multixact SLRUs losing data if the
+	 * oldestMulti is set incorrectly.
+	 */
+	if (GET_MAJOR_VERSION(old_cluster.major_version) < 903)
+		return;
+
 	prep_status("Checking oldestXID and oldestMultiXid consistency");
 
 	conn_template1 = connectToServer(cluster, "template1");
