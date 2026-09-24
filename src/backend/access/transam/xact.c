@@ -64,6 +64,7 @@
 #include "utils/builtins.h"
 #include "utils/combocid.h"
 #include "utils/guc.h"
+#include "utils/injection_point.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/relmapper.h"
@@ -1347,6 +1348,9 @@ RecordTransactionCommit(void)
 													 &RelcacheInitFileInval);
 	wrote_xlog = (XactLastRecEnd != 0);
 
+	/* Load the injection point before entering the critical section */
+	INJECTION_POINT_LOAD("commit-before-clog-update");
+
 	/*
 	 * If we haven't been assigned an XID yet, we neither can, nor do we want
 	 * to write a COMMIT record.
@@ -1500,6 +1504,12 @@ RecordTransactionCommit(void)
 		forceSyncCommit || nrels > 0)
 	{
 		XLogFlush(XactLastRecEnd);
+
+		/*
+		 * The commit record is on disk, but not in CLOG yet.  A test can stop
+		 * here to see what others make of the transaction meanwhile.
+		 */
+		INJECTION_POINT_CACHED("commit-before-clog-update", NULL);
 
 		/*
 		 * Now we may update the CLOG, if we wrote a COMMIT record above
