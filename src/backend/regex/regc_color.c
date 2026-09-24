@@ -1127,7 +1127,6 @@ dumpcolors(struct colormap *cm,
 	struct colordesc *cd;
 	struct colordesc *end;
 	color		co;
-	chr			c;
 
 	fprintf(f, "max %ld\n", (long) cm->max);
 	end = CDEND(cm);
@@ -1144,7 +1143,7 @@ dumpcolors(struct colormap *cm,
 			/*
 			 * Unfortunately, it's hard to do this next bit more efficiently.
 			 */
-			for (c = CHR_MIN; c <= MAX_SIMPLE_CHR; c++)
+			for (chr c = CHR_MIN; c <= MAX_SIMPLE_CHR; c++)
 				if (GETCOLOR(cm, c) == co)
 					dumpchr(c, f);
 			fprintf(f, "\n");
@@ -1153,24 +1152,22 @@ dumpcolors(struct colormap *cm,
 	/* dump the high colormap if it contains anything interesting */
 	if (cm->hiarrayrows > 1 || cm->hiarraycols > 1)
 	{
-		int			r,
-					c;
-		const color *rowptr;
-
 		fprintf(f, "other:\t");
-		for (c = 0; c < cm->hiarraycols; c++)
+		for (int c = 0; c < cm->hiarraycols; c++)
 		{
 			fprintf(f, "\t%ld", (long) cm->hicolormap[c]);
 		}
 		fprintf(f, "\n");
-		for (r = 0; r < cm->numcmranges; r++)
+		for (int r = 0; r < cm->numcmranges; r++)
 		{
+			const color *rowptr;
+
 			dumpchr(cm->cmranges[r].cmin, f);
 			fprintf(f, "..");
 			dumpchr(cm->cmranges[r].cmax, f);
 			fprintf(f, ":");
 			rowptr = &cm->hicolormap[cm->cmranges[r].rownum * cm->hiarraycols];
-			for (c = 0; c < cm->hiarraycols; c++)
+			for (int c = 0; c < cm->hiarraycols; c++)
 			{
 				fprintf(f, "\t%ld", (long) rowptr[c]);
 			}
