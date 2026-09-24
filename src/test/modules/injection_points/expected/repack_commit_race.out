@@ -1,0 +1,64 @@
+Parsed test spec with 5 sessions
+
+starting permutation: s2_begin s1_repack s3_begin s2_rollback s4_changes s3_rollback s5_wakeup s1_check
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step s2_begin: 
+	BEGIN;
+	SELECT pg_current_xact_id() IS NOT NULL;
+
+?column?
+--------
+t       
+(1 row)
+
+step s1_repack: 
+	REPACK (CONCURRENTLY) repack_race;
+ <waiting ...>
+step s3_begin: 
+	BEGIN;
+	SELECT pg_current_xact_id() IS NOT NULL;
+
+?column?
+--------
+t       
+(1 row)
+
+step s2_rollback: 
+	ROLLBACK;
+
+step s4_changes: 
+	INSERT INTO repack_race(i, j) VALUES (3, 3);
+	UPDATE repack_race SET j = j + 1 WHERE i = 1;
+	DELETE FROM repack_race WHERE i = 2;
+ <waiting ...>
+step s3_rollback: 
+	ROLLBACK;
+
+step s5_wakeup: 
+	SELECT injection_points_wakeup('commit-before-clog-update');
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step s1_repack: <... completed>
+step s4_changes: <... completed>
+step s1_check: 
+	SELECT i, j FROM repack_race ORDER BY i;
+
+i|j
+-+-
+1|2
+3|3
+(2 rows)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+

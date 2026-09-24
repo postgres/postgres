@@ -244,11 +244,16 @@ injection_wait(const char *name, const void *private_data, void *arg)
 	uint32		injection_wait_event = 0;
 	const InjectionPointCondition *condition = private_data;
 
-	if (inj_state == NULL)
-		injection_init_shmem();
-
+	/*
+	 * Check the condition before attaching to the shared state: attaching
+	 * allocates memory, which a process that is not meant to wait here must
+	 * not do if the injection point is in a critical section.
+	 */
 	if (!injection_point_allowed(condition))
 		return;
+
+	if (inj_state == NULL)
+		injection_init_shmem();
 
 	/*
 	 * Use the injection point name for this custom wait event.  Note that
