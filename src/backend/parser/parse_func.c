@@ -2260,7 +2260,7 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes, bool missing_ok)
 Oid
 LookupFuncWithArgs(ObjectType objtype, ObjectWithArgs *func, bool missing_ok)
 {
-	Oid			argoids[FUNC_MAX_ARGS];
+	Oid			argoids[FUNC_MAX_ARGS] = {0};
 	int			argcount;
 	int			nargs;
 	int			i;
