@@ -24,7 +24,7 @@ NAME = llvmjit
 
 # All files in this directory use LLVM.
 CFLAGS += $(LLVM_CFLAGS)
-CXXFLAGS += $(LLVM_CXXFLAGS)
+CXXFLAGS += $(LLVM_CXXFLAGS) $(PERMIT_CXX_SHADOW)
 override CPPFLAGS += $(LLVM_CPPFLAGS)
 SHLIB_LINK += $(LLVM_LIBS)
 

@@ -575,11 +575,11 @@ if test "$GCC" = yes -a "$ICC" = no; then
 
   PGAC_PROG_CC_CFLAGS_OPT([-Wcast-function-type])
   PGAC_PROG_CXX_CFLAGS_OPT([-Wcast-function-type])
-  PGAC_PROG_CC_CFLAGS_OPT([-Wshadow=compatible-local])
-  PGAC_PROG_CXX_CFLAGS_OPT([-Wshadow=compatible-local])
+
   # This was included in -Wall/-Wformat in older GCC versions
   PGAC_PROG_CC_CFLAGS_OPT([-Wformat-security])
   PGAC_PROG_CXX_CFLAGS_OPT([-Wformat-security])
+
   # gcc 14+, clang for a while
   # (Supported in C++ by clang but not gcc.  For consistency, omit in C++.)
   save_CFLAGS=$CFLAGS
@@ -589,6 +589,18 @@ if test "$GCC" = yes -a "$ICC" = no; then
     PERMIT_MISSING_VARIABLE_DECLARATIONS=-Wno-missing-variable-declarations
   fi
   AC_SUBST(PERMIT_MISSING_VARIABLE_DECLARATIONS)
+
+  # We need to be able to disable shadow warnings for the LLVM
+  # includes.
+  PGAC_PROG_CC_CFLAGS_OPT([-Wshadow=local])
+  save_CXXFLAGS=$CXXFLAGS
+  PGAC_PROG_CXX_CFLAGS_OPT([-Wshadow=local])
+  PERMIT_CXX_SHADOW=
+  if test x"$save_CXXFLAGS" != x"$CXXFLAGS"; then
+    PERMIT_CXX_SHADOW=-Wno-shadow=local
+  fi
+  AC_SUBST(PERMIT_CXX_SHADOW)
+
   # Disable strict-aliasing rules; needed for gcc 3.3+
   PGAC_PROG_CC_CFLAGS_OPT([-fno-strict-aliasing])
   PGAC_PROG_CXX_CFLAGS_OPT([-fno-strict-aliasing])

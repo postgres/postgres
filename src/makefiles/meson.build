@@ -102,6 +102,8 @@ pgxs_kv = {
     ' '.join(cflags_no_decl_after_statement),
   'PERMIT_MISSING_VARIABLE_DECLARATIONS':
     ' '.join(cflags_no_missing_var_decls),
+  'PERMIT_CXX_SHADOW':
+    ' '.join(cxxflags_no_shadow),
 
   'CFLAGS_CRC': ' '.join(cflags_crc),
   'CFLAGS_UNROLL_LOOPS': ' '.join(unroll_loops_cflags),
