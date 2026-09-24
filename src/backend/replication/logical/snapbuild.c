@@ -359,6 +359,12 @@ SnapBuildSnapDecRefcount(Snapshot snap)
  * In-progress transactions with catalog access are *not* allowed to modify
  * these snapshots; they have to copy them and fill in appropriate ->curcid
  * and ->subxip/subxcnt values.
+ *
+ * Note that some of the transactions in the returned snapshot->xip might not
+ * have finished committing yet (we saw their commit WAL records, but we don't
+ * know if they've removed themselves from procarray).  Callers that want to
+ * use the returned snapshot as an MVCC one must wait for this to happen; see
+ * SnapBuildInitialSnapshot().
  */
 static Snapshot
 SnapBuildBuildSnapshot(SnapBuild *builder)
@@ -469,6 +475,39 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 		elog(ERROR, "cannot build an initial slot snapshot when MyProc->xmin already is valid");
 
 	snap = SnapBuildBuildSnapshot(builder);
+
+	/*
+	 * Transactions appear in snap->xip as soon as their commit WAL records
+	 * are decoded, but that doesn't imply they can be considered committed in
+	 * a regular MVCC snapshot: that happens only when they remove themselves
+	 * from procarray.  Wait for this to happen; otherwise somebody using the
+	 * snapshot might set hint bits incorrectly.
+	 *
+	 * This is not needed during recovery, because the decoded commit record
+	 * has been replayed already.
+	 */
+	if (!RecoveryInProgress())
+	{
+		RunningTransactions running;
+
+		running = GetRunningTransactionData();
+		LWLockRelease(ProcArrayLock);
+		LWLockRelease(XidGenLock);
+
+		/*
+		 * Note we walk the array up to running->xcnt only, omitting this wait
+		 * for subtransactions: the subxacts are covered by their top-level
+		 * transaction already, there's no need for an additional wait.
+		 */
+		for (int i = 0; i < running->xcnt; i++)
+		{
+			TransactionId running_xid = running->xids[i];
+
+			if (bsearch(&running_xid, snap->xip, snap->xcnt,
+						sizeof(TransactionId), xidComparator) != NULL)
+				XactLockTableWait(running_xid, NULL, NULL, XLTW_None);
+		}
+	}
 
 	/*
 	 * Building an initial snapshot is expensive and an unenforced xmin
