@@ -3613,14 +3613,18 @@ ri_check_fastpath_index(RI_ConstraintInfo *riinfo,
  * ri_CheckPermissions
  *		Check permissions for the SELECT ... FOR KEY SHARE used by the SPI
  *		path, as the referenced table's owner.
+ *
+ * Go through ExecCheckPermissions() with a manufactured range table so that
+ * ExecutorCheckPerms_hook gets control, as it does for the query the SPI
+ * path executes.
  */
 static void
 ri_CheckPermissions(const RI_ConstraintInfo *riinfo, Relation query_rel)
 {
 	AclResult	aclresult;
 	AclMode		requiredPerms = ACL_SELECT | ACL_SELECT_FOR_UPDATE;
+	RangeTblEntry *rte;
 	RTEPermissionInfo *perminfo;
-	bool		result;
 
 	/* USAGE on schema. */
 	aclresult = object_aclcheck(NamespaceRelationId,
@@ -3630,16 +3634,10 @@ ri_CheckPermissions(const RI_ConstraintInfo *riinfo, Relation query_rel)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(RelationGetNamespace(query_rel)));
 
-	/* Avoid building the column bitmap when table privileges suffice. */
-	if (pg_class_aclmask(RelationGetRelid(query_rel), GetUserId(),
-						 requiredPerms, ACLMASK_ALL) == requiredPerms)
-		return;
-
 	/*
 	 * SELECT is needed only on the referenced key columns.  FOR KEY SHARE
-	 * also needs UPDATE privilege, which may be granted on any column.  Use
-	 * the executor's checks for both, leaving updatedCols empty as the SPI
-	 * query does.
+	 * also needs UPDATE privilege, which may be granted on any column; leave
+	 * updatedCols empty as the SPI query does.
 	 */
 	perminfo = makeNode(RTEPermissionInfo);
 	perminfo->relid = RelationGetRelid(query_rel);
@@ -3651,12 +3649,14 @@ ri_CheckPermissions(const RI_ConstraintInfo *riinfo, Relation query_rel)
 		perminfo->selectedCols = bms_add_member(perminfo->selectedCols, attno);
 	}
 
-	result = ExecCheckOneRelPerms(perminfo);
-	bms_free(perminfo->selectedCols);
-	pfree(perminfo);
-	if (!result)
-		aclcheck_error(ACLCHECK_NO_PRIV, OBJECT_TABLE,
-					   RelationGetRelationName(query_rel));
+	rte = makeNode(RangeTblEntry);
+	rte->rtekind = RTE_RELATION;
+	rte->relid = RelationGetRelid(query_rel);
+	rte->relkind = query_rel->rd_rel->relkind;
+	rte->rellockmode = RowShareLock;
+	rte->perminfoindex = 1;
+
+	(void) ExecCheckPermissions(list_make1(rte), list_make1(perminfo), true);
 }
 
 /*
