@@ -726,6 +726,7 @@ do_analyze_rel(Relation onerel, const VacuumParams *params,
 			ivinfo.index = Irel[ind];
 			ivinfo.heaprel = onerel;
 			ivinfo.analyze_only = true;
+			ivinfo.is_autovacuum = AmAutoVacuumWorkerProcess();
 			ivinfo.estimated_count = true;
 			ivinfo.message_level = elevel;
 			ivinfo.num_heap_tuples = onerel->rd_rel->reltuples;
