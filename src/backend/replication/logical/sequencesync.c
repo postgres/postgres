@@ -287,6 +287,23 @@ get_and_validate_seq_info(TupleTableSlot *slot, Relation *sequence_rel,
 	*seqidx = DatumGetInt32(slot_getattr(slot, ++col, &isnull));
 	Assert(!isnull);
 
+	/*
+	 * The publisher only echoes back an index that we put in the VALUES list,
+	 * so this should always identify an entry of seqinfos. Check it anyway
+	 * before using it as a list subscript, since list_nth() does not
+	 * bounds-check on non-assert builds and we would then write the remote
+	 * sequence state through a pointer fetched from beyond the list.
+	 *
+	 * This only keeps the subscript inside the list. An index that is wrong
+	 * but still in range is not detected, and cannot be; the sequence it
+	 * points at then receives another sequence's data. That is the same kind
+	 * of damage as the publisher reporting a wrong value in any other column,
+	 * and is likewise beyond what we can check.
+	 */
+	if (*seqidx < 0 || *seqidx >= list_length(seqinfos))
+		elog(ERROR, "invalid sequence index %d received from the publisher",
+			 *seqidx);
+
 	/* Identify the corresponding local sequence for the given index. */
 	*seqinfo = seqinfo_local =
 		(LogicalRepSequenceInfo *) list_nth(seqinfos, *seqidx);
@@ -512,7 +529,7 @@ copy_sequences(WalReceiverConn *conn)
 
 	while (cur_batch_base_index < n_seqinfos)
 	{
-		Oid			seqRow[REMOTE_SEQ_COL_COUNT] = {INT8OID, BOOLOID, INT8OID,
+		Oid			seqRow[REMOTE_SEQ_COL_COUNT] = {INT4OID, BOOLOID, INT8OID,
 		BOOLOID, LSNOID, OIDOID, INT8OID, INT8OID, INT8OID, INT8OID, BOOLOID};
 		int			batch_size = 0;
 		int			batch_succeeded_count = 0;
