@@ -124,7 +124,6 @@
 
 
 #ifdef __i386__		/* 32-bit i386 */
-#define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
 
@@ -194,7 +193,6 @@ spin_delay(void)
 
 
 #ifdef __x86_64__		/* AMD Opteron, Intel EM64T */
-#define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
 
@@ -249,7 +247,6 @@ spin_delay(void)
  */
 #if defined(__arm__) || defined(__aarch64__)
 #ifdef HAVE_GCC__SYNC_INT32_TAS
-#define HAS_TEST_AND_SET
 
 #define TAS(lock) tas(lock)
 
@@ -292,7 +289,6 @@ spin_delay(void)
 
 /* S/390 and S/390x Linux (32- and 64-bit zSeries) */
 #if defined(__s390__) || defined(__s390x__)
-#define HAS_TEST_AND_SET
 
 typedef unsigned int slock_t;
 
@@ -321,7 +317,6 @@ tas(volatile slock_t *lock)
  * acquire/release semantics. The CPU will treat superfluous members as
  * NOPs, so it's just code space.
  */
-#define HAS_TEST_AND_SET
 
 typedef unsigned char slock_t;
 
@@ -392,7 +387,6 @@ do \
 
 /* PowerPC */
 #if defined(__powerpc__) || defined(__powerpc64__)
-#define HAS_TEST_AND_SET
 
 typedef unsigned int slock_t;
 
@@ -453,7 +447,6 @@ do \
 
 
 #if defined(__mips__) && !defined(__sgi)	/* non-SGI MIPS */
-#define HAS_TEST_AND_SET
 
 typedef unsigned int slock_t;
 
@@ -531,10 +524,9 @@ do \
  * grounds that that's known to be more likely to work in the ARM ecosystem.
  * (But we dealt with ARM above.)
  */
-#if !defined(HAS_TEST_AND_SET)
+#if !defined(TAS)
 
 #if defined(HAVE_GCC__SYNC_INT32_TAS)
-#define HAS_TEST_AND_SET
 
 #define TAS(lock) tas(lock)
 
@@ -549,7 +541,6 @@ tas(volatile slock_t *lock)
 #define S_UNLOCK(lock) __sync_lock_release(lock)
 
 #elif defined(HAVE_GCC__SYNC_CHAR_TAS)
-#define HAS_TEST_AND_SET
 
 #define TAS(lock) tas(lock)
 
@@ -565,7 +556,7 @@ tas(volatile slock_t *lock)
 
 #endif	 /* HAVE_GCC__SYNC_INT32_TAS */
 
-#endif	/* !defined(HAS_TEST_AND_SET) */
+#endif	/* !defined(TAS) */
 
 
 /*
@@ -592,12 +583,11 @@ tas(volatile slock_t *lock)
  * ---------------------------------------------------------------------
  */
 
-#if !defined(HAS_TEST_AND_SET)	/* We didn't trigger above, let's try here */
+#if !defined(TAS)				/* We didn't trigger above, let's try here */
 
 #ifdef _MSC_VER
 typedef LONG slock_t;
 
-#define HAS_TEST_AND_SET
 #define TAS(lock) (InterlockedCompareExchange(lock, 1, 0))
 
 #define SPIN_DELAY() spin_delay()
@@ -649,11 +639,11 @@ spin_delay(void)
 #endif
 
 
-#endif	/* !defined(HAS_TEST_AND_SET) */
+#endif	/* !defined(TAS) */
 
 
 /* Blow up if we didn't have any way to do spinlocks */
-#ifndef HAS_TEST_AND_SET
+#ifndef TAS
 #error PostgreSQL does not have spinlock support on this platform.  Please report this to pgsql-bugs@lists.postgresql.org.
 #endif
 
