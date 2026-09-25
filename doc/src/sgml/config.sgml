@@ -7576,7 +7576,8 @@ local0.*    /var/log/postgresql
       <listitem>
        <para>
          This is a <function>printf</function>-style string that is output at the
-         beginning of each log line.
+         beginning of each log entry that is sent to <literal>stderr</literal>,
+         <literal>syslog</literal>, or <literal>eventlog</literal>.
          <literal>%</literal> characters begin <quote>escape sequences</quote>
          that are replaced with status information as outlined below.
          Unrecognized escapes are ignored. Other
