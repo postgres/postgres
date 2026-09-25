@@ -1,0 +1,38 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_wait_before_lock s2_update s2_wakeup_before_lock s1_check
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step s1_wait_before_lock: 
+	REPACK (CONCURRENTLY) repack_missingval;
+ <waiting ...>
+step s2_update: 
+	UPDATE repack_missingval SET j = j WHERE i IN (1, 2);
+
+step s2_wakeup_before_lock: 
+	SELECT injection_points_wakeup('repack-concurrently-before-lock');
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step s1_wait_before_lock: <... completed>
+step s1_check: 
+	SELECT i, j, c FROM repack_missingval ORDER BY i;
+
+i|j|c  
+-+-+---
+1|1|xyz
+2|2|xyz
+3|3|xyz
+(3 rows)
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+

@@ -114,6 +114,12 @@ typedef struct ChangeContext
 	EState	   *cc_estate;
 
 	/*
+	 * The tuple descriptor to deform decoded tuples with; it must have the
+	 * attmissingval values from the relation being repacked.
+	 */
+	TupleDesc	cc_tupdesc;
+
+	/*
 	 * Existing tuples to UPDATE and DELETE are located via this index. We
 	 * keep the scankey in partially initialized state to avoid repeated work.
 	 * sk_argument is completed on the fly.
@@ -198,7 +204,8 @@ static void process_concurrent_changes(XLogRecPtr end_of_wal,
 									   ChangeContext *chgcxt,
 									   bool done);
 static void initialize_change_context(ChangeContext *chgcxt,
-									  Relation relation,
+									  Relation src_relation,
+									  Relation tgt_relation,
 									  Oid ident_index_id);
 static void release_change_context(ChangeContext *chgcxt);
 static void rebuild_relation_finish_concurrent(Relation NewHeap, Relation OldHeap,
@@ -2688,12 +2695,26 @@ apply_concurrent_changes(BufFile *file, ChangeContext *chgcxt)
 	bool		have_old_tuple = false;
 	MemoryContext oldcxt;
 
-	spilled_tuple = MakeSingleTupleTableSlot(RelationGetDescr(rel),
-											 &TTSOpsVirtual);
+	/*
+	 * Set up the tuple table slots for the operations.
+	 *
+	 * spilled_tuple is a tuple we read from the file spilled by the decoding
+	 * worker.  It must be read using the tuple descriptor of the original
+	 * relation, because it may contain attributes with 'attmissingval'.
+	 *
+	 * old_update_tuple is an update's OLD tuple to extract the tuple's key
+	 * from, read from the spill file, so we also use the original rel's
+	 * tupdesc.  (XXX Many places aren't prepared for that tupdesc's attribute
+	 * layout to differ from the transient rel's tupdesc.)
+	 *
+	 * ondisk_tuple is the tuple in the transient relation for UPDATEs and
+	 * DELETEs, as obtained by searching by replication identity.  It uses
+	 * tupdesc and tuptable ops appropriate for the transient relation.
+	 */
+	spilled_tuple = MakeSingleTupleTableSlot(chgcxt->cc_tupdesc, &TTSOpsVirtual);
+	old_update_tuple = MakeSingleTupleTableSlot(chgcxt->cc_tupdesc, &TTSOpsVirtual);
 	ondisk_tuple = MakeSingleTupleTableSlot(RelationGetDescr(rel),
 											table_slot_callbacks(rel));
-	old_update_tuple = MakeSingleTupleTableSlot(RelationGetDescr(rel),
-												&TTSOpsVirtual);
 
 	oldcxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(chgcxt->cc_estate));
 
@@ -3151,14 +3172,24 @@ process_concurrent_changes(XLogRecPtr end_of_wal, ChangeContext *chgcxt, bool do
 }
 
 /*
- * Initialize the ChangeContext struct for the given relation, with
- * the given index as identity index.
+ * Initialize ChangeContext to propagate changes of src_relation (the relation
+ * being repacked) into tgt_relation (the transient relation), using the given
+ * index (on tgt_relation) as identity.
  */
 static void
 initialize_change_context(ChangeContext *chgcxt,
-						  Relation relation, Oid ident_index_id)
+						  Relation src_relation, Relation tgt_relation,
+						  Oid ident_index_id)
 {
-	chgcxt->cc_rel = relation;
+	chgcxt->cc_rel = tgt_relation;
+
+	/*
+	 * Use the descriptor of the source relation as the one to deform the
+	 * decoded tuples with; in particular, this descriptor contains all the
+	 * missing attributes.  Tuples formed with it are also valid for the
+	 * transient relation, as the attributes are otherwise identical.
+	 */
+	chgcxt->cc_tupdesc = RelationGetDescr(src_relation);
 
 	/* Only initialize fields needed by ExecInsertIndexTuples(). */
 	chgcxt->cc_estate = CreateExecutorState();
@@ -3169,7 +3200,7 @@ initialize_change_context(ChangeContext *chgcxt,
 	 */
 	{
 		RangeTblEntry *rte;
-		TupleDesc	desc = RelationGetDescr(relation);
+		TupleDesc	desc = RelationGetDescr(tgt_relation);
 		List	   *perminfos = NIL;
 		Bitmapset  *updatedCols = NULL;
 		RTEPermissionInfo *perminfo;
@@ -3181,8 +3212,8 @@ initialize_change_context(ChangeContext *chgcxt,
 		 */
 		rte = makeNode(RangeTblEntry);
 		rte->rtekind = RTE_RELATION;
-		rte->relid = RelationGetRelid(relation);
-		rte->relkind = RelationGetForm(relation)->relkind;
+		rte->relid = RelationGetRelid(tgt_relation);
+		rte->relkind = RelationGetForm(tgt_relation)->relkind;
 		/* Create the RTEPermissionInfo instance (and set ->perminfoindex). */
 		addRTEPermissionInfo(&perminfos, rte);
 
@@ -3216,7 +3247,7 @@ initialize_change_context(ChangeContext *chgcxt,
 
 	/* Set up our ResultRelInfo to use for index updates */
 	chgcxt->cc_rri = makeNode(ResultRelInfo);
-	InitResultRelInfo(chgcxt->cc_rri, relation, 1, NULL, 0);
+	InitResultRelInfo(chgcxt->cc_rri, tgt_relation, 1, NULL, 0);
 	ExecOpenIndices(chgcxt->cc_rri, false);
 
 	/*
@@ -3377,7 +3408,7 @@ rebuild_relation_finish_concurrent(Relation NewHeap, Relation OldHeap,
 			 get_rel_name(identIdx));
 
 	/* Gather information to apply concurrent changes. */
-	initialize_change_context(&chgcxt, NewHeap, ident_idx_new);
+	initialize_change_context(&chgcxt, OldHeap, NewHeap, ident_idx_new);
 
 	/*
 	 * During testing, wait for another backend to perform concurrent data
