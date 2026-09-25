@@ -20,6 +20,7 @@ ISOLATION = basic \
 	    repack \
 	    repack_commit_race \
 	    repack_decode \
+	    repack_missingval \
 	    repack_temporal \
 	    repack_temporal_multirange \
 	    repack_toast \

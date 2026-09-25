@@ -181,7 +181,7 @@ repack_process_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 
 /*
  * Write the given tuple, with the given change kind, to the repack spill
- * file.  Later, the repack decoding worker can read these and replay
+ * file.  Later, the repack steering process can read these and replay
  * the operations on the new copy of the table.
  *
  * For each change affecting the table being repacked, we store enough
