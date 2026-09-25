@@ -4357,7 +4357,6 @@ timeout_handler_proc
 timeout_params
 timerCA
 tlist_vinfo
-toast_compress_header
 toast_external_data
 tokenize_error_callback_arg
 transferMode

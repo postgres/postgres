@@ -18,6 +18,7 @@
 #include "access/heapam.h"
 #include "access/heaptoast.h"
 #include "access/table.h"
+#include "access/toast_compression.h"
 #include "access/toast_internals.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
@@ -92,7 +93,7 @@ toast_compress_datum(Datum value, char cmethod)
 	{
 		/* successful compression */
 		Assert(cmid != TOAST_INVALID_COMPRESSION_ID);
-		TOAST_COMPRESS_SET_SIZE_AND_COMPRESS_METHOD(tmp, valsize, cmid);
+		VARDATA_COMPRESSED_SET_TCINFO(tmp, valsize, cmid);
 		return PointerGetDatum(tmp);
 	}
 	else

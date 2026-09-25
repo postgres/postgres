@@ -16,6 +16,7 @@
 #include "access/multixact.h"
 #include "access/relation.h"
 #include "access/table.h"
+#include "access/toast_compression.h"
 #include "access/toast_internals.h"
 #include "access/visibilitymap.h"
 #include "access/xact.h"

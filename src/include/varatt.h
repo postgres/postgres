@@ -554,6 +554,21 @@ VARDATA_COMPRESSED_GET_COMPRESS_METHOD(const void *PTR)
 }
 
 /*
+ * Set the decompressed size and the compression method of a
+ * compressed-in-line varlena datum.  The length word is not touched here; the
+ * caller is expected to have set it with SET_VARSIZE_COMPRESSED().
+ */
+static inline void
+VARDATA_COMPRESSED_SET_TCINFO(void *PTR, uint32 extsize, uint32 cmethod)
+{
+	Assert(extsize > 0 && extsize <= VARLENA_EXTSIZE_MASK);
+	Assert(cmethod < (1U << (32 - VARLENA_EXTSIZE_BITS)));
+
+	((varattrib_4b *) PTR)->va_compressed.va_tcinfo =
+		extsize | (cmethod << VARLENA_EXTSIZE_BITS);
+}
+
+/*
  * Same for external Datums, saved into a va_extinfo.
  */
 static inline Size

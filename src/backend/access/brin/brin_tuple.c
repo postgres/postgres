@@ -35,6 +35,7 @@
 #include "access/detoast.h"
 #include "access/heaptoast.h"
 #include "access/htup_details.h"
+#include "access/toast_compression.h"
 #include "access/toast_internals.h"
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
