@@ -53,11 +53,6 @@
  * pbox, and final permutations are inverted (this has been brought to the
  * attention of the author).  A list of errata for this book has been
  * posted to the sci.crypt newsgroup by the author and is available for FTP.
- *
- * ARCHITECTURE ASSUMPTIONS:
- *	It is assumed that the 8-byte arrays passed by reference can be
- *	addressed as arrays of uint32's (ie. the CPU is not picky about
- *	alignment).
  */
 
 #include "postgres.h"
@@ -393,7 +388,7 @@ setup_salt(long salt)
 }
 
 static int
-des_setkey(const char *key)
+des_setkey(const uint32 *key)
 {
 	uint32		k0,
 				k1,
@@ -405,8 +400,8 @@ des_setkey(const char *key)
 	if (!des_initialised)
 		des_init();
 
-	rawkey0 = pg_ntoh32(*(const uint32 *) key);
-	rawkey1 = pg_ntoh32(*(const uint32 *) (key + 4));
+	rawkey0 = pg_ntoh32(key[0]);
+	rawkey1 = pg_ntoh32(key[1]);
 
 	if ((rawkey0 | rawkey1)
 		&& rawkey0 == old_rawkey0
@@ -614,9 +609,8 @@ do_des(uint32 l_in, uint32 r_in, uint32 *l_out, uint32 *r_out, int count)
 }
 
 static int
-des_cipher(const char *in, char *out, long salt, int count)
+des_cipher(const uint32 *in, uint32 *out, long salt, int count)
 {
-	uint32		buffer[2];
 	uint32		l_out,
 				r_out,
 				rawl,
@@ -628,21 +622,15 @@ des_cipher(const char *in, char *out, long salt, int count)
 
 	setup_salt(salt);
 
-	/* copy data to avoid assuming input is word-aligned */
-	memcpy(buffer, in, sizeof(buffer));
-
-	rawl = pg_ntoh32(buffer[0]);
-	rawr = pg_ntoh32(buffer[1]);
+	rawl = pg_ntoh32(in[0]);
+	rawr = pg_ntoh32(in[1]);
 
 	retval = do_des(rawl, rawr, &l_out, &r_out, count);
 	if (retval)
 		return retval;
 
-	buffer[0] = pg_hton32(l_out);
-	buffer[1] = pg_hton32(r_out);
-
-	/* copy data to avoid assuming output is word-aligned */
-	memcpy(out, buffer, sizeof(buffer));
+	out[0] = pg_hton32(l_out);
+	out[1] = pg_hton32(r_out);
 
 	return retval;
 }
@@ -655,10 +643,13 @@ px_crypt_des(const char *key, const char *setting)
 				salt,
 				l,
 				r0,
-				r1,
-				keybuf[2];
+				r1;
+	union
+	{
+		uint8		bytes[8];
+		uint32		ints[2];
+	}			keybuf;
 	char	   *p;
-	uint8	   *q;
 	static char output[21];
 
 	if (!des_initialised)
@@ -669,14 +660,13 @@ px_crypt_des(const char *key, const char *setting)
 	 * Copy the key, shifting each character up by one bit and padding with
 	 * zeros.
 	 */
-	q = (uint8 *) keybuf;
-	while (q - (uint8 *) keybuf - 8)
+	for (size_t q = 0; q < lengthof(keybuf.bytes); q++)
 	{
-		*q++ = *key << 1;
+		keybuf.bytes[q] = *key << 1;
 		if (*key != '\0')
 			key++;
 	}
-	if (des_setkey((char *) keybuf))
+	if (des_setkey(keybuf.ints))
 		return NULL;
 
 #ifndef DISABLE_XDES
@@ -707,17 +697,16 @@ px_crypt_des(const char *key, const char *setting)
 			/*
 			 * Encrypt the key with itself.
 			 */
-			if (des_cipher((char *) keybuf, (char *) keybuf, 0L, 1))
+			if (des_cipher(keybuf.ints, keybuf.ints, 0L, 1))
 				return NULL;
 
 			/*
 			 * And XOR with the next 8 characters of the key.
 			 */
-			q = (uint8 *) keybuf;
-			while (q - (uint8 *) keybuf - 8 && *key)
-				*q++ ^= *key++ << 1;
+			for (size_t q = 0; q < lengthof(keybuf.bytes) && *key; q++)
+				keybuf.bytes[q] ^= *key++ << 1;
 
-			if (des_setkey((char *) keybuf))
+			if (des_setkey(keybuf.ints))
 				return NULL;
 		}
 		strlcpy(output, setting, 10);
