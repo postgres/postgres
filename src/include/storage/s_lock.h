@@ -697,13 +697,6 @@ extern void s_unlock(volatile slock_t *lock);
 #define SPIN_DELAY()	((void) 0)
 #endif	 /* SPIN_DELAY */
 
-#if !defined(TAS)
-extern int	tas(volatile slock_t *lock);		/* in port/.../tas.s, or
-												 * s_lock.c */
-
-#define TAS(lock)		tas(lock)
-#endif	 /* TAS */
-
 #if !defined(TAS_SPIN)
 #define TAS_SPIN(lock)	TAS(lock)
 #endif	 /* TAS_SPIN */
