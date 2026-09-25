@@ -40,7 +40,7 @@ CATALOG(pg_event_trigger,3466,EventTriggerRelationId)
 								 * session_replication_role */
 
 #ifdef CATALOG_VARLEN
-	text		evttags[1];		/* command TAGs this event trigger targets */
+	text		evttags[];		/* command TAGs this event trigger targets */
 #endif
 } FormData_pg_event_trigger;
 

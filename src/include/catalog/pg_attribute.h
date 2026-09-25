@@ -171,13 +171,13 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	int16		attstattarget BKI_DEFAULT(_null_) BKI_FORCE_NULL;
 
 	/* Column-level access permissions */
-	aclitem		attacl[1] BKI_DEFAULT(_null_);
+	aclitem		attacl[] BKI_DEFAULT(_null_);
 
 	/* Column-level options */
-	text		attoptions[1] BKI_DEFAULT(_null_);
+	text		attoptions[] BKI_DEFAULT(_null_);
 
 	/* Column-level FDW options */
-	text		attfdwoptions[1] BKI_DEFAULT(_null_);
+	text		attfdwoptions[] BKI_DEFAULT(_null_);
 
 	/*
 	 * Missing value for added columns. This is a one element array which lets

@@ -86,7 +86,7 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	text		datcollversion BKI_DEFAULT(_null_);
 
 	/* access permissions */
-	aclitem		datacl[1];
+	aclitem		datacl[];
 #endif
 } FormData_pg_database;
 

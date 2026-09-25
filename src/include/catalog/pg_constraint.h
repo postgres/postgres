@@ -122,45 +122,45 @@ CATALOG(pg_constraint,2606,ConstraintRelationId)
 	 * Columns of conrelid that the constraint applies to, if known (this is
 	 * NULL for trigger constraints)
 	 */
-	int16		conkey[1];
+	int16		conkey[];
 
 	/*
 	 * If a foreign key, the referenced columns of confrelid
 	 */
-	int16		confkey[1];
+	int16		confkey[];
 
 	/*
 	 * If a foreign key, the OIDs of the PK = FK equality/overlap operators
 	 * for each column of the constraint
 	 */
-	Oid			conpfeqop[1] BKI_LOOKUP(pg_operator);
+	Oid			conpfeqop[] BKI_LOOKUP(pg_operator);
 
 	/*
 	 * If a foreign key, the OIDs of the PK = PK equality/overlap operators
 	 * for each column of the constraint (i.e., equality for the referenced
 	 * columns)
 	 */
-	Oid			conppeqop[1] BKI_LOOKUP(pg_operator);
+	Oid			conppeqop[] BKI_LOOKUP(pg_operator);
 
 	/*
 	 * If a foreign key, the OIDs of the FK = FK equality/overlap operators
 	 * for each column of the constraint (i.e., equality for the referencing
 	 * columns)
 	 */
-	Oid			conffeqop[1] BKI_LOOKUP(pg_operator);
+	Oid			conffeqop[] BKI_LOOKUP(pg_operator);
 
 	/*
 	 * If a foreign key with an ON DELETE SET NULL/DEFAULT action, the subset
 	 * of conkey to updated.  If null, all columns are updated.
 	 */
-	int16		confdelsetcols[1];
+	int16		confdelsetcols[];
 
 	/*
 	 * If an exclusion constraint, the OIDs of the exclusion operators for
 	 * each column of the constraint.  Also set for unique constraints/primary
 	 * keys using WITHOUT OVERLAPS.
 	 */
-	Oid			conexclop[1] BKI_LOOKUP(pg_operator);
+	Oid			conexclop[] BKI_LOOKUP(pg_operator);
 
 	/*
 	 * If a check constraint, nodeToString representation of expression

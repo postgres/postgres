@@ -117,7 +117,7 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 	text		subwalrcvtimeout BKI_FORCE_NOT_NULL;
 
 	/* List of publications subscribed to */
-	text		subpublications[1] BKI_FORCE_NOT_NULL;
+	text		subpublications[] BKI_FORCE_NOT_NULL;
 
 	/* Only publish data originating from the specified origin */
 	text		suborigin BKI_DEFAULT(LOGICALREP_ORIGIN_ANY);

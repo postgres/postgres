@@ -226,11 +226,19 @@ sub ParseHeader
 					$atttype = $RENAME_ATTTYPE{$atttype};
 				}
 
-				# If the C name ends with '[]' or '[digits]', we have
-				# an array type, so we discard that from the name and
-				# prepend '_' to the type.
-				if ($attname =~ /(\w+)\[\d*\]/)
+				# If the C name ends with '[]', we have an array type,
+				# so we discard that from the name and prepend '_' to
+				# the type.
+				#
+				# Older versions used '[1]' for this.  Catch those
+				# explicitly rather than produce garbage later.
+				if ($attname =~ /(\w+)\[(\d*)\]/)
 				{
+					if ($2 ne '')
+					{
+						die
+						  "catalog array column \"$atttype $attname\" must be declared with []";
+					}
 					$attname = $1;
 					$atttype = '_' . $atttype;
 				}

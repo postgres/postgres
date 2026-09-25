@@ -38,7 +38,7 @@ CATALOG(pg_parameter_acl,6243,ParameterAclRelationId) BKI_SHARED_RELATION BKI_RO
 	text		parname BKI_FORCE_NOT_NULL;
 
 	/* access permissions */
-	aclitem		paracl[1] BKI_DEFAULT(_null_);
+	aclitem		paracl[] BKI_DEFAULT(_null_);
 #endif
 } FormData_pg_parameter_acl;
 

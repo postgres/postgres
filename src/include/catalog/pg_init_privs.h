@@ -54,7 +54,7 @@ CATALOG(pg_init_privs,3394,InitPrivsRelationId)
 	char		privtype;		/* from initdb or extension? */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	aclitem		initprivs[1] BKI_FORCE_NOT_NULL;	/* initial privs on object */
+	aclitem		initprivs[] BKI_FORCE_NOT_NULL; /* initial privs on object */
 #endif
 } FormData_pg_init_privs;
 

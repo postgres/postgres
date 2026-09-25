@@ -37,7 +37,7 @@ CATALOG(pg_largeobject_metadata,2995,LargeObjectMetadataRelationId)
 												 * owner */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	aclitem		lomacl[1];		/* access permissions */
+	aclitem		lomacl[];		/* access permissions */
 #endif
 } FormData_pg_largeobject_metadata;
 

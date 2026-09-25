@@ -54,7 +54,7 @@ CATALOG(pg_statistic_ext,3381,StatisticExtRelationId)
 
 #ifdef CATALOG_VARLEN
 	int16		stxstattarget BKI_DEFAULT(_null_) BKI_FORCE_NULL;	/* statistics target */
-	char		stxkind[1] BKI_FORCE_NOT_NULL;	/* statistics kinds requested
+	char		stxkind[] BKI_FORCE_NOT_NULL;	/* statistics kinds requested
 												 * to build */
 	pg_node_tree stxexprs;		/* A list of expression trees for stats
 								 * attributes that are not simple column

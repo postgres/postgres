@@ -43,8 +43,8 @@ CATALOG(pg_foreign_data_wrapper,2328,ForeignDataWrapperRelationId)
 														 * none */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	aclitem		fdwacl[1];		/* access permissions */
-	text		fdwoptions[1];	/* FDW options */
+	aclitem		fdwacl[];		/* access permissions */
+	text		fdwoptions[];	/* FDW options */
 #endif
 } FormData_pg_foreign_data_wrapper;
 

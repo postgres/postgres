@@ -136,10 +136,10 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* NOTE: These fields are not present in a relcache entry's rd_rel field. */
 	/* access permissions */
-	aclitem		relacl[1] BKI_DEFAULT(_null_);
+	aclitem		relacl[] BKI_DEFAULT(_null_);
 
 	/* access-method-specific options */
-	text		reloptions[1] BKI_DEFAULT(_null_);
+	text		reloptions[] BKI_DEFAULT(_null_);
 
 	/* partition bound node tree */
 	pg_node_tree relpartbound BKI_DEFAULT(_null_);

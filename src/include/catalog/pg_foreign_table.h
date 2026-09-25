@@ -33,7 +33,7 @@ CATALOG(pg_foreign_table,3118,ForeignTableRelationId)
 	Oid			ftserver BKI_LOOKUP(pg_foreign_server); /* OID of foreign server */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text		ftoptions[1];	/* FDW-specific options */
+	text		ftoptions[];	/* FDW-specific options */
 #endif
 } FormData_pg_foreign_table;
 

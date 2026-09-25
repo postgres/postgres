@@ -37,8 +37,8 @@ CATALOG(pg_foreign_server,1417,ForeignServerRelationId)
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		srvtype;
 	text		srvversion;
-	aclitem		srvacl[1];		/* access permissions */
-	text		srvoptions[1];	/* FDW-specific options */
+	aclitem		srvacl[];		/* access permissions */
+	text		srvoptions[];	/* FDW-specific options */
 #endif
 } FormData_pg_foreign_server;
 

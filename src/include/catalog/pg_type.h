@@ -251,7 +251,7 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	/*
 	 * Access permissions
 	 */
-	aclitem		typacl[1] BKI_DEFAULT(_null_);
+	aclitem		typacl[] BKI_DEFAULT(_null_);
 #endif
 } FormData_pg_type;
 

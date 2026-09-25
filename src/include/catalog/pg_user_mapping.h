@@ -38,7 +38,7 @@ CATALOG(pg_user_mapping,1418,UserMappingRelationId)
 														 * mapping */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text		umoptions[1];	/* user mapping options */
+	text		umoptions[];	/* user mapping options */
 #endif
 } FormData_pg_user_mapping;
 

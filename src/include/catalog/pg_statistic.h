@@ -106,11 +106,11 @@ CATALOG(pg_statistic,2619,StatisticRelationId)
 	Oid			stacoll5 BKI_LOOKUP_OPT(pg_collation);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	float4		stanumbers1[1];
-	float4		stanumbers2[1];
-	float4		stanumbers3[1];
-	float4		stanumbers4[1];
-	float4		stanumbers5[1];
+	float4		stanumbers1[];
+	float4		stanumbers2[];
+	float4		stanumbers3[];
+	float4		stanumbers4[];
+	float4		stanumbers5[];
 
 	/*
 	 * Values in these arrays are values of the column's data type, or of some

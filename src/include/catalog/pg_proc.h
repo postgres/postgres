@@ -99,19 +99,19 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
 #ifdef CATALOG_VARLEN
 
 	/* all param types (NULL if IN only) */
-	Oid			proallargtypes[1] BKI_DEFAULT(_null_) BKI_LOOKUP(pg_type);
+	Oid			proallargtypes[] BKI_DEFAULT(_null_) BKI_LOOKUP(pg_type);
 
 	/* parameter modes (NULL if IN only) */
-	char		proargmodes[1] BKI_DEFAULT(_null_);
+	char		proargmodes[] BKI_DEFAULT(_null_);
 
 	/* parameter names (NULL if no names) */
-	text		proargnames[1] BKI_DEFAULT(_null_);
+	text		proargnames[] BKI_DEFAULT(_null_);
 
 	/* list of expression trees for argument defaults (NULL if none) */
 	pg_node_tree proargdefaults BKI_DEFAULT(_null_);
 
 	/* types for which to apply transforms */
-	Oid			protrftypes[1] BKI_DEFAULT(_null_) BKI_LOOKUP(pg_type);
+	Oid			protrftypes[] BKI_DEFAULT(_null_) BKI_LOOKUP(pg_type);
 
 	/* procedure source text */
 	text		prosrc BKI_FORCE_NOT_NULL;
@@ -123,10 +123,10 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
 	pg_node_tree prosqlbody BKI_DEFAULT(_null_);
 
 	/* procedure-local GUC settings */
-	text		proconfig[1] BKI_DEFAULT(_null_);
+	text		proconfig[] BKI_DEFAULT(_null_);
 
 	/* access permissions */
-	aclitem		proacl[1] BKI_DEFAULT(_null_);
+	aclitem		proacl[] BKI_DEFAULT(_null_);
 #endif
 } FormData_pg_proc;
 

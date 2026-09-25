@@ -39,7 +39,7 @@ CATALOG(pg_policy,3256,PolicyRelationId)
 
 #ifdef CATALOG_VARLEN
 	/* Roles to which the policy is applied; zero means PUBLIC */
-	Oid			polroles[1] BKI_LOOKUP_OPT(pg_authid) BKI_FORCE_NOT_NULL;
+	Oid			polroles[] BKI_LOOKUP_OPT(pg_authid) BKI_FORCE_NOT_NULL;
 	pg_node_tree polqual;		/* Policy quals. */
 	pg_node_tree polwithcheck;	/* WITH CHECK quals. */
 #endif
