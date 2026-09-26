@@ -3803,6 +3803,87 @@ NOTICE:  fp_auto_pk called
 NOTICE:  fp_auto_pk called
 DROP TABLE fp_fk_cci, fp_pk_cci;
 DROP FUNCTION fp_auto_pk;
+-- The fast path must check EXECUTE, as the referenced table's owner, on the
+-- functions it invokes on the FK values: the equality operator's function
+-- and, for a cross-type FK, the implicit cast function.  Validation of a new
+-- constraint by a role that cannot use the bulk check (RLS is enabled on the
+-- referenced table) runs per-row checks through the fast path.
+--
+-- Wrapped with BEGIN...ROLLBACK to ensure opclasses used here don't interfere
+-- with nearby tests.
+BEGIN;
+CREATE ROLE regress_ri_pkowner;
+CREATE ROLE regress_ri_fkowner;
+-- A private btree opclass whose equality function we can revoke without
+-- affecting anything else.
+CREATE FUNCTION regress_ri_int4eq(int4, int4) RETURNS bool
+  AS 'int4eq' LANGUAGE internal IMMUTABLE STRICT;
+CREATE OPERATOR === (LEFTARG = int4, RIGHTARG = int4,
+  FUNCTION = regress_ri_int4eq, COMMUTATOR = ===,
+  RESTRICT = eqsel, JOIN = eqjoinsel);
+CREATE OPERATOR CLASS regress_ri_int4_ops FOR TYPE int4 USING btree AS
+  OPERATOR 1 <, OPERATOR 2 <=, OPERATOR 3 ===, OPERATOR 4 >=, OPERATOR 5 >,
+  FUNCTION 1 btint4cmp(int4, int4);
+REVOKE EXECUTE ON FUNCTION regress_ri_int4eq(int4, int4) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION regress_ri_int4eq(int4, int4) TO regress_ri_fkowner;
+-- An FK column type needing a user-defined implicit cast to the PK type.
+CREATE TYPE fkenum AS ENUM ('one');
+CREATE FUNCTION fkenum_to_int4(fkenum) RETURNS int4
+  AS 'SELECT 1' LANGUAGE sql IMMUTABLE STRICT;
+CREATE CAST (fkenum AS int4) WITH FUNCTION fkenum_to_int4(fkenum) AS IMPLICIT;
+REVOKE EXECUTE ON FUNCTION fkenum_to_int4(fkenum) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION fkenum_to_int4(fkenum) TO regress_ri_fkowner;
+CREATE TABLE pktable_acl_op (a int4);
+CREATE UNIQUE INDEX ON pktable_acl_op (a regress_ri_int4_ops);
+CREATE TABLE pktable_acl_cast (a int4 PRIMARY KEY);
+CREATE TABLE pktable_acl_op_part (a int4) PARTITION BY LIST (a regress_ri_int4_ops);
+CREATE TABLE pktable_acl_op_part1 PARTITION OF pktable_acl_op_part DEFAULT;
+CREATE UNIQUE INDEX ON pktable_acl_op_part (a regress_ri_int4_ops);
+CREATE TABLE pktable_acl_cast_part (a int4 PRIMARY KEY) PARTITION BY LIST (a);
+INSERT INTO pktable_acl_op VALUES (1);
+INSERT INTO pktable_acl_cast VALUES (1);
+ALTER TABLE pktable_acl_op OWNER TO regress_ri_pkowner;
+ALTER TABLE pktable_acl_cast OWNER TO regress_ri_pkowner;
+ALTER TABLE pktable_acl_op_part OWNER TO regress_ri_pkowner;
+ALTER TABLE pktable_acl_cast_part OWNER TO regress_ri_pkowner;
+ALTER TABLE pktable_acl_op ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pktable_acl_cast ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pktable_acl_op_part ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pktable_acl_cast_part ENABLE ROW LEVEL SECURITY;
+GRANT REFERENCES ON pktable_acl_op, pktable_acl_cast, pktable_acl_op_part, pktable_acl_cast_part TO regress_ri_fkowner;
+CREATE TABLE fktable_acl_op (a int4);
+CREATE TABLE fktable_acl_cast (a fkenum);
+INSERT INTO fktable_acl_op VALUES (1);
+INSERT INTO fktable_acl_cast VALUES ('one');
+ALTER TABLE fktable_acl_op OWNER TO regress_ri_fkowner;
+ALTER TABLE fktable_acl_cast OWNER TO regress_ri_fkowner;
+-- The FK owner holds EXECUTE on both functions; the PK owner does not, and
+-- it is the PK owner whose privileges apply.
+SET ROLE regress_ri_fkowner;
+SAVEPOINT s;
+ALTER TABLE fktable_acl_op
+  ADD FOREIGN KEY (a) REFERENCES pktable_acl_op (a);	-- fails
+ERROR:  permission denied for function regress_ri_int4eq
+ROLLBACK TO SAVEPOINT s;
+SAVEPOINT s;
+ALTER TABLE fktable_acl_cast
+  ADD FOREIGN KEY (a) REFERENCES pktable_acl_cast (a);	-- fails
+ERROR:  permission denied for function fkenum_to_int4
+ROLLBACK TO SAVEPOINT s;
+SAVEPOINT s;
+ALTER TABLE fktable_acl_op
+  ADD FOREIGN KEY (a) REFERENCES pktable_acl_op_part (a);	-- fails (SPI path message)
+ERROR:  permission denied for function regress_ri_int4eq
+CONTEXT:  SQL statement "SELECT 1 FROM "public"."pktable_acl_op_part" x WHERE "a" OPERATOR(public.===) $1 FOR KEY SHARE OF x"
+ROLLBACK TO SAVEPOINT s;
+SAVEPOINT s;
+ALTER TABLE fktable_acl_cast
+  ADD FOREIGN KEY (a) REFERENCES pktable_acl_cast_part (a);	-- fails (SPI path message)
+ERROR:  permission denied for function fkenum_to_int4
+CONTEXT:  SQL statement "SELECT 1 FROM "public"."pktable_acl_cast_part" x WHERE "a" OPERATOR(pg_catalog.=) $1::pg_catalog.int4 FOR KEY SHARE OF x"
+ROLLBACK TO SAVEPOINT s;
+RESET ROLE;
+ROLLBACK;
 -- A STABLE cast used by an FK check must see changes made by earlier AFTER
 -- triggers, using the check's snapshot rather than the outer query's snapshot.
 -- Compare the per-row fast path with a partitioned-parent SPI check.
