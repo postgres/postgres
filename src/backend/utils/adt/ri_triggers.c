@@ -31,11 +31,13 @@
 #include "access/tableam.h"
 #include "access/xact.h"
 #include "catalog/index.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_am_d.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_proc.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "executor/spi.h"
@@ -305,6 +307,8 @@ static void ri_CheckPermissions(const RI_ConstraintInfo *riinfo,
 								Relation query_rel);
 static bool recheck_matched_pk_tuple(Relation idxrel, ScanKeyData *skeys,
 									 int nkeys, TupleTableSlot *new_slot);
+static void ri_CheckFunctionPermissions(const RI_ConstraintInfo *riinfo,
+										const FastPathMeta *fpmeta);
 static void build_index_scankeys(const RI_ConstraintInfo *riinfo,
 								 FastPathMeta *fpmeta,
 								 Relation idx_rel, Datum *pk_vals,
@@ -2851,6 +2855,7 @@ ri_FastPathCheck(RI_ConstraintInfo *riinfo,
 		ri_populate_fastpath_metadata(riinfo, fk_rel, idx_rel);
 	}
 	Assert(riinfo->fpmeta);
+	ri_CheckFunctionPermissions(riinfo, riinfo->fpmeta);
 	ri_ExtractValues(fk_rel, newslot, riinfo, false, pk_vals, pk_nulls);
 	build_index_scankeys(riinfo, riinfo->fpmeta, idx_rel, pk_vals, pk_nulls,
 						 skey);
@@ -3194,6 +3199,41 @@ recheck_matched_pk_tuple(Relation idxrel, ScanKeyData *skeys, int nkeys,
 	}
 
 	return matched;
+}
+
+/*
+ * ri_CheckFunctionPermissions
+ *		Check EXECUTE privilege on the functions the fast path invokes on the
+ *		FK values, as the referenced table's owner.
+ *
+ * This parallels the checks ExecInitFunc() performs when the SPI path
+ * initializes its generated query, where the equality operator's function
+ * appears in the WHERE clause and the cast function, if any, in the cast
+ * applied to the parameter.  Call with the user id already switched to the
+ * referenced table's owner.
+ */
+static void
+ri_CheckFunctionPermissions(const RI_ConstraintInfo *riinfo,
+							const FastPathMeta *fpmeta)
+{
+	for (int i = 0; i < riinfo->nkeys; i++)
+	{
+		Oid			funcs[2] = {fpmeta->regops[i], fpmeta->cast_func_finfo[i].fn_oid};
+
+		for (int j = 0; j < lengthof(funcs); j++)
+		{
+			AclResult	aclresult;
+
+			if (!OidIsValid(funcs[j]))
+				continue;
+			aclresult = object_aclcheck(ProcedureRelationId, funcs[j],
+										GetUserId(), ACL_EXECUTE);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, OBJECT_FUNCTION,
+							   get_func_name(funcs[j]));
+			InvokeFunctionExecuteHook(funcs[j]);
+		}
+	}
 }
 
 /*
