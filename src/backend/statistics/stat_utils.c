@@ -435,6 +435,9 @@ stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
  * This duplicates the logic in examine_attribute() but it will not skip the
  * attribute if the attstattarget is 0.
  *
+ * *atttypid and *atttypmod describe the type as declared.  *basetypcache is
+ * the cache entry of the base type behind any domain.
+ *
  * This information, retrieved from pg_attribute and pg_type with some
  * specific handling for index expressions, is a prerequisite to calling
  * any of the other statatt_*() functions.
@@ -442,14 +445,13 @@ stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 void
 statatt_get_type(Oid reloid, AttrNumber attnum,
 				 Oid *atttypid, int32 *atttypmod,
-				 char *atttyptype, Oid *atttypcoll,
+				 TypeCacheEntry **basetypcache, Oid *atttypcoll,
 				 Oid *eq_opr, Oid *lt_opr)
 {
 	Relation	rel = relation_open(reloid, AccessShareLock);
 	Form_pg_attribute attr;
 	HeapTuple	atup;
 	Node	   *expr;
-	TypeCacheEntry *typcache;
 
 	atup = SearchSysCache2(ATTNUM, ObjectIdGetDatum(reloid),
 						   Int16GetDatum(attnum));
@@ -496,35 +498,42 @@ statatt_get_type(Oid reloid, AttrNumber attnum,
 	ReleaseSysCache(atup);
 
 	/* finds the right operators even if atttypid is a domain */
-	typcache = lookup_type_cache(*atttypid, TYPECACHE_LT_OPR | TYPECACHE_EQ_OPR);
-	*atttyptype = typcache->typtype;
-	*eq_opr = typcache->eq_opr;
-	*lt_opr = typcache->lt_opr;
+	*basetypcache = lookup_type_cache(*atttypid, TYPECACHE_LT_OPR |
+									  TYPECACHE_EQ_OPR |
+									  TYPECACHE_DOMAIN_BASE_INFO);
+	if (OidIsValid((*basetypcache)->domainBaseType))
+		*basetypcache = lookup_type_cache((*basetypcache)->domainBaseType,
+										  TYPECACHE_LT_OPR |
+										  TYPECACHE_EQ_OPR);
+
+	*eq_opr = (*basetypcache)->eq_opr;
+	*lt_opr = (*basetypcache)->lt_opr;
 
 	/*
 	 * Special case: collation for tsvector is DEFAULT_COLLATION_OID. See
 	 * compute_tsvector_stats().
 	 */
-	if (*atttypid == TSVECTOROID)
+	if ((*basetypcache)->type_id == TSVECTOROID)
 		*atttypcoll = DEFAULT_COLLATION_OID;
 
 	relation_close(rel, NoLock);
 }
 
 /*
- * Derive element type information from the attribute type.  This information
- * is needed when the given type is one that contains elements of other types.
+ * Derive element type information from the base type of an attribute.  This
+ * information is needed when the given type is one that contains elements of
+ * other types.
  *
- * The atttypid and atttyptype should be derived from a previous call to
+ * The type cache entry should be derived from a previous call to
  * statatt_get_type().
  */
 bool
-statatt_get_elem_type(Oid atttypid, char atttyptype,
+statatt_get_elem_type(TypeCacheEntry *basetypcache,
 					  Oid *elemtypid, Oid *elem_eq_opr)
 {
 	TypeCacheEntry *elemtypcache;
 
-	if (atttypid == TSVECTOROID)
+	if (basetypcache->type_id == TSVECTOROID)
 	{
 		/*
 		 * Special case: element type for tsvector is text. See
@@ -534,8 +543,8 @@ statatt_get_elem_type(Oid atttypid, char atttyptype,
 	}
 	else
 	{
-		/* find underlying element type through any domain */
-		*elemtypid = get_base_element_type(atttypid);
+		/* find the underlying element type */
+		*elemtypid = get_element_type(basetypcache->type_id);
 	}
 
 	if (!OidIsValid(*elemtypid))
@@ -547,6 +556,33 @@ statatt_get_elem_type(Oid atttypid, char atttyptype,
 		return false;
 
 	*elem_eq_opr = elemtypcache->eq_opr;
+
+	return true;
+}
+
+/*
+ * Derive the range type to use from the attribute type, returning false if
+ * the attribute cannot have range statistics at all.
+ *
+ * For a multirange type, we step down to its range type, because
+ * compute_range_stats() stores range bounds even when analyzing a multirange
+ * column (see also range_typanalyze() and multirange_typanalyze()).
+ *
+ * The type cache entry should be derived from a previous call to
+ * statatt_get_type(), so that any domain has already been looked through.
+ */
+bool
+statatt_get_range_type(TypeCacheEntry *basetypcache, Oid *rangetypid)
+{
+	if (basetypcache->typtype == TYPTYPE_MULTIRANGE)
+		*rangetypid = get_multirange_range(basetypcache->type_id);
+	else if (basetypcache->typtype == TYPTYPE_RANGE)
+		*rangetypid = basetypcache->type_id;
+	else
+	{
+		*rangetypid = InvalidOid;
+		return false;
+	}
 
 	return true;
 }
