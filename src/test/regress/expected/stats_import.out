@@ -1273,6 +1273,153 @@ SELECT pg_catalog.pg_restore_attribute_stats(
  t
 (1 row)
 
+-- test for domains over range and multirange types
+CREATE DOMAIN stats_import.dom_int4 AS int4;
+CREATE DOMAIN stats_import.dom_range AS int4range;
+CREATE DOMAIN stats_import.dom_mrange AS int4multirange;
+CREATE TABLE stats_import.test_dom(
+    id stats_import.dom_int4,
+    drange stats_import.dom_range,
+    dmrange stats_import.dom_mrange
+) WITH (autovacuum_enabled = false);
+INSERT INTO stats_import.test_dom
+VALUES (1, '[1,3)', '{[1,3),[5,9),[20,30)}'),
+  (2, '[5,9)', '{[11,13),[15,19),[20,30)}'),
+  (3, '[11,15)', '{[21,23),[25,29),[120,130)}');
+-- warn: domain over a scalar type cannot have range stats
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_dom',
+  'attname', 'id',
+  'inherited', false,
+  'null_frac', 0.25::real,
+  'range_length_histogram', '{2,4,4}'::text,
+  'range_empty_frac', '0'::real,
+  'range_bounds_histogram', '{"[1,3)","[5,9)","[11,15)"}'::text
+);
+WARNING:  column "id" is not a range type
+DETAIL:  Cannot set STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM or STATISTIC_KIND_BOUNDS_HISTOGRAM.
+ pg_restore_attribute_stats 
+----------------------------
+ f
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test_dom'
+AND inherited = false
+AND attname = 'id';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac | range_bounds_histogram 
+--------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+------------------------
+ stats_import | test_dom  | id      | f         |      0.25 |         0 |          0 |                  |                   |                  |             |                   |                        |                      |                        |                  | 
+(1 row)
+
+-- ok: range stats for a domain over a range type
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_dom',
+  'attname', 'drange',
+  'inherited', false,
+  'range_length_histogram', '{2,4,4}'::text,
+  'range_empty_frac', '0'::real,
+  'range_bounds_histogram', '{"[1,3)","[5,9)","[11,15)"}'::text
+);
+ pg_restore_attribute_stats 
+----------------------------
+ t
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test_dom'
+AND inherited = false
+AND attname = 'drange';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac |   range_bounds_histogram    
+--------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+-----------------------------
+ stats_import | test_dom  | drange  | f         |         0 |         0 |          0 |                  |                   |                  |             |                   |                        |                      | {2,4,4}                |                0 | {"[1,3)","[5,9)","[11,15)"}
+(1 row)
+
+-- ok: range stats for a domain over a multirange type.
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_dom',
+  'attname', 'dmrange',
+  'inherited', false,
+  'range_length_histogram', '{29,29,109}'::text,
+  'range_empty_frac', '0'::real,
+  'range_bounds_histogram', '{"[1,30)","[11,30)","[21,130)"}'::text
+);
+ pg_restore_attribute_stats 
+----------------------------
+ t
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test_dom'
+AND inherited = false
+AND attname = 'dmrange';
+  schemaname  | tablename | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram | range_length_histogram | range_empty_frac |     range_bounds_histogram      
+--------------+-----------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+----------------------+------------------------+------------------+---------------------------------
+ stats_import | test_dom  | dmrange | f         |         0 |         0 |          0 |                  |                   |                  |             |                   |                        |                      | {29,29,109}            |                0 | {"[1,30)","[11,30)","[21,130)"}
+(1 row)
+
+-- warn: multirange values in the bounds histogram of a domain.  These
+-- must be ranges.
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_dom',
+  'attname', 'dmrange',
+  'inherited', false,
+  'range_length_histogram', '{29,29,109}'::text,
+  'range_empty_frac', '0'::real,
+  'range_bounds_histogram', '{"{[1,30)}","{[11,30)}"}'::text
+);
+WARNING:  malformed range literal: "{[1,30)}"
+DETAIL:  Missing left parenthesis or bracket.
+ pg_restore_attribute_stats 
+----------------------------
+ f
+(1 row)
+
+-- test for a domain over tsvector.
+CREATE DOMAIN stats_import.dom_tsvector AS tsvector;
+CREATE TABLE stats_import.test_dom_ts(
+    id int,
+    v stats_import.dom_tsvector
+) WITH (autovacuum_enabled = false);
+INSERT INTO stats_import.test_dom_ts
+SELECT g, to_tsvector('english', 'the quick brown fox ' || g)
+FROM generate_series(1, 20) AS g;
+-- ok: mcelem and elem_count_histogram for a domain over tsvector
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_dom_ts',
+  'attname', 'v',
+  'inherited', false,
+  'most_common_elems', '{brown,fox,quick}'::text,
+  'most_common_elem_freqs', '{0.3,0.2,0.2,0.3,0.0}'::real[],
+  'elem_count_histogram', '{4,4,4,4,4,4,4,4,4,4}'::real[]
+);
+ pg_restore_attribute_stats 
+----------------------------
+ t
+(1 row)
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test_dom_ts'
+AND inherited = false
+AND attname = 'v';
+  schemaname  |  tablename  | attname | inherited | null_frac | avg_width | n_distinct | most_common_vals | most_common_freqs | histogram_bounds | correlation | most_common_elems | most_common_elem_freqs | elem_count_histogram  | range_length_histogram | range_empty_frac | range_bounds_histogram 
+--------------+-------------+---------+-----------+-----------+-----------+------------+------------------+-------------------+------------------+-------------+-------------------+------------------------+-----------------------+------------------------+------------------+------------------------
+ stats_import | test_dom_ts | v       | f         |         0 |         0 |          0 |                  |                   |                  |             | {brown,fox,quick} | {0.3,0.2,0.2,0.3,0}    | {4,4,4,4,4,4,4,4,4,4} |                        |                  | 
+(1 row)
+
 --
 -- Test the ability to exactly copy data from one table to an identical table,
 -- correctly reconstructing the stakind order as well as the staopN and
@@ -1549,11 +1696,17 @@ AND attname = 'i';
 
 DROP TABLE stats_temp;
 DROP SCHEMA stats_import CASCADE;
-NOTICE:  drop cascades to 7 other objects
+NOTICE:  drop cascades to 13 other objects
 DETAIL:  drop cascades to type stats_import.complex_type
 drop cascades to table stats_import.test
 drop cascades to table stats_import.test_mr
 drop cascades to table stats_import.part_parent
 drop cascades to sequence stats_import.testseq
 drop cascades to view stats_import.testview
+drop cascades to type stats_import.dom_int4
+drop cascades to type stats_import.dom_range
+drop cascades to type stats_import.dom_mrange
+drop cascades to table stats_import.test_dom
+drop cascades to type stats_import.dom_tsvector
+drop cascades to table stats_import.test_dom_ts
 drop cascades to table stats_import.test_clone

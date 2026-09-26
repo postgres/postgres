@@ -882,6 +882,119 @@ SELECT pg_catalog.pg_restore_attribute_stats(
   'range_bounds_histogram', '{"[1,30)","[11,30)","[21,130)"}'::text
 );
 
+-- test for domains over range and multirange types
+CREATE DOMAIN stats_import.dom_int4 AS int4;
+CREATE DOMAIN stats_import.dom_range AS int4range;
+CREATE DOMAIN stats_import.dom_mrange AS int4multirange;
+
+CREATE TABLE stats_import.test_dom(
+    id stats_import.dom_int4,
+    drange stats_import.dom_range,
+    dmrange stats_import.dom_mrange
+) WITH (autovacuum_enabled = false);
+
+INSERT INTO stats_import.test_dom
+VALUES (1, '[1,3)', '{[1,3),[5,9),[20,30)}'),
+  (2, '[5,9)', '{[11,13),[15,19),[20,30)}'),
+  (3, '[11,15)', '{[21,23),[25,29),[120,130)}');
+
+-- warn: domain over a scalar type cannot have range stats
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_dom',
+  'attname', 'id',
+  'inherited', false,
+  'null_frac', 0.25::real,
+  'range_length_histogram', '{2,4,4}'::text,
+  'range_empty_frac', '0'::real,
+  'range_bounds_histogram', '{"[1,3)","[5,9)","[11,15)"}'::text
+);
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test_dom'
+AND inherited = false
+AND attname = 'id';
+
+-- ok: range stats for a domain over a range type
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_dom',
+  'attname', 'drange',
+  'inherited', false,
+  'range_length_histogram', '{2,4,4}'::text,
+  'range_empty_frac', '0'::real,
+  'range_bounds_histogram', '{"[1,3)","[5,9)","[11,15)"}'::text
+);
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test_dom'
+AND inherited = false
+AND attname = 'drange';
+
+-- ok: range stats for a domain over a multirange type.
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_dom',
+  'attname', 'dmrange',
+  'inherited', false,
+  'range_length_histogram', '{29,29,109}'::text,
+  'range_empty_frac', '0'::real,
+  'range_bounds_histogram', '{"[1,30)","[11,30)","[21,130)"}'::text
+);
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test_dom'
+AND inherited = false
+AND attname = 'dmrange';
+
+-- warn: multirange values in the bounds histogram of a domain.  These
+-- must be ranges.
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_dom',
+  'attname', 'dmrange',
+  'inherited', false,
+  'range_length_histogram', '{29,29,109}'::text,
+  'range_empty_frac', '0'::real,
+  'range_bounds_histogram', '{"{[1,30)}","{[11,30)}"}'::text
+);
+
+-- test for a domain over tsvector.
+CREATE DOMAIN stats_import.dom_tsvector AS tsvector;
+
+CREATE TABLE stats_import.test_dom_ts(
+    id int,
+    v stats_import.dom_tsvector
+) WITH (autovacuum_enabled = false);
+
+INSERT INTO stats_import.test_dom_ts
+SELECT g, to_tsvector('english', 'the quick brown fox ' || g)
+FROM generate_series(1, 20) AS g;
+
+-- ok: mcelem and elem_count_histogram for a domain over tsvector
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_dom_ts',
+  'attname', 'v',
+  'inherited', false,
+  'most_common_elems', '{brown,fox,quick}'::text,
+  'most_common_elem_freqs', '{0.3,0.2,0.2,0.3,0.0}'::real[],
+  'elem_count_histogram', '{4,4,4,4,4,4,4,4,4,4}'::real[]
+);
+
+SELECT *
+FROM pg_stats
+WHERE schemaname = 'stats_import'
+AND tablename = 'test_dom_ts'
+AND inherited = false
+AND attname = 'v';
+
 --
 -- Test the ability to exactly copy data from one table to an identical table,
 -- correctly reconstructing the stakind order as well as the staopN and
