@@ -227,10 +227,32 @@ analyze_rel(Oid relid, RangeVar *relation,
 
 		fdwroutine = GetFdwRoutineForRelation(onerel, false);
 
-		if (fdwroutine->ImportForeignStatistics != NULL &&
-			fdwroutine->ImportForeignStatistics(onerel, va_cols, elevel))
-			stats_imported = true;
-		else
+		if (fdwroutine->ImportForeignStatistics != NULL)
+		{
+			Oid			save_userid;
+			int			save_sec_context;
+			int			save_nestlevel;
+
+			/*
+			 * Switch to the table owner's userid, as in the sampling path.
+			 * Also lock down security-restricted operations and arrange to
+			 * make GUC variable changes local to this command.
+			 */
+			GetUserIdAndSecContext(&save_userid, &save_sec_context);
+			SetUserIdAndSecContext(onerel->rd_rel->relowner,
+								   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+			save_nestlevel = NewGUCNestLevel();
+			RestrictSearchPath();
+
+			stats_imported = fdwroutine->ImportForeignStatistics(onerel,
+																 va_cols,
+																 elevel);
+
+			AtEOXact_GUC(false, save_nestlevel);
+			SetUserIdAndSecContext(save_userid, save_sec_context);
+		}
+
+		if (!stats_imported)
 		{
 			bool		ok = false;
 
