@@ -19,6 +19,9 @@
 /* avoid including primnodes.h here */
 typedef struct RangeVar RangeVar;
 
+/* avoid including typcache.h here */
+typedef struct TypeCacheEntry TypeCacheEntry;
+
 struct StatsArgInfo
 {
 	const char *argname;
@@ -43,7 +46,7 @@ extern bool stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 
 extern void statatt_get_type(Oid reloid, AttrNumber attnum,
 							 Oid *atttypid, int32 *atttypmod,
-							 char *atttyptype, Oid *atttypcoll,
+							 TypeCacheEntry **basetypcache, Oid *atttypcoll,
 							 Oid *eq_opr, Oid *lt_opr);
 extern void statatt_init_empty_tuple(Oid reloid, int16 attnum, bool inherited,
 									 Datum *values, bool *nulls, bool *replaces);
@@ -55,7 +58,9 @@ extern void statatt_set_slot(Datum *values, bool *nulls, bool *replaces,
 
 extern Datum statatt_build_stavalues(const char *staname, FmgrInfo *array_in, Datum d,
 									 Oid typid, int32 typmod, bool *ok);
-extern bool statatt_get_elem_type(Oid atttypid, char atttyptype,
+extern bool statatt_get_elem_type(TypeCacheEntry *basetypcache,
 								  Oid *elemtypid, Oid *elem_eq_opr);
+extern bool statatt_get_range_type(TypeCacheEntry *basetypcache,
+								   Oid *rangetypid);
 
 #endif							/* STATS_UTILS_H */
