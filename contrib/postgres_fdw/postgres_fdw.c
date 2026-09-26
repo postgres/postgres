@@ -5832,11 +5832,10 @@ fetch_remote_statistics(Relation relation,
 	}
 
 	/*
-	 * Get connection to the foreign server.  Connection manager will
-	 * establish new connection if necessary.
-	 *
-	 * Note that unlike the sampling case, we only query pg_class and
-	 * pg_stats, so we do the remote access as the current user.
+	 * Get the connection to use.  We do the remote access as the table's
+	 * owner.  Note that unlike AnalyzeForeignTable(), the core code would
+	 * already have switched us to the table's owner, before we are called
+	 * from ImportForeignStatistics().
 	 */
 	user = GetUserMapping(GetUserId(), table->serverid);
 	conn = GetConnection(user, false, NULL);
