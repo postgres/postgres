@@ -233,7 +233,7 @@ struct RecordIOData
 	Oid			record_type;
 	int32		record_typmod;
 	int			ncolumns;
-	ColumnIOData columns[FLEXIBLE_ARRAY_MEMBER];
+	ColumnIOData columns[FLEXIBLE_ARRAY_MEMBER] pg_attribute_counted_by(ncolumns);
 };
 
 /* per-query cache for populate_record_worker and populate_recordset_worker */

@@ -298,6 +298,30 @@ extern "C++"
 #endif
 
 /*
+ * pg_attribute_counted_by specifies that a flexible array member is "counted
+ * by" another struct member.  This allows the compiler to improve detection
+ * of object size information and to provide better results in compile-time
+ * diagnostics and run-time features, such as the array bounds sanitizer.
+ *
+ * Using this annotation comes with additional responsibilities:
+ *
+ * - The count must be assigned before the first reference to the array.
+ * - The array must have at least count elements available at all times,
+ *   including after either member is updated.
+ *
+ * The attribute is ignored in C++ due to lack of compiler support.
+ */
+#ifndef __cplusplus
+#if __has_attribute (counted_by)
+#define pg_attribute_counted_by(count) __attribute__((counted_by(count)))
+#else
+#define pg_attribute_counted_by(count)
+#endif
+#else
+#define pg_attribute_counted_by(count)
+#endif
+
+/*
  * Append PG_USED_FOR_ASSERTS_ONLY to definitions of variables that are only
  * used in assert-enabled builds, to avoid compiler warnings about unused
  * variables in assert-disabled builds.
