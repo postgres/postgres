@@ -775,6 +775,7 @@ extern void check_exclusion_constraint(Relation heap, Relation index,
  * prototypes from functions in execReplication.c
  */
 extern bool RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
+										 bool skipduplicates,
 										 LockTupleMode lockmode,
 										 TupleTableSlot *searchslot,
 										 TupleTableSlot *outslot);
@@ -787,6 +788,7 @@ extern bool RelationFindDeletedTupleInfoSeq(Relation rel,
 											ReplOriginId *delete_origin,
 											TimestampTz *delete_time);
 extern bool RelationFindDeletedTupleInfoByIndex(Relation rel, Oid idxoid,
+												bool skipduplicates,
 												TupleTableSlot *searchslot,
 												TransactionId oldestxmin,
 												TransactionId *delete_xid,

@@ -56,7 +56,7 @@ typedef struct LogicalRepPartMapEntry
 } LogicalRepPartMapEntry;
 
 static Oid	FindLogicalRepLocalIndex(Relation localrel, LogicalRepRelation *remoterel,
-									 AttrMap *attrMap);
+									 AttrMap *attrMap, bool *idxisreplident);
 
 /*
  * Relcache invalidation callback for our relation map cache.
@@ -497,7 +497,8 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		 * on the relation).
 		 */
 		entry->localindexoid = FindLogicalRepLocalIndex(entry->localrel, remoterel,
-														entry->attrmap);
+														entry->attrmap,
+														&entry->idxisreplident);
 
 		entry->localrelvalid = true;
 	}
@@ -764,7 +765,8 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 	 * anything in the LogicalRepPartMapContext (hence CacheMemoryContext).
 	 */
 	entry->localindexoid = FindLogicalRepLocalIndex(partrel, remoterel,
-													entry->attrmap);
+													entry->attrmap,
+													&entry->idxisreplident);
 
 	entry->localrelvalid = true;
 
@@ -925,12 +927,17 @@ GetRelationIdentityOrPK(Relation rel)
 /*
  * Returns the index oid if we can use an index for subscriber. Otherwise,
  * returns InvalidOid.
+ *
+ * '*idxisreplident' is true if the returned index is the relation's replica
+ * identity or primary key, and false otherwise.
  */
 static Oid
 FindLogicalRepLocalIndex(Relation localrel, LogicalRepRelation *remoterel,
-						 AttrMap *attrMap)
+						 AttrMap *attrMap, bool *idxisreplident)
 {
 	Oid			idxoid;
+
+	*idxisreplident = false;
 
 	/*
 	 * We never need index oid for partitioned tables, always rely on leaf
@@ -944,7 +951,10 @@ FindLogicalRepLocalIndex(Relation localrel, LogicalRepRelation *remoterel,
 	 */
 	idxoid = GetRelationIdentityOrPK(localrel);
 	if (OidIsValid(idxoid))
+	{
+		*idxisreplident = true;
 		return idxoid;
+	}
 
 	if (remoterel->replident == REPLICA_IDENTITY_FULL)
 	{

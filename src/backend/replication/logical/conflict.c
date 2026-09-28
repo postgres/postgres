@@ -743,6 +743,10 @@ get_tuple_desc(EState *estate, ResultRelInfo *relinfo, ConflictType type,
 		 * when applying update or delete, such an index scan may not result
 		 * in a unique tuple and we still compare the complete tuple in such
 		 * cases, thus such indexes are not used here.
+		 *
+		 * XXX This can disagree with the index the apply worker searched by,
+		 * see FindReplTupleInLocalRel(). It may not even be one that
+		 * ExecOpenIndices() locked.
 		 */
 		Oid			replica_index = GetRelationIdentityOrPK(localrel);
 
