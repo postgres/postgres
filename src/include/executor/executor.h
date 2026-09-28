@@ -656,6 +656,11 @@ extern bool RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
 										 LockTupleMode lockmode,
 										 TupleTableSlot *searchslot,
 										 TupleTableSlot *outslot);
+extern bool RelationFindReplTupleByIndexExt(Relation rel, Oid idxoid,
+											bool skipduplicates,
+											LockTupleMode lockmode,
+											TupleTableSlot *searchslot,
+											TupleTableSlot *outslot);
 extern bool RelationFindReplTupleSeq(Relation rel, LockTupleMode lockmode,
 									 TupleTableSlot *searchslot, TupleTableSlot *outslot);
 
