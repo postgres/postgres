@@ -253,7 +253,10 @@ repack_setup_logical_decoding(Oid relid)
 
 	/*
 	 * Set up repacked_rel_locator and repacked_rel_toast_locator, which we
-	 * use to skip decoding of unrelated relations.
+	 * use to skip decoding of unrelated relations.  The steering backend
+	 * already holds ShareUpdateExclusiveLock on both these tables, so we
+	 * don't need any locks here, other than to avoid relation_open()'s
+	 * assertion that we hold one.
 	 */
 	rel = table_open(relid, AccessShareLock);
 	repacked_rel_locator = rel->rd_locator;

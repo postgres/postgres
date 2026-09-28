@@ -537,6 +537,16 @@ cluster_rel(RepackCommand cmd, Relation OldHeap, Oid indexOid,
 		check_concurrent_repack_requirements(OldHeap, &ident_idx);
 
 	/*
+	 * In concurrent mode, also lock the toast table.  Otherwise it would be
+	 * possible for the toast relfilenode to change (e.g. because VACUUM FULL
+	 * or REPACK is run on it).  This would break concurrent repack's system
+	 * for skipping decoding changes in other tables -- see
+	 * change_useless_for_repack().
+	 */
+	if (concurrent && OidIsValid(OldHeap->rd_rel->reltoastrelid))
+		LockRelationOid(OldHeap->rd_rel->reltoastrelid, lmode);
+
+	/*
 	 * Also check the state of indexes; this can abort the command for REPACK.
 	 * Historically this hasn't affected CLUSTER or VACUUM FULL, so don't do
 	 * it for those commands.
@@ -1137,16 +1147,22 @@ rebuild_relation(Relation OldHeap, Relation index, bool verbose,
 		BecomeLockGroupLeader();
 
 		/*
+		 * If there is a toast table, it must have been locked already.
+		 * Otherwise we risk it changing underneath us (catastrophic).
+		 */
+		Assert(!OidIsValid(OldHeap->rd_rel->reltoastrelid) ||
+			   CheckRelationOidLockedByMe(OldHeap->rd_rel->reltoastrelid,
+										  lmode, false));
+
+		/*
 		 * Start the worker that decodes data changes applied while we're
 		 * copying the table contents.
 		 *
 		 * Note that the worker has to wait for all transactions with XID
 		 * already assigned to finish. If some of those transactions is
 		 * waiting for a lock conflicting with ShareUpdateExclusiveLock on our
-		 * table (e.g.  it runs CREATE INDEX), we can end up in a deadlock.
-		 * Not sure this risk is worth unlocking/locking the table (and its
-		 * clustering index) and checking again if it's still eligible for
-		 * REPACK CONCURRENTLY.
+		 * table or its TOAST relation (e.g. it runs CREATE INDEX), we can end
+		 * up in a deadlock.
 		 */
 		start_repack_decoding_worker(tableOid);
 
@@ -1431,9 +1447,17 @@ copy_table_data(Relation NewHeap, Relation OldHeap, Relation OldIndex,
 	 *
 	 * We don't need to open the toast relation here, just lock it.  The lock
 	 * will be held till end of transaction.
+	 *
+	 * Concurrent repack must hold this lock already; see cluster_rel().
 	 */
 	if (OldHeap->rd_rel->reltoastrelid)
-		LockRelationOid(OldHeap->rd_rel->reltoastrelid, lmode);
+	{
+		if (!concurrent)
+			LockRelationOid(OldHeap->rd_rel->reltoastrelid, lmode);
+		else
+			CheckRelationOidLockedByMe(OldHeap->rd_rel->reltoastrelid,
+									   lmode, false);
+	}
 
 	/*
 	 * If both tables have TOAST tables, perform toast swap by content.  It is
