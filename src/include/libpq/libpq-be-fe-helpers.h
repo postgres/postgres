@@ -498,8 +498,15 @@ libpqsrv_notice_receiver(void *arg, const PGresult *res)
 	if (len > 0 && message[len - 1] == '\n')
 		len--;
 
+	/*
+	 * Omit the local statement and context from each remote message. They can
+	 * help identify the caller, but repeating them for every message could
+	 * greatly increase log volume.
+	 */
 	ereport(LOG,
-			errmsg_internal("%s: %.*s", prefix, len, message));
+			errmsg_internal("%s: %.*s", prefix, len, message),
+			errhidestmt(true),
+			errhidecontext(true));
 }
 
 #define PGresult libpqsrv_PGresult
