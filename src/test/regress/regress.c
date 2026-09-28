@@ -675,7 +675,7 @@ test_spinlock(void)
 		S_UNLOCK(&struct_w_lock.lock);
 
 		/* and that "contended" acquisition works */
-		s_lock(&struct_w_lock.lock, "testfile", 17, "testfunc");
+		S_LOCK(&struct_w_lock.lock);
 		S_UNLOCK(&struct_w_lock.lock);
 
 		/*

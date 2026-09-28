@@ -91,6 +91,7 @@ s_lock_stuck(const char *file, int line, const char *func)
 #endif
 }
 
+#ifdef USE_DEFAULT_S_LOCK
 /*
  * s_lock(lock) - platform-independent portion of waiting for a spinlock.
  */
@@ -110,6 +111,7 @@ s_lock(volatile slock_t *lock, const char *file, int line, const char *func)
 
 	return delayStatus.delays;
 }
+#endif
 
 #ifdef USE_DEFAULT_S_UNLOCK
 void
@@ -291,7 +293,7 @@ main()
 	printf("             if S_LOCK() and TAS() are working.\n");
 	fflush(stdout);
 
-	s_lock(&test_lock.lock, __FILE__, __LINE__, __func__);
+	S_LOCK(&test_lock.lock);
 
 	printf("S_LOCK_TEST: failed, lock not locked\n");
 	return 1;

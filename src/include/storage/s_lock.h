@@ -44,23 +44,14 @@
  *		atomic test-and-set only when it appears free.
  *
  *	TAS() and TAS_SPIN() are NOT part of the API, and should never be called
- *	directly.
- *
- *	CAUTION: on some platforms TAS() and/or TAS_SPIN() may sometimes report
- *	failure to acquire a lock even when the lock is not locked.  For example,
- *	on Alpha TAS() will "fail" if interrupted.  Therefore a retry loop must
- *	always be used, even if you are certain the lock is free.
+ *	directly.  A platform must provide either S_LOCK() or a TAS() for the
+ *	default S_LOCK() to be built on.  Currently, all supported platforms do
+ *	the latter, so that is probably the best place to start if adding a new
+ *	one.
  *
  *	It is the responsibility of these macros to make sure that the compiler
  *	does not re-order accesses to shared memory to precede the actual lock
- *	acquisition, or follow the lock release.  Prior to PostgreSQL 9.5, this
- *	was the caller's responsibility, which meant that callers had to use
- *	volatile-qualified pointers to refer to both the spinlock itself and the
- *	shared data being accessed within the spinlocked critical section.  This
- *	was notationally awkward, easy to forget (and thus error-prone), and
- *	prevented some useful compiler optimizations.  For these reasons, we
- *	now require that the macros themselves prevent compiler re-ordering,
- *	so that the caller doesn't need to take special precautions.
+ *	acquisition, or follow the lock release.
  *
  *	On platforms with weak memory ordering, the TAS(), TAS_SPIN(), and
  *	S_UNLOCK() macros must further include hardware-level memory fence
@@ -72,7 +63,7 @@
  *
  *	On most supported platforms, TAS() uses a tas() function written
  *	in assembly language to execute a hardware atomic-test-and-set
- *	instruction.  Equivalent OS-supplied mutex routines could be used too.
+ *	instruction.  Equivalent compiler intrinsics are another popular option.
  *
  *
  * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
@@ -642,19 +633,23 @@ spin_delay(void)
 #endif	/* !defined(TAS) */
 
 
-/* Blow up if we didn't have any way to do spinlocks */
-#ifndef TAS
-#error PostgreSQL does not have spinlock support on this platform.  Please report this to pgsql-bugs@lists.postgresql.org.
-#endif
-
-
 /*
  * Default Definitions - override these above as needed.
  */
 
+/*
+ * Make sure S_LOCK is defined, either explicitly for the platform or via a TAS
+ * macro for the platform.
+ */
 #if !defined(S_LOCK)
+#ifdef TAS
+#define USE_DEFAULT_S_LOCK
+extern int s_lock(volatile slock_t *lock, const char *file, int line, const char *func);
 #define S_LOCK(lock) \
 	(TAS(lock) ? s_lock((lock), __FILE__, __LINE__, __func__) : 0)
+#else
+#error PostgreSQL does not have spinlock support on this platform.  Please report this to pgsql-bugs@lists.postgresql.org.
+#endif	 /* TAS */
 #endif	 /* S_LOCK */
 
 #if !defined(S_UNLOCK)
@@ -687,15 +682,18 @@ extern void s_unlock(volatile slock_t *lock);
 #define SPIN_DELAY()	((void) 0)
 #endif	 /* SPIN_DELAY */
 
-#if !defined(TAS_SPIN)
+/*
+ * TAS_SPIN is only needed by the default S_LOCK's helper function (s_lock()),
+ * so we only provide a default when there is a TAS to base it on.
+ */
+#if !defined(TAS_SPIN) && defined(TAS)
 #define TAS_SPIN(lock)	TAS(lock)
-#endif	 /* TAS_SPIN */
+#endif	 /* ! TAS_SPIN && TAS */
 
 
 /*
  * Platform-independent out-of-line support routines
  */
-extern int s_lock(volatile slock_t *lock, const char *file, int line, const char *func);
 
 /* Support for dynamic adjustment of spins_per_delay */
 #define DEFAULT_SPINS_PER_DELAY  100
