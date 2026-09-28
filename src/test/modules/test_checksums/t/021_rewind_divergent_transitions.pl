@@ -87,7 +87,7 @@ $node_a->backup('backup');
 my $node_b = PostgreSQL::Test::Cluster->new('node_b');
 $node_b->init_from_backup($node_a, 'backup', has_streaming => 1);
 $node_b->start;
-$node_a->wait_for_catchup($node_b, 'replay', $node_a->lsn('insert'));
+$node_a->wait_for_replay_catchup($node_b);
 
 # Clean switchover to B; enable checksums online on it.
 $node_a->stop('fast');
@@ -137,7 +137,7 @@ primary_conninfo = '$connstr_b application_name=@{[$node_a->name]}'
 $node_a->set_standby_mode;
 $node_a->start;
 
-$node_b->wait_for_catchup($node_a, 'replay', $node_b->lsn('insert'));
+$node_b->wait_for_replay_catchup($node_a);
 test_checksum_state($node_a, 'on');
 
 is($node_a->safe_psql('postgres', "SELECT count(*) FROM t_div;"),
@@ -147,7 +147,7 @@ is($node_a->safe_psql('postgres', "SELECT count(*) FROM t_div;"),
 # checksums online so the next divergence point carries "off", and let
 # A replay the change.
 disable_data_checksums($node_b, wait => 'off');
-$node_b->wait_for_catchup($node_a, 'replay', $node_b->lsn('insert'));
+$node_b->wait_for_replay_catchup($node_a);
 test_checksum_state($node_a, 'off');
 
 # Clean switchover back to A; enable checksums online on it.
@@ -184,7 +184,7 @@ primary_conninfo = '$connstr_a application_name=@{[$node_b->name]}'
 $node_b->set_standby_mode;
 $node_b->start;
 
-$node_a->wait_for_catchup($node_b, 'replay', $node_a->lsn('insert'));
+$node_a->wait_for_replay_catchup($node_b);
 test_checksum_state($node_b, 'on');
 
 is($node_b->safe_psql('postgres', "SELECT count(*) FROM t;"),

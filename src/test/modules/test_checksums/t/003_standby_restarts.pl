@@ -42,8 +42,7 @@ $node_primary->safe_psql('postgres',
 	"CREATE TABLE t AS SELECT generate_series(1,10000) AS a;");
 
 # Wait for standby to catch up
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_replay_catchup($node_standby);
 
 # Check that checksums are turned off on all nodes
 test_checksum_state($node_primary, 'off');
@@ -140,8 +139,7 @@ $node_primary->safe_psql(
 	  SELECT g, repeat('x', 100) FROM generate_series(1, 1000) g;
 	CREATE INDEX unlogged_promo_payload_idx ON unlogged_promo (payload);
 ]);
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_replay_catchup($node_standby);
 
 # Get the relfilenode and database OID so we can inspect the filesystem
 my $unlogged_rfn = $node_primary->safe_psql('postgres',
@@ -161,8 +159,7 @@ wait_for_checksum_state($node_standby, 'on');
 
 # After standby replays, the unlogged main file must still not exist.
 # If the bug were present, FPI replay would materialize the full table.
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_replay_catchup($node_standby);
 ok( !-f "$standby_datadir/base/$db_oid/$unlogged_rfn",
 	'standby has no main fork for unlogged table after enable');
 
@@ -181,8 +178,7 @@ is($result, '1000',
 # Alter persistence to logged, and make sure we can read it on both the primary
 # and standby without any page verification errors in the logfiles.
 $node_primary->safe_psql('postgres', 'ALTER TABLE unlogged_tbl SET logged;');
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_replay_catchup($node_standby);
 
 $result =
   $node_primary->safe_psql('postgres', 'SELECT sum(a) FROM unlogged_tbl;');

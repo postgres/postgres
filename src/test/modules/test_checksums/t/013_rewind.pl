@@ -71,7 +71,8 @@ my $node_b = PostgreSQL::Test::Cluster->new('node_b');
 $node_b->init_from_backup($node_a, 'backup', has_streaming => 1);
 $node_b->start;
 
-$node_a->wait_for_catchup($node_b, 'replay', $node_a->lsn('insert'));
+# Backup completion has flushed the required WAL.
+$node_a->wait_for_replay_catchup($node_b);
 test_checksum_state($node_a, 'off');
 test_checksum_state($node_b, 'off');
 
@@ -83,7 +84,7 @@ $node_b->safe_psql('postgres',
 # in a background session; it will block on the injection point with
 # the checkpointer busy until released.
 $node_a->safe_psql('postgres', "CHECKPOINT;");
-$node_a->wait_for_catchup($node_b, 'replay', $node_a->lsn('insert'));
+$node_a->wait_for_replay_catchup($node_b);
 
 my $bg_psql = $node_b->background_psql('postgres', on_error_stop => 0);
 $bg_psql->query_until(
@@ -182,9 +183,14 @@ port = @{[$node_a->port]}
 primary_conninfo = '$connstr application_name=@{[$node_a->name]}'
 ]);
 $node_a->set_standby_mode;
+
+# Flush WAL through the minimum recovery point chosen by pg_rewind.  The
+# full_page_writes change can leave an unflushed record on the idle source,
+# delaying startup until the background writer logs its next snapshot.
+$node_b->safe_psql('postgres', 'SELECT pg_switch_wal();');
 $node_a->start;
 
-$node_b->wait_for_catchup($node_a, 'replay', $node_b->lsn('insert'));
+$node_b->wait_for_replay_catchup($node_a);
 test_checksum_state($node_a, 'on');
 
 is($node_a->safe_psql('postgres', "SELECT count(*) FROM t;"),

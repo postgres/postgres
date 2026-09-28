@@ -92,8 +92,7 @@ bgwriter_lru_maxpages = 0
 ]);
 $node_standby->start;
 
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_replay_catchup($node_standby);
 test_checksum_state($node_primary, 'off');
 test_checksum_state($node_standby, 'off');
 
@@ -102,8 +101,7 @@ test_checksum_state($node_standby, 'off');
 # record reaches the standby until the enabling is released, so this remains
 # the standby's backup starting checkpoint throughout.
 $node_primary->safe_psql('postgres', 'CHECKPOINT;');
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_replay_catchup($node_standby);
 $node_standby->safe_psql('postgres', 'CHECKPOINT;');
 
 # Put everything the enabling writes into fresh WAL segments, so that the
@@ -143,8 +141,7 @@ $node_primary->safe_psql('postgres',
 
 # The standby has now replayed the state change: its pg_control says "on"
 # while the rewritten pages are only dirty in its shared buffers.
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_replay_catchup($node_standby);
 wait_for_checksum_state($node_standby, 'on');
 
 # Crash the standby, losing the dirty rewritten pages.
@@ -197,8 +194,7 @@ isnt($ret, 0, 'standby refuses connections while below the state change');
 $node_standby->enable_streaming($node_primary);
 $node_standby->reload;
 $node_standby->poll_query_until('postgres', 'SELECT true;');
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_replay_catchup($node_standby);
 
 # The rewritten pages are again only dirty in shared buffers, so the on-disk
 # pages still lack checksums.  A base backup must skip verification entirely
@@ -228,8 +224,7 @@ $node_primary->poll_query_until('postgres',
 
 # A restartpoint on the final checkpoint lets verification resume, and a
 # backup started from it must again pass.
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_replay_catchup($node_standby);
 $node_standby->safe_psql('postgres', 'CHECKPOINT;');
 
 $node_standby->command_checks_all(
