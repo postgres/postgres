@@ -652,7 +652,7 @@ SetNextObjectId(Oid8 nextOid)
 	LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
 
 	if (TransamVariables->nextOid > nextOid)
-		elog(ERROR, "too late to advance OID counter to " OID8_FORMAT ", it is now " OID8_FORMAT,
+		elog(ERROR, "too late to advance OID counter to %" PRIu64 ", it is now %" PRIu64,
 			 nextOid, TransamVariables->nextOid);
 
 	TransamVariables->nextOid = nextOid;

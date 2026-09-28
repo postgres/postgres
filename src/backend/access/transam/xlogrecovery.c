@@ -840,7 +840,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 							LSN_FORMAT_ARGS(checkPoint.redo),
 							wasShutdown ? "true" : "false"));
 	ereport(DEBUG1,
-			(errmsg_internal("next transaction ID: " UINT64_FORMAT "; next OID: " OID8_FORMAT,
+			(errmsg_internal("next transaction ID: " UINT64_FORMAT "; next OID: %" PRIu64,
 							 U64FromFullTransactionId(checkPoint.nextXid),
 							 checkPoint.nextOid)));
 	ereport(DEBUG1,

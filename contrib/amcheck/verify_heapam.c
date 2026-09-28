@@ -1593,7 +1593,7 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 	if (isnull)
 	{
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value " OID8_FORMAT " has toast chunk with null sequence number",
+								psprintf("toast value %" PRIu64 " has toast chunk with null sequence number",
 										 toast_valueid));
 		return;
 	}
@@ -1601,7 +1601,7 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 	{
 		/* Either the TOAST index is corrupt, or we don't have all chunks. */
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value " OID8_FORMAT " index scan returned chunk %d when expecting chunk %d",
+								psprintf("toast value %" PRIu64 " index scan returned chunk %d when expecting chunk %d",
 										 toast_valueid,
 										 chunk_seq, *expected_chunk_seq));
 	}
@@ -1613,7 +1613,7 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 	if (isnull)
 	{
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value " OID8_FORMAT " chunk %d has null data",
+								psprintf("toast value %" PRIu64 " chunk %d has null data",
 										 toast_valueid,
 										 chunk_seq));
 		return;
@@ -1633,7 +1633,7 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 		uint32		header = ((varattrib_4b *) chunk)->va_4byte.va_header;
 
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value " OID8_FORMAT " chunk %d has invalid varlena header %0x",
+								psprintf("toast value %" PRIu64 " chunk %d has invalid varlena header %0x",
 										 toast_valueid,
 										 chunk_seq, header));
 		return;
@@ -1645,7 +1645,7 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 	if (chunk_seq > last_chunk_seq)
 	{
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value " OID8_FORMAT " chunk %d follows last expected chunk %d",
+								psprintf("toast value %" PRIu64 " chunk %d follows last expected chunk %d",
 										 toast_valueid,
 										 chunk_seq, last_chunk_seq));
 		return;
@@ -1656,7 +1656,7 @@ check_toast_tuple(HeapTuple toasttup, HeapCheckContext *ctx,
 
 	if (chunksize != expected_size)
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value " OID8_FORMAT " chunk %d has size %u, but expected size %u",
+								psprintf("toast value %" PRIu64 " chunk %d has size %u, but expected size %u",
 										 toast_valueid,
 										 chunk_seq, chunksize, expected_size));
 }
@@ -1806,7 +1806,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	/* Toasted attributes too large to be untoasted should never be stored */
 	if (va_rawsize > VARLENA_SIZE_LIMIT)
 		report_corruption(ctx,
-						  psprintf("toast value " OID8_FORMAT " rawsize %d exceeds limit %d",
+						  psprintf("toast value %" PRIu64 " rawsize %d exceeds limit %d",
 								   toast_pointer_valueid,
 								   va_rawsize,
 								   VARLENA_SIZE_LIMIT));
@@ -1834,7 +1834,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 		}
 		if (!valid)
 			report_corruption(ctx,
-							  psprintf("toast value " OID8_FORMAT " has invalid compression method id %d",
+							  psprintf("toast value %" PRIu64 " has invalid compression method id %d",
 									   toast_pointer_valueid, cmid));
 	}
 
@@ -1842,7 +1842,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	if (!(infomask & HEAP_HASEXTERNAL))
 	{
 		report_corruption(ctx,
-						  psprintf("toast value " OID8_FORMAT " is external but tuple header flag HEAP_HASEXTERNAL not set",
+						  psprintf("toast value %" PRIu64 " is external but tuple header flag HEAP_HASEXTERNAL not set",
 								   toast_pointer_valueid));
 		return true;
 	}
@@ -1851,7 +1851,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	if (!ctx->rel->rd_rel->reltoastrelid)
 	{
 		report_corruption(ctx,
-						  psprintf("toast value " OID8_FORMAT " is external but relation has no toast relation",
+						  psprintf("toast value %" PRIu64 " is external but relation has no toast relation",
 								   toast_pointer_valueid));
 		return true;
 	}
@@ -1921,7 +1921,7 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 	else
 	{
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value " OID8_FORMAT " stored in toast table whose chunk_id has unexpected type %u",
+								psprintf("toast value %" PRIu64 " stored in toast table whose chunk_id has unexpected type %u",
 										 toast_valueid, toast_typid));
 		return;
 	}
@@ -1929,7 +1929,7 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 	if (ta->tag != expected_tag)
 	{
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value " OID8_FORMAT " has TOAST tag %u, but chunk_id of toast table has type %u",
+								psprintf("toast value %" PRIu64 " has TOAST tag %u, but chunk_id of toast table has type %u",
 										 toast_valueid, (uint8) ta->tag,
 										 toast_typid));
 		return;
@@ -1964,11 +1964,11 @@ check_toasted_attribute(HeapCheckContext *ctx, ToastedAttribute *ta)
 
 	if (!found_toasttup)
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value " OID8_FORMAT " not found in toast table",
+								psprintf("toast value %" PRIu64 " not found in toast table",
 										 toast_valueid));
 	else if (expected_chunk_seq <= last_chunk_seq)
 		report_toast_corruption(ctx, ta,
-								psprintf("toast value " OID8_FORMAT " was expected to end at chunk %d, but ended while expecting chunk %d",
+								psprintf("toast value %" PRIu64 " was expected to end at chunk %d, but ended while expecting chunk %d",
 										 toast_valueid,
 										 last_chunk_seq, expected_chunk_seq));
 }

@@ -5068,11 +5068,11 @@ ReorderBufferToastAppendChunk(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		dlist_init(&ent->chunks);
 
 		if (chunk_seq != 0)
-			elog(ERROR, "got sequence entry %d for toast chunk " OID8_FORMAT " instead of seq 0",
+			elog(ERROR, "got sequence entry %d for toast chunk %" PRIu64 " instead of seq 0",
 				 chunk_seq, chunk_id);
 	}
 	else if (found && chunk_seq != ent->last_chunk_seq + 1)
-		elog(ERROR, "got sequence entry %d for toast chunk " OID8_FORMAT " instead of seq %d",
+		elog(ERROR, "got sequence entry %d for toast chunk %" PRIu64 " instead of seq %d",
 			 chunk_seq, chunk_id, ent->last_chunk_seq + 1);
 
 	chunk = DatumGetPointer(fastgetattr(newtup, 3, desc, &isnull));
