@@ -18,6 +18,14 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+af48a67026145bd02fa953524fcdb0d84c1d9de6
+#
+# Fix tuple search during apply after concurrent index DDL.
+# 2026-09-28 06:57:50 -0400
+#
+# LogicalRepRelMapEntry gains a bool field in existing alignment padding,
+# so existing member offsets and sizeof(LogicalRepRelMapEntry) remain unchanged.
+
 937a0e68cb55ac38341f242cf3302906e6e2ec42
 #
 # Fix parallel GIN index build with keys larger than 65535 bytes
