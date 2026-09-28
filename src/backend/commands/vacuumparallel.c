@@ -458,9 +458,13 @@ parallel_vacuum_init(Relation rel, Relation *indrels, int nindexes,
 
 	/*
 	 * Initialize shared cost-based vacuum delay parameters if it's for
-	 * autovacuum.
+	 * autovacuum and the parallel context has workers. Note that the parallel
+	 * context falls back to the leader's private memory with no workers and
+	 * no segment when the maximum number of DSM segments has been reached.
+	 * There are then no workers to propagate the parameters to, and no
+	 * segment to register the detach callback on.
 	 */
-	if (shared->is_autovacuum)
+	if (shared->is_autovacuum && pcxt->nworkers > 0)
 	{
 		parallel_vacuum_set_cost_parameters(&shared->cost_params);
 		pg_atomic_init_u32(&shared->cost_params.generation, 1);
