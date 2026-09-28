@@ -2105,6 +2105,7 @@ RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode)
 	proc->waitLock = NULL;
 	proc->waitProcLock = NULL;
 	proc->waitStatus = PROC_WAIT_STATUS_ERROR;
+	pg_atomic_write_u64(&proc->waitStart, 0);
 
 	/*
 	 * Delete the proclock immediately if it represents no already-held locks.
