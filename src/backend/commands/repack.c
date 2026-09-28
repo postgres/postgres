@@ -1455,8 +1455,8 @@ copy_table_data(Relation NewHeap, Relation OldHeap, Relation OldIndex,
 		if (!concurrent)
 			LockRelationOid(OldHeap->rd_rel->reltoastrelid, lmode);
 		else
-			CheckRelationOidLockedByMe(OldHeap->rd_rel->reltoastrelid,
-									   lmode, false);
+			Assert(CheckRelationOidLockedByMe(OldHeap->rd_rel->reltoastrelid,
+											  lmode, false));
 	}
 
 	/*
