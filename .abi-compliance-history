@@ -18,6 +18,14 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+0405dcf7c6b1162dd1e4377d1862aa0a38629e6b
+#
+# Fix tuple search during apply after concurrent index DDL.
+# 2026-09-28 06:44:47 -0400
+#
+# LogicalRepRelMapEntry gains a bool field in existing alignment padding,
+# so existing member offsets and sizeof(LogicalRepRelMapEntry) remain unchanged.
+
 13466d1f78394a8ec2d6d0b1c9d8bf5ac3acb99a
 #
 # Perform join removal by editing the query's jointree.
