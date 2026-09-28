@@ -130,12 +130,17 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
  *
  * If a matching tuple is found, lock it with lockmode, fill the slot with its
  * contents, and return true.  Return false otherwise.
+ *
+ * 'skipduplicates' specifies whether the first matching tuple can be used
+ * without comparing it against 'searchslot'. If false, all matching tuples are
+ * compared against 'searchslot', which must contain a complete row.
  */
 bool
-RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
-							 LockTupleMode lockmode,
-							 TupleTableSlot *searchslot,
-							 TupleTableSlot *outslot)
+RelationFindReplTupleByIndexExt(Relation rel, Oid idxoid,
+								bool skipduplicates,
+								LockTupleMode lockmode,
+								TupleTableSlot *searchslot,
+								TupleTableSlot *outslot)
 {
 	ScanKeyData skey[INDEX_MAX_KEYS];
 	int			skey_attoff;
@@ -145,12 +150,9 @@ RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
 	Relation	idxrel;
 	bool		found;
 	TypeCacheEntry **eq = NULL;
-	bool		isIdxSafeToSkipDuplicates;
 
 	/* Open the index. */
 	idxrel = index_open(idxoid, RowExclusiveLock);
-
-	isIdxSafeToSkipDuplicates = (GetRelationIdentityOrPK(rel) == idxoid);
 
 	InitDirtySnapshot(snap);
 
@@ -172,7 +174,7 @@ retry:
 		 * Avoid expensive equality check if the index is primary key or
 		 * replica identity index.
 		 */
-		if (!isIdxSafeToSkipDuplicates)
+		if (!skipduplicates)
 		{
 			if (eq == NULL)
 				eq = palloc0(sizeof(*eq) * outslot->tts_tupleDescriptor->natts);
@@ -255,6 +257,25 @@ retry:
 	index_close(idxrel, NoLock);
 
 	return found;
+}
+
+/*
+ * ABI-compatible wrapper to emulate old version of the above function.
+ * Do not call this version in new code.
+ */
+bool
+RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
+							 LockTupleMode lockmode,
+							 TupleTableSlot *searchslot,
+							 TupleTableSlot *outslot)
+{
+	bool		skipduplicates;
+
+	skipduplicates = (GetRelationIdentityOrPK(rel) == idxoid);
+
+	return RelationFindReplTupleByIndexExt(rel, idxoid,
+										   skipduplicates,
+										   lockmode, searchslot, outslot);
 }
 
 /*

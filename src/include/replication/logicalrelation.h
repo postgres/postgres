@@ -32,6 +32,10 @@ typedef struct LogicalRepRelMapEntry
 	Relation	localrel;		/* relcache entry (NULL when closed) */
 	AttrMap    *attrmap;		/* map of local attributes to remote ones */
 	bool		updatable;		/* Can apply updates/deletes? */
+	bool		idxisreplident; /* is localindexoid the relation's replica
+								 * identity or primary key, rather than an
+								 * index usable for a REPLICA IDENTITY FULL
+								 * remote relation? */
 	Oid			localindexoid;	/* which index to use, or InvalidOid if none */
 
 	/* Sync state. */
