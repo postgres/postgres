@@ -692,7 +692,6 @@ typedef uint64_t uint64;
 /* snprintf format strings to use for 64-bit integers */
 #define INT64_FORMAT "%" PRId64
 #define UINT64_FORMAT "%" PRIu64
-#define OID8_FORMAT "%" PRIu64
 
 /*
  * 128-bit signed and unsigned integers
