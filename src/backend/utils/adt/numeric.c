@@ -5215,7 +5215,7 @@ numeric_deserialize(PG_FUNCTION_ARGS)
 	appendBinaryStringInfo(&buf,
 						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
 
-	result = makeNumericAggStateCurrentContext(false);
+	result = makeNumericAggStateCurrentContext(true);
 
 	/* N */
 	result->N = pq_getmsgint64(&buf);
@@ -5614,7 +5614,7 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 	appendBinaryStringInfo(&buf,
 						   VARDATA_ANY(sstate), VARSIZE_ANY_EXHDR(sstate));
 
-	result = makePolyNumAggStateCurrentContext(false);
+	result = makePolyNumAggStateCurrentContext(true);
 
 	/* N */
 	result->N = pq_getmsgint64(&buf);
