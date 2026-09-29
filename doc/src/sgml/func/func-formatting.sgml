@@ -1128,7 +1128,7 @@
        </row>
        <row>
         <entry><literal>to_char(485, 'PL999')</literal></entry>
-        <entry><literal>'+485'</literal></entry>
+        <entry><literal>'+ 485'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(485, 'SG999')</literal></entry>
