@@ -5365,7 +5365,7 @@ numeric_deserialize(PG_FUNCTION_ARGS)
 	initReadOnlyStringInfo(&buf, VARDATA_ANY(sstate),
 						   VARSIZE_ANY_EXHDR(sstate));
 
-	result = makeNumericAggStateCurrentContext(false);
+	result = makeNumericAggStateCurrentContext(true);
 
 	/* N */
 	result->N = pq_getmsgint64(&buf);
@@ -5698,7 +5698,7 @@ numeric_poly_deserialize(PG_FUNCTION_ARGS)
 	initReadOnlyStringInfo(&buf, VARDATA_ANY(sstate),
 						   VARSIZE_ANY_EXHDR(sstate));
 
-	result = makeInt128AggStateCurrentContext(false);
+	result = makeInt128AggStateCurrentContext(true);
 
 	/* N */
 	result->N = pq_getmsgint64(&buf);
