@@ -37,23 +37,27 @@
 #include "optimizer/prep.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/parse_agg.h"
+#include "parser/parse_relation.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
 /*
  * Utility structure.  A sorting procedure is needed to simplify the search
- * of SJE-candidate baserels referencing the same database relation.  Having
- * collected all baserels from the query jointree, the planner sorts them
- * according to the reloid value, groups them with the next pass and attempts
- * to remove self-joins.
- *
- * Preliminary sorting prevents quadratic behavior that can be harmful in the
- * case of numerous joins.
+ * for SJE-candidate baserels, which must reference the same database relation
+ * with the same reader permissions (checkAsUser value).  We require the
+ * checkAsUser fields to match to ensure that merged RTEs carry the same
+ * securityQuals; in future this rule might keep us out of trouble with other
+ * role-based features, too.  Having collected all baserels from the jointree,
+ * remove_self_joins_recurse sorts them according to their reloid and useroid
+ * values, groups them in another pass and attempts to remove self-joins
+ * within each group.  This preliminary sorting prevents quadratic behavior
+ * in the case of numerous joins.
  */
 typedef struct
 {
 	int			relid;
 	Oid			reloid;
+	Oid			useroid;
 } SelfJoinCandidate;
 
 bool		enable_self_join_elimination;
@@ -2011,16 +2015,27 @@ remove_self_joins_recurse(PlannerInfo *root, List *joinlist)
 		return removed;			/* ... but don't fail to report sub-removals */
 
 	/*
-	 * In order to find relations with the same oid we first build an array of
-	 * candidates and then sort it by oid.
+	 * In order to find relations with the same reloid/useroid we first build
+	 * an array of candidates and then sort it by those oids.
 	 */
 	candidates = palloc_array(SelfJoinCandidate, numRels);
 	i = -1;
 	j = 0;
 	while ((i = bms_next_member(relids, i)) >= 0)
 	{
+		RangeTblEntry *rte = root->simple_rte_array[i];
+
 		candidates[j].relid = i;
-		candidates[j].reloid = root->simple_rte_array[i]->relid;
+		candidates[j].reloid = rte->relid;
+		if (rte->perminfoindex != 0)
+		{
+			RTEPermissionInfo *perminfo;
+
+			perminfo = getRTEPermissionInfo(root->parse->rteperminfos, rte);
+			candidates[j].useroid = perminfo->checkAsUser;
+		}
+		else
+			candidates[j].useroid = InvalidOid;
 		j++;
 	}
 
@@ -2028,7 +2043,7 @@ remove_self_joins_recurse(PlannerInfo *root, List *joinlist)
 		  self_join_candidates_cmp);
 
 	/*
-	 * Iteratively form a group of relation indexes with the same oid and
+	 * Iteratively form a group of relation indexes with the same oids and
 	 * launch the routine that detects self-joins in this group.
 	 *
 	 * We remove considered relations from relids as we scan, so that that set
@@ -2037,11 +2052,13 @@ remove_self_joins_recurse(PlannerInfo *root, List *joinlist)
 	i = 0;
 	for (j = 1; j <= numRels; j++)
 	{
-		if (j == numRels || candidates[j].reloid != candidates[i].reloid)
+		if (j == numRels ||
+			candidates[j].reloid != candidates[i].reloid ||
+			candidates[j].useroid != candidates[i].useroid)
 		{
 			if (j - i >= 2)
 			{
-				/* Create a group of relation indexes with the same oid */
+				/* Create a group of relation indexes with the same oids */
 				Relids		group = NULL;
 
 				while (i < j)
@@ -2073,7 +2090,7 @@ remove_self_joins_recurse(PlannerInfo *root, List *joinlist)
 }
 
 /*
- * Compare self-join candidates by their oids.
+ * Compare self-join candidates by their reloid and then useroid.
  */
 static int
 self_join_candidates_cmp(const void *a, const void *b)
@@ -2083,6 +2100,8 @@ self_join_candidates_cmp(const void *a, const void *b)
 
 	if (ca->reloid != cb->reloid)
 		return (ca->reloid < cb->reloid ? -1 : 1);
+	else if (ca->useroid != cb->useroid)
+		return (ca->useroid < cb->useroid ? -1 : 1);
 	else
 		return 0;
 }
