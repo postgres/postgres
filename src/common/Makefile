@@ -162,11 +162,6 @@ libpgcommon_shlib.a: $(OBJS_SHLIB)
 	rm -f $@
 	$(AR) $(AROPT) $@ $^
 
-# The JSON API normally exits on out-of-memory; disable that behavior for shared
-# library builds. This requires libpq's pqexpbuffer.h.
-jsonapi_shlib.o: override CPPFLAGS += -DJSONAPI_USE_PQEXPBUFFER
-jsonapi_shlib.o: override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
-
 # Because this uses its own compilation rule, it doesn't use the
 # dependency tracking logic from Makefile.global.  To make sure that
 # dependency tracking works anyway for the *_shlib.o files, depend on
@@ -175,6 +170,12 @@ jsonapi_shlib.o: override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 # corresponding *.o, but there seems little reason for that.
 %_shlib.o: %.c %.o
 	$(CC) $(CFLAGS) $(CFLAGS_SL) $(CPPFLAGS) -c $< -o $@
+
+# The JSON API normally exits on out-of-memory; disable that behavior for shared
+# library builds. This requires libpq's pqexpbuffer.h.
+# This rule overrides the previous one, so must duplicate all its effects.
+jsonapi_shlib.o: jsonapi.c jsonapi.o
+	$(CC) $(CFLAGS) $(CFLAGS_SL) -DJSONAPI_USE_PQEXPBUFFER -I$(libpq_srcdir) $(CPPFLAGS) -c $< -o $@
 
 libpgcommon_excluded_shlib.a: $(OBJS_EXCLUDED_SHLIB)
 	rm -f $@
