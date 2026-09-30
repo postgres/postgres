@@ -20,6 +20,7 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "storage/shmem.h"
+#include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/injection_point.h"
 
@@ -128,4 +129,58 @@ get_test_shmem_attach_count(PG_FUNCTION_ARGS)
 	if (!TestShmem->initialized)
 		elog(ERROR, "shmem area not yet initialized");
 	PG_RETURN_INT32(TestShmem->attach_count);
+}
+
+
+/*
+ * Callback for test_shmem_register().  test_shmem_register() provides the
+ * options, we just pass them through to ShmemRequestStruct.
+ */
+static void
+test_shmem_after_startup_request(void *arg)
+{
+	ShmemStructOpts *opts = (ShmemStructOpts *) arg;
+
+	elog(LOG, "test_shmem_after_startup_request callback called");
+
+	ShmemRequestStructWithOpts(opts);
+}
+
+/*
+ * Allocate or attach to a shmem structure, with the caller-supplied name and
+ * size.
+ *
+ * The given integer 'new_value' is stored in the area, and the old value
+ * is returned.
+ */
+PG_FUNCTION_INFO_V1(test_shmem_register);
+Datum
+test_shmem_register(PG_FUNCTION_ARGS)
+{
+	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int64		size = PG_GETARG_INT64(1);
+	int			new_value = PG_GETARG_INT32(2);
+	int			old_value;
+	int		   *attached = NULL;
+
+	ShmemStructOpts opts = {
+		.name = name,
+		.size = size,
+		.ptr = (void **) &attached,
+	};
+
+	ShmemCallbacks callbacks = {
+		.flags = SHMEM_CALLBACKS_ALLOW_AFTER_STARTUP,
+		.request_fn = test_shmem_after_startup_request,
+		.opaque_arg = &opts,
+	};
+
+	RegisterShmemCallbacks(&callbacks);
+	if (attached == NULL)
+		elog(ERROR, "could not attach to shared memory");
+
+	old_value = *attached;
+	*attached = new_value;
+
+	PG_RETURN_INT32(old_value);
 }
