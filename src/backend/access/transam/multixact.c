@@ -997,9 +997,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 	 * against catastrophic data loss due to multixact wraparound.  The basic
 	 * rules are:
 	 *
-	 * If we're past multiVacLimit or the safe threshold for member storage
-	 * space, or we don't know what the safe threshold for member storage is,
-	 * start trying to force autovacuum cycles.
+	 * If we're past multiVacLimit, start trying to force autovacuum cycles.
 	 * If we're past multiWarnLimit, start issuing warnings.
 	 * If we're past multiStopLimit, refuse to create new MultiXactIds.
 	 *
@@ -2167,7 +2165,7 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	 * Offsets are 64-bits wide and never wrap around, so we don't need to
 	 * consider them for emergency autovacuum purposes.  But now that we're in
 	 * a consistent state, determine MultiXactState->oldestOffset.  It will be
-	 * used to adjust the freezing cutoff, to keep the offsets disk usage in
+	 * used to adjust the freezing cutoff, to keep the members disk usage in
 	 * check.
 	 */
 	SetOldestOffset();

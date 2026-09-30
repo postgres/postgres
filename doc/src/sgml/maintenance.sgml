@@ -788,8 +788,8 @@ HINT:  Execute a database-wide VACUUM in that database.
      32-bit counter and corresponding storage, all of which requires
      careful aging management, storage cleanup, and wraparound handling.
      There is a separate storage area which holds the list of members in
-     each multixact, which also uses a 32-bit counter and which must also
-     be managed.  The system function
+     each multixact, which cannot wrap around but must also be managed
+     to keep disk usage under control.  The system function
      <function>pg_get_multixact_members()</function> described in
      <xref linkend="functions-pg-snapshot"/> can be used to examine the
      transaction IDs associated with a multixact ID.
@@ -823,16 +823,13 @@ HINT:  Execute a database-wide VACUUM in that database.
     <para>
      As a safety device, an aggressive vacuum scan will
      occur for any table whose multixact-age is greater than <xref
-     linkend="guc-autovacuum-multixact-freeze-max-age"/>. Also, if the number
-     of multixact member entries created exceeds approximately 2 billion
-     entries (occupying roughly 10GB in the
+     linkend="guc-autovacuum-multixact-freeze-max-age"/>. The aggressive
+     scans will occur even if autovacuum is nominally disabled. Also, if
+     the number of multixact member entries created exceeds approximately
+     2 billion entries (occupying roughly 10GB in the
      <literal>pg_multixact/members</literal> directory), aggressive vacuum
      scans will occur more often for all tables, starting with those that
-     have the oldest multixact-age. Both of these kinds of aggressive
-     scans will occur even if autovacuum is nominally disabled. At approximately
-     4 billion entries (occupying roughly 20GB in the
-     <literal>pg_multixact/members</literal> directory), even more aggressive
-     vacuum scans are triggered to reclaim member storage space.
+     have the oldest multixact-age.
     </para>
 
     <para>
