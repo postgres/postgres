@@ -1,4 +1,4 @@
-# version 2026c
+# version 2026e
 # redo posix_only
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
@@ -264,7 +264,7 @@ R i 1977 o - Mar 21 23 1 -
 R i 1977 o - O 20 24 0 -
 R i 1978 o - Mar 24 24 1 -
 R i 1978 o - Au 5 1 0 -
-R i 1979 o - May 26 24 1 -
+R i 1979 o - May 26 0 1 -
 R i 1979 o - S 18 24 0 -
 R i 1980 o - Mar 20 24 1 -
 R i 1980 o - S 22 24 0 -
@@ -1863,7 +1863,7 @@ R x 2019 ma - Ap Su>=2 3u 0 -
 R x 2019 2021 - S Su>=2 4u 1 -
 R x 2022 o - S Su>=9 4u 1 -
 R x 2023 ma - S Su>=2 4u 1 -
-R CO 1992 o - May 3 0 1 -
+R CO 1992 o - May 2 0 1 -
 R CO 1993 o - F 6 24 0 -
 R EC 1992 o - N 28 0 1 -
 R EC 1993 o - F 5 0 0 -
@@ -1959,6 +1959,19 @@ R U 2005 o - Mar 27 2 0 -
 R U 2005 o - O 9 2 1 -
 R U 2006 2015 - Mar Su>=8 2 0 -
 R U 2006 2014 - O Su>=1 2 1 -
+R US 1918 1919 - Mar lastSu 2 1 D
+R US 1918 1919 - O lastSu 2 0 S
+R US 1942 o - F 9 2 1 D
+R US 1945 o - Au 14 23u 1 D
+R US 1945 o - S 30 2 0 S
+R US 1967 2006 - O lastSu 2 0 S
+R US 1967 1973 - Ap lastSu 2 1 D
+R US 1974 o - Ja 6 2 1 D
+R US 1975 o - F lastSu 2 1 D
+R US 1976 1986 - Ap lastSu 2 1 D
+R US 1987 2006 - Ap Su>=1 2 1 D
+R US 2007 ma - Mar Su>=8 2 1 D
+R US 2007 ma - N Su>=1 2 0 S
 Z Africa/Abidjan -0:16:8 - LMT 1912
 0 - GMT
 Z Africa/Algiers 0:12:12 - LMT 1891 Mar 16
@@ -2051,7 +2064,7 @@ Z Africa/Windhoek 1:8:24 - LMT 1892 F 8
 2 1 SAST 1943 Mar 21 2
 2 - SAST 1990 Mar 21
 2 NA %s
-Z America/Adak 12:13:22 - LMT 1867 O 19 12:44:35
+Z America/Adak 12:13:22 - LMT 1867 O 19 0:31:13u
 -11:46:38 - LMT 1900 Au 20 12
 -11 - NST 1942
 -11 u N%sT 1946
@@ -2060,7 +2073,7 @@ Z America/Adak 12:13:22 - LMT 1867 O 19 12:44:35
 -11 u B%sT 1983 O 30 2
 -10 u AH%sT 1983 N 30
 -10 u H%sT
-Z America/Anchorage 14:0:24 - LMT 1867 O 19 14:31:37
+Z America/Anchorage 14:0:24 - LMT 1867 O 19 0:31:13u
 -9:59:36 - LMT 1900 Au 20 12
 -10 - AST 1942
 -10 u A%sT 1967 Ap
@@ -2360,7 +2373,7 @@ Z America/Detroit -5:32:11 - LMT 1905
 Z America/Edmonton -7:33:52 - LMT 1906 S
 -7 Ed M%sT 1987
 -7 C M%sT 2026 Jun 18
--7 1 MDT 2026 N 1 2
+-7 C MDT 2026 N 1 2
 -6 - CST
 Z America/Eirunepe -4:39:28 - LMT 1914
 -5 B %z 1988 S 12
@@ -2502,7 +2515,9 @@ Z America/Indiana/Winamac -5:46:25 - LMT 1883 N 18 18u
 Z America/Inuvik 0 - -00 1953
 -8 Y P%sT 1979 Ap lastSu 2
 -7 Y M%sT 1980
--7 C M%sT
+-7 C M%sT 2026 Au 21
+-7 C MDT 2026 N 1 2
+-6 - CST
 Z America/Iqaluit 0 - -00 1942 Au
 -5 Y E%sT 1999 O 31 2
 -6 C C%sT 2000 O 29 2
@@ -2512,7 +2527,7 @@ Z America/Jamaica -5:7:10 - LMT 1890
 -5 - EST 1974
 -5 u E%sT 1984
 -5 - EST
-Z America/Juneau 15:2:19 - LMT 1867 O 19 15:33:32
+Z America/Juneau 15:2:19 - LMT 1867 O 19 0:31:13u
 -8:57:41 - LMT 1900 Au 20 12
 -8 - PST 1942
 -8 u P%sT 1946
@@ -2596,7 +2611,7 @@ Z America/Merida -5:58:28 - LMT 1922 Ja 1 6u
 -6 - CST 1981 D 26 2
 -5 - EST 1982 N 2 2
 -6 m C%sT
-Z America/Metlakatla 15:13:42 - LMT 1867 O 19 15:44:55
+Z America/Metlakatla 15:13:42 - LMT 1867 O 19 0:31:13u
 -8:46:18 - LMT 1900 Au 20 12
 -8 - PST 1942
 -8 u P%sT 1946
@@ -2650,7 +2665,7 @@ Z America/New_York -4:56:2 - LMT 1883 N 18 17u
 -5 u E%sT 1946
 -5 NY E%sT 1967
 -5 u E%sT
-Z America/Nome 12:58:22 - LMT 1867 O 19 13:29:35
+Z America/Nome 12:58:22 - LMT 1867 O 19 0:31:13u
 -11:1:38 - LMT 1900 Au 20 12
 -11 - NST 1942
 -11 u N%sT 1946
@@ -2788,7 +2803,7 @@ Z America/Scoresbysund -1:27:52 - LMT 1916 Jul 28
 -2 c %z 1981 Mar 29
 -1 E %z 2024 Mar 31
 -2 E %z
-Z America/Sitka 14:58:47 - LMT 1867 O 19 15:30
+Z America/Sitka 14:58:47 - LMT 1867 O 19 0:31:13u
 -9:1:13 - LMT 1900 Au 20 12
 -8 - PST 1942
 -8 u P%sT 1946
@@ -2845,7 +2860,7 @@ Z America/Toronto -5:17:32 - LMT 1895
 Z America/Vancouver -8:12:28 - LMT 1884
 -8 Va P%sT 1987
 -8 C P%sT 2026 Mar 9
--8 1 PDT 2026 N 1 2
+-8 C PDT 2026 N 1 2
 -7 - MST
 Z America/Whitehorse -9:0:12 - LMT 1900 Au 20
 -9 Y Y%sT 1965
@@ -2855,8 +2870,10 @@ Z America/Whitehorse -9:0:12 - LMT 1900 Au 20
 -7 - MST
 Z America/Winnipeg -6:28:36 - LMT 1887 Jul 16
 -6 W C%sT 2006
--6 C C%sT
-Z America/Yakutat 14:41:5 - LMT 1867 O 19 15:12:18
+-6 C C%sT 2026 O 31
+-6 C CDT 2026 N 1 2
+-5 - EST
+Z America/Yakutat 14:41:5 - LMT 1867 O 19 0:31:13u
 -9:18:55 - LMT 1900 Au 20 12
 -9 - YST 1942
 -9 u Y%sT 1946
@@ -3457,6 +3474,8 @@ Z Australia/Perth 7:43:24 - LMT 1895 D
 Z Australia/Sydney 10:4:52 - LMT 1895 F
 10 AU AE%sT 1971
 10 AN AE%sT
+Z CST6CDT -6 US C%sT
+Z EST5EDT -5 US E%sT
 Z Etc/GMT 0 - GMT
 Z Etc/GMT+1 -1 - %z
 Z Etc/GMT+10 -10 - %z
@@ -3553,6 +3572,8 @@ Z Europe/Dublin -0:25:21 - LMT 1880 Au 2
 -0:25:21 - DMT 1916 May 21 2s
 -0:25:21 1 IST 1916 O 1 2s
 0 G %s 1921 D 6
+0 G GMT/IST 1925 S Su>=16 2s
+0 - GMT 1926
 0 G GMT/IST 1940 F 25 2s
 0 1 IST 1946 O 6 2s
 0 - GMT 1947 Mar 16 2s
@@ -3807,6 +3828,8 @@ Z Indian/Maldives 4:54 - LMT 1880
 5 - %z
 Z Indian/Mauritius 3:50 - LMT 1907
 4 MU %z
+Z MST7MDT -7 US M%sT
+Z PST8PDT -8 US P%sT
 Z Pacific/Apia 12:33:4 - LMT 1892 Jul 5
 -11:26:56 - LMT 1911
 -11:30 - %z 1950
@@ -3937,7 +3960,6 @@ L America/Noronha Brazil/DeNoronha
 L America/Sao_Paulo Brazil/East
 L America/Manaus Brazil/West
 L Europe/Brussels CET
-L America/Chicago CST6CDT
 L America/Halifax Canada/Atlantic
 L America/Winnipeg Canada/Central
 L America/Toronto Canada/Eastern
@@ -3951,7 +3973,6 @@ L Pacific/Easter Chile/EasterIsland
 L America/Havana Cuba
 L Europe/Athens EET
 L America/Panama EST
-L America/New_York EST5EDT
 L Africa/Cairo Egypt
 L Europe/Dublin Eire
 L Etc/GMT Etc/GMT+0
@@ -3977,7 +3998,6 @@ L Pacific/Kwajalein Kwajalein
 L Africa/Tripoli Libya
 L Europe/Brussels MET
 L America/Phoenix MST
-L America/Denver MST7MDT
 L America/Tijuana Mexico/BajaNorte
 L America/Mazatlan Mexico/BajaSur
 L America/Mexico_City Mexico/General
@@ -4175,6 +4195,5 @@ L Atlantic/Faroe Atlantic/Faeroe
 L Europe/Kyiv Europe/Kiev
 L Asia/Nicosia Europe/Nicosia
 L Pacific/Honolulu HST
-L America/Los_Angeles PST8PDT
 L Pacific/Guadalcanal Pacific/Ponape
 L Pacific/Port_Moresby Pacific/Truk
