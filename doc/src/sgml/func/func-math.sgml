@@ -26,6 +26,13 @@
     are resolved by using the type appearing later in these lists.
    </para>
 
+   <para>
+    The behavior of bitwise shifting, both left and right, has
+    platform-dependent behavior both in cases of left shifting that results in
+    a signed overflow and in cases of the results of shifting by more bits
+    than exist in the type or from shifting by a negative value.
+   </para>
+
    <table id="functions-math-op-table">
     <title>Mathematical Operators</title>
 
