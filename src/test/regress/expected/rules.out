@@ -2214,7 +2214,10 @@ pg_stat_progress_vacuum| SELECT s.pid,
             WHEN 2 THEN 'autovacuum'::text
             WHEN 3 THEN 'autovacuum_wraparound'::text
             ELSE NULL::text
-        END AS started_by
+        END AS started_by,
+    (s.param14)::oid AS current_index_relid,
+    s.param16 AS index_blks_total,
+    s.param17 AS index_blks_done
    FROM (pg_stat_get_progress_info('VACUUM'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
      LEFT JOIN pg_database d ON ((s.datid = d.oid)));
 pg_stat_recovery| SELECT promote_triggered,

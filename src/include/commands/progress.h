@@ -31,6 +31,8 @@
 #define PROGRESS_VACUUM_DELAY_TIME				10
 #define PROGRESS_VACUUM_MODE					11
 #define PROGRESS_VACUUM_STARTED_BY				12
+#define PROGRESS_VACUUM_CURRENT_INDEX_RELID		13
+/* 15 and 16 reserved for "block number" metrics */
 
 /* Phases of vacuum (as advertised via PROGRESS_VACUUM_PHASE) */
 #define PROGRESS_VACUUM_PHASE_SCAN_HEAP			1
