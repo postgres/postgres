@@ -40,13 +40,15 @@ step s1_wait_before_lock
 }
 step s1_decode
 {
-	SELECT count(*) FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1');
+	SELECT count(*) FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1',
+							  'skip-empty-xacts', '1', 'include-xids', '0');
 }
 # Show the decoded updates.  The row loaded by setup carries a random TOAST
 # value, so only the updates are stable enough to display.
 step s1_decode_updates
 {
-	SELECT data FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1')
+	SELECT data FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1',
+						     'skip-empty-xacts', '1', 'include-xids', '0')
 	WHERE data LIKE '%UPDATE%';
 }
 teardown

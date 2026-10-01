@@ -22,11 +22,12 @@ injection_points_wakeup
 
 step s1_wait_before_lock: <... completed>
 step s1_decode: 
-	SELECT count(*) FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1');
+	SELECT count(*) FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1',
+							  'skip-empty-xacts', '1', 'include-xids', '0');
 
 count
 -----
-    8
+    6
 (1 row)
 
 injection_points_detach
@@ -62,7 +63,8 @@ injection_points_wakeup
 
 step s1_wait_before_lock: <... completed>
 step s1_decode_updates: 
-	SELECT data FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1')
+	SELECT data FROM pg_logical_slot_peek_changes('s', NULL, NULL, 'include-rewrites', '1',
+						     'skip-empty-xacts', '1', 'include-xids', '0')
 	WHERE data LIKE '%UPDATE%';
 
 data                                                           
