@@ -812,6 +812,17 @@ WaitForParallelWorkersToFinish(ParallelContext *pcxt)
 		 */
 		CHECK_FOR_INTERRUPTS();
 
+		/*
+		 * An autovacuum worker running a parallel vacuum (leader) propagates
+		 * changes to the cost-based delay parameters to its parallel workers
+		 * at its own cost delay points, which it no longer reaches while
+		 * waiting here. Do it here instead, on every wakeup, so that a config
+		 * reload or a change in the number of autovacuum workers sharing the
+		 * cost limit reaches the parallel workers before they finish.
+		 */
+		if (AmAutoVacuumWorkerProcess())
+			parallel_vacuum_refresh_cost_params();
+
 		for (i = 0; i < pcxt->nworkers_launched; ++i)
 		{
 			/*

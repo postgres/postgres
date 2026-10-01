@@ -1814,8 +1814,33 @@ autovac_recalculate_workers_for_balance(void)
 	}
 
 	if (nworkers_for_balance != orig_nworkers_for_balance)
+	{
 		pg_atomic_write_u32(&AutoVacuumShmem->av_nworkersForBalance,
 							nworkers_for_balance);
+
+		/*
+		 * Wake up the autovacuum workers sharing the cost limit so that they
+		 * pick up the new count. An autovacuum worker that is vacuuming does
+		 * that on its next nap anyway, but one running a parallel vacuum
+		 * (leader) that is only waiting for its parallel workers to finish
+		 * never naps, and nothing else would tell it.
+		 *
+		 * Only the waiting leaders need this, but knowing which ones are
+		 * waiting would need more state. For an autovacuum worker that is not
+		 * in a latch wait, SetLatch() sends no signal and only marks the
+		 * latch set, which costs one early return from its next latch wait.
+		 */
+		dlist_foreach(iter, &AutoVacuumShmem->av_runningWorkers)
+		{
+			WorkerInfo	worker = dlist_container(WorkerInfoData, wi_links, iter.cur);
+
+			if (worker->wi_proc == NULL ||
+				pg_atomic_unlocked_test_flag(&worker->wi_dobalance))
+				continue;
+
+			SetLatch(&worker->wi_proc->procLatch);
+		}
+	}
 }
 
 /*
