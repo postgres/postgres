@@ -239,6 +239,24 @@ sub write_source
 # by post_indent().
 my @alignas_stash;
 
+sub stash_alignas
+{
+	my $text = shift;
+
+	push(@alignas_stash, $text);
+	my $index = $#alignas_stash;
+
+	# Pad the placeholder with underscores so that it is as wide as
+	# the text it stands in for, so that trailing comments on the line
+	# are placed correctly.  The padding goes before the index, so
+	# that the placeholder ends in a digit and doesn't accidentally
+	# swallow a following token.
+	my $pad = length($text) - length('alignas') - length($index);
+	$pad = 1 if $pad < 1;
+
+	return 'alignas' . '_' x $pad . $index;
+}
+
 sub pre_indent
 {
 	my $source = shift;
@@ -276,8 +294,7 @@ sub pre_indent
 		\b alignas \s*
 		( \( (?: [^()]++ | (?1) )*+ \) )
 	!
-		push(@alignas_stash, "alignas" . $1);
-		"alignas_" . $#alignas_stash . "_";
+		stash_alignas("alignas" . $1);
 	!gex;
 
 	return $source;
@@ -288,7 +305,7 @@ sub post_indent
 	my $source = shift;
 
 	# Restore alignas(...)
-	$source =~ s!\balignas_(\d+)_!$alignas_stash[$1]!g;
+	$source =~ s!\balignas_+(\d+)!$alignas_stash[$1]!g;
 
 	# Restore CATALOG lines
 	$source =~ s!^/\*(CATALOG\(.*)\*/$!$1!gm;
