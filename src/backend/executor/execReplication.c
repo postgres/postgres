@@ -536,6 +536,10 @@ update_most_recent_deletion_info(TupleTableSlot *scanslot,
  * returns the transaction ID, origin, and commit timestamp of the transaction
  * that deleted this tuple.
  *
+ * If 'identidxoid' is valid, it is the replica identity or primary key
+ * index, and only its key columns are compared. Otherwise, all columns are
+ * compared.
+ *
  * 'oldestxmin' acts as a cutoff transaction ID. Tuples deleted by transactions
  * with IDs >= 'oldestxmin' are considered recently dead and are eligible for
  * conflict detection.
@@ -563,7 +567,8 @@ update_most_recent_deletion_info(TupleTableSlot *scanslot,
  * tuple was deleted most recently.
  */
 bool
-RelationFindDeletedTupleInfoSeq(Relation rel, TupleTableSlot *searchslot,
+RelationFindDeletedTupleInfoSeq(Relation rel, Oid identidxoid,
+								TupleTableSlot *searchslot,
 								TransactionId oldestxmin,
 								TransactionId *delete_xid,
 								ReplOriginId *delete_origin,
@@ -572,7 +577,7 @@ RelationFindDeletedTupleInfoSeq(Relation rel, TupleTableSlot *searchslot,
 	TupleTableSlot *scanslot;
 	TableScanDesc scan;
 	TypeCacheEntry **eq;
-	Bitmapset  *indexbitmap;
+	Bitmapset  *indexbitmap = NULL;
 	TupleDesc	desc PG_USED_FOR_ASSERTS_ONLY = RelationGetDescr(rel);
 
 	Assert(equalTupleDescs(desc, searchslot->tts_tupleDescriptor));
@@ -582,21 +587,35 @@ RelationFindDeletedTupleInfoSeq(Relation rel, TupleTableSlot *searchslot,
 	*delete_time = 0;
 
 	/*
-	 * If the relation has a replica identity key or a primary key that is
-	 * unusable for locating deleted tuples (see
-	 * IsIndexUsableForFindingDeletedTuple), a full table scan becomes
-	 * necessary. In such cases, comparing the entire tuple is not required,
-	 * since the remote tuple might not include all column values. Instead,
-	 * the indexed columns alone are sufficient to identify the target tuple
-	 * (see logicalrep_rel_mark_updatable).
+	 * If the caller's replica identity key or primary key is unusable for
+	 * locating deleted tuples (see IsIndexUsableForFindingDeletedTuple), a
+	 * full table scan becomes necessary. In such cases, comparing the entire
+	 * tuple is not required, since the remote tuple might not include all
+	 * column values. Instead, the indexed columns alone are sufficient to
+	 * identify the target tuple (see logicalrep_rel_mark_updatable).
 	 */
-	indexbitmap = RelationGetIndexAttrBitmap(rel,
-											 INDEX_ATTR_BITMAP_IDENTITY_KEY);
+	if (OidIsValid(identidxoid))
+	{
+		/* The index must have been locked already */
+		Relation	idxrel = index_open(identidxoid, NoLock);
 
-	/* fallback to PK if no replica identity */
-	if (!indexbitmap)
-		indexbitmap = RelationGetIndexAttrBitmap(rel,
-												 INDEX_ATTR_BITMAP_PRIMARY_KEY);
+		/*
+		 * The index may no longer be the replica identity if DROP INDEX
+		 * CONCURRENTLY or REINDEX CONCURRENTLY ran meanwhile, but it stays
+		 * unique and non-partial, which is all we rely on. See
+		 * FindReplTupleInLocalRel().
+		 */
+		Assert(idxrel->rd_index->indisunique);
+		Assert(heap_attisnull(idxrel->rd_indextuple, Anum_pg_index_indpred,
+							  NULL));
+
+		for (int i = 0; i < idxrel->rd_index->indnkeyatts; i++)
+			indexbitmap = bms_add_member(indexbitmap,
+										 idxrel->rd_index->indkey.values[i] -
+										 FirstLowInvalidHeapAttributeNumber);
+
+		index_close(idxrel, NoLock);
+	}
 
 	eq = palloc0_array(TypeCacheEntry *, searchslot->tts_tupleDescriptor->natts);
 

@@ -377,6 +377,69 @@ like(
 	'update target row was deleted in tab');
 
 ###############################################################################
+# Ensure that a deferrable primary key is not used to match deleted tuples in
+# a sequential table scan. Such a key cannot serve as a replica identity, so
+# the whole tuple must be compared, and a deleted row that only shares the key
+# value must not be reported as update_deleted.
+###############################################################################
+
+# Create the table and publish it from node B only, so that local changes on
+# node A are not sent back. Skip the initial copy, so that node A never has
+# the row from node B.
+$node_B->safe_psql(
+	'postgres', "
+	CREATE TABLE tab_defer (a int, b int);
+	ALTER TABLE tab_defer REPLICA IDENTITY FULL;
+	INSERT INTO tab_defer VALUES (1, 1);");
+$node_A->safe_psql('postgres', "CREATE TABLE tab_defer (a int, b int)");
+$node_B->safe_psql('postgres',
+	"ALTER PUBLICATION tap_pub_B ADD TABLE tab_defer");
+$node_A->safe_psql('postgres',
+	"ALTER SUBSCRIPTION $subname_AB REFRESH PUBLICATION WITH (copy_data = false)"
+);
+$node_A->wait_for_subscription_sync($node_B, $subname_AB);
+
+# Disable the logical replication from node B to node A
+$node_A->safe_psql('postgres', "ALTER SUBSCRIPTION $subname_AB DISABLE");
+
+# Wait for the apply worker to stop
+$node_A->poll_query_until('postgres',
+	"SELECT count(*) = 0 FROM pg_stat_activity WHERE backend_type = 'logical replication apply worker'"
+);
+
+# The primary key is created after the conflict detection slot's xmin, so it
+# cannot be used to find deleted tuples and a sequential scan is used instead.
+# Then delete a local row that has the same key but a different value.
+$node_A->safe_psql(
+	'postgres', "
+	ALTER TABLE tab_defer ADD PRIMARY KEY (a) DEFERRABLE;
+	INSERT INTO tab_defer VALUES (1, 10);
+	DELETE FROM tab_defer WHERE a = 1;");
+
+$node_B->safe_psql('postgres', "UPDATE tab_defer SET b = 2 WHERE a = 1;");
+
+$log_location = -s $node_A->logfile;
+
+$node_A->safe_psql('postgres', "ALTER SUBSCRIPTION $subname_AB ENABLE;");
+$node_B->wait_for_catchup($subname_AB);
+
+$logfile = slurp_file($node_A->logfile(), $log_location);
+like(
+	$logfile,
+	qr/conflict detected on relation "public.tab_defer": conflict=update_missing.*
+.*DETAIL:.* Could not find the row to be updated: remote row \(1, 2\), replica identity full \(1, 1\)/,
+	'deleted row matching only the deferrable primary key is not reported as update_deleted'
+);
+
+# Clean up
+$node_B->safe_psql('postgres',
+	"ALTER PUBLICATION tap_pub_B DROP TABLE tab_defer");
+$node_A->safe_psql('postgres',
+	"ALTER SUBSCRIPTION $subname_AB REFRESH PUBLICATION");
+$node_A->safe_psql('postgres', "DROP TABLE tab_defer");
+$node_B->safe_psql('postgres', "DROP TABLE tab_defer");
+
+###############################################################################
 # Check that the xmin value of the conflict detection slot can be advanced when
 # the subscription has no tables.
 ###############################################################################
