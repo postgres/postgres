@@ -3964,6 +3964,31 @@ my %tests = (
 		},
 	},
 
+	'CREATE TABLE table_with_constraint_stats' => {
+		create_order => 98,
+		create_sql => 'CREATE TABLE dump_test.table_constraint_stats (
+						   col1 int,
+						   col2 int);
+						 ALTER TABLE dump_test.table_constraint_stats
+						   ADD CONSTRAINT ex_with_stats
+						   EXCLUDE USING btree ((col1 + 1) WITH =,
+							 col1 WITH =, (col2 + 1) WITH =);
+						 ALTER INDEX dump_test.ex_with_stats
+						   ALTER COLUMN 1 SET STATISTICS 100;
+						 ALTER INDEX dump_test.ex_with_stats
+						   ALTER COLUMN 3 SET STATISTICS 200;',
+		regexp => qr/^
+			\QALTER INDEX dump_test.ex_with_stats ALTER COLUMN 1 SET STATISTICS 100;\E\n
+			\QALTER INDEX dump_test.ex_with_stats ALTER COLUMN 3 SET STATISTICS 200;\E\n
+			/xms,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
 	'CREATE TABLE test_inheritance_parent' => {
 		create_order => 90,
 		create_sql => 'CREATE TABLE dump_test.test_inheritance_parent (
