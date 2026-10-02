@@ -238,6 +238,7 @@ sub write_source
 # Declaration attributes that pg_bsd_indent doesn't know how to handle.
 my @declaration_attributes = qw(
   alignas
+  pg_attribute_counted_by
 );
 
 # Text of each declaration attribute, stashed by pre_indent() and restored
