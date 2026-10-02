@@ -88,6 +88,52 @@ pg_fatal_impl(int line, const char *fmt,...)
 	exit(1);
 }
 
+/*
+ * Test Describe of a prepared FETCH statement after the cursor it
+ * references has been closed.
+ */
+static void
+test_describe_fetch(PGconn *conn)
+{
+	PGresult   *res;
+
+	fprintf(stderr, "test cursor describe and fetch... ");
+
+	res = PQexec(conn, "BEGIN");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		pg_fatal("BEGIN failed: %s", PQerrorMessage(conn));
+	PQclear(res);
+
+	res = PQexec(conn, "DECLARE fetch_cursor CURSOR FOR SELECT 1");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		pg_fatal("DECLARE CURSOR failed: %s", PQerrorMessage(conn));
+	PQclear(res);
+
+	/* prepare while the cursor exists, so that it caches a result desc */
+	res = PQprepare(conn, "fetch_one", "FETCH 1 FROM fetch_cursor", 0, NULL);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		pg_fatal("PQprepare failed: %s", PQerrorMessage(conn));
+	PQclear(res);
+
+	res = PQexec(conn, "CLOSE fetch_cursor");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		pg_fatal("CLOSE failed: %s", PQerrorMessage(conn));
+	PQclear(res);
+
+	/* describe fails after the cursor has been closed */
+	res = PQdescribePrepared(conn, "fetch_one");
+	if (PQresultStatus(res) != PGRES_FATAL_ERROR)
+		pg_fatal("expected FATAL_ERROR, got %s", PQresStatus(PQresultStatus(res)));
+	PQclear(res);
+
+	res = PQexec(conn, "ROLLBACK");
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		pg_fatal("ROLLBACK failed: %s", PQerrorMessage(conn));
+	PQclear(res);
+
+	fprintf(stderr, "ok\n");
+}
+
 static void
 test_disallowed_in_pipeline(PGconn *conn)
 {
@@ -1683,6 +1729,7 @@ usage(const char *progname)
 static void
 print_test_list(void)
 {
+	printf("describe_fetch\n");
 	printf("disallowed_in_pipeline\n");
 	printf("multi_pipelines\n");
 	printf("nosync\n");
@@ -1786,6 +1833,8 @@ main(int argc, char **argv)
 
 	if (strcmp(testname, "disallowed_in_pipeline") == 0)
 		test_disallowed_in_pipeline(conn);
+	else if (strcmp(testname, "describe_fetch") == 0)
+		test_describe_fetch(conn);
 	else if (strcmp(testname, "multi_pipelines") == 0)
 		test_multi_pipelines(conn);
 	else if (strcmp(testname, "nosync") == 0)
