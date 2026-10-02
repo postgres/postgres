@@ -3394,9 +3394,12 @@ FindDeletedTupleInLocalRel(Relation localrel,
 												   delete_xid, delete_origin,
 												   delete_time);
 	else
-		return RelationFindDeletedTupleInfoSeq(localrel, remoteslot,
-											   oldestxmin, delete_xid,
-											   delete_origin, delete_time);
+		return RelationFindDeletedTupleInfoSeq(localrel,
+											   relmapentry->idxisreplident ?
+											   localidxoid : InvalidOid,
+											   remoteslot, oldestxmin,
+											   delete_xid, delete_origin,
+											   delete_time);
 }
 
 /*
