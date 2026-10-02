@@ -235,26 +235,31 @@ sub write_source
 	return;
 }
 
-# Text of each alignas(...) call, stashed by pre_indent() and restored
-# by post_indent().
-my @alignas_stash;
+# Declaration attributes that pg_bsd_indent doesn't know how to handle.
+my @declaration_attributes = qw(
+  alignas
+);
 
-sub stash_alignas
+# Text of each declaration attribute, stashed by pre_indent() and restored
+# by post_indent().
+my @attribute_stash;
+
+sub stash_attribute
 {
 	my $text = shift;
 
-	push(@alignas_stash, $text);
-	my $index = $#alignas_stash;
+	push(@attribute_stash, $text);
+	my $index = $#attribute_stash;
 
 	# Pad the placeholder with underscores so that it is as wide as
 	# the text it stands in for, so that trailing comments on the line
 	# are placed correctly.  The padding goes before the index, so
 	# that the placeholder ends in a digit and doesn't accidentally
 	# swallow a following token.
-	my $pad = length($text) - length('alignas') - length($index);
+	my $pad = length($text) - length('_pgattr') - length($index);
 	$pad = 1 if $pad < 1;
 
-	return 'alignas' . '_' x $pad . $index;
+	return '_pgattr' . '_' x $pad . $index;
 }
 
 sub pre_indent
@@ -285,16 +290,20 @@ sub pre_indent
 	# Protect wrapping in CATALOG()
 	$source =~ s!^(CATALOG\(.*)$!/*$1*/!gm;
 
-	# pg_bsd_indent doesn't know about alignas(), so a non-first struct
-	# member declared with it gets misindented.  Disguise each call as
-	# a plain identifier; stash the original text rather than embed it,
-	# so nested parens or line breaks in the argument aren't a problem.
-	@alignas_stash = ();
+	# pg_bsd_indent doesn't know about attributes or similar at the
+	# front of a declaration and gets confused if they have
+	# parentheses, such as alignas().  So a non-first struct member
+	# declared with them gets misindented.  Disguise each such
+	# attribute as a plain identifier; stash the original text rather
+	# than embed it, so nested parens or line breaks in the argument
+	# aren't a problem.
+	@attribute_stash = ();
+	my $attribute = join('|', @declaration_attributes);
 	$source =~ s!
-		\b alignas \s*
-		( \( (?: [^()]++ | (?1) )*+ \) )
+		\b ($attribute) \s*
+		( \( (?: [^()]++ | (?2) )*+ \) )
 	!
-		stash_alignas("alignas" . $1);
+		stash_attribute($1 . $2);
 	!gex;
 
 	return $source;
@@ -304,8 +313,8 @@ sub post_indent
 {
 	my $source = shift;
 
-	# Restore alignas(...)
-	$source =~ s!\balignas_+(\d+)!$alignas_stash[$1]!g;
+	# Restore declaration attributes
+	$source =~ s!\b_pgattr_+(\d+)!$attribute_stash[$1]!g;
 
 	# Restore CATALOG lines
 	$source =~ s!^/\*(CATALOG\(.*)\*/$!$1!gm;
