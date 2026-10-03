@@ -1061,12 +1061,12 @@ LCOVFLAGS = -q --no-external
 all_gcno_files = $(shell find . -name '*.gcno' -print)
 
 lcov_base.info: $(all_gcno_files)
-	$(LCOV) $(LCOVFLAGS) -c -i -d . -d $(srcdir) -o $@
+	$(LCOV) $(LCOVFLAGS) -c -i -d . $(if $(filter yes,$(vpath_build)),-d $(srcdir)) -o $@
 
 all_gcda_files = $(shell find . -name '*.gcda' -print)
 
 lcov_test.info: $(all_gcda_files)
-	$(LCOV) $(LCOVFLAGS) -c -d . -d $(srcdir) -o $@
+	$(LCOV) $(LCOVFLAGS) -c -d . $(if $(filter yes,$(vpath_build)),-d $(srcdir)) -o $@
 
 
 # hook for clean-up
