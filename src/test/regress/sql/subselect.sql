@@ -540,6 +540,18 @@ from
   join
   int4_tbl i4 on dummy = i4.f1;
 
+-- Likewise, but with the sublink inserted into a whole-row reference.
+
+select 1 from ((select (select 1) as x) ss1 cross join int4_tbl i4) j
+  where (select 1 where j is null) is null;
+
+select 1 from ((select (select 1) as x) ss1 cross join int4_tbl i4) j
+  where (1, 1) in (select (j is null)::int, count(*) from int4_tbl);
+
+select 1 from ((select (select 1) as x) ss1 cross join int4_tbl i4) j
+  where exists (select 1 from int4_tbl
+                tablesample system ((j is null)::int * 100));
+
 --
 -- Test case for subselect within UPDATE of INSERT...ON CONFLICT DO UPDATE
 --
