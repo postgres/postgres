@@ -884,8 +884,12 @@ flatten_join_alias_vars_mutator(Node *node,
 				if (IsA(newvar, Var))
 					((Var *) newvar)->location = var->location;
 				/* Recurse in case join input is itself a join */
-				/* (also takes care of setting inserted_sublink if needed) */
 				newvar = flatten_join_alias_vars_mutator(newvar, context);
+
+				/* Detect if we are adding a sublink to query */
+				if (context->possible_sublink && !context->inserted_sublink)
+					context->inserted_sublink = checkExprHasSubLink(newvar);
+
 				fields = lappend(fields, newvar);
 				/* We need the names of non-dropped columns, too */
 				colnames = lappend(colnames, copyObject((Node *) lfirst(ln)));
