@@ -197,6 +197,7 @@ parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
  * This variant is used when the caller supplies their own parser callback to
  * resolve parameters and possibly other things.
  */
+pg_attribute_no_sanitize_function()
 Query *
 parse_analyze_withcb(RawStmt *parseTree, const char *sourceText,
 					 ParserSetupHook parserSetup,

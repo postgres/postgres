@@ -257,6 +257,7 @@ ST_SCOPE void ST_SORT(ST_ELEMENT_TYPE * first, size_t n
  * Refer to the comment at the top of this file for known caveats to consider
  * when writing inlined comparator functions.
  */
+pg_attribute_no_sanitize_function()
 static pg_noinline ST_ELEMENT_TYPE *
 ST_MED3(ST_ELEMENT_TYPE * a,
 		ST_ELEMENT_TYPE * b,
@@ -288,6 +289,7 @@ ST_SWAPN(ST_POINTER_TYPE * a, ST_POINTER_TYPE * b, size_t n)
 /*
  * Sort an array.
  */
+pg_attribute_no_sanitize_function()
 ST_SCOPE void
 ST_SORT(ST_ELEMENT_TYPE * data, size_t n
 		ST_SORT_PROTO_ELEMENT_SIZE

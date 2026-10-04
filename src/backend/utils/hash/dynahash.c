@@ -898,6 +898,7 @@ hash_search(HTAB *hashp,
 									   foundPtr);
 }
 
+pg_attribute_no_sanitize_function()
 void *
 hash_search_with_hash_value(HTAB *hashp,
 							const void *keyPtr,
@@ -1073,6 +1074,7 @@ hash_search_with_hash_value(HTAB *hashp,
  * NB: for a partitioned hashtable, caller must hold lock on both relevant
  * partitions, if the new hash key would belong to a different partition.
  */
+pg_attribute_no_sanitize_function()
 bool
 hash_update_hash_key(HTAB *hashp,
 					 void *existingEntry,

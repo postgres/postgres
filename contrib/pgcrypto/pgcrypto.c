@@ -492,6 +492,7 @@ pg_check_fipsmode(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(CheckFIPSMode());
 }
 
+pg_attribute_no_sanitize_function()
 static void *
 find_provider(text *name,
 			  PFN provider_lookup,

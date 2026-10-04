@@ -278,6 +278,22 @@ extern "C++"
 #endif
 
 /*
+ * Place this macro before functions that intentionally call through a
+ * function pointer whose type does not exactly match the called function.
+ * The prime examples are the expression tree walkers and mutators, which are
+ * declared with their own concrete node and context types and cast to a
+ * generic signature.  That is, strictly speaking, undefined behavior, but it
+ * is a convenient convention that works in practice.  See also
+ * -Wno-cast-function-type-strict, which disables the corresponding
+ * compile-time warning.
+ */
+#ifdef __clang__
+#define pg_attribute_no_sanitize_function() __attribute__((no_sanitize("function")))
+#else
+#define pg_attribute_no_sanitize_function()
+#endif
+
+/*
  * pg_attribute_nonnull means the compiler should warn if the function is
  * called with the listed arguments set to NULL.  If no arguments are
  * listed, the compiler should warn if any pointer arguments are set to NULL.

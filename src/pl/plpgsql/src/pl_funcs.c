@@ -360,6 +360,7 @@ typedef void (*plpgsql_expr_walker_callback) (PLpgSQL_expr *expr,
 	plpgsql_statement_tree_walker_impl(s, (plpgsql_stmt_walker_callback) (sw), \
 									   (plpgsql_expr_walker_callback) (ew), c)
 
+pg_attribute_no_sanitize_function()
 static void
 plpgsql_statement_tree_walker_impl(PLpgSQL_stmt *stmt,
 								   plpgsql_stmt_walker_callback stmt_callback,

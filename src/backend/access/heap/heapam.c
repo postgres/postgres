@@ -6574,6 +6574,7 @@ heap_abort_speculative(Relation relation, const ItemPointerData *tid)
  * consequence that the table's next VACUUM could see the table's relfrozenxid
  * move forward between vacuum_get_cutoffs() and finishing.
  */
+pg_attribute_no_sanitize_function()
 bool
 heap_inplace_lock(Relation relation,
 				  HeapTuple oldtup_ptr, Buffer buffer,

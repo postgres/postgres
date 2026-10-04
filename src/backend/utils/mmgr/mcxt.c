@@ -633,6 +633,7 @@ MemoryContextUnregisterResetCallback(MemoryContext context,
  * MemoryContextCallResetCallbacks
  *		Internal function to call all registered callbacks for context.
  */
+pg_attribute_no_sanitize_function()
 static void
 MemoryContextCallResetCallbacks(MemoryContext context)
 {

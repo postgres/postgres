@@ -29,6 +29,7 @@
  * eliminated at compile time, avoiding unnecessary run-time checks and code
  * for cases where EPQ is not required.
  */
+pg_attribute_no_sanitize_function()
 static pg_always_inline TupleTableSlot *
 ExecScanFetch(ScanState *node,
 			  EPQState *epqstate,
