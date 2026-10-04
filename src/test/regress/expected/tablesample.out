@@ -279,6 +279,38 @@ select pct, count(unique1) from
  100 | 10000
 (1 row)
 
+-- check that a join alias Var in a pulled-up LATERAL subquery's TABLESAMPLE
+-- clause gets flattened
+explain (costs off)
+select pct, count(unique1) from
+  ((values (0)) v(pct) full join (values (100)) w(pct) using (pct)),
+  lateral (select * from tenk1 tablesample bernoulli (pct)) ss
+  group by pct order by pct;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ GroupAggregate
+   Group Key: (COALESCE((0), (100)))
+   ->  Sort
+         Sort Key: (COALESCE((0), (100)))
+         ->  Nested Loop
+               ->  Hash Full Join
+                     Hash Cond: ((0) = (100))
+                     ->  Result
+                     ->  Hash
+                           ->  Result
+               ->  Sample Scan on tenk1
+                     Sampling: bernoulli (COALESCE((0), (100)))
+(12 rows)
+
+select pct, count(unique1) from
+  ((values (0)) v(pct) full join (values (100)) w(pct) using (pct)),
+  lateral (select * from tenk1 tablesample bernoulli (pct)) ss
+  group by pct order by pct;
+ pct | count 
+-----+-------
+ 100 | 10000
+(1 row)
+
 -- errors
 SELECT id FROM test_tablesample TABLESAMPLE FOOBAR (1);
 ERROR:  tablesample method foobar does not exist
