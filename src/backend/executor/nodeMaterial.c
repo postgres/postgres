@@ -328,9 +328,9 @@ ExecReScanMaterial(MaterialState *node)
 			return;
 
 		/*
-		 * If subnode is to be rescanned then we forget previous stored
-		 * results; we have to re-read the subplan and re-store.  Also, if we
-		 * told tuplestore it needn't support rescan, we lose and must
+		 * If subnode is to be rescanned then we clear out the previously
+		 * stored results; we have to re-read the subplan and re-store.  Also,
+		 * if we told tuplestore it needn't support rescan, we lose and must
 		 * re-read.  (This last should not happen in common cases; else our
 		 * caller lied by not passing EXEC_FLAG_REWIND to us.)
 		 *
@@ -340,8 +340,11 @@ ExecReScanMaterial(MaterialState *node)
 		if (outerPlan->chgParam != NULL ||
 			(node->eflags & EXEC_FLAG_REWIND) == 0)
 		{
-			tuplestore_end(node->tuplestorestate);
-			node->tuplestorestate = NULL;
+			/*
+			 * It's important to use tuplestore_clear() here so that we keep
+			 * track of the maximum storage used by all rescans.
+			 */
+			tuplestore_clear(node->tuplestorestate);
 			if (outerPlan->chgParam == NULL)
 				ExecReScan(outerPlan);
 			node->eof_underlying = false;
