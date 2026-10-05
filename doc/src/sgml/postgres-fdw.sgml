@@ -1148,20 +1148,17 @@ CREATE SUBSCRIPTION my_subscription SERVER subscription_server PUBLICATION testp
   </para>
 
   <para>
-   The remote transaction is opened in the same read/write mode as the local
-   transaction: if the local transaction is <literal>READ ONLY</literal>,
-   the remote transaction is opened in <literal>READ ONLY</literal> mode,
-   otherwise it is opened in <literal>READ WRITE</literal> mode.
-   (This rule is also applied to remote and local subtransactions.)
+   Local <literal>READ ONLY</literal> transactions propagate their read-only
+   mode to remote sessions.
+   (This rule is also applied to local subtransactions.)
    Note that this does not prevent login triggers executed on the remote
    server from writing.
   </para>
 
   <para>
-   The remote transaction is also opened in the same deferrable mode as the
-   local transaction: if the local transaction is <literal>DEFERRABLE</literal>,
-   the remote transaction is opened in <literal>DEFERRABLE</literal> mode,
-   otherwise it is opened in <literal>NOT DEFERRABLE</literal> mode.
+   Also, local <literal>DEFERRABLE</literal> transactions propagate their
+   deferrable mode to remote sessions.
+   (This rule is only applied to remote servers 9.1 and newer.)
   </para>
 
   <para>

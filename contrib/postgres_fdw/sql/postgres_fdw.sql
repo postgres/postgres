@@ -4377,6 +4377,8 @@ DROP VIEW my_application_name;
 -- test read-only and/or deferrable transactions
 -- ===================================================================
 CREATE TABLE loct (f1 int, f2 text);
+INSERT INTO loct VALUES (1, 'foo'), (2, 'bar');
+
 CREATE FUNCTION locf() RETURNS SETOF loct LANGUAGE SQL AS
   'UPDATE public.loct SET f2 = f2 || f2 RETURNING *';
 CREATE VIEW locv AS SELECT t.* FROM locf() t;
@@ -4384,7 +4386,6 @@ CREATE FOREIGN TABLE remt (f1 int, f2 text)
   SERVER loopback OPTIONS (table_name 'locv');
 CREATE FOREIGN TABLE remt2 (f1 int, f2 text)
   SERVER loopback2 OPTIONS (table_name 'locv');
-INSERT INTO loct VALUES (1, 'foo'), (2, 'bar');
 
 START TRANSACTION READ ONLY;
 SAVEPOINT s;
@@ -4430,9 +4431,31 @@ SET transaction_read_only = on;
 SELECT * FROM remt2;  -- should fail
 ROLLBACK;
 
+-- Clean up
 DROP FOREIGN TABLE remt;
+DROP FOREIGN TABLE remt2;
+DROP VIEW locv;
+DROP FUNCTION locf();
+
 CREATE FOREIGN TABLE remt (f1 int, f2 text)
   SERVER loopback OPTIONS (table_name 'loct');
+
+CREATE FUNCTION defer_trig_func() RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.f2 IS NOT NULL THEN
+    UPDATE public.loct SET f2 = f2 || f2 WHERE f1 = NEW.f1;
+  END IF;
+  RETURN NULL;
+END;
+$$;
+CREATE CONSTRAINT TRIGGER defer_trig AFTER INSERT ON loct
+  DEFERRABLE INITIALLY DEFERRED
+  FOR EACH ROW EXECUTE PROCEDURE defer_trig_func();
+
+START TRANSACTION;
+INSERT INTO remt VALUES (3, 'baz');
+SET TRANSACTION READ ONLY;
+COMMIT;
 
 START TRANSACTION ISOLATION LEVEL SERIALIZABLE READ ONLY;
 SELECT * FROM remt;
@@ -4448,9 +4471,8 @@ COMMIT;
 
 -- Clean up
 DROP FOREIGN TABLE remt;
-DROP FOREIGN TABLE remt2;
-DROP VIEW locv;
-DROP FUNCTION locf();
+DROP TRIGGER defer_trig ON loct;
+DROP FUNCTION defer_trig_func;
 DROP TABLE loct;
 
 -- ===================================================================
