@@ -2024,19 +2024,27 @@ create_join_clause(PlannerInfo *root,
 										ec->ec_min_security);
 
 	/*
-	 * If either EM is a child, force the clause's clause_relids to include
-	 * the relid(s) of the child rel.  In normal cases it would already, but
-	 * not if we are considering appendrel child relations with pseudoconstant
-	 * translated variables (i.e., UNION ALL sub-selects with constant output
-	 * items).  We must do this so that join_clause_is_movable_into() will
-	 * think that the clause should be evaluated at the correct place.
+	 * If either EM is a child, set the clause's clause_relids from the
+	 * members' em_relids rather than the relids found in the expressions.
+	 * These normally match, but not for UNION ALL sub-selects whose output
+	 * items are constants (mentioning no rels) or contain lateral references
+	 * (mentioning rels that the child's parameterization supplies).  We must
+	 * do this so that join_clause_is_movable_into() will think that the
+	 * clause should be evaluated at the correct place.
 	 */
-	if (leftem->em_is_child)
-		rinfo->clause_relids = bms_add_members(rinfo->clause_relids,
-											   leftem->em_relids);
-	if (rightem->em_is_child)
-		rinfo->clause_relids = bms_add_members(rinfo->clause_relids,
-											   rightem->em_relids);
+	if (leftem->em_is_child || rightem->em_is_child)
+	{
+		Relids		baserels;
+
+		rinfo->clause_relids = bms_union(leftem->em_relids,
+										 rightem->em_relids);
+
+		/* keep num_base_rels in sync, as in make_restrictinfo() */
+		baserels = bms_difference(rinfo->clause_relids,
+								  root->outer_join_rels);
+		rinfo->num_base_rels = bms_num_members(baserels);
+		bms_free(baserels);
+	}
 
 	/* If it's a child clause, copy the parent's rinfo_serial */
 	if (parent_rinfo)
