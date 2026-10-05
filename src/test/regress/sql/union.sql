@@ -531,6 +531,15 @@ SELECT four FROM tenk1 t2
 UNION
 SELECT ten FROM tenk1 dummy WHERE 1=2;
 
+-- Ensure EXPLAIN can show a dummy set operation whose output is coerced
+-- to another type by the parent set operation.
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two::numeric FROM tenk1 t1
+EXCEPT
+(SELECT four FROM tenk1 dummy WHERE 1=2
+ EXCEPT ALL
+ SELECT ten FROM tenk1 t2);
+
 -- Test constraint exclusion of UNION ALL subqueries
 explain (costs off)
  SELECT * FROM
