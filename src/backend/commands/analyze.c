@@ -1253,8 +1253,6 @@ acquire_sample_rows(Relation onerel, int elevel,
 	/* Outer loop over blocks to sample */
 	while (table_scan_analyze_next_block(scan, stream))
 	{
-		vacuum_delay_point(true);
-
 		while (table_scan_analyze_next_tuple(scan, OldestXmin, &liverows, &deadrows, slot))
 		{
 			/*
@@ -1302,6 +1300,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 
 		pgstat_progress_update_param(PROGRESS_ANALYZE_BLOCKS_DONE,
 									 ++blksdone);
+		vacuum_delay_point(true);
 	}
 
 	read_stream_end(stream);

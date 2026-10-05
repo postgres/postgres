@@ -895,8 +895,6 @@ ginInsertCleanup(GinState *ginstate, bool must_empty_list,
 		 */
 		processPendingPage(&accum, &datums, page, FirstOffsetNumber);
 
-		vacuum_delay_point(false);
-
 		/*
 		 * Is it time to flush memory to disk?	Flush if we are at the end of
 		 * the pending list, or if we have a full row and memory is getting
@@ -1002,10 +1000,12 @@ ginInsertCleanup(GinState *ginstate, bool must_empty_list,
 			UnlockReleaseBuffer(buffer);
 		}
 
+		/* call vacuum_delay_point while not holding any buffer lock */
+		vacuum_delay_point(false);
+
 		/*
 		 * Read next page in pending list
 		 */
-		vacuum_delay_point(false);
 		buffer = ReadBuffer(index, blkno);
 		LockBuffer(buffer, GIN_SHARE);
 		page = BufferGetPage(buffer);
