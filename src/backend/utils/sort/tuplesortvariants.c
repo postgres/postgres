@@ -939,6 +939,7 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 	MemoryContext oldcontext = MemoryContextSwitchTo(base->tuplecontext);
 	TuplesortDatumArg *arg = (TuplesortDatumArg *) base->arg;
 	SortTuple	stup;
+	Size		tuplen;
 
 	/*
 	 * Pass-by-value types or null values are just stored directly in
@@ -961,17 +962,26 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 		stup.datum1 = !isNull ? val : (Datum) 0;
 		stup.isnull1 = isNull;
 		stup.tuple = NULL;		/* no separate storage */
+		tuplen = 0;
 	}
 	else
 	{
 		stup.isnull1 = false;
 		stup.datum1 = datumCopy(val, false, arg->datumTypeLen);
 		stup.tuple = DatumGetPointer(stup.datum1);
+
+		/* GetMemoryChunkSpace is not supported for bump contexts */
+		if (TupleSortUseBumpTupleCxt(base->sortopt))
+			tuplen = MAXALIGN(datumGetSize(PointerGetDatum(stup.tuple),
+										   false,
+										   arg->datumTypeLen));
+		else
+			tuplen = GetMemoryChunkSpace(stup.tuple);
 	}
 
 	tuplesort_puttuple_common(state, &stup,
 							  base->tuples &&
-							  base->sortKeys->abbrev_converter && !isNull, 0);
+							  base->sortKeys->abbrev_converter && !isNull, tuplen);
 
 	MemoryContextSwitchTo(oldcontext);
 }
