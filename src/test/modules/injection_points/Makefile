@@ -12,10 +12,15 @@ PGFILEDESC = "injection_points - facility for injection points"
 REGRESS = injection_points reindex_conc vacuum
 REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
 
+# wait_cleanup terminates another backend, whose FATAL message can be lost
+# on Windows, making the test unstable there.
+# See https://postgr.es/m/088AB35D-0860-494A-A9CF-8B301543AA51@yandex-team.ru
+WAIT_CLEANUP_TST = $(if $(filter win32,$(PORTNAME)),,wait_cleanup)
+
 ISOLATION = inplace \
 	    reindex_concurrently_deferred \
 	    syscache-update-pruned \
-	    wait_cleanup \
+	    $(WAIT_CLEANUP_TST) \
 	    heap_lock_update \
 	    on_conflict_probe_window
 
