@@ -112,6 +112,20 @@ static uint32 pgfdw_we_get_result = 0;
  */
 #define RETRY_CANCEL_TIMEOUT	1000
 
+/*
+ * Macro for constructing commit command to be sent
+ *
+ * We synchronize the read/write mode before committing remote transactions
+ * so deferred triggers on remote servers can run in the right mode.
+ */
+#define CONSTRUCT_COMMIT_COMMAND(sql, entry) \
+	do { \
+		if ((read_only_level > 0) && !(entry)->xact_read_only) \
+			strcpy((sql), "SET TRANSACTION READ ONLY; COMMIT TRANSACTION"); \
+		else \
+			strcpy((sql), "COMMIT TRANSACTION"); \
+	} while(0)
+
 /* Macro for constructing abort command to be sent */
 #define CONSTRUCT_ABORT_COMMAND(sql, entry, toplevel) \
 	do { \
@@ -941,7 +955,7 @@ begin_remote_xact(ConnCacheEntry *entry)
 			appendStringInfoString(&sql, "REPEATABLE READ");
 		if (ro)
 			appendStringInfoString(&sql, " READ ONLY");
-		if (XactDeferrable)
+		if (XactDeferrable && PQserverVersion(entry->conn) >= 90100)
 			appendStringInfoString(&sql, " DEFERRABLE");
 		entry->changing_xact_state = true;
 		do_sql_command(entry->conn, sql.data);
@@ -971,7 +985,7 @@ begin_remote_xact(ConnCacheEntry *entry)
 		if (entry->xact_depth == read_only_level)
 		{
 			entry->changing_xact_state = true;
-			do_sql_command(entry->conn, "SET transaction_read_only = on");
+			do_sql_command(entry->conn, "SET TRANSACTION READ ONLY");
 			entry->xact_read_only = true;
 			entry->changing_xact_state = false;
 		}
@@ -1004,7 +1018,7 @@ begin_remote_xact(ConnCacheEntry *entry)
 		initStringInfo(&sql);
 		appendStringInfo(&sql, "SAVEPOINT s%d", entry->xact_depth + 1);
 		if (ro)
-			appendStringInfoString(&sql, "; SET transaction_read_only = on");
+			appendStringInfoString(&sql, "; SET TRANSACTION READ ONLY");
 		entry->changing_xact_state = true;
 		do_sql_command(entry->conn, sql.data);
 		entry->xact_depth++;
@@ -1185,6 +1199,24 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 		return;
 
 	/*
+	 * If we are called for pre-commit cleanup, ensure read_only_level is set
+	 * for later processing.  Note that we need to do this because the local
+	 * transaction may have become read-only since the last remote operation.
+	 */
+	if (event == XACT_EVENT_PARALLEL_PRE_COMMIT ||
+		event == XACT_EVENT_PRE_COMMIT)
+	{
+		if (XactReadOnly)
+		{
+			if (read_only_level == 0)
+				read_only_level = 1;
+			Assert(read_only_level == 1);
+		}
+		else
+			Assert(read_only_level == 0);
+	}
+
+	/*
 	 * Scan all connection cache entries to find open remote transactions, and
 	 * close them.
 	 */
@@ -1200,6 +1232,8 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 		/* If it has an open remote transaction, try to close it */
 		if (entry->xact_depth > 0)
 		{
+			char		sql[100];
+
 			elog(DEBUG3, "closing remote transaction on connection %p",
 				 entry->conn);
 
@@ -1215,14 +1249,17 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 					pgfdw_reject_incomplete_xact_state_change(entry);
 
 					/* Commit all remote transactions during pre-commit */
+					CONSTRUCT_COMMIT_COMMAND(sql, entry);
 					entry->changing_xact_state = true;
 					if (entry->parallel_commit)
 					{
-						do_sql_command_begin(entry->conn, "COMMIT TRANSACTION");
+						do_sql_command_begin(entry->conn, sql);
 						pending_entries = lappend(pending_entries, entry);
 						continue;
 					}
-					do_sql_command(entry->conn, "COMMIT TRANSACTION");
+					do_sql_command(entry->conn, sql);
+					if ((read_only_level > 0) && !entry->xact_read_only)
+						entry->xact_read_only = true;
 					entry->changing_xact_state = false;
 
 					/*
@@ -2019,6 +2056,8 @@ pgfdw_finish_pre_commit_cleanup(List *pending_entries)
 	 */
 	foreach(lc, pending_entries)
 	{
+		char		sql[100];
+
 		entry = (ConnCacheEntry *) lfirst(lc);
 
 		Assert(entry->changing_xact_state);
@@ -2027,7 +2066,10 @@ pgfdw_finish_pre_commit_cleanup(List *pending_entries)
 		 * We might already have received the result on the socket, so pass
 		 * consume_input=true to try to consume it first
 		 */
-		do_sql_command_end(entry->conn, "COMMIT TRANSACTION", true);
+		CONSTRUCT_COMMIT_COMMAND(sql, entry);
+		do_sql_command_end(entry->conn, sql, true);
+		if ((read_only_level > 0) && !(entry)->xact_read_only)
+			entry->xact_read_only = true;
 		entry->changing_xact_state = false;
 
 		/* Do a DEALLOCATE ALL in parallel if needed */
