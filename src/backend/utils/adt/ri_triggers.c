@@ -2783,6 +2783,7 @@ ri_FastPathCheck(RI_ConstraintInfo *riinfo,
 	Oid			saved_userid;
 	int			saved_sec_context;
 	Snapshot	snapshot;
+	FastPathMeta *fpmeta;
 
 	INJECTION_POINT("ri-before-pk-lock", NULL);
 
@@ -2854,11 +2855,19 @@ ri_FastPathCheck(RI_ConstraintInfo *riinfo,
 		riinfo = ri_LoadConstraintInfo(riinfo->constraint_id);
 		ri_populate_fastpath_metadata(riinfo, fk_rel, idx_rel);
 	}
-	Assert(riinfo->fpmeta);
-	ri_CheckFunctionPermissions(riinfo, riinfo->fpmeta);
+
+	/*
+	 * Use our own pointer to the metadata from here on.  The permission
+	 * checks below look up catalog entries and so can process invalidation
+	 * messages, which detach riinfo->fpmeta (see
+	 * InvalidateConstraintCacheCallBack()); the detached object stays valid
+	 * until AtEOXact_RI().
+	 */
+	fpmeta = riinfo->fpmeta;
+	Assert(fpmeta);
+	ri_CheckFunctionPermissions(riinfo, fpmeta);
 	ri_ExtractValues(fk_rel, newslot, riinfo, false, pk_vals, pk_nulls);
-	build_index_scankeys(riinfo, riinfo->fpmeta, idx_rel, pk_vals, pk_nulls,
-						 skey);
+	build_index_scankeys(riinfo, fpmeta, idx_rel, pk_vals, pk_nulls, skey);
 	found = ri_FastPathProbeOne(pk_rel, idx_rel, scandesc, slot,
 								snapshot, riinfo, skey, riinfo->nkeys);
 	SetUserIdAndSecContext(saved_userid, saved_sec_context);
