@@ -3329,6 +3329,10 @@ get_expression_sortgroupref(PlannerInfo *root, Expr *expr)
 			!bms_is_member(((Var *) expr)->varno, ge_info->ec->ec_relids))
 			continue;
 
+		/* The grouping operators can't be applied to a cross-type member */
+		if (exprType((Node *) expr) != exprType((Node *) ge_info->expr))
+			continue;
+
 		/*
 		 * Scan the EquivalenceClass, looking for a match to the given
 		 * expression.  We ignore child members here.
