@@ -1440,6 +1440,11 @@ explain (verbose, costs off)
 select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1)) q(a, b, c) on (ft4.c1 <= q.b);
 select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.c1) from ft1 right join ft2 on (ft1.c1 = ft2.c1)) q(a, b, c) on (ft4.c1 <= q.b);
 
+-- Eager aggregation: a partially grouped rel must not be joined remotely
+explain (verbose, costs off)
+select t1.c2, sum(t2.c1) from ft1 t1 inner join ft2 t2 on (t1.c2 = t2.c2) where t1.c1 < 20 group by t1.c2 order by 1;
+select t1.c2, sum(t2.c1) from ft1 t1 inner join ft2 t2 on (t1.c2 = t2.c2) where t1.c1 < 20 group by t1.c2 order by 1;
+
 
 -- Not supported cases
 -- Grouping sets

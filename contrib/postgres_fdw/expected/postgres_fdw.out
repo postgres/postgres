@@ -4632,6 +4632,32 @@ select sum(q.a), count(q.b) from ft4 left join (select 13, avg(ft1.c1), sum(ft2.
  650 |    50
 (1 row)
 
+-- Eager aggregation: a partially grouped rel must not be joined remotely
+explain (verbose, costs off)
+select t1.c2, sum(t2.c1) from ft1 t1 inner join ft2 t2 on (t1.c2 = t2.c2) where t1.c1 < 20 group by t1.c2 order by 1;
+                                                                                   QUERY PLAN                                                                                    
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: t1.c2, (sum(t2.c1))
+   Relations: Aggregate on ((public.ft1 t1) INNER JOIN (public.ft2 t2))
+   Remote SQL: SELECT r1.c2, sum(r2."C 1") FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r2.c2 = r1.c2)) AND ((r1."C 1" < 20)))) GROUP BY 1 ORDER BY r1.c2 ASC NULLS LAST
+(4 rows)
+
+select t1.c2, sum(t2.c1) from ft1 t1 inner join ft2 t2 on (t1.c2 = t2.c2) where t1.c1 < 20 group by t1.c2 order by 1;
+ c2 |  sum   
+----+--------
+  0 |  50500
+  1 |  99200
+  2 |  99400
+  3 |  99600
+  4 |  99800
+  5 | 100000
+  6 | 100200
+  7 | 100400
+  8 | 100600
+  9 | 100800
+(10 rows)
+
 -- Not supported cases
 -- Grouping sets
 explain (verbose, costs off)

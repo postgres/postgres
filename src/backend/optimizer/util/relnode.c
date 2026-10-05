@@ -532,6 +532,13 @@ build_grouped_rel(PlannerInfo *root, RelOptInfo *rel)
 	grouped_rel->consider_partitionwise_join = false;
 
 	/*
+	 * clear FDW info; FDWs don't know how to handle grouped relations
+	 */
+	grouped_rel->serverid = InvalidOid;
+	grouped_rel->fdwroutine = NULL;
+	grouped_rel->fdw_private = NULL;
+
+	/*
 	 * clear size estimates
 	 */
 	grouped_rel->rows = 0;
