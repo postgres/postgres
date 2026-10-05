@@ -1388,6 +1388,26 @@ SELECT ten FROM tenk1 dummy WHERE 1=2;
                      Output: t2.four
 (11 rows)
 
+-- Ensure EXPLAIN can show a dummy set operation whose output is coerced
+-- to another type by the parent set operation.
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two::numeric FROM tenk1 t1
+EXCEPT
+(SELECT four FROM tenk1 dummy WHERE 1=2
+ EXCEPT ALL
+ SELECT ten FROM tenk1 t2);
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ HashSetOp Except
+   Output: ((t1.two)::numeric)
+   ->  Seq Scan on public.tenk1 t1
+         Output: (t1.two)::numeric
+   ->  Result
+         Output: unnamed_subquery.four
+         Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1
+         One-Time Filter: false
+(8 rows)
+
 -- Test constraint exclusion of UNION ALL subqueries
 explain (costs off)
  SELECT * FROM

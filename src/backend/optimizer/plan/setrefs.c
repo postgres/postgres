@@ -155,6 +155,7 @@ static Plan *set_mergeappend_references(PlannerInfo *root,
 										int rtoffset);
 static void set_hash_references(PlannerInfo *root, Plan *plan, int rtoffset);
 static Relids offset_relid_set(Relids relids, int rtoffset);
+static Node *fix_dummy_setop_vars_mutator(Node *node, int *first_child_relid);
 static Node *fix_scan_expr(PlannerInfo *root, Node *node,
 						   int rtoffset, double num_exec);
 static Node *fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context);
@@ -1041,6 +1042,8 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					set_upper_references(root, plan, rtoffset);
 				else
 				{
+					int			first_child_relid;
+
 					/*
 					 * The tlist of a childless Result could contain
 					 * unresolved ROWID_VAR Vars, in case it's representing a
@@ -1054,33 +1057,35 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					 * shouldn't be seen by fix_scan_expr.
 					 *
 					 * We also must handle the case where set operations have
-					 * been short-circuited resulting in a dummy Result node.
-					 * prepunion.c uses varno==0 for the set op targetlist.
-					 * See generate_setop_tlist() and generate_setop_tlist().
-					 * Here we rewrite these to use varno==1, which is the
-					 * varno of the first set-op child.  Without this, EXPLAIN
+					 * been proven empty, resulting in a dummy Result node.
+					 * Because prepunion.c uses varno 0 for setop targetlists,
+					 * that's what we'll find here.  Replace such Vars with
+					 * Vars pointing at the Result's lowest-numbered replaced
+					 * rel, which will be its leftmost set-op child.  While we
+					 * can assume that ROWID_VARs are at top level, varno 0
+					 * Vars might be buried in coercion expressions, so that
+					 * needs a recursive traversal.  Without this, EXPLAIN
 					 * will have trouble displaying targetlists of dummy set
 					 * operations.
+					 *
+					 * Note that some Results have empty relids, leading to
+					 * first_child_relid being negative.  We assume such
+					 * Results can't contain any varno 0 Vars.
 					 */
+					first_child_relid = bms_next_member(splan->relids, -1);
 					foreach(l, splan->plan.targetlist)
 					{
 						TargetEntry *tle = (TargetEntry *) lfirst(l);
 						Var		   *var = (Var *) tle->expr;
 
-						if (var && IsA(var, Var))
-						{
-							if (var->varno == ROWID_VAR)
-								tle->expr = (Expr *) makeNullConst(var->vartype,
-																   var->vartypmod,
-																   var->varcollid);
-							else if (var->varno == 0)
-								tle->expr = (Expr *) makeVar(1,
-															 var->varattno,
-															 var->vartype,
-															 var->vartypmod,
-															 var->varcollid,
-															 var->varlevelsup);
-						}
+						if (var && IsA(var, Var) && var->varno == ROWID_VAR)
+							tle->expr = (Expr *) makeNullConst(var->vartype,
+															   var->vartypmod,
+															   var->varcollid);
+						else if (first_child_relid > 0)
+							tle->expr = (Expr *)
+								fix_dummy_setop_vars_mutator((Node *) tle->expr,
+															 &first_child_relid);
 					}
 
 					splan->plan.targetlist =
@@ -2244,6 +2249,32 @@ fix_alternative_subplan(PlannerInfo *root, AlternativeSubPlan *asplan,
 	root->isUsedSubplan[bestplan->plan_id - 1] = true;
 
 	return (Node *) bestplan;
+}
+
+/*
+ * fix_dummy_setop_vars_mutator
+ *		Change the varno 0 Vars made by prepunion.c to varno *first_child_relid.
+ */
+static Node *
+fix_dummy_setop_vars_mutator(Node *node, int *first_child_relid)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varno == 0)
+			return (Node *) makeVar(*first_child_relid,
+									var->varattno,
+									var->vartype,
+									var->vartypmod,
+									var->varcollid,
+									var->varlevelsup);
+		return node;
+	}
+	return expression_tree_mutator(node, fix_dummy_setop_vars_mutator,
+								   first_child_relid);
 }
 
 /*
