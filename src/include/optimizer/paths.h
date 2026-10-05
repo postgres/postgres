@@ -184,6 +184,9 @@ extern void add_child_join_rel_equivalences(PlannerInfo *root,
 											AppendRelInfo **appinfos,
 											RelOptInfo *parent_joinrel,
 											RelOptInfo *child_joinrel);
+extern void add_child_rel_pathkey_equivalences(PlannerInfo *root,
+											   RelOptInfo *child_rel,
+											   List *pathkeys);
 extern void add_setop_child_rel_equivalences(PlannerInfo *root,
 											 RelOptInfo *child_rel,
 											 List *child_tlist,

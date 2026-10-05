@@ -3044,6 +3044,84 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 }
 
 /*
+ * add_child_rel_pathkey_equivalences
+ *	  Make sure the ECs of the given pathkeys have members for child_rel.
+ *
+ * An EC created after its relations' children were processed has no child
+ * members, so child_rel could not be sorted by it.  Add them here.
+ */
+void
+add_child_rel_pathkey_equivalences(PlannerInfo *root, RelOptInfo *child_rel,
+								   List *pathkeys)
+{
+	Relids		top_parent_relids = child_rel->top_parent_relids;
+	MemoryContext oldcontext;
+	ListCell   *lc;
+
+	Assert(IS_OTHER_REL(child_rel));
+
+	/* As in add_child_join_rel_equivalences, new members must survive GEQO */
+	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
+
+	foreach(lc, pathkeys)
+	{
+		EquivalenceClass *ec = lfirst_node(PathKey, lc)->pk_eclass;
+
+		if (ec->ec_has_volatile)
+			continue;
+
+		foreach_node(EquivalenceMember, cur_em, ec->ec_members)
+		{
+			EquivalenceMemberIterator it;
+			EquivalenceMember *em;
+			Expr	   *child_expr;
+			Relids		new_relids;
+			int			child_relid;
+
+			/* Consider only members computable at the topmost parent */
+			if (cur_em->em_is_const ||
+				!bms_is_subset(cur_em->em_relids, top_parent_relids))
+				continue;
+
+			/* Skip members that already have a child version for this rel */
+			setup_eclass_member_iterator(&it, ec, child_rel->relids);
+			while ((em = eclass_member_iterator_next(&it)) != NULL)
+			{
+				if (em->em_parent == cur_em &&
+					bms_is_subset(em->em_relids, child_rel->relids))
+					break;
+			}
+			if (em != NULL)
+				continue;
+
+			new_relids = adjust_child_relids_multilevel(root,
+														cur_em->em_relids,
+														child_rel,
+														child_rel->top_parent);
+
+			/* Store the member under one of its child relations */
+			child_relid = bms_next_member(bms_difference(new_relids,
+														 top_parent_relids),
+										  -1);
+			if (child_relid < 0)
+				continue;
+
+			child_expr = (Expr *)
+				adjust_appendrel_attrs_multilevel(root,
+												  (Node *) cur_em->em_expr,
+												  child_rel,
+												  child_rel->top_parent);
+
+			add_child_eq_member(root, ec, -1, child_expr, new_relids,
+								cur_em->em_jdomain, cur_em,
+								cur_em->em_datatype, child_relid);
+		}
+	}
+
+	MemoryContextSwitchTo(oldcontext);
+}
+
+/*
  * add_setop_child_rel_equivalences
  *		Add equivalence members for each non-resjunk target in 'child_tlist'
  *		to the EquivalenceClass in the corresponding setop_pathkey's pk_eclass.

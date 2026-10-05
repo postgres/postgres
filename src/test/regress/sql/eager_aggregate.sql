@@ -324,6 +324,33 @@ SELECT t3.y, sum(t2.y + t3.y)
   JOIN eager_agg_tab1 t3 ON t2.x = t3.x
 GROUP BY t3.y ORDER BY t3.y;
 
+-- partial aggregation with an extra grouping key needed by a non-equality
+-- join clause
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.x, sum(t1.y)
+  FROM eager_agg_tab1 t1
+  JOIN eager_agg_tab1 t2 ON t1.x = t2.x AND t1.y < t2.y
+GROUP BY t1.x ORDER BY t1.x;
+
+SELECT t1.x, sum(t1.y)
+  FROM eager_agg_tab1 t1
+  JOIN eager_agg_tab1 t2 ON t1.x = t2.x AND t1.y < t2.y
+GROUP BY t1.x ORDER BY t1.x;
+
+-- same, with the extra grouping key nullable by an outer join below
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.x, sum(t2.y)
+  FROM eager_agg_tab1 t1
+  LEFT JOIN eager_agg_tab1 t2 ON t1.x = t2.x AND t1.y = t2.y
+  JOIN eager_agg_tab1 t3 ON t1.x = t3.x AND COALESCE(t2.y, 0) < t3.y
+GROUP BY t1.x ORDER BY t1.x;
+
+SELECT t1.x, sum(t2.y)
+  FROM eager_agg_tab1 t1
+  LEFT JOIN eager_agg_tab1 t2 ON t1.x = t2.x AND t1.y = t2.y
+  JOIN eager_agg_tab1 t3 ON t1.x = t3.x AND COALESCE(t2.y, 0) < t3.y
+GROUP BY t1.x ORDER BY t1.x;
+
 RESET enable_hashagg;
 RESET max_parallel_workers_per_gather;
 

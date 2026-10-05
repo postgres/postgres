@@ -3545,6 +3545,10 @@ generate_grouped_paths(PlannerInfo *root, RelOptInfo *grouped_rel,
 		group_pathkeys =
 			make_pathkeys_for_sortclauses(root, agg_info->group_clauses,
 										  top_group_tlist);
+
+		/* The ECs just made for extra grouping keys lack child members */
+		if (IS_OTHER_REL(rel))
+			add_child_rel_pathkey_equivalences(root, rel, group_pathkeys);
 	}
 
 	/*

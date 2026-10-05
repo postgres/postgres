@@ -1086,6 +1086,235 @@ GROUP BY t3.y ORDER BY t3.y;
  9 | 6890088
 (10 rows)
 
+-- partial aggregation with an extra grouping key needed by a non-equality
+-- join clause
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.x, sum(t1.y)
+  FROM eager_agg_tab1 t1
+  JOIN eager_agg_tab1 t2 ON t1.x = t2.x AND t1.y < t2.y
+GROUP BY t1.x ORDER BY t1.x;
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Merge Append
+   Sort Key: t1.x
+   ->  Finalize GroupAggregate
+         Output: t1.x, sum(t1.y)
+         Group Key: t1.x
+         ->  Merge Join
+               Output: t1.x, (PARTIAL sum(t1.y))
+               Merge Cond: (t1.x = t2.x)
+               Join Filter: (t1.y < t2.y)
+               ->  Partial GroupAggregate
+                     Output: t1.x, t1.y, PARTIAL sum(t1.y)
+                     Group Key: t1.x, t1.y
+                     ->  Sort
+                           Output: t1.x, t1.y
+                           Sort Key: t1.x, t1.y
+                           ->  Seq Scan on public.eager_agg_tab1_p1 t1
+                                 Output: t1.x, t1.y
+               ->  Sort
+                     Output: t2.x, t2.y
+                     Sort Key: t2.x
+                     ->  Seq Scan on public.eager_agg_tab1_p1 t2
+                           Output: t2.x, t2.y
+   ->  Finalize GroupAggregate
+         Output: t1_1.x, sum(t1_1.y)
+         Group Key: t1_1.x
+         ->  Merge Join
+               Output: t1_1.x, (PARTIAL sum(t1_1.y))
+               Merge Cond: (t1_1.x = t2_1.x)
+               Join Filter: (t1_1.y < t2_1.y)
+               ->  Partial GroupAggregate
+                     Output: t1_1.x, t1_1.y, PARTIAL sum(t1_1.y)
+                     Group Key: t1_1.x, t1_1.y
+                     ->  Sort
+                           Output: t1_1.x, t1_1.y
+                           Sort Key: t1_1.x, t1_1.y
+                           ->  Seq Scan on public.eager_agg_tab1_p2 t1_1
+                                 Output: t1_1.x, t1_1.y
+               ->  Sort
+                     Output: t2_1.x, t2_1.y
+                     Sort Key: t2_1.x
+                     ->  Seq Scan on public.eager_agg_tab1_p2 t2_1
+                           Output: t2_1.x, t2_1.y
+   ->  Finalize GroupAggregate
+         Output: t1_2.x, sum(t1_2.y)
+         Group Key: t1_2.x
+         ->  Merge Join
+               Output: t1_2.x, (PARTIAL sum(t1_2.y))
+               Merge Cond: (t1_2.x = t2_2.x)
+               Join Filter: (t1_2.y < t2_2.y)
+               ->  Partial GroupAggregate
+                     Output: t1_2.x, t1_2.y, PARTIAL sum(t1_2.y)
+                     Group Key: t1_2.x, t1_2.y
+                     ->  Sort
+                           Output: t1_2.x, t1_2.y
+                           Sort Key: t1_2.x, t1_2.y
+                           ->  Seq Scan on public.eager_agg_tab1_p3 t1_2
+                                 Output: t1_2.x, t1_2.y
+               ->  Sort
+                     Output: t2_2.x, t2_2.y
+                     Sort Key: t2_2.x
+                     ->  Seq Scan on public.eager_agg_tab1_p3 t2_2
+                           Output: t2_2.x, t2_2.y
+(62 rows)
+
+SELECT t1.x, sum(t1.y)
+  FROM eager_agg_tab1 t1
+  JOIN eager_agg_tab1 t2 ON t1.x = t2.x AND t1.y < t2.y
+GROUP BY t1.x ORDER BY t1.x;
+ x  | sum  
+----+------
+  0 |    0
+  1 | 1122
+  2 | 2244
+  3 | 3366
+  4 | 4488
+  5 |    0
+  6 | 1122
+  7 | 2244
+  8 | 3366
+  9 | 4488
+ 10 |    0
+ 11 | 1089
+ 12 | 2178
+ 13 | 3267
+ 14 | 4356
+(15 rows)
+
+-- same, with the extra grouping key nullable by an outer join below
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT t1.x, sum(t2.y)
+  FROM eager_agg_tab1 t1
+  LEFT JOIN eager_agg_tab1 t2 ON t1.x = t2.x AND t1.y = t2.y
+  JOIN eager_agg_tab1 t3 ON t1.x = t3.x AND COALESCE(t2.y, 0) < t3.y
+GROUP BY t1.x ORDER BY t1.x;
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: t1.x
+   ->  Finalize GroupAggregate
+         Output: t1.x, sum(t2.y)
+         Group Key: t1.x
+         ->  Merge Join
+               Output: t1.x, (PARTIAL sum(t2.y))
+               Merge Cond: (t1.x = t3.x)
+               Join Filter: (COALESCE(t2.y, 0) < t3.y)
+               ->  Partial GroupAggregate
+                     Output: t1.x, t2.y, PARTIAL sum(t2.y)
+                     Group Key: t1.x, t2.y
+                     ->  Incremental Sort
+                           Output: t1.x, t2.y
+                           Sort Key: t1.x, t2.y
+                           Presorted Key: t1.x
+                           ->  Merge Left Join
+                                 Output: t1.x, t2.y
+                                 Merge Cond: ((t1.x = t2.x) AND (t1.y = t2.y))
+                                 ->  Sort
+                                       Output: t1.x, t1.y
+                                       Sort Key: t1.x, t1.y
+                                       ->  Seq Scan on public.eager_agg_tab1_p1 t1
+                                             Output: t1.x, t1.y
+                                 ->  Sort
+                                       Output: t2.y, t2.x
+                                       Sort Key: t2.x, t2.y
+                                       ->  Seq Scan on public.eager_agg_tab1_p1 t2
+                                             Output: t2.y, t2.x
+               ->  Sort
+                     Output: t3.x, t3.y
+                     Sort Key: t3.x
+                     ->  Seq Scan on public.eager_agg_tab1_p1 t3
+                           Output: t3.x, t3.y
+   ->  Finalize GroupAggregate
+         Output: t1_1.x, sum(t2_1.y)
+         Group Key: t1_1.x
+         ->  Merge Join
+               Output: t1_1.x, (PARTIAL sum(t2_1.y))
+               Merge Cond: (t1_1.x = t3_1.x)
+               Join Filter: (COALESCE(t2_1.y, 0) < t3_1.y)
+               ->  Partial GroupAggregate
+                     Output: t1_1.x, t2_1.y, PARTIAL sum(t2_1.y)
+                     Group Key: t1_1.x, t2_1.y
+                     ->  Incremental Sort
+                           Output: t1_1.x, t2_1.y
+                           Sort Key: t1_1.x, t2_1.y
+                           Presorted Key: t1_1.x
+                           ->  Merge Left Join
+                                 Output: t1_1.x, t2_1.y
+                                 Merge Cond: ((t1_1.x = t2_1.x) AND (t1_1.y = t2_1.y))
+                                 ->  Sort
+                                       Output: t1_1.x, t1_1.y
+                                       Sort Key: t1_1.x, t1_1.y
+                                       ->  Seq Scan on public.eager_agg_tab1_p2 t1_1
+                                             Output: t1_1.x, t1_1.y
+                                 ->  Sort
+                                       Output: t2_1.y, t2_1.x
+                                       Sort Key: t2_1.x, t2_1.y
+                                       ->  Seq Scan on public.eager_agg_tab1_p2 t2_1
+                                             Output: t2_1.y, t2_1.x
+               ->  Sort
+                     Output: t3_1.x, t3_1.y
+                     Sort Key: t3_1.x
+                     ->  Seq Scan on public.eager_agg_tab1_p2 t3_1
+                           Output: t3_1.x, t3_1.y
+   ->  Finalize GroupAggregate
+         Output: t1_2.x, sum(t2_2.y)
+         Group Key: t1_2.x
+         ->  Merge Join
+               Output: t1_2.x, (PARTIAL sum(t2_2.y))
+               Merge Cond: (t1_2.x = t3_2.x)
+               Join Filter: (COALESCE(t2_2.y, 0) < t3_2.y)
+               ->  Partial GroupAggregate
+                     Output: t1_2.x, t2_2.y, PARTIAL sum(t2_2.y)
+                     Group Key: t1_2.x, t2_2.y
+                     ->  Incremental Sort
+                           Output: t1_2.x, t2_2.y
+                           Sort Key: t1_2.x, t2_2.y
+                           Presorted Key: t1_2.x
+                           ->  Merge Left Join
+                                 Output: t1_2.x, t2_2.y
+                                 Merge Cond: ((t1_2.x = t2_2.x) AND (t1_2.y = t2_2.y))
+                                 ->  Sort
+                                       Output: t1_2.x, t1_2.y
+                                       Sort Key: t1_2.x, t1_2.y
+                                       ->  Seq Scan on public.eager_agg_tab1_p3 t1_2
+                                             Output: t1_2.x, t1_2.y
+                                 ->  Sort
+                                       Output: t2_2.y, t2_2.x
+                                       Sort Key: t2_2.x, t2_2.y
+                                       ->  Seq Scan on public.eager_agg_tab1_p3 t2_2
+                                             Output: t2_2.y, t2_2.x
+               ->  Sort
+                     Output: t3_2.x, t3_2.y
+                     Sort Key: t3_2.x
+                     ->  Seq Scan on public.eager_agg_tab1_p3 t3_2
+                           Output: t3_2.x, t3_2.y
+(98 rows)
+
+SELECT t1.x, sum(t2.y)
+  FROM eager_agg_tab1 t1
+  LEFT JOIN eager_agg_tab1 t2 ON t1.x = t2.x AND t1.y = t2.y
+  JOIN eager_agg_tab1 t3 ON t1.x = t3.x AND COALESCE(t2.y, 0) < t3.y
+GROUP BY t1.x ORDER BY t1.x;
+ x  |  sum   
+----+--------
+  0 |      0
+  1 |  38148
+  2 |  76296
+  3 | 114444
+  4 | 152592
+  5 |      0
+  6 |  37026
+  7 |  74052
+  8 | 111078
+  9 | 148104
+ 10 |      0
+ 11 |  35937
+ 12 |  71874
+ 13 | 107811
+ 14 | 143748
+(15 rows)
+
 RESET enable_hashagg;
 RESET max_parallel_workers_per_gather;
 -- try that with GEQO too
