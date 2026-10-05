@@ -86,6 +86,7 @@ typedef struct PVSharedCostParams
 	int			cost_page_dirty;
 	int			cost_page_hit;
 	int			cost_page_miss;
+	bool		track_cost_delay_timing;
 } PVSharedCostParams;
 
 /*
@@ -644,6 +645,7 @@ parallel_vacuum_set_cost_parameters(PVSharedCostParams *params)
 	params->cost_page_dirty = VacuumCostPageDirty;
 	params->cost_page_hit = VacuumCostPageHit;
 	params->cost_page_miss = VacuumCostPageMiss;
+	params->track_cost_delay_timing = track_cost_delay_timing;
 }
 
 /*
@@ -676,6 +678,7 @@ parallel_vacuum_update_shared_delay_params(void)
 	VacuumCostPageDirty = pv_shared_cost_params->cost_page_dirty;
 	VacuumCostPageHit = pv_shared_cost_params->cost_page_hit;
 	VacuumCostPageMiss = pv_shared_cost_params->cost_page_miss;
+	track_cost_delay_timing = pv_shared_cost_params->track_cost_delay_timing;
 	SpinLockRelease(&pv_shared_cost_params->mutex);
 
 	VacuumUpdateCosts();
@@ -683,12 +686,13 @@ parallel_vacuum_update_shared_delay_params(void)
 	shared_params_generation_local = params_generation;
 
 	elog(DEBUG2,
-		 "parallel autovacuum worker updated cost params: cost_limit=%d, cost_delay=%g, cost_page_miss=%d, cost_page_dirty=%d, cost_page_hit=%d",
+		 "parallel autovacuum worker updated cost params: cost_limit=%d, cost_delay=%g, cost_page_miss=%d, cost_page_dirty=%d, cost_page_hit=%d, track_cost_delay_timing=%s",
 		 vacuum_cost_limit,
 		 vacuum_cost_delay,
 		 VacuumCostPageMiss,
 		 VacuumCostPageDirty,
-		 VacuumCostPageHit);
+		 VacuumCostPageHit,
+		 track_cost_delay_timing ? "yes" : "no");
 }
 
 /*
@@ -715,7 +719,8 @@ parallel_vacuum_propagate_shared_delay_params(void)
 		vacuum_cost_limit == pv_shared_cost_params->cost_limit &&
 		VacuumCostPageDirty == pv_shared_cost_params->cost_page_dirty &&
 		VacuumCostPageHit == pv_shared_cost_params->cost_page_hit &&
-		VacuumCostPageMiss == pv_shared_cost_params->cost_page_miss)
+		VacuumCostPageMiss == pv_shared_cost_params->cost_page_miss &&
+		track_cost_delay_timing == pv_shared_cost_params->track_cost_delay_timing)
 		return;
 
 	/* Update the shared delay parameters */
@@ -1388,7 +1393,7 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 						  &wal_usage[ParallelWorkerNumber]);
 
 	/* Report any remaining cost-based vacuum delay time */
-	if (track_cost_delay_timing)
+	if (parallel_vacuum_worker_delay_ns > 0)
 		pgstat_progress_parallel_incr_param(PROGRESS_VACUUM_DELAY_TIME,
 											parallel_vacuum_worker_delay_ns);
 
