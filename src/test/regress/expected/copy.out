@@ -117,6 +117,19 @@ copy (select * from copytest) to stdout (format json);
 {"style":"Unix","test":"abc\ndef","filler":2}
 {"style":"Mac","test":"abc\rdef","filler":3}
 {"style":"esc\\ape","test":"a\\r\\\r\\\n\\nb","filler":4}
+-- keys are the query's column names, also when a scan does not project
+copy (select a as x, b as y, c as z from copytest_order) to stdout (format json);
+{"x":1,"y":2,"z":3}
+create temp table copytest_order2 (c int, b int, a int);
+insert into copytest_order2 values (4, 5, 6);
+copy (select * from copytest_order union all select * from copytest_order2)
+  to stdout (format json);
+{"a":1,"b":2,"c":3}
+{"a":4,"b":5,"c":6}
+-- columns with missing values force a projection
+alter table copytest_order2 add column d int default 7;
+copy (select * from copytest_order2) to stdout (format json);
+{"c":4,"b":5,"a":6,"d":7}
 -- all of the following should yield error
 copy copytest to stdout (format json, delimiter '|');
 ERROR:  cannot specify DELIMITER in JSON mode

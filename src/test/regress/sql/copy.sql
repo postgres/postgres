@@ -101,6 +101,16 @@ copy copytest to stdout json;
 copy copytest to stdout (format json);
 copy (select * from copytest) to stdout (format json);
 
+-- keys are the query's column names, also when a scan does not project
+copy (select a as x, b as y, c as z from copytest_order) to stdout (format json);
+create temp table copytest_order2 (c int, b int, a int);
+insert into copytest_order2 values (4, 5, 6);
+copy (select * from copytest_order union all select * from copytest_order2)
+  to stdout (format json);
+-- columns with missing values force a projection
+alter table copytest_order2 add column d int default 7;
+copy (select * from copytest_order2) to stdout (format json);
+
 -- all of the following should yield error
 copy copytest to stdout (format json, delimiter '|');
 copy copytest to stdout (format json, null '\N');
