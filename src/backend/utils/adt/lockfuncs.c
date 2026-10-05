@@ -518,8 +518,14 @@ pg_blocking_pids(PG_FUNCTION_ARGS)
 			/* A proc never blocks itself, so ignore that entry */
 			if (instance == blocked_instance)
 				continue;
-			/* Members of same lock group never block each other, either */
-			if (instance->leaderPid == blocked_instance->leaderPid)
+
+			/*
+			 * Members of the same lock group don't block each other, either,
+			 * except on relation extension locks (see LockCheckConflicts()).
+			 */
+			if (instance->leaderPid == blocked_instance->leaderPid &&
+				blocked_instance->locktag.locktag_type !=
+				LOCKTAG_RELATION_EXTEND)
 				continue;
 
 			if (conflictMask & instance->holdMask)
