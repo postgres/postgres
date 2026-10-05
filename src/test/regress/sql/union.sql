@@ -523,13 +523,40 @@ EXCEPT ALL
 SELECT four FROM tenk1 WHERE 1=2
 ORDER BY 1;
 
--- Try a mixed setop case.  Ensure the right-hand UNION child gets removed.
+-- Try mixed setop cases.  Ensure the right-hand UNION child gets removed.
 EXPLAIN (COSTS OFF, VERBOSE)
 SELECT two FROM tenk1 t1
 EXCEPT
 SELECT four FROM tenk1 t2
 UNION
 SELECT ten FROM tenk1 dummy WHERE 1=2;
+
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 t1 WHERE two = 1
+INTERSECT ALL
+SELECT four FROM tenk1 t2 WHERE four = 1
+UNION
+SELECT ten FROM tenk1 dummy WHERE 1=2;
+
+-- As above, but with sorting: ensure we do not get confused by child pathkeys
+SET enable_hashagg = off;
+
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 t1 WHERE two = 1
+INTERSECT ALL
+SELECT four FROM tenk1 t2 WHERE four = 1
+UNION
+SELECT ten FROM tenk1 dummy WHERE 1=2;
+
+-- also check case where the upper op is EXCEPT
+EXPLAIN (COSTS OFF, VERBOSE)
+(SELECT two FROM tenk1 t1 WHERE two = 1
+ INTERSECT
+ SELECT four FROM tenk1 t2 WHERE four = 1)
+EXCEPT ALL
+SELECT ten FROM tenk1 dummy WHERE 1=2;
+
+RESET enable_hashagg;
 
 -- Ensure EXPLAIN can show a dummy set operation whose output is coerced
 -- to another type by the parent set operation.
