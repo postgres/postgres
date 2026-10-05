@@ -1999,6 +1999,7 @@ typedef struct TableFuncScanState
 	int64		ordinal;		/* row number to be output next */
 	MemoryContext perTableCxt;	/* per-table context */
 	Tuplestorestate *tupstore;	/* output tuple store */
+	bool		tupstore_filled;	/* tuplestore filled yet? */
 } TableFuncScanState;
 
 /* ----------------

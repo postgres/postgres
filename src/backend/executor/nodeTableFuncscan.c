@@ -59,11 +59,15 @@ TableFuncNext(TableFuncScanState *node)
 	scanslot = node->ss.ss_ScanTupleSlot;
 
 	/*
-	 * If first time through, read all tuples from function and put them in a
-	 * tuplestore. Subsequent calls just fetch tuples from tuplestore.
+	 * If first time through (or first since a parameter change), read all
+	 * tuples from function and put them in a tuplestore.  Subsequent calls
+	 * just fetch tuples from tuplestore.
 	 */
-	if (node->tupstore == NULL)
+	if (!node->tupstore_filled)
+	{
 		tfuncFetchRows(node, node->ss.ps.ps_ExprContext);
+		node->tupstore_filled = true;
+	}
 
 	/*
 	 * Get the next tuple from tuplestore.
@@ -172,6 +176,7 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 							  "TableFunc per value context",
 							  ALLOCSET_DEFAULT_SIZES);
 	scanstate->opaque = NULL;	/* initialized at runtime */
+	scanstate->tupstore_filled = false;
 
 	scanstate->ns_names = tf->ns_names;
 
@@ -244,18 +249,17 @@ ExecReScanTableFuncScan(TableFuncScanState *node)
 	ExecScanReScan(&node->ss);
 
 	/*
-	 * Recompute when parameters are changed.
+	 * Recompute when parameters are changed.  It's important to use
+	 * tuplestore_clear() rather than tuplestore_end() here so that we keep
+	 * track of the maximum storage used by all rescans.
 	 */
 	if (chgparam)
 	{
 		if (node->tupstore != NULL)
-		{
-			tuplestore_end(node->tupstore);
-			node->tupstore = NULL;
-		}
+			tuplestore_clear(node->tupstore);
+		node->tupstore_filled = false;
 	}
-
-	if (node->tupstore != NULL)
+	else if (node->tupstore != NULL)
 		tuplestore_rescan(node->tupstore);
 }
 
@@ -275,9 +279,10 @@ tfuncFetchRows(TableFuncScanState *tstate, ExprContext *econtext)
 
 	Assert(tstate->opaque == NULL);
 
-	/* build tuplestore for the result */
+	/* build tuplestore for the result, unless we have one from a prior scan */
 	oldcxt = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-	tstate->tupstore = tuplestore_begin_heap(false, false, work_mem);
+	if (tstate->tupstore == NULL)
+		tstate->tupstore = tuplestore_begin_heap(false, false, work_mem);
 
 	/*
 	 * Each call to fetch a new set of rows - of which there may be very many
