@@ -2191,6 +2191,8 @@ bt_child_highkey_check(BtreeCheckState *state,
 	/* Move to the right on the child level */
 	while (true)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		/*
 		 * Did we traverse the whole tree level and this is check for pages to
 		 * the right of rightmost downlink?
