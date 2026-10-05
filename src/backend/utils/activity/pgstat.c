@@ -1745,8 +1745,6 @@ pgstat_write_statsfile(void)
 		PgStatShared_Common *shstats;
 		const PgStat_KindInfo *kind_info = NULL;
 
-		CHECK_FOR_INTERRUPTS();
-
 		/*
 		 * We should not see any "dropped" entries when writing the stats
 		 * file, as all backends and auxiliary processes should have cleaned
