@@ -26,6 +26,32 @@ test_install_data += files(
   'injection_points--1.0.sql',
 )
 
+injection_points_isolation = [
+  'basic',
+  'inplace',
+  'reindex_concurrently_deferred',
+  'repack',
+  'repack_commit_race',
+  'repack_decode',
+  'repack_dropped',
+  'repack_missingval',
+  'repack_temporal',
+  'repack_temporal_multirange',
+  'repack_toast',
+  'ri_fastpath_reindex',
+  'ri_fastpath_snapshot',
+  'syscache-update-pruned',
+  'heap_lock_update',
+  'on_conflict_probe_window',
+]
+
+# wait_cleanup terminates another backend, whose FATAL message can be lost
+# on Windows, making the test unstable there.
+# See https://postgr.es/m/088AB35D-0860-494A-A9CF-8B301543AA51@yandex-team.ru
+if host_system != 'windows'
+  injection_points_isolation += 'wait_cleanup'
+endif
+
 tests += {
   'name': 'injection_points',
   'sd': meson.current_source_dir(),
@@ -42,25 +68,7 @@ tests += {
     'runningcheck': false,
   },
   'isolation': {
-    'specs': [
-      'basic',
-      'inplace',
-      'reindex_concurrently_deferred',
-      'repack',
-      'repack_commit_race',
-      'repack_decode',
-      'repack_dropped',
-      'repack_missingval',
-      'repack_temporal',
-      'repack_temporal_multirange',
-      'repack_toast',
-      'ri_fastpath_reindex',
-      'ri_fastpath_snapshot',
-      'syscache-update-pruned',
-      'wait_cleanup',
-      'heap_lock_update',
-      'on_conflict_probe_window',
-    ],
+    'specs': injection_points_isolation,
     'runningcheck': false, # see syscache-update-pruned
     # Some tests wait for all snapshots, so avoid parallel execution
     'runningcheck-parallel': false,

@@ -6,9 +6,15 @@ PGFILEDESC = "test_decoding - example of a logical decoding output plugin"
 REGRESS = ddl xact rewrite toast permissions decoding_in_xact \
 	decoding_into_rel binary prepared replorigin time messages \
 	repack spill slot truncate stream stats twophase twophase_stream
+
+# slot_creation_error terminates another backend, whose FATAL message can be
+# lost on Windows, making the test unstable there.
+# See https://postgr.es/m/088AB35D-0860-494A-A9CF-8B301543AA51@yandex-team.ru
+SLOT_CREATION_TST = $(if $(filter win32,$(PORTNAME)),,slot_creation_error)
+
 ISOLATION = mxact delayed_startup ondisk_startup concurrent_ddl_dml \
 	oldest_xmin snapshot_transfer subxact_without_top concurrent_stream \
-	twophase_snapshot slot_creation_error catalog_change_snapshot \
+	twophase_snapshot $(SLOT_CREATION_TST) catalog_change_snapshot \
 	skip_snapshot_restore invalidation_distribution parallel_session_origin
 
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf
