@@ -247,9 +247,10 @@ makepol(QPRS_STATE *state)
 				}
 				else
 				{
-					if (lenstack == STACKDEPTH)
-						/* internal error */
-						elog(ERROR, "stack too short");
+					if (lenstack >= STACKDEPTH)
+						ereturn(state->escontext, ERR,
+								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+								 errmsg("ltxtquery is too complex")));
 					stack[lenstack] = val;
 					lenstack++;
 				}
@@ -282,7 +283,6 @@ makepol(QPRS_STATE *state)
 				ereturn(state->escontext, ERR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error")));
-
 		}
 	}
 	while (lenstack)
