@@ -948,7 +948,7 @@ decide_file_actions(XLogSegNo last_common_segno)
 		filemap->entries[i++] = entry;
 	}
 
-	qsort(&filemap->entries, filemap->nentries, sizeof(file_entry_t *),
+	qsort(filemap->entries, filemap->nentries, sizeof(file_entry_t *),
 		  final_filemap_cmp);
 
 	return filemap;

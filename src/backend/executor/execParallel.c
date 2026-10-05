@@ -1126,7 +1126,7 @@ ExecParallelRetrieveInstrumentation(PlanState *planstate,
 	MemoryContextSwitchTo(oldcontext);
 
 	planstate->worker_instrument->num_workers = instrumentation->num_workers;
-	memcpy(&planstate->worker_instrument->instrument, instrument, ibytes);
+	memcpy(planstate->worker_instrument->instrument, instrument, ibytes);
 
 	/* Perform any node-type-specific work that needs to be done. */
 	switch (nodeTag(planstate))
