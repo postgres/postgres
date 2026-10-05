@@ -633,10 +633,14 @@ typedef struct OperatorElement
 } OperatorElement;
 
 static void
-pushOpStack(OperatorElement *stack, int *lenstack, int8 op, int16 distance)
+pushOpStack(TSQueryParserState state,
+			OperatorElement *stack, int *lenstack,
+			int8 op, int16 distance)
 {
-	if (*lenstack == STACKDEPTH)	/* internal error */
-		elog(ERROR, "tsquery stack too small");
+	if (*lenstack >= STACKDEPTH)
+		ereturn(state->escontext,,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("tsquery is too complex")));
 
 	stack[*lenstack].op = op;
 	stack[*lenstack].distance = distance;
@@ -696,7 +700,7 @@ makepol(TSQueryParserState state,
 				break;
 			case PT_OPR:
 				cleanOpStack(state, opstack, &lenstack, operator);
-				pushOpStack(opstack, &lenstack, operator, weight);
+				pushOpStack(state, opstack, &lenstack, operator, weight);
 				break;
 			case PT_OPEN:
 				makepol(state, pushval, opaque);
@@ -714,7 +718,7 @@ makepol(TSQueryParserState state,
 									state->buffer)));
 				return;
 		}
-		/* detect soft error in pushval or recursion */
+		/* detect soft error in pushval, pushOpStack, or recursion */
 		if (SOFT_ERROR_OCCURRED(state->escontext))
 			return;
 	}
