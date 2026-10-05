@@ -3965,6 +3965,32 @@ select * from
   int8_tbl a left join
   lateral (select *, coalesce(a.q2, 42) as x from int8_tbl b) ss on a.q2 = ss.q1;
 
+-- check EC-derived clauses for a UNION ALL member with nullable lateral refs
+explain (costs off)
+select * from
+  int8_tbl x left join int8_tbl y on x.q2 = y.q1,
+  lateral (select x.q1 as v union all select x.q1 + y.q2) ss
+where x.q2 = ss.v;
+select * from
+  int8_tbl x left join int8_tbl y on x.q2 = y.q1,
+  lateral (select x.q1 as v union all select x.q1 + y.q2) ss
+where x.q2 = ss.v;
+
+-- likewise when the member is scanned below the outer join nulling those refs
+explain (costs off)
+select * from
+  int8_tbl x left join int8_tbl y on true
+  left join (int8_tbl z join
+             lateral (select z.q1 as v union all select y.q1 + z.q1) ss
+             on z.q2 = ss.v)
+    on y.q1 = 1;
+select * from
+  int8_tbl x left join int8_tbl y on true
+  left join (int8_tbl z join
+             lateral (select z.q1 as v union all select y.q1 + z.q1) ss
+             on z.q2 = ss.v)
+    on y.q1 = 1;
+
 -- lateral can result in join conditions appearing below their
 -- real semantic level
 explain (verbose, costs off)

@@ -10342,6 +10342,98 @@ select * from
  4567890123456789 | -4567890123456789 |                  |                   |                 
 (10 rows)
 
+-- check EC-derived clauses for a UNION ALL member with nullable lateral refs
+explain (costs off)
+select * from
+  int8_tbl x left join int8_tbl y on x.q2 = y.q1,
+  lateral (select x.q1 as v union all select x.q1 + y.q2) ss
+where x.q2 = ss.v;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Nested Loop
+   ->  Hash Left Join
+         Hash Cond: (x.q2 = y.q1)
+         ->  Seq Scan on int8_tbl x
+         ->  Hash
+               ->  Seq Scan on int8_tbl y
+   ->  Append
+         ->  Result
+               One-Time Filter: (x.q2 = x.q1)
+         ->  Result
+               One-Time Filter: (x.q2 = (x.q1 + y.q2))
+(11 rows)
+
+select * from
+  int8_tbl x left join int8_tbl y on x.q2 = y.q1,
+  lateral (select x.q1 as v union all select x.q1 + y.q2) ss
+where x.q2 = ss.v;
+        q1        |        q2        |        q1        |        q2         |        v         
+------------------+------------------+------------------+-------------------+------------------
+ 4567890123456789 | 4567890123456789 | 4567890123456789 | -4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789 | 4567890123456789 |  4567890123456789 | 4567890123456789
+ 4567890123456789 | 4567890123456789 | 4567890123456789 |               123 | 4567890123456789
+(3 rows)
+
+-- likewise when the member is scanned below the outer join nulling those refs
+explain (costs off)
+select * from
+  int8_tbl x left join int8_tbl y on true
+  left join (int8_tbl z join
+             lateral (select z.q1 as v union all select y.q1 + z.q1) ss
+             on z.q2 = ss.v)
+    on y.q1 = 1;
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on int8_tbl x
+   ->  Materialize
+         ->  Nested Loop Left Join
+               Join Filter: (y.q1 = 1)
+               ->  Seq Scan on int8_tbl y
+               ->  Nested Loop
+                     ->  Seq Scan on int8_tbl z
+                     ->  Append
+                           ->  Result
+                                 One-Time Filter: (z.q2 = z.q1)
+                           ->  Result
+                                 One-Time Filter: (z.q2 = (y.q1 + z.q1))
+(13 rows)
+
+select * from
+  int8_tbl x left join int8_tbl y on true
+  left join (int8_tbl z join
+             lateral (select z.q1 as v union all select y.q1 + z.q1) ss
+             on z.q2 = ss.v)
+    on y.q1 = 1;
+        q1        |        q2         |        q1        |        q2         | q1 | q2 | v 
+------------------+-------------------+------------------+-------------------+----+----+---
+              123 |               456 |              123 |               456 |    |    |  
+              123 |               456 |              123 |  4567890123456789 |    |    |  
+              123 |               456 | 4567890123456789 |               123 |    |    |  
+              123 |               456 | 4567890123456789 |  4567890123456789 |    |    |  
+              123 |               456 | 4567890123456789 | -4567890123456789 |    |    |  
+              123 |  4567890123456789 |              123 |               456 |    |    |  
+              123 |  4567890123456789 |              123 |  4567890123456789 |    |    |  
+              123 |  4567890123456789 | 4567890123456789 |               123 |    |    |  
+              123 |  4567890123456789 | 4567890123456789 |  4567890123456789 |    |    |  
+              123 |  4567890123456789 | 4567890123456789 | -4567890123456789 |    |    |  
+ 4567890123456789 |               123 |              123 |               456 |    |    |  
+ 4567890123456789 |               123 |              123 |  4567890123456789 |    |    |  
+ 4567890123456789 |               123 | 4567890123456789 |               123 |    |    |  
+ 4567890123456789 |               123 | 4567890123456789 |  4567890123456789 |    |    |  
+ 4567890123456789 |               123 | 4567890123456789 | -4567890123456789 |    |    |  
+ 4567890123456789 |  4567890123456789 |              123 |               456 |    |    |  
+ 4567890123456789 |  4567890123456789 |              123 |  4567890123456789 |    |    |  
+ 4567890123456789 |  4567890123456789 | 4567890123456789 |               123 |    |    |  
+ 4567890123456789 |  4567890123456789 | 4567890123456789 |  4567890123456789 |    |    |  
+ 4567890123456789 |  4567890123456789 | 4567890123456789 | -4567890123456789 |    |    |  
+ 4567890123456789 | -4567890123456789 |              123 |               456 |    |    |  
+ 4567890123456789 | -4567890123456789 |              123 |  4567890123456789 |    |    |  
+ 4567890123456789 | -4567890123456789 | 4567890123456789 |               123 |    |    |  
+ 4567890123456789 | -4567890123456789 | 4567890123456789 |  4567890123456789 |    |    |  
+ 4567890123456789 | -4567890123456789 | 4567890123456789 | -4567890123456789 |    |    |  
+(25 rows)
+
 -- lateral can result in join conditions appearing below their
 -- real semantic level
 explain (verbose, costs off)
