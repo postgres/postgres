@@ -260,6 +260,19 @@ $cmdret = $primary->psql(
 	stderr => \$stderr);
 is($cmdret, 3, "psql fails correctly");
 like($stderr, qr/backup label too long/, "pg_backup_start fails gracefully");
+
+# Newlines and carriage returns are not allowed in backup labels
+foreach my $label ("E'one\\nbackup'", "E'one\\rbackup'")
+{
+	$primary->psql(
+		'postgres',
+		"SELECT pg_backup_start($label)",
+		stderr => \$stderr);
+	like(
+		$stderr,
+		qr/backup label contains a newline or carriage return character/,
+		"pg_backup_start rejects label $label");
+}
 $primary->safe_psql('postgres',
 	"SELECT pg_backup_start('onebackup'); SELECT pg_backup_stop();");
 $primary->safe_psql('postgres', "SELECT pg_backup_start('twobackup')");

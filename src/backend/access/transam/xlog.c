@@ -9995,6 +9995,11 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 				 errmsg("backup label too long (max %d bytes)",
 						MAXPGPATH)));
 
+	if (strpbrk(backupidstr, "\n\r"))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("backup label contains a newline or carriage return character")));
+
 	strlcpy(state->name, backupidstr, sizeof(state->name));
 
 	/*
