@@ -203,6 +203,29 @@ SELECT t2.b, count(*)
   WHERE EXISTS (SELECT 1 FROM eager_agg_t1 t1 WHERE t1.b = t2.b)
 GROUP BY t2.b ORDER BY t2.b;
 
+-- Ensure a join key of a different type than the grouping key is not grouped
+-- using the grouping key's operators
+CREATE TABLE eager_agg_s1 (a int2);
+CREATE TABLE eager_agg_s2 (b int4, c double precision);
+INSERT INTO eager_agg_s1 VALUES (5);
+INSERT INTO eager_agg_s2 SELECT 5, 1 FROM generate_series(1, 100);
+INSERT INTO eager_agg_s2 SELECT 65541, 1 FROM generate_series(1, 100);
+ANALYZE eager_agg_s1, eager_agg_s2;
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT s1.a, sum(s2.c)
+  FROM eager_agg_s1 s1
+  JOIN eager_agg_s2 s2 ON s1.a = s2.b
+GROUP BY s1.a;
+
+SELECT s1.a, sum(s2.c)
+  FROM eager_agg_s1 s1
+  JOIN eager_agg_s2 s2 ON s1.a = s2.b
+GROUP BY s1.a;
+
+DROP TABLE eager_agg_s1;
+DROP TABLE eager_agg_s2;
+
 DROP TABLE eager_agg_t1;
 DROP TABLE eager_agg_t2;
 DROP TABLE eager_agg_t3;
