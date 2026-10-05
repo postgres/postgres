@@ -22,6 +22,9 @@ $node_primary->append_conf(
 allow_in_place_tablespaces = on
 log_temp_files = 0
 
+# The test must control when pruning WAL is generated.
+autovacuum = off
+
 # for deadlock test
 max_prepared_transactions = 10
 
