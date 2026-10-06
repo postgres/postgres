@@ -58,6 +58,86 @@ $ssl_server->switch_server_cert($node, certfile => 'server-cn-only');
 my $connstr =
   "user=ssltestuser dbname=trustdb hostaddr=$SERVERHOSTADDR sslsni=1";
 
+# Enable SNI with an encrypted host key and a per-host passphrase command.
+{
+	$ssl_server->switch_server_cert(
+		$node,
+		certfile => 'server-ip-cn-only',
+		passphrase_cmd => '');
+	my $verify_connstr =
+	  "$connstr sslmode=verify-full sslrootcert=ssl/root+server_ca.crt sslcert=invalid sslkey=invalid sslcrl=invalid sslcrldir=invalid";
+	$node->connect_ok(
+		"$verify_connstr host=192.0.2.1 sslsni=0",
+		'global certificate before enabling SNI');
+	$node->append_conf('pg_hosts.conf',
+		'common-name.pg-ssltest.test server-cn-only.crt server-password.key root+client_ca.crt "echo secret1" on'
+	);
+	$node->append_conf('postgresql.conf', 'ssl_sni = on');
+	my $log_offset = -s $node->logfile;
+	$node->reload;
+	$node->wait_for_log(qr/reloading configuration files/, $log_offset);
+	$node->connect_ok(
+		"$verify_connstr host=common-name.pg-ssltest.test",
+		'reload enables SNI with the per-host passphrase command');
+
+	ok(unlink($node->data_dir . '/pg_hosts.conf'));
+	$node->append_conf('pg_hosts.conf', '');
+	$node->append_conf('postgresql.conf', 'ssl_sni = off');
+	$ssl_server->switch_server_cert($node, certfile => 'server-cn-only');
+}
+
+# Check certificate selection after a failed reload and a successful retry.
+SKIP:
+{
+	skip 'SSL context retention requires forked backends', 11
+	  if $exec_backend =~ /on/;
+
+	my $verify_connstr =
+	  "$connstr sslmode=verify-full sslrootcert=ssl/root+server_ca.crt sslcert=invalid sslkey=invalid sslcrl=invalid sslcrldir=invalid";
+	$node->append_conf(
+		'pg_hosts.conf', qq{
+* server-ip-cn-only.crt server-ip-cn-only.key
+common-name.pg-ssltest.test server-cn-only.crt server-cn-only.key
+});
+	$node->append_conf('postgresql.conf', 'ssl_sni = on');
+	my $log_offset = -s $node->logfile;
+	$node->reload;
+	$node->wait_for_log(qr/reloading configuration files/, $log_offset);
+	$node->connect_ok(
+		"$verify_connstr host=common-name.pg-ssltest.test",
+		'loaded SNI mode selects the named host certificate');
+
+	$node->append_conf('postgresql.conf', 'ssl_sni = off');
+	$node->append_conf('sslconfig.conf',
+		"ssl_cert_file = 'missing-server.crt'");
+	$log_offset = -s $node->logfile;
+	$node->reload;
+	$node->wait_for_log(qr/SSL configuration was not reloaded/, $log_offset);
+	$node->connect_ok(
+		"$verify_connstr host=common-name.pg-ssltest.test",
+		'failed reload retains the named host certificate with a default host configured'
+	);
+
+	$ssl_server->switch_server_cert(
+		$node,
+		certfile => 'server-ip-cn-only',
+		restart => 'no');
+	$log_offset = -s $node->logfile;
+	$node->reload;
+	$node->wait_for_log(qr/reloading configuration files/, $log_offset);
+	$node->connect_fails(
+		"$verify_connstr host=common-name.pg-ssltest.test",
+		'successful retry disables SNI host selection',
+		expected_stderr =>
+		  qr/server certificate for "192\.0\.2\.1" does not match host name/);
+	$node->connect_ok("$verify_connstr host=192.0.2.1 sslsni=0",
+		'successful retry serves the configured certificate');
+
+	ok(unlink($node->data_dir . '/pg_hosts.conf'));
+	$node->append_conf('pg_hosts.conf', '');
+	$ssl_server->switch_server_cert($node, certfile => 'server-cn-only');
+}
+
 ##############################################################################
 # postgresql.conf
 ##############################################################################
@@ -263,6 +343,81 @@ $node->connect_fails(
 	"pg_hosts.conf: connect to 'example' with sslmode=require",
 	expected_stderr => qr/unrecognized name/);
 
+# Turn off SNI while the postgresql.conf configuration cannot be loaded, such
+# that the reload fails to replace the SSL configuration.  The pg_hosts.conf
+# configuration without a default host must remain in effect, ssl_sni will be
+# set to 'off' but the previous config - including ssl_sni setting - is what
+# will be used.
+my $bsession = $node->background_psql('trustdb',
+	connstr =>
+	  "$connstr host=example.org sslrootcert=ssl/root_ca.crt sslmode=verify-ca"
+);
+$result = $bsession->query_safe('SHOW ssl_sni');
+is($result, 'on', 'SNI is enabled in active config for background session');
+
+$node->append_conf(
+	'postgresql.conf', qq{
+ssl_sni = off
+ssl_cert_file = 'nonexistent.crt'
+});
+my $node_loglocation = -s $node->logfile;
+$node->reload;
+
+$node->wait_for_log(qr/SSL configuration was not reloaded/,
+	$node_loglocation);
+$node->log_check('SSL reload triggered WARNING on ssl_sni state',
+	$node_loglocation, log_like => [qr/SNI remains on/]);
+
+$result = $bsession->query_safe('SHOW ssl_sni');
+is($result, 'off', 'SNI is reported as off in background session');
+$bsession->quit;
+$node_loglocation = -s $node->logfile;
+
+# EXEC_BACKEND backends load the SSL configuration on each connection instead
+# of reusing the contexts in the postmaster
+SKIP:
+{
+	skip 'SSL config reload is per connection in EXEC_BACKEND', 4
+	  if ($windows_os || $exec_backend =~ /on/);
+
+	my ($rc, $stdout, $stderr) = $node->psql(
+		'trustdb',
+		qq[SHOW ssl_sni;],
+		connstr =>
+		  "$connstr sslrootcert=ssl/root+server_ca.crt sslmode=require host=example.org"
+	);
+	is($rc, 0,
+		"pg_hosts.conf: connect to example.org after failed reload with ssl_sni off"
+	);
+	is($stdout, 'off', 'ssl_sni is set to off in a new connection');
+
+	$node->connect_fails(
+		"$connstr sslrootcert=ssl/root+server_ca.crt sslmode=require sslsni=0",
+		"pg_hosts.conf: connect to default after failed reload with ssl_sni off",
+		expected_stderr => qr/handshake failure/);
+}
+
+# Specifically test EXEC_BACKEND where a failed reload by definition cannot
+# retain the previous configuration.  Here the server should not accept any
+# connections.
+SKIP:
+{
+	skip 'Only testing EXEC_BACKEND behavior', 2 if ($exec_backend !~ /on/);
+	$node->connect_fails(
+		"$connstr sslrootcert=ssl/root+server_ca.crt sslmode=require sslsni=0",
+		"pg_hosts.conf: connect to default after failed reload with ssl_sni off",
+		expected_stderr => qr/server does not support SSL/);
+}
+
+# Reset configuration for the next test
+$node->append_conf(
+	'postgresql.conf', qq{
+ssl_sni = on
+ssl_cert_file = ''
+});
+$node_loglocation = -s $node->logfile;
+$node->reload;
+
 # Reconfigure with broken configuration for the key passphrase, the server
 # should not start up
 ok(unlink($node->data_dir . '/pg_hosts.conf'));
@@ -309,7 +464,7 @@ ok(unlink($node->data_dir . '/pg_hosts.conf'));
 $node->append_conf('pg_hosts.conf',
 	'localhost server-cn-only.crt server-password.key root+client_ca.crt "echo secret1" off'
 );
-my $node_loglocation = -s $node->logfile;
+$node_loglocation = -s $node->logfile;
 $result = $node->restart(fail_ok => 1);
 is($result, 1,
 	'pg_hosts.conf: restart succeeds with password-protected key when using the correct passphrase command'
