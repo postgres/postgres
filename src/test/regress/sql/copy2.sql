@@ -195,6 +195,12 @@ COPY x from stdin WHERE a > 60003;
 60005	26	36	46	56
 \.
 
+COPY x from stdin WHERE NOT (a < 70003);
+70001	22	32	42	52
+70002	23	33	43	53
+70003	24	34	44	54
+\.
+
 COPY x from stdin WHERE f > 60003;
 \.
 
