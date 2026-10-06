@@ -50,6 +50,7 @@ typedef struct process_sublinks_context
 {
 	PlannerInfo *root;
 	bool		isTopQual;
+	bool		skipPHVs;		/* don't descend into PlaceHolderVars? */
 } process_sublinks_context;
 
 typedef struct finalize_primnode_context
@@ -376,12 +377,20 @@ build_subplan(PlannerInfo *root, Plan *plan, Path *path,
 		 * comments for SS_replace_correlation_vars).  Do that now.  A
 		 * PlaceHolderVar needs no such treatment: subquery_planner already
 		 * preprocessed the PHVs of its owning level, so its expression is
-		 * fully processed and may already contain SubPlans.
+		 * fully processed and may already contain SubPlans.  The same goes
+		 * for any PlaceHolderVars within the arguments, so skip those.
 		 */
 		if (IsA(arg, Aggref) ||
 			IsA(arg, GroupingFunc) ||
 			IsA(arg, ReturningExpr))
-			arg = SS_process_sublinks(root, arg, false);
+		{
+			process_sublinks_context context;
+
+			context.root = root;
+			context.isTopQual = false;
+			context.skipPHVs = true;
+			arg = process_sublinks_mutator(arg, &context);
+		}
 
 		splan->parParam = lappend_int(splan->parParam, pitem->paramId);
 		splan->args = lappend(splan->args, arg);
@@ -2217,6 +2226,7 @@ SS_process_sublinks(PlannerInfo *root, Node *expr, bool isQual)
 
 	context.root = root;
 	context.isTopQual = isQual;
+	context.skipPHVs = false;
 	return process_sublinks_mutator(expr, &context);
 }
 
@@ -2226,6 +2236,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	process_sublinks_context locContext;
 
 	locContext.root = context->root;
+	locContext.skipPHVs = context->skipPHVs;
 
 	if (node == NULL)
 		return NULL;
@@ -2259,10 +2270,11 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	 * ReturningExpr they'll be handled when build_subplan collects it into
 	 * the arguments to be passed down to the current subplan, while an outer
 	 * PHV's expression has already been preprocessed by its owning level.
+	 * That also holds for a PHV within such an argument (skipPHVs).
 	 */
 	if (IsA(node, PlaceHolderVar))
 	{
-		if (((PlaceHolderVar *) node)->phlevelsup > 0)
+		if (((PlaceHolderVar *) node)->phlevelsup > 0 || context->skipPHVs)
 			return node;
 	}
 	else if (IsA(node, Aggref))

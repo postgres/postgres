@@ -6657,6 +6657,31 @@ from (select case when false then remov.id else (select i41.f1) end as c1
            Output: ((SubPlan expr_1))
 (14 rows)
 
+-- likewise, where the pushed-down PHV sits within an outer-level aggregate
+explain (verbose, costs off)
+select (select sum(ss1.c1) from int4_tbl i43) as c2
+from (select (select i41.f1) as c1 from int4_tbl i41) ss1
+     right join int4_tbl i42 on true;
+                    QUERY PLAN                     
+---------------------------------------------------
+ Aggregate
+   Output: (SubPlan expr_2)
+   ->  Nested Loop Left Join
+         Output: ((SubPlan expr_1))
+         ->  Seq Scan on public.int4_tbl i42
+               Output: i42.f1
+         ->  Materialize
+               Output: ((SubPlan expr_1))
+               ->  Seq Scan on public.int4_tbl i41
+                     Output: (SubPlan expr_1)
+                     SubPlan expr_1
+                       ->  Result
+                             Output: i41.f1
+   SubPlan expr_2
+     ->  Seq Scan on public.int4_tbl i43
+           Output: sum(((SubPlan expr_1)))
+(16 rows)
+
 -- likewise, where the pushed-down PHV's expression contains another PHV of
 -- the same level, which must not be preprocessed separately from its parent
 explain (verbose, costs off)
