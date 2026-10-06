@@ -2746,6 +2746,12 @@ from (select case when false then remov.id else (select i41.f1) end as c1
       from int4_tbl i41 left join a remov on i41.f1 = remov.id) ss1
      right join int4_tbl i42 on true;
 
+-- likewise, where the pushed-down PHV sits within an outer-level aggregate
+explain (verbose, costs off)
+select (select sum(ss1.c1) from int4_tbl i43) as c2
+from (select (select i41.f1) as c1 from int4_tbl i41) ss1
+     right join int4_tbl i42 on true;
+
 -- likewise, where the pushed-down PHV's expression contains another PHV of
 -- the same level, which must not be preprocessed separately from its parent
 explain (verbose, costs off)
