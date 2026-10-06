@@ -1046,6 +1046,31 @@ ERROR:  column "test2" of relation "atacc1" contains null values
 -- now add a primary key column with a default (succeeds).
 alter table atacc1 add column test2 int default 0 primary key;
 drop table atacc1;
+-- Replacing a NOT NULL column must create a new constraint for the primary key.
+create table atacc1 (id int not null);
+alter table atacc1 drop column id, add column id int, add primary key (id);
+drop table atacc1;
+-- A NOT NULL constraint dropped in the same ALTER TABLE must be replaced.
+create table atacc1 (id int not null);
+alter table atacc1 alter column id drop not null, add primary key (id);
+drop table atacc1;
+create table atacc1 (id int constraint atacc1_id_nn not null);
+alter table atacc1 drop constraint atacc1_id_nn, add primary key (id);
+drop table atacc1;
+-- ADD PRIMARY KEY must prefer an explicitly named replacement NOT NULL.
+create table atacc1 (id int not null);
+alter table atacc1 alter column id drop not null,
+  add primary key (id), add constraint atacc1_id_nn not null id;
+drop table atacc1;
+create table atacc1 (id int not null);
+alter table atacc1 alter column id drop not null,
+  add constraint atacc1_id_nn not null id, add primary key (id);
+drop table atacc1;
+-- The replacement NOT NULL constraint must propagate to the partitions too.
+create table atacc1 (id int not null) partition by range (id);
+create table atacc1_1 partition of atacc1 for values from (0) to (10);
+alter table atacc1 alter column id drop not null, add primary key (id);
+drop table atacc1;
 -- this combination used to have order-of-execution problems (bug #15580)
 create table atacc1 (a int);
 insert into atacc1 values(1);

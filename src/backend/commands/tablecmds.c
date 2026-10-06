@@ -555,9 +555,8 @@ static ObjectAddress ATExecDropColumn(List **wqueue, Relation rel, const char *c
 									  bool recurse, bool recursing,
 									  bool missing_ok, LOCKMODE lockmode,
 									  ObjectAddresses *addrs);
-static void ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
-								bool recurse, LOCKMODE lockmode,
-								AlterTableUtilityContext *context);
+static void ATPrepAddPrimaryKey(AlteredTableInfo *tab, Relation rel,
+								AlterTableCmd *cmd, LOCKMODE lockmode);
 static void verifyNotNullPKCompatible(HeapTuple tuple, const char *colname);
 static ObjectAddress ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 									IndexStmt *stmt, bool is_rebuild, LOCKMODE lockmode);
@@ -5146,7 +5145,6 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_AddConstraint:	/* ADD CONSTRAINT */
 			ATSimplePermissions(cmd->subtype, rel,
 								ATT_TABLE | ATT_PARTITIONED_TABLE | ATT_FOREIGN_TABLE);
-			ATPrepAddPrimaryKey(wqueue, rel, cmd, recurse, lockmode, context);
 			if (recurse)
 			{
 				/* recurses at exec time; lock descendants and set flag */
@@ -5393,6 +5391,19 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
 				ATExecCmd(wqueue, tab,
 						  lfirst_node(AlterTableCmd, lcmd),
 						  lockmode, pass, context);
+
+			/*
+			 * For ADD PRIMARY KEY without USING INDEX, queue any required NOT
+			 * NULL constraints after transforming all explicit constraints.
+			 * This lets a named NOT NULL constraint take precedence
+			 * regardless of subcommand order. USING INDEX is handled during
+			 * transformation.
+			 */
+			if (pass == AT_PASS_ADD_CONSTR)
+			{
+				foreach_node(AlterTableCmd, cmd, subcmds)
+					ATPrepAddPrimaryKey(tab, tab->rel, cmd, lockmode);
+			}
 
 			/*
 			 * After the ALTER TYPE or SET EXPRESSION pass, do cleanup work
@@ -9552,7 +9563,7 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
  * hierarchy (failing to ensure that leads to funny corner cases).  For the
  * normal case where we're asked to recurse, this routine checks if the
  * not-null constraints exist already, and if not queues a requirement for
- * them to be created by phase 2.
+ * them to be created in the AT_PASS_COL_ATTRS pass.
  *
  * For the case where we're asked not to recurse, we verify that a not-null
  * constraint exists on each column of each (direct) child table, throwing an
@@ -9567,16 +9578,17 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
  * deadlocks during parallel pg_restore of PKs on partitioned tables.
  */
 static void
-ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
-					bool recurse, LOCKMODE lockmode,
-					AlterTableUtilityContext *context)
+ATPrepAddPrimaryKey(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd,
+					LOCKMODE lockmode)
 {
 	Constraint *pkconstr;
 	List	   *children = NIL;
 	bool		got_children = false;
 
 	pkconstr = castNode(Constraint, cmd->def);
-	if (pkconstr->contype != CONSTR_PRIMARY)
+
+	/* USING INDEX queues its own NOT NULL constraints during transformation */
+	if (pkconstr->contype != CONSTR_PRIMARY || pkconstr->indexname != NULL)
 		return;
 
 	/* Verify that columns are not-null, or request that they be made so */
@@ -9600,7 +9612,7 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			heap_freetuple(tuple);
 			continue;
 		}
-		else if (!recurse)
+		else if (!cmd->recurse)
 		{
 			/*
 			 * No constraint on this column.  Asked not to recurse, we won't
@@ -9638,7 +9650,8 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		newcmd->recurse = true;
 		newcmd->def = (Node *) nnconstr;
 
-		ATPrepCmd(wqueue, rel, newcmd, true, false, lockmode, context);
+		tab->subcmds[AT_PASS_COL_ATTRS] =
+			lappend(tab->subcmds[AT_PASS_COL_ATTRS], newcmd);
 	}
 }
 
