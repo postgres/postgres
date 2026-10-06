@@ -78,6 +78,36 @@ wait_for_logical_decoding_disabled($primary);
 test_wal_level($primary, "replica|replica",
 	"logical decoding disabled after repack");
 
+# Test that a backend applies an XLogLogicalInfo update that it received
+# while its transaction block was in the failed state, once the block ends.
+# The failed transaction keeps its XID until ROLLBACK, so the update is
+# deferred; it must not be carried over into the next transaction.
+my $psql_aborted = $primary->background_psql('postgres', on_error_stop => 0);
+$psql_aborted->query_safe(q[begin; select pg_current_xact_id();]);
+my ($aborted_out, $aborted_ret) = $psql_aborted->query(q[select 1/0;]);
+is($aborted_ret, 1, "transaction block failed");
+$psql_aborted->{stderr} = '';
+
+# Enable logical decoding while the backend is idle in the failed transaction
+# block.  This waits for all backends to absorb the barrier.
+$primary->safe_psql('postgres',
+	qq[select pg_create_logical_replication_slot('test_aborted_slot', 'test_decoding')]
+);
+
+# Check the value in the transaction right after ROLLBACK.  Note that both
+# commands need to be sent together, as query_safe() appends an empty query
+# that would run in its own transaction and apply the deferred update.
+is( $psql_aborted->query_safe(
+		q[rollback; select current_setting('effective_wal_level');]),
+	'logical',
+	"effective_wal_level is updated after rolling back a failed transaction block"
+);
+$psql_aborted->quit;
+
+$primary->safe_psql('postgres',
+	qq[select pg_drop_replication_slot('test_aborted_slot')]);
+wait_for_logical_decoding_disabled($primary);
+
 # Create a new logical slot and check that effective_wal_level must be increased
 # to 'logical'.
 $primary->safe_psql('postgres',

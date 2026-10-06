@@ -227,7 +227,11 @@ IsXLogLogicalInfoEnabled(void)
 }
 
 /*
- * Reset the local cache at end of the transaction.
+ * Apply a pending XLogLogicalInfo update at end of the top-level transaction.
+ *
+ * This is called from CommitTransaction(), PrepareTransaction(), and
+ * CleanupTransaction(), which are the only places where the top-level XID is
+ * reset, so the next transaction always starts with the latest value.
  */
 void
 AtEOXact_LogicalCtl(void)
