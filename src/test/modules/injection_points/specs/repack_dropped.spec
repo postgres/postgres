@@ -24,6 +24,7 @@ setup {
 teardown {
 	DROP TABLE repack_dropped;
 	DROP FUNCTION repack_dropped_f;
+	DROP EXTENSION injection_points;
 }
 
 session s1
