@@ -3041,9 +3041,19 @@ PostmasterStateMachine(void)
 			 */
 			ForgetUnstartedBackgroundWorkers();
 
-			SignalChildren(SIGTERM, targetMask);
+			/*
+			 * While processing a crash, targetMask includes the checkpointer
+			 * and the io workers.  These ignore SIGTERM, so upgrade to
+			 * SIGQUIT.
+			 */
+			if (FatalError)
+				HandleFatalError(PMQUIT_FOR_STOP, false);
+			else
+			{
+				SignalChildren(SIGTERM, targetMask);
 
-			UpdatePMState(PM_WAIT_BACKENDS);
+				UpdatePMState(PM_WAIT_BACKENDS);
+			}
 		}
 
 		/* Are any of the target processes still running? */
