@@ -2592,14 +2592,21 @@ varstr_abbrev_abort(int memtupcount, SortSupport ssup)
 /*
  * Generic equalimage support function for character type's operator classes.
  * Disables the use of deduplication with nondeterministic collations.
+ *
+ * Earlier minor releases erroneously associated this function with
+ * bpchar_ops.  Detect that case to rescind deduplication support, without
+ * requiring initdb.
  */
 Datum
 btvarstrequalimage(PG_FUNCTION_ARGS)
 {
-	/* Oid		opcintype = PG_GETARG_OID(0); */
+	Oid			opcintype = PG_GETARG_OID(0);
 	Oid			collid = PG_GET_COLLATION();
 
 	check_collation_set(collid);
+
+	if (opcintype == BPCHAROID)
+		PG_RETURN_BOOL(false);
 
 	if (lc_collate_is_c(collid) ||
 		collid == DEFAULT_COLLATION_OID ||
