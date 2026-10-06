@@ -184,6 +184,7 @@ LINE 1: COPY x TO stdout WHERE a = 1;
 HINT:  Try the COPY (SELECT ... WHERE ...) TO variant.
 COPY x from stdin WHERE a = 50004;
 COPY x from stdin WHERE a > 60003;
+COPY x from stdin WHERE NOT (a < 70003);
 COPY x from stdin WHERE f > 60003;
 ERROR:  column "f" does not exist
 LINE 1: COPY x from stdin WHERE f > 60003;
@@ -234,12 +235,13 @@ SELECT * FROM x;
  50004 | 25 | 35         | 45     | before trigger fired
  60004 | 25 | 35         | 45     | before trigger fired
  60005 | 26 | 36         | 46     | before trigger fired
+ 70003 | 24 | 34         | 44     | before trigger fired
      1 |  1 | stuff      | test_1 | after trigger fired
      2 |  2 | stuff      | test_2 | after trigger fired
      3 |  3 | stuff      | test_3 | after trigger fired
      4 |  4 | stuff      | test_4 | after trigger fired
      5 |  5 | stuff      | test_5 | after trigger fired
-(28 rows)
+(29 rows)
 
 -- check copy out
 COPY x TO stdout;
@@ -266,6 +268,7 @@ COPY x TO stdout;
 50004	25	35	45	before trigger fired
 60004	25	35	45	before trigger fired
 60005	26	36	46	before trigger fired
+70003	24	34	44	before trigger fired
 1	1	stuff	test_1	after trigger fired
 2	2	stuff	test_2	after trigger fired
 3	3	stuff	test_3	after trigger fired
@@ -295,6 +298,7 @@ Delimiter	before trigger fired
 35	before trigger fired
 35	before trigger fired
 36	before trigger fired
+34	before trigger fired
 stuff	after trigger fired
 stuff	after trigger fired
 stuff	after trigger fired
@@ -324,6 +328,7 @@ I'm null	before trigger fired
 25	before trigger fired
 25	before trigger fired
 26	before trigger fired
+24	before trigger fired
 1	after trigger fired
 2	after trigger fired
 3	after trigger fired

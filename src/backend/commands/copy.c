@@ -29,6 +29,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/miscnodes.h"
+#include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_collate.h"
@@ -209,6 +210,7 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 			whereClause = (Node *) canonicalize_qual((Expr *) whereClause, false);
 			whereClause = (Node *) make_ands_implicit((Expr *) whereClause);
+			fix_opfuncids(whereClause);
 		}
 
 		tupDesc = RelationGetDescr(rel);
