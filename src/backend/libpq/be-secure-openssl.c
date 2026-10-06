@@ -257,9 +257,6 @@ be_tls_init(bool isServerStart)
 		{
 			HostsLine  *host = lfirst(line);
 
-			if (!init_host_context(host, isServerStart, &hasWarned))
-				goto error;
-
 			/*
 			 * The hostname in the config will be set to NULL for the default
 			 * host as well as in configs used for non-SNI connections.  Lists
@@ -329,6 +326,14 @@ be_tls_init(bool isServerStart)
 				 */
 				new_hosts->sni = lappend(new_hosts->sni, host);
 			}
+
+			/*
+			 * Create the SSL context only once the entry has been accepted
+			 * and added to new_hosts, as the cleanup callback can only free
+			 * contexts of entries it can reach from there.
+			 */
+			if (!init_host_context(host, isServerStart, &hasWarned))
+				goto error;
 		}
 	}
 
