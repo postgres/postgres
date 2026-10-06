@@ -166,6 +166,10 @@ sub configure_test_server_for_ssl
 		$node->psql('postgres', "CREATE DATABASE $db");
 	}
 
+	# Grant pg_read_all_settings to ssltestuser so that relevant GUCs can be
+	# examined during tests
+	$node->psql('postgres', "GRANT pg_read_all_settings TO ssltestuser");
+
 	# Update password of each user as needed.
 	if (defined($params{password}))
 	{
