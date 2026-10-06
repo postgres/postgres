@@ -346,10 +346,14 @@ be_tls_init(bool isServerStart)
 			Assert(ssl_sni == false);
 #endif
 
-		pgconf->ssl_cert = ssl_cert_file;
-		pgconf->ssl_key = ssl_key_file;
-		pgconf->ssl_ca = ssl_ca_file;
-		pgconf->ssl_passphrase_cmd = ssl_passphrase_command;
+		/*
+		 * Copy the configuration from the GUC variables since they aren't
+		 * guaranteed to survive a failed reload.
+		 */
+		pgconf->ssl_cert = pstrdup(ssl_cert_file);
+		pgconf->ssl_key = pstrdup(ssl_key_file);
+		pgconf->ssl_ca = pstrdup(ssl_ca_file);
+		pgconf->ssl_passphrase_cmd = pstrdup(ssl_passphrase_command);
 		pgconf->ssl_passphrase_reload = ssl_passphrase_command_supports_reload;
 
 		if (!init_host_context(pgconf, isServerStart, &hasWarned))
