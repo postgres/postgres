@@ -856,6 +856,13 @@ be_tls_destroy(void)
 		SSL_CTX_free(SSL_context);
 	SSL_context = NULL;
 	ssl_loaded_verify_locations = false;
+
+	if (SSL_hosts_memcxt)
+	{
+		MemoryContextDelete(SSL_hosts_memcxt);
+		SSL_hosts_memcxt = NULL;
+		SSL_hosts = NULL;
+	}
 }
 
 int
