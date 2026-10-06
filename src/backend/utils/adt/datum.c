@@ -423,8 +423,8 @@ datum_image_hash(Datum value, bool typByVal, int typLen)
  * function.
  *
  * Earlier minor releases erroneously associated this function with
- * interval_ops.  Detect that case to rescind deduplication support, without
- * requiring initdb.
+ * interval_ops and bpchar_pattern_ops.  Detect those cases to rescind
+ * deduplication support, without requiring initdb.
  *-------------------------------------------------------------------------
  */
 Datum
@@ -432,7 +432,7 @@ btequalimage(PG_FUNCTION_ARGS)
 {
 	Oid			opcintype = PG_GETARG_OID(0);
 
-	PG_RETURN_BOOL(opcintype != INTERVALOID);
+	PG_RETURN_BOOL(opcintype != INTERVALOID && opcintype != BPCHAROID);
 }
 
 /*-------------------------------------------------------------------------
