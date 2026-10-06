@@ -145,6 +145,8 @@ static bool is_safe_append_member(Query *subquery);
 static bool jointree_contains_lateral_outer_refs(PlannerInfo *root,
 												 Node *jtnode, bool restricted,
 												 Relids safe_upper_varnos);
+static void flatten_join_alias_vars_in_jointree(PlannerInfo *root,
+												Node *jtnode);
 static void perform_pullup_replace_vars(PlannerInfo *root,
 										pullup_replace_vars_context *rvcontext,
 										AppendRelInfo *containing_appendrel);
@@ -1526,6 +1528,26 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	pull_up_subqueries(subroot);
 
 	/*
+	 * We must flatten any join alias Vars in the subquery's targetlist,
+	 * because pulling up the subquery's subqueries might have changed their
+	 * expansions into arbitrary expressions.  That could affect
+	 * pullup_replace_vars' decisions about whether PlaceHolderVar wrappers
+	 * are needed for tlist entries, and if the subquery is LATERAL, the
+	 * expansions might contain lateral references that the is_simple_subquery
+	 * recheck below has to see.  The latter also requires flattening join
+	 * alias Vars in the jointree quals of a LATERAL subquery.  (Likely it'd
+	 * be better to do flatten_join_alias_vars on the whole query tree at some
+	 * earlier stage, maybe even in the rewriter; but for now let's just fix
+	 * these cases here.)
+	 */
+	subquery->targetList = (List *)
+		flatten_join_alias_vars(subroot, subroot->parse,
+								(Node *) subquery->targetList);
+	if (rte->lateral)
+		flatten_join_alias_vars_in_jointree(subroot,
+											(Node *) subquery->jointree);
+
+	/*
 	 * Now we must recheck whether the subquery is still simple enough to pull
 	 * up.  If not, abandon processing it.
 	 *
@@ -1550,19 +1572,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 		 */
 		return jtnode;
 	}
-
-	/*
-	 * We must flatten any join alias Vars in the subquery's targetlist,
-	 * because pulling up the subquery's subqueries might have changed their
-	 * expansions into arbitrary expressions, which could affect
-	 * pullup_replace_vars' decisions about whether PlaceHolderVar wrappers
-	 * are needed for tlist entries.  (Likely it'd be better to do
-	 * flatten_join_alias_vars on the whole query tree at some earlier stage,
-	 * maybe even in the rewriter; but for now let's just fix this case here.)
-	 */
-	subquery->targetList = (List *)
-		flatten_join_alias_vars(subroot, subroot->parse,
-								(Node *) subquery->targetList);
 
 	/*
 	 * Adjust level-0 varnos in subquery so that we can append its rangetable
@@ -2546,6 +2555,40 @@ jointree_contains_lateral_outer_refs(PlannerInfo *root, Node *jtnode,
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(jtnode));
 	return false;
+}
+
+/*
+ * flatten_join_alias_vars_in_jointree
+ *		Apply flatten_join_alias_vars to all quals in the given jointree,
+ *		replacing them in place.  The jointree must belong to root->parse.
+ */
+static void
+flatten_join_alias_vars_in_jointree(PlannerInfo *root, Node *jtnode)
+{
+	if (jtnode == NULL)
+		return;
+	if (IsA(jtnode, RangeTblRef))
+		return;
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+		ListCell   *l;
+
+		foreach(l, f->fromlist)
+			flatten_join_alias_vars_in_jointree(root, lfirst(l));
+		f->quals = flatten_join_alias_vars(root, root->parse, f->quals);
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+
+		flatten_join_alias_vars_in_jointree(root, j->larg);
+		flatten_join_alias_vars_in_jointree(root, j->rarg);
+		j->quals = flatten_join_alias_vars(root, root->parse, j->quals);
+	}
+	else
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 }
 
 /*
