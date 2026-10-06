@@ -156,19 +156,19 @@ sub configure_test_server_for_ssl
 		'certdb_cn', 'verifydb');
 
 	# Create test users and databases
-	$node->psql('postgres', "CREATE USER ssltestuser");
-	$node->psql('postgres', "CREATE USER md5testuser");
-	$node->psql('postgres', "CREATE USER anotheruser");
-	$node->psql('postgres', "CREATE USER yetanotheruser");
+	$node->safe_psql('postgres', "CREATE USER ssltestuser");
+	$node->safe_psql('postgres', "CREATE USER md5testuser");
+	$node->safe_psql('postgres', "CREATE USER anotheruser");
+	$node->safe_psql('postgres', "CREATE USER yetanotheruser");
 
 	foreach my $db (@databases)
 	{
-		$node->psql('postgres', "CREATE DATABASE $db");
+		$node->safe_psql('postgres', "CREATE DATABASE $db");
 	}
 
 	# Grant pg_read_all_settings to ssltestuser so that relevant GUCs can be
 	# examined during tests
-	$node->psql('postgres', "GRANT pg_read_all_settings TO ssltestuser");
+	$node->safe_psql('postgres', "GRANT pg_read_all_settings TO ssltestuser");
 
 	# Update password of each user as needed.
 	if (defined($params{password}))
@@ -176,14 +176,14 @@ sub configure_test_server_for_ssl
 		die "Password encryption must be specified when password is set"
 		  unless defined($params{password_enc});
 
-		$node->psql('postgres',
+		$node->safe_psql('postgres',
 			"SET password_encryption='$params{password_enc}'; ALTER USER ssltestuser PASSWORD '$params{password}';"
 		);
 		# A special user that always has an md5-encrypted password
-		$node->psql('postgres',
+		$node->safe_psql('postgres',
 			"SET password_encryption='md5'; ALTER USER md5testuser PASSWORD '$params{password}';"
 		);
-		$node->psql('postgres',
+		$node->safe_psql('postgres',
 			"SET password_encryption='$params{password_enc}'; ALTER USER anotheruser PASSWORD '$params{password}';"
 		);
 	}
@@ -195,7 +195,7 @@ sub configure_test_server_for_ssl
 		{
 			foreach my $db (@databases)
 			{
-				$node->psql($db, "CREATE EXTENSION $extension CASCADE;");
+				$node->safe_psql($db, "CREATE EXTENSION $extension CASCADE;");
 			}
 		}
 	}
