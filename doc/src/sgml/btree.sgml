@@ -875,10 +875,18 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
    <itemizedlist>
     <listitem>
      <para>
-      <type>text</type>, <type>varchar</type>, and <type>char</type>
-      cannot use deduplication when a
-      <emphasis>nondeterministic</emphasis> collation is used.  Case
-      and accent differences must be preserved among equal datums.
+      <type>text</type> and <type>varchar</type> cannot use deduplication when
+      a <emphasis>nondeterministic</emphasis> collation is used.  Case and
+      accent differences must be preserved among equal datums.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <type>character</type> (and its aliases <type>char</type> and
+      <type>bpchar</type>) cannot use deduplication.  Trailing spaces are
+      disregarded when comparing two values, but must be preserved among
+      equal datums.
      </para>
     </listitem>
 
