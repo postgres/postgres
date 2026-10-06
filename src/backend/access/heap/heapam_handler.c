@@ -1967,7 +1967,7 @@ heapam_scan_get_blocks_done(HeapScanDesc hscan)
 	 * Might have wrapped around the end of the relation, if startblock was
 	 * not zero.
 	 */
-	if (hscan->rs_cblock > startblock)
+	if (hscan->rs_cblock >= startblock)
 		blocks_done = hscan->rs_cblock - startblock;
 	else
 	{

@@ -1788,10 +1788,6 @@ _gin_parallel_merge(GinBuildState *state)
 
 		/* discard the existing data */
 		GinBufferReset(buffer);
-
-		/* Report progress */
-		pgstat_progress_update_param(PROGRESS_CREATEIDX_TUPLES_DONE,
-									 ++numtuples);
 	}
 
 	/* release all the memory */
@@ -1944,6 +1940,7 @@ _gin_process_worker_data(GinBuildState *state, Tuplesortstate *worker_sort,
 									buffer->items, buffer->nfrozen, &ntuplen);
 
 			tuplesort_putgintuple(state->bs_sortstate, ntup, ntuplen);
+			state->bs_numtuples++;
 
 			pfree(ntup);
 
