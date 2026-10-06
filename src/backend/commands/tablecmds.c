@@ -200,7 +200,7 @@ typedef struct AlteredTableInfo
 	Expr	   *partition_constraint;	/* for attach partition validation */
 	/* true, if validating default due to some other attach/detach */
 	bool		validate_default;
-	/* Objects to rebuild after completing ALTER TYPE operations */
+	/* Objects to rebuild after ALTER TYPE or SET EXPRESSION operations */
 	List	   *changedConstraintOids;	/* OIDs of constraints to rebuild */
 	List	   *changedConstraintDefs;	/* string definitions of same */
 	List	   *changedIndexOids;	/* OIDs of indexes to rebuild */
