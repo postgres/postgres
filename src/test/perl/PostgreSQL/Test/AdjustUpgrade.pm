@@ -112,6 +112,25 @@ sub adjust_database_contents
 			'drop extension if exists test_ext7');
 	}
 
+	# We can no longer upgrade bpchar indexes that claim deduplication ability
+	# (amcheck will complain about them), so drop them if source is pre-v14.
+	if ($old_version < 14)
+	{
+		if ($dbnames{"regression"})
+		{
+			_add_st($result, 'regression',
+					'drop index if exists public.hslot_hubname',
+					'drop index if exists public.hslot_name',
+					'drop index if exists public.hub_name',
+					'drop index if exists public.iface_name',
+					'drop index if exists public.phone_name',
+					'drop index if exists public.pline_name',
+					'drop index if exists public.pslot_name',
+					'drop index if exists public.room_rno',
+					'drop index if exists public.wslot_name');
+		}
+	}
+
 	# refint was removed in v20
 	if ($old_version < 20)
 	{
