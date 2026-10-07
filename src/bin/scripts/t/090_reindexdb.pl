@@ -260,6 +260,16 @@ $node->issues_sql_like(
 $node->command_ok(
 	[ 'reindexdb', '-j', '2', '-S', 's3' ],
 	'parallel reindexdb with empty schema');
+$node->command_fails(
+	[
+		'reindexdb',
+		'--jobs' => '2',
+		'--concurrently',
+		'--index' => 's1.i1',
+		'--index' => 's2.i2',
+		'postgres',
+	],
+	'parallel reindexdb for indices concurrently');
 $node->command_ok(
 	[ 'reindexdb', '-j', '2', '--concurrently', '-d', 'postgres' ],
 	'parallel reindexdb on database, concurrently');
