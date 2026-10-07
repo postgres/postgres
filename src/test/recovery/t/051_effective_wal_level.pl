@@ -628,6 +628,86 @@ select pg_sync_replication_slots();
 		'0',
 		"no synced slot is left behind on standby5");
 
+	# Test the same race, but where the slot is re-created on the primary
+	# before the slot synchronization resumes. Logical decoding is enabled
+	# again at the time the local slot is created, so checking the logical
+	# decoding status alone cannot tell that the remote slot information
+	# predates the deactivation.
+
+	$primary->safe_psql('postgres',
+		qq[select pg_create_logical_replication_slot('sync_slot', 'test_decoding', false, false, true)]
+	);
+	$primary->wait_for_replay_catchup($standby5);
+	test_wal_level($standby5, "replica|logical",
+		"logical decoding got activated on standby5 for the re-creation test"
+	);
+
+	$psql_sync_slot = $standby5->background_psql('postgres');
+	$psql_sync_slot->query_until(
+		qr/sync_slots/,
+		q(\echo sync_slots
+select injection_points_set_local();
+select injection_points_attach('replication-slot-create-begin', 'wait', 'sync_slot');
+select pg_sync_replication_slots();
+));
+	$standby5->wait_for_event('client backend',
+		'replication-slot-create-begin');
+	note("injection_point 'replication-slot-create-begin' is reached");
+
+	# Drop and re-create the slot, and wait for the standby to replay both
+	# the deactivation and the activation.
+	$primary->safe_psql('postgres',
+		qq[select pg_drop_replication_slot('sync_slot')]);
+	wait_for_logical_decoding_disabled($primary);
+	$primary->safe_psql('postgres',
+		qq[select pg_create_logical_replication_slot('sync_slot', 'test_decoding', false, false, true)]
+	);
+	my $restart_lsn = $primary->safe_psql('postgres',
+		qq[select restart_lsn from pg_replication_slots where slot_name = 'sync_slot']
+	);
+	$primary->wait_for_replay_catchup($standby5);
+	test_wal_level($standby5, "replica|logical",
+		"logical decoding got deactivated and activated again on standby5");
+
+	# Resume the slot synchronization. It must drop the slot created from
+	# the stale information, and re-create it from the re-created remote slot
+	# on retry.
+	$log_offset = -s $standby5->logfile;
+	$standby5->safe_psql(
+		'postgres', qq[
+select injection_points_detach('replication-slot-create-begin');
+select injection_points_wakeup('replication-slot-create-begin');
+]);
+	$standby5->wait_for_log(
+		qr/could not synchronize replication slot "sync_slot".*\n.*DETAIL:  Logical decoding was disabled after the remote slot's restart LSN/,
+		$log_offset);
+	$standby5->poll_query_until('postgres',
+		qq[select restart_lsn >= '$restart_lsn' from pg_replication_slots where slot_name = 'sync_slot']
+	  )
+	  or die
+	  "timed out waiting for the slot to be re-created from the re-created remote slot";
+
+	# The slot created on retry might not be persisted until the remote slot
+	# catches up with the catalog_xmin computed locally. Drop the remote slot
+	# to let the slot synchronization finish, keeping logical decoding enabled
+	# with another slot as the slot synchronization requires it.
+	$primary->safe_psql(
+		'postgres', qq[
+select pg_create_logical_replication_slot('test_slot4', 'test_decoding');
+select pg_drop_replication_slot('sync_slot');
+]);
+	$primary->wait_for_replay_catchup($standby5);
+	$psql_sync_slot->quit;
+	$primary->safe_psql('postgres',
+		qq[select pg_drop_replication_slot('test_slot4')]);
+	wait_for_logical_decoding_disabled($primary);
+	$primary->wait_for_replay_catchup($standby5);
+	is( $standby5->safe_psql(
+			'postgres', qq[select count(*) from pg_replication_slots]),
+		'0',
+		"no synced slot is left behind on standby5 after the re-creation test"
+	);
+
 	# Test that logical slot creation on a standby fails cleanly if logical
 	# decoding is concurrently deactivated by the end-of-recovery transition
 	# upon promotion.
