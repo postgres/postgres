@@ -776,6 +776,9 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * PlaceHolderVar or constructed from those, we can just add the
  * varnullingrels bits to the existing nullingrels field(s); otherwise
  * we have to add a PlaceHolderVar wrapper.
+ *
+ * If root is NULL, nulled whole-row JOIN Vars are left unexpanded, so the
+ * result must be flattened again with a root before it can be executed.
  */
 Node *
 flatten_join_alias_vars(PlannerInfo *root, Query *query, Node *node)
@@ -809,7 +812,8 @@ flatten_join_alias_vars(PlannerInfo *root, Query *query, Node *node)
  * PlaceHolderVars.  We can avoid making PlaceHolderVars in the parser's
  * usage because it won't be dealing with arbitrary expressions: so long as
  * adjust_standard_join_alias_expression can handle everything the parser
- * would make as a join alias expression, we're OK.
+ * would make as a join alias expression, we're OK.  (Nulled whole-row join
+ * Vars are the exception; those are left unexpanded.)
  *
  * The "node" might be part of a sub-query of the Query whose join alias
  * Vars are to be expanded.  "sublevels_up" indicates how far below the
@@ -864,6 +868,13 @@ flatten_join_alias_vars_mutator(Node *node,
 			List	   *colnames = NIL;
 			ListCell   *lv;
 			ListCell   *ln;
+
+			/*
+			 * A nulled whole-row expansion needs a PlaceHolderVar, which we
+			 * can't make without a root; leave the Var unexpanded.
+			 */
+			if (context->root == NULL && var->varnullingrels != NULL)
+				return node;
 
 			Assert(list_length(rte->joinaliasvars) == list_length(rte->eref->colnames));
 			forboth(lv, rte->joinaliasvars, ln, rte->eref->colnames)
