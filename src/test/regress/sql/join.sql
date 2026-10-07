@@ -1397,6 +1397,86 @@ from int8_tbl t1 left join
   on (t1.q2 = t23.q1)
 group by t23 order by 1;
 
+-- nulled whole-row Var of a zero-column join, referenced from a subquery
+explain (verbose, costs off)
+select t1.q1, t1.q2, (select t23::text)
+from int8_tbl t1 left join
+  ((select from int4_tbl where f1 = 0) t2
+   cross join (select from int4_tbl where f1 = 0) t3) t23
+  on (t1.q1 = 123)
+order by 1, 2;
+select t1.q1, t1.q2, (select t23::text)
+from int8_tbl t1 left join
+  ((select from int4_tbl where f1 = 0) t2
+   cross join (select from int4_tbl where f1 = 0) t3) t23
+  on (t1.q1 = 123)
+order by 1, 2;
+
+-- nulled whole-row Var of a zero-column outer join
+explain (verbose, costs off)
+select t1.q1, t1.q2, f
+from int8_tbl t1 left join
+  ((select from int4_tbl where f1 = 0) t2
+   left join (select from int4_tbl where f1 = 0) t3 on true) t23
+  on (t1.q1 = 123),
+  length(t23::text) f
+order by 1, 2;
+select t1.q1, t1.q2, f
+from int8_tbl t1 left join
+  ((select from int4_tbl where f1 = 0) t2
+   left join (select from int4_tbl where f1 = 0) t3 on true) t23
+  on (t1.q1 = 123),
+  length(t23::text) f
+order by 1, 2;
+
+-- nulled whole-row Var of a join with a variable-free merged column
+explain (verbose, costs off)
+select 1 from (unnest(array[1, (select sum(f1) from int4_tbl)]) as u(b)
+               right join (values (1)) as v(b) using (b)
+               full join int8_tbl i8 on true) as j,
+  length(j::text) f;
+select 1 from (unnest(array[1, (select sum(f1) from int4_tbl)]) as u(b)
+               right join (values (1)) as v(b) using (b)
+               full join int8_tbl i8 on true) as j,
+  length(j::text) f;
+
+-- nulled whole-row Var of a join containing a lateral reference
+explain (verbose, costs off)
+select (j is null) from int4_tbl i4
+  left join (int8_tbl i8 join lateral (select i4.f1 from (values (3)) v) ss(x) on true) as j
+  on false;
+select (j is null) from int4_tbl i4
+  left join (int8_tbl i8 join lateral (select i4.f1 from (values (3)) v) ss(x) on true) as j
+  on false;
+
+-- same, but the PHV must be passed up through another join
+explain (verbose, costs off)
+select j from int4_tbl i4
+  left join (lateral (values (i4.f1)) as v(a) cross join int8_tbl i8) as j
+  on (j.q1 = 123 and j.q2 = 456),
+  int4_tbl i4b
+where i4.f1 = 0
+order by 1;
+select j from int4_tbl i4
+  left join (lateral (values (i4.f1)) as v(a) cross join int8_tbl i8) as j
+  on (j.q1 = 123 and j.q2 = 456),
+  int4_tbl i4b
+where i4.f1 = 0
+order by 1;
+
+-- same, referenced from a subquery, with only lateral references and constants
+explain (verbose, costs off)
+select i4.f1, (select j::text)
+from int4_tbl i4
+  left join (lateral (select i4.f1) ss(x) cross join (select 1) s2(y)) j
+  on (i4.f1 = 0)
+order by 1;
+select i4.f1, (select j::text)
+from int4_tbl i4
+  left join (lateral (select i4.f1) ss(x) cross join (select 1) s2(y)) j
+  on (i4.f1 = 0)
+order by 1;
+
 --
 -- test incorrect failure to NULL pulled-up subexpressions
 --
