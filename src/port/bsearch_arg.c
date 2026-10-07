@@ -67,7 +67,7 @@ bsearch_arg(const void *key, const void *base0,
 		p = base + (lim >> 1) * size;
 		cmp = (*compar) (key, p, arg);
 		if (cmp == 0)
-			return (void *) p;
+			return unconstify(void *, p);
 		if (cmp > 0)
 		{						/* key > p: move right */
 			base = (const char *) p + size;

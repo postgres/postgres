@@ -942,7 +942,7 @@ RegisterShmemCallbacks(const ShmemCallbacks *callbacks)
 	{
 		/* Remember the callbacks for later */
 		registered_shmem_callbacks = lappend(registered_shmem_callbacks,
-											 (void *) callbacks);
+											 unconstify(ShmemCallbacks *, callbacks));
 	}
 	else
 		elog(ERROR, "cannot request shared memory at this time");

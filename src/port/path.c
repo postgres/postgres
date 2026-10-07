@@ -78,7 +78,7 @@ skip_drive(const char *path)
 	{
 		path += 2;
 	}
-	return (char *) path;
+	return unconstify(char *, path);
 }
 #else
 

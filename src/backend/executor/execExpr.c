@@ -4312,7 +4312,7 @@ ExecBuildHash32Expr(TupleDesc desc, const TupleTableSlotOps *ops,
 	state->parent = parent;
 
 	/* Insert setup steps as needed. */
-	ExecCreateExprSetupSteps(state, (Node *) hash_exprs);
+	ExecCreateExprSetupSteps(state, unconstify(Node *, (const Node *) hash_exprs));
 
 	/*
 	 * Make a place to store intermediate hash values between subsequent

@@ -1101,7 +1101,7 @@ mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		if (nblocks_this_segment != nblocks)
 			elog(ERROR, "write crosses segment boundary");
 
-		iovcnt = buffers_to_iovec(iov, (void **) buffers, nblocks_this_segment);
+		iovcnt = buffers_to_iovec(iov, unconstify(void **, buffers), nblocks_this_segment);
 		size_this_segment = nblocks_this_segment * BLCKSZ;
 		transferred_this_segment = 0;
 
