@@ -46,6 +46,18 @@ SELECT EXISTS (
 EOM
 ok($result, "WAL summarization caught up after insert");
 
+# --quiet must also suppress limit blocks caused by relation creation.
+my $summary_dir = $node1->data_dir . '/pg_wal/summaries';
+my @summaries = map { "$summary_dir/$_" }
+  sort grep { /^[0-9A-F]{40}\.summary$/ } slurp_dir($summary_dir);
+command_like(
+	[ 'pg_walsummary', @summaries ],
+	qr/: limit 0$/m,
+	'relation creation produces limit blocks');
+
+command_like([ 'pg_walsummary', '-q', @summaries ],
+	qr/\A\z/, "-q suppresses all output");
+
 # The WAL summarizer should have generated some IO statistics.
 $node1->poll_query_until(
 	'postgres',
