@@ -454,7 +454,6 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 								 * WordEntries */
 	Size		hdrlen;
 	Size		len;			/* allocated size of vec */
-	bool		needSort = false;
 
 	nentries = pq_getmsgint(buf, sizeof(int32));
 
@@ -512,16 +511,18 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 
 		datalen += lex_len;
 
+		/* Verify correct sorting of lexemes, with no duplicates */
 		if (i > 0 && compareentry(&vec->entries[i],
 								  &vec->entries[i - 1],
 								  STRPTR(vec)) <= 0)
-			needSort = true;
+			elog(ERROR, "tsvector lexemes are misordered");
 
 		/* Receive positions */
 		if (npos > 0)
 		{
 			uint16		j;
 			WordEntryPos *wepptr;
+			WordEntryPos lastpos = 0;
 
 			/*
 			 * Pad to 2-byte alignment if necessary. Though we used palloc0
@@ -539,9 +540,13 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 			wepptr = POSDATAPTR(vec, &vec->entries[i]);
 			for (j = 0; j < npos; j++)
 			{
-				wepptr[j] = (WordEntryPos) pq_getmsgint(buf, sizeof(WordEntryPos));
-				if (j > 0 && WEP_GETPOS(wepptr[j]) <= WEP_GETPOS(wepptr[j - 1]))
+				WordEntryPos thispos;
+
+				thispos = (WordEntryPos) pq_getmsgint(buf, sizeof(WordEntryPos));
+				/* Verify positions are sorted, nonduplicate, and not zero */
+				if (WEP_GETPOS(thispos) <= WEP_GETPOS(lastpos))
 					elog(ERROR, "position information is misordered");
+				wepptr[j] = lastpos = thispos;
 			}
 
 			datalen += sizeof(uint16) + npos * sizeof(WordEntryPos);
@@ -558,10 +563,6 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 		elog(ERROR, "invalid tsvector: maximum total lexeme length exceeded");
 
 	SET_VARSIZE(vec, hdrlen + datalen);
-
-	if (needSort)
-		qsort_arg(ARRPTR(vec), vec->size, sizeof(WordEntry),
-				  compareentry, STRPTR(vec));
 
 	PG_RETURN_TSVECTOR(vec);
 }
