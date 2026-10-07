@@ -783,7 +783,9 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * for making PlaceHolderVars.  We can avoid making PlaceHolderVars in the
  * parser's usage because it won't be dealing with arbitrary expressions:
  * so long as adjust_standard_join_alias_expression can handle everything
- * the parser would make as a join alias expression, we're OK.
+ * the parser would make as a join alias expression, we're OK.  The one
+ * exception is a nulled whole-row join Var, which is left unexpanded when
+ * root is NULL; the planner expands it later.
  */
 Node *
 flatten_join_alias_vars(PlannerInfo *root, Query *query, Node *node)
@@ -834,6 +836,13 @@ flatten_join_alias_vars_mutator(Node *node,
 			List	   *colnames = NIL;
 			ListCell   *lv;
 			ListCell   *ln;
+
+			/*
+			 * A nulled whole-row expansion needs a PlaceHolderVar, which we
+			 * can't make without a root; leave the Var unexpanded.
+			 */
+			if (context->root == NULL && var->varnullingrels != NULL)
+				return node;
 
 			Assert(list_length(rte->joinaliasvars) == list_length(rte->eref->colnames));
 			forboth(lv, rte->joinaliasvars, ln, rte->eref->colnames)
