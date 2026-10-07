@@ -61,16 +61,149 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
 
   <para>
    If a <literal>USING INDEX</literal> clause is specified, the rows are
-   physically reordered based on information from an index.  Please see the
-   notes on clustering below.
+   physically reordered based on information from an index.  Please see
+   <xref linkend="sql-repack-notes-on-clustering"/> below.
   </para>
 
   <para>
    When a table is being repacked, an <literal>ACCESS EXCLUSIVE</literal> lock
-   is acquired on it. This prevents any other database operations (both reads
-   and writes) from operating on the table until the <command>REPACK</command>
-   is finished. If you want to keep the table accessible during the repacking,
-   consider using the <literal>CONCURRENTLY</literal> option.
+   is acquired on it, unless the <literal>CONCURRENTLY</literal> option is given.
+   See <xref linkend="sql-repack-notes-on-concurrently"/> for a discussion
+   on the effects of this option.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (possibly schema-qualified) of a table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">column_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a specific column to analyze. Defaults to all columns.
+      If a column list is specific, <literal>ANALYZE</literal> must also
+      be specified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">index_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an index.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CONCURRENTLY</literal></term>
+    <listitem>
+     <para>
+      Allow other transactions to use the table while it is being repacked.
+      See <xref linkend="sql-repack-notes-on-concurrently" /> for more details.
+     </para>
+
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>VERBOSE</literal></term>
+    <listitem>
+     <para>
+      Prints a progress report as each table is repacked
+      at <literal>INFO</literal> level.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ANALYZE</literal></term>
+    <term><literal>ANALYSE</literal></term>
+    <listitem>
+     <para>
+      Applies <xref linkend="sql-analyze"/> on the table after repacking.  This is
+      currently only supported when a single (non-partitioned) table is specified.
+      This option cannot be used inside a transaction block, or from a function,
+      procedure, or <command>DO</command> block.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">boolean</replaceable></term>
+    <listitem>
+     <para>
+      Specifies whether the selected option should be turned on or off.
+      You can write <literal>TRUE</literal>, <literal>ON</literal>, or
+      <literal>1</literal> to enable the option, and <literal>FALSE</literal>,
+      <literal>OFF</literal>, or <literal>0</literal> to disable it.  The
+      <replaceable class="parameter">boolean</replaceable> value can also
+      be omitted, in which case <literal>TRUE</literal> is assumed.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 id="sql-repack-notes">
+  <title>Notes</title>
+
+  <para>
+   To repack a table, one must have the <literal>MAINTAIN</literal> privilege
+   on the table.
+  </para>
+
+  <para>
+   <command>REPACK</command> is primarily meant to remove bloat and, with
+   <literal>USING INDEX</literal>, to cluster the table, in order to improve
+   performance.  Although it also advances the table's
+   <structfield>relfrozenxid</structfield> and <structfield>relminmxid</structfield>,
+   it is not a good way to prevent transaction ID or multixact ID wraparound:
+   it rewrites the whole table and all of its indexes, so it takes much longer
+   than <command>VACUUM</command>, and it can fail after most of the work
+   is done, especially with <literal>CONCURRENTLY</literal> on a busy table.
+   <command>VACUUM</command> is recommended for that instead (see
+   <xref linkend="vacuum-for-wraparound"/>).
+   When a table gets close to wraparound, <command>VACUUM</command> skips index
+   vacuuming on its own (see <xref linkend="guc-vacuum-failsafe-age"/>), and its
+   <link linkend="sql-vacuum"><literal>INDEX_CLEANUP OFF</literal></link>
+   option can do the same earlier.
+  </para>
+
+  <para>
+   <command>REPACK</command> refuses to process a table on which an invalid
+   index exists.  Such indexes must be dropped or reindexed by the user ahead
+   of time.
+  </para>
+
+  <para>
+   While <command>REPACK</command> is running, the <xref
+   linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
+   pg_temp</literal>.
+  </para>
+
+  <para>
+   Each backend running <command>REPACK</command> will report its progress
+   in the <structname>pg_stat_progress_repack</structname> view. See
+   <xref linkend="repack-progress-reporting"/> for details.
+  </para>
+
+  <para>
+   Repacking a partitioned table repacks each of its partitions. If an index
+   is specified, each partition is repacked using the partition of that
+   index. <command>REPACK</command> on a partitioned table cannot be executed
+   inside a transaction block.
   </para>
 
   <refsect2 id="sql-repack-notes-on-clustering" xreflabel="Notes on Clustering">
@@ -141,27 +274,37 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
     all tables which have a clustering index defined and which the calling
     user has privileges for are processed.
    </para>
-
   </refsect2>
 
   <refsect2 id="sql-repack-notes-on-resources" xreflabel="Notes on Resources">
    <title>Notes on Resources</title>
 
    <para>
-    When an index scan or a sequential scan without sort is used, a temporary
-    copy of the table is created that contains the table data in the index
-    order.  Temporary copies of each index on the table are created as well.
-    Therefore, you need free space on disk at least equal to the sum of the
-    table size and the index sizes.
+    <command>REPACK</command> creates a temporary copy of the table and all
+    of its indexes, so you need free disk space at least equal to the sum
+    of the table size and the index sizes.
    </para>
 
    <para>
-    When a sequential scan and sort is used, a temporary sort file is also
-    created, so that the peak temporary space requirement is as much as double
-    the table size, plus the index sizes.  This method is often faster than
-    the index scan method, but if the disk space requirement is intolerable,
-    you can disable this choice by temporarily setting
-    <xref linkend="guc-enable-sort"/> to <literal>off</literal>.
+    If the <literal>USING INDEX</literal> clause is given and the planner
+    chooses a sequential scan and sort to implement it, a temporary sort
+    file of up to the size of the table is needed in addition to the above.
+    This method is usually faster than an index scan, but if the disk space
+    requirement is intolerable, you can disable this choice by temporarily
+    setting <xref linkend="guc-enable-sort"/> to <literal>off</literal>; or
+    omitting <literal>USING INDEX</literal> if the table doesn't need to be
+    reordered.
+   </para>
+
+   <para>
+    For the purposes of transaction ID wraparound
+    (see <xref linkend="vacuum-for-wraparound"/>),
+    <command>REPACK</command> is considered a single long-running
+    transaction, which prevents <command>VACUUM</command> from cleaning
+    up dead rows from other tables.
+    It is advisable to monitor <structname>pg_stat_activity.backend_xid</structname>
+    for the process running <command>REPACK</command> when repacking
+    very large tables, to avoid causing excessive bloat in other tables.
    </para>
 
    <para>
@@ -171,244 +314,136 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
    </para>
   </refsect2>
 
- </refsect1>
+  <refsect2 id="sql-repack-notes-on-concurrently" xreflabel="Notes on Concurrent Operation">
+   <title>Notes on Concurrent Operation</title>
 
- <refsect1>
-  <title>Parameters</title>
+   <warning>
+    <para>
+     <command>REPACK</command> with the <literal>CONCURRENTLY</literal>
+     option is not MVCC-safe.  After the repacking transaction commits,
+     the table will appear empty to concurrent transactions, if they are
+     using a snapshot taken before repacking started.
+     See <xref linkend="mvcc-caveats"/> for more details.
+    </para>
+   </warning>
 
-  <variablelist>
-   <varlistentry>
-    <term><replaceable class="parameter">table_name</replaceable></term>
-    <listitem>
-     <para>
-      The name (possibly schema-qualified) of a table.
-     </para>
-    </listitem>
-   </varlistentry>
+   <para>
+    <command>REPACK</command> copies the contents of the table
+    (ignoring dead tuples) into a new file, sorted by the specified index,
+    and also creates a new file for each index. It then swaps the old and
+    new files for the table and all the indexes, and deletes the old files.
+    Without the <literal>CONCURRENTLY</literal> option, an
+    <literal>ACCESS EXCLUSIVE</literal> lock is acquired at the beginning
+    and remains held throughout the operation to make sure that the old
+    files do not change during the processing; otherwise, any concurrent
+    changes would get lost due to the swap.
+   </para>
 
-   <varlistentry>
-    <term><replaceable class="parameter">column_name</replaceable></term>
-    <listitem>
-     <para>
-      The name of a specific column to analyze. Defaults to all columns.
-      If a column list is specific, <literal>ANALYZE</literal> must also
-      be specified.
-     </para>
-    </listitem>
-   </varlistentry>
+   <para>
+    By contrast, when the <literal>CONCURRENTLY</literal> option is
+    specified, the bulk of the operation is run with
+    <literal>SHARE UPDATE EXCLUSIVE</literal> lock, and the
+    <literal>ACCESS EXCLUSIVE</literal> lock is only acquired
+    during the final phase to swap the table and index files.
+    The data changes that took place during the creation of the new
+    table and index files are captured using logical decoding
+    (see <xref linkend="logicaldecoding"/>) and applied before
+    the <literal>ACCESS EXCLUSIVE</literal> lock is requested.
+    Once that lock is obtained, a final pass over any remaining captured
+    concurrent data changes is done and the files are swapped.
+    Thus the lock is typically held for a short time, depending
+    on the amount of changes accumulated while the lock was being
+    waited for.
+   </para>
 
-   <varlistentry>
-    <term><replaceable class="parameter">index_name</replaceable></term>
-    <listitem>
-     <para>
-      The name of an index.
-     </para>
-    </listitem>
-   </varlistentry>
+   <para>
+    Processing of these concurrent changes requires a fixed small
+    amount of memory for each tuple concurrently updated or deleted,
+    not limited by <xref linkend="guc-maintenance-work-mem"/>;
+    if more than about 104 million rows are concurrently updated or
+    deleted during the execution of <command>REPACK</command>, the
+    command fails.  In addition, the complete tuple data for all
+    concurrent changes (except for TOAST columns that are not modified
+    by <command>UPDATE</command>) are stored on disk separately.
+   </para>
 
-   <varlistentry>
-    <term><literal>CONCURRENTLY</literal></term>
-    <listitem>
-     <para>
-      Allow other transactions to use the table while it is being repacked.
-     </para>
+   <para>
+    <command>REPACK (CONCURRENTLY)</command> might fail to complete if DDL
+    commands are executed on the table by other transactions during the
+    repacking.
+   </para>
 
-     <para>
-      Internally, <command>REPACK</command> copies the contents of the table
-      (ignoring dead tuples) into a new file, sorted by the specified index,
-      and also creates a new file for each index. Then it swaps the old and
-      new files for the table and all the indexes, and deletes the old
-      files. The <literal>ACCESS EXCLUSIVE</literal> lock is needed to make
-      sure that the old files do not change during the processing because the
-      changes would get lost due to the swap.
-     </para>
+   <para>
+    <command>REPACK (CONCURRENTLY) USING INDEX</command>
+    does not try to order the rows inserted into the table after the
+    repacking started.
+   </para>
 
-     <para>
-      With the <literal>CONCURRENTLY</literal> option, the <literal>ACCESS
-      EXCLUSIVE</literal> lock is only acquired to swap the table and index
-      files. The data changes that took place during the creation of the new
-      table and index files are captured using logical decoding
-      (<xref linkend="logicaldecoding"/>) and applied before
-      the <literal>ACCESS EXCLUSIVE</literal> lock is requested. Thus the lock
-      is typically held only for the time needed to swap the files, which
-      should be pretty short. However, the time might still be noticeable if
-      too many data changes have been done to the table while
-      <command>REPACK</command> was waiting for the lock: those changes must
-      be processed just before the files are swapped, while the
-      <literal>ACCESS EXCLUSIVE</literal> lock is being held.
-     </para>
+   <para>
+    The <literal>CONCURRENTLY</literal> option cannot be used in the
+    following cases:
 
-     <para>
-      Note that <command>REPACK</command> with the
-      <literal>CONCURRENTLY</literal> option does not try to order the rows
-      inserted into the table after the repacking started. Also
-      note <command>REPACK</command> might fail to complete due to DDL
-      commands executed on the table by other transactions during the
-      repacking.
-     </para>
-
-     <note>
+    <itemizedlist>
+     <listitem>
       <para>
-       In addition to the temporary space requirements explained in
-       <xref linkend="sql-repack-notes-on-resources"/>,
-       the <literal>CONCURRENTLY</literal> option can add to the usage of
-       temporary space a bit more. The reason is that other transactions can
-       perform DML operations which cannot be applied to the new file until
-       <command>REPACK</command> has copied all the existing tuples from the
-       old file. Thus the tuples inserted into the old file during the copying
-       are also stored separately in a temporary file, until they can be
-       processed.
+       The relation is not a table (e.g., it is a materialized view).
       </para>
-     </note>
+     </listitem>
 
-     <para>
-      The <literal>CONCURRENTLY</literal> option cannot be used in the
-      following cases:
-
-      <itemizedlist>
-       <listitem>
-        <para>
-          The relation is not a table (e.g., it is a materialized view).
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-          The table is <literal>UNLOGGED</literal>.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-          The table is partitioned.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         The table lacks a primary key and index-based replica identity.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-          The table is a system catalog or a <acronym>TOAST</acronym> table.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-          The table's access method is not <literal>heap</literal>.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-          The table is declared as a catalog table using the
-          <link linkend="reloption-user-catalog-table"><literal>user_catalog_table</literal></link>
-          storage parameter.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         <command>REPACK</command> is executed inside a transaction block.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         The <link linkend="guc-max-repack-replication-slots"><varname>max_repack_replication_slots</varname></link>
-         configuration parameter does not allow for the creation of an
-         additional replication slot.
-        </para>
-       </listitem>
-      </itemizedlist>
-     </para>
-
-     <warning>
+     <listitem>
       <para>
-       <command>REPACK</command> with the <literal>CONCURRENTLY</literal>
-       option is not MVCC-safe, see <xref linkend="mvcc-caveats"/> for
-       details.
+       The table is <literal>UNLOGGED</literal>.
       </para>
-     </warning>
+     </listitem>
 
-    </listitem>
-   </varlistentry>
+     <listitem>
+      <para>
+       The table is partitioned.
+      </para>
+     </listitem>
 
-   <varlistentry>
-    <term><literal>VERBOSE</literal></term>
-    <listitem>
-     <para>
-      Prints a progress report as each table is repacked
-      at <literal>INFO</literal> level.
-     </para>
-    </listitem>
-   </varlistentry>
+     <listitem>
+      <para>
+       The table lacks a primary key and index-based replica identity.
+      </para>
+     </listitem>
 
-   <varlistentry>
-    <term><literal>ANALYZE</literal></term>
-    <term><literal>ANALYSE</literal></term>
-    <listitem>
-     <para>
-      Applies <xref linkend="sql-analyze"/> on the table after repacking.  This is
-      currently only supported when a single (non-partitioned) table is specified.
-      This option cannot be used inside a transaction block, or from a function,
-      procedure, or <command>DO</command> block.
-     </para>
-    </listitem>
-   </varlistentry>
+     <listitem>
+      <para>
+       The table is a system catalog or a <acronym>TOAST</acronym> table.
+      </para>
+     </listitem>
 
-   <varlistentry>
-    <term><replaceable class="parameter">boolean</replaceable></term>
-    <listitem>
-     <para>
-      Specifies whether the selected option should be turned on or off.
-      You can write <literal>TRUE</literal>, <literal>ON</literal>, or
-      <literal>1</literal> to enable the option, and <literal>FALSE</literal>,
-      <literal>OFF</literal>, or <literal>0</literal> to disable it.  The
-      <replaceable class="parameter">boolean</replaceable> value can also
-      be omitted, in which case <literal>TRUE</literal> is assumed.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
+     <listitem>
+      <para>
+       The table's access method is not <literal>heap</literal>.
+      </para>
+     </listitem>
 
- <refsect1>
-  <title>Notes</title>
+     <listitem>
+      <para>
+       The table is declared as a catalog table using the
+       <link linkend="reloption-user-catalog-table"><literal>user_catalog_table</literal></link>
+       storage parameter.
+      </para>
+     </listitem>
 
-   <para>
-    To repack a table, one must have the <literal>MAINTAIN</literal> privilege
-    on the table.
+     <listitem>
+      <para>
+       <command>REPACK</command> is executed inside a transaction block.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The <link linkend="guc-max-repack-replication-slots"><varname>max_repack_replication_slots</varname></link>
+       configuration parameter does not allow for the creation of an
+       additional replication slot.
+      </para>
+     </listitem>
+    </itemizedlist>
    </para>
-
-   <para>
-    <command>REPACK</command> refuses to process a table on which an invalid
-    index exists.  Such indexes must be dropped or reindexed by the user ahead
-    of time.
-   </para>
-
-   <para>
-    While <command>REPACK</command> is running, the <xref
-    linkend="guc-search-path"/> is temporarily changed to <literal>pg_catalog,
-    pg_temp</literal>.
-   </para>
-
-  <para>
-    Each backend running <command>REPACK</command> will report its progress
-    in the <structname>pg_stat_progress_repack</structname> view. See
-    <xref linkend="repack-progress-reporting"/> for details.
-  </para>
-
-   <para>
-    Repacking a partitioned table repacks each of its partitions. If an index
-    is specified, each partition is repacked using the partition of that
-    index. <command>REPACK</command> on a partitioned table cannot be executed
-    inside a transaction block.
-   </para>
-
+  </refsect2>
  </refsect1>
 
  <refsect1>
