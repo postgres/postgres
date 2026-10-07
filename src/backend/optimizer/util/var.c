@@ -791,6 +791,8 @@ flatten_join_alias_vars(PlannerInfo *root, Query *query, Node *node)
 	 * it's okay to immediately increment sublevels_up.
 	 */
 	Assert(node != (Node *) query);
+	/* add_nullingrels_if_needed relies on this */
+	Assert(root == NULL || query == root->parse);
 
 	context.root = root;
 	context.query = query;
@@ -1251,21 +1253,23 @@ add_nullingrels_if_needed(PlannerInfo *root, Node *newnode, Var *oldvar)
 		 * We can insert a PlaceHolderVar to carry the nullingrels.  However,
 		 * deciding where to evaluate the PHV is slightly tricky.  We first
 		 * try to evaluate it at the natural semantic level of the new
-		 * expression; but if that expression is variable-free, fall back to
-		 * evaluating it at the join that the oldvar is an alias Var for.
+		 * expression, ignoring any lateral references to rels outside the
+		 * join; but if that leaves nothing, fall back to evaluating it at the
+		 * join that the oldvar is an alias Var for.
 		 */
 		PlaceHolderVar *newphv;
 		Index		levelsup = oldvar->varlevelsup;
-		Relids		phrels = pull_varnos_of_level(root, newnode, levelsup);
+		Relids		joinrelids;
+		Relids		phrels;
 
-		if (bms_is_empty(phrels))	/* variable-free? */
+		/* oldvar belongs to root->parse even when levelsup > 0 */
+		joinrelids = get_relids_for_join(root->parse, oldvar->varno);
+		phrels = pull_varnos_of_level(root, newnode, levelsup);
+		phrels = bms_int_members(phrels, joinrelids);
+		if (bms_is_empty(phrels))
 		{
-			if (levelsup != 0)	/* this won't work otherwise */
-				elog(ERROR, "unsupported join alias expression");
-			phrels = get_relids_for_join(root->parse, oldvar->varno);
-			/* If it's an outer join, eval below not above the join */
-			phrels = bms_del_member(phrels, oldvar->varno);
-			Assert(!bms_is_empty(phrels));
+			/* Keep the join's own OJ relid: this set spans both its sides */
+			phrels = joinrelids;
 		}
 		newphv = make_placeholder_expr(root, (Expr *) newnode, phrels);
 		/* newphv has zero phlevelsup and NULL phnullingrels; fix it */

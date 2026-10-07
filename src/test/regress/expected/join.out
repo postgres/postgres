@@ -3678,6 +3678,262 @@ group by t23 order by 1;
                                         |     2
 (6 rows)
 
+-- nulled whole-row Var of a zero-column join, referenced from a subquery
+explain (verbose, costs off)
+select t1.q1, t1.q2, (select t23::text)
+from int8_tbl t1 left join
+  ((select from int4_tbl where f1 = 0) t2
+   cross join (select from int4_tbl where f1 = 0) t3) t23
+  on (t1.q1 = 123)
+order by 1, 2;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Sort
+   Output: t1.q1, t1.q2, ((SubPlan expr_1))
+   Sort Key: t1.q1, t1.q2
+   ->  Nested Loop Left Join
+         Output: t1.q1, t1.q2, (SubPlan expr_1)
+         Join Filter: (t1.q1 = 123)
+         ->  Seq Scan on public.int8_tbl t1
+               Output: t1.q1, t1.q2
+         ->  Materialize
+               Output: ('()'::record)
+               ->  Nested Loop
+                     Output: '()'::record
+                     ->  Seq Scan on public.int4_tbl
+                           Output: int4_tbl.f1
+                           Filter: (int4_tbl.f1 = 0)
+                     ->  Seq Scan on public.int4_tbl int4_tbl_1
+                           Output: int4_tbl_1.f1
+                           Filter: (int4_tbl_1.f1 = 0)
+         SubPlan expr_1
+           ->  Result
+                 Output: (('()'::record))::text
+(21 rows)
+
+select t1.q1, t1.q2, (select t23::text)
+from int8_tbl t1 left join
+  ((select from int4_tbl where f1 = 0) t2
+   cross join (select from int4_tbl where f1 = 0) t3) t23
+  on (t1.q1 = 123)
+order by 1, 2;
+        q1        |        q2         | t23 
+------------------+-------------------+-----
+              123 |               456 | ()
+              123 |  4567890123456789 | ()
+ 4567890123456789 | -4567890123456789 | 
+ 4567890123456789 |               123 | 
+ 4567890123456789 |  4567890123456789 | 
+(5 rows)
+
+-- nulled whole-row Var of a zero-column outer join
+explain (verbose, costs off)
+select t1.q1, t1.q2, f
+from int8_tbl t1 left join
+  ((select from int4_tbl where f1 = 0) t2
+   left join (select from int4_tbl where f1 = 0) t3 on true) t23
+  on (t1.q1 = 123),
+  length(t23::text) f
+order by 1, 2;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Sort
+   Output: t1.q1, t1.q2, f.f
+   Sort Key: t1.q1, t1.q2
+   ->  Nested Loop
+         Output: t1.q1, t1.q2, f.f
+         ->  Nested Loop Left Join
+               Output: t1.q1, t1.q2, ('()'::record)
+               Join Filter: (t1.q1 = 123)
+               ->  Seq Scan on public.int8_tbl t1
+                     Output: t1.q1, t1.q2
+               ->  Materialize
+                     Output: ('()'::record)
+                     ->  Nested Loop Left Join
+                           Output: '()'::record
+                           ->  Seq Scan on public.int4_tbl
+                                 Output: int4_tbl.f1
+                                 Filter: (int4_tbl.f1 = 0)
+                           ->  Seq Scan on public.int4_tbl int4_tbl_1
+                                 Output: int4_tbl_1.f1
+                                 Filter: (int4_tbl_1.f1 = 0)
+         ->  Function Scan on pg_catalog.length f
+               Output: f.f
+               Function Call: length((('()'::record))::text)
+(23 rows)
+
+select t1.q1, t1.q2, f
+from int8_tbl t1 left join
+  ((select from int4_tbl where f1 = 0) t2
+   left join (select from int4_tbl where f1 = 0) t3 on true) t23
+  on (t1.q1 = 123),
+  length(t23::text) f
+order by 1, 2;
+        q1        |        q2         | f 
+------------------+-------------------+---
+              123 |               456 | 2
+              123 |  4567890123456789 | 2
+ 4567890123456789 | -4567890123456789 |  
+ 4567890123456789 |               123 |  
+ 4567890123456789 |  4567890123456789 |  
+(5 rows)
+
+-- nulled whole-row Var of a join with a variable-free merged column
+explain (verbose, costs off)
+select 1 from (unnest(array[1, (select sum(f1) from int4_tbl)]) as u(b)
+               right join (values (1)) as v(b) using (b)
+               full join int8_tbl i8 on true) as j,
+  length(j::text) f;
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
+ Nested Loop
+   Output: 1
+   InitPlan expr_1
+     ->  Aggregate
+           Output: sum(int4_tbl.f1)
+           ->  Seq Scan on public.int4_tbl
+                 Output: int4_tbl.f1
+   ->  Merge Full Join
+         Output: ('1'::bigint), i8.q1, i8.q2
+         ->  Nested Loop Left Join
+               Output: '1'::bigint
+               ->  Result
+               ->  Function Scan on pg_catalog.unnest u
+                     Output: u.b
+                     Function Call: unnest(ARRAY['1'::bigint, (InitPlan expr_1).col1])
+                     Filter: (u.b = 1)
+         ->  Materialize
+               Output: i8.q1, i8.q2
+               ->  Seq Scan on public.int8_tbl i8
+                     Output: i8.q1, i8.q2
+   ->  Function Scan on pg_catalog.length f
+         Output: f.f
+         Function Call: length((ROW(('1'::bigint), i8.q1, i8.q2))::text)
+(23 rows)
+
+select 1 from (unnest(array[1, (select sum(f1) from int4_tbl)]) as u(b)
+               right join (values (1)) as v(b) using (b)
+               full join int8_tbl i8 on true) as j,
+  length(j::text) f;
+ ?column? 
+----------
+        1
+        1
+        1
+        1
+        1
+(5 rows)
+
+-- nulled whole-row Var of a join containing a lateral reference
+explain (verbose, costs off)
+select (j is null) from int4_tbl i4
+  left join (int8_tbl i8 join lateral (select i4.f1 from (values (3)) v) ss(x) on true) as j
+  on false;
+                   QUERY PLAN                   
+------------------------------------------------
+ Nested Loop Left Join
+   Output: ((ROW(i8.q1, i8.q2, i4.f1)) IS NULL)
+   Join Filter: false
+   ->  Seq Scan on public.int4_tbl i4
+         Output: i4.f1
+   ->  Result
+         Output: ROW(i8.q1, i8.q2, i4.f1)
+         Replaces: Scan on i8
+         One-Time Filter: false
+(9 rows)
+
+select (j is null) from int4_tbl i4
+  left join (int8_tbl i8 join lateral (select i4.f1 from (values (3)) v) ss(x) on true) as j
+  on false;
+ ?column? 
+----------
+ t
+ t
+ t
+ t
+ t
+(5 rows)
+
+-- same, but the PHV must be passed up through another join
+explain (verbose, costs off)
+select j from int4_tbl i4
+  left join (lateral (values (i4.f1)) as v(a) cross join int8_tbl i8) as j
+  on (j.q1 = 123 and j.q2 = 456),
+  int4_tbl i4b
+where i4.f1 = 0
+order by 1;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Sort
+   Output: (ROW(i4.f1, i8.q1, i8.q2))
+   Sort Key: (ROW(i4.f1, i8.q1, i8.q2))
+   ->  Nested Loop
+         Output: (ROW(i4.f1, i8.q1, i8.q2))
+         ->  Nested Loop Left Join
+               Output: (ROW(i4.f1, i8.q1, i8.q2))
+               ->  Seq Scan on public.int4_tbl i4
+                     Output: i4.f1
+                     Filter: (i4.f1 = 0)
+               ->  Seq Scan on public.int8_tbl i8
+                     Output: ROW(i4.f1, i8.q1, i8.q2)
+                     Filter: ((i8.q1 = 123) AND (i8.q2 = 456))
+         ->  Seq Scan on public.int4_tbl i4b
+               Output: i4b.f1
+(15 rows)
+
+select j from int4_tbl i4
+  left join (lateral (values (i4.f1)) as v(a) cross join int8_tbl i8) as j
+  on (j.q1 = 123 and j.q2 = 456),
+  int4_tbl i4b
+where i4.f1 = 0
+order by 1;
+      j      
+-------------
+ (0,123,456)
+ (0,123,456)
+ (0,123,456)
+ (0,123,456)
+ (0,123,456)
+(5 rows)
+
+-- same, referenced from a subquery, with only lateral references and constants
+explain (verbose, costs off)
+select i4.f1, (select j::text)
+from int4_tbl i4
+  left join (lateral (select i4.f1) ss(x) cross join (select 1) s2(y)) j
+  on (i4.f1 = 0)
+order by 1;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Sort
+   Output: i4.f1, ((SubPlan expr_1))
+   Sort Key: i4.f1
+   ->  Nested Loop Left Join
+         Output: i4.f1, (SubPlan expr_1)
+         Join Filter: (i4.f1 = 0)
+         ->  Seq Scan on public.int4_tbl i4
+               Output: i4.f1
+         ->  Result
+               Output: ROW(i4.f1, 1)
+         SubPlan expr_1
+           ->  Result
+                 Output: ((ROW(i4.f1, 1)))::text
+(13 rows)
+
+select i4.f1, (select j::text)
+from int4_tbl i4
+  left join (lateral (select i4.f1) ss(x) cross join (select 1) s2(y)) j
+  on (i4.f1 = 0)
+order by 1;
+     f1      |   j   
+-------------+-------
+ -2147483647 | 
+     -123456 | 
+           0 | (0,1)
+      123456 | 
+  2147483647 | 
+(5 rows)
+
 --
 -- test incorrect failure to NULL pulled-up subexpressions
 --
