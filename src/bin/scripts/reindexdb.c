@@ -216,6 +216,9 @@ main(int argc, char *argv[])
 	if (concurrentCons > 1 && syscatalog)
 		pg_fatal("cannot use multiple jobs to reindex system catalogs");
 
+	if (concurrentCons > 1 && concurrently && indexes.head != NULL)
+		pg_fatal("cannot use multiple jobs to reindex indexes concurrently");
+
 	if (alldb)
 	{
 		if (dbname)
