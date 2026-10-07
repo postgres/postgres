@@ -105,13 +105,6 @@
   max => 'INT_MAX / 2',
 },
 
-{ name => 'array_nulls', type => 'bool', context => 'PGC_USERSET', group => 'COMPAT_OPTIONS_PREVIOUS',
-  short_desc => 'Enables input of NULL elements in arrays.',
-  long_desc => 'When turned on, unquoted NULL in an array input value means a null value; otherwise it is taken literally.',
-  variable => 'Array_nulls',
-  boot_val => 'true',
-},
-
 { name => 'authentication_timeout', type => 'int', context => 'PGC_SIGHUP', group => 'CONN_AUTH_AUTH',
   short_desc => 'Sets the maximum allowed time to complete client authentication.',
   flags => 'GUC_UNIT_S',

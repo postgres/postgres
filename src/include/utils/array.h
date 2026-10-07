@@ -344,11 +344,6 @@ typedef struct ArrayIteratorData *ArrayIterator;
 
 
 /*
- * GUC parameter
- */
-extern PGDLLIMPORT bool Array_nulls;
-
-/*
  * prototypes for functions defined in arrayfuncs.c
  */
 extern void CopyArrayEls(ArrayType *array,

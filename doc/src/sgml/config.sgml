@@ -11941,32 +11941,6 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
 
      <variablelist>
 
-     <varlistentry id="guc-array-nulls" xreflabel="array_nulls">
-      <term><varname>array_nulls</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>array_nulls</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        This controls whether the array input parser recognizes
-        unquoted <literal>NULL</literal> as specifying a null array element.
-        By default, this is <literal>on</literal>, allowing array values containing
-        null values to be entered.  However, <productname>PostgreSQL</productname> versions
-        before 8.2 did not support null values in arrays, and therefore would
-        treat <literal>NULL</literal> as specifying a normal array element with
-        the string value <quote>NULL</quote>.  For backward compatibility with
-        applications that require the old behavior, this variable can be
-        turned <literal>off</literal>.
-       </para>
-
-       <para>
-        Note that it is possible to create array values containing null values
-        even when this variable is <literal>off</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-backslash-quote" xreflabel="backslash_quote">
       <term><varname>backslash_quote</varname> (<type>enum</type>)
       <indexterm><primary>strings</primary><secondary>backslash quotes</secondary></indexterm>

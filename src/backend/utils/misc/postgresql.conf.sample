@@ -892,7 +892,6 @@
 
 # - Previous PostgreSQL Versions -
 
-#array_nulls = on
 #backslash_quote = safe_encoding        # on, off, or safe_encoding
 #lo_compat_privileges = off
 #quote_all_identifiers = off

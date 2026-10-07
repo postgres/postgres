@@ -39,11 +39,6 @@
 
 
 /*
- * GUC parameter
- */
-bool		Array_nulls = true;
-
-/*
  * Local definitions
  */
 #define ASSGN	 "="
@@ -925,7 +920,7 @@ unquoted_element:
 					elembuf->len = dstlen;
 					*srcptr = p;
 					/* Check if it's unquoted "NULL" */
-					if (Array_nulls && !has_escapes &&
+					if (!has_escapes &&
 						pg_strcasecmp(elembuf->data, "NULL") == 0)
 						return ATOK_ELEM_NULL;
 					else
