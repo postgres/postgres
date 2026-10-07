@@ -4422,6 +4422,35 @@ group by t1.q2 order by 1;
   4567890123456789 |     6
 (4 rows)
 
+-- nulled whole-row Var of a join alias in aggregate queries
+select t1.q2, count(t23)
+from int8_tbl t1 left join
+  (int8_tbl t2 join int4_tbl t3 on t3.f1 = 0) t23
+  on (t1.q2 = t23.q1)
+group by t1.q2 order by 1;
+        q2         | count 
+-------------------+-------
+ -4567890123456789 |     0
+               123 |     2
+               456 |     0
+  4567890123456789 |     6
+(4 rows)
+
+select t23, count(*)
+from int8_tbl t1 left join
+  (int8_tbl t2 join int4_tbl t3 on t3.f1 = 0) t23
+  on (t1.q2 = t23.q1)
+group by t23 order by 1;
+                  t23                   | count 
+----------------------------------------+-------
+ (123,456,0)                            |     1
+ (123,4567890123456789,0)               |     1
+ (4567890123456789,-4567890123456789,0) |     2
+ (4567890123456789,123,0)               |     2
+ (4567890123456789,4567890123456789,0)  |     2
+                                        |     2
+(6 rows)
+
 --
 -- test incorrect failure to NULL pulled-up subexpressions
 --

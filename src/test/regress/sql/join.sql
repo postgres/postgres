@@ -1384,6 +1384,19 @@ from int8_tbl t1 left join
   on (t1.q2 = t2.q1)
 group by t1.q2 order by 1;
 
+-- nulled whole-row Var of a join alias in aggregate queries
+select t1.q2, count(t23)
+from int8_tbl t1 left join
+  (int8_tbl t2 join int4_tbl t3 on t3.f1 = 0) t23
+  on (t1.q2 = t23.q1)
+group by t1.q2 order by 1;
+
+select t23, count(*)
+from int8_tbl t1 left join
+  (int8_tbl t2 join int4_tbl t3 on t3.f1 = 0) t23
+  on (t1.q2 = t23.q1)
+group by t23 order by 1;
+
 --
 -- test incorrect failure to NULL pulled-up subexpressions
 --
