@@ -66,6 +66,7 @@ tests += {
       't/055_cascade_reconnect.pl',
       't/056_standby_snapshot_export.pl',
       't/057_snapshot_commit_race.pl',
+      't/059_remote_apply_status_interval.pl',
     ],
   },
 }

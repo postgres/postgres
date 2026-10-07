@@ -1196,8 +1196,8 @@ XLogWalRcvClose(XLogRecPtr recptr, TimeLineID tli)
  * The message is sent if 'force' is set, if enough time has passed since the
  * last update to reach wal_receiver_status_interval, or if WAL locations have
  * advanced since the previous status update. If wal_receiver_status_interval
- * is disabled and 'force' is false, this function does nothing. Set 'force' to
- * send the message unconditionally.
+ * is disabled and neither 'force' nor 'checkApply' is set, this function does
+ * nothing. Set 'force' to send the message unconditionally.
  *
  * Whether WAL locations are considered "advanced" depends on 'checkApply'.
  * If 'checkApply' is false, only the write and flush locations are checked.
@@ -1222,10 +1222,11 @@ XLogWalRcvSendReply(bool force, bool requestReply, bool checkApply)
 	TimestampTz now;
 
 	/*
-	 * If the user doesn't want status to be reported to the primary, be sure
-	 * to exit before doing anything at all.
+	 * If status reporting is disabled, skip non-forced replies unless the
+	 * startup process has requested an apply notification.  Backends waiting
+	 * with synchronous_commit = remote_apply depend on these notifications.
 	 */
-	if (!force && wal_receiver_status_interval <= 0)
+	if (!force && !checkApply && wal_receiver_status_interval <= 0)
 		return;
 
 	/* Get current timestamp. */
