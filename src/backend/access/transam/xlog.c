@@ -8782,7 +8782,7 @@ xlog_redo(XLogReaderState *record)
 		 * subsequent WAL records, which may not contain logical information.
 		 */
 		if (status)
-			EnableLogicalDecoding();
+			EnableLogicalDecoding(lsn);
 		else
 			DisableLogicalDecoding();
 

@@ -14,14 +14,17 @@
 #ifndef LOGICALCTL_H
 #define LOGICALCTL_H
 
+#include "access/xlogdefs.h"
+
 extern void StartupLogicalDecodingStatus(bool last_status);
 extern void InitializeProcessXLogLogicalInfo(void);
 extern bool ProcessBarrierUpdateXLogLogicalInfo(void);
 extern bool IsLogicalDecodingEnabled(void);
+extern bool StandbyLogicalDecodingEnabledSince(XLogRecPtr lsn);
 extern bool IsXLogLogicalInfoEnabled(void);
 extern void AtEOXact_LogicalCtl(void);
 extern void EnsureLogicalDecodingEnabled(void);
-extern void EnableLogicalDecoding(void);
+extern void EnableLogicalDecoding(XLogRecPtr lsn);
 extern void RequestDisableLogicalDecoding(void);
 extern void DisableLogicalDecodingIfNecessary(void);
 extern void DisableLogicalDecoding(void);
