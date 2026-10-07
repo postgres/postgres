@@ -1412,20 +1412,37 @@ typedef struct PGAlignedXLogBlock PGAlignedXLogBlock;
  * design or language restrictions prevent you from declaring that
  * (e.g. because a function returns both const and non-const variables).
  *
- * Note that this only works in function scope, not for global variables (it'd
- * be nice, but not trivial, to improve that).
+ * unconstify_constexpr is for contexts where a constant expression is
+ * required, such as for initializing global variables.  It provides the same
+ * level of checking as unconstify, but the checking only works on GCC,
+ * otherwise it lets anything through.  Also, if the check fails, it gives a
+ * less clear error message.  So it should only be used when necessary.
+ *
+ * (An unvolatize_constexpr doesn't seem necessary, but it could be added if
+ * required.)
  */
 #if defined(__cplusplus)
 #define unconstify(underlying_type, expr) const_cast<underlying_type>(expr)
+#define unconstify_constexpr(underlying_type, expr) const_cast<underlying_type>(expr)
 #define unvolatize(underlying_type, expr) const_cast<underlying_type>(expr)
-#else
+#else							/* !__cplusplus */
 #define unconstify(underlying_type, expr) \
 	(StaticAssertVariableIsOfTypeMacro(expr, const underlying_type), \
 	 (underlying_type) (expr))
 #define unvolatize(underlying_type, expr) \
 	(StaticAssertVariableIsOfTypeMacro(expr, volatile underlying_type), \
 	 (underlying_type) (expr))
-#endif
+#ifdef __GNUC__
+#define unconstify_constexpr(underlying_type, expr) \
+	__builtin_choose_expr( \
+		_Generic((expr), const underlying_type: 1, default: 0), \
+		(underlying_type) (expr), \
+		(void) 0)
+#else							/* !__GNUC_ */
+#define unconstify_constexpr(underlying_type, expr) \
+	((underlying_type) (expr))
+#endif							/* !__GNUC_ */
+#endif							/* !__cplusplus */
 
 /*
  * SSE2 instructions are part of the spec for the 64-bit x86 ISA. We assume
