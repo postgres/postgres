@@ -2185,8 +2185,14 @@ match_previous_words(int pattern_id,
 	/* BEGIN GEN_TABCOMPLETE */
 
 /* CREATE */
-	/* complete with something you can create */
-	else if (TailMatches("CREATE"))
+
+	/*
+	 * Complete with something you can create. If CREATE is a privilege name,
+	 * leave it to the GRANT/REVOKE rules below.
+	 */
+	else if (TailMatches("CREATE") &&
+			 !TailMatches("GRANT|REVOKE", "CREATE") &&
+			 !TailMatches("REVOKE", "GRANT", "OPTION", "FOR", "CREATE"))
 	{
 		/* only some object types can be created as part of CREATE SCHEMA */
 		if (HeadMatches("CREATE", "SCHEMA"))
