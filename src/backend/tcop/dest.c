@@ -93,7 +93,7 @@ static const DestReceiver spi_printtupDR = {
  * It's ok to cast the constness away as any modification of the none receiver
  * would be a bug (which gets easier to catch this way).
  */
-DestReceiver *None_Receiver = (DestReceiver *) &donothingDR;
+DestReceiver *None_Receiver = unconstify_constexpr(DestReceiver *, &donothingDR);
 
 /* ----------------
  *		BeginCommand - initialize the destination at start of command
