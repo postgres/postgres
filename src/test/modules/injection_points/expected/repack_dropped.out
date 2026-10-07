@@ -1,6 +1,6 @@
 Parsed test spec with 3 sessions
 
-starting permutation: s1_size s2_repack s3_updates s1_unlock s2_noop s1_size
+starting permutation: s1_size s2_repack s3_updates s3_insert s1_unlock s2_noop s1_size
 injection_points_attach
 -----------------------
                        
@@ -23,6 +23,9 @@ step s2_repack:
 step s3_updates: 
 	UPDATE repack_dropped SET a = a || a;
 
+step s3_insert: 
+	INSERT INTO repack_dropped (id, a) VALUES (3, 'three');
+
 step s1_unlock: 
 	SELECT injection_points_wakeup('repack-concurrently-before-lock');
 
@@ -43,5 +46,6 @@ id|fits_in_one_block
 --+-----------------
  1|t                
  2|t                
-(2 rows)
+ 3|t                
+(3 rows)
 

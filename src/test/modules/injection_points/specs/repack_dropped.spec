@@ -13,11 +13,18 @@ setup {
 	INSERT INTO repack_dropped (id, a, b) VALUES (2, 'two',
 		repeat(encode(sha256('2'), 'hex'), current_setting('block_size')::int / 32));
 	CREATE FUNCTION repack_dropped_f() RETURNS trigger LANGUAGE plpgsql AS
-		$$ BEGIN
+		$$ DECLARE r repack_dropped;
+		BEGIN
+			IF TG_OP = 'INSERT' THEN
+				r := (SELECT t FROM repack_dropped t WHERE id = 1);
+				r.id := NEW.id;
+				RETURN r;
+			END IF;
 			IF NEW.id = 1 THEN return OLD; END IF;
 			RETURN NEW;
 		END $$;
 	CREATE TRIGGER repack_dropped_t BEFORE UPDATE ON repack_dropped FOR EACH ROW EXECUTE FUNCTION repack_dropped_f();
+	CREATE TRIGGER repack_dropped_ins_t BEFORE INSERT ON repack_dropped FOR EACH ROW EXECUTE FUNCTION repack_dropped_f();
 	ALTER TABLE repack_dropped DROP COLUMN b;
 }
 
@@ -63,10 +70,17 @@ step s3_updates
 	UPDATE repack_dropped SET a = a || a;
 }
 
+# The trigger makes tuple 3 a copy of tuple 1, dropped column included.
+step s3_insert
+{
+	INSERT INTO repack_dropped (id, a) VALUES (3, 'three');
+}
+
 permutation
 	s1_size
 	s2_repack
 	s3_updates
+	s3_insert
 	s1_unlock
 	s2_noop
 	s1_size
