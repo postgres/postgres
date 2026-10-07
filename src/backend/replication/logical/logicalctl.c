@@ -100,9 +100,11 @@ typedef struct LogicalDecodingCtlData
 static LogicalDecodingCtlData *LogicalDecodingCtl = NULL;
 
 static void LogicalDecodingCtlShmemRequest(void *arg);
+static void LogicalDecodingCtlShmemInit(void *arg);
 
 const ShmemCallbacks LogicalDecodingCtlShmemCallbacks = {
 	.request_fn = LogicalDecodingCtlShmemRequest,
+	.init_fn = LogicalDecodingCtlShmemInit,
 };
 
 /*
@@ -134,6 +136,14 @@ LogicalDecodingCtlShmemRequest(void *arg)
 					   .size = sizeof(LogicalDecodingCtlData),
 					   .ptr = (void **) &LogicalDecodingCtl,
 		);
+}
+
+static void
+LogicalDecodingCtlShmemInit(void *arg)
+{
+	LogicalDecodingCtl->xlog_logical_info = false;
+	LogicalDecodingCtl->logical_decoding_enabled = false;
+	LogicalDecodingCtl->pending_disable = false;
 }
 
 /*
