@@ -466,7 +466,7 @@ pgwin32_send(SOCKET s, const void *buf, int len, int flags)
 		return -1;
 
 	wbuf.len = len;
-	wbuf.buf = (char *) buf;
+	wbuf.buf = unconstify(void *, buf);
 
 	/*
 	 * Readiness of socket to send data to UDP socket may be not true: socket

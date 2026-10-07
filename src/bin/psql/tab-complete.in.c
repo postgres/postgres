@@ -1514,7 +1514,7 @@ static char *dequote_file_name(char *fname, int quote_char);
 void
 initialize_readline(void)
 {
-	rl_readline_name = (char *) pset.progname;
+	rl_readline_name = unconstify(char *, pset.progname);
 	rl_attempted_completion_function = psql_completion;
 
 #ifdef USE_FILENAME_QUOTING_FUNCTIONS

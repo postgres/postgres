@@ -185,7 +185,7 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 		else
 			input.length = bytes_to_encrypt;
 
-		input.value = (char *) ptr + bytes_encrypted;
+		input.value = unconstify(char *, (const char *) ptr) + bytes_encrypted;
 
 		output.value = NULL;
 		output.length = 0;

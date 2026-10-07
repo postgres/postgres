@@ -1153,7 +1153,7 @@ initialize_SSL(PGconn *conn)
 			!(strspn(host, "0123456789.") == strlen(host) ||
 			  strchr(host, ':')))
 		{
-			if (SSL_set_tlsext_host_name(conn->ssl, host) != 1)
+			if (SSL_set_tlsext_host_name(conn->ssl, unconstify(char *, host)) != 1)
 			{
 				char	   *errm = SSLerrmessage(ERR_get_error());
 

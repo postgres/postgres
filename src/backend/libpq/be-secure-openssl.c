@@ -1840,7 +1840,7 @@ alpn_cb(SSL *ssl,
 	Assert(outlen != NULL);
 	Assert(in != NULL);
 
-	retval = SSL_select_next_proto((unsigned char **) out, outlen,
+	retval = SSL_select_next_proto(unconstify(unsigned char **, out), outlen,
 								   alpn_protos, sizeof(alpn_protos),
 								   in, inlen);
 	if (*out == NULL || *outlen > sizeof(alpn_protos) || *outlen <= 0)
