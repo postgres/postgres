@@ -298,6 +298,16 @@ $node->issues_sql_like(
 	],
 	qr/statement:\ REINDEX TABLE s1.t1;/,
 	'parallel reindexdb for schemas does a per-table REINDEX');
+$node->command_fails(
+	[
+		'reindexdb',
+		'--jobs' => '2',
+		'--concurrently',
+		'--index' => 's1.i1',
+		'--index' => 's2.i2',
+		'postgres',
+	],
+	'parallel reindexdb for indices concurrently');
 $node->command_ok([ 'reindexdb', '--jobs' => '2', '--schema' => 's3' ],
 	'parallel reindexdb with empty schema');
 $node->command_ok(
