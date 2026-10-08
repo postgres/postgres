@@ -333,6 +333,14 @@ astreamer_gzip_decompressor_content(astreamer *streamer,
 							  mystreamer->base.bbs_buffer.maxlen, context);
 			mystreamer->bytes_written = 0;
 		}
+
+		/*
+		 * The input can be several gzip members one after another, which is
+		 * what pg_basebackup writes for pg_wal.tar.gz.  Get ready for the
+		 * next one.
+		 */
+		if (res == Z_STREAM_END && inflateReset(zs) != Z_OK)
+			pg_fatal("could not reset compression stream");
 	}
 }
 
