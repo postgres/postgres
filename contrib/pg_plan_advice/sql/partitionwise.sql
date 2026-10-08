@@ -123,3 +123,7 @@ COMMIT;
 -- We should get PARTITIONWISE advice for all unpruned partition tables.
 EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM mllpt WHERE a = 1 UNION ALL SELECT * FROM mllpt;
+
+-- Same, but prune down to a single leaf so the Append is elided.
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM mllpt WHERE a = 1 AND b = 1;

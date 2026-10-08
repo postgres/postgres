@@ -214,7 +214,8 @@ static List *set_windowagg_runcondition_references(PlannerInfo *root,
 												   Plan *plan);
 
 static void record_elided_node(PlannerGlobal *glob, int plan_node_id,
-							   NodeTag elided_type, Bitmapset *relids);
+							   NodeTag elided_type, Bitmapset *relids,
+							   List *child_append_relid_sets);
 
 
 /*****************************************************************************
@@ -1480,7 +1481,8 @@ set_subqueryscan_references(PlannerInfo *root,
 		/* Remember that we removed a SubqueryScan */
 		scanrelid = plan->scan.scanrelid + rtoffset;
 		record_elided_node(root->glob, plan->subplan->plan_node_id,
-						   T_SubqueryScan, bms_make_singleton(scanrelid));
+						   T_SubqueryScan, bms_make_singleton(scanrelid),
+						   NIL);
 	}
 	else
 	{
@@ -1915,7 +1917,9 @@ set_append_references(PlannerInfo *root,
 
 			/* Remember that we removed an Append */
 			record_elided_node(root->glob, p->plan_node_id, T_Append,
-							   offset_relid_set(aplan->apprelids, rtoffset));
+							   offset_relid_set(aplan->apprelids, rtoffset),
+							   offset_relid_set_list(aplan->child_append_relid_sets,
+													 rtoffset));
 
 			return result;
 		}
@@ -1995,7 +1999,9 @@ set_mergeappend_references(PlannerInfo *root,
 
 			/* Remember that we removed a MergeAppend */
 			record_elided_node(root->glob, p->plan_node_id, T_MergeAppend,
-							   offset_relid_set(mplan->apprelids, rtoffset));
+							   offset_relid_set(mplan->apprelids, rtoffset),
+							   offset_relid_set_list(mplan->child_append_relid_sets,
+													 rtoffset));
 
 			return result;
 		}
@@ -3873,13 +3879,15 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
  */
 static void
 record_elided_node(PlannerGlobal *glob, int plan_node_id,
-				   NodeTag elided_type, Bitmapset *relids)
+				   NodeTag elided_type, Bitmapset *relids,
+				   List *child_append_relid_sets)
 {
 	ElidedNode *n = makeNode(ElidedNode);
 
 	n->plan_node_id = plan_node_id;
 	n->elided_type = elided_type;
 	n->relids = relids;
+	n->child_append_relid_sets = child_append_relid_sets;
 
 	glob->elidedNodes = lappend(glob->elidedNodes, n);
 }
