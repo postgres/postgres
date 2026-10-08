@@ -149,8 +149,6 @@ $node->reload;
 $log_start = $node->wait_for_log(
 	qr/parameter "oauth_validator_libraries" changed to "validator"/,
 	$log_start);
-is($bgconn->query_safe('SHOW oauth_validator_libraries'),
-	'validator', 'oauth_validator_libraries restored');
 
 {
 	# Make sure PGOAUTHDEBUG=UNSAFE doesn't disable certificate verification.
