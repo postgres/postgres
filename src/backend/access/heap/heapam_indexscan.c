@@ -365,9 +365,9 @@ heapam_index_getnext_slot(IndexScanDesc scan, ScanDirection direction,
 										 ItemPointerGetBlockNumber(&scan->xs_heaptid),
 										 &hscan->xs_vmbuffer);
 
-			/* Page isn't all-visible, so verify visibility with a heap fetch */
 			if (unlikely(!all_visible))
 			{
+				/* Page isn't all-visible, so need a heap fetch */
 				if (!heapam_index_only_heap_fetch(scan))
 				{
 					/* No visible tuple */
