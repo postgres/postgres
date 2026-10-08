@@ -599,8 +599,10 @@ error:
 	{
 		ereport(WARNING,
 				errcode(ERRCODE_CONFIG_FILE_ERROR),
-				errmsg("SSL configuration not reloaded, SNI remains %s", SSL_hosts->sni_enabled ? "on" : "off"),
-				errdetail("The SSL configuration failed to reload, previous configuration and SNI state will remain active."));
+				SSL_hosts->sni_enabled ?
+				errmsg("SSL configuration not reloaded, SNI remains on") :
+				errmsg("SSL configuration not reloaded, SNI remains off"),
+				errdetail("The SSL configuration failed to reload; the previous configuration and SNI state will remain active."));
 	}
 
 	MemoryContextSwitchTo(oldcxt);
