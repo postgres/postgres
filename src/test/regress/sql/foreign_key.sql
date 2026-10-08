@@ -3065,3 +3065,24 @@ DROP TABLE pktable_inval;
 DROP CAST (fkint AS int4);
 DROP FUNCTION fkint_to_int4(fkint);
 DROP TYPE fkint CASCADE;
+
+-- An FK check locks the referenced row, which a read-only transaction does
+-- not allow unless the referenced table is temporary.
+CREATE TABLE fp_pk_ro (a int PRIMARY KEY);
+INSERT INTO fp_pk_ro VALUES (1);
+CREATE TABLE fp_fk_ro (a int REFERENCES fp_pk_ro DEFERRABLE INITIALLY DEFERRED);
+BEGIN;
+INSERT INTO fp_fk_ro VALUES (1);
+SET TRANSACTION READ ONLY;
+COMMIT;	-- fails
+CREATE TEMP TABLE fp_pk_ro_tmp (a int PRIMARY KEY);
+INSERT INTO fp_pk_ro_tmp VALUES (1);
+CREATE TEMP TABLE fp_fk_ro_tmp (a int REFERENCES fp_pk_ro_tmp
+    DEFERRABLE INITIALLY DEFERRED);
+BEGIN;
+INSERT INTO fp_fk_ro_tmp VALUES (1);
+SET TRANSACTION READ ONLY;
+COMMIT;	-- succeeds
+SELECT count(*) FROM fp_fk_ro;
+SELECT count(*) FROM fp_fk_ro_tmp;
+DROP TABLE fp_fk_ro, fp_pk_ro, fp_fk_ro_tmp, fp_pk_ro_tmp;
