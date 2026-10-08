@@ -158,12 +158,17 @@ Creating Back-Branch Release Notes
 Retiring a Branch
 =================
 
-* Notify the private committers email list, to ensure all committers
-  are aware of the branch being dead.
+* When the release freeze begins on a branch's last advance-scheduled release,
+  notify the private committers email list about the branch having lost
+  eligibility for ordinary back-patches.  Any later back-patches should fall
+  under the project policy about keeping out-of-support branches buildable
+  (https://postgr.es/m/d0316012-ece7-7b7e-2d36-9c38cb77cb3b@enterprisedb.com).
 
-* Get the buildfarm's 'branches_of_interest.txt' file updated to remove
-  the retired branch.  Then notify the buildfarm owners' email list,
-  for the benefit of owners who use manual branch scheduling.
+* Three weeks after the branch's actual last release (including any follow-up
+  releases), get the buildfarm's 'branches_of_interest.txt' file updated to
+  remove the retired branch.  Then notify the buildfarm owners' email list,
+  for the benefit of owners who use manual branch scheduling.  (The delay
+  gives time to discover the need for follow-up releases.)
 
 
 
