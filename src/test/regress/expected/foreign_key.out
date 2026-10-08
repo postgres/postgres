@@ -4119,3 +4119,34 @@ DROP TYPE fkint CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to function fkint_in(cstring)
 drop cascades to function fkint_out(fkint)
+-- An FK check locks the referenced row, which a read-only transaction does
+-- not allow unless the referenced table is temporary.
+CREATE TABLE fp_pk_ro (a int PRIMARY KEY);
+INSERT INTO fp_pk_ro VALUES (1);
+CREATE TABLE fp_fk_ro (a int REFERENCES fp_pk_ro DEFERRABLE INITIALLY DEFERRED);
+BEGIN;
+INSERT INTO fp_fk_ro VALUES (1);
+SET TRANSACTION READ ONLY;
+COMMIT;	-- fails
+ERROR:  cannot execute SELECT FOR KEY SHARE in a read-only transaction
+CREATE TEMP TABLE fp_pk_ro_tmp (a int PRIMARY KEY);
+INSERT INTO fp_pk_ro_tmp VALUES (1);
+CREATE TEMP TABLE fp_fk_ro_tmp (a int REFERENCES fp_pk_ro_tmp
+    DEFERRABLE INITIALLY DEFERRED);
+BEGIN;
+INSERT INTO fp_fk_ro_tmp VALUES (1);
+SET TRANSACTION READ ONLY;
+COMMIT;	-- succeeds
+SELECT count(*) FROM fp_fk_ro;
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM fp_fk_ro_tmp;
+ count 
+-------
+     1
+(1 row)
+
+DROP TABLE fp_fk_ro, fp_pk_ro, fp_fk_ro_tmp, fp_pk_ro_tmp;
