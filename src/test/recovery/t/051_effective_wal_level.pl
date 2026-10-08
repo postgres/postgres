@@ -687,10 +687,9 @@ select injection_points_wakeup('replication-slot-create-begin');
 	  or die
 	  "timed out waiting for the slot to be re-created from the re-created remote slot";
 
-	# The slot created on retry might not be persisted until the remote slot
-	# catches up with the catalog_xmin computed locally. Drop the remote slot
-	# to let the slot synchronization finish, keeping logical decoding enabled
-	# with another slot as the slot synchronization requires it.
+	# Drop the remote slot so that the slot synchronization has nothing left
+	# to retry, keeping logical decoding enabled with another slot as the
+	# slot synchronization requires it.
 	$primary->safe_psql(
 		'postgres', qq[
 select pg_create_logical_replication_slot('test_slot4', 'test_decoding');
@@ -698,6 +697,12 @@ select pg_drop_replication_slot('sync_slot');
 ]);
 	$primary->wait_for_replay_catchup($standby5);
 	$psql_sync_slot->quit;
+
+	# The slot created on retry may or may not have been persisted by the
+	# time the remote slot was dropped. One more synchronization cycle
+	# drops the local slot either way.
+	$standby5->safe_psql('postgres', qq[select pg_sync_replication_slots()]);
+
 	$primary->safe_psql('postgres',
 		qq[select pg_drop_replication_slot('test_slot4')]);
 	wait_for_logical_decoding_disabled($primary);
