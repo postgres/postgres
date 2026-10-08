@@ -239,6 +239,15 @@ struct XLogReaderState
 	 * ----------------------------------------
 	 */
 
+#ifdef USE_ZSTD
+	/* Decompression context reused for zstd-compressed full-page images. */
+	void	   *zstd_dctx;
+#ifndef FRONTEND
+	/* Reset callback for zstd_dctx */
+	MemoryContextCallback zstd_dctx_cb;
+#endif
+#endif
+
 	/*
 	 * Buffer for decoded records.  This is a circular buffer, though
 	 * individual records can't be split in the middle, so some space is often
