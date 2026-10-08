@@ -306,8 +306,6 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 				new_rel_allvisible;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
-	PgStat_Counter startreadtime = 0,
-				startwritetime = 0;
 	WalUsage	startwalusage = pgWalUsage;
 	BufferUsage startbufferusage = pgBufferUsage;
 	ErrorContextCallback errcallback;
@@ -320,11 +318,6 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	{
 		pg_rusage_init(&ru0);
 		starttime = GetCurrentTimestamp();
-		if (track_io_timing)
-		{
-			startreadtime = pgStatBlockReadTime;
-			startwritetime = pgStatBlockWriteTime;
-		}
 	}
 
 	pgstat_progress_start_command(PROGRESS_COMMAND_VACUUM,
@@ -732,8 +725,17 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 			}
 			if (track_io_timing)
 			{
-				double		read_ms = (double) (pgStatBlockReadTime - startreadtime) / 1000;
-				double		write_ms = (double) (pgStatBlockWriteTime - startwritetime) / 1000;
+				/*
+				 * Take the timings from the same buffer usage delta as the
+				 * block counts, so that the parallel workers are included in
+				 * both.
+				 */
+				double		read_ms =
+					INSTR_TIME_GET_MILLISEC(bufferusage.shared_blk_read_time) +
+					INSTR_TIME_GET_MILLISEC(bufferusage.local_blk_read_time);
+				double		write_ms =
+					INSTR_TIME_GET_MILLISEC(bufferusage.shared_blk_write_time) +
+					INSTR_TIME_GET_MILLISEC(bufferusage.local_blk_write_time);
 
 				appendStringInfo(&buf, _("I/O timings: read: %.3f ms, write: %.3f ms\n"),
 								 read_ms, write_ms);
