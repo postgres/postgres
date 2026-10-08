@@ -1608,6 +1608,7 @@ summarizer_wal_segment_open(XLogReaderState *state, XLogSegNo nextSegNo,
 		state->seg.ws_file = BasicOpenFile(path, O_RDONLY | PG_BINARY);
 		if (state->seg.ws_file >= 0)
 		{
+			XLogReaderRegisterResetCallback(state);
 			*tli_p = tli;
 			return;
 		}

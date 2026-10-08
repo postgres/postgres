@@ -836,7 +836,10 @@ wal_segment_open(XLogReaderState *state, XLogSegNo nextSegNo,
 	XLogFilePath(path, tli, nextSegNo, state->segcxt.ws_segsize);
 	state->seg.ws_file = BasicOpenFile(path, O_RDONLY | PG_BINARY);
 	if (state->seg.ws_file >= 0)
+	{
+		XLogReaderRegisterResetCallback(state);
 		return;
+	}
 
 	if (errno == ENOENT)
 		ereport(ERROR,

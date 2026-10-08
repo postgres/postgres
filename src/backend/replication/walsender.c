@@ -3346,7 +3346,10 @@ WalSndSegmentOpen(XLogReaderState *state, XLogSegNo nextSegNo,
 	XLogFilePath(path, *tli_p, nextSegNo, state->segcxt.ws_segsize);
 	state->seg.ws_file = BasicOpenFile(path, O_RDONLY | PG_BINARY);
 	if (state->seg.ws_file >= 0)
+	{
+		XLogReaderRegisterResetCallback(state);
 		return;
+	}
 
 	/*
 	 * If the file is not found, assume it's because the standby asked for a
