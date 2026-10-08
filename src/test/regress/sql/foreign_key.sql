@@ -3086,3 +3086,32 @@ COMMIT;	-- succeeds
 SELECT count(*) FROM fp_fk_ro;
 SELECT count(*) FROM fp_fk_ro_tmp;
 DROP TABLE fp_fk_ro, fp_pk_ro, fp_fk_ro_tmp, fp_pk_ro_tmp;
+
+-- The row lock must use the command ID the check's snapshot was taken
+-- with.  An equality function that updates the referenced row advances the
+-- command counter before the lock; the row must then count as updated by
+-- the check's own command, so that the check reports a violation, as the
+-- SPI path does, rather than failing to lock an "invisible" tuple.  The
+-- equality function runs while the scan holds the index page locked; its
+-- UPDATE is a HOT update, since v isn't indexed, so it doesn't touch the
+-- index.  This is done in a transaction that is rolled back, so that other
+-- tests never see the operator class.
+BEGIN;
+CREATE TABLE fp_pk_cid (id int, v int DEFAULT 0);
+CREATE FUNCTION fp_cid_eq(int, int) RETURNS bool LANGUAGE plpgsql AS $$
+BEGIN
+    UPDATE fp_pk_cid SET v = v + 1 WHERE id OPERATOR(pg_catalog.=) $1;
+    RETURN $1 OPERATOR(pg_catalog.=) $2;
+END$$;
+CREATE OPERATOR =~= (LEFTARG = int, RIGHTARG = int, FUNCTION = fp_cid_eq);
+CREATE OPERATOR CLASS fp_cid_ops FOR TYPE int USING btree AS
+    OPERATOR 1 pg_catalog.<, OPERATOR 2 pg_catalog.<=, OPERATOR 3 =~=,
+    OPERATOR 4 pg_catalog.>=, OPERATOR 5 pg_catalog.>,
+    FUNCTION 1 btint4cmp(int, int);
+CREATE UNIQUE INDEX fp_pk_cid_id ON fp_pk_cid (id fp_cid_ops);
+INSERT INTO fp_pk_cid VALUES (1);
+CREATE TABLE fp_fk_cid (a int REFERENCES fp_pk_cid (id));
+SAVEPOINT fp_cid;
+INSERT INTO fp_fk_cid VALUES (1);	-- fails, as a violation
+ROLLBACK TO SAVEPOINT fp_cid;
+ROLLBACK;
