@@ -83,6 +83,9 @@ pgpa_build_scan(pgpa_plan_walker_context *walker, Plan *plan,
 		else
 			strategy = PGPA_SCAN_ORDINARY;
 
+		/* Be sure to account for pulled-up scans, as for a live Append. */
+		child_append_relid_sets = elided_node->child_append_relid_sets;
+
 		/* Join RTIs can be present, but advice never refers to them. */
 		relids = pgpa_filter_out_join_relids(relids, walker->pstmt->rtable);
 	}

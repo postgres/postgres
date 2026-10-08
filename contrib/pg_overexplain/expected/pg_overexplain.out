@@ -628,6 +628,7 @@ SELECT * FROM vegetables WHERE genus = 'daucus';
    Scan RTI: 2
    Elided Node Type: Append
    Elided Node RTIs: 1
+   Elided Node Child Append RTIs: none
  RTI 1 (relation, inherited, in-from-clause):
    Eref: vegetables (id, name, genus)
    Relation: vegetables
@@ -641,7 +642,7 @@ SELECT * FROM vegetables WHERE genus = 'daucus';
    Relation Kind: relation
    Relation Lock Mode: AccessShareLock
  Unprunable RTIs: 1 2
-(18 rows)
+(19 rows)
 
 -- Also test a case that involves a write.
 EXPLAIN (RANGE_TABLE, COSTS OFF)
@@ -677,6 +678,7 @@ SELECT * FROM vegetables v,
          Scan RTI: 6
          Elided Node Type: Append
          Elided Node RTIs: 5
+         Elided Node Child Append RTIs: none
          Elided Node Type: SubqueryScan
          Elided Node RTIs: 2
    ->  Append
@@ -723,7 +725,7 @@ SELECT * FROM vegetables v,
    Relation Kind: relation
    Relation Lock Mode: AccessShareLock
  Unprunable RTIs: 1 3 4 5 6
-(52 rows)
+(53 rows)
 
 -- should show "Subplan: unnamed_subquery"
 EXPLAIN (RANGE_TABLE, COSTS OFF)
@@ -737,6 +739,7 @@ SELECT * FROM vegetables v,
          Scan RTI: 6
          Elided Node Type: Append
          Elided Node RTIs: 5
+         Elided Node Child Append RTIs: none
          Elided Node Type: SubqueryScan
          Elided Node RTIs: 2
    ->  Append
@@ -782,7 +785,7 @@ SELECT * FROM vegetables v,
    Relation Kind: relation
    Relation Lock Mode: AccessShareLock
  Unprunable RTIs: 1 3 4 5 6
-(51 rows)
+(52 rows)
 
 -- test display of child append RTIs
 EXPLAIN (RANGE_TABLE, COSTS OFF)

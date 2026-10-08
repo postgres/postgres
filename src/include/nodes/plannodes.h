@@ -1866,6 +1866,9 @@ typedef struct SubPlanRTInfo
  *
  * plan_node_id is that of the surviving plan node, the sole child of the
  * one which was elided.
+ *
+ * For an elided Append or MergeAppend, child_append_relid_sets is the
+ * child_append_relid_sets value from the removed node; otherwise, it is NIL.
  */
 typedef struct ElidedNode
 {
@@ -1873,6 +1876,7 @@ typedef struct ElidedNode
 	int			plan_node_id;
 	NodeTag		elided_type;
 	Bitmapset  *relids;
+	List	   *child_append_relid_sets;
 } ElidedNode;
 
 #endif							/* PLANNODES_H */

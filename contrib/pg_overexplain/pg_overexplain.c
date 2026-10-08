@@ -311,6 +311,9 @@ overexplain_per_node_hook(PlanState *planstate, List *ancestors,
 			ExplainOpenGroup("Elided Node", NULL, true, es);
 			ExplainPropertyText("Elided Node Type", elidednodetag, es);
 			overexplain_bitmapset("Elided Node RTIs", n->relids, es);
+			if (n->elided_type == T_Append || n->elided_type == T_MergeAppend)
+				overexplain_bitmapset_list("Elided Node Child Append RTIs",
+										   n->child_append_relid_sets, es);
 			ExplainCloseGroup("Elided Node", NULL, true, es);
 		}
 		if (opened_elided_nodes)

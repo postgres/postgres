@@ -476,3 +476,16 @@ SELECT * FROM mllpt WHERE a = 1 UNION ALL SELECT * FROM mllpt;
     mllpt/public.mllpt_a1_b2@unnamed_subquery mllpt/public.mllpt_a1_b3@unnamed_subquery)
 (27 rows)
 
+-- Same, but prune down to a single leaf so the Append is elided.
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM mllpt WHERE a = 1 AND b = 1;
+                  QUERY PLAN                  
+----------------------------------------------
+ Seq Scan on mllpt_a1_b1 mllpt
+   Filter: ((a = 1) AND (b = 1))
+ Generated Plan Advice:
+   SEQ_SCAN(mllpt/public.mllpt_a1_b1)
+   PARTITIONWISE(mllpt/public.mllpt_a1 mllpt)
+   NO_GATHER(mllpt/public.mllpt_a1_b1)
+(6 rows)
+
