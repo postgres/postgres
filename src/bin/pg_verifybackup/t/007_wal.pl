@@ -105,4 +105,26 @@ $primary->command_ok(
 command_ok([ 'pg_verifybackup', $backup_path3 ],
 	'WAL verification succeeds with separate pg_wal.tar');
 
+# Same with client-side gzip compression.  pg_basebackup writes pg_wal.tar.gz
+# as several concatenated gzip members.
+SKIP:
+{
+	skip "gzip compression not supported by this build", 2
+	  if !check_pg_config("#define HAVE_LIBZ 1");
+
+	my $backup_path4 = $primary->backup_dir . '/test_tar_gz_wal';
+	$primary->command_ok(
+		[
+			'pg_basebackup',
+			'--pgdata' => $backup_path4,
+			'--no-sync',
+			'--format' => 'tar',
+			'--gzip',
+			'--checkpoint' => 'fast'
+		],
+		"tar backup with separate pg_wal.tar.gz");
+	command_ok([ 'pg_verifybackup', $backup_path4 ],
+		'WAL verification succeeds with separate pg_wal.tar.gz');
+}
+
 done_testing();
