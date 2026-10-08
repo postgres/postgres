@@ -1897,11 +1897,11 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 		 * left half of an incomplete split, but ensuring that it's not the
 		 * right half is more complicated.  For that, we have to check that
 		 * the left sibling doesn't have its INCOMPLETE_SPLIT flag set using
-		 * _bt_leftsib_splitflag().  On the first iteration, we temporarily
-		 * release the lock on scanblkno/leafbuf, check the left sibling, and
-		 * construct a search stack to scanblkno.  On subsequent iterations,
-		 * we know we stepped right from a page that passed these tests, so
-		 * it's OK.
+		 * _bt_leftsib_splitflag().  The first time we reach a page that isn't
+		 * already half-dead (usually the scanblkno page), we temporarily
+		 * release the lock on leafbuf, check the left sibling, and construct
+		 * a search stack to leafbuf.  On subsequent iterations, we know we
+		 * stepped right from a page that passed these tests, so it's OK.
 		 */
 		if (P_RIGHTMOST(opaque) || P_ISROOT(opaque) ||
 			P_FIRSTDATAKEY(opaque) <= PageGetMaxOffsetNumber(page) ||
@@ -1956,7 +1956,6 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 				 * Check that the left sibling of leafbuf (if any) is not
 				 * marked with INCOMPLETE_SPLIT flag before proceeding
 				 */
-				Assert(leafblkno == scanblkno);
 				if (_bt_leftsib_splitflag(rel, leftsib, leafblkno))
 				{
 					ReleaseBuffer(leafbuf);
