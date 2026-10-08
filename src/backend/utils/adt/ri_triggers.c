@@ -2955,8 +2955,16 @@ ri_LockPKTuple(Relation pk_rel, TupleTableSlot *slot, Snapshot snap,
 	if (!IsolationUsesXactSnapshot())
 		lockflags |= TUPLE_LOCK_FLAG_FIND_LAST_VERSION;
 
+	/*
+	 * Lock as of the command ID the scan's snapshot was taken with, as
+	 * ExecLockRows() uses the es_output_cid fixed when its query started.
+	 * User code run during the scan, such as an equality function, may have
+	 * advanced the current command ID since; with that, a row it updated
+	 * would look updated by an earlier command (TM_Invisible) rather than by
+	 * this one (TM_SelfModified).
+	 */
 	result = table_tuple_lock(pk_rel, &slot->tts_tid, snap,
-							  slot, GetCurrentCommandId(false),
+							  slot, snap->curcid,
 							  LockTupleKeyShare, LockWaitBlock,
 							  lockflags, &tmfd);
 
