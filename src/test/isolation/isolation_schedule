@@ -43,6 +43,7 @@ test: fk-fastpath-null-key
 test: subxid-overflow
 test: eval-plan-qual
 test: eval-plan-qual-trigger
+test: eval-plan-qual-partition-prune
 test: inplace-inval
 test: intra-grant-inplace
 test: intra-grant-inplace-db
