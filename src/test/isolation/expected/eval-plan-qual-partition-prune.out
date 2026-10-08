@@ -1,0 +1,30 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_begin s1_update s2_update s1_commit s2_select
+step s1_begin: BEGIN;
+step s1_update: UPDATE lk SET n = n + 1 WHERE id = 1;
+step s2_update: 
+  WITH locked AS (
+    SELECT * FROM lk WHERE id = 1 FOR UPDATE
+  ), upd AS (
+    UPDATE lp SET b = lp.b + 1 + (SELECT count(*) FROM locked)
+    FROM lp lp2 WHERE lp2.a = lp.a
+    RETURNING lp.*
+  )
+  SELECT * FROM upd ORDER BY a;
+ <waiting ...>
+step s1_commit: COMMIT;
+step s2_update: <... completed>
+a|b
+-+-
+1|3
+2|3
+(2 rows)
+
+step s2_select: SELECT * FROM lp ORDER BY a;
+a|b
+-+-
+1|3
+2|3
+(2 rows)
+
