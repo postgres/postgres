@@ -54,6 +54,25 @@ INSERT INTO ptmismatch (id, dimm, valm)
 	  FROM generate_series(1,3000) g;
 VACUUM ANALYZE ptmismatch;
 
+CREATE TABLE mllpt (a int not null, b int not null)
+	PARTITION BY LIST (a);
+CREATE TABLE mllpt_a1 PARTITION OF mllpt FOR VALUES IN (1)
+	PARTITION BY LIST (b);
+CREATE TABLE mllpt_a1_b1 PARTITION OF mllpt_a1 FOR VALUES IN (1)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE mllpt_a1_b2 PARTITION OF mllpt_a1 FOR VALUES IN (2)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE mllpt_a1_b3 PARTITION OF mllpt_a1 FOR VALUES IN (3)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE mllpt_a2 PARTITION OF mllpt FOR VALUES IN (2)
+	PARTITION BY LIST (b);
+CREATE TABLE mllpt_a2_b1 PARTITION OF mllpt_a2 FOR VALUES IN (1)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE mllpt_a2_b2 PARTITION OF mllpt_a2 FOR VALUES IN (2)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE mllpt_a2_b3 PARTITION OF mllpt_a2 FOR VALUES IN (3)
+	WITH (autovacuum_enabled = false);
+
 EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    AND val1 = 1 AND val2 = 1 AND val3 = 1;
@@ -100,3 +119,7 @@ EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    AND val1 = 1 AND val2 = 1 AND val3 = 1;
 COMMIT;
+
+-- We should get PARTITIONWISE advice for all unpruned partition tables.
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM mllpt WHERE a = 1 UNION ALL SELECT * FROM mllpt;

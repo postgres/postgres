@@ -200,8 +200,13 @@ pgpa_build_scan(pgpa_plan_walker_context *walker, Plan *plan,
 		child_nonjoin_relids =
 			pgpa_filter_out_join_relids(child_relids,
 										walker->pstmt->rtable);
-		(void) pgpa_make_scan(walker, plan, strategy,
-							  child_nonjoin_relids);
+		if (unique_nonjoin_rtekind(child_nonjoin_relids, walker->pstmt->rtable)
+			== RTE_RELATION)
+			(void) pgpa_make_scan(walker, plan, PGPA_SCAN_PARTITIONWISE,
+								  child_nonjoin_relids);
+		else
+			(void) pgpa_make_scan(walker, plan, PGPA_SCAN_ORDINARY,
+								  child_nonjoin_relids);
 	}
 
 	/*
