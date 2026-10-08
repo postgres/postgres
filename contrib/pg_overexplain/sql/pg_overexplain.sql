@@ -31,6 +31,25 @@ INSERT INTO vegetables (name, genus)
 		   ('rutabaga', 'brassica'), ('turnip', 'brassica');
 VACUUM ANALYZE vegetables;
 
+-- Create a multi-level partitioned table.
+CREATE TABLE creatures (id serial, name text, class text, clade text)
+	PARTITION BY LIST (class);
+CREATE TABLE mammalia PARTITION OF creatures FOR VALUES IN ('mammalia')
+	PARTITION BY LIST (clade);
+CREATE TABLE carnivora PARTITION OF mammalia FOR VALUES IN ('carnivora');
+CREATE TABLE rodentia PARTITION OF mammalia FOR VALUES IN ('rodentia');
+CREATE TABLE aves PARTITION OF creatures FOR VALUES IN ('aves');
+INSERT INTO creatures (name, class, clade)
+	VALUES ('fossa', 'mammalia', 'carnivora'),
+		   ('meerkat', 'mammalia', 'carnivora'),
+		   ('binturong', 'mammalia', 'carnivora'),
+		   ('capybara', 'mammalia', 'rodentia'),
+		   ('chinchilla', 'mammalia', 'rodentia'),
+		   ('agouti', 'mammalia', 'rodentia'),
+		   ('kakapo', 'aves', NULL),
+		   ('hoatzin', 'aves', NULL);
+VACUUM ANALYZE creatures;
+
 -- We filter relation OIDs out of the test output in order to avoid
 -- test instability. This is currently only needed for EXPLAIN (DEBUG), not
 -- EXPLAIN (RANGE_TABLE). Also suppress actual row counts, which are not
@@ -136,3 +155,7 @@ SELECT * FROM vegetables v,
 EXPLAIN (RANGE_TABLE, COSTS OFF)
 SELECT * FROM vegetables v,
        (SELECT * FROM vegetables WHERE genus = 'daucus' OFFSET 0);
+
+-- test display of child append RTIs
+EXPLAIN (RANGE_TABLE, COSTS OFF)
+SELECT * FROM (SELECT * FROM creatures OFFSET 0) ss;

@@ -60,6 +60,24 @@ INSERT INTO vegetables (name, genus)
 		   ('cabbage', 'brassica'), ('kohlrabi', 'brassica'),
 		   ('rutabaga', 'brassica'), ('turnip', 'brassica');
 VACUUM ANALYZE vegetables;
+-- Create a multi-level partitioned table.
+CREATE TABLE creatures (id serial, name text, class text, clade text)
+	PARTITION BY LIST (class);
+CREATE TABLE mammalia PARTITION OF creatures FOR VALUES IN ('mammalia')
+	PARTITION BY LIST (clade);
+CREATE TABLE carnivora PARTITION OF mammalia FOR VALUES IN ('carnivora');
+CREATE TABLE rodentia PARTITION OF mammalia FOR VALUES IN ('rodentia');
+CREATE TABLE aves PARTITION OF creatures FOR VALUES IN ('aves');
+INSERT INTO creatures (name, class, clade)
+	VALUES ('fossa', 'mammalia', 'carnivora'),
+		   ('meerkat', 'mammalia', 'carnivora'),
+		   ('binturong', 'mammalia', 'carnivora'),
+		   ('capybara', 'mammalia', 'rodentia'),
+		   ('chinchilla', 'mammalia', 'rodentia'),
+		   ('agouti', 'mammalia', 'rodentia'),
+		   ('kakapo', 'aves', NULL),
+		   ('hoatzin', 'aves', NULL);
+VACUUM ANALYZE creatures;
 -- We filter relation OIDs out of the test output in order to avoid
 -- test instability. This is currently only needed for EXPLAIN (DEBUG), not
 -- EXPLAIN (RANGE_TABLE). Also suppress actual row counts, which are not
@@ -765,4 +783,61 @@ SELECT * FROM vegetables v,
    Relation Lock Mode: AccessShareLock
  Unprunable RTIs: 1 3 4 5 6
 (51 rows)
+
+-- test display of child append RTIs
+EXPLAIN (RANGE_TABLE, COSTS OFF)
+SELECT * FROM (SELECT * FROM creatures OFFSET 0) ss;
+                  QUERY PLAN                  
+----------------------------------------------
+ Append
+   Append RTIs: 2
+   Child Append RTIs: 4
+   Elided Node Type: SubqueryScan
+   Elided Node RTIs: 1
+   ->  Seq Scan on aves creatures_1
+         Scan RTI: 3
+   ->  Seq Scan on carnivora creatures_2
+         Scan RTI: 5
+   ->  Seq Scan on rodentia creatures_3
+         Scan RTI: 6
+ RTI 1 (subquery, in-from-clause):
+   Alias: ss ()
+   Eref: ss (id, name, class, clade)
+ RTI 2 (relation, inherited, in-from-clause):
+   Subplan: ss
+   Eref: creatures (id, name, class, clade)
+   Relation: creatures
+   Relation Kind: partitioned_table
+   Relation Lock Mode: AccessShareLock
+   Permission Info Index: 1
+ RTI 3 (relation, in-from-clause):
+   Subplan: ss
+   Alias: creatures (id, name, class, clade)
+   Eref: creatures (id, name, class, clade)
+   Relation: aves
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ RTI 4 (relation, inherited, in-from-clause):
+   Subplan: ss
+   Alias: creatures (id, name, class, clade)
+   Eref: creatures (id, name, class, clade)
+   Relation: mammalia
+   Relation Kind: partitioned_table
+   Relation Lock Mode: AccessShareLock
+ RTI 5 (relation, in-from-clause):
+   Subplan: ss
+   Alias: creatures (id, name, class, clade)
+   Eref: creatures (id, name, class, clade)
+   Relation: carnivora
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ RTI 6 (relation, in-from-clause):
+   Subplan: ss
+   Alias: creatures (id, name, class, clade)
+   Eref: creatures (id, name, class, clade)
+   Relation: rodentia
+   Relation Kind: relation
+   Relation Lock Mode: AccessShareLock
+ Unprunable RTIs: 2 3 4 5 6
+(50 rows)
 
