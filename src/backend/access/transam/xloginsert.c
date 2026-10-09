@@ -1437,4 +1437,9 @@ InitXLogInsert(void)
 	if (hdr_scratch == NULL)
 		hdr_scratch = MemoryContextAllocZero(xloginsert_cxt,
 											 HEADER_SCRATCH_SIZE);
+
+	/* Extra initialization for wal_debug */
+#ifdef WAL_DEBUG
+	InitWalDebug();
+#endif
 }

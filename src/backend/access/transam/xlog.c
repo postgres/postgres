@@ -5570,22 +5570,6 @@ XLOGShmemInit(void *arg)
 	char	   *allocptr;
 	int			i;
 
-#ifdef WAL_DEBUG
-
-	/*
-	 * Create a memory context for WAL debugging that's exempt from the normal
-	 * "no pallocs in critical section" rule. Yes, that can lead to a PANIC if
-	 * an allocation fails, but wal_debug is not for production use anyway.
-	 */
-	if (walDebugCxt == NULL)
-	{
-		walDebugCxt = AllocSetContextCreate(TopMemoryContext,
-											"WAL Debug",
-											ALLOCSET_DEFAULT_SIZES);
-		MemoryContextAllowInCriticalSection(walDebugCxt, true);
-	}
-#endif
-
 	memset(XLogCtl, 0, sizeof(XLogCtlData));
 
 	/*
@@ -5668,6 +5652,30 @@ XLOGShmemAttach(void *arg)
 {
 	WALInsertLocks = XLogCtl->Insert.WALInsertLocks;
 }
+
+/*
+ * Initialize process-local state needed by wal_debug.
+ *
+ * This must be called before XLogInsertRecord().
+ */
+#ifdef WAL_DEBUG
+void
+InitWalDebug(void)
+{
+	/*
+	 * Create a memory context for WAL debugging that's exempt from the normal
+	 * "no pallocs in critical section" rule. Yes, that can lead to a PANIC if
+	 * an allocation fails, but wal_debug is not for production use anyway.
+	 */
+	if (walDebugCxt == NULL)
+	{
+		walDebugCxt = AllocSetContextCreate(TopMemoryContext,
+											"WAL Debug",
+											ALLOCSET_DEFAULT_SIZES);
+		MemoryContextAllowInCriticalSection(walDebugCxt, true);
+	}
+}
+#endif
 
 /*
  * This func must be called ONCE on system install.  It creates pg_control
