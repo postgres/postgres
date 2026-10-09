@@ -33,6 +33,7 @@ typedef struct astreamer_zstd_frame
 	ZSTD_CCtx  *cctx;
 	ZSTD_DCtx  *dctx;
 	ZSTD_outBuffer zstd_outBuf;
+	astreamer_decompression_state state;
 } astreamer_zstd_frame;
 
 static void astreamer_zstd_compressor_content(astreamer *streamer,
@@ -280,6 +281,7 @@ astreamer_zstd_decompressor_new(astreamer *next)
 	streamer->zstd_outBuf.size = streamer->base.bbs_buffer.maxlen;
 	streamer->zstd_outBuf.pos = 0;
 
+	streamer->state = ASTREAMER_STREAM_NEW;
 	return &streamer->base;
 #else
 	pg_fatal("this build does not support compression with %s", "ZSTD");
@@ -329,6 +331,12 @@ astreamer_zstd_decompressor_content(astreamer *streamer,
 		if (ZSTD_isError(ret))
 			pg_fatal("could not decompress data: %s",
 					 ZSTD_getErrorName(ret));
+
+		/* The frame is only done when ZSTD_decompressStream returns 0 */
+		if (ret)
+			mystreamer->state = ASTREAMER_FRAME_INCOMPLETE;
+		else
+			mystreamer->state = ASTREAMER_FRAME_COMPLETE;
 	}
 }
 
@@ -339,6 +347,44 @@ static void
 astreamer_zstd_decompressor_finalize(astreamer *streamer)
 {
 	astreamer_zstd_frame *mystreamer = (astreamer_zstd_frame *) streamer;
+
+	/*
+	 * A full output buffer with a positive return value might leave data in
+	 * zstd's internal buffers. Call the decompressor with empty input until
+	 * it has flushed that data.
+	 */
+	while (mystreamer->state == ASTREAMER_FRAME_INCOMPLETE &&
+		   mystreamer->zstd_outBuf.pos == mystreamer->zstd_outBuf.size)
+	{
+		ZSTD_inBuffer empty = {NULL, 0, 0};
+		size_t		ret;
+
+		astreamer_content(mystreamer->base.bbs_next, NULL,
+						  mystreamer->zstd_outBuf.dst,
+						  mystreamer->zstd_outBuf.pos, ASTREAMER_UNKNOWN);
+
+		mystreamer->zstd_outBuf.dst = mystreamer->base.bbs_buffer.data;
+		mystreamer->zstd_outBuf.size = mystreamer->base.bbs_buffer.maxlen;
+		mystreamer->zstd_outBuf.pos = 0;
+
+		ret = ZSTD_decompressStream(mystreamer->dctx,
+									&mystreamer->zstd_outBuf, &empty);
+
+		if (ZSTD_isError(ret))
+			pg_fatal("could not decompress data: %s",
+					 ZSTD_getErrorName(ret));
+
+		/* The frame is only done when ZSTD_decompressStream returns 0 */
+		if (ret)
+			mystreamer->state = ASTREAMER_FRAME_INCOMPLETE;
+		else
+			mystreamer->state = ASTREAMER_FRAME_COMPLETE;
+	}
+
+	if (unlikely(mystreamer->state == ASTREAMER_STREAM_NEW))
+		pg_fatal("could not decompress data: compressed stream is empty");
+	else if (mystreamer->state != ASTREAMER_FRAME_COMPLETE)
+		pg_fatal("could not decompress data: compressed stream is incomplete");
 
 	/*
 	 * End of the stream, if there is some pending data in output buffers then

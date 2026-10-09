@@ -35,6 +35,7 @@ typedef struct astreamer_lz4_frame
 
 	size_t		bytes_written;
 	bool		header_written;
+	astreamer_decompression_state state;
 } astreamer_lz4_frame;
 
 static void astreamer_lz4_compressor_content(astreamer *streamer,
@@ -297,6 +298,7 @@ astreamer_lz4_decompressor_new(astreamer *next)
 		pg_fatal("could not initialize compression library: %s",
 				 LZ4F_getErrorName(ctxError));
 
+	streamer->state = ASTREAMER_STREAM_NEW;
 	return &streamer->base;
 #else
 	pg_fatal("this build does not support compression with %s", "LZ4");
@@ -358,6 +360,12 @@ astreamer_lz4_decompressor_content(astreamer *streamer,
 			pg_fatal("could not decompress data: %s",
 					 LZ4F_getErrorName(ret));
 
+		/* The frame is only done when LZ4F_decompress returns 0 */
+		if (ret)
+			mystreamer->state = ASTREAMER_FRAME_INCOMPLETE;
+		else
+			mystreamer->state = ASTREAMER_FRAME_COMPLETE;
+
 		/* Update input buffer based on number of bytes consumed */
 		avail_in -= read_size;
 		next_in += read_size;
@@ -394,6 +402,11 @@ astreamer_lz4_decompressor_finalize(astreamer *streamer)
 	astreamer_lz4_frame *mystreamer;
 
 	mystreamer = (astreamer_lz4_frame *) streamer;
+
+	if (unlikely(mystreamer->state == ASTREAMER_STREAM_NEW))
+		pg_fatal("could not decompress data: compressed stream is empty");
+	else if (mystreamer->state != ASTREAMER_FRAME_COMPLETE)
+		pg_fatal("could not decompress data: compressed stream is incomplete");
 
 	/*
 	 * End of the stream, if there is some pending data in output buffers then
