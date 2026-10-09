@@ -18,6 +18,15 @@ INSERT INTO gt_fact
 	SELECT g, (g%3)+1 FROM generate_series(1,100000) g;
 VACUUM ANALYZE gt_fact;
 
+CREATE TABLE gt_part (id int not null, val int not null)
+	PARTITION BY RANGE (id);
+CREATE TABLE gt_part1 PARTITION OF gt_part FOR VALUES FROM (0) TO (1000)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE gt_part2 PARTITION OF gt_part FOR VALUES FROM (1000) TO (2000)
+	WITH (autovacuum_enabled = false);
+INSERT INTO gt_part SELECT g, g FROM generate_series(0, 1999) g;
+VACUUM ANALYZE gt_part;
+
 -- By default, we expect Gather Merge with a parallel hash join.
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
@@ -83,4 +92,21 @@ BEGIN;
 SET LOCAL pg_plan_advice.advice = 'gather((f d)) no_gather(f)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
+COMMIT;
+
+-- Test interaction of NO_GATHER with partitioned tables.  By default, we
+-- expect Gather over a Parallel Append, but no_gather(gt_part) should
+-- suppress it, even if we prune down to a single partition such that the
+-- Append itself doesn't appear in the plan. Previously, we had a bug where
+-- NO_GATHER for the parent was omitted from the generated output even when
+-- NO_GATHER was supplied, so this also serves to verify that this is no
+-- longer happening.
+BEGIN;
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_part WHERE val = 42;
+SET LOCAL pg_plan_advice.advice = 'no_gather(gt_part)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_part WHERE val = 42;
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_part WHERE id < 500 AND val = 42;
 COMMIT;

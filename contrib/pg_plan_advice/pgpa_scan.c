@@ -229,13 +229,8 @@ pgpa_build_scan(pgpa_plan_walker_context *walker, Plan *plan,
 	 *
 	 * Add nothing if we're beneath a Gather or Gather Merge node, since
 	 * NO_GATHER advice is clearly inappropriate in that situation.
-	 *
-	 * Add nothing if this is an Append or MergeAppend node, whether or not
-	 * elided. We'll emit NO_GATHER() for the underlying scan, which is good
-	 * enough.
 	 */
-	if (!beneath_any_gather && nodetype != T_Append &&
-		nodetype != T_MergeAppend)
+	if (!beneath_any_gather)
 		walker->no_gather_scans =
 			bms_add_members(walker->no_gather_scans, relids);
 

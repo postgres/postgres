@@ -70,8 +70,8 @@ CREATE TABLE mllpt_a2_b3 PARTITION OF mllpt_a2 FOR VALUES IN (3)
 EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    AND val1 = 1 AND val2 = 1 AND val3 = 1;
-                                     QUERY PLAN                                      
--------------------------------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Append
    ->  Nested Loop
          ->  Hash Join
@@ -117,9 +117,10 @@ SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    INDEX_SCAN(pt1/public.pt1a public.pt1a_pkey pt1/public.pt1b public.pt1b_pkey
     pt1/public.pt1c public.pt1c_pkey)
    PARTITIONWISE((pt1 pt2 pt3))
-   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
-    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
-(47 rows)
+   NO_GATHER(pt1 pt2 pt3 pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c
+    pt2/public.pt2a pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a
+    pt3/public.pt3b pt3/public.pt3c)
+(48 rows)
 
 -- Suppress partitionwise join, or do it just partially.
 BEGIN;
@@ -127,8 +128,8 @@ SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE(pt1 pt2 pt3)';
 EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    AND val1 = 1 AND val2 = 1 AND val3 = 1;
-                                     QUERY PLAN                                      
--------------------------------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Nested Loop
    ->  Hash Join
          Hash Cond: (pt2.id = pt3.id)
@@ -170,16 +171,17 @@ SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    INDEX_SCAN(pt1/public.pt1a public.pt1a_pkey pt1/public.pt1b public.pt1b_pkey
     pt1/public.pt1c public.pt1c_pkey)
    PARTITIONWISE(pt2 pt3 pt1)
-   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
-    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
-(43 rows)
+   NO_GATHER(pt1 pt2 pt3 pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c
+    pt2/public.pt2a pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a
+    pt3/public.pt3b pt3/public.pt3c)
+(44 rows)
 
 SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 pt2) pt3)';
 EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    AND val1 = 1 AND val2 = 1 AND val3 = 1;
-                                     QUERY PLAN                                      
--------------------------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Hash Join
    Hash Cond: (pt1.id = pt3.id)
    ->  Append
@@ -225,9 +227,10 @@ SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
     pt1/public.pt1c pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b
     pt3/public.pt3c)
    PARTITIONWISE((pt1 pt2) pt3)
-   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
-    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
-(47 rows)
+   NO_GATHER(pt1 pt2 pt3 pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c
+    pt2/public.pt2a pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a
+    pt3/public.pt3b pt3/public.pt3c)
+(48 rows)
 
 COMMIT;
 -- Test conflicting advice.
@@ -236,8 +239,8 @@ SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 pt2) (pt1 pt3))';
 EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    AND val1 = 1 AND val2 = 1 AND val3 = 1;
-                                     QUERY PLAN                                      
--------------------------------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Append
    Disabled: true
    ->  Nested Loop
@@ -287,9 +290,10 @@ SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    INDEX_SCAN(pt1/public.pt1a public.pt1a_pkey pt1/public.pt1b public.pt1b_pkey
     pt1/public.pt1c public.pt1c_pkey)
    PARTITIONWISE((pt1 pt2 pt3))
-   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
-    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
-(51 rows)
+   NO_GATHER(pt1 pt2 pt3 pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c
+    pt2/public.pt2a pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a
+    pt3/public.pt3b pt3/public.pt3c)
+(52 rows)
 
 COMMIT;
 -- Test use of join order for the partitionwise join case.
@@ -298,8 +302,8 @@ SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 pt2)) JOIN_ORDER({pt1 pt2}
 EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    AND val1 = 1 AND val2 = 1 AND val3 = 1;
-                                     QUERY PLAN                                      
--------------------------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Hash Join
    Hash Cond: (pt1.id = pt3.id)
    ->  Append
@@ -345,9 +349,10 @@ SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
     pt1/public.pt1c pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b
     pt3/public.pt3c)
    PARTITIONWISE((pt1 pt2) pt3)
-   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
-    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
-(47 rows)
+   NO_GATHER(pt1 pt2 pt3 pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c
+    pt2/public.pt2a pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a
+    pt3/public.pt3b pt3/public.pt3c)
+(48 rows)
 
 COMMIT;
 -- Can't force a partitionwise join with a mismatched table.
@@ -355,8 +360,8 @@ BEGIN;
 SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 ptmismatch))';
 EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, ptmismatch WHERE pt1.id = ptmismatch.id;
-                                QUERY PLAN                                 
----------------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Nested Loop
    Disabled: true
    ->  Append
@@ -377,7 +382,7 @@ SELECT * FROM pt1, ptmismatch WHERE pt1.id = ptmismatch.id;
    INDEX_SCAN(ptmismatch/public.ptmismatcha public.ptmismatcha_pkey
     ptmismatch/public.ptmismatchb public.ptmismatchb_pkey)
    PARTITIONWISE(pt1 ptmismatch)
-   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c
+   NO_GATHER(pt1 ptmismatch pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c
     ptmismatch/public.ptmismatcha ptmismatch/public.ptmismatchb)
 (22 rows)
 
@@ -388,8 +393,8 @@ SET LOCAL pg_plan_advice.advice = 'JOIN_ORDER(pt3/public.pt3a pt2/public.pt2a pt
 EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    AND val1 = 1 AND val2 = 1 AND val3 = 1;
-                                     QUERY PLAN                                      
--------------------------------------------------------------------------------------
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
  Append
    ->  Nested Loop
          ->  Hash Join
@@ -437,9 +442,10 @@ SELECT * FROM pt1, pt2, pt3 WHERE pt1.id = pt2.id AND pt2.id = pt3.id
    INDEX_SCAN(pt1/public.pt1a public.pt1a_pkey pt1/public.pt1b public.pt1b_pkey
     pt1/public.pt1c public.pt1c_pkey)
    PARTITIONWISE((pt1 pt2 pt3))
-   NO_GATHER(pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c pt2/public.pt2a
-    pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a pt3/public.pt3b pt3/public.pt3c)
-(49 rows)
+   NO_GATHER(pt1 pt2 pt3 pt1/public.pt1a pt1/public.pt1b pt1/public.pt1c
+    pt2/public.pt2a pt2/public.pt2b pt2/public.pt2c pt3/public.pt3a
+    pt3/public.pt3b pt3/public.pt3c)
+(50 rows)
 
 COMMIT;
 -- We should get PARTITIONWISE advice for all unpruned partition tables.
@@ -469,9 +475,9 @@ SELECT * FROM mllpt WHERE a = 1 UNION ALL SELECT * FROM mllpt;
     mllpt/public.mllpt_a2_b2 mllpt/public.mllpt_a2_b3)
    PARTITIONWISE(mllpt mllpt/public.mllpt_a1 mllpt/public.mllpt_a2
     mllpt/public.mllpt_a1@unnamed_subquery mllpt@unnamed_subquery)
-   NO_GATHER(unnamed_subquery#3 mllpt/public.mllpt_a1_b1
+   NO_GATHER(unnamed_subquery unnamed_subquery#3 mllpt/public.mllpt_a1_b1
     mllpt/public.mllpt_a1_b2 mllpt/public.mllpt_a1_b3 mllpt/public.mllpt_a2_b1
-    mllpt/public.mllpt_a2_b2 mllpt/public.mllpt_a2_b3
+    mllpt/public.mllpt_a2_b2 mllpt/public.mllpt_a2_b3 mllpt@unnamed_subquery
     mllpt/public.mllpt_a1_b1@unnamed_subquery
     mllpt/public.mllpt_a1_b2@unnamed_subquery mllpt/public.mllpt_a1_b3@unnamed_subquery)
 (27 rows)
@@ -486,6 +492,6 @@ SELECT * FROM mllpt WHERE a = 1 AND b = 1;
  Generated Plan Advice:
    SEQ_SCAN(mllpt/public.mllpt_a1_b1)
    PARTITIONWISE(mllpt/public.mllpt_a1 mllpt)
-   NO_GATHER(mllpt/public.mllpt_a1_b1)
+   NO_GATHER(mllpt mllpt/public.mllpt_a1_b1)
 (6 rows)
 
