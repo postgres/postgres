@@ -45,6 +45,7 @@ typedef struct ZstdCompressorState
 	ZSTD_DStream *dstream;
 	ZSTD_outBuffer output;
 	ZSTD_inBuffer input;
+	bool		frame_finished;
 
 	/* pointer to a static string like from strerror(), for Zstd_write() */
 	const char *zstderror;
@@ -165,6 +166,7 @@ ReadDataFromArchiveZstd(ArchiveHandle *AH, CompressorState *cs)
 	ZSTD_inBuffer *input = &zstdcs->input;
 	size_t		input_allocated_size = ZSTD_DStreamInSize();
 	size_t		res;
+	bool		frame_finished = false;
 
 	for (;;)
 	{
@@ -193,6 +195,7 @@ ReadDataFromArchiveZstd(ArchiveHandle *AH, CompressorState *cs)
 			res = ZSTD_decompressStream(zstdcs->dstream, output, input);
 			if (ZSTD_isError(res))
 				pg_fatal("could not decompress data: %s", ZSTD_getErrorName(res));
+			frame_finished = (res == 0);
 
 			/*
 			 * then write the decompressed data to the output handle
@@ -200,8 +203,34 @@ ReadDataFromArchiveZstd(ArchiveHandle *AH, CompressorState *cs)
 			((char *) output->dst)[output->pos] = '\0';
 			ahwrite(output->dst, 1, output->pos, AH);
 
-			if (res == 0)
+			if (frame_finished)
 				break;			/* End of frame */
+		}
+	}
+
+	if (!frame_finished)
+	{
+		ZSTD_inBuffer empty = {NULL, 0, 0};
+
+		/*
+		 * A full output buffer with a positive return value might leave data
+		 * in zstd's internal buffers. Call the decompressor with empty input
+		 * until it has flushed that data.
+		 */
+		while (!frame_finished)
+		{
+			output->pos = 0;
+			res = ZSTD_decompressStream(zstdcs->dstream, output, &empty);
+			if (ZSTD_isError(res))
+				pg_fatal("could not decompress data: %s",
+						 ZSTD_getErrorName(res));
+			frame_finished = (res == 0);
+
+			if (output->pos == 0 && !frame_finished)
+				pg_fatal("could not decompress data: compressed stream is incomplete");
+
+			((char *) output->dst)[output->pos] = '\0';
+			ahwrite(output->dst, 1, output->pos, AH);
 		}
 	}
 }
@@ -318,9 +347,33 @@ Zstd_read_internal(void *ptr, size_t size, CompressFileHandle *CFH, bool exit_on
 
 			Assert(cnt <= input_allocated_size);
 
-			/* If we have no more input to consume, we're done */
+			/* If we have no more input to consume, verify the final frame. */
 			if (cnt == 0)
+			{
+				ZSTD_inBuffer empty = {NULL, 0, 0};
+
+				if (!zstdcs->frame_finished)
+				{
+					res = ZSTD_decompressStream(zstdcs->dstream, output, &empty);
+					if (ZSTD_isError(res))
+					{
+						if (exit_on_error)
+							pg_fatal("could not decompress data: %s", ZSTD_getErrorName(res));
+						return -1;
+					}
+
+					zstdcs->frame_finished = (res == 0);
+					if (!zstdcs->frame_finished && output->pos == 0)
+					{
+						zstdcs->zstderror = "compressed stream is incomplete";
+						if (exit_on_error)
+							pg_fatal("could not decompress data: %s", zstdcs->zstderror);
+						return -1;
+					}
+				}
+
 				break;
+			}
 		}
 
 		while (input->pos < input->size)
@@ -335,10 +388,12 @@ Zstd_read_internal(void *ptr, size_t size, CompressFileHandle *CFH, bool exit_on
 				return -1;
 			}
 
+			zstdcs->frame_finished = (res == 0);
+
 			if (output->pos == output->size)
 				break;			/* No more room for output */
 
-			if (res == 0)
+			if (zstdcs->frame_finished)
 				break;			/* End of frame */
 		}
 	}
@@ -477,6 +532,12 @@ Zstd_close(CompressFileHandle *CFH)
 
 	if (zstdcs->dstream)
 	{
+		if (!zstdcs->frame_finished)
+		{
+			errno = EIO;
+			zstdcs->zstderror = "compressed stream is incomplete";
+			success = false;
+		}
 		ZSTD_freeDStream(zstdcs->dstream);
 		pg_free(unconstify(void *, zstdcs->input.src));
 	}
