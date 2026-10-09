@@ -69,6 +69,20 @@ typedef enum
 } astreamer_archive_context;
 
 /*
+ * State of the most recently processed compressed frame.  When decompression
+ * requires more input data to complete, or a bigger output buffer to store
+ * the result, the state is set to ASTREAMER_FRAME_INCOMPLETE.  Exactly how to
+ * resolve an incomplete state is compression library dependent.  Before a
+ * stream has decompressed any frames, its state is ASTREAMER_STREAM_NEW.
+ */
+typedef enum
+{
+	ASTREAMER_STREAM_NEW,
+	ASTREAMER_FRAME_INCOMPLETE,
+	ASTREAMER_FRAME_COMPLETE,
+} astreamer_decompression_state;
+
+/*
  * Each chunk of data that is classified as ASTREAMER_MEMBER_HEADER,
  * ASTREAMER_MEMBER_CONTENTS, or ASTREAMER_MEMBER_TRAILER should also
  * pass a pointer to an instance of this struct. The details are expected

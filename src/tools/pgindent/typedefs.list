@@ -3589,6 +3589,7 @@ array_unnest_fctx
 assign_collations_context
 astreamer
 astreamer_archive_context
+astreamer_decompression_state
 astreamer_extractor
 astreamer_gzip_decompressor
 astreamer_gzip_writer
