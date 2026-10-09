@@ -15,6 +15,14 @@ CREATE TABLE gt_fact (
 INSERT INTO gt_fact
 	SELECT g, (g%3)+1 FROM generate_series(1,100000) g;
 VACUUM ANALYZE gt_fact;
+CREATE TABLE gt_part (id int not null, val int not null)
+	PARTITION BY RANGE (id);
+CREATE TABLE gt_part1 PARTITION OF gt_part FOR VALUES FROM (0) TO (1000)
+	WITH (autovacuum_enabled = false);
+CREATE TABLE gt_part2 PARTITION OF gt_part FOR VALUES FROM (1000) TO (2000)
+	WITH (autovacuum_enabled = false);
+INSERT INTO gt_part SELECT g, g FROM generate_series(0, 1999) g;
+VACUUM ANALYZE gt_part;
 -- By default, we expect Gather Merge with a parallel hash join.
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 	SELECT * FROM gt_fact f JOIN gt_dim d ON f.dim_id = d.id ORDER BY d.id;
@@ -367,5 +375,63 @@ EXPLAIN (COSTS OFF, PLAN_ADVICE)
    SEQ_SCAN(f d)
    GATHER_MERGE((f d))
 (17 rows)
+
+COMMIT;
+-- Test interaction of NO_GATHER with partitioned tables.  By default, we
+-- expect Gather over a Parallel Append, but no_gather(gt_part) should
+-- suppress it, even if we prune down to a single partition such that the
+-- Append itself doesn't appear in the plan. Previously, we had a bug where
+-- NO_GATHER for the parent was omitted from the generated output even when
+-- NO_GATHER was supplied, so this also serves to verify that this is no
+-- longer happening.
+BEGIN;
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_part WHERE val = 42;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Gather
+   Workers Planned: 1
+   ->  Parallel Append
+         ->  Parallel Seq Scan on gt_part1 gt_part_1
+               Filter: (val = 42)
+         ->  Parallel Seq Scan on gt_part2 gt_part_2
+               Filter: (val = 42)
+ Generated Plan Advice:
+   SEQ_SCAN(gt_part/public.gt_part1 gt_part/public.gt_part2)
+   PARTITIONWISE(gt_part)
+   GATHER(gt_part)
+(11 rows)
+
+SET LOCAL pg_plan_advice.advice = 'no_gather(gt_part)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_part WHERE val = 42;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Append
+   ->  Seq Scan on gt_part1 gt_part_1
+         Filter: (val = 42)
+   ->  Seq Scan on gt_part2 gt_part_2
+         Filter: (val = 42)
+ Supplied Plan Advice:
+   NO_GATHER(gt_part) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(gt_part/public.gt_part1 gt_part/public.gt_part2)
+   PARTITIONWISE(gt_part)
+   NO_GATHER(gt_part gt_part/public.gt_part1 gt_part/public.gt_part2)
+(11 rows)
+
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT * FROM gt_part WHERE id < 500 AND val = 42;
+                  QUERY PLAN                  
+----------------------------------------------
+ Seq Scan on gt_part1 gt_part
+   Filter: ((id < 500) AND (val = 42))
+ Supplied Plan Advice:
+   NO_GATHER(gt_part) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(gt_part/public.gt_part1)
+   PARTITIONWISE(gt_part)
+   NO_GATHER(gt_part gt_part/public.gt_part1)
+(8 rows)
 
 COMMIT;
