@@ -24,17 +24,14 @@
 BufferDescPadded *BufferDescriptors;
 char	   *BufferBlocks;
 ConditionVariableMinimallyPadded *BufferIOCVArray;
-WritebackContext BackendWritebackContext;
 CkptSortItem *CkptBufferIds;
 
 static void BufferManagerShmemRequest(void *arg);
 static void BufferManagerShmemInit(void *arg);
-static void BufferManagerShmemAttach(void *arg);
 
 const ShmemCallbacks BufferManagerShmemCallbacks = {
 	.request_fn = BufferManagerShmemRequest,
 	.init_fn = BufferManagerShmemInit,
-	.attach_fn = BufferManagerShmemAttach,
 };
 
 /*
@@ -138,16 +135,4 @@ BufferManagerShmemInit(void *arg)
 		proclist_init(&buf->lock_waiters);
 		ConditionVariableInit(BufferDescriptorGetIOCV(buf));
 	}
-
-	/* Initialize per-backend file flush context */
-	WritebackContextInit(&BackendWritebackContext,
-						 &backend_flush_after);
-}
-
-static void
-BufferManagerShmemAttach(void *arg)
-{
-	/* Initialize per-backend file flush context */
-	WritebackContextInit(&BackendWritebackContext,
-						 &backend_flush_after);
 }

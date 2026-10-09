@@ -270,6 +270,8 @@ static int	PrivateRefCountEntryLast = -1;
 
 static uint32 MaxProportionalPins;
 
+static WritebackContext BackendWritebackContext;
+
 static void ReservePrivateRefCountEntry(void);
 static PrivateRefCountEntry *NewPrivateRefCountEntry(Buffer buffer);
 static PrivateRefCountEntry *GetPrivateRefCountEntry(Buffer buffer, bool do_move);
@@ -4251,6 +4253,10 @@ InitBufferManagerAccess(void)
 	memset(&PrivateRefCountArrayKeys, 0, sizeof(PrivateRefCountArrayKeys));
 
 	PrivateRefCountHash = refcount_create(CurrentMemoryContext, 100, NULL);
+
+	/* Initialize per-backend file flush context */
+	WritebackContextInit(&BackendWritebackContext,
+						 &backend_flush_after);
 
 	/*
 	 * AtProcExit_Buffers needs LWLock access, and thereby has to be called at
