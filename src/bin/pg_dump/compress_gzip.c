@@ -205,7 +205,8 @@ ReadDataFromArchiveGzip(ArchiveHandle *AH, CompressorState *cs)
 
 			res = inflate(zp, 0);
 			if (res != Z_OK && res != Z_STREAM_END)
-				pg_fatal("could not uncompress data: %s", zp->msg);
+				pg_fatal("could not uncompress data: %s",
+						 zp->msg ? zp->msg : "unknown error");
 
 			out[DEFAULT_IO_BUFFER_SIZE - zp->avail_out] = '\0';
 			ahwrite(out, 1, DEFAULT_IO_BUFFER_SIZE - zp->avail_out, AH);
@@ -220,7 +221,8 @@ ReadDataFromArchiveGzip(ArchiveHandle *AH, CompressorState *cs)
 		zp->avail_out = DEFAULT_IO_BUFFER_SIZE;
 		res = inflate(zp, 0);
 		if (res != Z_OK && res != Z_STREAM_END)
-			pg_fatal("could not uncompress data: %s", zp->msg);
+			pg_fatal("could not uncompress data: %s",
+					 zp->msg ? zp->msg : "unknown error");
 
 		out[DEFAULT_IO_BUFFER_SIZE - zp->avail_out] = '\0';
 		ahwrite(out, 1, DEFAULT_IO_BUFFER_SIZE - zp->avail_out, AH);
