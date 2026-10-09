@@ -175,7 +175,7 @@ XLogReaderFree(XLogReaderState *state)
 											 &state->reset_cb);
 #endif
 
-	if (state->seg.ws_file != -1)
+	if (state->seg.ws_file >= 0)
 		state->routine.segment_close(state);
 
 	if (state->decode_buffer && state->free_decode_buffer)
