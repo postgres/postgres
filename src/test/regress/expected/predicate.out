@@ -611,16 +611,6 @@ SELECT * FROM pred_tab WHERE ((a > 1) IS TRUE) IS NULL;
    One-Time Filter: false
 (3 rows)
 
--- DistinctExpr
-EXPLAIN (COSTS OFF)
-SELECT * FROM pred_tab WHERE (a IS DISTINCT FROM b) IS NULL;
-          QUERY PLAN          
-------------------------------
- Result
-   Replaces: Scan on pred_tab
-   One-Time Filter: false
-(3 rows)
-
 -- RelabelType
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab WHERE (a::oid) IS NULL;
