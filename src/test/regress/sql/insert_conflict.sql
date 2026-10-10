@@ -79,6 +79,19 @@ explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on con
 drop index cross_match;
 
 --
+-- Index expressions that are simplified to a plain column can be inferred
+--
+create table insertconflict_nn (a int not null, b text);
+create unique index nn_expr_key on insertconflict_nn(coalesce(a, 0), lower(b));
+
+explain (costs off) insert into insertconflict_nn values(1, 'x') on conflict (coalesce(a, 0), lower(b)) do nothing;
+explain (costs off) insert into insertconflict_nn values(1, 'x') on conflict (a int4_ops, lower(b)) do nothing;
+-- fails:
+explain (costs off) insert into insertconflict_nn values(1, 'x') on conflict (a) do nothing;
+
+drop table insertconflict_nn;
+
+--
 -- Single key tests
 --
 create unique index key_index on insertconflicttest(key);
