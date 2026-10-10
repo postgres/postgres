@@ -299,10 +299,6 @@ SELECT * FROM pred_tab WHERE (b IS NULL) IS NULL;
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab WHERE ((a > 1) IS TRUE) IS NULL;
 
--- DistinctExpr
-EXPLAIN (COSTS OFF)
-SELECT * FROM pred_tab WHERE (a IS DISTINCT FROM b) IS NULL;
-
 -- RelabelType
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab WHERE (a::oid) IS NULL;

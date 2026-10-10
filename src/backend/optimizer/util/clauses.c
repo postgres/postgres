@@ -4909,8 +4909,8 @@ var_is_nonnullable(PlannerInfo *root, Var *var, NotNullSource source)
 				 * Note that we need to check if the relation actually has any
 				 * children, as we might not have done that yet.
 				 */
-				if (rte->inh && has_subclass(rte->relid) &&
-					rte->relkind != RELKIND_PARTITIONED_TABLE)
+				if (rte->relkind != RELKIND_PARTITIONED_TABLE &&
+					rte->inh && has_subclass(rte->relid))
 					return false;
 
 				/* We need not lock the relation since it was already locked */
@@ -5056,14 +5056,6 @@ expr_is_nonnullable(PlannerInfo *root, Expr *expr, NotNullSource source)
 				/*
 				 * A BooleanTest expression always evaluates to a boolean
 				 * value.  It never returns SQL NULL.
-				 */
-				return true;
-			}
-		case T_DistinctExpr:
-			{
-				/*
-				 * IS DISTINCT FROM never returns NULL, effectively acting as
-				 * though NULL were a normal data value.
 				 */
 				return true;
 			}
