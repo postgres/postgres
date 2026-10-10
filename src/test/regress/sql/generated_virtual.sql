@@ -1004,3 +1004,13 @@ select * from gtest_cursor order by id;
 commit;
 
 drop table gtest_cursor;
+
+-- NOT NULL on a partitioned table's virtual column does not prove non-nullness,
+-- because a partition can have a different generation expression
+CREATE TABLE gtestnn_parent2 (a int NOT NULL, b int GENERATED ALWAYS AS (nullif(a, 0)) VIRTUAL NOT NULL) PARTITION BY LIST (a);
+CREATE TABLE gtestnn_child2 PARTITION OF gtestnn_parent2 (b GENERATED ALWAYS AS (a + 1) VIRTUAL) FOR VALUES IN (0);
+INSERT INTO gtestnn_parent2 VALUES (0);
+EXPLAIN (COSTS OFF)
+SELECT a FROM gtestnn_parent2 WHERE a NOT IN (SELECT b FROM gtestnn_parent2);
+SELECT a FROM gtestnn_parent2 WHERE a NOT IN (SELECT b FROM gtestnn_parent2);
+DROP TABLE gtestnn_parent2;
