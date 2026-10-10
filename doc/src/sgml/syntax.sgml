@@ -1602,11 +1602,19 @@ sqrt(2)
    </para>
 
    <para>
-    For example, <literal>count(*)</literal> yields the total number
-    of input rows; <literal>count(f1)</literal> yields the number of
-    input rows in which <literal>f1</literal> is non-null, since
-    <function>count</function> ignores nulls; and
-    <literal>count(distinct f1)</literal> yields the number of
+    For example, in this query:
+<programlisting>
+WITH vals (f1) AS ( VALUES (1),(3),(4),(3),(2),(null) )
+SELECT count(*) AS total, count(f1) AS non_null, COUNT(DISTINCT f1) AS distinct
+FROM vals;
+ total | non_null | distinct
+-------+----------+----------
+     6 |        5 |        4
+</programlisting>
+    <literal>total</literal> yields the total number of input rows;
+    <literal>non_null</literal> yields the number of input rows in which
+    <literal>f1</literal> is non-null, since <function>count</function>
+    ignores nulls; and <literal>distinct</literal> yields the number of
     distinct non-null values of <literal>f1</literal>.
    </para>
 
