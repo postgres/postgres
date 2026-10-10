@@ -3058,7 +3058,7 @@ SELECT '2 years 15 months 100 weeks 99 hours 123456789 milliseconds'::interval;
           <entry><literal>iso_8601</literal></entry>
           <entry>P1Y2M</entry>
           <entry>P3DT4H5M6S</entry>
-          <entry>P-1Y-2M3D&zwsp;T-4H-5M-6S</entry>
+          <entry>P-1Y-2M3DT-4H-5M-6S</entry>
          </row>
         </tbody>
        </tgroup>
