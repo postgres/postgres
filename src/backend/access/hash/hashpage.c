@@ -35,6 +35,7 @@
 #include "port/pg_bitutils.h"
 #include "storage/predicate.h"
 #include "storage/smgr.h"
+#include "utils/injection_point.h"
 #include "utils/rel.h"
 
 static bool _hash_alloc_buckets(Relation rel, BlockNumber firstblock,
@@ -1109,6 +1110,8 @@ _hash_splitbucket(Relation rel,
 						   BufferGetBlockNumber(bucket_obuf),
 						   BufferGetBlockNumber(bucket_nbuf));
 
+	INJECTION_POINT("hash-split-before-relocation", NULL);
+
 	/*
 	 * Partition the tuples in the old bucket between the old bucket and the
 	 * new bucket, advancing along the old bucket's overflow bucket chain and
@@ -1456,6 +1459,8 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 	npage = BufferGetPage(bucket_nbuf);
 	npageopaque = HashPageGetOpaque(npage);
 	nbucket = npageopaque->hasho_bucket;
+
+	INJECTION_POINT("hash-finish-incomplete-split", NULL);
 
 	_hash_splitbucket(rel, metabuf, obucket,
 					  nbucket, obuf, bucket_nbuf, tidhtab,
