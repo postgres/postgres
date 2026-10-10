@@ -1879,6 +1879,8 @@ MINUTE TO SECOND
      Date and time input is accepted in almost any reasonable format, including
      ISO 8601, <acronym>SQL</acronym>-compatible,
      traditional <productname>POSTGRES</productname>, and others.
+     (<productname>PostgreSQL</productname> does not support ISO
+     8601-optional signed years.)
      For some formats, ordering of day, month, and year in date input is
      ambiguous and there is support for specifying the expected
      ordering of these fields.  Set the <xref linkend="guc-datestyle"/> parameter
