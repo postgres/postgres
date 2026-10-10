@@ -1492,6 +1492,19 @@ SELECT a, b FROM groupby_collation_t GROUP BY a, b ORDER BY a, b;
 
 DROP TABLE groupby_collation_t;
 
+--
+-- An expression that is simplified to one of its inputs must keep its own
+-- collation.
+--
+CREATE TABLE simplify_collation_t (a text COLLATE "C" NOT NULL, b text);
+INSERT INTO simplify_collation_t VALUES ('foo'), ('FOO');
+
+SELECT count(*) FROM (SELECT COALESCE(a, b COLLATE case_insensitive) FROM simplify_collation_t GROUP BY 1);
+SELECT count(*) FROM (SELECT CASE WHEN true THEN a ELSE b COLLATE case_insensitive END FROM simplify_collation_t GROUP BY 1);
+SELECT count(*) FROM (SELECT NULLIF(a, NULL::text COLLATE case_insensitive) FROM simplify_collation_t GROUP BY 1);
+
+DROP TABLE simplify_collation_t;
+
 -- virtual generated columns
 CREATE TABLE t5 (
     a int,
