@@ -389,9 +389,9 @@
       The differences highlighted here are not all of them. In XQuery and
       the 2.0 and later versions of XPath, there is an XPath 1.0 compatibility
       mode, and the W3C lists of
-      <ulink url='https://www.w3.org/TR/2010/REC-xpath-functions-20101214/#xpath1-compatibility'>function library changes</ulink>
+      <ulink url="https://www.w3.org/TR/2010/REC-xpath-functions-20101214/#xpath1-compatibility">function library changes</ulink>
       and
-      <ulink url='https://www.w3.org/TR/xpath20/#id-backwards-compatibility'>language changes</ulink>
+      <ulink url="https://www.w3.org/TR/xpath20/#id-backwards-compatibility">language changes</ulink>
       applied in that mode offer a more complete (but still not exhaustive)
       account of the differences.  The compatibility mode cannot make the
       later languages exactly equivalent to XPath 1.0.
