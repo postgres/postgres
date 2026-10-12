@@ -174,6 +174,27 @@ typedef struct SharedMemoizeInfo
 
 
 /* ---------------------
+ *	Instrumentation information for Material
+ * ---------------------
+ */
+typedef struct MaterialInstrumentation
+{
+	int64		maxSpaceUsed;	/* peak memory/disk usage in bytes, or 0 if no
+								 * tuplestore was created */
+	bool		usedDisk;		/* did the tuplestore spill to disk? */
+} MaterialInstrumentation;
+
+/*
+ * Shared memory container for per-worker material information
+ */
+typedef struct SharedMaterialInfo
+{
+	int			num_workers;
+	MaterialInstrumentation sinstrument[FLEXIBLE_ARRAY_MEMBER];
+} SharedMaterialInfo;
+
+
+/* ---------------------
  *	Instrumentation information for Sorts.
  * ---------------------
  */

@@ -36,6 +36,7 @@
 #include "executor/nodeIncrementalSort.h"
 #include "executor/nodeIndexonlyscan.h"
 #include "executor/nodeIndexscan.h"
+#include "executor/nodeMaterial.h"
 #include "executor/nodeMemoize.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeSort.h"
@@ -338,6 +339,10 @@ ExecParallelEstimate(PlanState *planstate, ExecParallelEstimateContext *e)
 			/* even when not parallel-aware, for EXPLAIN ANALYZE */
 			ExecMemoizeEstimate((MemoizeState *) planstate, e->pcxt);
 			break;
+		case T_MaterialState:
+			/* even when not parallel-aware, for EXPLAIN ANALYZE */
+			ExecMaterialEstimate((MaterialState *) planstate, e->pcxt);
+			break;
 		default:
 			break;
 	}
@@ -585,6 +590,10 @@ ExecParallelInitializeDSM(PlanState *planstate,
 		case T_MemoizeState:
 			/* even when not parallel-aware, for EXPLAIN ANALYZE */
 			ExecMemoizeInitializeDSM((MemoizeState *) planstate, d->pcxt);
+			break;
+		case T_MaterialState:
+			/* even when not parallel-aware, for EXPLAIN ANALYZE */
+			ExecMaterialInitializeDSM((MaterialState *) planstate, d->pcxt);
 			break;
 		default:
 			break;
@@ -1074,6 +1083,7 @@ ExecParallelReInitializeDSM(PlanState *planstate,
 		case T_SortState:
 		case T_IncrementalSortState:
 		case T_MemoizeState:
+		case T_MaterialState:
 			/* these nodes have DSM state, but no reinitialization is required */
 			break;
 
@@ -1154,6 +1164,9 @@ ExecParallelRetrieveInstrumentation(PlanState *planstate,
 			break;
 		case T_MemoizeState:
 			ExecMemoizeRetrieveInstrumentation((MemoizeState *) planstate);
+			break;
+		case T_MaterialState:
+			ExecMaterialRetrieveInstrumentation((MaterialState *) planstate);
 			break;
 		case T_BitmapHeapScanState:
 			ExecBitmapHeapRetrieveInstrumentation((BitmapHeapScanState *) planstate);
@@ -1483,6 +1496,10 @@ ExecParallelInitializeWorker(PlanState *planstate, ParallelWorkerContext *pwcxt)
 		case T_MemoizeState:
 			/* even when not parallel-aware, for EXPLAIN ANALYZE */
 			ExecMemoizeInitializeWorker((MemoizeState *) planstate, pwcxt);
+			break;
+		case T_MaterialState:
+			/* even when not parallel-aware, for EXPLAIN ANALYZE */
+			ExecMaterialInitializeWorker((MaterialState *) planstate, pwcxt);
 			break;
 		default:
 			break;

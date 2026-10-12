@@ -2259,6 +2259,7 @@ typedef struct MaterialState
 	int			eflags;			/* capability flags to pass to tuplestore */
 	bool		eof_underlying; /* reached end of underlying plan? */
 	Tuplestorestate *tuplestorestate;
+	SharedMaterialInfo *shared_info;	/* statistics for parallel workers */
 } MaterialState;
 
 struct MemoizeEntry;

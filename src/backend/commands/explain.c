@@ -3491,15 +3491,41 @@ show_material_info(MaterialState *mstate, ExplainState *es)
 
 	Tuplestorestate *tupstore = mstate->tuplestorestate;
 
-	/*
-	 * Nothing to show if ANALYZE option wasn't used or if execution didn't
-	 * get as far as creating the tuplestore.
-	 */
-	if (!es->analyze || tupstore == NULL)
+	if (!es->analyze)
 		return;
 
-	tuplestore_get_stats(tupstore, &usedDisk, &maxSpaceUsed);
-	show_storage_info(usedDisk, maxSpaceUsed, es);
+	/*
+	 * Nothing to show for the leader if execution didn't get as far as
+	 * creating the tuplestore.
+	 */
+	if (tupstore != NULL)
+	{
+		tuplestore_get_stats(tupstore, &usedDisk, &maxSpaceUsed);
+		show_storage_info(usedDisk, maxSpaceUsed, es);
+	}
+
+	if (mstate->shared_info == NULL)
+		return;
+
+	/* Show details from parallel workers */
+	for (int n = 0; n < mstate->shared_info->num_workers; n++)
+	{
+		MaterialInstrumentation *si;
+
+		si = &mstate->shared_info->sinstrument[n];
+
+		/* Skip workers that didn't create a tuplestore */
+		if (si->maxSpaceUsed == 0)
+			continue;
+
+		if (es->workers_state)
+			ExplainOpenWorker(n, es);
+
+		show_storage_info(si->usedDisk, si->maxSpaceUsed, es);
+
+		if (es->workers_state)
+			ExplainCloseWorker(n, es);
+	}
 }
 
 /*
