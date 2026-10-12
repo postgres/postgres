@@ -215,7 +215,7 @@ SELECT test_shmem_register('test_shmem after startup', -1, 3);
 			'-c' => 'test_shmem.area_size=-1',
 			'postgres'
 		],
-		'<' => \$queries,
+		'<' => \'',
 		'2>' => \$startup_stderr);
 	ok(!$result,
 		"unknown-size request during single-user startup is rejected");
