@@ -1,12 +1,14 @@
-# Recalibrated and completed via the pgsql.cc NLS review workbench.
-# Feng Ruohang <rh@vonng.com>, 2026.
+# Simplified Chinese message translation file for psql
+# This file is distributed under the same license as the PostgreSQL package.
+# Ruohang Feng <rh@vonng.com>, 2026.
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 19\n"
+"Project-Id-Version: psql (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2026-09-17 05:51+0000\n"
 "PO-Revision-Date: 2026-09-17 16:00+0800\n"
-"Last-Translator: Feng Ruohang <rh@vonng.com>\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -6015,7 +6017,7 @@ msgstr "或者是旧的语法"
 
 #: sql_help.c:2203
 msgid "base_type"
-msgstr "基础类型"
+msgstr "输入类型"
 
 #: sql_help.c:2262 sql_help.c:2312
 msgid "locale"
@@ -6385,7 +6387,7 @@ msgstr "默认值"
 
 #: sql_help.c:3376
 msgid "element"
-msgstr "元素"
+msgstr "元素类型"
 
 #: sql_help.c:3377
 msgid "delimiter"

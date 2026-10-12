@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL 19)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-15 10:55+0900\n"
-"PO-Revision-Date: 2026-09-15 14:02+0900\n"
+"POT-Creation-Date: 2026-10-08 10:10+0900\n"
+"PO-Revision-Date: 2026-10-08 11:41+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -1054,162 +1054,167 @@ msgstr "履歴ファイル内の無効なデータ"
 msgid "Timeline IDs must be less than child timeline's ID."
 msgstr "タイムラインIDは子のタイムラインIDより小さくなければなりません。"
 
-#: xlogreader.c:626
+#: xlogreader.c:649
 #, c-format
 msgid "invalid record offset at %X/%08X: expected at least %u, got %u"
 msgstr "%X/%08Xでレコードオフセットが無効です:最低でも%uを期待していましたが、実際は%uでした"
 
-#: xlogreader.c:635
+#: xlogreader.c:658
 #, c-format
 msgid "contrecord is requested by %X/%08X"
 msgstr "%X/%08Xによって継続レコードが要求されています"
 
-#: xlogreader.c:676 xlogreader.c:1166
+#: xlogreader.c:699 xlogreader.c:1189
 #, c-format
 msgid "invalid record length at %X/%08X: expected at least %u, got %u"
 msgstr "%X/%08Xでレコード長が無効です:最低でも%uを期待していましたが、実際は%uでした"
 
-#: xlogreader.c:690 xlogreader.c:1175
+#: xlogreader.c:713 xlogreader.c:1198
 #, c-format
 msgid "invalid record length at %X/%08X: expected at most %u, got %u"
 msgstr "%X/%08Xでレコード長が不正です: 最大でも%uであるはずですが、実際は%uでした。"
 
-#: xlogreader.c:781
+#: xlogreader.c:804
 #, c-format
 msgid "there is no contrecord flag at %X/%08X"
 msgstr "%X/%08Xで継続レコードフラグがありません"
 
-#: xlogreader.c:794
+#: xlogreader.c:817
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%08X"
 msgstr "%3$X/%4$08Xで不正な継続レコード長さ%1$u(正しくは%2$lld)"
 
-#: xlogreader.c:1183
+#: xlogreader.c:1206
 #, c-format
 msgid "invalid resource manager ID %u at %X/%08X"
 msgstr "%2$X/%3$08Xで不正なリソースマネージャID %1$u"
 
-#: xlogreader.c:1196 xlogreader.c:1212
+#: xlogreader.c:1219 xlogreader.c:1235
 #, c-format
 msgid "record with incorrect prev-link %X/%08X at %X/%08X"
 msgstr "%3$X/%4$08Xで不正な後方リンク%1$X/%2$08X"
 
-#: xlogreader.c:1250
+#: xlogreader.c:1273
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%08X"
 msgstr "%X/%08Xのレコード内のリソースマネージャのデータチェックサムが不正です"
 
-#: xlogreader.c:1284
+#: xlogreader.c:1307
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%08X, offset %u"
 msgstr "WALセグメント%2$s、LSN %3$X/%4$08X、オフセット%5$uで不正なマジックナンバー%1$04X"
 
-#: xlogreader.c:1299 xlogreader.c:1341
+#: xlogreader.c:1322 xlogreader.c:1364
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%08X, offset %u"
 msgstr "WALセグメント %2$s、LSN %3$X/%4$08X、オフセット%5$uで不正な情報ビット列%1$04X"
 
-#: xlogreader.c:1315
+#: xlogreader.c:1338
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %<PRIu64>, pg_control database system identifier is %<PRIu64>"
 msgstr "WALファイルは異なるデータベースシステム由来のものです: WALファイルのデータベースシステム識別子は %<PRIu64>で、pg_control におけるデータベースシステム識別子は %<PRIu64>です"
 
-#: xlogreader.c:1323
+#: xlogreader.c:1346
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "WAL ファイルは異なるデータベースシステム由来のものです: ページヘッダーのセグメントサイズが正しくありません"
 
-#: xlogreader.c:1329
+#: xlogreader.c:1352
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL ファイルは異なるデータベースシステム由来のものです: ページヘッダーのXLOG_BLCKSZが正しくありません"
 
-#: xlogreader.c:1361
+#: xlogreader.c:1384
 #, c-format
 msgid "unexpected pageaddr %X/%08X in WAL segment %s, LSN %X/%08X, offset %u"
 msgstr "WALセグメント%3$s、LSN %4$X/%5$08X、オフセット%6$uで想定外のページアドレス%1$X/%2$X"
 
-#: xlogreader.c:1387
+#: xlogreader.c:1410
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%08X, offset %u"
 msgstr "WALセグメント%3$s、LSN %4$X/%5$08X、オフセット%6$uで異常な順序のタイムラインID %1$u(%2$uの後)"
 
-#: xlogreader.c:1819
+#: xlogreader.c:1842
 #, c-format
 msgid "out-of-order block_id %u at %X/%08X"
 msgstr "%X/%08Xで異常な順序の block_id %u"
 
-#: xlogreader.c:1843
+#: xlogreader.c:1866
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%08X"
 msgstr "%X/%08Xで、BKPBLOCK_HAS_DATAが設定されていますが、データがありません"
 
-#: xlogreader.c:1850
+#: xlogreader.c:1873
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %d at %X/%08X"
 msgstr "BKPBLOCK_HAS_DATAが設定されていませんが、%2$X/%3$08Xのデータ長は%1$dです"
 
-#: xlogreader.c:1886
+#: xlogreader.c:1909
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %d length %d block image length %d at %X/%08X"
 msgstr "BKPIMAGE_HAS_HOLEが設定されていますが、%4$X/%5$08Xでホールオフセット%1$d、長さ%2$d、ブロックイメージ長%3$dです"
 
-#: xlogreader.c:1902
+#: xlogreader.c:1925
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %d length %d at %X/%08X"
 msgstr "BKPIMAGE_HAS_HOLEが設定されていませんが、%3$X/%4$08Xにおけるホールオフセット%1$dの長さが%2$dです"
 
-#: xlogreader.c:1916
+#: xlogreader.c:1939
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %d at %X/%08X"
 msgstr "BKPIMAGE_COMPRESSEDが設定されていますが、%2$X/%3$08Xにおいてブロックイメージ長が%1$dです"
 
-#: xlogreader.c:1931
+#: xlogreader.c:1954
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %d at %X/%08X"
 msgstr "BKPIMAGE_HAS_HOLEもBKPIMAGE_COMPRESSEDも設定されていませんが、%2$X/%3$08Xにおいてブロックイメージ長が%1$dです"
 
-#: xlogreader.c:1947
+#: xlogreader.c:1970
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%08X"
 msgstr "%X/%08Xで、BKPBLOCK_SAME_RELが設定されていますが、以前のリレーションがありません"
 
-#: xlogreader.c:1959
+#: xlogreader.c:1982
 #, c-format
 msgid "invalid block_id %u at %X/%08X"
 msgstr "%2$X/%3$08Xで、block_id %1$uが不正です"
 
-#: xlogreader.c:2026
+#: xlogreader.c:2049
 #, c-format
 msgid "record with invalid length at %X/%08X"
 msgstr "%X/%08Xで、レコード長が無効です"
 
-#: xlogreader.c:2052
+#: xlogreader.c:2075
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "WALレコード中のID %dのバックアップブロックを特定できませんでした"
 
-#: xlogreader.c:2136
+#: xlogreader.c:2159
 #, c-format
 msgid "could not restore image at %X/%08X with invalid block %d specified"
 msgstr "%X/%08Xで、不正なブロック%dが指定されているためイメージが復元できませんでした"
 
-#: xlogreader.c:2143
+#: xlogreader.c:2166
 #, c-format
 msgid "could not restore image at %X/%08X with invalid state, block %d"
 msgstr "%X/%Xで、不正な状態であるためブロック%dのイメージが復元できませんでした"
 
-#: xlogreader.c:2170 xlogreader.c:2187
+#: xlogreader.c:2193 xlogreader.c:2232
 #, c-format
 msgid "could not restore image at %X/%08X compressed with %s not supported by build, block %d"
 msgstr "%1$X/%2$08Xで、このビルドでサポートされない圧縮方式%3$sで圧縮されているためブロック%4$dが復元できませんでした"
 
-#: xlogreader.c:2196
+#: xlogreader.c:2210
+#, c-format
+msgid "out of memory while restoring image at %X/%08X, block %d"
+msgstr "%X/%08X、ブロック %d でイメージの復元中にメモリ不足が発生しました"
+
+#: xlogreader.c:2241
 #, c-format
 msgid "could not restore image at %X/%08X compressed with unknown method, block %d"
 msgstr "%X/%08Xで、イメージが未知の方式で圧縮されているためブロック%dが復元できませんでした"
 
-#: xlogreader.c:2204
+#: xlogreader.c:2249
 #, c-format
 msgid "could not decompress image at %X/%08X, block %d"
 msgstr "%X/%08Xで、ブロック%dが伸張できませんでした"

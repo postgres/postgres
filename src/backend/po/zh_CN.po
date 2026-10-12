@@ -1,15 +1,15 @@
-# simplified Chinese translation file for PostgreSQL server
+# Simplified Chinese message translation file for postgres
+# This file is distributed under the same license as the PostgreSQL package.
 # Weiping He <laser@zhengmai.com.cn>, 2001.
+# Ruohang Feng <rh@vonng.com>, 2026.
 #
-# Recalibrated and completed via the pgsql.cc NLS review workbench.
-# Feng Ruohang <rh@vonng.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 19\n"
+"Project-Id-Version: postgres (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-17 05:49+0000\n"
-"PO-Revision-Date: 2026-09-17 16:00+0800\n"
-"Last-Translator: Feng Ruohang <rh@vonng.com>\n"
+"POT-Creation-Date: 2026-09-23 14:41+0000\n"
+"PO-Revision-Date: 2026-09-23 23:11+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -4196,7 +4196,7 @@ msgstr "未记录索引 \"%s\" 对页 %u 所在范围的 BRIN 摘要生成请求
 #: access/transam/xlogfuncs.c:272 access/transam/xlogfuncs.c:311
 #: access/transam/xlogfuncs.c:332 access/transam/xlogfuncs.c:353
 #: access/transam/xlogfuncs.c:419 access/transam/xlogfuncs.c:478
-#: commands/wait.c:176 statistics/attribute_stats.c:153
+#: commands/wait.c:178 statistics/attribute_stats.c:153
 #: statistics/attribute_stats.c:644 statistics/extended_stats_funcs.c:370
 #: statistics/extended_stats_funcs.c:1778 statistics/relation_stats.c:86
 #, c-format
@@ -4685,43 +4685,43 @@ msgid ""
 "operator family \"%s\" of access method %s is missing cross-type operator(s)"
 msgstr "访问方法 %2$s 的操作符族 \"%1$s\" 缺少跨类型操作符"
 
-#: access/heap/heapam.c:1222 access/index/indexam.c:274
+#: access/heap/heapam.c:1224 access/index/indexam.c:274
 #, c-format
 msgid "cannot query non-catalog table \"%s\" during logical decoding"
 msgstr "逻辑解码期间不能查询非目录表 \"%s\""
 
-#: access/heap/heapam.c:2240
+#: access/heap/heapam.c:2242
 #, c-format
 msgid "cannot insert tuples in a parallel worker"
 msgstr "不能在并行工作进程中插入元组"
 
-#: access/heap/heapam.c:2795
+#: access/heap/heapam.c:2797
 #, c-format
 msgid "cannot delete tuples during a parallel operation"
 msgstr "并行操作期间不能删除元组"
 
-#: access/heap/heapam.c:2842
+#: access/heap/heapam.c:2844
 #, c-format
 msgid "attempted to delete invisible tuple"
 msgstr "试图删除不可见元组"
 
-#: access/heap/heapam.c:3334 access/index/genam.c:832
+#: access/heap/heapam.c:3336 access/index/genam.c:832
 #, c-format
 msgid "cannot update tuples during a parallel operation"
 msgstr "并行操作期间不能更新元组"
 
-#: access/heap/heapam.c:3511
+#: access/heap/heapam.c:3513
 #, c-format
 msgid "attempted to update invisible tuple"
 msgstr "试图更新不可见元组"
 
-#: access/heap/heapam.c:5151 access/heap/heapam.c:5189
-#: access/heap/heapam.c:5478 access/heap/heapam_handler.c:379
+#: access/heap/heapam.c:5153 access/heap/heapam.c:5191
+#: access/heap/heapam.c:5480 access/heap/heapam_handler.c:379
 #, c-format
 msgid "could not obtain lock on row in relation \"%s\""
 msgstr "无法获取关系 \"%s\" 中行的锁"
 
-#: access/heap/heapam.c:6635 commands/trigger.c:3416
+#: access/heap/heapam.c:6637 commands/trigger.c:3416
 #: executor/nodeModifyTable.c:2627 executor/nodeModifyTable.c:2717
 #, c-format
 msgid ""
@@ -4741,27 +4741,27 @@ msgstr "待锁定的元组已因并发更新而移动到另一分区"
 msgid "row is too big: size %zu, maximum size %zu"
 msgstr "行过大: 大小 %zu, 最大值 %zu"
 
-#: access/heap/pruneheap.c:891
+#: access/heap/pruneheap.c:897
 #, c-format
 msgid "dead line pointer found on page marked all-visible"
 msgstr "在标记为全可见的页上发现死行指针"
 
-#: access/heap/pruneheap.c:892 access/heap/pruneheap.c:916
+#: access/heap/pruneheap.c:898 access/heap/pruneheap.c:922
 #, c-format
 msgid "relation \"%s\", page %u, tuple %u"
 msgstr "关系 \"%s\", 页 %u, 元组 %u"
 
-#: access/heap/pruneheap.c:915
+#: access/heap/pruneheap.c:921
 #, c-format
 msgid "tuple not visible to all transactions found on page marked all-visible"
 msgstr "在标记为全可见的页上发现并非对所有事务可见的元组"
 
-#: access/heap/pruneheap.c:936
+#: access/heap/pruneheap.c:942
 #, c-format
 msgid "page is not marked all-visible but visibility map bit is set"
 msgstr "页未标记为全可见，但可见性映射位已设置"
 
-#: access/heap/pruneheap.c:937
+#: access/heap/pruneheap.c:943
 #, c-format
 msgid "relation \"%s\", page %u"
 msgstr "关系 \"%s\", 页 %u"
@@ -5221,7 +5221,7 @@ msgid ""
 "for type %s"
 msgstr "访问方法 %2$s 的操作符族 \"%1$s\" 缺少类型 %4$s 的支持函数 %3$d"
 
-#: access/table/table.c:150 optimizer/util/plancat.c:149
+#: access/table/table.c:150 optimizer/util/plancat.c:150
 #, c-format
 msgid "cannot open relation \"%s\""
 msgstr "不能打开关系 \"%s\""
@@ -5429,6 +5429,7 @@ msgid "parallel worker failed to initialize"
 msgstr "并行工作进程初始化失败"
 
 #: access/transam/parallel.c:762 access/transam/parallel.c:881
+#: commands/repack.c:3895 commands/repack.c:4150
 #, c-format
 msgid "More details may be available in the server log."
 msgstr "服务器日志中可能有更多详情。"
@@ -6330,7 +6331,7 @@ msgid "WAL level not sufficient for making an online backup"
 msgstr "WAL 的级别不能满足在线备份的要求"
 
 #: access/transam/xlog.c:9028 access/transam/xlog.c:9358
-#: access/transam/xlogfuncs.c:279 commands/subscriptioncmds.c:3293
+#: access/transam/xlogfuncs.c:279 commands/subscriptioncmds.c:3299
 #, c-format
 msgid ""
 "\"wal_level\" must be set to \"replica\" or \"logical\" at server start."
@@ -6516,9 +6517,9 @@ msgstr "无效的 WAL 文件名 \"%s\""
 
 #: access/transam/xlogfuncs.c:554 access/transam/xlogfuncs.c:584
 #: access/transam/xlogfuncs.c:608 access/transam/xlogfuncs.c:631
-#: access/transam/xlogfuncs.c:699 commands/wait.c:306 commands/wait.c:315
-#: commands/wait.c:324 commands/wait.c:341 commands/wait.c:348
-#: commands/wait.c:355
+#: access/transam/xlogfuncs.c:699 commands/wait.c:308 commands/wait.c:317
+#: commands/wait.c:326 commands/wait.c:343 commands/wait.c:350
+#: commands/wait.c:357
 #, c-format
 msgid "recovery is not in progress"
 msgstr "当前未进行恢复"
@@ -7252,7 +7253,7 @@ msgstr "您可以在完成必要的配置更改后重启服务器。"
 #: catalog/dependency.c:1169 catalog/dependency.c:1176
 #: catalog/dependency.c:1187 commands/tablecmds.c:1560
 #: commands/tablecmds.c:17361 commands/tablespace.c:473 commands/user.c:1309
-#: commands/view.c:441 commands/wait.c:106 executor/execExprInterp.c:5285
+#: commands/view.c:441 commands/wait.c:107 executor/execExprInterp.c:5285
 #: executor/execExprInterp.c:5293 libpq/auth-oauth.c:700 libpq/auth.c:316
 #: replication/logical/applyparallelworker.c:1060 replication/slot.c:1851
 #: replication/slot.c:2993 replication/slot.c:2995 replication/syncrep.c:1088
@@ -7873,7 +7874,7 @@ msgstr "使用 %s 时不能使用 IN SCHEMA 子句"
 
 #: catalog/aclchk.c:1565 catalog/catalog.c:684 catalog/heap.c:2657
 #: catalog/heap.c:2979 catalog/objectaddress.c:1537
-#: catalog/pg_publication.c:702 commands/analyze.c:1061 commands/copy.c:1123
+#: catalog/pg_publication.c:708 commands/analyze.c:1061 commands/copy.c:1123
 #: commands/sequence.c:1660 commands/tablecmds.c:7798 commands/tablecmds.c:7972
 #: commands/tablecmds.c:8173 commands/tablecmds.c:8309
 #: commands/tablecmds.c:8463 commands/tablecmds.c:8557
@@ -8792,7 +8793,7 @@ msgstr "关系 \"%s\" 已存在，跳过"
 msgid "pg_class index OID value not set when in binary upgrade mode"
 msgstr "二进制升级模式下未设置索引的 pg_class OID 值"
 
-#: catalog/index.c:964 utils/cache/relcache.c:3801
+#: catalog/index.c:964 utils/cache/relcache.c:3791
 #, c-format
 msgid "index relfilenumber value not set when in binary upgrade mode"
 msgstr "二进制升级模式下未设置索引的 relfilenumber 值"
@@ -8802,28 +8803,28 @@ msgstr "二进制升级模式下未设置索引的 relfilenumber 值"
 msgid "DROP INDEX CONCURRENTLY must be first action in transaction"
 msgstr "DROP INDEX CONCURRENTLY 必须是事务中的第一个操作"
 
-#: catalog/index.c:3777
+#: catalog/index.c:3851
 #, c-format
 msgid "cannot reindex temporary tables of other sessions"
 msgstr "不能重建其他会话的临时表的索引"
 
-#: catalog/index.c:3788 commands/indexcmds.c:3835
+#: catalog/index.c:3862 commands/indexcmds.c:3835
 #, c-format
 msgid "cannot reindex invalid index on TOAST table"
 msgstr "不能重建 TOAST 表上的无效索引"
 
-#: catalog/index.c:3804 commands/indexcmds.c:3713 commands/indexcmds.c:3859
+#: catalog/index.c:3878 commands/indexcmds.c:3713 commands/indexcmds.c:3859
 #: commands/tablecmds.c:3746
 #, c-format
 msgid "cannot move system relation \"%s\""
 msgstr "不能移动系统关系 \"%s\""
 
-#: catalog/index.c:3941
+#: catalog/index.c:4015
 #, c-format
 msgid "index \"%s\" was reindexed"
 msgstr "索引 \"%s\" 已重建"
 
-#: catalog/index.c:4107
+#: catalog/index.c:4181
 #, c-format
 msgid "cannot reindex invalid index \"%s.%s\" on TOAST table, skipping"
 msgstr "不能重建 TOAST 表上的无效索引 \"%s.%s\"，跳过"
@@ -8912,8 +8913,8 @@ msgstr "文本搜索配置 \"%s\" 不存在"
 msgid "cross-database references are not implemented: %s"
 msgstr "尚未实现跨数据库引用: %s"
 
-#: catalog/namespace.c:3407 gram.y:19661 gram.y:19701 parser/parse_expr.c:875
-#: parser/parse_target.c:1270
+#: catalog/namespace.c:3407 parser/parse_expr.c:875 parser/parse_target.c:1270
+#: gram.y:19661 gram.y:19701
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "限定名不正确（点号分隔的名称部分过多）: %s"
@@ -9660,7 +9661,7 @@ msgstr "索引不支持此操作。"
 msgid "This operation is not supported for sequences."
 msgstr "序列不支持此操作。"
 
-#: catalog/pg_class.c:35 commands/repack.c:1012
+#: catalog/pg_class.c:35 commands/repack.c:1013
 #, c-format
 msgid "This operation is not supported for TOAST tables."
 msgstr "TOAST 表不支持此操作。"
@@ -9874,7 +9875,7 @@ msgid ""
 "The partition is being detached concurrently or has an unfinished detach."
 msgstr "该分区正在并发分离，或存在尚未完成的分离操作。"
 
-#: catalog/pg_inherits.c:596 catalog/pg_publication.c:82
+#: catalog/pg_inherits.c:596 catalog/pg_publication.c:88
 #: commands/tablecmds.c:4959 commands/tablecmds.c:18503
 #, c-format
 msgid ""
@@ -10084,78 +10085,78 @@ msgstr "SQL 函数不能声明 %s 类型的参数"
 msgid "SQL function \"%s\""
 msgstr "SQL 函数 \"%s\""
 
-#: catalog/pg_publication.c:66
+#: catalog/pg_publication.c:72
 #, c-format
 msgid "cannot specify relation \"%s\" in the publication EXCEPT clause"
 msgstr "不能在发布的 EXCEPT 子句中指定关系 \"%s\""
 
-#: catalog/pg_publication.c:71
+#: catalog/pg_publication.c:77
 #, c-format
 msgid "cannot add relation \"%s\" to publication"
 msgstr "不能将关系 \"%s\" 加入发布"
 
-#: catalog/pg_publication.c:81
+#: catalog/pg_publication.c:87
 #, c-format
 msgid ""
 "This operation is not supported for partitions with an incomplete detach."
 msgstr "尚未完成分离的分区不支持此操作。"
 
-#: catalog/pg_publication.c:87
+#: catalog/pg_publication.c:93
 #, c-format
 msgid "This operation is not supported for individual partitions."
 msgstr "单个分区不支持此操作。"
 
-#: catalog/pg_publication.c:103
+#: catalog/pg_publication.c:109
 #, c-format
 msgid "This operation is not supported for system tables."
 msgstr "系统表不支持此操作。"
 
-#: catalog/pg_publication.c:110
+#: catalog/pg_publication.c:116
 #, c-format
 msgid "This operation is not supported for temporary tables."
 msgstr "临时表不支持此操作。"
 
-#: catalog/pg_publication.c:115
+#: catalog/pg_publication.c:121
 #, c-format
 msgid "This operation is not supported for unlogged tables."
 msgstr "不记录 WAL 的表不支持此操作。"
 
-#: catalog/pg_publication.c:129 catalog/pg_publication.c:137
+#: catalog/pg_publication.c:135 catalog/pg_publication.c:143
 #, c-format
 msgid "cannot add schema \"%s\" to publication"
 msgstr "不能将模式 \"%s\" 加入发布"
 
-#: catalog/pg_publication.c:131
+#: catalog/pg_publication.c:137
 #, c-format
 msgid "This operation is not supported for system schemas."
 msgstr "系统模式不支持此操作。"
 
-#: catalog/pg_publication.c:139
+#: catalog/pg_publication.c:145
 #, c-format
 msgid "Temporary schemas cannot be replicated."
 msgstr "不能复制临时模式。"
 
-#: catalog/pg_publication.c:568
+#: catalog/pg_publication.c:574
 #, c-format
 msgid "relation \"%s\" is already member of publication \"%s\""
 msgstr "关系 \"%s\" 已是发布 \"%s\" 的成员"
 
-#: catalog/pg_publication.c:708
+#: catalog/pg_publication.c:714
 #, c-format
 msgid "cannot use system column \"%s\" in publication column list"
 msgstr "发布列列表中不能使用系统列 \"%s\""
 
-#: catalog/pg_publication.c:714
+#: catalog/pg_publication.c:720
 #, c-format
 msgid "cannot use virtual generated column \"%s\" in publication column list"
 msgstr "发布列列表中不能使用虚拟生成列 \"%s\""
 
-#: catalog/pg_publication.c:720
+#: catalog/pg_publication.c:726
 #, c-format
 msgid "duplicate column \"%s\" in publication column list"
 msgstr "发布列列表中的列 \"%s\" 重复"
 
-#: catalog/pg_publication.c:832
+#: catalog/pg_publication.c:838
 #, c-format
 msgid "schema \"%s\" is already member of publication \"%s\""
 msgstr "模式 \"%s\" 已是发布 \"%s\" 的成员"
@@ -10233,20 +10234,20 @@ msgid ""
 "by the database system"
 msgstr "不能重新分配 %s 所拥有对象的所有权，因为数据库系统需要这些对象"
 
-#: catalog/pg_subscription.c:70 commands/repack.c:928
+#: catalog/pg_subscription.c:70 commands/repack.c:929
 #: commands/tablecmds.c:20954 replication/logical/relation.c:252
 #, c-format
 msgid "\"%s\""
 msgstr "\"%s\""
 
-#: catalog/pg_subscription.c:72 commands/repack.c:930
+#: catalog/pg_subscription.c:72 commands/repack.c:931
 #: commands/tablecmds.c:20956 replication/logical/relation.c:254
 #, c-format
 msgid ", \"%s\""
 msgstr ", \"%s\""
 
-#: catalog/pg_subscription.c:218 commands/subscriptioncmds.c:2031
-#: commands/subscriptioncmds.c:2390
+#: catalog/pg_subscription.c:218 commands/subscriptioncmds.c:2037
+#: commands/subscriptioncmds.c:2396
 #, c-format
 msgid ""
 "subscription owner \"%s\" does not have permission on foreign server \"%s\""
@@ -10481,15 +10482,15 @@ msgid "must be superuser to rename %s"
 msgstr "必须是超级用户才能重命名 %s"
 
 #: commands/alter.c:250 commands/subscriptioncmds.c:720
-#: commands/subscriptioncmds.c:1688 commands/subscriptioncmds.c:1763
-#: commands/subscriptioncmds.c:2784
+#: commands/subscriptioncmds.c:1694 commands/subscriptioncmds.c:1769
+#: commands/subscriptioncmds.c:2790
 #, c-format
 msgid "password_required=false is superuser-only"
 msgstr "password_required=false 仅限超级用户使用"
 
 #: commands/alter.c:251 commands/subscriptioncmds.c:721
-#: commands/subscriptioncmds.c:1689 commands/subscriptioncmds.c:1764
-#: commands/subscriptioncmds.c:2785
+#: commands/subscriptioncmds.c:1695 commands/subscriptioncmds.c:1770
+#: commands/subscriptioncmds.c:2791
 #, c-format
 msgid ""
 "Subscriptions with the password_required option set to false may only be "
@@ -10722,7 +10723,7 @@ msgstr "不能刷新默认排序规则的版本"
 
 #. translator: %s is an SQL command
 #. translator: %s is an SQL ALTER command
-#: commands/collationcmds.c:448 commands/subscriptioncmds.c:2161
+#: commands/collationcmds.c:448 commands/subscriptioncmds.c:2167
 #: commands/tablecmds.c:8189 commands/tablecmds.c:8199
 #: commands/tablecmds.c:8201 commands/tablecmds.c:16770
 #: commands/tablecmds.c:20317 commands/tablecmds.c:20338
@@ -10777,12 +10778,12 @@ msgstr "数据库 \"%s\" 不存在"
 msgid "cannot set comment on relation \"%s\""
 msgstr "不能为关系 \"%s\" 设置注释"
 
-#: commands/constraint.c:61 utils/adt/ri_triggers.c:2265
+#: commands/constraint.c:61 utils/adt/ri_triggers.c:2266
 #, c-format
 msgid "function \"%s\" was not called by trigger manager"
 msgstr "函数 \"%s\" 没有被触发器管理器调用"
 
-#: commands/constraint.c:68 utils/adt/ri_triggers.c:2274
+#: commands/constraint.c:68 utils/adt/ri_triggers.c:2275
 #, c-format
 msgid "function \"%s\" must be fired AFTER ROW"
 msgstr "函数 \"%s\" 必须由 AFTER ROW 触发器触发"
@@ -10958,7 +10959,7 @@ msgid "argument to option \"%s\" must be a valid encoding name"
 msgstr "选项 \"%s\" 的参数必须是有效的编码名"
 
 #: commands/copy.c:780 commands/dbcommands.c:890 commands/dbcommands.c:2439
-#: commands/wait.c:128
+#: commands/wait.c:129
 #, c-format
 msgid "option \"%s\" not recognized"
 msgstr "无法识别的选项 \"%s\""
@@ -11920,7 +11921,7 @@ msgid "some useless files may be left behind in old database directory \"%s\""
 msgstr "原先的数据库目录 \"%s\" 中可能留下一些无用的文件"
 
 #: commands/dbcommands.c:2374 commands/explain_state.c:170
-#: commands/explain_state.c:427 commands/indexcmds.c:2890 commands/repack.c:290
+#: commands/explain_state.c:427 commands/indexcmds.c:2890 commands/repack.c:291
 #: commands/vacuum.c:236 commands/vacuum.c:299 postmaster/checkpointer.c:1031
 #, c-format
 msgid "unrecognized %s option \"%s\""
@@ -12243,7 +12244,7 @@ msgstr "%s 只能在 table_rewrite 事件触发器函数中调用"
 msgid "%s can only be called in an event trigger function"
 msgstr "%s 只能在事件触发器函数中调用"
 
-#: commands/explain_state.c:136 commands/explain_state.c:161 commands/wait.c:87
+#: commands/explain_state.c:136 commands/explain_state.c:161 commands/wait.c:88
 #: postmaster/checkpointer.c:1022 replication/walsender.c:1209
 #, c-format
 msgid "unrecognized value for %s option \"%s\": \"%s\""
@@ -13796,7 +13797,7 @@ msgstr "操作符属性 \"%s\" 不能更改"
 msgid "operator attribute \"%s\" cannot be changed if it has already been set"
 msgstr "操作符属性 \"%s\" 一旦设置就不能更改"
 
-#: commands/policy.c:86 commands/policy.c:379 commands/repack.c:629
+#: commands/policy.c:86 commands/policy.c:379 commands/repack.c:630
 #: commands/statscmds.c:151 commands/tablecmds.c:1841 commands/tablecmds.c:2444
 #: commands/tablecmds.c:3867 commands/tablecmds.c:6838
 #: commands/tablecmds.c:10157 commands/tablecmds.c:20205
@@ -13898,7 +13899,7 @@ msgstr "预备语句 \"%s\" 不存在"
 msgid "must be superuser to create custom procedural language"
 msgstr "必须是超级用户才能创建自定义过程语言"
 
-#: commands/publicationcmds.c:134 libpq/auth-oauth.c:887
+#: commands/publicationcmds.c:134 libpq/auth-oauth.c:875
 #: postmaster/postmaster.c:1144 postmaster/postmaster.c:1246
 #: replication/logical/logical.c:219 utils/init/miscinit.c:1820
 #, c-format
@@ -14199,49 +14200,49 @@ msgstr "发布参数 \"%s\" 的值无效: \"%s\""
 msgid "Valid values are \"%s\" and \"%s\"."
 msgstr "有效值为 \"%s\" 和 \"%s\"。"
 
-#: commands/repack.c:274
+#: commands/repack.c:275
 #, c-format
 msgid "ANALYZE option not supported for %s"
 msgstr "%s 不支持 ANALYZE 选项"
 
-#: commands/repack.c:283
+#: commands/repack.c:284
 #, c-format
 msgid "CONCURRENTLY option not supported for %s"
 msgstr "%s 不支持 CONCURRENTLY 选项"
 
-#: commands/repack.c:348
+#: commands/repack.c:349
 #, c-format
 msgid "cannot execute %s on multiple tables"
 msgstr "不能对多个表执行 %s"
 
-#: commands/repack.c:364
+#: commands/repack.c:365
 #, c-format
 msgid "%s is not supported for partitioned tables"
 msgstr "分区表不支持 %s"
 
-#: commands/repack.c:366
+#: commands/repack.c:367
 #, c-format
 msgid "Consider running the command on individual partitions."
 msgstr "可考虑对各个分区分别运行该命令。"
 
-#: commands/repack.c:371
+#: commands/repack.c:372
 #, c-format
 msgid "%s requires an explicit table name"
 msgstr "%s 需要显式指定表名"
 
 #. translator: first %s is name of a SQL command, eg. REPACK
-#: commands/repack.c:579
+#: commands/repack.c:580
 #, c-format
 msgid "cannot execute %s on a shared catalog"
 msgstr "不能对共享系统目录执行 %s"
 
 #. translator: first %s is name of a SQL command, eg. REPACK
-#: commands/repack.c:596 commands/repack.c:2562
+#: commands/repack.c:597 commands/repack.c:2563
 #, c-format
 msgid "cannot execute %s on temporary tables of other sessions"
 msgstr "不能对其他会话的临时表执行 %s"
 
-#: commands/repack.c:631
+#: commands/repack.c:632
 #, c-format
 msgid ""
 "System catalogs can only be clustered by the index they're already clustered "
@@ -14249,89 +14250,89 @@ msgid ""
 msgstr ""
 "除非启用 \"%s\"，否则系统目录只能按其已经用于聚簇的索引（若有）进行聚簇。"
 
-#: commands/repack.c:779 commands/tablecmds.c:19140
+#: commands/repack.c:780 commands/tablecmds.c:19140
 #, c-format
 msgid "\"%s\" is not an index for table \"%s\""
 msgstr "\"%1$s\" 不是表 \"%2$s\" 的索引"
 
-#: commands/repack.c:787
+#: commands/repack.c:788
 #, c-format
 msgid ""
 "cannot cluster on index \"%s\" because access method does not support "
 "clustering"
 msgstr "不能按索引 \"%s\" 进行聚簇，因为访问方法不支持聚簇"
 
-#: commands/repack.c:799
+#: commands/repack.c:800
 #, c-format
 msgid "cannot cluster on partial index \"%s\""
 msgstr "不能按部分索引 \"%s\" 进行聚簇"
 
-#: commands/repack.c:813
+#: commands/repack.c:814
 #, c-format
 msgid "cannot cluster on invalid index \"%s\""
 msgstr "不能按无效索引 \"%s\" 进行聚簇"
 
-#: commands/repack.c:940 commands/repack.c:978 commands/repack.c:986
-#: commands/repack.c:999 commands/repack.c:1010 commands/repack.c:1018
-#: commands/repack.c:1026 commands/repack.c:1039 commands/repack.c:1057
-#: commands/repack.c:1065
+#: commands/repack.c:941 commands/repack.c:979 commands/repack.c:987
+#: commands/repack.c:1000 commands/repack.c:1011 commands/repack.c:1019
+#: commands/repack.c:1027 commands/repack.c:1040 commands/repack.c:1058
+#: commands/repack.c:1066
 #, c-format
 msgid "cannot execute %s on relation \"%s\""
 msgstr "不能对关系 \"%2$s\" 执行 %1$s"
 
-#: commands/repack.c:942
+#: commands/repack.c:943
 #, c-format
 msgid "An invalid index cannot be processed correctly: %s."
 msgid_plural "Some invalid indexes cannot be processed correctly: %s."
 msgstr[0] "不能正确处理无效索引: %s。"
 
-#: commands/repack.c:946
+#: commands/repack.c:947
 #, c-format
 msgid "Use DROP INDEX or REINDEX."
 msgstr "使用 DROP INDEX 或 REINDEX。"
 
-#: commands/repack.c:964
+#: commands/repack.c:965
 #, c-format
 msgid "cannot execute %s in this configuration"
 msgstr "当前配置下不能执行 %s"
 
-#: commands/repack.c:966
+#: commands/repack.c:967
 #, c-format
 msgid ""
 "This operation requires \"wal_level\" to be set to \"replica\" or higher."
 msgstr "此操作需要将 \"wal_level\" 设置为 \"replica\" 或更高级别。"
 
-#: commands/repack.c:980
+#: commands/repack.c:981
 #, c-format
 msgid "This operation is only supported for the \"heap\" access method."
 msgstr "此操作仅支持 \"heap\" 访问方法。"
 
-#: commands/repack.c:988
+#: commands/repack.c:989
 #, c-format
 msgid "This operation is not supported for system catalogs."
 msgstr "系统目录不支持此操作。"
 
-#: commands/repack.c:1001
+#: commands/repack.c:1002
 #, c-format
 msgid "This operation is not supported for user catalog tables."
 msgstr "用户目录表不支持此操作。"
 
-#: commands/repack.c:1020
+#: commands/repack.c:1021
 #, c-format
 msgid "This operation is only supported for permanent relations."
 msgstr "此操作仅支持永久关系。"
 
-#: commands/repack.c:1041
+#: commands/repack.c:1042
 #, c-format
 msgid "This operation does not support tables with %s."
 msgstr "此操作不支持设置了 %s 的表。"
 
-#: commands/repack.c:1060
+#: commands/repack.c:1061
 #, c-format
 msgid "This operation does not support deferrable primary keys."
 msgstr "此操作不支持可延迟的主键。"
 
-#: commands/repack.c:1061
+#: commands/repack.c:1062
 #, c-format
 msgid ""
 "Use ALTER TABLE ... REPLICA IDENTITY USING INDEX to designate another index "
@@ -14340,34 +14341,34 @@ msgstr ""
 "使用 ALTER TABLE ... REPLICA IDENTITY USING INDEX 将另一个索引指定为复制标"
 "识。"
 
-#: commands/repack.c:1067
+#: commands/repack.c:1068
 #, c-format
 msgid "Relation \"%s\" has no identity index."
 msgstr "关系 \"%s\" 没有标识索引。"
 
-#: commands/repack.c:1518
+#: commands/repack.c:1519
 #, c-format
 msgid "repacking \"%s.%s\" using index scan on \"%s\""
 msgstr "正在使用对 \"%3$s\" 的索引扫描重组 \"%1$s.%2$s\""
 
-#: commands/repack.c:1524
+#: commands/repack.c:1525
 #, c-format
 msgid "repacking \"%s.%s\" using sequential scan and sort"
 msgstr "正在使用顺序扫描和排序重组 \"%s.%s\""
 
-#: commands/repack.c:1529
+#: commands/repack.c:1530
 #, c-format
 msgid "repacking \"%s.%s\" in physical order"
 msgstr "正在按物理顺序重组 \"%s.%s\""
 
-#: commands/repack.c:1561
+#: commands/repack.c:1562
 #, c-format
 msgid ""
 "\"%s.%s\": found %.0f removable, %.0f nonremovable row versions in %u pages"
 msgstr ""
 "\"%1$s.%2$s\": 在 %5$u 页中找到 %3$.0f 个可删除、%4$.0f 个不可删除的行版本"
 
-#: commands/repack.c:1566
+#: commands/repack.c:1567
 #, c-format
 msgid ""
 "%.0f dead row versions cannot be removed yet.\n"
@@ -14376,45 +14377,45 @@ msgstr ""
 "仍有 %.0f 个死行版本暂时不能删除。\n"
 "%s。"
 
-#: commands/repack.c:2374 commands/repack.c:2642
+#: commands/repack.c:2375 commands/repack.c:2643
 #, c-format
 msgid "there is no previously clustered index for table \"%s\""
 msgstr "表 \"%s\" 没有先前用于聚簇的索引"
 
 #. translator: first %s is name of a SQL command, eg. REPACK
-#: commands/repack.c:2380
+#: commands/repack.c:2381
 #, c-format
 msgid ""
 "cannot execute %s on partitioned table \"%s\" USING INDEX with no index name"
 msgstr "对分区表 \"%2$s\" 执行 %1$s 时，USING INDEX 不能省略索引名"
 
-#: commands/repack.c:2507
+#: commands/repack.c:2508
 #, c-format
 msgid "permission denied to execute %s on \"%s\", skipping it"
 msgstr "权限不足，无法对 \"%2$s\" 执行 %1$s，跳过该对象"
 
-#: commands/repack.c:2544 commands/vacuum.c:351
+#: commands/repack.c:2545 commands/vacuum.c:351
 #, c-format
 msgid "ANALYZE option must be specified when a column list is provided"
 msgstr "提供列列表时必须指定 ANALYZE 选项"
 
-#: commands/repack.c:2652 commands/tablecmds.c:17068 commands/tablecmds.c:19130
+#: commands/repack.c:2653 commands/tablecmds.c:17068 commands/tablecmds.c:19130
 #, c-format
 msgid "index \"%s\" for table \"%s\" does not exist"
 msgstr "表 \"%2$s\" 的索引 \"%1$s\" 不存在"
 
-#: commands/repack.c:2849 commands/repack.c:2887
+#: commands/repack.c:2850 commands/repack.c:2888
 #, c-format
 msgid "could not apply concurrent %s on relation \"%s\""
 msgstr "无法对关系 \"%2$s\" 应用并发的 %1$s"
 
-#: commands/repack.c:3798 replication/logical/launcher.c:567
+#: commands/repack.c:3802 replication/logical/launcher.c:567
 #, c-format
 msgid "out of background worker slots"
 msgstr "后台工作进程槽位已耗尽"
 
 #. translator: %s is a GUC variable name
-#: commands/repack.c:3799 replication/logical/launcher.c:470
+#: commands/repack.c:3803 replication/logical/launcher.c:470
 #: replication/logical/launcher.c:568 replication/slot.c:1816
 #: replication/slot.c:1836 storage/lmgr/lock.c:1083 storage/lmgr/lock.c:1121
 #: storage/lmgr/lock.c:3041 storage/lmgr/lock.c:4418 storage/lmgr/lock.c:4483
@@ -14424,26 +14425,36 @@ msgstr "后台工作进程槽位已耗尽"
 msgid "You might need to increase \"%s\"."
 msgstr "可能需要增大 \"%s\"。"
 
-#: commands/repack.c:3851
+#: commands/repack.c:3894
+#, c-format
+msgid "REPACK decoding worker failed to start"
+msgstr "REPACK 解码工作进程启动失败"
+
+#: commands/repack.c:3959
 #, c-format
 msgid "postmaster exited during REPACK command"
 msgstr "postmaster 在执行 REPACK 命令期间退出"
 
-#: commands/repack.c:4078 commands/repack.c:4080
+#: commands/repack.c:4149
+#, c-format
+msgid "lost connection to REPACK decoding worker"
+msgstr "与 REPACK 解码工作进程的连接已丢失"
+
+#: commands/repack.c:4193 commands/repack.c:4195
 msgid "REPACK decoding worker"
 msgstr "REPACK 解码工作进程"
 
-#: commands/repack_worker.c:418 postmaster/walsummarizer.c:1150
+#: commands/repack_worker.c:440 postmaster/walsummarizer.c:1150
 #, c-format
 msgid "could not read WAL from timeline %u at %X/%08X: %s"
 msgstr "无法从时间线 %u 的 %X/%08X 处读取 WAL: %s"
 
-#: commands/repack_worker.c:435
+#: commands/repack_worker.c:457
 #, c-format
 msgid "could not read WAL record"
 msgstr "无法读取 WAL 记录"
 
-#: commands/repack_worker.c:483
+#: commands/repack_worker.c:505
 #, c-format
 msgid "waiting for WAL failed"
 msgstr "等待 WAL 失败"
@@ -14765,7 +14776,7 @@ msgid "Foreign-data wrapper must be defined with CONNECTION specified."
 msgstr "定义外部数据包装器时必须指定 CONNECTION。"
 
 #: commands/subscriptioncmds.c:925 commands/subscriptioncmds.c:1096
-#: commands/subscriptioncmds.c:1359 commands/subscriptioncmds.c:2328
+#: commands/subscriptioncmds.c:1365 commands/subscriptioncmds.c:2334
 #, c-format
 msgid "subscription \"%s\" could not connect to the publisher: %s"
 msgstr "订阅 \"%s\" 无法连接到发布服务器: %s"
@@ -14787,85 +14798,85 @@ msgid ""
 "enable the subscription, and alter the subscription to refresh publications."
 msgstr "要启动复制，必须手动创建复制槽、启用订阅，并修改订阅以刷新发布。"
 
-#: commands/subscriptioncmds.c:1373 replication/logical/sequencesync.c:471
+#: commands/subscriptioncmds.c:1379 replication/logical/sequencesync.c:502
 #, c-format
 msgid ""
 "cannot synchronize sequences if the publisher is running a version earlier "
 "than PostgreSQL 19"
 msgstr "发布服务器运行的版本早于 PostgreSQL 19 时，不能同步序列"
 
-#: commands/subscriptioncmds.c:1497
+#: commands/subscriptioncmds.c:1503
 #, c-format
 msgid "cannot set option \"%s\" for enabled subscription"
 msgstr "不能为已启用的订阅设置选项 \"%s\""
 
-#: commands/subscriptioncmds.c:1511
+#: commands/subscriptioncmds.c:1517
 #, c-format
 msgid ""
 "cannot set option \"%s\" for a subscription that does not have a slot name"
 msgstr "不能为没有槽名称的订阅设置选项 \"%s\""
 
-#: commands/subscriptioncmds.c:1562 commands/subscriptioncmds.c:2444
-#: commands/subscriptioncmds.c:2850 utils/cache/lsyscache.c:4018
+#: commands/subscriptioncmds.c:1568 commands/subscriptioncmds.c:2450
+#: commands/subscriptioncmds.c:2856 utils/cache/lsyscache.c:4018
 #, c-format
 msgid "subscription \"%s\" does not exist"
 msgstr "订阅 \"%s\" 不存在"
 
-#: commands/subscriptioncmds.c:1717
+#: commands/subscriptioncmds.c:1723
 #, c-format
 msgid "cannot set %s for enabled subscription"
 msgstr "不能为已启用的订阅设置 %s"
 
-#: commands/subscriptioncmds.c:1802
+#: commands/subscriptioncmds.c:1808
 #, c-format
 msgid "\"slot_name\" and \"two_phase\" cannot be altered at the same time"
 msgstr "不能同时修改 \"slot_name\" 和 \"two_phase\""
 
-#: commands/subscriptioncmds.c:1818
+#: commands/subscriptioncmds.c:1824
 #, c-format
 msgid ""
 "cannot alter \"two_phase\" when logical replication worker is still running"
 msgstr "逻辑复制工作进程仍在运行时，不能修改 \"two_phase\""
 
-#: commands/subscriptioncmds.c:1819 commands/subscriptioncmds.c:1904
+#: commands/subscriptioncmds.c:1825 commands/subscriptioncmds.c:1910
 #, c-format
 msgid "Try again after some time."
 msgstr "稍后重试。"
 
-#: commands/subscriptioncmds.c:1832
+#: commands/subscriptioncmds.c:1838
 #, c-format
 msgid "cannot disable \"two_phase\" when prepared transactions exist"
 msgstr "存在预备事务时，不能禁用 \"two_phase\""
 
-#: commands/subscriptioncmds.c:1833
+#: commands/subscriptioncmds.c:1839
 #, c-format
 msgid "Resolve these transactions and try again."
 msgstr "先处理完这些事务，然后重试。"
 
-#: commands/subscriptioncmds.c:1902
+#: commands/subscriptioncmds.c:1908
 #, c-format
 msgid ""
 "cannot alter option \"%s\" when logical replication worker is still running"
 msgstr "逻辑复制工作进程仍在运行时，不能修改选项 \"%s\""
 
-#: commands/subscriptioncmds.c:1976
+#: commands/subscriptioncmds.c:1982
 #, c-format
 msgid "cannot enable subscription that does not have a slot name"
 msgstr "不能启用没有槽名称的订阅"
 
-#: commands/subscriptioncmds.c:2111 commands/subscriptioncmds.c:2159
+#: commands/subscriptioncmds.c:2117 commands/subscriptioncmds.c:2165
 #, c-format
 msgid ""
 "ALTER SUBSCRIPTION with refresh is not allowed for disabled subscriptions"
 msgstr "已禁用的订阅不允许使用带刷新的 ALTER SUBSCRIPTION"
 
-#: commands/subscriptioncmds.c:2112
+#: commands/subscriptioncmds.c:2118
 #, c-format
 msgid "Use ALTER SUBSCRIPTION ... SET PUBLICATION ... WITH (refresh = false)."
 msgstr ""
 "使用 ALTER SUBSCRIPTION ... SET PUBLICATION ... WITH (refresh = false)。"
 
-#: commands/subscriptioncmds.c:2121 commands/subscriptioncmds.c:2173
+#: commands/subscriptioncmds.c:2127 commands/subscriptioncmds.c:2179
 #, c-format
 msgid ""
 "ALTER SUBSCRIPTION with refresh and copy_data is not allowed when two_phase "
@@ -14874,7 +14885,7 @@ msgstr ""
 "启用 two_phase 时，不允许在 ALTER SUBSCRIPTION 中同时启用 refresh 和 "
 "copy_data"
 
-#: commands/subscriptioncmds.c:2122
+#: commands/subscriptioncmds.c:2128
 #, c-format
 msgid ""
 "Use ALTER SUBSCRIPTION ... SET PUBLICATION with refresh = false, or with "
@@ -14884,7 +14895,7 @@ msgstr ""
 "PUBLICATION，或使用 DROP/CREATE SUBSCRIPTION。"
 
 #. translator: %s is an SQL ALTER command
-#: commands/subscriptioncmds.c:2175
+#: commands/subscriptioncmds.c:2181
 #, c-format
 msgid ""
 "Use %s with refresh = false, or with copy_data = false, or use DROP/CREATE "
@@ -14893,12 +14904,12 @@ msgstr ""
 "使用带有 refresh = false 或 copy_data = false 的 %s，或使用 DROP/CREATE "
 "SUBSCRIPTION。"
 
-#: commands/subscriptioncmds.c:2198 commands/subscriptioncmds.c:2237
+#: commands/subscriptioncmds.c:2204 commands/subscriptioncmds.c:2243
 #, c-format
 msgid "%s is not allowed for disabled subscriptions"
 msgstr "已禁用的订阅不允许执行 %s"
 
-#: commands/subscriptioncmds.c:2221
+#: commands/subscriptioncmds.c:2227
 #, c-format
 msgid ""
 "ALTER SUBSCRIPTION ... REFRESH PUBLICATION with copy_data is not allowed "
@@ -14907,7 +14918,7 @@ msgstr ""
 "启用 two_phase 时，不允许在 ALTER SUBSCRIPTION ... REFRESH PUBLICATION 中启"
 "用 copy_data"
 
-#: commands/subscriptioncmds.c:2222
+#: commands/subscriptioncmds.c:2228
 #, c-format
 msgid ""
 "Use ALTER SUBSCRIPTION ... REFRESH PUBLICATION with copy_data = false, or "
@@ -14916,37 +14927,37 @@ msgstr ""
 "使用带有 copy_data = false 的 ALTER SUBSCRIPTION ... REFRESH PUBLICATION，或"
 "使用 DROP/CREATE SUBSCRIPTION。"
 
-#: commands/subscriptioncmds.c:2269
+#: commands/subscriptioncmds.c:2275
 #, c-format
 msgid "skip WAL location (LSN %X/%08X) must be greater than origin LSN %X/%08X"
 msgstr "要跳过的 WAL 位置（LSN %X/%08X）必须大于复制源 LSN %X/%08X"
 
-#: commands/subscriptioncmds.c:2448
+#: commands/subscriptioncmds.c:2454
 #, c-format
 msgid "subscription \"%s\" does not exist, skipping"
 msgstr "订阅 \"%s\" 不存在，跳过"
 
-#: commands/subscriptioncmds.c:2726
+#: commands/subscriptioncmds.c:2732
 #, c-format
 msgid "dropped replication slot \"%s\" on publisher"
 msgstr "已在发布服务器上删除复制槽 \"%s\""
 
-#: commands/subscriptioncmds.c:2735 commands/subscriptioncmds.c:2743
+#: commands/subscriptioncmds.c:2741 commands/subscriptioncmds.c:2749
 #, c-format
 msgid "could not drop replication slot \"%s\" on publisher: %s"
 msgstr "无法在发布服务器上删除复制槽 \"%s\": %s"
 
-#: commands/subscriptioncmds.c:2883
+#: commands/subscriptioncmds.c:2889
 #, c-format
 msgid "subscription with OID %u does not exist"
 msgstr "OID 为 %u 的订阅不存在"
 
-#: commands/subscriptioncmds.c:3018 commands/subscriptioncmds.c:3419
+#: commands/subscriptioncmds.c:3024 commands/subscriptioncmds.c:3425
 #, c-format
 msgid "could not receive list of replicated tables from the publisher: %s"
 msgstr "无法从发布服务器接收参与复制的表列表: %s"
 
-#: commands/subscriptioncmds.c:3057
+#: commands/subscriptioncmds.c:3063
 #, c-format
 msgid ""
 "subscription \"%s\" requested copy_data with origin = NONE but might copy "
@@ -14954,7 +14965,7 @@ msgid ""
 msgstr ""
 "订阅 \"%s\" 请求在 origin = NONE 时执行 copy_data，但可能复制来自其他源的数据"
 
-#: commands/subscriptioncmds.c:3059 commands/subscriptioncmds.c:3068
+#: commands/subscriptioncmds.c:3065 commands/subscriptioncmds.c:3074
 #, c-format
 msgid ""
 "The subscription subscribes to a publication (%s) that contains tables that "
@@ -14964,14 +14975,14 @@ msgid_plural ""
 "are written to by other subscriptions."
 msgstr[0] "该订阅所订阅的发布（%s）包含由其他订阅写入的表。"
 
-#: commands/subscriptioncmds.c:3062
+#: commands/subscriptioncmds.c:3068
 #, c-format
 msgid ""
 "Verify that initial data copied from the publisher tables did not come from "
 "other origins."
 msgstr "确认从发布服务器表中复制的初始数据并非来自其他源。"
 
-#: commands/subscriptioncmds.c:3066
+#: commands/subscriptioncmds.c:3072
 #, c-format
 msgid ""
 "subscription \"%s\" enabled retain_dead_tuples but might not reliably detect "
@@ -14980,24 +14991,24 @@ msgstr ""
 "订阅 \"%s\" 已启用 retain_dead_tuples，但可能无法可靠检测来自不同源的更改所产"
 "生的冲突"
 
-#: commands/subscriptioncmds.c:3071
+#: commands/subscriptioncmds.c:3077
 #, c-format
 msgid "Consider using origin = NONE or disabling retain_dead_tuples."
 msgstr "可考虑使用 origin = NONE 或禁用 retain_dead_tuples。"
 
-#: commands/subscriptioncmds.c:3157
+#: commands/subscriptioncmds.c:3163
 #, c-format
 msgid "could not receive list of replicated sequences from the publisher: %s"
 msgstr "无法从发布服务器接收参与复制的序列列表: %s"
 
-#: commands/subscriptioncmds.c:3189
+#: commands/subscriptioncmds.c:3195
 #, c-format
 msgid ""
 "subscription \"%s\" requested origin = NONE but might synchronize sequence "
 "values that had a different origin"
 msgstr "订阅 \"%s\" 已请求 origin = NONE，但可能同步来自其他源的序列值"
 
-#: commands/subscriptioncmds.c:3191
+#: commands/subscriptioncmds.c:3197
 #, c-format
 msgid ""
 "The subscription subscribes to a publication (%s) that contains sequences "
@@ -15007,68 +15018,68 @@ msgid_plural ""
 "are synchronized from other subscriptions."
 msgstr[0] "该订阅所订阅的发布（%s）包含从其他订阅同步的序列。"
 
-#: commands/subscriptioncmds.c:3194
+#: commands/subscriptioncmds.c:3200
 #, c-format
 msgid ""
 "Verify that the initial values copied from the publisher sequences did not "
 "come from other origins."
 msgstr "确认从发布服务器序列中复制的初始值并非来自其他源。"
 
-#: commands/subscriptioncmds.c:3229
+#: commands/subscriptioncmds.c:3235
 #, c-format
 msgid ""
 "cannot enable retain_dead_tuples if the publisher is running a version "
 "earlier than PostgreSQL 19"
 msgstr "发布服务器运行的版本早于 PostgreSQL 19 时，不能启用 retain_dead_tuples"
 
-#: commands/subscriptioncmds.c:3236
+#: commands/subscriptioncmds.c:3242
 #, c-format
 msgid "could not obtain recovery progress from the publisher: %s"
 msgstr "无法从发布服务器获取恢复进度: %s"
 
-#: commands/subscriptioncmds.c:3248
+#: commands/subscriptioncmds.c:3254
 #, c-format
 msgid "cannot enable retain_dead_tuples if the publisher is in recovery"
 msgstr "发布服务器处于恢复状态时，不能启用 retain_dead_tuples"
 
-#: commands/subscriptioncmds.c:3292
+#: commands/subscriptioncmds.c:3298
 #, c-format
 msgid ""
 "\"wal_level\" is insufficient to create the replication slot required by "
 "retain_dead_tuples"
 msgstr "\"wal_level\" 不足以创建 retain_dead_tuples 所需的复制槽"
 
-#: commands/subscriptioncmds.c:3298
+#: commands/subscriptioncmds.c:3304
 #, c-format
 msgid ""
 "commit timestamp and origin data required for detecting conflicts won't be "
 "retained"
 msgstr "不会保留检测冲突所需的提交时间戳和复制源数据"
 
-#: commands/subscriptioncmds.c:3299
+#: commands/subscriptioncmds.c:3305
 #, c-format
 msgid "Consider setting \"%s\" to true."
 msgstr "可考虑将 \"%s\" 设置为 true。"
 
-#: commands/subscriptioncmds.c:3305
+#: commands/subscriptioncmds.c:3311
 #, c-format
 msgid ""
 "deleted rows to detect conflicts would not be removed until the subscription "
 "is enabled"
 msgstr "为检测冲突而保留的已删除行，在启用订阅之前不会被删除"
 
-#: commands/subscriptioncmds.c:3307
+#: commands/subscriptioncmds.c:3313
 #, c-format
 msgid "Consider setting %s to false."
 msgstr "可考虑将 %s 设置为 false。"
 
-#: commands/subscriptioncmds.c:3314
+#: commands/subscriptioncmds.c:3320
 #, c-format
 msgid ""
 "max_retention_duration is ineffective when retain_dead_tuples is disabled"
 msgstr "禁用 retain_dead_tuples 时，max_retention_duration 不起作用"
 
-#: commands/subscriptioncmds.c:3447 replication/logical/tablesync.c:851
+#: commands/subscriptioncmds.c:3453 replication/logical/tablesync.c:851
 #: replication/pgoutput/pgoutput.c:1191
 #, c-format
 msgid ""
@@ -15076,7 +15087,7 @@ msgid ""
 "publications"
 msgstr "不能在不同发布中为表 \"%s.%s\" 使用不同的列列表"
 
-#: commands/subscriptioncmds.c:3497
+#: commands/subscriptioncmds.c:3503
 #, c-format
 msgid ""
 "could not connect to publisher when attempting to drop replication slot "
@@ -15084,34 +15095,34 @@ msgid ""
 msgstr "尝试删除复制槽 \"%s\" 时无法连接到发布服务器: %s"
 
 #. translator: %s is an SQL ALTER command
-#: commands/subscriptioncmds.c:3500
+#: commands/subscriptioncmds.c:3506
 #, c-format
 msgid ""
 "Use %s to disable the subscription, and then use %s to disassociate it from "
 "the slot."
 msgstr "使用 %s 禁用订阅，然后使用 %s 解除订阅与复制槽的关联。"
 
-#: commands/subscriptioncmds.c:3531
+#: commands/subscriptioncmds.c:3537
 #, c-format
 msgid "publication name \"%s\" used more than once"
 msgstr "多次使用发布名称 \"%s\""
 
-#: commands/subscriptioncmds.c:3575
+#: commands/subscriptioncmds.c:3581
 #, c-format
 msgid "publication \"%s\" is already in subscription \"%s\""
 msgstr "发布 \"%s\" 已包含在订阅 \"%s\" 中"
 
-#: commands/subscriptioncmds.c:3589
+#: commands/subscriptioncmds.c:3595
 #, c-format
 msgid "publication \"%s\" is not in subscription \"%s\""
 msgstr "发布 \"%s\" 不在订阅 \"%s\" 中"
 
-#: commands/subscriptioncmds.c:3600
+#: commands/subscriptioncmds.c:3606
 #, c-format
 msgid "cannot drop all the publications from a subscription"
 msgstr "不能从订阅中移除全部发布"
 
-#: commands/subscriptioncmds.c:3657
+#: commands/subscriptioncmds.c:3663
 #, c-format
 msgid "%s requires a Boolean value or \"parallel\""
 msgstr "%s 需要布尔值或 \"parallel\""
@@ -17276,8 +17287,8 @@ msgstr "不能从外部子表收集过渡元组"
 
 #: commands/trigger.c:3417 executor/nodeModifyTable.c:1722
 #: executor/nodeModifyTable.c:1796 executor/nodeModifyTable.c:2628
-#: executor/nodeModifyTable.c:2718 executor/nodeModifyTable.c:3543
-#: executor/nodeModifyTable.c:3740
+#: executor/nodeModifyTable.c:2718 executor/nodeModifyTable.c:3544
+#: executor/nodeModifyTable.c:3755
 #, c-format
 msgid ""
 "Consider using an AFTER trigger instead of a BEFORE trigger to propagate "
@@ -17287,15 +17298,15 @@ msgstr "考虑使用 AFTER 触发器代替 BEFORE 触发器，将更改传播到
 #: commands/trigger.c:3459 executor/nodeLockRows.c:228
 #: executor/nodeModifyTable.c:403 executor/nodeModifyTable.c:1738
 #: executor/nodeModifyTable.c:2644 executor/nodeModifyTable.c:2850
-#: executor/nodeModifyTable.c:3581 utils/adt/ri_triggers.c:2945
+#: executor/nodeModifyTable.c:3588 utils/adt/ri_triggers.c:2957
 #, c-format
 msgid "could not serialize access due to concurrent update"
 msgstr "由于并发更新，无法串行化访问"
 
 #: commands/trigger.c:3467 executor/nodeLockRows.c:237
 #: executor/nodeModifyTable.c:1828 executor/nodeModifyTable.c:2735
-#: executor/nodeModifyTable.c:2866 executor/nodeModifyTable.c:3561
-#: utils/adt/ri_triggers.c:2938
+#: executor/nodeModifyTable.c:2866 executor/nodeModifyTable.c:3562
+#: utils/adt/ri_triggers.c:2950
 #, c-format
 msgid "could not serialize access due to concurrent delete"
 msgstr "由于并发删除，无法串行化访问"
@@ -17815,8 +17826,8 @@ msgid ""
 "Only roles with the %s attribute may create roles with the %s attribute."
 msgstr "只有具有 %s 属性的角色才能创建具有 %s 属性的角色。"
 
-#: commands/user.c:361 commands/user.c:1399 commands/user.c:1406 gram.y:17771
-#: gram.y:17817 utils/adt/acl.c:5782 utils/adt/acl.c:5788
+#: commands/user.c:361 commands/user.c:1399 commands/user.c:1406
+#: utils/adt/acl.c:5782 utils/adt/acl.c:5788 gram.y:17771 gram.y:17817
 #, c-format
 msgid "role name \"%s\" is reserved"
 msgstr "角色名称 \"%s\" 为保留名称"
@@ -18486,51 +18497,49 @@ msgstr "视图不能设置为不记录 WAL，因为它们没有数据存储"
 msgid "view \"%s\" will be a temporary view"
 msgstr "视图 \"%s\" 将是临时视图"
 
-#: commands/wait.c:56
+#: commands/wait.c:57
 #, c-format
 msgid "%s can only be executed as a top-level statement"
 msgstr "%s 只能作为顶层语句执行"
 
-#: commands/wait.c:58
+#: commands/wait.c:59
 #, c-format
 msgid "WAIT cannot be used within a function, procedure, or DO block."
 msgstr "不能在函数、过程或 DO 块中使用 WAIT。"
 
-#: commands/wait.c:105
+#: commands/wait.c:106
 #, c-format
 msgid "invalid timeout value: \"%s\""
 msgstr "无效的超时值: \"%s\""
 
-#: commands/wait.c:112
+#: commands/wait.c:113
 #, c-format
 msgid "timeout cannot be negative"
 msgstr "超时值不能为负数"
 
-#: commands/wait.c:158
-#, c-format
-msgid "WAIT must be called without an active or registered snapshot"
-msgstr "必须在没有活动快照或已注册快照时调用 WAIT"
-
 #: commands/wait.c:159
 #, c-format
-msgid ""
-"WAIT cannot be executed within a transaction with an isolation level higher "
-"than READ COMMITTED."
-msgstr "不能在隔离级别高于 READ COMMITTED 的事务中执行 WAIT。"
+msgid "WAIT cannot be executed while the current transaction holds a snapshot"
+msgstr "当前事务持有快照时不能执行 WAIT"
 
-#: commands/wait.c:177
+#: commands/wait.c:161
+#, c-format
+msgid "This transaction runs at an isolation level higher than READ COMMITTED, so it holds a snapshot from its first query until it ends."
+msgstr "当前事务以高于 READ COMMITTED 的隔离级别运行，因此从第一次查询开始持有快照，直到事务结束。"
+
+#: commands/wait.c:179
 #, c-format
 msgid ""
 "Waiting for primary_flush can only be done on a primary server. Use "
 "standby_flush mode on a standby server."
 msgstr "只能在主库上等待 primary_flush。在备库上使用 standby_flush 模式。"
 
-#: commands/wait.c:227
+#: commands/wait.c:229
 #, c-format
 msgid "cannot wait for a standby LSN while holding locks"
 msgstr "持有锁时不能等待备库 LSN"
 
-#: commands/wait.c:228
+#: commands/wait.c:230
 #, c-format
 msgid ""
 "This session holds a lock on %s, which could make recovery wait for this "
@@ -18539,40 +18548,40 @@ msgstr ""
 "当前会话持有 %s 上的锁，可能导致恢复过程等待当前会话，而当前会话又在等待恢复"
 "过程。"
 
-#: commands/wait.c:230
+#: commands/wait.c:232
 #, c-format
-msgid "Release the locks, or execute WAIT FOR before acquiring them."
-msgstr "请释放这些锁，或在获取锁之前执行 WAIT FOR。"
+msgid "Release the locks, or execute WAIT before acquiring them."
+msgstr "请释放这些锁，或在获取锁之前执行 WAIT。"
 
-#: commands/wait.c:257
+#: commands/wait.c:259
 #, c-format
 msgid ""
 "timed out while waiting for target LSN %X/%08X to be replayed; current "
 "standby_replay LSN %X/%08X"
 msgstr "等待目标 LSN %X/%08X 重放时超时；当前 standby_replay LSN 为 %X/%08X"
 
-#: commands/wait.c:265
+#: commands/wait.c:267
 #, c-format
 msgid ""
 "timed out while waiting for target LSN %X/%08X to be written; current "
 "standby_write LSN %X/%08X"
 msgstr "等待目标 LSN %X/%08X 写入时超时；当前 standby_write LSN 为 %X/%08X"
 
-#: commands/wait.c:273
+#: commands/wait.c:275
 #, c-format
 msgid ""
 "timed out while waiting for target LSN %X/%08X to be flushed; current "
 "standby_flush LSN %X/%08X"
 msgstr "等待目标 LSN %X/%08X 刷盘时超时；当前 standby_flush LSN 为 %X/%08X"
 
-#: commands/wait.c:281
+#: commands/wait.c:283
 #, c-format
 msgid ""
 "timed out while waiting for target LSN %X/%08X to be flushed; current "
 "primary_flush LSN %X/%08X"
 msgstr "等待目标 LSN %X/%08X 刷盘时超时；当前 primary_flush LSN 为 %X/%08X"
 
-#: commands/wait.c:307
+#: commands/wait.c:309
 #, c-format
 msgid ""
 "Recovery ended before target LSN %X/%08X was replayed; last standby_replay "
@@ -18580,7 +18589,7 @@ msgid ""
 msgstr ""
 "在重放目标 LSN %X/%08X 之前恢复已结束；最后的 standby_replay LSN 为 %X/%08X。"
 
-#: commands/wait.c:316
+#: commands/wait.c:318
 #, c-format
 msgid ""
 "Recovery ended before target LSN %X/%08X was written; last standby_write LSN "
@@ -18588,7 +18597,7 @@ msgid ""
 msgstr ""
 "在写入目标 LSN %X/%08X 之前恢复已结束；最后的 standby_write LSN 为 %X/%08X。"
 
-#: commands/wait.c:325
+#: commands/wait.c:327
 #, c-format
 msgid ""
 "Recovery ended before target LSN %X/%08X was flushed; last standby_flush LSN "
@@ -18596,7 +18605,7 @@ msgid ""
 msgstr ""
 "在刷盘目标 LSN %X/%08X 之前恢复已结束；最后的 standby_flush LSN 为 %X/%08X。"
 
-#: commands/wait.c:342 commands/wait.c:349 commands/wait.c:356
+#: commands/wait.c:344 commands/wait.c:351 commands/wait.c:358
 #, c-format
 msgid "Waiting for the %s LSN can only be executed during recovery."
 msgstr "只能在恢复期间等待 %s LSN。"
@@ -19339,8 +19348,8 @@ msgid "Consider defining the foreign key on table \"%s\"."
 msgstr "可以考虑在表 \"%s\" 上定义外键。"
 
 #. translator: %s is a SQL command name
-#: executor/nodeModifyTable.c:2828 executor/nodeModifyTable.c:3549
-#: executor/nodeModifyTable.c:3746
+#: executor/nodeModifyTable.c:2828 executor/nodeModifyTable.c:3550
+#: executor/nodeModifyTable.c:3761
 #, c-format
 msgid "%s command cannot affect row a second time"
 msgstr "%s 命令不能再次影响同一行"
@@ -19352,19 +19361,19 @@ msgid ""
 "duplicate constrained values."
 msgstr "确保同一命令中待插入的行，其受约束的值没有重复。"
 
-#: executor/nodeModifyTable.c:3542 executor/nodeModifyTable.c:3739
+#: executor/nodeModifyTable.c:3543 executor/nodeModifyTable.c:3754
 #, c-format
 msgid ""
 "tuple to be updated or deleted was already modified by an operation "
 "triggered by the current command"
 msgstr "待更新或删除的元组已被当前命令触发的操作修改"
 
-#: executor/nodeModifyTable.c:3551 executor/nodeModifyTable.c:3748
+#: executor/nodeModifyTable.c:3552 executor/nodeModifyTable.c:3763
 #, c-format
 msgid "Ensure that not more than one source row matches any one target row."
 msgstr "确保每个目标行最多匹配一个源行。"
 
-#: executor/nodeModifyTable.c:3625
+#: executor/nodeModifyTable.c:3632
 #, c-format
 msgid ""
 "tuple to be merged was already moved to another partition due to concurrent "
@@ -19535,7 +19544,7 @@ msgid "user mapping not found for user \"%s\", server \"%s\""
 msgstr "未找到用户 \"%s\" 在服务器 \"%s\" 上的用户映射"
 
 #: foreign/foreign.c:380 optimizer/plan/createplan.c:7166
-#: optimizer/util/plancat.c:542
+#: optimizer/util/plancat.c:543
 #, c-format
 msgid "access to non-system foreign table is restricted"
 msgstr "对非系统外部表的访问受限"
@@ -19645,7 +19654,7 @@ msgstr "创建临时表时使用 GLOBAL 已弃用"
 msgid "for a generated column, GENERATED ALWAYS must be specified"
 msgstr "对于生成列，必须指定 GENERATED ALWAYS"
 
-#: gram.y:4534 utils/adt/ri_triggers.c:2349
+#: utils/adt/ri_triggers.c:2350 gram.y:4534
 #, c-format
 msgid "MATCH PARTIAL not yet implemented"
 msgstr "MATCH PARTIAL 尚未实现"
@@ -19684,7 +19693,7 @@ msgstr "不支持 CREATE OR REPLACE CONSTRAINT TRIGGER"
 msgid "duplicate trigger events specified"
 msgstr "重复指定触发器事件"
 
-#: gram.y:6331 parser/parse_utilcmd.c:3980 parser/parse_utilcmd.c:4006
+#: parser/parse_utilcmd.c:3980 parser/parse_utilcmd.c:4006 gram.y:6331
 #, c-format
 msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
 msgstr "声明为 INITIALLY DEFERRED 的约束必须为 DEFERRABLE"
@@ -19709,12 +19718,12 @@ msgstr "尚未实现删除枚举值的功能"
 msgid "aggregates cannot have output arguments"
 msgstr "聚合函数不能声明输出参数"
 
-#: gram.y:9239 utils/adt/regproc.c:678
+#: utils/adt/regproc.c:678 gram.y:9239
 #, c-format
 msgid "missing argument"
 msgstr "缺少参数"
 
-#: gram.y:9240 utils/adt/regproc.c:679
+#: utils/adt/regproc.c:679 gram.y:9240
 #, c-format
 msgid "Use NONE to denote the missing argument of a unary operator."
 msgstr "使用 NONE 表示一元操作符缺少的参数。"
@@ -19858,8 +19867,8 @@ msgstr "没有 ORDER BY 子句时，不能指定 WITH TIES"
 msgid "improper use of \"*\""
 msgstr "未正确使用 \"*\""
 
-#: gram.y:19211 gram.y:19228 tsearch/spell.c:972 tsearch/spell.c:989
-#: tsearch/spell.c:1006 tsearch/spell.c:1023 tsearch/spell.c:1098
+#: tsearch/spell.c:972 tsearch/spell.c:989 tsearch/spell.c:1006
+#: tsearch/spell.c:1023 tsearch/spell.c:1098 gram.y:19211 gram.y:19228
 #, c-format
 msgid "syntax error"
 msgstr "语法错误"
@@ -20027,10 +20036,10 @@ msgstr "在文件 \"%s\" 第 %u 行，词元 \"%s\" 附近语法错误"
 msgid "too many syntax errors found, abandoning file \"%s\""
 msgstr "发现过多的语法错误，放弃文件 \"%s\""
 
-#: jsonpath_gram.y:270 jsonpath_gram.y:631 jsonpath_scan.l:625
-#: jsonpath_scan.l:636 jsonpath_scan.l:646 jsonpath_scan.l:698
 #: utils/adt/bytea.c:258 utils/adt/encode.c:755 utils/adt/encode.c:820
-#: utils/adt/jsonfuncs.c:664
+#: utils/adt/jsonfuncs.c:664 jsonpath_gram.y:270 jsonpath_gram.y:631
+#: jsonpath_scan.l:625 jsonpath_scan.l:636 jsonpath_scan.l:646
+#: jsonpath_scan.l:698
 #, c-format
 msgid "invalid input syntax for type %s"
 msgstr "类型 %s 的输入语法无效"
@@ -20045,7 +20054,7 @@ msgstr ".decimal() 只能指定可选的 precision[,scale]。"
 msgid "Unrecognized flag character \"%.*s\" in LIKE_REGEX predicate."
 msgstr "LIKE_REGEX 谓词中的标志字符 \"%.*s\" 无法识别。"
 
-#: jsonpath_gram.y:663 tsearch/spell.c:752 utils/adt/regexp.c:223
+#: tsearch/spell.c:752 utils/adt/regexp.c:223 jsonpath_gram.y:663
 #, c-format
 msgid "invalid regular expression: %s"
 msgstr "无效的正则表达式: %s"
@@ -20104,7 +20113,7 @@ msgstr "无效的输入"
 msgid "invalid hexadecimal digit"
 msgstr "无效的十六进制数字"
 
-#: jsonpath_scan.l:592 utils/adt/jsonfuncs.c:652
+#: utils/adt/jsonfuncs.c:652 jsonpath_scan.l:592
 #, c-format
 msgid "unsupported Unicode escape sequence"
 msgstr "不支持的 Unicode 转义序列"
@@ -20300,13 +20309,13 @@ msgstr "服务器的魔数为 0x%08X，模块的魔数为 0x%08X。"
 msgid "OAuth validator module \"%s\" must provide a \"%s\" callback"
 msgstr "OAuth 验证器模块 \"%s\" 必须提供 \"%s\" 回调"
 
-#: libpq/auth-oauth.c:870
+#: libpq/auth-oauth.c:886
 #, c-format
 msgid "parameter \"%s\" must be set for authentication method \"%s\""
 msgstr "认证方法 \"%2$s\" 必须设置参数 \"%1$s\""
 
-#: libpq/auth-oauth.c:872 libpq/auth-oauth.c:906 libpq/auth-oauth.c:923
-#: libpq/auth-oauth.c:1076 libpq/be-secure-common.c:223
+#: libpq/auth-oauth.c:888 libpq/auth-oauth.c:907 libpq/auth-oauth.c:924
+#: libpq/auth-oauth.c:1077 libpq/be-secure-common.c:223
 #: libpq/be-secure-common.c:238 libpq/be-secure-common.c:248
 #: libpq/be-secure-common.c:262 libpq/be-secure-common.c:272
 #: libpq/be-secure-common.c:289 libpq/be-secure-common.c:306
@@ -20328,7 +20337,7 @@ msgstr "认证方法 \"%2$s\" 必须设置参数 \"%1$s\""
 msgid "line %d of configuration file \"%s\""
 msgstr "配置文件 \"%2$s\" 的第 %1$d 行"
 
-#: libpq/auth-oauth.c:904
+#: libpq/auth-oauth.c:905
 #, c-format
 msgid ""
 "authentication method \"oauth\" requires option \"validator\" to be set when "
@@ -20337,36 +20346,36 @@ msgstr ""
 "当 \"%s\" 包含多个验证器模块时，认证方法 \"oauth\" 需要设置 \"validator\" 选"
 "项"
 
-#: libpq/auth-oauth.c:921
+#: libpq/auth-oauth.c:922
 #, c-format
 msgid "validator \"%s\" is not permitted by \"%s\""
 msgstr "\"%2$s\" 不允许使用验证器 \"%1$s\""
 
-#: libpq/auth-oauth.c:973
+#: libpq/auth-oauth.c:974
 #, c-format
 msgid "HBA option name \"%s\" is invalid and will be ignored"
 msgstr "HBA 选项名 \"%s\" 无效，将被忽略"
 
 #. translator: the second %s is a function name
-#: libpq/auth-oauth.c:976
+#: libpq/auth-oauth.c:977
 #, c-format
 msgid "validator module \"%s\", in call to %s"
 msgstr "验证器模块 \"%s\"，调用 %s 时"
 
-#: libpq/auth-oauth.c:1066 libpq/auth-oauth.c:1070 libpq/hba.c:2322
+#: libpq/auth-oauth.c:1067 libpq/auth-oauth.c:1071 libpq/hba.c:2322
 #, c-format
 msgid "unrecognized authentication option name: \"%s\""
 msgstr "无法识别的认证选项名称: \"%s\""
 
 #. translator: the first %s is the name of the module
-#: libpq/auth-oauth.c:1073
+#: libpq/auth-oauth.c:1074
 #, c-format
 msgid ""
 "The installed validator module (\"%s\") did not define an option named "
 "\"%s\"."
 msgstr "已安装的验证器模块（\"%s\"）未定义名为 \"%s\" 的选项。"
 
-#: libpq/auth-oauth.c:1075
+#: libpq/auth-oauth.c:1076
 #, c-format
 msgid ""
 "All OAuth connections matching this line will fail. Correct the option and "
@@ -22379,46 +22388,46 @@ msgid "%s cannot be applied to the nullable side of an outer join"
 msgstr "%s 不能应用于外连接中可能为 NULL 的一侧"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: optimizer/plan/planner.c:1802 parser/analyze.c:1864 parser/analyze.c:2123
+#: optimizer/plan/planner.c:1814 parser/analyze.c:1864 parser/analyze.c:2123
 #: parser/analyze.c:3405
 #, c-format
 msgid "%s is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr "%s 不允许与 UNION/INTERSECT/EXCEPT 一起使用"
 
-#: optimizer/plan/planner.c:2547 optimizer/plan/planner.c:4426
+#: optimizer/plan/planner.c:2559 optimizer/plan/planner.c:4438
 #, c-format
 msgid "could not implement GROUP BY"
 msgstr "无法实现 GROUP BY"
 
-#: optimizer/plan/planner.c:2548 optimizer/plan/planner.c:4427
-#: optimizer/plan/planner.c:5108 optimizer/prep/prepunion.c:1127
+#: optimizer/plan/planner.c:2560 optimizer/plan/planner.c:4439
+#: optimizer/plan/planner.c:5120 optimizer/prep/prepunion.c:1127
 #, c-format
 msgid ""
 "Some of the datatypes only support hashing, while others only support "
 "sorting."
 msgstr "部分数据类型只支持哈希，另一些数据类型只支持排序。"
 
-#: optimizer/plan/planner.c:5107
+#: optimizer/plan/planner.c:5119
 #, c-format
 msgid "could not implement DISTINCT"
 msgstr "无法实现 DISTINCT"
 
-#: optimizer/plan/planner.c:6572
+#: optimizer/plan/planner.c:6584
 #, c-format
 msgid "could not implement window PARTITION BY"
 msgstr "无法实现窗口 PARTITION BY"
 
-#: optimizer/plan/planner.c:6573
+#: optimizer/plan/planner.c:6585
 #, c-format
 msgid "Window partitioning columns must be of sortable datatypes."
 msgstr "窗口分区列必须属于可排序的数据类型。"
 
-#: optimizer/plan/planner.c:6577
+#: optimizer/plan/planner.c:6589
 #, c-format
 msgid "could not implement window ORDER BY"
 msgstr "无法实现窗口 ORDER BY"
 
-#: optimizer/plan/planner.c:6578
+#: optimizer/plan/planner.c:6590
 #, c-format
 msgid "Window ordering columns must be of sortable datatypes."
 msgstr "窗口排序列必须属于可排序的数据类型。"
@@ -22455,27 +22464,28 @@ msgstr ""
 msgid "SQL function \"%s\" during inlining"
 msgstr "SQL 函数 \"%s\" 在内联期间"
 
-#: optimizer/util/plancat.c:158
+#: optimizer/util/plancat.c:159
 #, c-format
 msgid "cannot access temporary or unlogged relations during recovery"
 msgstr "恢复期间不能访问临时关系或不记录 WAL 的关系"
 
-#: optimizer/util/plancat.c:874
+#: optimizer/util/plancat.c:877
 #, c-format
 msgid "whole row unique index inference specifications are not supported"
 msgstr "唯一索引推断条件中不支持整行引用"
 
-#: optimizer/util/plancat.c:913
+#: optimizer/util/plancat.c:916
 #, c-format
 msgid "constraint in ON CONFLICT clause has no associated index"
 msgstr "ON CONFLICT 子句中的约束没有关联的索引"
 
-#: optimizer/util/plancat.c:1022
+#. translator: %s is an ON CONFLICT clause
+#: optimizer/util/plancat.c:1008
 #, c-format
-msgid "ON CONFLICT DO %s not supported with exclusion constraints"
-msgstr "ON CONFLICT DO %s 不支持排他约束"
+msgid "%s not supported with exclusion constraints"
+msgstr "%s 不支持排他约束"
 
-#: optimizer/util/plancat.c:1190
+#: optimizer/util/plancat.c:1165
 #, c-format
 msgid ""
 "there is no unique or exclusion constraint matching the ON CONFLICT "
@@ -25206,7 +25216,7 @@ msgid ""
 msgstr "带有 WHERE 条件的规则只能包含 SELECT, INSERT, UPDATE 或 DELETE 动作"
 
 #: parser/parse_utilcmd.c:3419 parser/parse_utilcmd.c:3520
-#: rewrite/rewriteHandler.c:545 rewrite/rewriteManip.c:1204
+#: rewrite/rewriteHandler.c:545 rewrite/rewriteManip.c:1205
 #, c-format
 msgid "conditional UNION/INTERSECT/EXCEPT statements are not implemented"
 msgstr "尚未实现带条件的 UNION/INTERSECT/EXCEPT 语句"
@@ -25380,7 +25390,7 @@ msgstr "无效的 Unicode 转义字符"
 msgid "invalid Unicode escape value"
 msgstr "无效的 Unicode 转义值"
 
-#: parser/parser.c:494 scan.l:680 utils/adt/varlena.c:5811
+#: parser/parser.c:494 utils/adt/varlena.c:5811 scan.l:680
 #, c-format
 msgid "invalid Unicode escape"
 msgstr "无效的 Unicode 转义"
@@ -25390,8 +25400,8 @@ msgstr "无效的 Unicode 转义"
 msgid "Unicode escapes must be \\XXXX or \\+XXXXXX."
 msgstr "Unicode 转义必须是 \\XXXX 或 \\+XXXXXX。"
 
-#: parser/parser.c:523 scan.l:641 scan.l:657 scan.l:673
-#: utils/adt/varlena.c:5836
+#: parser/parser.c:523 utils/adt/varlena.c:5836 scan.l:641 scan.l:657
+#: scan.l:673
 #, c-format
 msgid "invalid Unicode surrogate pair"
 msgstr "无效的 Unicode 代理项对"
@@ -27368,19 +27378,19 @@ msgstr "删除 %2$s/%3$s/xid* 时无法删除文件 \"%1$s\": %m"
 msgid "could not read from file \"%s\": read %d instead of %d bytes"
 msgstr "无法读取文件 \"%s\": 已读取 %d 字节，预期为 %d 字节"
 
-#: replication/logical/sequencesync.c:195
+#: replication/logical/sequencesync.c:197
 #, c-format
 msgid "mismatched or renamed sequence on subscriber (%s)"
 msgid_plural "mismatched or renamed sequences on subscriber (%s)"
 msgstr[0] "订阅服务器上的序列不匹配或已重命名（%s）"
 
-#: replication/logical/sequencesync.c:214
+#: replication/logical/sequencesync.c:216
 #, c-format
 msgid "insufficient privileges on subscriber sequence (%s)"
 msgid_plural "insufficient privileges on subscriber sequences (%s)"
 msgstr[0] "对订阅服务器上的序列权限不足（%s）"
 
-#: replication/logical/sequencesync.c:219
+#: replication/logical/sequencesync.c:221
 #, c-format
 msgid ""
 "Grant UPDATE on the sequence to the subscription owner on the subscriber."
@@ -27388,13 +27398,13 @@ msgid_plural ""
 "Grant UPDATE on the sequences to the subscription owner on the subscriber."
 msgstr[0] "在订阅服务器上向订阅所有者授予相关序列的 UPDATE 权限。"
 
-#: replication/logical/sequencesync.c:231
+#: replication/logical/sequencesync.c:233
 #, c-format
 msgid "insufficient privileges on publisher sequence (%s)"
 msgid_plural "insufficient privileges on publisher sequences (%s)"
 msgstr[0] "对发布服务器上的序列权限不足（%s）"
 
-#: replication/logical/sequencesync.c:235
+#: replication/logical/sequencesync.c:237
 #, c-format
 msgid ""
 "Grant SELECT on the sequence to the role used for the replication connection "
@@ -27404,31 +27414,36 @@ msgid_plural ""
 "connection on the publisher."
 msgstr[0] "在发布服务器上向复制连接所用角色授予相关序列的 SELECT 权限。"
 
-#: replication/logical/sequencesync.c:247
+#: replication/logical/sequencesync.c:249
 #, c-format
 msgid "missing sequence on publisher (%s)"
 msgid_plural "missing sequences on publisher (%s)"
 msgstr[0] "发布服务器上缺少序列（%s）"
 
-#: replication/logical/sequencesync.c:255
+#: replication/logical/sequencesync.c:257
 #, c-format
 msgid ""
 "logical replication sequence synchronization failed for subscription \"%s\""
 msgstr "订阅 \"%s\" 的逻辑复制序列同步失败"
 
-#: replication/logical/sequencesync.c:569
+#: replication/logical/sequencesync.c:600
 #, c-format
 msgid "could not fetch sequence information from the publisher: %s"
 msgstr "无法从发布服务器获取序列信息: %s"
 
-#: replication/logical/sequencesync.c:652
+#: replication/logical/sequencesync.c:683
 #, c-format
 msgid ""
 "skip synchronization of sequence \"%s.%s\" because it has been dropped "
 "concurrently"
 msgstr "跳过序列 \"%s.%s\" 的同步，因为它已被并发删除"
 
-#: replication/logical/sequencesync.c:824
+#: replication/logical/sequencesync.c:697
+#, c-format
+msgid "skip synchronization of sequence \"%s.%s\" because it is no longer part of subscription \"%s\""
+msgstr "跳过序列 \"%s.%s\" 的同步，因为它已不再属于订阅 \"%s\""
+
+#: replication/logical/sequencesync.c:868
 #, c-format
 msgid ""
 "sequencesync worker for subscription \"%s\" could not connect to the "
@@ -29311,12 +29326,12 @@ msgid ""
 "queries"
 msgstr "WITH 不能用于被规则重写为多个查询的查询中"
 
-#: rewrite/rewriteManip.c:1192
+#: rewrite/rewriteManip.c:1193
 #, c-format
 msgid "conditional utility statements are not implemented"
 msgstr "条件工具语句未实现"
 
-#: rewrite/rewriteManip.c:1924
+#: rewrite/rewriteManip.c:1925
 #, c-format
 msgid ""
 "NEW variables in ON UPDATE rules cannot reference columns that are part of a "
@@ -30313,45 +30328,55 @@ msgstr "共享内存队列中的消息大小 %zu 无效"
 msgid "out of shared memory"
 msgstr "共享内存不足"
 
-#: storage/ipc/shmem.c:382
+#: storage/ipc/shmem.c:383
 #, c-format
 msgid "shared memory struct \"%s\" is already registered"
 msgstr "共享内存结构 \"%s\" 已注册"
 
-#: storage/ipc/shmem.c:548
+#: storage/ipc/shmem.c:552
 #, c-format
 msgid "could not create ShmemIndex entry for data structure \"%s\""
 msgstr "无法为数据结构 \"%s\" 创建 ShmemIndex 条目"
 
-#: storage/ipc/shmem.c:565
+#: storage/ipc/shmem.c:569
 #, c-format
 msgid ""
 "not enough shared memory for data structure \"%s\" (%zd bytes requested)"
 msgstr "没有足够的共享内存用于数据结构 \"%s\"（请求 %zd 字节）"
 
-#: storage/ipc/shmem.c:619
+#: storage/ipc/shmem.c:623
 #, c-format
 msgid "could not find ShmemIndex entry for data structure \"%s\""
 msgstr "无法找到数据结构 \"%s\" 的 ShmemIndex 条目"
 
-#: storage/ipc/shmem.c:635 storage/ipc/shmem.c:1022
+#: storage/ipc/shmem.c:639 storage/ipc/shmem.c:1033
 #, c-format
 msgid ""
 "cannot attach to shared memory struct \"%s\" because it was not fully "
 "initialized"
 msgstr "不能附接到共享内存结构 \"%s\"，因为它尚未完全初始化"
 
-#: storage/ipc/shmem.c:643
+#: storage/ipc/shmem.c:647
 #, c-format
 msgid ""
 "shared memory struct \"%s\" was created with different size: existing %zu, "
 "requested %zd"
 msgstr "共享内存结构 \"%s\" 创建时的大小不同: 现有大小为 %zu，请求大小为 %zd"
 
-#: storage/ipc/shmem.c:718 storage/ipc/shmem.c:816
+#: storage/ipc/shmem.c:722 storage/ipc/shmem.c:820
 #, c-format
 msgid "out of shared memory (%zu bytes requested)"
 msgstr "共享内存不足（请求 %zu 字节）"
+
+#: storage/ipc/shmem.c:1041
+#, c-format
+msgid "cannot attach to shared memory struct \"%s\" because it does not exist"
+msgstr "不能附接到共享内存结构 \"%s\"，因为它不存在"
+
+#: storage/ipc/shmem.c:1043
+#, c-format
+msgid "SHMEM_ATTACH_UNKNOWN_SIZE can only be used to attach to an existing shared memory structure."
+msgstr "SHMEM_ATTACH_UNKNOWN_SIZE 只能用于附接到现有的共享内存结构。"
 
 #: storage/ipc/signalfuncs.c:75
 #, c-format
@@ -33825,72 +33850,72 @@ msgstr "jsonpath 项方法 .%s() 的字段位置不得为零"
 msgid "jsonpath item method .%s() can only be applied to an object"
 msgstr "jsonpath 项方法 .%s() 只能应用于对象"
 
-#: utils/adt/jsonpath_exec.c:3389
+#: utils/adt/jsonpath_exec.c:3393
 #, c-format
 msgid "could not convert value of type %s to jsonpath"
 msgstr "无法将类型 %s 的值转换为 jsonpath"
 
-#: utils/adt/jsonpath_exec.c:3423
+#: utils/adt/jsonpath_exec.c:3427
 #, c-format
 msgid "could not find jsonpath variable \"%s\""
 msgstr "无法找到 jsonpath 变量 \"%s\""
 
-#: utils/adt/jsonpath_exec.c:3476
+#: utils/adt/jsonpath_exec.c:3480
 #, c-format
 msgid "\"vars\" argument is not an object"
 msgstr "\"vars\" 参数不是对象"
 
-#: utils/adt/jsonpath_exec.c:3477
+#: utils/adt/jsonpath_exec.c:3481
 #, c-format
 msgid ""
 "Jsonpath parameters should be encoded as key-value pairs of \"vars\" object."
 msgstr "Jsonpath 参数应编码为 \"vars\" 对象的键值对。"
 
-#: utils/adt/jsonpath_exec.c:3749
+#: utils/adt/jsonpath_exec.c:3753
 #, c-format
 msgid "jsonpath array subscript is not a single numeric value"
 msgstr "jsonpath 数组下标不是一个数值"
 
-#: utils/adt/jsonpath_exec.c:3764
+#: utils/adt/jsonpath_exec.c:3768
 #, c-format
 msgid "jsonpath array subscript is out of integer range"
 msgstr "jsonpath 数组下标超出整数范围"
 
-#: utils/adt/jsonpath_exec.c:3986
+#: utils/adt/jsonpath_exec.c:3990
 #, c-format
 msgid "cannot convert value from %s to %s without time zone usage"
 msgstr "不使用时区就不能将值从 %s 转换为 %s"
 
-#: utils/adt/jsonpath_exec.c:3988
+#: utils/adt/jsonpath_exec.c:3992
 #, c-format
 msgid "Use *_tz() function for time zone support."
 msgstr "使用 *_tz() 函数以支持时区。"
 
-#: utils/adt/jsonpath_exec.c:4292
+#: utils/adt/jsonpath_exec.c:4296
 #, c-format
 msgid ""
 "JSON path expression for column \"%s\" must return single item when no "
 "wrapper is requested"
 msgstr "未请求包装时，列 \"%s\" 的 JSON 路径表达式必须返回一个项"
 
-#: utils/adt/jsonpath_exec.c:4294 utils/adt/jsonpath_exec.c:4299
+#: utils/adt/jsonpath_exec.c:4298 utils/adt/jsonpath_exec.c:4303
 #, c-format
 msgid "Use the WITH WRAPPER clause to wrap SQL/JSON items into an array."
 msgstr "使用 WITH WRAPPER 子句将 SQL/JSON 项包装成数组。"
 
-#: utils/adt/jsonpath_exec.c:4298
+#: utils/adt/jsonpath_exec.c:4302
 #, c-format
 msgid ""
 "JSON path expression in JSON_QUERY must return single item when no wrapper "
 "is requested"
 msgstr "未请求包装时，JSON_QUERY 中的 JSON 路径表达式必须返回一个项"
 
-#: utils/adt/jsonpath_exec.c:4355 utils/adt/jsonpath_exec.c:4379
+#: utils/adt/jsonpath_exec.c:4359 utils/adt/jsonpath_exec.c:4383
 #, c-format
 msgid "JSON path expression for column \"%s\" must return single scalar item"
 msgstr "列 \"%s\" 的 JSON 路径表达式必须返回一个标量项"
 
-#: utils/adt/jsonpath_exec.c:4360 utils/adt/jsonpath_exec.c:4384
+#: utils/adt/jsonpath_exec.c:4364 utils/adt/jsonpath_exec.c:4388
 #, c-format
 msgid "JSON path expression in JSON_VALUE must return single scalar item"
 msgstr "JSON_VALUE 中的 JSON 路径表达式必须返回一个标量项"
@@ -34846,7 +34871,7 @@ msgstr "参数 \"%s\" 的值无效: %d"
 msgid ""
 "SQL regular expression may not contain more than two escape-double-quote "
 "separators"
-msgstr "SQL 正则表达式不得包含两个以上的转义双引号分隔符"
+msgstr "SQL 正则表达式不得包含超过两个转义双引号分隔符"
 
 #. translator: %s is a SQL function name
 #: utils/adt/regexp.c:1165 utils/adt/regexp.c:1256 utils/adt/regexp.c:1343
@@ -34914,38 +34939,38 @@ msgstr "预期为类型名称"
 msgid "improper type name"
 msgstr "类型名称不正确"
 
-#: utils/adt/ri_triggers.c:384 utils/adt/ri_triggers.c:1865
-#: utils/adt/ri_triggers.c:3410
+#: utils/adt/ri_triggers.c:385 utils/adt/ri_triggers.c:1866
+#: utils/adt/ri_triggers.c:3473
 #, c-format
 msgid "insert or update on table \"%s\" violates foreign key constraint \"%s\""
 msgstr "对表 \"%s\" 的插入或更新违反外键约束 \"%s\""
 
-#: utils/adt/ri_triggers.c:387 utils/adt/ri_triggers.c:1868
+#: utils/adt/ri_triggers.c:388 utils/adt/ri_triggers.c:1869
 #, c-format
 msgid "MATCH FULL does not allow mixing of null and nonnull key values."
 msgstr "MATCH FULL 不允许混合 NULL 和非 NULL 键值。"
 
-#: utils/adt/ri_triggers.c:2282
+#: utils/adt/ri_triggers.c:2283
 #, c-format
 msgid "function \"%s\" must be fired for INSERT"
 msgstr "函数 \"%s\" 必须为 INSERT 操作触发"
 
-#: utils/adt/ri_triggers.c:2288
+#: utils/adt/ri_triggers.c:2289
 #, c-format
 msgid "function \"%s\" must be fired for UPDATE"
 msgstr "函数 \"%s\" 必须为 UPDATE 操作触发"
 
-#: utils/adt/ri_triggers.c:2294
+#: utils/adt/ri_triggers.c:2295
 #, c-format
 msgid "function \"%s\" must be fired for DELETE"
 msgstr "函数 \"%s\" 必须为 DELETE 操作触发"
 
-#: utils/adt/ri_triggers.c:2317
+#: utils/adt/ri_triggers.c:2318
 #, c-format
 msgid "no pg_constraint entry for trigger \"%s\" on table \"%s\""
 msgstr "pg_constraint 中没有表 \"%2$s\" 上触发器 \"%1$s\" 的条目"
 
-#: utils/adt/ri_triggers.c:2319
+#: utils/adt/ri_triggers.c:2320
 #, c-format
 msgid ""
 "Remove this referential integrity trigger and its mates, then do ALTER TABLE "
@@ -34953,7 +34978,7 @@ msgid ""
 msgstr ""
 "删除此参照完整性触发器及其配套触发器，然后执行 ALTER TABLE ADD CONSTRAINT。"
 
-#: utils/adt/ri_triggers.c:2727
+#: utils/adt/ri_triggers.c:2739
 #, c-format
 msgid ""
 "referential integrity query on \"%s\" from constraint \"%s\" on \"%s\" gave "
@@ -34961,32 +34986,32 @@ msgid ""
 msgstr ""
 "涉及 \"%1$s\" 的参照完整性查询（来自 \"%3$s\" 上的约束 \"%2$s\"）返回意外结果"
 
-#: utils/adt/ri_triggers.c:2731
+#: utils/adt/ri_triggers.c:2743
 #, c-format
 msgid "This is most likely due to a rule having rewritten the query."
 msgstr "这很可能是因为规则已重写查询。"
 
-#: utils/adt/ri_triggers.c:3400
+#: utils/adt/ri_triggers.c:3463
 #, c-format
 msgid "removing partition \"%s\" violates foreign key constraint \"%s\""
 msgstr "分离分区 \"%s\" 违反外键约束 \"%s\""
 
-#: utils/adt/ri_triggers.c:3403 utils/adt/ri_triggers.c:3442
+#: utils/adt/ri_triggers.c:3466 utils/adt/ri_triggers.c:3505
 #, c-format
 msgid "Key (%s)=(%s) is still referenced from table \"%s\"."
 msgstr "键 (%s)=(%s) 仍被表 \"%s\" 引用。"
 
-#: utils/adt/ri_triggers.c:3414
+#: utils/adt/ri_triggers.c:3477
 #, c-format
 msgid "Key (%s)=(%s) is not present in table \"%s\"."
 msgstr "表 \"%3$s\" 中不存在键 (%1$s)=(%2$s)。"
 
-#: utils/adt/ri_triggers.c:3417
+#: utils/adt/ri_triggers.c:3480
 #, c-format
 msgid "Key is not present in table \"%s\"."
 msgstr "表 \"%s\" 中不存在键。"
 
-#: utils/adt/ri_triggers.c:3423
+#: utils/adt/ri_triggers.c:3486
 #, c-format
 msgid ""
 "update or delete on table \"%s\" violates RESTRICT setting of foreign key "
@@ -34995,24 +35020,24 @@ msgstr ""
 "对表 \"%1$s\" 的更新或删除违反表 \"%3$s\" 上外键约束 \"%2$s\" 的 RESTRICT 设"
 "置"
 
-#: utils/adt/ri_triggers.c:3428
+#: utils/adt/ri_triggers.c:3491
 #, c-format
 msgid "Key (%s)=(%s) is referenced from table \"%s\"."
 msgstr "键 (%s)=(%s) 被表 \"%s\" 引用。"
 
-#: utils/adt/ri_triggers.c:3431
+#: utils/adt/ri_triggers.c:3494
 #, c-format
 msgid "Key is referenced from table \"%s\"."
 msgstr "键被表 \"%s\" 引用。"
 
-#: utils/adt/ri_triggers.c:3437
+#: utils/adt/ri_triggers.c:3500
 #, c-format
 msgid ""
 "update or delete on table \"%s\" violates foreign key constraint \"%s\" on "
 "table \"%s\""
 msgstr "对表 \"%1$s\" 的更新或删除违反表 \"%3$s\" 上的外键约束 \"%2$s\""
 
-#: utils/adt/ri_triggers.c:3445
+#: utils/adt/ri_triggers.c:3508
 #, c-format
 msgid "Key is still referenced from table \"%s\"."
 msgstr "键仍被表 \"%s\" 引用。"
@@ -35829,27 +35854,27 @@ msgid ""
 "type %s"
 msgstr "访问方法 %2$s 的操作符类 \"%1$s\" 缺少类型 %4$s 的支持函数 %3$d"
 
-#: utils/cache/relcache.c:3811
+#: utils/cache/relcache.c:3801
 #, c-format
 msgid "heap relfilenumber value not set when in binary upgrade mode"
 msgstr "二进制升级模式下未设置堆的 relfilenumber 值"
 
-#: utils/cache/relcache.c:3819
+#: utils/cache/relcache.c:3809
 #, c-format
 msgid "unexpected request for new relfilenumber in binary upgrade mode"
 msgstr "二进制升级模式下出现意外的新 relfilenumber 请求"
 
-#: utils/cache/relcache.c:6685
+#: utils/cache/relcache.c:6675
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr "无法创建关系缓存初始化文件 \"%s\": %m"
 
-#: utils/cache/relcache.c:6687
+#: utils/cache/relcache.c:6677
 #, c-format
 msgid "Continuing anyway, but there's something wrong."
 msgstr "仍然继续，但存在某些问题。"
 
-#: utils/cache/relcache.c:7017
+#: utils/cache/relcache.c:7007
 #, c-format
 msgid "could not remove cache file \"%s\": %m"
 msgstr "无法删除缓存文件 \"%s\": %m"
@@ -36118,7 +36143,7 @@ msgstr "函数调用上下文中缺少操作符类选项信息"
 #: utils/fmgr/fmgr.c:2142
 #, c-format
 msgid "language validation function %u called for language %u instead of %u"
-msgstr "语言校验函数 %u 调用的目标语言是 %u，而不是 %u"
+msgstr "为语言 %2$u 调用了语言校验函数 %1$u，而非函数 %3$u"
 
 #: utils/fmgr/funcapi.c:498
 #, c-format
@@ -37431,6 +37456,24 @@ msgstr "非只读可串行化事务不能导入来自只读事务的快照"
 #, c-format
 msgid "cannot import a snapshot from a different database"
 msgstr "不能导入来自不同数据库的快照"
+
+#, c-format
+#~ msgid "WAIT must be called without an active or registered snapshot"
+#~ msgstr "必须在没有活动快照或已注册快照时调用 WAIT"
+
+#, c-format
+#~ msgid ""
+#~ "WAIT cannot be executed within a transaction with an isolation level higher "
+#~ "than READ COMMITTED."
+#~ msgstr "不能在隔离级别高于 READ COMMITTED 的事务中执行 WAIT。"
+
+#, c-format
+#~ msgid "Release the locks, or execute WAIT FOR before acquiring them."
+#~ msgstr "请释放这些锁，或在获取锁之前执行 WAIT FOR。"
+
+#, c-format
+#~ msgid "ON CONFLICT DO %s not supported with exclusion constraints"
+#~ msgstr "ON CONFLICT DO %s 不支持排他约束"
 
 #, c-format
 #~ msgid ""

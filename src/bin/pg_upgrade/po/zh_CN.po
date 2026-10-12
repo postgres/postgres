@@ -1,17 +1,16 @@
-# LANGUAGE message translation file for pg_upgrade
+# Simplified Chinese message translation file for pg_upgrade
 # Copyright (C) 2019 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_upgrade (PostgreSQL) package.
-# FIRST AUTHOR <zhangjie2@fujitsu.com>, 2019.
+# This file is distributed under the same license as the PostgreSQL package.
+# Jie Zhang <zhangjie2@fujitsu.com>, 2019.
+# Ruohang Feng <rh@vonng.com>, 2026.
 #
-# Recalibrated and completed via the pgsql.cc NLS review workbench.
-# Feng Ruohang <rh@vonng.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 19\n"
+"Project-Id-Version: pg_upgrade (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-17 05:53+0000\n"
-"PO-Revision-Date: 2026-09-17 16:00+0800\n"
-"Last-Translator: Feng Ruohang <rh@vonng.com>\n"
+"POT-Creation-Date: 2026-09-23 14:52+0000\n"
+"PO-Revision-Date: 2026-09-23 23:11+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -94,11 +93,11 @@ msgstr "文件 \"%s\" 过大"
 msgid "could not parse version file \"%s\""
 msgstr "无法解析版本文件 \"%s\""
 
-#: check.c:117
+#: check.c:120
 msgid "Checking for system-defined composite types in user tables"
 msgstr "正在检查用户表中的系统定义复合类型"
 
-#: check.c:124
+#: check.c:127
 msgid ""
 "Your installation contains system-defined composite types in user tables.\n"
 "These type OIDs are not stable across PostgreSQL versions,\n"
@@ -109,11 +108,11 @@ msgstr ""
 "这些类型的 OID 在不同 PostgreSQL 版本间并不稳定，\n"
 "因此当前不能升级此集簇。可以删除有问题的列，然后重新开始升级。\n"
 
-#: check.c:138
+#: check.c:141
 msgid "Checking for incompatible \"line\" data type"
 msgstr "正在检查不兼容的 \"line\" 数据类型"
 
-#: check.c:143
+#: check.c:146
 msgid ""
 "Your installation contains the \"line\" data type in user tables.\n"
 "This data type changed its internal and input/output format\n"
@@ -125,11 +124,11 @@ msgstr ""
 "该数据类型的内部格式及输入/输出格式在旧版本与新版本之间已发生变化，\n"
 "因此当前不能升级此集簇。可以删除有问题的列，然后重新开始升级。\n"
 
-#: check.c:160
+#: check.c:163
 msgid "Checking for reg* data types in user tables"
 msgstr "正在检查用户表中的 reg* 数据类型"
 
-#: check.c:188
+#: check.c:191
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
 "These data types reference system OIDs that are not preserved by\n"
@@ -140,11 +139,11 @@ msgstr ""
 "这些数据类型引用 pg_upgrade 不会保留的系统 OID，\n"
 "因此当前不能升级此集簇。可以删除有问题的列，然后重新开始升级。\n"
 
-#: check.c:200
+#: check.c:203
 msgid "Checking for incompatible \"aclitem\" data type"
 msgstr "正在检查不兼容的 \"aclitem\" 数据类型"
 
-#: check.c:205
+#: check.c:208
 msgid ""
 "Your installation contains the \"aclitem\" data type in user tables.\n"
 "The internal format of \"aclitem\" changed in PostgreSQL version 16\n"
@@ -155,11 +154,11 @@ msgstr ""
 "\"aclitem\" 的内部格式在 PostgreSQL 16 中已发生变化，\n"
 "因此当前不能升级此集簇。可以删除有问题的列，然后重新开始升级。\n"
 
-#: check.c:224
+#: check.c:227
 msgid "Checking for invalid \"unknown\" user columns"
 msgstr "正在检查无效的 \"unknown\" 用户列"
 
-#: check.c:229
+#: check.c:232
 msgid ""
 "Your installation contains the \"unknown\" data type in user tables.\n"
 "This data type is no longer allowed in tables, so this cluster\n"
@@ -170,11 +169,11 @@ msgstr ""
 "表中已不再允许使用此数据类型，因此当前不能升级此集簇。\n"
 "可以删除有问题的列，然后重新开始升级。\n"
 
-#: check.c:246
+#: check.c:249
 msgid "Checking for invalid \"sql_identifier\" user columns"
 msgstr "正在检查无效的 \"sql_identifier\" 用户列"
 
-#: check.c:251
+#: check.c:254
 msgid ""
 "Your installation contains the \"sql_identifier\" data type in user tables.\n"
 "The on-disk format for this data type has changed, so this\n"
@@ -185,11 +184,11 @@ msgstr ""
 "该数据类型的磁盘格式已更改，因此当前不能升级此集簇。\n"
 "可以删除有问题的列，然后重新开始升级。\n"
 
-#: check.c:262
+#: check.c:265
 msgid "Checking for incompatible \"jsonb\" data type in user tables"
 msgstr "正在检查用户表中不兼容的 \"jsonb\" 数据类型"
 
-#: check.c:267
+#: check.c:270
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
 "The internal format of \"jsonb\" changed during 9.4 beta so this\n"
@@ -200,11 +199,11 @@ msgstr ""
 "\"jsonb\" 的内部格式在 9.4 beta 期间已发生变化，\n"
 "因此当前不能升级此集簇。可以删除有问题的列，然后重新开始升级。\n"
 
-#: check.c:279
+#: check.c:282
 msgid "Checking for removed \"abstime\" data type in user tables"
 msgstr "正在检查用户表中已移除的 \"abstime\" 数据类型"
 
-#: check.c:284
+#: check.c:287
 msgid ""
 "Your installation contains the \"abstime\" data type in user tables.\n"
 "The \"abstime\" type has been removed in PostgreSQL version 12,\n"
@@ -216,11 +215,11 @@ msgstr ""
 "PostgreSQL 12 已移除 \"abstime\" 类型，因此当前不能升级此集簇。\n"
 "可以删除有问题的列，或将其改为其他数据类型，然后重新开始升级。\n"
 
-#: check.c:292
+#: check.c:295
 msgid "Checking for removed \"reltime\" data type in user tables"
 msgstr "正在检查用户表中已移除的 \"reltime\" 数据类型"
 
-#: check.c:297
+#: check.c:300
 msgid ""
 "Your installation contains the \"reltime\" data type in user tables.\n"
 "The \"reltime\" type has been removed in PostgreSQL version 12,\n"
@@ -232,11 +231,11 @@ msgstr ""
 "PostgreSQL 12 已移除 \"reltime\" 类型，因此当前不能升级此集簇。\n"
 "可以删除有问题的列，或将其改为其他数据类型，然后重新开始升级。\n"
 
-#: check.c:305
+#: check.c:308
 msgid "Checking for removed \"tinterval\" data type in user tables"
 msgstr "正在检查用户表中已移除的 \"tinterval\" 数据类型"
 
-#: check.c:310
+#: check.c:313
 msgid ""
 "Your installation contains the \"tinterval\" data type in user tables.\n"
 "The \"tinterval\" type has been removed in PostgreSQL version 12,\n"
@@ -248,35 +247,35 @@ msgstr ""
 "PostgreSQL 12 已移除 \"tinterval\" 类型，因此当前不能升级此集簇。\n"
 "可以删除有问题的列，或将其改为其他数据类型，然后重新开始升级。\n"
 
-#: check.c:426
+#: check.c:429
 #, c-format
 msgid "failed check: %s"
 msgstr "检查失败: %s"
 
-#: check.c:429
+#: check.c:432
 msgid "A list of the problem columns is in the file:"
 msgstr "有问题的列列在以下文件中:"
 
-#: check.c:435 check.c:1070 check.c:1221 check.c:1285 check.c:1359 check.c:1445
-#: check.c:1533 check.c:1663 check.c:1732 check.c:1817 check.c:1906
-#: check.c:1950 check.c:2030 check.c:2339 check.c:2459 check.c:2478
-#: check.c:2494 check.c:2538 check.c:2591 check.c:2704 file.c:378 file.c:415
+#: check.c:438 check.c:1074 check.c:1225 check.c:1289 check.c:1363 check.c:1449
+#: check.c:1537 check.c:1667 check.c:1736 check.c:1821 check.c:1910
+#: check.c:1954 check.c:2034 check.c:2343 check.c:2463 check.c:2482
+#: check.c:2498 check.c:2542 check.c:2595 check.c:2708 file.c:378 file.c:415
 #: function.c:214 option.c:519 slru_io.c:113 version.c:97 version.c:178
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "无法打开文件 \"%s\": %m"
 
-#: check.c:477
+#: check.c:480
 #, c-format
 msgid "Checking data type usage"
 msgstr "正在检查数据类型使用情况"
 
-#: check.c:531
+#: check.c:534
 #, c-format
 msgid "Data type checks failed: %s"
 msgstr "数据类型检查失败: %s"
 
-#: check.c:580
+#: check.c:583
 #, c-format
 msgid ""
 "Performing Consistency Checks on Old Live Server\n"
@@ -285,7 +284,7 @@ msgstr ""
 "正在对运行中的旧服务器执行一致性检查\n"
 "------------------------------------------------"
 
-#: check.c:586
+#: check.c:589
 #, c-format
 msgid ""
 "Performing Consistency Checks\n"
@@ -294,13 +293,13 @@ msgstr ""
 "正在执行一致性检查\n"
 "-----------------------------"
 
-#: check.c:786
+#: check.c:790
 #, c-format
 msgid ""
 "Swap mode can only upgrade clusters from PostgreSQL version %s and later."
 msgstr "交换模式只能升级 PostgreSQL %s 及更高版本的集簇。"
 
-#: check.c:809
+#: check.c:813
 #, c-format
 msgid ""
 "\n"
@@ -309,7 +308,7 @@ msgstr ""
 "\n"
 "*集簇兼容*"
 
-#: check.c:817
+#: check.c:821
 #, c-format
 msgid ""
 "\n"
@@ -320,7 +319,7 @@ msgstr ""
 "如果 pg_upgrade 在此之后失败，必须重新对新集簇执行 initdb，\n"
 "然后才能继续。"
 
-#: check.c:858
+#: check.c:862
 #, c-format
 msgid ""
 "Some statistics are not transferred by pg_upgrade.\n"
@@ -333,7 +332,7 @@ msgstr ""
 "    %s/vacuumdb %s--all --analyze-in-stages --missing-stats-only\n"
 "    %s/vacuumdb %s--all --analyze-only"
 
-#: check.c:867
+#: check.c:871
 #, c-format
 msgid ""
 "Running this script will delete the old cluster's data files:\n"
@@ -342,7 +341,7 @@ msgstr ""
 "运行此脚本将删除旧集簇的数据文件:\n"
 "    %s"
 
-#: check.c:872
+#: check.c:876
 #, c-format
 msgid ""
 "Could not create a script to delete the old cluster's data files\n"
@@ -355,66 +354,66 @@ msgstr ""
 "位于旧集簇目录内。必须手动删除\n"
 "旧集簇的内容。"
 
-#: check.c:884
+#: check.c:888
 #, c-format
 msgid "Checking cluster versions"
 msgstr "正在检查集簇版本"
 
-#: check.c:896
+#: check.c:900
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version %s and later."
 msgstr "此工具只能从 PostgreSQL %s 及更高版本升级。"
 
-#: check.c:901
+#: check.c:905
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s."
 msgstr "此工具只能升级到 PostgreSQL %s。"
 
-#: check.c:910
+#: check.c:914
 #, c-format
 msgid ""
 "This utility cannot be used to downgrade to older major PostgreSQL versions."
 msgstr "此工具不能用于降级到较旧的 PostgreSQL 主版本。"
 
-#: check.c:915
+#: check.c:919
 #, c-format
 msgid ""
 "Old cluster data and binary directories are from different major versions."
 msgstr "旧集簇的数据目录与可执行文件目录来自不同的主版本。"
 
-#: check.c:918
+#: check.c:922
 #, c-format
 msgid ""
 "New cluster data and binary directories are from different major versions."
 msgstr "新集簇的数据目录与可执行文件目录来自不同的主版本。"
 
-#: check.c:929
+#: check.c:933
 #, c-format
 msgid "The option %s cannot be used for upgrades from PostgreSQL %s and later."
 msgstr "从 PostgreSQL %2$s 及更高版本升级时不能使用选项 %1$s。"
 
-#: check.c:945
+#: check.c:949
 #, c-format
 msgid ""
 "When checking a live server, the old and new port numbers must be different."
 msgstr "检查运行中的服务器时，新旧端口号必须不同。"
 
-#: check.c:965
+#: check.c:969
 #, c-format
 msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\""
 msgstr "新集簇数据库 \"%s\" 不为空: 发现关系 \"%s.%s\""
 
-#: check.c:988
+#: check.c:992
 #, c-format
 msgid "Checking new cluster tablespace directories"
 msgstr "正在检查新集簇的表空间目录"
 
-#: check.c:999
+#: check.c:1003
 #, c-format
 msgid "new cluster tablespace directory already exists: \"%s\""
 msgstr "新集簇的表空间目录已存在: \"%s\""
 
-#: check.c:1033
+#: check.c:1037
 #, c-format
 msgid ""
 "\n"
@@ -424,7 +423,7 @@ msgstr ""
 "\n"
 "警告:  新数据目录不宜位于旧数据目录内，即 %s"
 
-#: check.c:1057
+#: check.c:1061
 #, c-format
 msgid ""
 "\n"
@@ -434,56 +433,56 @@ msgstr ""
 "\n"
 "警告:  用户定义的表空间位置不宜位于数据目录内，即 %s"
 
-#: check.c:1067
+#: check.c:1071
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "正在创建删除旧集簇的脚本"
 
-#: check.c:1095
+#: check.c:1099
 #, c-format
 msgid "could not add execute permission to file \"%s\": %m"
 msgstr "无法为文件 \"%s\" 添加执行权限: %m"
 
-#: check.c:1115
+#: check.c:1119
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "正在检查数据库用户是否为安装用户"
 
-#: check.c:1131
+#: check.c:1135
 #, c-format
 msgid "database user \"%s\" is not the install user"
 msgstr "数据库用户 \"%s\" 不是安装用户"
 
-#: check.c:1142
+#: check.c:1146
 #, c-format
 msgid "could not determine the number of users"
 msgstr "无法确定用户数量"
 
-#: check.c:1150
+#: check.c:1154
 #, c-format
 msgid "Only the install user can be defined in the new cluster."
 msgstr "新集簇中只能定义安装用户。"
 
-#: check.c:1180
+#: check.c:1184
 #, c-format
 msgid "Checking database connection settings"
 msgstr "正在检查数据库连接设置"
 
-#: check.c:1208
+#: check.c:1212
 #, c-format
 msgid ""
 "template0 must not allow connections, i.e. its pg_database.datallowconn must "
 "be false"
 msgstr "template0 不得允许连接，即其 pg_database.datallowconn 必须为 false"
 
-#: check.c:1235 check.c:1296 check.c:1411 check.c:1504 check.c:1629
-#: check.c:1703 check.c:1786 check.c:1861 check.c:1919 check.c:1999
-#: check.c:2351 check.c:2507 check.c:2647 check.c:2716 function.c:235
+#: check.c:1239 check.c:1300 check.c:1415 check.c:1508 check.c:1633
+#: check.c:1707 check.c:1790 check.c:1865 check.c:1923 check.c:2003
+#: check.c:2355 check.c:2511 check.c:2651 check.c:2720 function.c:235
 #, c-format
 msgid "fatal"
 msgstr "致命错误"
 
-#: check.c:1236
+#: check.c:1240
 #, c-format
 msgid ""
 "All non-template0 databases must allow connections, i.e. their\n"
@@ -502,12 +501,12 @@ msgstr ""
 "有问题的数据库列在以下文件中:\n"
 "    %s"
 
-#: check.c:1263
+#: check.c:1267
 #, c-format
 msgid "Checking for unsupported encodings"
 msgstr "正在检查不支持的编码"
 
-#: check.c:1297
+#: check.c:1301
 #, c-format
 msgid ""
 "Your installation contains databases using encodings that are\n"
@@ -520,27 +519,27 @@ msgstr ""
 "使用不支持的编码的数据库列在以下文件中:\n"
 "    %s"
 
-#: check.c:1319
+#: check.c:1323
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "正在检查预备事务"
 
-#: check.c:1328
+#: check.c:1332
 #, c-format
 msgid "The source cluster contains prepared transactions"
 msgstr "源集簇包含预备事务"
 
-#: check.c:1330
+#: check.c:1334
 #, c-format
 msgid "The target cluster contains prepared transactions"
 msgstr "目标集簇包含预备事务"
 
-#: check.c:1387
+#: check.c:1391
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "正在检查 contrib/isn 的 bigint 参数传递方式是否不匹配"
 
-#: check.c:1412
+#: check.c:1416
 #, c-format
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
@@ -558,12 +557,12 @@ msgstr ""
 "有问题的函数列在以下文件中:\n"
 "    %s"
 
-#: check.c:1489
+#: check.c:1493
 #, c-format
 msgid "Checking for user-defined postfix operators"
 msgstr "正在检查用户定义的后缀操作符"
 
-#: check.c:1505
+#: check.c:1509
 #, c-format
 msgid ""
 "Your installation contains user-defined postfix operators, which are not\n"
@@ -578,12 +577,12 @@ msgstr ""
 "用户定义的后缀操作符列在以下文件中:\n"
 "    %s"
 
-#: check.c:1557
+#: check.c:1561
 #, c-format
 msgid "Checking for incompatible polymorphic functions"
 msgstr "正在检查不兼容的多态函数"
 
-#: check.c:1630
+#: check.c:1634
 #, c-format
 msgid ""
 "Your installation contains user-defined objects that refer to internal\n"
@@ -603,12 +602,12 @@ msgstr ""
 "有问题的对象列在以下文件中:\n"
 "    %s"
 
-#: check.c:1688
+#: check.c:1692
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "正在检查使用 WITH OIDS 的表"
 
-#: check.c:1704
+#: check.c:1708
 #, c-format
 msgid ""
 "Your installation contains tables declared WITH OIDS, which is not\n"
@@ -623,12 +622,12 @@ msgstr ""
 "有问题的表列在以下文件中:\n"
 "    %s"
 
-#: check.c:1760
+#: check.c:1764
 #, c-format
 msgid "Checking for not-null constraint inconsistencies"
 msgstr "正在检查非空约束的不一致"
 
-#: check.c:1787
+#: check.c:1791
 #, c-format
 msgid ""
 "Your installation contains inconsistent NOT NULL constraints.\n"
@@ -646,12 +645,12 @@ msgstr ""
 "对以下文件中列出的每一列都执行此操作:\n"
 "    %s"
 
-#: check.c:1846
+#: check.c:1850
 #, c-format
 msgid "Checking for uses of gist_inet_ops/gist_cidr_ops"
 msgstr "正在检查 gist_inet_ops/gist_cidr_ops 的使用情况"
 
-#: check.c:1862
+#: check.c:1866
 #, c-format
 msgid ""
 "Your installation contains indexes that use the btree_gist extension's\n"
@@ -668,12 +667,12 @@ msgstr ""
 "有问题的索引列在以下文件中:\n"
 "    %s"
 
-#: check.c:1889
+#: check.c:1893
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "正在检查以 \"pg_\" 开头的角色"
 
-#: check.c:1920
+#: check.c:1924
 #, c-format
 msgid ""
 "Your installation contains roles starting with \"pg_\".\n"
@@ -688,12 +687,12 @@ msgstr ""
 "以 \"pg_\" 开头的角色列在以下文件中:\n"
 "    %s"
 
-#: check.c:1971
+#: check.c:1975
 #, c-format
 msgid "Checking for user-defined encoding conversions"
 msgstr "正在检查用户定义的编码转换"
 
-#: check.c:2000
+#: check.c:2004
 #, c-format
 msgid ""
 "Your installation contains user-defined encoding conversions.\n"
@@ -710,17 +709,17 @@ msgstr ""
 "用户定义的编码转换列在以下文件中:\n"
 "    %s"
 
-#: check.c:2085
+#: check.c:2089
 #, c-format
 msgid "Checking for objects affected by Unicode update"
 msgstr "正在检查受 Unicode 更新影响的对象"
 
-#: check.c:2184 version.c:139
+#: check.c:2188 version.c:139
 #, c-format
 msgid "warning"
 msgstr "警告"
 
-#: check.c:2185
+#: check.c:2189
 #, c-format
 msgid ""
 "Your installation contains relations that might be affected by a new version "
@@ -732,42 +731,42 @@ msgstr ""
 "可能受影响的关系列在以下文件中:\n"
 "    %s"
 
-#: check.c:2236
+#: check.c:2240
 #, c-format
 msgid "Checking new cluster replication slots"
 msgstr "正在检查新集簇的复制槽"
 
-#: check.c:2248
+#: check.c:2252
 #, c-format
 msgid "could not count the number of replication slots"
 msgstr "无法统计复制槽数量"
 
-#: check.c:2258
+#: check.c:2262
 #, c-format
 msgid "expected 0 logical replication slots but found %d"
 msgstr "预期为 0 个逻辑复制槽，实际为 %d 个"
 
-#: check.c:2267
+#: check.c:2271
 #, c-format
 msgid "replication slot \"%s\" already exists in the new cluster"
 msgstr "新集簇中已存在复制槽 \"%s\""
 
-#: check.c:2277 check.c:2414
+#: check.c:2281 check.c:2418
 #, c-format
 msgid "could not determine parameter settings on new cluster"
 msgstr "无法确定新集簇的参数设置"
 
-#: check.c:2283
+#: check.c:2287
 #, c-format
 msgid "\"wal_level\" must be \"replica\" or \"logical\" but is set to \"%s\""
 msgstr "\"wal_level\" 必须为 \"replica\" 或 \"logical\"，但当前设为 \"%s\""
 
-#: check.c:2305
+#: check.c:2309
 #, c-format
 msgid "could not parse \"output_plugin_libraries\" setting '%s'"
 msgstr "无法解析 \"output_plugin_libraries\" 设置 '%s'"
 
-#: check.c:2352
+#: check.c:2356
 #, c-format
 msgid ""
 "Your installation contains logical replication slots with plugins\n"
@@ -784,7 +783,7 @@ msgstr ""
 "有问题的槽列在以下文件中:\n"
 "    %s"
 
-#: check.c:2368
+#: check.c:2372
 #, c-format
 msgid ""
 "\"max_replication_slots\" (%d) must be greater than or equal to the number "
@@ -794,7 +793,7 @@ msgstr ""
 "\"max_replication_slots\"（%d）必须大于等于旧集簇的逻辑复制槽数量与保留冲突检"
 "测信息所需的一个额外槽之和（%d）"
 
-#: check.c:2374
+#: check.c:2378
 #, c-format
 msgid ""
 "\"max_replication_slots\" (%d) must be greater than or equal to the number "
@@ -802,12 +801,12 @@ msgid ""
 msgstr ""
 "\"max_replication_slots\"（%d）必须大于等于旧集簇中的逻辑复制槽数量（%d）"
 
-#: check.c:2406
+#: check.c:2410
 #, c-format
 msgid "Checking new cluster configuration for subscriptions"
 msgstr "正在检查新集簇的订阅配置"
 
-#: check.c:2418
+#: check.c:2422
 #, c-format
 msgid ""
 "\"max_active_replication_origins\" (%d) must be greater than or equal to the "
@@ -815,12 +814,12 @@ msgid ""
 msgstr ""
 "\"max_active_replication_origins\"（%d）必须大于等于旧集簇中的订阅数量（%d）"
 
-#: check.c:2440
+#: check.c:2444
 #, c-format
 msgid "Checking logical replication slots"
 msgstr "正在检查逻辑复制槽"
 
-#: check.c:2508
+#: check.c:2512
 #, c-format
 msgid ""
 "Your installation contains logical replication slots that cannot be "
@@ -837,12 +836,12 @@ msgstr ""
 "有问题的槽列在以下文件中:\n"
 "    %s"
 
-#: check.c:2566
+#: check.c:2570
 #, c-format
 msgid "Checking subscription state"
 msgstr "正在检查订阅状态"
 
-#: check.c:2648
+#: check.c:2652
 #, c-format
 msgid ""
 "Your installation contains subscriptions without origin or having relations "
@@ -858,12 +857,12 @@ msgstr ""
 "有问题的订阅列在以下文件中:\n"
 "    %s"
 
-#: check.c:2674
+#: check.c:2678
 #, c-format
 msgid "Checking names of databases, roles, and tablespaces"
 msgstr "正在检查数据库、角色和表空间的名称"
 
-#: check.c:2717
+#: check.c:2721
 #, c-format
 msgid ""
 "Your installation contains databases, roles, or tablespaces with names\n"
@@ -877,6 +876,21 @@ msgstr ""
 "重命名这些对象以修复此问题。\n"
 "所有名称无效的对象列在以下文件中:\n"
 "    %s"
+
+#: check.c:2761
+#, c-format
+msgid "Checking oldestXID and oldestMultiXid consistency"
+msgstr "正在检查 oldestXID 和 oldestMultiXid 的一致性"
+
+#: check.c:2782
+#, c-format
+msgid "oldestXID (%u) in the control file is newer than the datfrozenxid (%u) of database \"%s\""
+msgstr "控制文件中的 oldestXID（%1$u）晚于数据库 \"%3$s\" 的 datfrozenxid（%2$u）"
+
+#: check.c:2787
+#, c-format
+msgid "oldestMultiXid (%u) in control file is newer than the datminmxid (%u) of database \"%s\""
+msgstr "控制文件中的 oldestMultiXid（%1$u）晚于数据库 \"%3$s\" 的 datminmxid（%2$u）"
 
 #: controldata.c:133 controldata.c:203
 #, c-format

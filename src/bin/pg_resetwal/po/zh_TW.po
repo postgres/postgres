@@ -1,0 +1,1022 @@
+# Traditional Chinese message translation file for pg_resetwal
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# 2004-07-30 Zhenbang Wei <forth@zbwei.net>
+# Ruohang Feng <rh@vonng.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_resetwal (PostgreSQL) 19\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2026-09-18 04:23+0000\n"
+"PO-Revision-Date: 2026-09-20 12:27+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# libpq/be-secure.c:294 libpq/be-secure.c:387
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
+#, c-format
+msgid "error: "
+msgstr "錯誤: "
+
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
+#, c-format
+msgid "warning: "
+msgstr "警告: "
+
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
+#, c-format
+msgid "detail: "
+msgstr "詳情: "
+
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
+#, c-format
+msgid "hint: "
+msgstr "提示: "
+
+# commands/copy.c:1031
+#: ../../common/controldata_utils.c:98 pg_resetwal.c:424 pg_resetwal.c:614
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "無法開啟檔案 \"%s\" 以讀取: %m"
+
+# access/transam/xlog.c:1659 access/transam/xlog.c:2942
+# access/transam/xlog.c:5397 access/transam/xlog.c:5448
+# access/transam/xlog.c:5520 access/transam/xlog.c:5545
+# access/transam/xlog.c:5583
+#: ../../common/controldata_utils.c:111 pg_resetwal.c:629
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "無法讀取檔案 \"%s\": %m"
+
+# access/transam/xlog.c:1659 access/transam/xlog.c:2942
+# access/transam/xlog.c:5397 access/transam/xlog.c:5448
+# access/transam/xlog.c:5520 access/transam/xlog.c:5545
+# access/transam/xlog.c:5583
+#: ../../common/controldata_utils.c:120
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "無法讀取檔案 \"%1$s\": 應讀取 %3$zu，實際讀取 %2$d"
+
+# access/transam/slru.c:680 access/transam/xlog.c:1567
+# access/transam/xlog.c:1691 access/transam/xlog.c:3013
+#: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "無法關閉檔案 \"%s\": %m"
+
+#: ../../common/controldata_utils.c:169
+msgid "byte ordering mismatch"
+msgstr "位元組順序不一致"
+
+#: ../../common/controldata_utils.c:171
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"位元組順序可能不一致\n"
+"用於儲存 pg_control 檔案的位元組順序可能與此程式使用的位元組順序不同。\n"
+"在這種情況下，下面的結果將不正確，且 PostgreSQL 安裝將與這個資料目錄\n"
+"不相容。"
+
+# access/transam/slru.c:638 access/transam/xlog.c:1631
+# access/transam/xlog.c:2742 access/transam/xlog.c:2832
+# access/transam/xlog.c:2930 libpq/hba.c:911 libpq/hba.c:935
+# utils/error/elog.c:1118 utils/init/miscinit.c:783 utils/init/miscinit.c:889
+# utils/misc/database.c:68
+#: ../../common/controldata_utils.c:231 ../../common/file_utils.c:69
+#: ../../common/file_utils.c:370 ../../common/file_utils.c:428
+#: ../../common/file_utils.c:502 pg_resetwal.c:1186
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "無法開啟檔案 \"%s\": %m"
+
+# access/transam/xlog.c:5319 access/transam/xlog.c:5439
+#: ../../common/controldata_utils.c:250 pg_resetwal.c:1194 pg_resetwal.c:1206
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "無法寫入檔案 \"%s\": %m"
+
+# access/transam/slru.c:673 access/transam/xlog.c:1562
+# access/transam/xlog.c:1686 access/transam/xlog.c:3008
+#: ../../common/controldata_utils.c:269 ../../common/file_utils.c:440
+#: ../../common/file_utils.c:510
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "無法對檔案 \"%s\" 執行 fsync: %m"
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "記憶體不足\n"
+
+# common.c:78
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能複製空指標(內部錯誤)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu * %zu\n"
+
+# libpq/be-fsstubs.c:484
+#: ../../common/file_utils.c:75
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "無法同步檔案 \"%s\" 所在的檔案系統: %m"
+
+# access/transam/xlog.c:1936 access/transam/xlog.c:2038
+# access/transam/xlog.c:5291
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
+#: ../../fe_utils/version.c:60
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "無法取得檔案 \"%s\" 的狀態: %m"
+
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "此建置版本不支援同步方法 \"%s\""
+
+# access/transam/slru.c:930 commands/tablespace.c:529
+# commands/tablespace.c:694 utils/adt/misc.c:174
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
+#: pg_resetwal.c:975 pg_resetwal.c:1028 pg_resetwal.c:1063 pg_resetwal.c:1103
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "無法開啟目錄 \"%s\": %m"
+
+# access/transam/slru.c:967 commands/tablespace.c:577
+# commands/tablespace.c:721
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
+#: pg_resetwal.c:1001 pg_resetwal.c:1042 pg_resetwal.c:1080 pg_resetwal.c:1117
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "無法讀取目錄 \"%s\": %m"
+
+# access/transam/xlog.c:3037 access/transam/xlog.c:3819
+# access/transam/xlog.c:3862 commands/user.c:282 commands/user.c:412
+# postmaster/pgarch.c:597
+#: ../../common/file_utils.c:520
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "無法將檔案 \"%s\" 重新命名為 \"%s\": %m"
+
+# port/win32/security.c:39
+#: ../../common/restricted_token.c:60
+#, c-format
+msgid "could not open process token: error code %lu"
+msgstr "無法開啟行程權杖: 錯誤碼 %lu"
+
+# port/pg_sema.c:117 port/sysv_sema.c:117
+#: ../../common/restricted_token.c:74
+#, c-format
+msgid "could not allocate SIDs: error code %lu"
+msgstr "無法配置 SID: 錯誤碼 %lu"
+
+# port/win32/signal.c:239
+#: ../../common/restricted_token.c:94
+#, c-format
+msgid "could not create restricted token: error code %lu"
+msgstr "無法建立受限權杖: 錯誤碼 %lu"
+
+#: ../../common/restricted_token.c:115
+#, c-format
+msgid "could not start process for command \"%s\": error code %lu"
+msgstr "無法為指令 \"%s\" 啟動行程: 錯誤碼 %lu"
+
+# port/win32/signal.c:239
+#: ../../common/restricted_token.c:153
+#, c-format
+msgid "could not re-execute with restricted token: error code %lu"
+msgstr "無法使用受限權杖重新執行: 錯誤碼 %lu"
+
+#: ../../common/restricted_token.c:168
+#, c-format
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "無法從子行程取得結束碼: 錯誤碼 %lu"
+
+# utils/adt/formatting.c:2044
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "選項 %2$s 的值 \"%1$s\" 無效"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s 必須在範圍 %d..%d 內"
+
+# utils/adt/acl.c:197
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "無法識別的同步方法: %s"
+
+#: ../../fe_utils/option_utils.c:139
+#, c-format
+msgid "options %s and %s cannot be used together"
+msgstr "不能同時使用 %s 和 %s 選項"
+
+#: ../../fe_utils/version.c:57
+#, c-format
+msgid "could not open version file \"%s\": %m"
+msgstr "無法開啟版本檔 \"%s\": %m"
+
+#: ../../fe_utils/version.c:62
+#, c-format
+msgid "file \"%s\" is too large"
+msgstr "檔案 \"%s\" 過大"
+
+#: ../../fe_utils/version.c:66
+#, c-format
+msgid "could not parse version file \"%s\""
+msgstr "無法解析版本檔 \"%s\""
+
+#. translator: %s is a command line argument (-e, etc)
+#: pg_resetwal.c:192 pg_resetwal.c:204 pg_resetwal.c:218 pg_resetwal.c:232
+#: pg_resetwal.c:239 pg_resetwal.c:259 pg_resetwal.c:273 pg_resetwal.c:281
+#: pg_resetwal.c:302 pg_resetwal.c:316 pg_resetwal.c:351
+#, c-format
+msgid "invalid argument for option %s"
+msgstr "選項 %s 的參數無效"
+
+# tcop/postgres.c:2636 tcop/postgres.c:2652
+#: pg_resetwal.c:193 pg_resetwal.c:205 pg_resetwal.c:219 pg_resetwal.c:233
+#: pg_resetwal.c:240 pg_resetwal.c:260 pg_resetwal.c:274 pg_resetwal.c:282
+#: pg_resetwal.c:303 pg_resetwal.c:317 pg_resetwal.c:352 pg_resetwal.c:361
+#: pg_resetwal.c:374 pg_resetwal.c:381
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "用 \"%s --help\" 取得更多資訊。"
+
+# utils/adt/varlena.c:2016
+#: pg_resetwal.c:209
+#, c-format
+msgid "oldest transaction ID (-u) must be greater than or equal to %u"
+msgstr "最舊的交易 ID(-u) 必須大於或等於 %u"
+
+#: pg_resetwal.c:223
+#, c-format
+msgid "transaction ID (-x) must be greater than or equal to %u"
+msgstr "交易 ID(-x) 必須大於或等於 %u"
+
+#: pg_resetwal.c:246 pg_resetwal.c:250
+#, c-format
+msgid "transaction ID (-c) must be either %u or greater than or equal to %u"
+msgstr "交易 ID(-c) 必須為 %u 或大於等於 %u"
+
+#: pg_resetwal.c:264
+#, c-format
+msgid "OID (-o) must not be 0"
+msgstr "OID (-o) 不可為 0"
+
+#: pg_resetwal.c:291
+#, c-format
+msgid "next multitransaction ID (-m) must not be 0"
+msgstr "下一個多重交易 ID(-m) 不得為 0"
+
+#: pg_resetwal.c:293
+#, c-format
+msgid "oldest multitransaction ID (-m) must not be 0"
+msgstr "最舊的多重交易 ID(-m) 不可為 0"
+
+#: pg_resetwal.c:309
+#, c-format
+msgid "next multitransaction offset (-O) must not be 0"
+msgstr "下一個多重交易位移(-O) 不得為 0"
+
+#: pg_resetwal.c:336
+#, c-format
+msgid "argument of %s must be a power of two between 1 and 1024"
+msgstr "%s 的參數必須是 1 到 1024 之間的二的冪"
+
+#: pg_resetwal.c:372
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "命令列參數過多(第一個多餘參數是 \"%s\")"
+
+#: pg_resetwal.c:380
+#, c-format
+msgid "no data directory specified"
+msgstr "未指定資料目錄"
+
+#  translator: %s represents an SQL statement name
+# access/transam/xact.c:2195
+#: pg_resetwal.c:394
+#, c-format
+msgid "cannot be executed by \"root\""
+msgstr "不能以 \"root\" 身分執行"
+
+# postmaster/postmaster.c:1015
+#: pg_resetwal.c:395
+#, c-format
+msgid "You must run %s as the PostgreSQL superuser."
+msgstr "您必須以 PostgreSQL 超級使用者身分執行 %s。"
+
+# postmaster/postmaster.c:897
+#: pg_resetwal.c:405
+#, c-format
+msgid "could not read permissions of directory \"%s\": %m"
+msgstr "無法讀取目錄 \"%s\" 的權限: %m"
+
+# utils/init/postinit.c:292
+#: pg_resetwal.c:411
+#, c-format
+msgid "could not change directory to \"%s\": %m"
+msgstr "無法切換目錄到 \"%s\": %m"
+
+# utils/init/miscinit.c:589
+#: pg_resetwal.c:429
+#, c-format
+msgid "lock file \"%s\" exists"
+msgstr "鎖定檔 \"%s\" 已存在"
+
+#: pg_resetwal.c:430
+#, c-format
+msgid "Is a server running?  If not, delete the lock file and try again."
+msgstr "伺服器是否正在執行？如果沒有，請刪除鎖定檔然後重試。"
+
+#: pg_resetwal.c:533
+#, c-format
+msgid "not proceeding because control file values were guessed"
+msgstr "不繼續執行，因為控制檔中的值是推測所得"
+
+#: pg_resetwal.c:534
+#, c-format
+msgid "If these values seem acceptable, use -f to force reset."
+msgstr "如果這些值看起來可以接受，請用 -f 強制重設。"
+
+#: pg_resetwal.c:543
+#, c-format
+msgid "database server was not shut down cleanly"
+msgstr "資料庫伺服器未正常停止"
+
+#: pg_resetwal.c:544
+#, c-format
+msgid "Resetting the write-ahead log might cause data to be lost."
+msgstr "重設預寫式日誌可能導致資料遺失。"
+
+#: pg_resetwal.c:545
+#, c-format
+msgid "If you want to proceed anyway, use -f to force reset."
+msgstr "如果仍要繼續，使用 -f 強制重設。"
+
+# utils/misc/guc.c:255
+#: pg_resetwal.c:558
+#, c-format
+msgid "Write-ahead log reset\n"
+msgstr "預寫式日誌已重設\n"
+
+# postmaster/postmaster.c:912
+#: pg_resetwal.c:583
+#, c-format
+msgid "data directory is of wrong version"
+msgstr "資料目錄版本錯誤"
+
+# utils/init/miscinit.c:908
+#: pg_resetwal.c:584
+#, c-format
+msgid "File \"%s\" contains \"%s\", which is not compatible with this program's version \"%s\"."
+msgstr "檔案 \"%s\" 包含 \"%s\"，與本程式的版本 \"%s\" 不相容。"
+
+#: pg_resetwal.c:617
+#, c-format
+msgid ""
+"If you are sure the data directory path is correct, execute\n"
+"  touch %s\n"
+"and try again."
+msgstr ""
+"如果你確定資料目錄的路徑正確，請執行\n"
+"  touch %s\n"
+"然後重試。"
+
+#: pg_resetwal.c:645
+#, c-format
+msgid "pg_control exists but has invalid CRC; proceed with caution"
+msgstr "pg_control 存在但 CRC 無效，請謹慎操作"
+
+#: pg_resetwal.c:654
+#, c-format
+msgid "pg_control specifies invalid WAL segment size (%d byte); proceed with caution"
+msgid_plural "pg_control specifies invalid WAL segment size (%d bytes); proceed with caution"
+msgstr[0] "pg_control 指定無效的 WAL 片段大小(%d 位元組)，請謹慎操作"
+
+#: pg_resetwal.c:665
+#, c-format
+msgid "pg_control exists but is broken or wrong version; ignoring it"
+msgstr "pg_control 存在但已損壞或版本不正確，正在忽略它"
+
+#: pg_resetwal.c:761
+#, c-format
+msgid ""
+"Guessed pg_control values:\n"
+"\n"
+msgstr ""
+"猜測的 pg_control 值:\n"
+"\n"
+
+#: pg_resetwal.c:763
+#, c-format
+msgid ""
+"Current pg_control values:\n"
+"\n"
+msgstr ""
+"目前的 pg_control 值:\n"
+"\n"
+
+#: pg_resetwal.c:765
+#, c-format
+msgid "pg_control version number:            %u\n"
+msgstr "pg_control 版本號碼:             %u\n"
+
+#: pg_resetwal.c:767
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "系統目錄版本號碼:                %u\n"
+
+#: pg_resetwal.c:769
+#, c-format
+msgid "Database system identifier:           %<PRIu64>\n"
+msgstr "資料庫系統識別碼:                %<PRIu64>\n"
+
+#: pg_resetwal.c:771
+#, c-format
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "最新檢查點 TimeLineID:           %u\n"
+
+#: pg_resetwal.c:773
+#, c-format
+msgid "Latest checkpoint's full_page_writes: %s\n"
+msgstr "最新檢查點 full_page_writes:     %s\n"
+
+# help.c:48
+#: pg_resetwal.c:774
+msgid "off"
+msgstr "off"
+
+# help.c:48
+#: pg_resetwal.c:774
+msgid "on"
+msgstr "on"
+
+#: pg_resetwal.c:775
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u:%u\n"
+msgstr "最新檢查點 NextXID:              %u:%u\n"
+
+#: pg_resetwal.c:778
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "最新檢查點 NextOID:              %u\n"
+
+#: pg_resetwal.c:780
+#, c-format
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "最新檢查點 NextMultiXactId:      %u\n"
+
+#: pg_resetwal.c:782
+#, c-format
+msgid "Latest checkpoint's NextMultiOffset:  %<PRIu64>\n"
+msgstr "最新檢查點的 NextMultiOffset:    %<PRIu64>\n"
+
+#: pg_resetwal.c:784
+#, c-format
+msgid "Latest checkpoint's oldestXID:        %u\n"
+msgstr "最新檢查點 oldestXID:            %u\n"
+
+#: pg_resetwal.c:786
+#, c-format
+msgid "Latest checkpoint's oldestXID's DB:   %u\n"
+msgstr "最新檢查點 oldestXID 的資料庫:   %u\n"
+
+#: pg_resetwal.c:788
+#, c-format
+msgid "Latest checkpoint's oldestActiveXID:  %u\n"
+msgstr "最新檢查點 oldestActiveXID:      %u\n"
+
+#: pg_resetwal.c:790
+#, c-format
+msgid "Latest checkpoint's oldestMultiXid:   %u\n"
+msgstr "最新檢查點 oldestMultiXid:       %u\n"
+
+#: pg_resetwal.c:792
+#, c-format
+msgid "Latest checkpoint's oldestMulti's DB: %u\n"
+msgstr "最新檢查點 oldestMulti 的資料庫: %u\n"
+
+#: pg_resetwal.c:794
+#, c-format
+msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
+msgstr "最新檢查點 oldestCommitTsXid:    %u\n"
+
+#: pg_resetwal.c:796
+#, c-format
+msgid "Latest checkpoint's newestCommitTsXid:%u\n"
+msgstr "最新檢查點 newestCommitTsXid:    %u\n"
+
+#: pg_resetwal.c:798
+#, c-format
+msgid "Maximum data alignment:               %u\n"
+msgstr "資料對齊上限:                    %u\n"
+
+#: pg_resetwal.c:801
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "資料庫區塊大小:                  %u\n"
+
+#: pg_resetwal.c:803
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "大型關聯每個區段的區塊數:        %u\n"
+
+#: pg_resetwal.c:805
+#, c-format
+msgid "Pages per SLRU segment:               %u\n"
+msgstr "每個 SLRU 區段的頁數:            %u\n"
+
+#: pg_resetwal.c:807
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "WAL 區塊大小:                    %u\n"
+
+#: pg_resetwal.c:809 pg_resetwal.c:898
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "每個 WAL 片段的位元組數:         %u\n"
+
+#: pg_resetwal.c:811
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "識別名稱長度上限:                %u\n"
+
+#: pg_resetwal.c:813
+#, c-format
+msgid "Maximum columns in an index:          %u\n"
+msgstr "索引欄位數上限:                  %u\n"
+
+#: pg_resetwal.c:815
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "TOAST 區塊大小上限:              %u\n"
+
+#: pg_resetwal.c:817
+#, c-format
+msgid "Size of a large-object chunk:         %u\n"
+msgstr "大物件區塊的大小:                %u\n"
+
+#: pg_resetwal.c:820
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "日期/時間型別的儲存方式:         %s\n"
+
+#: pg_resetwal.c:821
+msgid "64-bit integers"
+msgstr "64 位元整數"
+
+#: pg_resetwal.c:822
+#, c-format
+msgid "Float8 argument passing:              %s\n"
+msgstr "Float8 參數傳遞方式:             %s\n"
+
+#: pg_resetwal.c:823
+msgid "by reference"
+msgstr "傳址"
+
+#: pg_resetwal.c:823
+msgid "by value"
+msgstr "傳值"
+
+#: pg_resetwal.c:824
+#, c-format
+msgid "Data page checksum version:           %u\n"
+msgstr "資料頁檢查碼版本:                %u\n"
+
+#: pg_resetwal.c:826
+#, c-format
+msgid "Default char data signedness:         %s\n"
+msgstr "char 資料的預設符號屬性:         %s\n"
+
+#: pg_resetwal.c:827
+msgid "signed"
+msgstr "帶正負號"
+
+#: pg_resetwal.c:827
+msgid "unsigned"
+msgstr "不帶正負號"
+
+#: pg_resetwal.c:840
+#, c-format
+msgid ""
+"\n"
+"\n"
+"Values to be changed:\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"將要變更的值:\n"
+"\n"
+
+#: pg_resetwal.c:844
+#, c-format
+msgid "First log segment after reset:        %s\n"
+msgstr "重設後的第一個日誌片段:          %s\n"
+
+#: pg_resetwal.c:848
+#, c-format
+msgid "NextMultiXactId:                      %u\n"
+msgstr "NextMultiXactId:                 %u\n"
+
+#: pg_resetwal.c:850
+#, c-format
+msgid "OldestMultiXid:                       %u\n"
+msgstr "OldestMultiXid:                  %u\n"
+
+#: pg_resetwal.c:852
+#, c-format
+msgid "OldestMulti's DB:                     %u\n"
+msgstr "OldestMulti 的資料庫:            %u\n"
+
+#: pg_resetwal.c:858
+#, c-format
+msgid "NextMultiOffset:                      %<PRIu64>\n"
+msgstr "NextMultiOffset:                 %<PRIu64>\n"
+
+#: pg_resetwal.c:864
+#, c-format
+msgid "NextOID:                              %u\n"
+msgstr "NextOID:                         %u\n"
+
+#: pg_resetwal.c:870
+#, c-format
+msgid "NextXID:                              %u\n"
+msgstr "NextXID:                         %u\n"
+
+#: pg_resetwal.c:876
+#, c-format
+msgid "OldestXID:                            %u\n"
+msgstr "OldestXID:                       %u\n"
+
+#: pg_resetwal.c:878
+#, c-format
+msgid "OldestXID's DB:                       %u\n"
+msgstr "OldestXID 的資料庫:              %u\n"
+
+#: pg_resetwal.c:884
+#, c-format
+msgid "NextXID epoch:                        %u\n"
+msgstr "NextXID 紀元:                    %u\n"
+
+#: pg_resetwal.c:890
+#, c-format
+msgid "oldestCommitTsXid:                    %u\n"
+msgstr "oldestCommitTsXid:               %u\n"
+
+#: pg_resetwal.c:892
+#, c-format
+msgid "newestCommitTsXid:                    %u\n"
+msgstr "newestCommitTsXid:               %u\n"
+
+# access/transam/slru.c:930 commands/tablespace.c:529
+# commands/tablespace.c:694 utils/adt/misc.c:174
+#: pg_resetwal.c:1004 pg_resetwal.c:1045 pg_resetwal.c:1083 pg_resetwal.c:1120
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "無法關閉目錄 \"%s\": %m"
+
+# access/transam/slru.c:645 access/transam/xlog.c:1526
+# access/transam/xlog.c:1646 access/transam/xlog.c:2911
+# access/transam/xlog.c:5308 access/transam/xlog.c:5426
+# postmaster/postmaster.c:3366
+#: pg_resetwal.c:1037 pg_resetwal.c:1075 pg_resetwal.c:1112
+#, c-format
+msgid "could not delete file \"%s\": %m"
+msgstr "無法刪除檔案 \"%s\": %m"
+
+#: pg_resetwal.c:1211
+#, c-format
+msgid "fsync error: %m"
+msgstr "fsync 錯誤: %m"
+
+#: pg_resetwal.c:1220
+#, c-format
+msgid ""
+"%s resets the PostgreSQL write-ahead log.\n"
+"\n"
+msgstr "%s 重設 PostgreSQL 的預寫式日誌。\n\n"
+
+#: pg_resetwal.c:1221
+#, c-format
+msgid "Usage:\n"
+msgstr "用法:\n"
+
+#: pg_resetwal.c:1222
+#, c-format
+msgid "  %s [OPTION]... DATADIR\n"
+msgstr "  %s [選項]... 資料目錄\n"
+
+#: pg_resetwal.c:1224
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"選項:\n"
+
+# postmaster/postmaster.c:1024 tcop/postgres.c:2122
+#: pg_resetwal.c:1225
+#, c-format
+msgid " [-D, --pgdata=]DATADIR  data directory\n"
+msgstr " [-D, --pgdata=]DATADIR  資料目錄\n"
+
+#: pg_resetwal.c:1226
+#, c-format
+msgid ""
+"  -f, --force            force update to be done even after unclean shutdown or\n"
+"                         if pg_control values had to be guessed\n"
+msgstr "  -f, --force            即使上次未正常停止，或必須推測 pg_control 中的值，\n                         也強制執行更新\n"
+
+#: pg_resetwal.c:1228
+#, c-format
+msgid "  -n, --dry-run          no update, just show what would be done\n"
+msgstr "  -n, --dry-run          不更新，只顯示將執行的操作\n"
+
+#: pg_resetwal.c:1229
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version          顯示版本，然後結束\n"
+
+#: pg_resetwal.c:1230
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help             顯示說明，然後結束\n"
+
+#: pg_resetwal.c:1232
+#, c-format
+msgid ""
+"\n"
+"Options to override control file values:\n"
+msgstr "\n覆寫控制檔中各值的選項:\n"
+
+#: pg_resetwal.c:1233
+#, c-format
+msgid ""
+"  -c, --commit-timestamp-ids=XID,XID\n"
+"                                   set oldest and newest transactions bearing\n"
+"                                   commit timestamp (zero means no change)\n"
+msgstr "  -c, --commit-timestamp-ids=XID,XID\n                                   設定具有提交時間戳記的最舊和最新交易\n                                   (零表示不修改)\n"
+
+#: pg_resetwal.c:1236
+#, c-format
+msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
+msgstr "  -e, --epoch=XIDEPOCH             設定下一個交易 ID 的紀元\n"
+
+#: pg_resetwal.c:1237
+#, c-format
+msgid "  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"
+msgstr "  -l, --next-wal-file=WALFILE      設定新 WAL 的最小起始位置\n"
+
+#: pg_resetwal.c:1238
+#, c-format
+msgid "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
+msgstr "  -m, --multixact-ids=MXID,MXID    設定下一個和最舊的多重交易 ID\n"
+
+#: pg_resetwal.c:1239
+#, c-format
+msgid "  -o, --next-oid=OID               set next OID\n"
+msgstr "  -o, --next-oid=OID               設定下一個 OID\n"
+
+#: pg_resetwal.c:1240
+#, c-format
+msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
+msgstr "  -O, --multixact-offset=OFFSET    設定下一個多重交易位移\n"
+
+#: pg_resetwal.c:1241
+#, c-format
+msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
+msgstr "  -u, --oldest-transaction-id=XID  設定最舊的交易 ID\n"
+
+#: pg_resetwal.c:1242
+#, c-format
+msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
+msgstr "  -x, --next-transaction-id=XID    設定下一個交易 ID\n"
+
+#: pg_resetwal.c:1243
+#, c-format
+msgid "      --char-signedness=OPTION     set char signedness to \"signed\" or \"unsigned\"\n"
+msgstr "      --char-signedness=OPTION     將 char 的符號屬性設為 \"signed\" 或 \"unsigned\"\n"
+
+#: pg_resetwal.c:1244
+#, c-format
+msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
+msgstr "      --wal-segsize=SIZE           WAL 片段的大小，單位是 MB\n"
+
+#: pg_resetwal.c:1246
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"回報錯誤至 <%s>。\n"
+
+#: pg_resetwal.c:1247
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 首頁: <%s>\n"
+
+#, c-format
+#~ msgid "  --help          show this help, then exit\n"
+#~ msgstr "  --help          顯示說明然後結束\n"
+
+#, c-format
+#~ msgid "  --version       output version information, then exit\n"
+#~ msgstr "  --version       顯示版本資訊然後結束\n"
+
+#, c-format
+#~ msgid "  -?, --help                       show this help, then exit\n"
+#~ msgstr "  -?, --help                       顯示說明，然後結束\n"
+
+#, c-format
+#~ msgid "  -V, --version                    output version information, then exit\n"
+#~ msgstr "  -V, --version                    顯示版本，然後結束\n"
+
+#, c-format
+#~ msgid "  -f, --force                      force update to be done\n"
+#~ msgstr "  -f, --force                      強制執行更新\n"
+
+# postmaster/postmaster.c:1024 tcop/postgres.c:2122
+#, c-format
+#~ msgid " [-D, --pgdata=]DATADIR            data directory\n"
+#~ msgstr " [-D, --pgdata=]DATADIR            資料目錄\n"
+
+# command.c:256
+#, c-format
+#~ msgid "%s: could not change directory to \"%s\": %s\n"
+#~ msgstr "%s: 無法變更 \"%s\" 的目錄:%s\n"
+
+#, c-format
+#~ msgid "%s: could not create pg_control file: %s\n"
+#~ msgstr "%s: 無法建立pg_control檔: %s\n"
+
+#, c-format
+#~ msgid "%s: could not delete file \"%s\": %s\n"
+#~ msgstr "%s: 無法刪除檔案 \"%s\": %s\n"
+
+#, c-format
+#~ msgid "%s: could not open directory \"%s\": %s\n"
+#~ msgstr "%s: 無法開啟目錄 \"%s\": %s\n"
+
+#, c-format
+#~ msgid "%s: could not open file \"%s\" for reading: %s\n"
+#~ msgstr "%s: 無法開啟檔案讀取 \"%s\": %s\n"
+
+#, c-format
+#~ msgid "%s: could not open file \"%s\": %s\n"
+#~ msgstr "%s: 無法開啟檔案 \"%s\": %s\n"
+
+#, c-format
+#~ msgid "%s: could not read file \"%s\": %s\n"
+#~ msgstr "%s: 無法讀取檔案 \"%s\": %s\n"
+
+#, c-format
+#~ msgid "%s: could not read from directory \"%s\": %s\n"
+#~ msgstr "%s: 無法讀取目錄 \"%s\": %s\n"
+
+#, c-format
+#~ msgid "%s: could not write file \"%s\": %s\n"
+#~ msgstr "%s: 無法寫入檔案 \"%s\": %s\n"
+
+#, c-format
+#~ msgid "%s: could not write pg_control file: %s\n"
+#~ msgstr "%s: 無法寫入pg_control檔: %s\n"
+
+#, c-format
+#~ msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"
+#~ msgstr "%s: 內部錯誤 -- sizeof(ControlFileData) 太大... 請修正 PG_CONTROL_SIZE\n"
+
+#~ msgid "%s: invalid LC_COLLATE setting\n"
+#~ msgstr "%s: 無效的LC_COLLATE設定\n"
+
+#~ msgid "%s: invalid LC_CTYPE setting\n"
+#~ msgstr "%s: 無效的LC_CTYPE設定\n"
+
+#, c-format
+#~ msgid "%s: invalid argument for option -O\n"
+#~ msgstr "%s: 選項 -O 的參數無效\n"
+
+#, c-format
+#~ msgid "%s: invalid argument for option -l\n"
+#~ msgstr "%s: 選項 -l 的參數無效\n"
+
+#, c-format
+#~ msgid "%s: invalid argument for option -m\n"
+#~ msgstr "%s: 選項 -m 的參數無效\n"
+
+#, c-format
+#~ msgid "%s: invalid argument for option -o\n"
+#~ msgstr "%s: 選項 -o 的參數無效\n"
+
+#, c-format
+#~ msgid "%s: invalid argument for option -x\n"
+#~ msgstr "%s: 選項 -x 的參數無效\n"
+
+#, c-format
+#~ msgid "First log file ID after reset:        %u\n"
+#~ msgstr "重設後的第一個日誌檔 ID:              %u\n"
+
+#, c-format
+#~ msgid "Float4 argument passing:              %s\n"
+#~ msgstr "Float4 參數傳遞方式:                  %s\n"
+
+#~ msgid "Maximum number of function arguments: %u\n"
+#~ msgstr "函式參數的最大數量:                   %u\n"
+
+#, c-format
+#~ msgid "Options:\n"
+#~ msgstr "選項:\n"
+
+#, c-format
+#~ msgid ""
+#~ "The database server was not shut down cleanly.\n"
+#~ "Resetting the write-ahead log might cause data to be lost.\n"
+#~ "If you want to proceed anyway, use -f to force reset.\n"
+#~ msgstr ""
+#~ "資料庫伺服器未正常關閉。\n"
+#~ "重設交易日誌可能會導致資料遺失。\n"
+#~ "如果你仍要繼續，請用 -f 強制重設。\n"
+
+#, c-format
+#~ msgid "Transaction log reset\n"
+#~ msgstr "重設交易日誌\n"
+
+#, c-format
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "執行 \"%s --help\" 顯示更多資訊。\n"
+
+#, c-format
+#~ msgid ""
+#~ "Usage:\n"
+#~ "  %s [OPTION]... DATADIR\n"
+#~ "\n"
+#~ msgstr ""
+#~ "用法:\n"
+#~ "  %s [OPTION]... DATADIR\n"
+#~ "\n"
+
+# commands/define.c:197
+#, c-format
+#~ msgid "argument of --wal-segsize must be a number"
+#~ msgstr "--wal-segsize 的參數必須是數字"
+
+#~ msgid "floating-point numbers"
+#~ msgstr "浮點數"
+
+#, c-format
+#~ msgid "transaction ID epoch (-e) must not be -1"
+#~ msgstr "交易 ID epoch (-e) 不可為 -1"
+
+# utils/adt/rowtypes.c:178 utils/adt/rowtypes.c:186
+#, c-format
+#~ msgid "unexpected empty file \"%s\""
+#~ msgstr "非預期的空檔 \"%s\""
+

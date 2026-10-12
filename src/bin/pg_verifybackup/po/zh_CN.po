@@ -1,17 +1,16 @@
-# LANGUAGE message translation file for pg_verifybackup
+# Simplified Chinese message translation file for pg_verifybackup
 # Copyright (C) 2020 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_verifybackup (PostgreSQL) package.
-# FIRST AUTHOR <zhangjie2@fujitsu.com>, 2020.
+# This file is distributed under the same license as the PostgreSQL package.
+# Jie Zhang <zhangjie2@fujitsu.com>, 2020.
+# Ruohang Feng <rh@vonng.com>, 2026.
 #
-# Recalibrated and completed via the pgsql.cc NLS review workbench.
-# Feng Ruohang <rh@vonng.com>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 19\n"
+"Project-Id-Version: pg_verifybackup (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2026-09-17 05:50+0000\n"
 "PO-Revision-Date: 2026-09-17 16:00+0800\n"
-"Last-Translator: Feng Ruohang <rh@vonng.com>\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"

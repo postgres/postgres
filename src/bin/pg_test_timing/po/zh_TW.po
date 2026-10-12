@@ -1,84 +1,223 @@
 # Traditional Chinese message translation file for pg_test_timing
-# Copyright (C) 2023 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_test_timing (PostgreSQL) package.
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # Zhenbang Wei <znbang@gmail.com>, 2023.
+# Ruohang Feng <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_timing (PostgreSQL) 16\n"
+"Project-Id-Version: pg_test_timing (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-11 20:49+0000\n"
-"PO-Revision-Date: 2023-11-06 08:50+0800\n"
-"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
-"Language-Team: \n"
+"POT-Creation-Date: 2026-09-18 04:23+0000\n"
+"PO-Revision-Date: 2026-09-19 12:00+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.1\n"
 
-#: pg_test_timing.c:59
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
-msgid "Usage: %s [-d DURATION]\n"
-msgstr "用法: %s [-d DURATION]\n"
+msgid "out of memory\n"
+msgstr "記憶體不足\n"
 
-#: pg_test_timing.c:81
+# common.c:78
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能複製空指標(內部錯誤)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu * %zu\n"
+
+#: pg_test_timing.c:79
+#, c-format
+msgid "Usage: %s [-c CUTOFF] [-d DURATION]\n"
+msgstr "用法: %s [-c 截止點] [-d 持續時間]\n"
+
+#: pg_test_timing.c:100 pg_test_timing.c:121
 #, c-format
 msgid "%s: invalid argument for option %s\n"
 msgstr "%s: 選項 %s 的參數無效\n"
 
 # postmaster/postmaster.c:512 postmaster/postmaster.c:525
-#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
+#: pg_test_timing.c:102 pg_test_timing.c:123 pg_test_timing.c:137
+#: pg_test_timing.c:149
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "用 \"%s --help\" 取得更多資訊。\n"
 
-#: pg_test_timing.c:90
+#: pg_test_timing.c:108 pg_test_timing.c:130
 #, c-format
 msgid "%s: %s must be in range %u..%u\n"
 msgstr "%s: %s 必須在範圍 %u..%u 內\n"
 
-#: pg_test_timing.c:107
+#: pg_test_timing.c:147
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: 命令列參數過多(第一個是 \"%s\")\n"
+msgstr "%s: 命令列參數過多(第一個多餘參數是 \"%s\")\n"
 
-#: pg_test_timing.c:115
+#: pg_test_timing.c:154
 #, c-format
-msgid "Testing timing overhead for %u second.\n"
-msgid_plural "Testing timing overhead for %u seconds.\n"
-msgstr[0] "測試 %u 秒的計時額外負擔。\n"
+msgid ""
+"Testing timing overhead for %u second.\n"
+"\n"
+msgid_plural ""
+"Testing timing overhead for %u seconds.\n"
+"\n"
+msgstr[0] "正在測試計時額外負擔，持續 %u 秒。\n\n"
 
-#: pg_test_timing.c:151
+#: pg_test_timing.c:209
+#, c-format
+msgid "TSC frequency source: %s\n"
+msgstr "TSC 頻率來源: %s\n"
+
+#: pg_test_timing.c:210
+#, c-format
+msgid "TSC frequency in use: %d kHz\n"
+msgstr "使用中的 TSC 頻率: %d kHz\n"
+
+#: pg_test_timing.c:216
+#, c-format
+msgid "TSC frequency from calibration: %d kHz\n"
+msgstr "校準所得的 TSC 頻率: %d kHz\n"
+
+#: pg_test_timing.c:223
+#, c-format
+msgid "WARNING: Calibrated TSC frequency differs by %.1f%% from the TSC frequency in use\n"
+msgstr "警告: 校準的 TSC 頻率與使用中的 TSC 頻率相差 %.1f%%\n"
+
+#: pg_test_timing.c:225
+#, c-format
+msgid "HINT: Consider setting timing_clock_source to 'system'. Report bugs to <%s>.\n"
+msgstr "提示: 考慮將 timing_clock_source 設為 'system'。請向 <%s> 回報錯誤。\n"
+
+#: pg_test_timing.c:230
+#, c-format
+msgid "TSC calibration did not converge\n"
+msgstr "TSC 校準未收斂\n"
+
+#: pg_test_timing.c:240
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will be used by default, unless timing_clock_source is set to 'system'.\n"
+msgstr "\n除非將 timing_clock_source 設為 'system'，否則預設將使用 TSC 時鐘源。\n"
+
+#: pg_test_timing.c:242
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will not be used by default, unless timing_clock_source is set to 'tsc'.\n"
+msgstr "\n除非將 timing_clock_source 設為 'tsc'，否則預設將不使用 TSC 時鐘源。\n"
+
+#: pg_test_timing.c:245
+#, c-format
+msgid ""
+"\n"
+"TSC clock source is not usable. Likely unable to determine TSC frequency. Are you running in an unsupported virtualized environment?\n"
+msgstr "\nTSC 時鐘源不可用。可能無法判定 TSC 頻率。是否正在不支援的虛擬化環境中執行？\n"
+
+#: pg_test_timing.c:270
+#, c-format
+msgid "Fast clock source: %s\n"
+msgstr "快速時鐘源: %s\n"
+
+#: pg_test_timing.c:272
+#, c-format
+msgid "System clock source: %s\n"
+msgstr "系統時鐘源: %s\n"
+
+#: pg_test_timing.c:274
+#, c-format
+msgid "Clock source: %s\n"
+msgstr "時鐘源: %s\n"
+
+#: pg_test_timing.c:312
 #, c-format
 msgid "Detected clock going backwards in time.\n"
 msgstr "偵測到時鐘時間倒退。\n"
 
-#: pg_test_timing.c:152
+#: pg_test_timing.c:313
 #, c-format
-msgid "Time warp: %d ms\n"
-msgstr "時間扭曲: %d 毫秒\n"
+msgid "Time warp: %<PRId64> ns\n"
+msgstr "時鐘回退: %<PRId64> 奈秒\n"
 
-#: pg_test_timing.c:175
+#: pg_test_timing.c:351
 #, c-format
-msgid "Per loop time including overhead: %0.2f ns\n"
-msgstr "每個循環時間，包括額外負擔: %0.2f ns\n"
+msgid "Average loop time including overhead: %0.2f ns\n"
+msgstr "含額外負擔的平均迴圈時間: %0.2f ns\n"
 
-#: pg_test_timing.c:186
-msgid "< us"
-msgstr "< us"
+#: pg_test_timing.c:361
+msgid "<= ns"
+msgstr "<= ns"
 
-#: pg_test_timing.c:187
+#  translator: Make sure the (y/n) prompts match the translation of this.
+#: pg_test_timing.c:362
+msgid "ns"
+msgstr "ns"
+
+#: pg_test_timing.c:363
 #, no-c-format
 msgid "% of total"
 msgstr "佔總數 %"
 
-#: pg_test_timing.c:188
+#: pg_test_timing.c:364
+#, no-c-format
+msgid "running %"
+msgstr "累計 %"
+
+#: pg_test_timing.c:365
 msgid "count"
 msgstr "次數"
 
-#: pg_test_timing.c:197
+#: pg_test_timing.c:375
+#, c-format
+msgid "WARNING: No timing measurements collected. Report this as a bug to <%s>.\n"
+msgstr "警告: 未收集到任何計時測量結果。請將此問題作為錯誤回報至 <%s>。\n"
+
+#: pg_test_timing.c:389
 #, c-format
 msgid "Histogram of timing durations:\n"
-msgstr "計時期間的 histogram:\n"
+msgstr "計時持續時間的直方圖:\n"
+
+#: pg_test_timing.c:409
+#, c-format
+msgid ""
+"\n"
+"Observed timing durations up to %.4f%%:\n"
+msgstr "\n觀測到的計時持續時間 (累計至 %.4f%%):\n"
+
+#~ msgid "< us"
+#~ msgstr "< us"
+

@@ -1,161 +1,330 @@
 # Traditional Chinese message translation file for pg_waldump
-# Copyright (C) 2023 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_waldump (PostgreSQL) package.
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # Zhenbang Wei <znbang@gmail.com>, 2023.
+# Ruohang Feng <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_waldump (PostgreSQL) 16\n"
+"Project-Id-Version: pg_waldump (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-11 20:48+0000\n"
-"PO-Revision-Date: 2023-11-06 08:50+0800\n"
-"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
-"Language-Team: \n"
+"POT-Creation-Date: 2026-09-18 04:21+0000\n"
+"PO-Revision-Date: 2026-09-20 12:27+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.1\n"
 
 # libpq/be-secure.c:294 libpq/be-secure.c:387
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "錯誤: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
-msgstr "詳細內容: "
+msgstr "詳情: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "提示: "
 
-# commands/tablespace.c:154 commands/tablespace.c:162
-# commands/tablespace.c:168
-#: pg_waldump.c:137
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
-msgid "could not create directory \"%s\": %m"
-msgstr "無法建立目錄\"%s\": %m"
+msgid "out of memory\n"
+msgstr "記憶體不足\n"
 
-# commands/tablespace.c:334
-#: pg_waldump.c:146
+# common.c:78
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
-msgid "directory \"%s\" exists but is not empty"
-msgstr "目錄 \"%s\" 已存在，但不是空目錄"
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能複製空指標(內部錯誤)\n"
 
-# utils/init/postinit.c:283
-#: pg_waldump.c:150
+#: ../../common/fe_memutils.c:209
 #, c-format
-msgid "could not access directory \"%s\": %m"
-msgstr "無法存取目錄 \"%s\": %m"
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu * %zu\n"
 
 # access/transam/slru.c:638 access/transam/xlog.c:1631
 # access/transam/xlog.c:2742 access/transam/xlog.c:2832
 # access/transam/xlog.c:2930 libpq/hba.c:911 libpq/hba.c:935
 # utils/error/elog.c:1118 utils/init/miscinit.c:783 utils/init/miscinit.c:889
 # utils/misc/database.c:68
-#: pg_waldump.c:199 pg_waldump.c:528
+#: ../../common/file_utils.c:69 ../../common/file_utils.c:370
+#: ../../common/file_utils.c:428 ../../common/file_utils.c:502 pg_waldump.c:193
+#: pg_waldump.c:648
 #, c-format
 msgid "could not open file \"%s\": %m"
-msgstr "無法開啟檔案\"%s\": %m"
+msgstr "無法開啟檔案 \"%s\": %m"
 
-#: pg_waldump.c:255
+# libpq/be-fsstubs.c:484
+#: ../../common/file_utils.c:75
 #, c-format
-msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
-msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
-msgstr[0] "WAL 片段大小必須為介於 1 MB 到 1 GB 之間的二的次方數，但是 WAL 檔 \"%s\" 的標頭指定了 %d 位元組"
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "無法同步檔案 \"%s\" 所在的檔案系統: %m"
+
+# access/transam/xlog.c:1936 access/transam/xlog.c:2038
+# access/transam/xlog.c:5291
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "無法取得檔案 \"%s\" 的狀態: %m"
+
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "此建置版本不支援同步方法 \"%s\""
+
+# access/transam/slru.c:930 commands/tablespace.c:529
+# commands/tablespace.c:694 utils/adt/misc.c:174
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
+#: pg_waldump.c:1252 pg_waldump.c:1286
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "無法開啟目錄 \"%s\": %m"
+
+# access/transam/slru.c:967 commands/tablespace.c:577
+# commands/tablespace.c:721
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "無法讀取目錄 \"%s\": %m"
+
+# access/transam/slru.c:673 access/transam/xlog.c:1562
+# access/transam/xlog.c:1686 access/transam/xlog.c:3008
+#: ../../common/file_utils.c:440 ../../common/file_utils.c:510
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "無法對檔案 \"%s\" 執行 fsync: %m"
+
+# access/transam/xlog.c:3037 access/transam/xlog.c:3819
+# access/transam/xlog.c:3862 commands/user.c:282 commands/user.c:412
+# postmaster/pgarch.c:597
+#: ../../common/file_utils.c:520
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "無法將檔案 \"%s\" 重新命名為 \"%s\": %m"
+
+#: archive_waldump.c:143 pg_waldump.c:1300 pg_waldump.c:1330
+#, c-format
+msgid "could not open file \"%s\""
+msgstr "無法開啟檔案 \"%s\""
+
+#: archive_waldump.c:188
+#, c-format
+msgid "could not find WAL in archive \"%s\""
+msgstr "無法在封存檔 \"%s\" 中找到 WAL"
+
+#: archive_waldump.c:205
+#, c-format
+msgid "invalid WAL segment size in WAL file from archive \"%s\" (%u byte)"
+msgid_plural "invalid WAL segment size in WAL file from archive \"%s\" (%u bytes)"
+msgstr[0] "封存檔 \"%s\" 中 WAL 檔的 WAL 片段大小無效 (%u 位元組)"
+
+#: archive_waldump.c:209 pg_waldump.c:252
+#, c-format
+msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
+msgstr "WAL 片段大小必須是 1 MB 到 1 GB 之間的二的冪。"
+
+# access/transam/slru.c:680 access/transam/xlog.c:1567
+# access/transam/xlog.c:1691 access/transam/xlog.c:3013
+#: archive_waldump.c:291 pg_waldump.c:654
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "無法關閉檔案 \"%s\": %m"
+
+#: archive_waldump.c:367
+#, c-format
+msgid "WAL segment \"%s\" in archive \"%s\" is too short: read %zu of %zu bytes"
+msgstr "封存檔 \"%2$s\" 中的 WAL 片段 \"%1$s\" 過短: 應讀取 %4$zu 位元組，實際讀取 %3$zu 位元組"
+
+#: archive_waldump.c:371
+#, c-format
+msgid "unexpected end of archive \"%s\" while reading \"%s\": read %zu of %zu bytes"
+msgstr "讀取 \"%2$s\" 時非預期地遇到封存檔 \"%1$s\" 結尾: 應讀取 %4$zu 位元組，實際讀取 %3$zu 位元組"
+
+# access/transam/slru.c:680 access/transam/xlog.c:1567
+# access/transam/xlog.c:1691 access/transam/xlog.c:3013
+#: archive_waldump.c:503
+#, c-format
+msgid "could not close file \"%s/%s\": %m"
+msgstr "無法關閉檔案 \"%s/%s\": %m"
+
+#: archive_waldump.c:516
+#, c-format
+msgid "could not find WAL \"%s\" in archive \"%s\""
+msgstr "無法在封存檔 \"%2$s\" 中找到 WAL \"%1$s\""
 
 # access/transam/xlog.c:1659 access/transam/xlog.c:2942
 # access/transam/xlog.c:5397 access/transam/xlog.c:5448
 # access/transam/xlog.c:5520 access/transam/xlog.c:5545
 # access/transam/xlog.c:5583
-#: pg_waldump.c:261
+#: archive_waldump.c:548 pg_waldump.c:259
 #, c-format
 msgid "could not read file \"%s\": %m"
-msgstr "無法讀取檔案\"%s\": %m"
+msgstr "無法讀取檔案 \"%s\": %m"
 
-#: pg_waldump.c:264
+# commands/tablespace.c:154 commands/tablespace.c:162
+# commands/tablespace.c:168
+#: archive_waldump.c:595 pg_waldump.c:131
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "無法建立目錄 \"%s\": %m"
+
+# access/transam/slru.c:645 access/transam/xlog.c:1526
+# access/transam/xlog.c:1646 access/transam/xlog.c:2911
+# access/transam/xlog.c:5308 access/transam/xlog.c:5426
+# postmaster/postmaster.c:3366
+#: archive_waldump.c:622
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "無法建立檔案 \"%s\": %m"
+
+#: archive_waldump.c:626
+#, c-format
+msgid "could not set permissions on file \"%s\": %m"
+msgstr "無法設定檔案 \"%s\" 的權限: %m"
+
+# access/transam/xlog.c:1555 access/transam/xlog.c:1679
+# access/transam/xlog.c:2964 access/transam/xlog.c:3002 commands/copy.c:1117
+# commands/tablespace.c:668 commands/tablespace.c:674
+# postmaster/postmaster.c:3430 utils/init/miscinit.c:832
+# utils/init/miscinit.c:841 utils/misc/guc.c:4934 utils/misc/guc.c:4998
+#: archive_waldump.c:651
+#, c-format
+msgid "could not write to file \"%s/%s\": %m"
+msgstr "無法寫入檔案 \"%s/%s\": %m"
+
+#: archive_waldump.c:743
+#, c-format
+msgid "ignoring duplicate WAL \"%s\" found in archive \"%s\""
+msgstr "正在忽略封存檔 \"%2$s\" 中發現的重複 WAL \"%1$s\""
+
+#: archive_waldump.c:779
+#, c-format
+msgid "unexpected state while parsing tar file"
+msgstr "解析 tar 檔時出現非預期的狀態"
+
+# commands/tablespace.c:334
+#: pg_waldump.c:140
+#, c-format
+msgid "directory \"%s\" exists but is not empty"
+msgstr "目錄 \"%s\" 已存在，但不是空目錄"
+
+# utils/init/postinit.c:283
+#: pg_waldump.c:144
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "無法存取目錄 \"%s\": %m"
+
+#: pg_waldump.c:248
+#, c-format
+msgid "invalid WAL segment size in WAL file \"%s\" (%u byte)"
+msgid_plural "invalid WAL segment size in WAL file \"%s\" (%u bytes)"
+msgstr[0] "WAL 檔 \"%s\" 的 WAL 片段大小無效 (%u 位元組)"
+
+#: pg_waldump.c:262
 #, c-format
 msgid "could not read file \"%s\": read %d of %d"
-msgstr "無法讀取檔案 \"%s\": 已讀取 %d / %d"
+msgstr "無法讀取檔案 \"%1$s\": 應讀取 %3$d，實際讀取 %2$d"
 
-#: pg_waldump.c:325
+#: pg_waldump.c:324
 #, c-format
 msgid "could not locate WAL file \"%s\""
 msgstr "找不到 WAL 檔 \"%s\""
 
-#: pg_waldump.c:327
+#: pg_waldump.c:326
 #, c-format
 msgid "could not find any WAL file"
 msgstr "找不到任何 WAL 檔"
 
-#: pg_waldump.c:368
+#: pg_waldump.c:393
 #, c-format
 msgid "could not find file \"%s\": %m"
 msgstr "找不到檔案 \"%s\": %m"
 
-#: pg_waldump.c:417
+#: pg_waldump.c:433
 #, c-format
-msgid "could not read from file %s, offset %d: %m"
-msgstr "無法從檔案 %s 讀取，位移 %d: %m"
+msgid "could not read from file \"%s\", offset %d: %m"
+msgstr "無法從檔案 \"%s\" 的位移 %d 處讀取: %m"
 
-#: pg_waldump.c:421
+#: pg_waldump.c:437
 #, c-format
-msgid "could not read from file %s, offset %d: read %d of %d"
-msgstr "無法從檔案 %s 讀取，位移 %d: 已讀取 %d / %d"
+msgid "could not read from file \"%s\", offset %d: read %d of %d"
+msgstr "無法從檔案 \"%1$s\" 的位移 %2$d 處讀取: 應讀取 %4$d，實際讀取 %3$d"
 
 # commands/vacuum.c:2258 commands/vacuumlazy.c:489 commands/vacuumlazy.c:770
 # nodes/print.c:86 storage/lmgr/deadlock.c:888 tcop/postgres.c:3285
-#: pg_waldump.c:511
+#: pg_waldump.c:631
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_waldump.c:519
+#: pg_waldump.c:639
 #, c-format
 msgid "invalid fork number: %u"
-msgstr "無效的分叉號碼: %u"
+msgstr "無效的關聯分支編號: %u"
 
 # access/transam/xlog.c:5319 access/transam/xlog.c:5439
-#: pg_waldump.c:531
+#: pg_waldump.c:651
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "無法寫入檔案 \"%s\": %m"
 
-# access/transam/slru.c:680 access/transam/xlog.c:1567
-# access/transam/xlog.c:1691 access/transam/xlog.c:3013
-#: pg_waldump.c:534
-#, c-format
-msgid "could not close file \"%s\": %m"
-msgstr "無法關閉檔案 \"%s\": %m"
-
-#: pg_waldump.c:754
+#: pg_waldump.c:895
 #, c-format
 msgid ""
 "%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
 "\n"
-msgstr "%s 解碼並顯示 PostgreSQL 的 write-ahead 日誌以進行除錯。\n"
+msgstr "%s 解碼並顯示 PostgreSQL 的預寫式日誌以進行除錯。\n\n"
 
-#: pg_waldump.c:756
+#: pg_waldump.c:897
 #, c-format
 msgid "Usage:\n"
 msgstr "用法:\n"
 
-#: pg_waldump.c:757
+#: pg_waldump.c:898
 #, c-format
 msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
-msgstr "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
+msgstr "  %s [選項]... [起始片段 [結束片段]]\n"
 
-#: pg_waldump.c:758
+#: pg_waldump.c:899
 #, c-format
 msgid ""
 "\n"
@@ -164,76 +333,69 @@ msgstr ""
 "\n"
 "選項:\n"
 
-#: pg_waldump.c:759
+#: pg_waldump.c:900
 #, c-format
 msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
 msgstr "  -b, --bkp-details      輸出關於備份區塊的詳細資訊\n"
 
-#: pg_waldump.c:760
+#: pg_waldump.c:901
 #, c-format
 msgid "  -B, --block=N          with --relation, only show records that modify block N\n"
 msgstr "  -B, --block=N          與 --relation 一起使用，只顯示修改區塊 N 的記錄\n"
 
-#: pg_waldump.c:761
+#: pg_waldump.c:902
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
 msgstr "  -e, --end=RECPTR       在 WAL 位置 RECPTR 停止讀取\n"
 
-#: pg_waldump.c:762
+#: pg_waldump.c:903
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
 msgstr "  -f, --follow           到達 WAL 結尾後繼續嘗試\n"
 
-#: pg_waldump.c:763
+#: pg_waldump.c:904
 #, c-format
 msgid ""
 "  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
 "                         valid names are main, fsm, vm, init\n"
-msgstr ""
-"  -F, --fork=FORK        只顯示分叉 FORK 中修改區塊的記錄；\n"
-"                         有效的名稱有 main, fsm, vm, init\n"
+msgstr "  -F, --fork=FORK        只顯示修改關聯分支 FORK 中區塊的記錄；\n                         有效的名稱有 main, fsm, vm, init\n"
 
-#: pg_waldump.c:765
+#: pg_waldump.c:906
 #, c-format
 msgid "  -n, --limit=N          number of records to display\n"
 msgstr "  -n, --limit=N          要顯示的記錄數量\n"
 
-#: pg_waldump.c:766
+#: pg_waldump.c:907
 #, c-format
 msgid ""
-"  -p, --path=PATH        directory in which to find WAL segment files or a\n"
-"                         directory with a ./pg_wal that contains such files\n"
+"  -p, --path=PATH        a tar archive or a directory in which to find WAL segment files or\n"
+"                         a directory with a pg_wal subdirectory containing such files\n"
 "                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"
-msgstr ""
-"  -p, --path=PATH        包含 WAL 片段檔的目錄，或包含 ./pg_wal 的目錄，\n"
-"                         且 ./pg_wal 內有 WAL 片段檔\n"
-"                         (預設: 目前目錄、./pg_wal、$PGDATA/pg_wal)\n"
+msgstr "  -p, --path=PATH        用於尋找 WAL 片段檔的 tar 封存檔或目錄，或是\n                         包含 pg_wal 子目錄且其中有這些檔案的目錄\n                         (預設: 目前目錄, ./pg_wal, $PGDATA/pg_wal)\n"
 
-#: pg_waldump.c:769
+#: pg_waldump.c:910
 #, c-format
 msgid "  -q, --quiet            do not print any output, except for errors\n"
 msgstr "  -q, --quiet            不顯示任何輸出，除了錯誤訊息\n"
 
-#: pg_waldump.c:770
+#: pg_waldump.c:911
 #, c-format
 msgid ""
 "  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
 "                         use --rmgr=list to list valid resource manager names\n"
-msgstr ""
-"  -r, --rmgr=RMGR        只顯示由資源管理員 RMGR 產生的記錄；\n"
-"                         用 --rmgr=list 列出有效的資源管理員名稱\n"
+msgstr "  -r, --rmgr=RMGR        只顯示由資源管理員 RMGR 產生的記錄；\n                         用 --rmgr=list 列出有效的資源管理員名稱\n"
 
-#: pg_waldump.c:772
+#: pg_waldump.c:913
 #, c-format
 msgid "  -R, --relation=T/D/R   only show records that modify blocks in relation T/D/R\n"
 msgstr "  -R, --relation=T/D/R   只顯示在 T/D/R 關聯中修改區塊的記錄\n"
 
-#: pg_waldump.c:773
+#: pg_waldump.c:914
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
 msgstr "  -s, --start=RECPTR     從 WAL 位置 RECPTR 開始讀取\n"
 
-#: pg_waldump.c:774
+#: pg_waldump.c:915
 #, c-format
 msgid ""
 "  -t, --timeline=TLI     timeline from which to read WAL records\n"
@@ -242,41 +404,39 @@ msgstr ""
 "  -t, --timeline=TLI     讀取 WAL 記錄的時間軸\n"
 "                         (預設: 1 或 STARTSEG 的值)\n"
 
-#: pg_waldump.c:776
+#: pg_waldump.c:917
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          顯示版本，然後結束\n"
 
-#: pg_waldump.c:777
+#: pg_waldump.c:918
 #, c-format
 msgid "  -w, --fullpage         only show records with a full page write\n"
 msgstr "  -w, --fullpage         只顯示有完整資料頁寫入的記錄\n"
 
-#: pg_waldump.c:778
+#: pg_waldump.c:919
 #, c-format
 msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
 msgstr "  -x, --xid=XID          只顯示有交易 ID XID 的記錄\n"
 
-#: pg_waldump.c:779
+#: pg_waldump.c:920
 #, c-format
 msgid ""
 "  -z, --stats[=record]   show statistics instead of records\n"
 "                         (optionally, show per-record statistics)\n"
-msgstr ""
-"  -z, --stats[=record]   顯示統計資料而不是記錄\n"
-"                         (可選性顯示每筆記錄的統計資料)\n"
+msgstr "  -z, --stats[=record]   顯示統計資料而不是記錄\n                         (可選擇顯示各記錄類型的統計資料)\n"
 
-#: pg_waldump.c:781
+#: pg_waldump.c:922
 #, c-format
 msgid "  --save-fullpage=DIR    save full page images to DIR\n"
 msgstr "  --save-fullpage=DIR    將完整資料頁影像存入 DIR\n"
 
-#: pg_waldump.c:782
+#: pg_waldump.c:923
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             顯示說明，然後結束\n"
 
-#: pg_waldump.c:783
+#: pg_waldump.c:924
 #, c-format
 msgid ""
 "\n"
@@ -285,307 +445,314 @@ msgstr ""
 "\n"
 "回報錯誤至 <%s>。\n"
 
-#: pg_waldump.c:784
+#: pg_waldump.c:925
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "%s 網站: <%s>\n"
+msgstr "%s 首頁: <%s>\n"
 
-#: pg_waldump.c:880
+#: pg_waldump.c:1027
 #, c-format
 msgid "no arguments specified"
 msgstr "未指定任何參數"
 
-#: pg_waldump.c:896
+#: pg_waldump.c:1043
 #, c-format
 msgid "invalid block number: \"%s\""
 msgstr "無效的區塊編號: \"%s\""
 
-#: pg_waldump.c:905 pg_waldump.c:1003
+#: pg_waldump.c:1052 pg_waldump.c:1150
 #, c-format
 msgid "invalid WAL location: \"%s\""
 msgstr "無效的 WAL 位置: \"%s\""
 
-#: pg_waldump.c:918
+#: pg_waldump.c:1065
 #, c-format
 msgid "invalid fork name: \"%s\""
-msgstr "無效的分叉名稱: \"%s\""
+msgstr "無效的關聯分支名稱: \"%s\""
 
 # utils/adt/formatting.c:2044
-#: pg_waldump.c:926 pg_waldump.c:1029
+#: pg_waldump.c:1073 pg_waldump.c:1176
 #, c-format
 msgid "invalid value \"%s\" for option %s"
 msgstr "選項 %2$s 的值 \"%1$s\" 無效"
 
-#: pg_waldump.c:957
+#: pg_waldump.c:1104
 #, c-format
 msgid "custom resource manager \"%s\" does not exist"
 msgstr "自訂資源管理員 \"%s\" 不存在"
 
-#: pg_waldump.c:978
+#: pg_waldump.c:1125
 #, c-format
 msgid "resource manager \"%s\" does not exist"
 msgstr "資源管理員 \"%s\" 不存在"
 
-#: pg_waldump.c:993
+#: pg_waldump.c:1140
 #, c-format
 msgid "invalid relation specification: \"%s\""
-msgstr "無效的關聯規格: \"%s\""
+msgstr "無效的關聯識別資訊: \"%s\""
 
-#: pg_waldump.c:994
+#: pg_waldump.c:1141
 #, c-format
 msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
 msgstr "預期 \"表空間 OID/資料庫 OID/關聯檔案節點\"。"
 
-#: pg_waldump.c:1036
+#: pg_waldump.c:1183
 #, c-format
 msgid "%s must be in range %u..%u"
 msgstr "%s 必須在範圍 %u..%u 內"
 
-#: pg_waldump.c:1051
+#: pg_waldump.c:1198
 #, c-format
 msgid "invalid transaction ID specification: \"%s\""
-msgstr "無效的交易 ID 規格: \"%s\""
+msgstr "無效的交易 ID: \"%s\""
 
-#: pg_waldump.c:1066
+#: pg_waldump.c:1213
 #, c-format
 msgid "unrecognized value for option %s: %s"
-msgstr "無法辨識項選 %s 的值: %s"
+msgstr "無法辨識選項 %s 的值: %s"
 
-#: pg_waldump.c:1083
+#: pg_waldump.c:1230
 #, c-format
 msgid "option %s requires option %s to be specified"
 msgstr "選項 %s 需要指定選項 %s"
 
-#: pg_waldump.c:1090
+#: pg_waldump.c:1237
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "命令列參數過多(第一個是 \"%s\")"
+msgstr "命令列參數過多(第一個多餘參數是 \"%s\")"
 
-# access/transam/slru.c:930 commands/tablespace.c:529
-# commands/tablespace.c:694 utils/adt/misc.c:174
-#: pg_waldump.c:1100 pg_waldump.c:1123
+#: pg_waldump.c:1274
 #, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "無法開啟目錄\"%s\": %m"
+msgid "unnecessary command-line arguments specified with tar archive (first is \"%s\")"
+msgstr "使用 tar 封存檔時指定了多餘的命令列參數 (第一個多餘參數是 \"%s\")"
 
-#: pg_waldump.c:1129 pg_waldump.c:1159
+#: pg_waldump.c:1310
 #, c-format
-msgid "could not open file \"%s\""
-msgstr "無法開啟檔案 \"%s\""
+msgid "start WAL location %X/%08X is not inside file \"%s\""
+msgstr "WAL 開始位置 %X/%08X 不在檔案 \"%s\" 內"
 
-#: pg_waldump.c:1139
-#, c-format
-msgid "start WAL location %X/%X is not inside file \"%s\""
-msgstr "WAL 開始位置 %X/%X 不在檔案 \"%s\" 內"
-
-#: pg_waldump.c:1166
+#: pg_waldump.c:1337
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "ENDSEG %s 在 STARTSEG %s 之前"
 
-#: pg_waldump.c:1181
+#: pg_waldump.c:1351
 #, c-format
-msgid "end WAL location %X/%X is not inside file \"%s\""
-msgstr "WAL 結束位置 %X/%X 不在檔案 \"%s\" 內"
+msgid "end WAL location %X/%08X is not inside file \"%s\""
+msgstr "WAL 結束位置 %X/%08X 不在檔案 \"%s\" 內"
 
-#: pg_waldump.c:1193
+#: pg_waldump.c:1364
 #, c-format
 msgid "no start WAL location given"
-msgstr "未提供 WAL 開始位罝"
+msgstr "未提供 WAL 開始位置"
 
-#: pg_waldump.c:1207
+#: pg_waldump.c:1371
+#, c-format
+msgid "--follow is not supported when reading from a tar archive"
+msgstr "從 tar 封存檔讀取時不支援 --follow"
+
+#: pg_waldump.c:1409
 #, c-format
 msgid "out of memory while allocating a WAL reading processor"
-msgstr "配置 WAL 讀取處理器時耗盡記憶體"
+msgstr "配置 WAL 讀取處理器時記憶體不足"
 
-#: pg_waldump.c:1213
+#: pg_waldump.c:1425
 #, c-format
-msgid "could not find a valid record after %X/%X"
-msgstr "%X/%X 之後找不到有效的記錄"
+msgid "could not find a valid record after %X/%08X: %s"
+msgstr "%X/%08X 之後找不到有效的記錄: %s"
 
-#: pg_waldump.c:1223
+#: pg_waldump.c:1428
 #, c-format
-msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
-msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
-msgstr[0] "第一筆記錄在 %X/%X 之後，位於 %X/%X，跳過 %u 個位元組\n"
+msgid "could not find a valid record after %X/%08X"
+msgstr "%X/%08X 之後找不到有效的記錄"
 
-#: pg_waldump.c:1308
+#: pg_waldump.c:1439
 #, c-format
-msgid "error in WAL record at %X/%X: %s"
-msgstr "WAL 記錄在 %X/%X 出現錯誤: %s"
+msgid "first record is after %X/%08X, at %X/%08X, skipping over %u byte"
+msgid_plural "first record is after %X/%08X, at %X/%08X, skipping over %u bytes"
+msgstr[0] "第一筆記錄在 %X/%08X 之後，位於 %X/%08X，正在跳過 %u 個位元組"
+
+#: pg_waldump.c:1527
+#, c-format
+msgid "error in WAL record at %X/%08X: %s"
+msgstr "WAL 記錄在 %X/%08X 出現錯誤: %s"
 
 # tcop/postgres.c:2636 tcop/postgres.c:2652
-#: pg_waldump.c:1317
+#: pg_waldump.c:1545
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "用 \"%s --help\" 取得更多資訊。"
 
-#: xlogreader.c:626
+#: xlogreader.c:621
 #, c-format
-msgid "invalid record offset at %X/%X: expected at least %u, got %u"
-msgstr "位於 %X/%X 的記錄 offset 無效: 預期至少 %u，實際為 %u"
+msgid "invalid record offset at %X/%08X: expected at least %u, got %u"
+msgstr "位於 %X/%08X 的記錄位移無效: 預期至少 %u，實際為 %u"
 
 # access/transam/xlog.c:2443
-#: xlogreader.c:635
+#: xlogreader.c:630
 #, c-format
-msgid "contrecord is requested by %X/%X"
-msgstr "%X/%X 要求 contrecord"
+msgid "contrecord is requested by %X/%08X"
+msgstr "請求的 %X/%08X 處是續接記錄"
 
-#: xlogreader.c:676 xlogreader.c:1119
+#: xlogreader.c:671 xlogreader.c:1146
 #, c-format
-msgid "invalid record length at %X/%X: expected at least %u, got %u"
-msgstr "位於 %X/%X 的記錄長度無效: 預期至少 %u，實際為 %u"
+msgid "invalid record length at %X/%08X: expected at least %u, got %u"
+msgstr "位於 %X/%08X 的記錄長度無效: 預期至少 %u，實際為 %u"
 
-#: xlogreader.c:705
+#: xlogreader.c:761
 #, c-format
-msgid "out of memory while trying to decode a record of length %u"
-msgstr "嘗試解碼長度為 %u 的記錄時耗盡記憶體"
+msgid "there is no contrecord flag at %X/%08X"
+msgstr "位於 %X/%08X 沒有續接記錄旗標"
 
-# access/transam/xlog.c:2503
-#: xlogreader.c:727
+#: xlogreader.c:774
 #, c-format
-msgid "record length %u at %X/%X too long"
-msgstr "位於 %X/%X 的記錄長度 %u 過長"
-
-#: xlogreader.c:776
-#, c-format
-msgid "there is no contrecord flag at %X/%X"
-msgstr "位於 %X/%X 沒有 contrecord 標誌"
-
-#: xlogreader.c:789
-#, c-format
-msgid "invalid contrecord length %u (expected %lld) at %X/%X"
-msgstr "位於 %3$X/%4$X 的 contrecord 長度 %1$u 無效(預期為 %2$lld)"
+msgid "invalid contrecord length %u (expected %lld) at %X/%08X"
+msgstr "位於 %3$X/%4$08X 的續接記錄長度 %1$u 無效(預期為 %2$lld)"
 
 # access/transam/xlog.c:2465
-#: xlogreader.c:1127
+#: xlogreader.c:1154
 #, c-format
-msgid "invalid resource manager ID %u at %X/%X"
-msgstr "無效的資源管理器 ID %u 於 %X/%X"
+msgid "invalid resource manager ID %u at %X/%08X"
+msgstr "%2$X/%3$08X 處的資源管理員 ID %1$u 無效"
 
 # access/transam/xlog.c:2458
-#: xlogreader.c:1140 xlogreader.c:1156
+#: xlogreader.c:1167 xlogreader.c:1183
 #, c-format
-msgid "record with incorrect prev-link %X/%X at %X/%X"
-msgstr "位於 %3$X/%4$X 的記錄有不正確的 prev-link %1$X/%2$X"
+msgid "record with incorrect prev-link %X/%08X at %X/%08X"
+msgstr "位於 %3$X/%4$08X 的記錄有不正確的前一記錄連結 %1$X/%2$08X"
 
 # access/transam/xlog.c:2269
-#: xlogreader.c:1192
+#: xlogreader.c:1221
 #, c-format
-msgid "incorrect resource manager data checksum in record at %X/%X"
-msgstr "位於 %X/%X 的記錄中資源管理員資料檢查碼不正確"
+msgid "incorrect resource manager data checksum in record at %X/%08X"
+msgstr "位於 %X/%08X 的記錄中資源管理員資料檢查碼不正確"
 
-#: xlogreader.c:1226
+#: xlogreader.c:1255
 #, c-format
-msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
-msgstr "WAL 片段 %2$s 中的魔數數字 %1$04X 無效，LSN %3$X/%4$X，位移 %5$u"
+msgid "invalid magic number %04X in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "WAL 片段 %2$s 中的魔數 %1$04X 無效, LSN %3$X/%4$08X, 位移 %5$u"
 
-#: xlogreader.c:1241 xlogreader.c:1283
+#: xlogreader.c:1270 xlogreader.c:1312
 #, c-format
-msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
-msgstr "WAL 片段 %2$s 中的資訊位元 %1$04X 無效，LSN %3$X/%4$X，位移 %5$u"
+msgid "invalid info bits %04X in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "WAL 片段 %2$s 中的資訊位元 %1$04X 無效, LSN %3$X/%4$08X, 位移 %5$u"
 
-#: xlogreader.c:1257
+#: xlogreader.c:1286
 #, c-format
-msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
-msgstr "WAL 檔案來自不同的資料庫系統: WAL 檔案的資料庫系統識別碼為 %llu，而 pg_control 的資料庫系統識別碼為 %llu"
+msgid "WAL file is from different database system: WAL file database system identifier is %<PRIu64>, pg_control database system identifier is %<PRIu64>"
+msgstr "WAL 檔案來自不同的資料庫系統: WAL 檔案的資料庫系統識別碼為 %<PRIu64>，而 pg_control 的資料庫系統識別碼為 %<PRIu64>"
 
-#: xlogreader.c:1265
+#: xlogreader.c:1294
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "WAL 檔案來自不同的資料庫系統: 資料頁標頭中的片段大小不正確"
 
-#: xlogreader.c:1271
+#: xlogreader.c:1300
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL 檔案來自不同的資料庫系統: 資料頁標頭中的 XLOG_BLCKSZ 不正確"
 
-#: xlogreader.c:1303
+#: xlogreader.c:1332
 #, c-format
-msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
-msgstr "非預期的 pageaddr %X/%X 位於 WAL 片段 %s，LSN %X/%X，位移 %u"
+msgid "unexpected pageaddr %X/%08X in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "WAL 片段 %3$s 中出現非預期的 pageaddr %1$X/%2$08X, LSN %4$X/%5$08X, 位移 %6$u"
 
-#: xlogreader.c:1329
+#: xlogreader.c:1358
 #, c-format
-msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
-msgstr "非依序 timeline ID %u(在 %u 之後)位於 WAL 片段 %s，LSN %X/%X，位移 %u"
+msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%08X, offset %u"
+msgstr "WAL 片段 %3$s 中的時間軸 ID %1$u 順序錯誤(前一個為 %2$u), LSN %4$X/%5$08X, 位移 %6$u"
 
-#: xlogreader.c:1735
+#: xlogreader.c:1790
 #, c-format
-msgid "out-of-order block_id %u at %X/%X"
-msgstr "非循序 block_id %u 位於 %X/%X"
+msgid "out-of-order block_id %u at %X/%08X"
+msgstr "位於 %2$X/%3$08X 的 block_id %1$u 順序錯誤"
 
-#: xlogreader.c:1759
+#: xlogreader.c:1814
 #, c-format
-msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
-msgstr "設定了 BKPBLOCK_HAS_DATA，但在 %X/%X 的沒有包含任何資料"
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%08X"
+msgstr "%X/%08X 處已設定 BKPBLOCK_HAS_DATA，但未包含資料"
 
-#: xlogreader.c:1766
+#: xlogreader.c:1821
 #, c-format
-msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
-msgstr "未設定 BKPBLOCK_HAS_DATA，但在 %2$X/%3$X 的資料長度為 %1$u"
+msgid "BKPBLOCK_HAS_DATA not set, but data length is %d at %X/%08X"
+msgstr "未設定 BKPBLOCK_HAS_DATA，但 %2$X/%3$08X 處的資料長度為 %1$d"
 
-#: xlogreader.c:1802
+#: xlogreader.c:1857
 #, c-format
-msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
-msgstr "設定了 BKPIMAGE_HAS_HOLE，但在 %4$X/%5$X 有 offset %1$u 長度 %2$u 影像長度 %3$u 的空洞"
+msgid "BKPIMAGE_HAS_HOLE set, but hole offset %d length %d block image length %d at %X/%08X"
+msgstr "已設定 BKPIMAGE_HAS_HOLE，但 %4$X/%5$08X 處的空洞位移為 %1$d，長度為 %2$d，區塊映像長度為 %3$d"
 
-#: xlogreader.c:1818
+#: xlogreader.c:1873
 #, c-format
-msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
-msgstr "未設定 BKPIMAGE_HAS_HOLE，但在 %3$X/%4$X 有 offset %1$u 長度 %2$u 的空洞"
+msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %d length %d at %X/%08X"
+msgstr "未設定 BKPIMAGE_HAS_HOLE，但 %3$X/%4$08X 處的空洞位移為 %1$d，長度為 %2$d"
 
-#: xlogreader.c:1832
+#: xlogreader.c:1887
 #, c-format
-msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
-msgstr "設定了 BKPIMAGE_COMPRESSED，但在 %2$X/%3$X 的區塊影像長度為 %1$u"
+msgid "BKPIMAGE_COMPRESSED set, but block image length %d at %X/%08X"
+msgstr "已設定 BKPIMAGE_COMPRESSED，但 %2$X/%3$08X 處的區塊映像長度為 %1$d"
 
-#: xlogreader.c:1847
+#: xlogreader.c:1902
 #, c-format
-msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
-msgstr "未設定 BKPIMAGE_HAS_HOLE 和 BKPIMAGE_COMPRESSED，但在 %2$X/%3$X 的區塊影像長度為 %1$u"
+msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %d at %X/%08X"
+msgstr "既未設定 BKPIMAGE_HAS_HOLE，也未設定 BKPIMAGE_COMPRESSED，但 %2$X/%3$08X 處的區塊映像長度為 %1$d"
 
-#: xlogreader.c:1863
+#: xlogreader.c:1918
 #, c-format
-msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
-msgstr "設定了 BKPBLOCK_SAME_REL，但在 %X/%X 沒有先前的 rel"
+msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%08X"
+msgstr "%X/%08X 處已設定 BKPBLOCK_SAME_REL，但沒有先前的關聯"
 
-#: xlogreader.c:1875
+#: xlogreader.c:1930
 #, c-format
-msgid "invalid block_id %u at %X/%X"
-msgstr "位於 %2$X/%3$X 的無效 block_id %1$u"
+msgid "invalid block_id %u at %X/%08X"
+msgstr "%2$X/%3$08X 處的 block_id %1$u 無效"
 
-#: xlogreader.c:1942
+#: xlogreader.c:1997
 #, c-format
-msgid "record with invalid length at %X/%X"
-msgstr "位於 %X/%X 的記錄長度無效"
+msgid "record with invalid length at %X/%08X"
+msgstr "位於 %X/%08X 的記錄長度無效"
 
-#: xlogreader.c:1968
+#: xlogreader.c:2023
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "在 WAL 記錄中找不到具有 ID %d 的備份區塊"
 
-#: xlogreader.c:2052
+#: xlogreader.c:2107
 #, c-format
-msgid "could not restore image at %X/%X with invalid block %d specified"
-msgstr "無法還原指定了無效區塊 %3$d 的影像，位置 %1$X/%2$X"
+msgid "could not restore image at %X/%08X with invalid block %d specified"
+msgstr "無法還原 %X/%08X 處的映像，因為指定的區塊 %d 無效"
 
-#: xlogreader.c:2059
+#: xlogreader.c:2114
 #, c-format
-msgid "could not restore image at %X/%X with invalid state, block %d"
-msgstr "無法還原處於無效狀態的影像，位置 %X/%X，區塊 %d"
+msgid "could not restore image at %X/%08X with invalid state, block %d"
+msgstr "無法還原 %X/%08X 處的映像，狀態無效, 區塊 %d"
 
-#: xlogreader.c:2086 xlogreader.c:2103
+#: xlogreader.c:2141 xlogreader.c:2158
 #, c-format
-msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
-msgstr "無法還原用此版本不支援的壓縮方法 %3$s 壓縮的影像，位置 %1$X/%2$X，區塊 %4$d"
+msgid "could not restore image at %X/%08X compressed with %s not supported by build, block %d"
+msgstr "無法還原 %X/%08X 處使用 %s 壓縮的映像，此建置版本不支援該壓縮方式, 區塊 %d"
 
-#: xlogreader.c:2112
+#: xlogreader.c:2167
 #, c-format
-msgid "could not restore image at %X/%X compressed with unknown method, block %d"
-msgstr "無法還原使用未知方法壓縮的影像，位置 %X/%X，區塊 %d"
+msgid "could not restore image at %X/%08X compressed with unknown method, block %d"
+msgstr "無法還原 %X/%08X 處使用未知方法壓縮的映像, 區塊 %d"
 
-#: xlogreader.c:2120
+#: xlogreader.c:2175
 #, c-format
-msgid "could not decompress image at %X/%X, block %d"
-msgstr "無法解壓縮影像，位置 %X/%X，區塊 %d"
+msgid "could not decompress image at %X/%08X, block %d"
+msgstr "無法解壓縮 %X/%08X 處的映像, 區塊 %d"
+
+#, c-format
+#~ msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
+#~ msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
+#~ msgstr[0] "WAL 片段大小必須為介於 1 MB 到 1 GB 之間的二的次方數，但是 WAL 檔 \"%s\" 的標頭指定了 %d 位元組"
+
+#, c-format
+#~ msgid "out of memory while trying to decode a record of length %u"
+#~ msgstr "嘗試解碼長度為 %u 的記錄時耗盡記憶體"
+
+# access/transam/xlog.c:2503
+#, c-format
+#~ msgid "record length %u at %X/%X too long"
+#~ msgstr "位於 %X/%X 的記錄長度 %u 過長"
+

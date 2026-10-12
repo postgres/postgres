@@ -857,7 +857,7 @@ msgstr "სერვერის (\"%s\" ) %s-ე პორტზე მიე�
 #: fe-connect.c:2487
 #, c-format
 msgid "\tIs the server running locally and accepting connections on that socket?"
-msgstr "\tარის სერვერი ლოკალურად გაშვებული და მზადაა სოკეტითა დასაკავშირებლად?"
+msgstr "\tარის სერვერი ლოკალურად გაშვებული და მზადაა სოკეტით დასაკავშირებლად?"
 
 #: fe-connect.c:2489
 #, c-format

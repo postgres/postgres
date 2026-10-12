@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2026-03-22 19:40+0000\n"
-"PO-Revision-Date: 2026-03-22 22:06+0100\n"
+"PO-Revision-Date: 2026-10-12 10:33+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -2150,11 +2150,6 @@ msgstr "erreur de socket non reconnue : 0x%08X/%d"
 #, c-format
 #~ msgid "failed to create timerfd: %m"
 #~ msgstr "a échoué à créer timerfd : %m"
-
-#, fuzzy, c-format
-#~| msgid "failed to create kqueue: %m"
-#~ msgid "failed to lock mutex (%d)"
-#~ msgstr "a échoué à créer kqueue : %m"
 
 #, c-format
 #~ msgid "getting timerfd value: %m"

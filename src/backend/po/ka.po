@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: postgres (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2026-09-12 20:45+0000\n"
-"PO-Revision-Date: 2026-09-13 05:47+0200\n"
+"PO-Revision-Date: 2026-10-12 10:33+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -34539,11 +34539,6 @@ msgstr "სხვა ბაზიდან სწრაფი ასლის �
 #~ msgstr ""
 #~ "XID-ების მინიჭებების თავიდან ასაცილებლად გაუშვით VACUUM მთელ ბაზაზე იმ მონაცემთა ბაზისთვის.\n"
 #~ "შეიძლება, ასევე, დაგჭირდეთ ძველი მომზადებული ტრანზაქციების კომიტი ან დაბრუნება, ან გამოუყენებელი რეპლიკაციის სლოტების წაშლა."
-
-#, c-format
-#~| msgid "Use ALTER TABLE ... DETACH PARTITION ... FINALIZE to complete the pending detach operation."
-#~ msgid "Use CREATE TABLE ... PARTITION OF ... DEFAULT to add a DEFAULT partition."
-#~ msgstr "DEFAULT დანაყოფის დასამატებლად გამოიყენეთ CREATE TABLE ... PARTITION OF ... DEFAULT."
 
 #~ msgid "Use DROP PROPERTY GRAPH to remove a property graph."
 #~ msgstr "თვისების გრაფიკის წასაშლელად გამოიყენეთ DROP PROPERTY GRAPH."

@@ -1,135 +1,144 @@
 # Traditional Chinese message translation file for pltcl
-# Copyright (C) 2023 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pltcl (PostgreSQL) package.
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # Zhenbang Wei <znbang@gmail.com>, 2011.
+# Ruohang Feng <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL) 16\n"
+"Project-Id-Version: pltcl (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-11 20:38+0000\n"
-"PO-Revision-Date: 2023-11-06 08:50+0800\n"
-"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
-"Language-Team: \n"
+"POT-Creation-Date: 2026-09-18 04:08+0000\n"
+"PO-Revision-Date: 2026-09-19 12:00+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.1\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-#: pltcl.c:462
+#: pltcl.c:472
 msgid "PL/Tcl function to call once when pltcl is first used."
-msgstr "初次使用 pltcl 時執行的 PL/Tcl 函數。"
+msgstr "初次使用 pltcl 時呼叫一次的 PL/Tcl 函式。"
 
-#: pltcl.c:469
+#: pltcl.c:479
 msgid "PL/TclU function to call once when pltclu is first used."
-msgstr "初次使用 pltclu 時執行的 PL/TclU 函數。"
+msgstr "初次使用 pltclu 時呼叫一次的 PL/TclU 函式。"
 
 # utils/adt/ri_triggers.c:2921
-#: pltcl.c:636
+#: pltcl.c:646
 #, c-format
 msgid "function \"%s\" is in the wrong language"
-msgstr "函數 \"%s\" 使用錯誤的語言"
+msgstr "函式 \"%s\" 使用錯誤的語言"
 
 # utils/adt/ri_triggers.c:2938
-#: pltcl.c:647
+#: pltcl.c:657
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
-msgstr "函數 \"%s\" 不得設為 SECURITY DEFINER"
+msgstr "函式 \"%s\" 不得設為 SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:681
+#: pltcl.c:691
 #, c-format
 msgid "processing %s parameter"
-msgstr "處理 %s 參數"
+msgstr "正在處理 %s 參數"
 
 # executor/execQual.c:866 executor/execQual.c:910 executor/execQual.c:1086
 # executor/execQual.c:1211 executor/execQual.c:3445 executor/functions.c:666
 # executor/functions.c:705 utils/fmgr/funcapi.c:39
-#: pltcl.c:834
+#: pltcl.c:843
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
-msgstr "在無法接受集合的情況下呼叫了回傳集合的函數"
+msgstr "在不能接受集合的情境中呼叫傳回集合的函式"
 
-#: pltcl.c:839
+#: pltcl.c:848
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
-msgstr "需要實體化模式，但在這個情況下是不允許的"
+msgstr "需要物化模式，但此上下文不允許該模式"
 
-#: pltcl.c:1012
+#: pltcl.c:1021
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
-msgstr "在不接受記錄型別的清況下呼叫回傳記錄的函數"
+msgstr "在不能接受 record 型別的上下文中呼叫傳回 record 的函式"
 
-# fe-exec.c:2204
-#: pltcl.c:1295
+#: pltcl.c:1040
 #, c-format
-msgid "could not split return value from trigger: %s"
-msgstr "無法拆分觸發程序的回傳值: %s"
+msgid "could not parse function return value: %s"
+msgstr "無法解析函式傳回值: %s"
+
+#: pltcl.c:1306
+#, c-format
+msgid "could not parse trigger return value: %s"
+msgstr "無法解析觸發器傳回值: %s"
 
 # commands/vacuum.c:2258 commands/vacuumlazy.c:489 commands/vacuumlazy.c:770
 # nodes/print.c:86 storage/lmgr/deadlock.c:888 tcop/postgres.c:3285
-#: pltcl.c:1376 pltcl.c:1803
+#: pltcl.c:1406 pltcl.c:1904
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1377
+#: pltcl.c:1407
 #, c-format
 msgid ""
 "%s\n"
-"in PL/Tcl function \"%s\""
-msgstr ""
-"%s\n"
-"於 PL/Tcl 函數  \"%s\""
+"in PL/Tcl function %s"
+msgstr "%s\n於 PL/Tcl 函式 %s 中"
 
-#: pltcl.c:1540
+#: pltcl.c:1636
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr "觸發函數只能被當作觸發程序來呼叫"
+msgstr "觸發器函式只能當做觸發器呼叫"
 
-#: pltcl.c:1544
+#: pltcl.c:1640
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
-msgstr "PL/Tcl 函數不能回傳型別 %s"
+msgstr "PL/Tcl 函式不能傳回型別 %s"
 
-#: pltcl.c:1583
+#: pltcl.c:1678
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
-msgstr "PL/Tcl 函數不能接受型別 %s"
+msgstr "PL/Tcl 函式不能接受型別 %s"
 
 # utils/init/miscinit.c:519
-#: pltcl.c:1695
+#: pltcl.c:1792
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "無法建立內部程序 \"%s\": %s"
 
 # parser/analyze.c:2210
-#: pltcl.c:3199
+#: pltcl.c:3304
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "欄位名稱/值清單須有偶數個元素"
 
-#: pltcl.c:3217
+#: pltcl.c:3322
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "欄位名稱/值清單包含不存在的欄位名稱 \"%s\""
 
 # commands/tablecmds.c:5425
-#: pltcl.c:3224
+#: pltcl.c:3329
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "無法設定系統屬性 \"%s\""
+msgstr "不能設定系統屬性 \"%s\""
 
 # commands/tablecmds.c:4580
-#: pltcl.c:3230
+#: pltcl.c:3335
 #, c-format
 msgid "cannot set generated column \"%s\""
-msgstr "無法設定被產生的欄位 \"%s\""
+msgstr "不能設定產生欄位 \"%s\""
 
 #~ msgid "PL/Tcl functions cannot return composite types"
 #~ msgstr "PL/Tcl 函式不能傳回複合型別"
 
+# fe-exec.c:2204
+#, c-format
+#~ msgid "could not split return value from trigger: %s"
+#~ msgstr "無法拆分觸發程序的回傳值: %s"
+
 # common.c:123
 #~ msgid "out of memory"
 #~ msgstr "記憶體用盡"
+

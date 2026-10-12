@@ -1,0 +1,2282 @@
+# Traditional Chinese message translation file for pg_upgrade
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Ruohang Feng <rh@vonng.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_upgrade (PostgreSQL) 19\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2026-09-23 14:52+0000\n"
+"PO-Revision-Date: 2026-09-23 23:11+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "記憶體不足\n"
+
+# common.c:78
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能複製空指標(內部錯誤)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu * %zu\n"
+
+#: ../../common/restricted_token.c:168
+#, c-format
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "無法從子行程取得結束碼: 錯誤碼 %lu"
+
+# libpq/be-secure.c:689
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "無法查詢有效使用者 ID %ld: %s"
+
+# commands/user.c:899 commands/user.c:1012 commands/user.c:1104
+# commands/user.c:1233 commands/variable.c:664 utils/cache/lsyscache.c:2064
+# utils/init/miscinit.c:335
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "使用者不存在"
+
+# port/win32/security.c:39
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "使用者名稱查詢失敗: 錯誤碼 %lu"
+
+#: ../../fe_utils/option_utils.c:139
+#, c-format
+msgid "options %s and %s cannot be used together"
+msgstr "不能同時使用 %s 和 %s 選項"
+
+# commands/copy.c:828
+#: ../../fe_utils/string_utils.c:585
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "shell 命令的參數包含換行或歸位符號: \"%s\"\n"
+
+# commands/copy.c:828
+#: ../../fe_utils/string_utils.c:758
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "資料庫名稱包含換行或歸位符號: \"%s\"\n"
+
+#: ../../fe_utils/version.c:57
+#, c-format
+msgid "could not open version file \"%s\": %m"
+msgstr "無法開啟版本檔 \"%s\": %m"
+
+# access/transam/xlog.c:1936 access/transam/xlog.c:2038
+# access/transam/xlog.c:5291
+#: ../../fe_utils/version.c:60 relfilenumber.c:279
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "無法取得檔案 \"%s\" 的狀態: %m"
+
+#: ../../fe_utils/version.c:62
+#, c-format
+msgid "file \"%s\" is too large"
+msgstr "檔案 \"%s\" 過大"
+
+#: ../../fe_utils/version.c:66
+#, c-format
+msgid "could not parse version file \"%s\""
+msgstr "無法解析版本檔 \"%s\""
+
+#: check.c:120
+msgid "Checking for system-defined composite types in user tables"
+msgstr "檢查使用者資料表中的系統定義複合型別"
+
+#: check.c:127
+msgid ""
+"Your installation contains system-defined composite types in user tables.\n"
+"These type OIDs are not stable across PostgreSQL versions,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns and restart the upgrade.\n"
+msgstr "您的安裝在使用者資料表中包含系統定義的複合型別。\n這些型別的 OID 在不同 PostgreSQL 版本間並不穩定，\n因此目前不能升級此叢集。您可以刪除有問題的\n欄位，然後重新開始升級。\n"
+
+#: check.c:141
+msgid "Checking for incompatible \"line\" data type"
+msgstr "檢查不相容的 \"line\" 資料型別"
+
+#: check.c:146
+msgid ""
+"Your installation contains the \"line\" data type in user tables.\n"
+"This data type changed its internal and input/output format\n"
+"between your old and new versions so this\n"
+"cluster cannot currently be upgraded.  You can\n"
+"drop the problem columns and restart the upgrade.\n"
+msgstr "您的安裝在使用者資料表中包含 \"line\" 資料型別。\n此資料型別的內部格式及輸入/輸出格式在舊版本與新版本之間\n已發生變化，因此目前不能升級此叢集。您可以\n刪除有問題的欄位，然後重新開始升級。\n"
+
+#: check.c:163
+msgid "Checking for reg* data types in user tables"
+msgstr "檢查使用者資料表中有無 reg* 資料型別"
+
+#: check.c:191
+msgid ""
+"Your installation contains one of the reg* data types in user tables.\n"
+"These data types reference system OIDs that are not preserved by\n"
+"pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
+"drop the problem columns and restart the upgrade.\n"
+msgstr "您的安裝在使用者資料表中包含某種 reg* 資料型別。\n這些資料型別參照 pg_upgrade 不會保留的系統 OID，\n因此目前不能升級此叢集。您可以刪除有問題的\n欄位，然後重新開始升級。\n"
+
+#: check.c:203
+msgid "Checking for incompatible \"aclitem\" data type"
+msgstr "正在檢查不相容的 \"aclitem\" 資料型別"
+
+#: check.c:208
+msgid ""
+"Your installation contains the \"aclitem\" data type in user tables.\n"
+"The internal format of \"aclitem\" changed in PostgreSQL version 16\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns and restart the upgrade.\n"
+msgstr "您的安裝在使用者資料表中包含 \"aclitem\" 資料型別。\n\"aclitem\" 的內部格式在 PostgreSQL 16 中已發生變化，\n因此目前不能升級此叢集。您可以刪除有問題的\n欄位，然後重新開始升級。\n"
+
+#: check.c:227
+msgid "Checking for invalid \"unknown\" user columns"
+msgstr "檢查無效的 \"unknown\" 使用者欄位"
+
+#: check.c:232
+msgid ""
+"Your installation contains the \"unknown\" data type in user tables.\n"
+"This data type is no longer allowed in tables, so this cluster\n"
+"cannot currently be upgraded.  You can drop the problem columns\n"
+"and restart the upgrade.\n"
+msgstr "您的安裝在使用者資料表中包含 \"unknown\" 資料型別。\n資料表中已不再允許使用此資料型別，因此目前\n不能升級此叢集。您可以刪除有問題的欄位，\n然後重新開始升級。\n"
+
+#: check.c:249
+msgid "Checking for invalid \"sql_identifier\" user columns"
+msgstr "檢查無效的 \"sql_identifier\" 使用者欄位"
+
+#: check.c:254
+msgid ""
+"Your installation contains the \"sql_identifier\" data type in user tables.\n"
+"The on-disk format for this data type has changed, so this\n"
+"cluster cannot currently be upgraded.  You can drop the problem\n"
+"columns and restart the upgrade.\n"
+msgstr "您的安裝在使用者資料表中包含 \"sql_identifier\" 資料型別。\n此資料型別的磁碟格式已更改，因此目前\n不能升級此叢集。您可以刪除有問題的\n欄位，然後重新開始升級。\n"
+
+#: check.c:265
+msgid "Checking for incompatible \"jsonb\" data type in user tables"
+msgstr "正在檢查使用者資料表中不相容的 \"jsonb\" 資料型別"
+
+#: check.c:270
+msgid ""
+"Your installation contains the \"jsonb\" data type in user tables.\n"
+"The internal format of \"jsonb\" changed during 9.4 beta so this\n"
+"cluster cannot currently be upgraded.  You can drop the problem \n"
+"columns and restart the upgrade.\n"
+msgstr "您的安裝在使用者資料表中包含 \"jsonb\" 資料型別。\n\"jsonb\" 的內部格式在 9.4 beta 期間已發生變化，因此\n目前不能升級此叢集。您可以刪除有問題的\n欄位，然後重新開始升級。\n"
+
+#: check.c:282
+msgid "Checking for removed \"abstime\" data type in user tables"
+msgstr "正在檢查使用者資料表中已移除的 \"abstime\" 資料型別"
+
+#: check.c:287
+msgid ""
+"Your installation contains the \"abstime\" data type in user tables.\n"
+"The \"abstime\" type has been removed in PostgreSQL version 12,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.\n"
+msgstr "您的安裝在使用者資料表中包含 \"abstime\" 資料型別。\nPostgreSQL 12 已移除 \"abstime\" 型別，因此目前不能\n升級此叢集。您可以刪除有問題的欄位，或將其\n改為其他資料型別，然後重新開始升級。\n"
+
+#: check.c:295
+msgid "Checking for removed \"reltime\" data type in user tables"
+msgstr "正在檢查使用者資料表中已移除的 \"reltime\" 資料型別"
+
+#: check.c:300
+msgid ""
+"Your installation contains the \"reltime\" data type in user tables.\n"
+"The \"reltime\" type has been removed in PostgreSQL version 12,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.\n"
+msgstr "您的安裝在使用者資料表中包含 \"reltime\" 資料型別。\nPostgreSQL 12 已移除 \"reltime\" 型別，因此目前不能\n升級此叢集。您可以刪除有問題的欄位，或將其\n改為其他資料型別，然後重新開始升級。\n"
+
+#: check.c:308
+msgid "Checking for removed \"tinterval\" data type in user tables"
+msgstr "正在檢查使用者資料表中已移除的 \"tinterval\" 資料型別"
+
+#: check.c:313
+msgid ""
+"Your installation contains the \"tinterval\" data type in user tables.\n"
+"The \"tinterval\" type has been removed in PostgreSQL version 12,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.\n"
+msgstr "您的安裝在使用者資料表中包含 \"tinterval\" 資料型別。\nPostgreSQL 12 已移除 \"tinterval\" 型別，因此目前不能\n升級此叢集。您可以刪除有問題的欄位，或將其\n改為其他資料型別，然後重新開始升級。\n"
+
+#: check.c:429
+#, c-format
+msgid "failed check: %s"
+msgstr "檢查失敗: %s"
+
+#: check.c:432
+msgid "A list of the problem columns is in the file:"
+msgstr "有問題的欄位列在以下檔案中:"
+
+# access/transam/slru.c:638 access/transam/xlog.c:1631
+# access/transam/xlog.c:2742 access/transam/xlog.c:2832
+# access/transam/xlog.c:2930 libpq/hba.c:911 libpq/hba.c:935
+# utils/error/elog.c:1118 utils/init/miscinit.c:783 utils/init/miscinit.c:889
+# utils/misc/database.c:68
+#: check.c:438 check.c:1074 check.c:1225 check.c:1289 check.c:1363 check.c:1449
+#: check.c:1537 check.c:1667 check.c:1736 check.c:1821 check.c:1910
+#: check.c:1954 check.c:2034 check.c:2343 check.c:2463 check.c:2482
+#: check.c:2498 check.c:2542 check.c:2595 check.c:2708 file.c:378 file.c:415
+#: function.c:214 option.c:519 slru_io.c:113 version.c:97 version.c:178
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "無法開啟檔案 \"%s\": %m"
+
+#: check.c:480
+#, c-format
+msgid "Checking data type usage"
+msgstr "正在檢查資料型別使用情況"
+
+#: check.c:534
+#, c-format
+msgid "Data type checks failed: %s"
+msgstr "資料型別檢查失敗: %s"
+
+#: check.c:583
+#, c-format
+msgid ""
+"Performing Consistency Checks on Old Live Server\n"
+"------------------------------------------------"
+msgstr "在執行中的舊伺服器上執行一致性檢查\n------------------------------------------------"
+
+#: check.c:589
+#, c-format
+msgid ""
+"Performing Consistency Checks\n"
+"-----------------------------"
+msgstr ""
+"執行一致性檢查\n"
+"-----------------------------"
+
+#: check.c:790
+#, c-format
+msgid "Swap mode can only upgrade clusters from PostgreSQL version %s and later."
+msgstr "交換模式只能升級 PostgreSQL %s 及更高版本的叢集。"
+
+#: check.c:813
+#, c-format
+msgid ""
+"\n"
+"*Clusters are compatible*"
+msgstr ""
+"\n"
+"*叢集相容*"
+
+#: check.c:821
+#, c-format
+msgid ""
+"\n"
+"If pg_upgrade fails after this point, you must re-initdb the\n"
+"new cluster before continuing."
+msgstr ""
+"\n"
+"如果 pg_upgrade 在這個階段後失敗，您必須執行 initdb 再次\n"
+"建立新叢集才能繼續。"
+
+#: check.c:862
+#, c-format
+msgid ""
+"Some statistics are not transferred by pg_upgrade.\n"
+"Once you start the new server, consider running these two commands:\n"
+"    %s/vacuumdb %s--all --analyze-in-stages --missing-stats-only\n"
+"    %s/vacuumdb %s--all --analyze-only"
+msgstr "pg_upgrade 不會轉移部分統計資料。\n啟動新伺服器後，請考慮執行以下兩個命令:\n    %s/vacuumdb %s--all --analyze-in-stages --missing-stats-only\n    %s/vacuumdb %s--all --analyze-only"
+
+#: check.c:871
+#, c-format
+msgid ""
+"Running this script will delete the old cluster's data files:\n"
+"    %s"
+msgstr ""
+"執行此腳本將刪除舊叢集的資料檔:\n"
+"    %s"
+
+#: check.c:876
+#, c-format
+msgid ""
+"Could not create a script to delete the old cluster's data files\n"
+"because user-defined tablespaces or the new cluster's data directory\n"
+"exist in the old cluster directory.  The old cluster's contents must\n"
+"be deleted manually."
+msgstr "無法建立用來刪除舊叢集資料檔的腳本，\n因為在舊叢集目錄中存在使用者定義的表空間或新叢集的資料目錄。\n必須手動刪除舊叢集的內容。"
+
+#: check.c:888
+#, c-format
+msgid "Checking cluster versions"
+msgstr "檢查叢集版本"
+
+#: check.c:900
+#, c-format
+msgid "This utility can only upgrade from PostgreSQL version %s and later."
+msgstr "本工具只能從 PostgreSQL 版本 %s 及更新的版本升級。"
+
+#: check.c:905
+#, c-format
+msgid "This utility can only upgrade to PostgreSQL version %s."
+msgstr "本工具只能升級至 PostgreSQL 版本 %s。"
+
+#: check.c:914
+#, c-format
+msgid "This utility cannot be used to downgrade to older major PostgreSQL versions."
+msgstr "本工具不能用於降級至較舊的 PostgreSQL 主要版本。"
+
+#: check.c:919
+#, c-format
+msgid "Old cluster data and binary directories are from different major versions."
+msgstr "舊叢集的資料和執行檔目錄來自不同的主要版本。"
+
+#: check.c:922
+#, c-format
+msgid "New cluster data and binary directories are from different major versions."
+msgstr "新叢集的資料和執行檔目錄來自不同的主要版本。"
+
+#: check.c:933
+#, c-format
+msgid "The option %s cannot be used for upgrades from PostgreSQL %s and later."
+msgstr "從 PostgreSQL %2$s 及更高版本升級時不能使用選項 %1$s。"
+
+#: check.c:949
+#, c-format
+msgid "When checking a live server, the old and new port numbers must be different."
+msgstr "檢查執行中的伺服器時，新舊連接埠必須不同。"
+
+#: check.c:969
+#, c-format
+msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\""
+msgstr "新叢集資料庫 \"%s\" 不是空的: 找到關聯 \"%s.%s\""
+
+#: check.c:992
+#, c-format
+msgid "Checking new cluster tablespace directories"
+msgstr "正在檢查新叢集的表空間目錄"
+
+#: check.c:1003
+#, c-format
+msgid "new cluster tablespace directory already exists: \"%s\""
+msgstr "新叢集的表空間目錄已存在: \"%s\""
+
+#: check.c:1037
+#, c-format
+msgid ""
+"\n"
+"WARNING:  new data directory should not be inside the old data directory, i.e. %s"
+msgstr "\n警告:  新的資料目錄不宜位於舊的資料目錄內，即 %s"
+
+#: check.c:1061
+#, c-format
+msgid ""
+"\n"
+"WARNING:  user-defined tablespace locations should not be inside the data directory, i.e. %s"
+msgstr "\n警告:  使用者定義的表空間位置不宜位於資料目錄內，即 %s"
+
+#: check.c:1071
+#, c-format
+msgid "Creating script to delete old cluster"
+msgstr "建立刪除舊叢集的腳本"
+
+#: check.c:1099
+#, c-format
+msgid "could not add execute permission to file \"%s\": %m"
+msgstr "無法將執行權限加到檔案 \"%s\": %m"
+
+#: check.c:1119
+#, c-format
+msgid "Checking database user is the install user"
+msgstr "檢查資料庫使用者是否為安裝使用者"
+
+#: check.c:1135
+#, c-format
+msgid "database user \"%s\" is not the install user"
+msgstr "資料庫使用者 \"%s\" 不是安裝使用者"
+
+#: check.c:1146
+#, c-format
+msgid "could not determine the number of users"
+msgstr "無法確定使用者數量"
+
+#: check.c:1154
+#, c-format
+msgid "Only the install user can be defined in the new cluster."
+msgstr "新叢集中只能定義安裝使用者。"
+
+#: check.c:1184
+#, c-format
+msgid "Checking database connection settings"
+msgstr "檢查資料庫連線設定"
+
+#: check.c:1212
+#, c-format
+msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false"
+msgstr "template0 不允許連線，即其 pg_database.datallowconn 必須為 false"
+
+#: check.c:1239 check.c:1300 check.c:1415 check.c:1508 check.c:1633
+#: check.c:1707 check.c:1790 check.c:1865 check.c:1923 check.c:2003
+#: check.c:2355 check.c:2511 check.c:2651 check.c:2720 function.c:235
+#, c-format
+msgid "fatal"
+msgstr "致命錯誤"
+
+#: check.c:1240
+#, c-format
+msgid ""
+"All non-template0 databases must allow connections, i.e. their\n"
+"pg_database.datallowconn must be true and pg_database.datconnlimit\n"
+"must not be -2.  Your installation contains non-template0 databases\n"
+"which cannot be connected to.  Consider allowing connection for all\n"
+"non-template0 databases or drop the databases which do not allow\n"
+"connections.  A list of databases with the problem is in the file:\n"
+"    %s"
+msgstr "所有非 template0 的資料庫必須允許連線，即它們的\npg_database.datallowconn 必須為 true，且 pg_database.datconnlimit\n不得為 -2。您的安裝中包含了不能連線的\n非 template0 資料庫。請考慮允許所有非 template0 資料庫的連線，\n或刪除不允許連線的資料庫。有問題的資料庫列在以下檔案中:\n    %s"
+
+#: check.c:1267
+#, c-format
+msgid "Checking for unsupported encodings"
+msgstr "正在檢查不支援的編碼"
+
+#: check.c:1301
+#, c-format
+msgid ""
+"Your installation contains databases using encodings that are\n"
+"no longer supported.  Consider dumping and restoring with UTF8.\n"
+"A list of databases with unsupported encodings is in the file:\n"
+"    %s"
+msgstr "您的安裝中有資料庫使用已不再支援的編碼。\n可以考慮備份後以 UTF8 還原。\n使用不支援編碼的資料庫列在以下檔案中:\n    %s"
+
+#: check.c:1323
+#, c-format
+msgid "Checking for prepared transactions"
+msgstr "檢查已預備的交易"
+
+#: check.c:1332
+#, c-format
+msgid "The source cluster contains prepared transactions"
+msgstr "來源叢集包含已預備的交易"
+
+#: check.c:1334
+#, c-format
+msgid "The target cluster contains prepared transactions"
+msgstr "目標叢集包含已預備的交易"
+
+#: check.c:1391
+#, c-format
+msgid "Checking for contrib/isn with bigint-passing mismatch"
+msgstr "檢查 contrib/isn 傳遞 bigint 方式不一致"
+
+#: check.c:1416
+#, c-format
+msgid ""
+"Your installation contains \"contrib/isn\" functions which rely on the\n"
+"bigint data type.  Your old and new clusters pass bigint values\n"
+"differently so this cluster cannot currently be upgraded.  You can\n"
+"manually dump databases in the old cluster that use \"contrib/isn\"\n"
+"facilities, drop them, perform the upgrade, and then restore them.  A\n"
+"list of the problem functions is in the file:\n"
+"    %s"
+msgstr "您的安裝包含依賴於 bigint 資料型別的 \"contrib/isn\" 函式。由於您的\n新、舊叢集以不同方式傳遞 bigint 值，因此目前不能升級此叢集。您\n可以手動備份並刪除舊叢集中使用 \"contrib/isn\" 功能的資料庫，進行\n升級，然後還原它們。問題函式的清單位於以下檔案中:\n    %s"
+
+#: check.c:1493
+#, c-format
+msgid "Checking for user-defined postfix operators"
+msgstr "檢查使用者定義的後綴運算子"
+
+#: check.c:1509
+#, c-format
+msgid ""
+"Your installation contains user-defined postfix operators, which are not\n"
+"supported anymore.  Consider dropping the postfix operators and replacing\n"
+"them with prefix operators or function calls.\n"
+"A list of user-defined postfix operators is in the file:\n"
+"    %s"
+msgstr ""
+"您的安裝包含不再支援的使用者定義後綴運算子，請考慮刪除後綴運算子\n"
+"並替換為前綴運算子或函式呼叫。\n"
+"使用者定義後綴運算子的清單位於以下檔案中:\n"
+"    %s"
+
+#: check.c:1561
+#, c-format
+msgid "Checking for incompatible polymorphic functions"
+msgstr "檢查不相容的多型函式"
+
+#: check.c:1634
+#, c-format
+msgid ""
+"Your installation contains user-defined objects that refer to internal\n"
+"polymorphic functions with arguments of type \"anyarray\" or \"anyelement\".\n"
+"These user-defined objects must be dropped before upgrading and restored\n"
+"afterwards, changing them to refer to the new corresponding functions with\n"
+"arguments of type \"anycompatiblearray\" and \"anycompatible\".\n"
+"A list of the problematic objects is in the file:\n"
+"    %s"
+msgstr "您的安裝包含參考內部多型函式的使用者定義物件，\n這些函式的引數型別為 \"anyarray\" 或 \"anyelement\"。\n這些使用者定義物件必須在升級之前刪除，升級之後再還原，\n並將它們改為參考新的對應函式，其引數型別為\n\"anycompatiblearray\" 和 \"anycompatible\"。\n問題物件的清單位於以下檔案中:\n    %s"
+
+#: check.c:1692
+#, c-format
+msgid "Checking for tables WITH OIDS"
+msgstr "檢查使用 WITH OIDS 的資料表"
+
+#: check.c:1708
+#, c-format
+msgid ""
+"Your installation contains tables declared WITH OIDS, which is not\n"
+"supported anymore.  Consider removing the oid column using\n"
+"    ALTER TABLE ... SET WITHOUT OIDS;\n"
+"A list of tables with the problem is in the file:\n"
+"    %s"
+msgstr ""
+"您的安裝包含宣告 WITH OIDS 的資料表，但這已不再受支援。請考慮\n"
+"使用以下方法移除 oid 欄位\n"
+"    ALTER TABLE ... SET WITHOUT OIDS;\n"
+"問題資料表的清單位於以下檔案中:\n"
+"    %s"
+
+#: check.c:1764
+#, c-format
+msgid "Checking for not-null constraint inconsistencies"
+msgstr "正在檢查非空條件約束的不一致"
+
+#: check.c:1791
+#, c-format
+msgid ""
+"Your installation contains inconsistent NOT NULL constraints.\n"
+"If the parent column(s) are NOT NULL, then the child column must\n"
+"also be marked NOT NULL, or the upgrade will fail.\n"
+"You can fix this by running\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"on each column listed in the file:\n"
+"    %s"
+msgstr "您的安裝中存在不一致的 NOT NULL 條件約束。\n如果父資料表的欄位為 NOT NULL，子資料表的對應欄位\n也必須標記為 NOT NULL，否則升級將失敗。\n可以執行以下命令來修復:\n    ALTER TABLE tablename ALTER column SET NOT NULL;\n對以下檔案中列出的每一個欄位都執行此操作:\n    %s"
+
+#: check.c:1850
+#, c-format
+msgid "Checking for uses of gist_inet_ops/gist_cidr_ops"
+msgstr "正在檢查 gist_inet_ops/gist_cidr_ops 的使用情況"
+
+#: check.c:1866
+#, c-format
+msgid ""
+"Your installation contains indexes that use the btree_gist extension's\n"
+"gist_inet_ops or gist_cidr_ops operator classes, which cannot be\n"
+"binary-upgraded.  Replace them with indexes that use the built-in GiST\n"
+"inet_ops operator class.\n"
+"A list of indexes with the problem is in the file:\n"
+"    %s"
+msgstr "您的安裝包含使用 btree_gist 擴充模組的 gist_inet_ops\n或 gist_cidr_ops 運算子類別的索引，這些索引不能進行\n二進位升級。請改用內建 GiST inet_ops 運算子類別\n的索引取代它們。\n有問題的索引列在以下檔案中:\n    %s"
+
+#: check.c:1893
+#, c-format
+msgid "Checking for roles starting with \"pg_\""
+msgstr "檢查以 \"pg_\" 開頭的角色"
+
+#: check.c:1924
+#, c-format
+msgid ""
+"Your installation contains roles starting with \"pg_\".\n"
+"\"pg_\" is a reserved prefix for system roles.  The cluster\n"
+"cannot be upgraded until these roles are renamed.\n"
+"A list of roles starting with \"pg_\" is in the file:\n"
+"    %s"
+msgstr "您的安裝包含以 \"pg_\" 開頭的角色，\"pg_\" 是系統角色的\n保留字首，在這些角色被重新命名之前，不能升級此叢集。\n以 \"pg_\" 開頭的角色列表位於以下檔案中:\n    %s"
+
+#: check.c:1975
+#, c-format
+msgid "Checking for user-defined encoding conversions"
+msgstr "檢查使用者自訂的編碼轉換"
+
+#: check.c:2004
+#, c-format
+msgid ""
+"Your installation contains user-defined encoding conversions.\n"
+"The conversion function parameters changed in PostgreSQL version 14\n"
+"so this cluster cannot currently be upgraded.  You can remove the\n"
+"encoding conversions in the old cluster and restart the upgrade.\n"
+"A list of user-defined encoding conversions is in the file:\n"
+"    %s"
+msgstr "您的安裝包含了使用者自定義的編碼轉換，由於轉換函式的參數在\nPostgreSQL 版本 14 中有所更改，因此目前不能升級此叢集。您可以\n移除舊叢集中的編碼轉換，然後重新進行升級。\n使用者自定義的編碼轉換列表位於以下檔案中:\n    %s"
+
+#: check.c:2089
+#, c-format
+msgid "Checking for objects affected by Unicode update"
+msgstr "正在檢查受 Unicode 更新影響的物件"
+
+#: check.c:2188 version.c:139
+#, c-format
+msgid "warning"
+msgstr "警告"
+
+#: check.c:2189
+#, c-format
+msgid ""
+"Your installation contains relations that might be affected by a new version of Unicode.\n"
+"A list of potentially-affected relations is in the file:\n"
+"    %s"
+msgstr "您的安裝包含可能受新版 Unicode 影響的關聯。\n可能受影響的關聯列在以下檔案中:\n    %s"
+
+#: check.c:2240
+#, c-format
+msgid "Checking new cluster replication slots"
+msgstr "正在檢查新叢集的複寫槽"
+
+# storage/smgr/md.c:367
+#: check.c:2252
+#, c-format
+msgid "could not count the number of replication slots"
+msgstr "無法統計複寫槽數量"
+
+#: check.c:2262
+#, c-format
+msgid "expected 0 logical replication slots but found %d"
+msgstr "預期為 0 個邏輯複寫槽，實際為 %d 個"
+
+# commands/conversioncmds.c:151
+#: check.c:2271
+#, c-format
+msgid "replication slot \"%s\" already exists in the new cluster"
+msgstr "新叢集中已存在複寫槽 \"%s\""
+
+#: check.c:2281 check.c:2418
+#, c-format
+msgid "could not determine parameter settings on new cluster"
+msgstr "無法確定新叢集的參數設定"
+
+#: check.c:2287
+#, c-format
+msgid "\"wal_level\" must be \"replica\" or \"logical\" but is set to \"%s\""
+msgstr "\"wal_level\" 必須為 \"replica\" 或 \"logical\"，但目前設為 \"%s\""
+
+#: check.c:2309
+#, c-format
+msgid "could not parse \"output_plugin_libraries\" setting '%s'"
+msgstr "無法解析 \"output_plugin_libraries\" 設定 '%s'"
+
+#: check.c:2356
+#, c-format
+msgid ""
+"Your installation contains logical replication slots with plugins\n"
+"that are not allowed by the new cluster's output_plugin_libraries\n"
+"setting. You can add trusted plugins to output_plugin_libraries\n"
+"and/or remove affected slots, and then restart the upgrade.\n"
+"A list of the problematic slots is in the file:\n"
+"    %s"
+msgstr "您的安裝包含邏輯複寫槽，但其外掛程式\n為新叢集的 output_plugin_libraries 設定所不允許。\n可以將受信任的外掛程式加入 output_plugin_libraries，\n和/或刪除受影響的槽，然後重新開始升級。\n有問題的槽列在以下檔案中:\n    %s"
+
+#: check.c:2372
+#, c-format
+msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots in the old cluster plus one additional slot required for retaining conflict detection information (%d)"
+msgstr "\"max_replication_slots\" (%d) 必須大於等於舊叢集的邏輯複寫槽數量與保留衝突偵測資訊所需的一個額外槽的總和 (%d)"
+
+#: check.c:2378
+#, c-format
+msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) in the old cluster"
+msgstr "\"max_replication_slots\" (%d) 必須大於等於舊叢集中的邏輯複寫槽數量 (%d)"
+
+#: check.c:2410
+#, c-format
+msgid "Checking new cluster configuration for subscriptions"
+msgstr "正在檢查新叢集的訂閱組態"
+
+#: check.c:2422
+#, c-format
+msgid "\"max_active_replication_origins\" (%d) must be greater than or equal to the number of subscriptions (%d) in the old cluster"
+msgstr "\"max_active_replication_origins\" (%d) 必須大於等於舊叢集中的訂閱數量 (%d)"
+
+#: check.c:2444
+#, c-format
+msgid "Checking logical replication slots"
+msgstr "正在檢查邏輯複寫槽"
+
+#: check.c:2512
+#, c-format
+msgid ""
+"Your installation contains logical replication slots that cannot be upgraded.\n"
+"You can remove invalid slots and/or consume the pending WAL for other slots,\n"
+"and then restart the upgrade.\n"
+"A list of the problematic slots is in the file:\n"
+"    %s"
+msgstr "您的安裝包含不能升級的邏輯複寫槽。\n可以刪除無效的槽，和/或消費其他槽尚未處理的 WAL，\n然後重新開始升級。\n有問題的槽列在以下檔案中:\n    %s"
+
+#: check.c:2570
+#, c-format
+msgid "Checking subscription state"
+msgstr "正在檢查訂閱狀態"
+
+#: check.c:2652
+#, c-format
+msgid ""
+"Your installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state.\n"
+"You can allow the initial sync to finish for all relations and then restart the upgrade.\n"
+"A list of the problematic subscriptions is in the file:\n"
+"    %s"
+msgstr "您的安裝包含沒有複寫來源的訂閱，或關聯狀態不為 i (初始化) 或 r (就緒) 的訂閱。\n可以讓所有關聯完成初始同步，然後重新開始升級。\n有問題的訂閱列在以下檔案中:\n    %s"
+
+#: check.c:2678
+#, c-format
+msgid "Checking names of databases, roles, and tablespaces"
+msgstr "正在檢查資料庫、角色和表空間的名稱"
+
+#: check.c:2721
+#, c-format
+msgid ""
+"Your installation contains databases, roles, or tablespaces with names\n"
+"with invalid characters (newline or carriage return).  To fix this,\n"
+"rename these objects.\n"
+"A list of all objects with invalid names is in the file:\n"
+"    %s"
+msgstr "您的安裝包含名稱中帶有無效字元 (換行或歸位字元)\n的資料庫、角色或表空間。要修復此問題，\n請重新命名這些物件。\n所有名稱無效的物件列在以下檔案中:\n    %s"
+
+#: check.c:2761
+#, c-format
+msgid "Checking oldestXID and oldestMultiXid consistency"
+msgstr "正在檢查 oldestXID 和 oldestMultiXid 的一致性"
+
+#: check.c:2782
+#, c-format
+msgid "oldestXID (%u) in the control file is newer than the datfrozenxid (%u) of database \"%s\""
+msgstr "控制檔案中的 oldestXID (%1$u) 晚於資料庫 \"%3$s\" 的 datfrozenxid (%2$u)"
+
+#: check.c:2787
+#, c-format
+msgid "oldestMultiXid (%u) in control file is newer than the datminmxid (%u) of database \"%s\""
+msgstr "控制檔案中的 oldestMultiXid (%1$u) 晚於資料庫 \"%3$s\" 的 datminmxid (%2$u)"
+
+#: controldata.c:133 controldata.c:203
+#, c-format
+msgid "could not get control data using %s: %m"
+msgstr "無法用 %s 取得控制資料: %m"
+
+#: controldata.c:143
+#, c-format
+msgid "%d: database cluster state problem"
+msgstr "%d: 資料庫叢集狀態問題"
+
+#: controldata.c:162
+#, c-format
+msgid "The source cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary."
+msgstr "來源叢集是在復原模式下關閉的。若要進行升級，請依照文件使用 \"rsync\"，或者將其以主伺服器身分關閉。"
+
+#: controldata.c:164
+#, c-format
+msgid "The target cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary."
+msgstr "目標叢集是在復原模式下關閉的。若要進行升級，請依照文件使用 \"rsync\"，或者將其以主伺服器身分關閉。"
+
+#: controldata.c:169
+#, c-format
+msgid "The source cluster was not shut down cleanly, state reported as: \"%s\""
+msgstr "來源叢集未正常停止，回報的狀態為: \"%s\""
+
+#: controldata.c:171
+#, c-format
+msgid "The target cluster was not shut down cleanly, state reported as: \"%s\""
+msgstr "目標叢集未正常停止，回報的狀態為: \"%s\""
+
+#: controldata.c:179 controldata.c:530
+#, c-format
+msgid "could not get control data using %s: %s"
+msgstr "無法用 %s 取得控制資料: %s"
+
+#: controldata.c:185
+#, c-format
+msgid "The source cluster lacks cluster state information:"
+msgstr "來源叢集缺少叢集狀態資訊:"
+
+#: controldata.c:187
+#, c-format
+msgid "The target cluster lacks cluster state information:"
+msgstr "目標叢集缺少叢集狀態資訊:"
+
+# commands/vacuum.c:2258 commands/vacuumlazy.c:489 commands/vacuumlazy.c:770
+# nodes/print.c:86 storage/lmgr/deadlock.c:888 tcop/postgres.c:3285
+#: controldata.c:217 dump.c:54 exec.c:119 pg_upgrade.c:630 pg_upgrade.c:670
+#: pg_upgrade.c:1048 relfilenumber.c:605 server.c:34 util.c:337
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: controldata.c:224
+#, c-format
+msgid "%d: pg_resetwal problem"
+msgstr "%d: pg_resetwal 問題"
+
+#: controldata.c:234 controldata.c:244 controldata.c:255 controldata.c:266
+#: controldata.c:277 controldata.c:296 controldata.c:307 controldata.c:318
+#: controldata.c:329 controldata.c:340 controldata.c:351 controldata.c:362
+#: controldata.c:365 controldata.c:369 controldata.c:379 controldata.c:391
+#: controldata.c:402 controldata.c:413 controldata.c:424 controldata.c:435
+#: controldata.c:446 controldata.c:457 controldata.c:468 controldata.c:479
+#: controldata.c:490 controldata.c:501 controldata.c:512 controldata.c:521
+#, c-format
+msgid "%d: controldata retrieval problem"
+msgstr "%d: 控制資料取得問題"
+
+#: controldata.c:618
+#, c-format
+msgid "The source cluster lacks some required control information:"
+msgstr "來源叢集缺少一些必要的控制資訊:"
+
+#: controldata.c:621
+#, c-format
+msgid "The target cluster lacks some required control information:"
+msgstr "目標叢集缺少一些必要的控制資訊:"
+
+#: controldata.c:624
+#, c-format
+msgid "  checkpoint next XID"
+msgstr "  檢查點下一個 XID"
+
+#: controldata.c:627
+#, c-format
+msgid "  latest checkpoint next OID"
+msgstr "  最新檢查點下一個 OID"
+
+#: controldata.c:630
+#, c-format
+msgid "  latest checkpoint next MultiXactId"
+msgstr "  最新檢查點下一個 MultiXactId"
+
+#: controldata.c:634
+#, c-format
+msgid "  latest checkpoint oldest MultiXactId"
+msgstr "  最新檢查點最早 MultiXactId"
+
+#: controldata.c:637
+#, c-format
+msgid "  latest checkpoint oldestXID"
+msgstr "  最新檢查點 oldestXID"
+
+#: controldata.c:640
+#, c-format
+msgid "  latest checkpoint next MultiXactOffset"
+msgstr "  最新檢查點下一個 MultiXactOffset"
+
+#: controldata.c:643
+#, c-format
+msgid "  first WAL segment after reset"
+msgstr "  重設後第一個 WAL 片段"
+
+#: controldata.c:646
+#, c-format
+msgid "  float8 argument passing method"
+msgstr "  float8 引數傳遞方式"
+
+#: controldata.c:649
+#, c-format
+msgid "  maximum alignment"
+msgstr "  最大對齊值"
+
+#: controldata.c:652
+#, c-format
+msgid "  block size"
+msgstr "  區塊大小"
+
+#: controldata.c:655
+#, c-format
+msgid "  large relation segment size"
+msgstr "  大型關聯區段大小"
+
+#: controldata.c:658
+#, c-format
+msgid "  WAL block size"
+msgstr "  WAL 區塊大小"
+
+#: controldata.c:661
+#, c-format
+msgid "  WAL segment size"
+msgstr "  WAL 片段大小"
+
+#: controldata.c:664
+#, c-format
+msgid "  maximum identifier length"
+msgstr "  最大識別名稱長度"
+
+#: controldata.c:667
+#, c-format
+msgid "  maximum number of indexed columns"
+msgstr "  最大索引欄位數"
+
+#: controldata.c:670
+#, c-format
+msgid "  maximum TOAST chunk size"
+msgstr "  TOAST 區塊大小上限"
+
+#: controldata.c:674
+#, c-format
+msgid "  large-object chunk size"
+msgstr "  大物件區塊大小"
+
+#: controldata.c:677
+#, c-format
+msgid "  dates/times are integers?"
+msgstr "  時間/日期是整數？"
+
+#: controldata.c:681
+#, c-format
+msgid "  data checksum version"
+msgstr "  資料檢查碼版本"
+
+#: controldata.c:685
+#, c-format
+msgid "  default char signedness"
+msgstr "  預設 char 符號屬性"
+
+#: controldata.c:687
+#, c-format
+msgid "Cannot continue without required control information, terminating"
+msgstr "因必要的控制資訊不足而不能繼續，終止中"
+
+#: controldata.c:702
+#, c-format
+msgid ""
+"old and new pg_controldata alignments are invalid or do not match.\n"
+"Likely one cluster is a 32-bit install, the other 64-bit"
+msgstr "新舊 pg_controldata 對齊值無效或不一致。\n很可能其中一個叢集是 32 位元，而另一個是 64 位元"
+
+#: controldata.c:706
+#, c-format
+msgid "old and new pg_controldata block sizes are invalid or do not match"
+msgstr "新舊 pg_controldata 區塊大小無效或不一致"
+
+#: controldata.c:709
+#, c-format
+msgid "old and new pg_controldata maximum relation segment sizes are invalid or do not match"
+msgstr "新舊 pg_controldata 最大關聯區段大小無效或不一致"
+
+#: controldata.c:712
+#, c-format
+msgid "old and new pg_controldata WAL block sizes are invalid or do not match"
+msgstr "新舊 pg_controldata WAL 區塊大小無效或不一致"
+
+#: controldata.c:715
+#, c-format
+msgid "old and new pg_controldata WAL segment sizes are invalid or do not match"
+msgstr "新舊 pg_controldata WAL 片段大小無效或不一致"
+
+#: controldata.c:718
+#, c-format
+msgid "old and new pg_controldata maximum identifier lengths are invalid or do not match"
+msgstr "新舊 pg_controldata 最大識別名稱長度無效或不一致"
+
+#: controldata.c:721
+#, c-format
+msgid "old and new pg_controldata maximum indexed columns are invalid or do not match"
+msgstr "新舊 pg_controldata 最大索引欄位數無效或不一致"
+
+#: controldata.c:724
+#, c-format
+msgid "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match"
+msgstr "新舊 pg_controldata 最大 TOAST 區塊大小無效或不一致"
+
+#: controldata.c:729
+#, c-format
+msgid "old and new pg_controldata large-object chunk sizes are invalid or do not match"
+msgstr "新舊 pg_controldata 大物件區塊大小無效或不一致"
+
+#: controldata.c:732
+#, c-format
+msgid "old and new pg_controldata date/time storage types do not match"
+msgstr "新舊 pg_controldata 日期/時間儲存型別不一致"
+
+#: controldata.c:745
+#, c-format
+msgid "old cluster does not use data checksums but the new one does"
+msgstr "舊的叢集不使用資料檢查碼，但新的叢集有用"
+
+#: controldata.c:748
+#, c-format
+msgid "old cluster uses data checksums but the new one does not"
+msgstr "舊的叢集使用資料檢查碼，但新的叢集不使用"
+
+#: controldata.c:750
+#, c-format
+msgid "old and new cluster pg_controldata checksum versions do not match"
+msgstr "新、舊叢集 pg_controldata 檢查碼版本不一致"
+
+#. translator: %s is the file path of the control file
+#: controldata.c:762
+#, c-format
+msgid "Adding \".old\" suffix to old \"%s\""
+msgstr "正在為舊 \"%s\" 加上 \".old\" 字尾"
+
+# access/transam/xlog.c:3037 access/transam/xlog.c:3819
+# access/transam/xlog.c:3862 commands/user.c:282 commands/user.c:412
+# postmaster/pgarch.c:597
+#: controldata.c:767 relfilenumber.c:385 relfilenumber.c:412
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "無法將檔案 \"%s\" 重新命名為 \"%s\": %m"
+
+#. translator: %s/%s is the file path of the control file
+#: controldata.c:773
+#, c-format
+msgid ""
+"\n"
+"If you want to start the old cluster, you will need to remove\n"
+"the \".old\" suffix from \"%s/%s.old\".\n"
+"Because \"link\" mode was used, the old cluster cannot be safely\n"
+"started once the new cluster has been started."
+msgstr "\n若要啟動舊叢集，需要從 \"%s/%s.old\" 中\n移除 \".old\" 字尾。\n因為使用了 \"link\" 模式，一旦新叢集已經啟動過，\n就不能再安全地啟動舊叢集。"
+
+#: controldata.c:780
+#, c-format
+msgid ""
+"\n"
+"Because \"swap\" mode was used, the old cluster can no longer be\n"
+"safely started."
+msgstr "\n因為使用了 \"swap\" 模式，已不能再安全地\n啟動舊叢集。"
+
+#: controldata.c:784 file.c:455
+#, c-format
+msgid "unrecognized transfer mode"
+msgstr "無法識別的傳輸模式"
+
+#: dump.c:20
+#, c-format
+msgid "Creating dump of global objects"
+msgstr "建立全域物件的備份"
+
+#: dump.c:33
+#, c-format
+msgid "Creating dump of database schemas"
+msgstr "建立資料庫 schema 的備份"
+
+#: exec.c:48
+#, c-format
+msgid "could not get pg_ctl version data using %s: %m"
+msgstr "無法用 %s 取得 pg_ctl 版本資料: %m"
+
+#: exec.c:52
+#, c-format
+msgid "could not get pg_ctl version data using %s: %s"
+msgstr "無法用 %s 取得 pg_ctl 版本資料: %s"
+
+#: exec.c:56
+#, c-format
+msgid "could not get pg_ctl version output from %s"
+msgstr "無法從 %s 取得 pg_ctl 版本輸出"
+
+#: exec.c:113 exec.c:117
+#, c-format
+msgid "command too long"
+msgstr "命令太長"
+
+# utils/init/miscinit.c:533
+#: exec.c:161 pg_upgrade.c:339
+#, c-format
+msgid "could not open log file \"%s\": %m"
+msgstr "無法開啟日誌檔 \"%s\": %m"
+
+#: exec.c:193
+#, c-format
+msgid ""
+"\n"
+"*failure*"
+msgstr ""
+"\n"
+"*失敗*"
+
+#: exec.c:196
+#, c-format
+msgid "There were problems executing \"%s\""
+msgstr "執行 \"%s\" 時發生問題"
+
+#: exec.c:199
+#, c-format
+msgid ""
+"Consult the last few lines of \"%s\" or \"%s\" for\n"
+"the probable cause of the failure."
+msgstr ""
+"請查看 \"%s\" 或 \"%s\" 的最後幾行，尋找可能\n"
+"導致失敗的原因。"
+
+#: exec.c:204
+#, c-format
+msgid ""
+"Consult the last few lines of \"%s\" for\n"
+"the probable cause of the failure."
+msgstr ""
+"請查看 \"%s\" 最後幾行，尋找可能\n"
+"導致失敗的原因。"
+
+#: exec.c:219 pg_upgrade.c:349
+#, c-format
+msgid "could not write to log file \"%s\": %m"
+msgstr "無法寫入記錄檔 \"%s\": %m"
+
+# commands/copy.c:1031
+#: exec.c:245
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "無法開啟檔案 \"%s\" 以讀取: %m"
+
+#: exec.c:271
+#, c-format
+msgid "You must have read and write access in the current directory."
+msgstr "您必須有目前目錄的讀取和寫入權限。"
+
+#: exec.c:324 exec.c:390 exec.c:440
+#, c-format
+msgid "check for \"%s\" failed: %m"
+msgstr "檢查 \"%s\" 失敗: %m"
+
+#: exec.c:327 exec.c:393
+#, c-format
+msgid "\"%s\" is not a directory"
+msgstr "\"%s\" 不是目錄"
+
+#: exec.c:445
+#, c-format
+msgid "check for \"%s\" failed: cannot execute"
+msgstr "檢查 \"%s\" 失敗: 無法執行"
+
+#: exec.c:455
+#, c-format
+msgid "check for \"%s\" failed: incorrect version: found \"%s\", expected \"%s\""
+msgstr "檢查 \"%s\" 失敗: 版本不正確: 找到 \"%s\"，預期是 \"%s\""
+
+#: file.c:44
+#, c-format
+msgid "error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "clone 關聯 \"%s.%s\" (\"%s\" 至 \"%s\") 時發生錯誤: %m"
+
+#: file.c:51
+#, c-format
+msgid "error while cloning relation \"%s.%s\": could not open file \"%s\": %m"
+msgstr "clone 關聯 \"%s.%s\" 時發生錯誤: 無法開啟檔案 \"%s\": %m"
+
+#: file.c:56
+#, c-format
+msgid "error while cloning relation \"%s.%s\": could not create file \"%s\": %m"
+msgstr "clone 關聯 \"%s.%s\" 時發生錯誤: 無法建立檔案 \"%s\": %m"
+
+#: file.c:65
+#, c-format
+msgid "error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %s"
+msgstr "clone 關聯 \"%s.%s\" (\"%s\" 至 \"%s\") 時發生錯誤: %s"
+
+#: file.c:91 file.c:160 file.c:233
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not open file \"%s\": %m"
+msgstr "複製關聯 \"%s.%s\" 時發生錯誤: 無法開啟檔案 \"%s\": %m"
+
+#: file.c:96 file.c:165 file.c:242
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not create file \"%s\": %m"
+msgstr "複製關聯 \"%s.%s\" 時發生錯誤: 無法建立檔案 \"%s\": %m"
+
+#: file.c:110 file.c:266
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not read file \"%s\": %m"
+msgstr "複製關聯 \"%s.%s\" 時發生錯誤: 無法讀取檔案 \"%s\": %m"
+
+#: file.c:122 file.c:344
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not write file \"%s\": %m"
+msgstr "複製關聯 \"%s.%s\" 時發生錯誤: 無法寫入檔案 \"%s\": %m"
+
+#: file.c:136
+#, c-format
+msgid "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "複製關聯 \"%s.%s\" (\"%s\" 至 \"%s\") 時發生錯誤: %m"
+
+#: file.c:172
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not copy file range from \"%s\" to \"%s\": %m"
+msgstr "複製關聯 \"%s.%s\" 時發生錯誤: 無法將檔案範圍從 \"%s\" 複製到 \"%s\": %m"
+
+#: file.c:194
+#, c-format
+msgid "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "建立關聯 \"%s.%s\" 的連結時發生錯誤 (\"%s\" 至 \"%s\"): %m"
+
+#: file.c:237
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not stat file \"%s\": %m"
+msgstr "複製關聯 \"%s.%s\" 時發生錯誤: 無法取得檔案 \"%s\" 的狀態: %m"
+
+#: file.c:269
+#, c-format
+msgid "error while copying relation \"%s.%s\": partial page found in file \"%s\""
+msgstr "複製關聯 \"%s.%s\" 時發生錯誤: 在檔案 \"%s\" 中找到不完整的頁面"
+
+#: file.c:371 file.c:387
+#, c-format
+msgid "could not clone file between old and new data directories: %m"
+msgstr "無法在舊和新的資料目錄之間 clone 檔案: %m"
+
+# access/transam/slru.c:645 access/transam/xlog.c:1526
+# access/transam/xlog.c:1646 access/transam/xlog.c:2911
+# access/transam/xlog.c:5308 access/transam/xlog.c:5426
+# postmaster/postmaster.c:3366
+#: file.c:383 file.c:420 slru_io.c:221
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "無法建立檔案 \"%s\": %m"
+
+#: file.c:393
+#, c-format
+msgid "file cloning not supported on this platform"
+msgstr "此平臺不支援 clone 檔案"
+
+#: file.c:424
+#, c-format
+msgid "could not copy file range between old and new data directories: %m"
+msgstr "無法在舊和新的資料目錄之間複製檔案範圍: %m"
+
+#: file.c:430
+#, c-format
+msgid "copy_file_range not supported on this platform"
+msgstr "此平台不支援 copy_file_range"
+
+#: file.c:449
+#, c-format
+msgid ""
+"could not create hard link between old and new data directories: %m\n"
+"In link mode the old and new data directories must be on the same file system."
+msgstr "無法在舊資料目錄和新資料目錄之間建立硬連結: %m\n在 link 模式，舊資料目錄和新資料目錄必須位於相同的檔案系統。"
+
+#: file.c:452
+#, c-format
+msgid ""
+"could not create hard link between old and new data directories: %m\n"
+"In swap mode the old and new data directories must be on the same file system."
+msgstr "無法在舊資料目錄和新資料目錄之間建立硬連結: %m\n在 swap 模式，舊資料目錄和新資料目錄必須位於相同的檔案系統。"
+
+#: function.c:179
+#, c-format
+msgid "Checking for presence of required libraries"
+msgstr "檢查必要程式庫是否存在"
+
+# utils/fmgr/dfmgr.c:145
+#: function.c:215
+#, c-format
+msgid "could not load library \"%s\": %s"
+msgstr "無法載入程式庫 \"%s\": %s"
+
+#: function.c:226
+#, c-format
+msgid "In database: %s\n"
+msgstr "在資料庫中: %s\n"
+
+#: function.c:236
+#, c-format
+msgid ""
+"Your installation references loadable libraries that are missing from the\n"
+"new installation.  You can add these libraries to the new installation,\n"
+"or remove the functions using them from the old installation.  A list of\n"
+"problem libraries is in the file:\n"
+"    %s"
+msgstr "您的安裝參考了在新安裝中沒有的可載入程式庫。您可以將這些程式庫新增至\n新安裝，或從舊安裝中刪除使用它們的函式。\n問題程式庫的清單位於以下檔案中:\n    %s"
+
+#: info.c:130
+#, c-format
+msgid "Relation names for OID %u in database \"%s\" do not match: old name \"%s.%s\", new name \"%s.%s\""
+msgstr "OID %u 的關聯名稱在資料庫 \"%s\" 中不一致: 舊名稱 \"%s.%s\", 新名稱 \"%s.%s\""
+
+#: info.c:150
+#, c-format
+msgid "Failed to match up old and new tables in database \"%s\""
+msgstr "無法在資料庫 \"%s\" 中對應新、舊資料表"
+
+#: info.c:231
+#, c-format
+msgid " which is an index on \"%s.%s\""
+msgstr " 是 \"%s.%s\" 的索引"
+
+#: info.c:241
+#, c-format
+msgid " which is an index on OID %u"
+msgstr " 是 OID 為 %u 的關聯上的索引"
+
+#: info.c:253
+#, c-format
+msgid " which is the TOAST table for \"%s.%s\""
+msgstr " （該 TOAST 資料表屬於 \"%s.%s\"）"
+
+#: info.c:261
+#, c-format
+msgid " which is the TOAST table for OID %u"
+msgstr " （該 TOAST 資料表屬於 OID 為 %u 的關聯）"
+
+#: info.c:265
+#, c-format
+msgid "No match found in old cluster for new relation with OID %u in database \"%s\": %s"
+msgstr "在舊叢集中找不到與資料庫 \"%2$s\" 中 OID 為 %1$u 的新關聯相符的物件: %3$s"
+
+#: info.c:268
+#, c-format
+msgid "No match found in new cluster for old relation with OID %u in database \"%s\": %s"
+msgstr "在新叢集中找不到與資料庫 \"%2$s\" 中 OID 為 %1$u 的舊關聯相符的物件: %3$s"
+
+#: info.c:318
+#, c-format
+msgid ""
+"\n"
+"source databases:"
+msgstr "\n來源資料庫:"
+
+#: info.c:320
+#, c-format
+msgid ""
+"\n"
+"target databases:"
+msgstr ""
+"\n"
+"目標資料庫:"
+
+#: info.c:364
+#, c-format
+msgid "template0 not found"
+msgstr "找不到 template0"
+
+#: info.c:911
+#, c-format
+msgid "Database: \"%s\""
+msgstr "資料庫: \"%s\""
+
+#: info.c:924
+#, c-format
+msgid "relname: \"%s.%s\", reloid: %u, reltblspace: \"%s\""
+msgstr "relname: \"%s.%s\", reloid: %u, reltblspace: \"%s\""
+
+#: info.c:938
+#, c-format
+msgid "Logical replication slots in the database:"
+msgstr "資料庫中的邏輯複寫槽:"
+
+#: info.c:944
+#, c-format
+msgid "slot name: \"%s\", output plugin: \"%s\", two_phase: %s"
+msgstr "槽名: \"%s\", 輸出外掛程式: \"%s\", two_phase: %s"
+
+#: multixact_read_v18.c:264
+#, c-format
+msgid "multixact %u has an invalid length (%d)"
+msgstr "多重交易 %u 的長度無效 (%d)"
+
+#: multixact_read_v18.c:335
+#, c-format
+msgid "multixact %u has more than one updating member"
+msgstr "多重交易 %u 有多個執行更新的成員"
+
+#: option.c:110
+#, c-format
+msgid "%s: cannot be run as root"
+msgstr "%s: 不能以 root 身分執行"
+
+#: option.c:177
+#, c-format
+msgid "invalid old port number"
+msgstr "舊連接埠無效"
+
+#: option.c:182
+#, c-format
+msgid "invalid new port number"
+msgstr "新連接埠無效"
+
+#: option.c:230
+#, c-format
+msgid "invalid argument for option %s"
+msgstr "選項 %s 的參數無效"
+
+# postmaster/postmaster.c:512 postmaster/postmaster.c:525
+#: option.c:238
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "用 \"%s --help\" 取得更多資訊。\n"
+
+#: option.c:245
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "命令列參數過多(第一個多餘參數是 \"%s\")"
+
+#: option.c:251
+#, c-format
+msgid "Running in verbose mode"
+msgstr "以詳細模式執行"
+
+#: option.c:269
+msgid "old cluster binaries reside"
+msgstr "舊叢集執行檔所在"
+
+#: option.c:271
+msgid "new cluster binaries reside"
+msgstr "新叢集執行檔所在"
+
+#: option.c:273
+msgid "old cluster data resides"
+msgstr "舊叢集資料所在"
+
+#: option.c:275
+msgid "new cluster data resides"
+msgstr "新叢集資料所在"
+
+#: option.c:277
+msgid "sockets will be created"
+msgstr "建立 socket 所用"
+
+#: option.c:294 option.c:400
+#, c-format
+msgid "could not determine current directory"
+msgstr "無法確定目前目錄"
+
+#: option.c:297
+#, c-format
+msgid "cannot run pg_upgrade from inside the new cluster data directory on Windows"
+msgstr "在 Windows 上不能在新叢集的資料目錄內執行 pg_upgrade"
+
+#: option.c:306
+#, c-format
+msgid ""
+"pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n"
+"\n"
+msgstr ""
+"pg_upgrade 將 PostgreSQL 叢集升級到不同的主要版本。\n"
+"\n"
+
+#: option.c:307
+#, c-format
+msgid "Usage:\n"
+msgstr "用法:\n"
+
+#: option.c:308
+#, c-format
+msgid ""
+"  pg_upgrade [OPTION]...\n"
+"\n"
+msgstr "  pg_upgrade [選項]...\n\n"
+
+# postmaster/postmaster.c:1017 tcop/postgres.c:2115
+#: option.c:309
+#, c-format
+msgid "Options:\n"
+msgstr "選項:\n"
+
+#: option.c:310
+#, c-format
+msgid "  -b, --old-bindir=BINDIR       old cluster executable directory\n"
+msgstr "  -b, --old-bindir=BINDIR       舊叢集執行檔目錄\n"
+
+#: option.c:311
+#, c-format
+msgid ""
+"  -B, --new-bindir=BINDIR       new cluster executable directory (default\n"
+"                                same directory as pg_upgrade)\n"
+msgstr "  -B, --new-bindir=BINDIR       新叢集執行檔目錄(預設與 pg_upgrade 相同目錄)\n"
+
+#: option.c:313
+#, c-format
+msgid "  -c, --check                   check clusters only, don't change any data\n"
+msgstr "  -c, --check                   只檢查叢集，不變更任何資料\n"
+
+#: option.c:314
+#, c-format
+msgid "  -d, --old-datadir=DATADIR     old cluster data directory\n"
+msgstr "  -d, --old-datadir=DATADIR     舊叢集資料目錄\n"
+
+#: option.c:315
+#, c-format
+msgid "  -D, --new-datadir=DATADIR     new cluster data directory\n"
+msgstr "  -D, --new-datadir=DATADIR     新叢集資料目錄\n"
+
+#: option.c:316
+#, c-format
+msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
+msgstr "  -j, --jobs=NUM                同時使用的行程或執行緒數目\n"
+
+#: option.c:317
+#, c-format
+msgid "  -k, --link                    link instead of copying files to new cluster\n"
+msgstr "  -k, --link                    連結檔案至新叢集，而非複製\n"
+
+#: option.c:318
+#, c-format
+msgid "  -N, --no-sync                 do not wait for changes to be written safely to disk\n"
+msgstr "  -N, --no-sync                 不等待變更安全寫入磁碟\n"
+
+#: option.c:319
+#, c-format
+msgid "  -o, --old-options=OPTIONS     old cluster options to pass to the server\n"
+msgstr "  -o, --old-options=OPTIONS     傳遞給伺服器的舊叢集選項\n"
+
+#: option.c:320
+#, c-format
+msgid "  -O, --new-options=OPTIONS     new cluster options to pass to the server\n"
+msgstr "  -O, --new-options=OPTIONS     傳遞給伺服器的新叢集選項\n"
+
+#: option.c:321
+#, c-format
+msgid "  -p, --old-port=PORT           old cluster port number (default %d)\n"
+msgstr "  -p, --old-port=PORT           舊叢集連接埠(預設 %d)\n"
+
+#: option.c:322
+#, c-format
+msgid "  -P, --new-port=PORT           new cluster port number (default %d)\n"
+msgstr "  -P, --new-port=PORT           新叢集連接埠(預設 %d)\n"
+
+#: option.c:323
+#, c-format
+msgid "  -r, --retain                  retain SQL and log files after success\n"
+msgstr "  -r, --retain                  在成功後保留 SQL 和日誌檔案\n"
+
+#: option.c:324
+#, c-format
+msgid "  -s, --socketdir=DIR           socket directory to use (default current dir.)\n"
+msgstr "  -s, --socketdir=DIR           使用的 socket 目錄(預設為目前目錄)\n"
+
+#: option.c:325
+#, c-format
+msgid "  -U, --username=NAME           cluster superuser (default \"%s\")\n"
+msgstr "  -U, --username=NAME           叢集超級使用者(預設為 \"%s\")\n"
+
+#: option.c:326
+#, c-format
+msgid "  -v, --verbose                 enable verbose internal logging\n"
+msgstr "  -v, --verbose                 啟動詳細的內部記錄\n"
+
+#: option.c:327
+#, c-format
+msgid "  -V, --version                 display version information, then exit\n"
+msgstr "  -V, --version                 顯示版本，然後結束\n"
+
+#: option.c:328
+#, c-format
+msgid "  --clone                       clone instead of copying files to new cluster\n"
+msgstr "  --clone                       clone 檔案至新叢集而非複製\n"
+
+#: option.c:329
+#, c-format
+msgid "  --copy                        copy files to new cluster (default)\n"
+msgstr "  --copy                        複製檔案至新叢集(預設)\n"
+
+#: option.c:330
+#, c-format
+msgid "  --copy-file-range             copy files to new cluster with copy_file_range\n"
+msgstr "  --copy-file-range             使用 copy_file_range 將檔案複製到新叢集\n"
+
+# tcop/postgres.c:2129
+#: option.c:331
+#, c-format
+msgid "  --no-statistics               do not import statistics from old cluster\n"
+msgstr "  --no-statistics               不從舊叢集匯入統計資料\n"
+
+#: option.c:332
+#, c-format
+msgid ""
+"  --set-char-signedness=OPTION  set new cluster char signedness to \"signed\" or\n"
+"                                \"unsigned\"\n"
+msgstr "  --set-char-signedness=OPTION  將新叢集的 char 符號屬性設為 \"signed\" 或\n                                \"unsigned\"\n"
+
+#: option.c:334
+#, c-format
+msgid "  --swap                        move data directories to new cluster\n"
+msgstr "  --swap                        將資料目錄移動到新叢集\n"
+
+#: option.c:335
+#, c-format
+msgid "  --sync-method=METHOD          set method for syncing files to disk\n"
+msgstr "  --sync-method=METHOD          設定將檔案同步到磁碟的方法\n"
+
+#: option.c:336
+#, c-format
+msgid "  -?, --help                    show this help, then exit\n"
+msgstr "  -?, --help                    顯示說明，然後結束\n"
+
+#: option.c:337
+#, c-format
+msgid ""
+"\n"
+"Before running pg_upgrade you must:\n"
+"  create a new database cluster (using the new version of initdb)\n"
+"  shutdown the postmaster servicing the old cluster\n"
+"  shutdown the postmaster servicing the new cluster\n"
+msgstr "\n在執行 pg_upgrade 之前，您必須:\n  建立新的資料庫叢集(使用新版本的 initdb)\n  關閉舊叢集的 postmaster\n  關閉新叢集的 postmaster\n"
+
+#: option.c:342
+#, c-format
+msgid ""
+"\n"
+"When you run pg_upgrade, you must provide the following information:\n"
+"  the data directory for the old cluster  (-d DATADIR)\n"
+"  the data directory for the new cluster  (-D DATADIR)\n"
+"  the \"bin\" directory for the old version (-b BINDIR)\n"
+"  the \"bin\" directory for the new version (-B BINDIR)\n"
+msgstr "\n當您執行 pg_upgrade 時，必須提供以下資訊:\n  舊叢集的資料目錄                        (-d DATADIR)\n  新叢集的資料目錄                        (-D DATADIR)\n  舊版本的 \"bin\" 目錄                     (-b BINDIR)\n  新版本的 \"bin\" 目錄                     (-B BINDIR)\n"
+
+#: option.c:348
+#, c-format
+msgid ""
+"\n"
+"For example:\n"
+"  pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n"
+"or\n"
+msgstr ""
+"\n"
+"例如:\n"
+"  pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n"
+"或\n"
+
+#: option.c:353
+#, c-format
+msgid ""
+"  $ export PGDATAOLD=oldCluster/data\n"
+"  $ export PGDATANEW=newCluster/data\n"
+"  $ export PGBINOLD=oldCluster/bin\n"
+"  $ export PGBINNEW=newCluster/bin\n"
+"  $ pg_upgrade\n"
+msgstr ""
+"  $ export PGDATAOLD=oldCluster/data\n"
+"  $ export PGDATANEW=newCluster/data\n"
+"  $ export PGBINOLD=oldCluster/bin\n"
+"  $ export PGBINNEW=newCluster/bin\n"
+"  $ pg_upgrade\n"
+
+#: option.c:359
+#, c-format
+msgid ""
+"  C:\\> set PGDATAOLD=oldCluster/data\n"
+"  C:\\> set PGDATANEW=newCluster/data\n"
+"  C:\\> set PGBINOLD=oldCluster/bin\n"
+"  C:\\> set PGBINNEW=newCluster/bin\n"
+"  C:\\> pg_upgrade\n"
+msgstr ""
+"  C:\\> set PGDATAOLD=oldCluster/data\n"
+"  C:\\> set PGDATANEW=newCluster/data\n"
+"  C:\\> set PGBINOLD=oldCluster/bin\n"
+"  C:\\> set PGBINNEW=newCluster/bin\n"
+"  C:\\> pg_upgrade\n"
+
+#: option.c:365
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr "\n回報錯誤至 <%s>。\n"
+
+#: option.c:366
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 首頁: <%s>\n"
+
+#: option.c:406
+#, c-format
+msgid ""
+"You must identify the directory where the %s.\n"
+"Please use the %s command-line option or the %s environment variable."
+msgstr "您必須指定%s的目錄。\n請使用 %s 命令列選項或環境變數 %s。"
+
+#: option.c:459
+#, c-format
+msgid "Finding the real data directory for the source cluster"
+msgstr "尋找來源叢集的實際資料目錄"
+
+#: option.c:461
+#, c-format
+msgid "Finding the real data directory for the target cluster"
+msgstr "尋找目標叢集的實際資料目錄"
+
+#: option.c:474
+#, c-format
+msgid "could not get data directory using %s: %m"
+msgstr "無法用 %s 取得資料目錄: %m"
+
+#: option.c:478
+#, c-format
+msgid "could not get data directory using %s: %s"
+msgstr "無法用 %s 取得資料目錄: %s"
+
+#: option.c:526
+#, c-format
+msgid "could not read line %d from file \"%s\": %m"
+msgstr "無法從檔案 \"%2$s\" 讀取第 %1$d 行內容: %m"
+
+#: option.c:543
+#, c-format
+msgid "user-supplied old port number %hu corrected to %hu"
+msgstr "使用者提供的舊埠號 %hu 已更正為 %hu"
+
+# fe-connect.c:1197
+#: parallel.c:128 parallel.c:236
+#, c-format
+msgid "could not create worker process: %m"
+msgstr "無法建立工作行程: %m"
+
+#: parallel.c:144 parallel.c:255
+#, c-format
+msgid "could not create worker thread: %m"
+msgstr "無法建立工作執行緒: %m"
+
+# fe-misc.c:991
+#: parallel.c:297 task.c:406
+#, c-format
+msgid "%s() failed: %m"
+msgstr "%s() 失敗: %m"
+
+#: parallel.c:301
+#, c-format
+msgid "child process exited abnormally: status %d"
+msgstr "子行程異常結束: 狀態 %d"
+
+#: parallel.c:316
+#, c-format
+msgid "child worker exited abnormally: %m"
+msgstr "子工作執行緒異常結束: %m"
+
+# postmaster/postmaster.c:897
+#: pg_upgrade.c:117
+#, c-format
+msgid "could not read permissions of directory \"%s\": %m"
+msgstr "無法讀取目錄 \"%s\" 的權限: %m"
+
+#: pg_upgrade.c:149
+#, c-format
+msgid ""
+"\n"
+"Performing Upgrade\n"
+"------------------"
+msgstr ""
+"\n"
+"進行升級\n"
+"------------------"
+
+#: pg_upgrade.c:197
+#, c-format
+msgid "Setting next OID for new cluster"
+msgstr "設定新叢集的下一個 OID"
+
+#: pg_upgrade.c:242
+#, c-format
+msgid "Sync data directory to disk"
+msgstr "同步資料目錄至磁碟"
+
+#: pg_upgrade.c:258
+#, c-format
+msgid ""
+"\n"
+"Upgrade Complete\n"
+"----------------"
+msgstr ""
+"\n"
+"升級完成\n"
+"----------------"
+
+#: pg_upgrade.c:291 pg_upgrade.c:304 pg_upgrade.c:311 pg_upgrade.c:318
+#: pg_upgrade.c:336 pg_upgrade.c:347
+#, c-format
+msgid "directory path for new cluster is too long"
+msgstr "新叢集的目錄路徑太長"
+
+# commands/tablespace.c:154 commands/tablespace.c:162
+# commands/tablespace.c:168
+#: pg_upgrade.c:325 pg_upgrade.c:327 pg_upgrade.c:329 pg_upgrade.c:331
+#: relfilenumber.c:285 relfilenumber.c:289
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "無法建立目錄 \"%s\": %m"
+
+#: pg_upgrade.c:380
+#, c-format
+msgid "%s: could not find own program executable"
+msgstr "%s: 找不到自身程式的執行檔"
+
+#: pg_upgrade.c:406
+#, c-format
+msgid ""
+"There seems to be a postmaster servicing the old cluster.\n"
+"Please shutdown that postmaster and try again."
+msgstr ""
+"似乎有 postmaster 正在使用舊叢集。\n"
+"請關閉該 postmaster 然後重試。"
+
+#: pg_upgrade.c:419
+#, c-format
+msgid ""
+"There seems to be a postmaster servicing the new cluster.\n"
+"Please shutdown that postmaster and try again."
+msgstr ""
+"似乎有 postmaster 正在使用新叢集。\n"
+"請關閉該 postmaster 然後重試。"
+
+#: pg_upgrade.c:445
+#, c-format
+msgid "Setting the default char signedness for new cluster"
+msgstr "正在為新叢集設定預設 char 符號屬性"
+
+#: pg_upgrade.c:473
+#, c-format
+msgid "Setting locale and encoding for new cluster"
+msgstr "設定新叢集的區域設定和編碼"
+
+#: pg_upgrade.c:551
+#, c-format
+msgid "Analyzing all rows in the new cluster"
+msgstr "分析新叢集中的所有資料列"
+
+#: pg_upgrade.c:564
+#, c-format
+msgid "Freezing all rows in the new cluster"
+msgstr "凍結新叢集中的所有資料列"
+
+#: pg_upgrade.c:584
+#, c-format
+msgid "Restoring global objects in the new cluster"
+msgstr "還原新叢集中的全域物件"
+
+#: pg_upgrade.c:601
+#, c-format
+msgid "Restoring database schemas in the new cluster"
+msgstr "還原新叢集中的資料庫 schema"
+
+#: pg_upgrade.c:736
+#, c-format
+msgid "Deleting files from new %s"
+msgstr "從新的 %s 刪除檔案"
+
+#: pg_upgrade.c:740
+#, c-format
+msgid "could not delete directory \"%s\""
+msgstr "無法刪除目錄 \"%s\""
+
+#: pg_upgrade.c:759
+#, c-format
+msgid "Copying old %s to new server"
+msgstr "將舊的 %s 複製到新伺服器"
+
+#: pg_upgrade.c:785
+#, c-format
+msgid "Setting oldest XID for new cluster"
+msgstr "為新叢集設定最早的 XID"
+
+#: pg_upgrade.c:793
+#, c-format
+msgid "Setting next transaction ID and epoch for new cluster"
+msgstr "為新叢集設定下一個交易 ID 和紀元"
+
+#: pg_upgrade.c:823 pg_upgrade.c:886
+#, c-format
+msgid "Setting next multixact ID and offset for new cluster"
+msgstr "為新叢集設定下一個多重交易 ID 和位移"
+
+#: pg_upgrade.c:882
+#, c-format
+msgid "Converting pg_multixact files"
+msgstr "正在轉換 pg_multixact 檔案"
+
+#: pg_upgrade.c:896
+#, c-format
+msgid "Resetting WAL archives"
+msgstr "重設 WAL 封存檔"
+
+#: pg_upgrade.c:939
+#, c-format
+msgid "Setting frozenxid and minmxid counters in new cluster"
+msgstr "在新叢集中設定 frozenxid 和 minmxid 計數器"
+
+#: pg_upgrade.c:941
+#, c-format
+msgid "Setting minmxid counter in new cluster"
+msgstr "在新叢集中設定 minmxid 計數器"
+
+#: pg_upgrade.c:1032
+#, c-format
+msgid "Restoring logical replication slots in the new cluster"
+msgstr "正在還原新叢集中的邏輯複寫槽"
+
+#: pg_upgrade.c:1094
+#, c-format
+msgid "Creating the replication conflict detection slot"
+msgstr "正在建立複寫衝突偵測槽"
+
+# access/transam/slru.c:673 access/transam/xlog.c:1562
+# access/transam/xlog.c:1686 access/transam/xlog.c:3008
+#: relfilenumber.c:68
+#, c-format
+msgid "could not synchronize file \"%s\": %m"
+msgstr "無法同步檔案 \"%s\": %m"
+
+#: relfilenumber.c:114
+#, c-format
+msgid "Cloning user relation files"
+msgstr "Clone 使用者關聯檔"
+
+#: relfilenumber.c:117
+#, c-format
+msgid "Copying user relation files"
+msgstr "複製使用者關聯檔"
+
+#: relfilenumber.c:120
+#, c-format
+msgid "Copying user relation files with copy_file_range"
+msgstr "正在使用 copy_file_range 複製使用者關聯檔案"
+
+#: relfilenumber.c:123
+#, c-format
+msgid "Linking user relation files"
+msgstr "連結使用者關聯檔"
+
+#: relfilenumber.c:126
+#, c-format
+msgid "Swapping data directories"
+msgstr "正在交換資料目錄"
+
+#: relfilenumber.c:202
+#, c-format
+msgid "old database \"%s\" not found in the new cluster"
+msgstr "在新叢集中找不到舊資料庫 \"%s\""
+
+# access/transam/xlog.c:3037 access/transam/xlog.c:3819
+# access/transam/xlog.c:3862 commands/user.c:282 commands/user.c:412
+# postmaster/pgarch.c:597
+#: relfilenumber.c:293 relfilenumber.c:297
+#, c-format
+msgid "could not rename directory \"%s\" to \"%s\": %m"
+msgstr "無法將目錄 \"%s\" 重新命名為 \"%s\": %m"
+
+# access/transam/slru.c:930 commands/tablespace.c:529
+# commands/tablespace.c:694 utils/adt/misc.c:174
+#: relfilenumber.c:367 relfilenumber.c:394
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "無法開啟目錄 \"%s\": %m"
+
+# access/transam/slru.c:967 commands/tablespace.c:577
+# commands/tablespace.c:721
+#: relfilenumber.c:388 relfilenumber.c:426
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "無法讀取目錄 \"%s\": %m"
+
+# access/transam/slru.c:930 commands/tablespace.c:529
+# commands/tablespace.c:694 utils/adt/misc.c:174
+#: relfilenumber.c:431
+#, c-format
+msgid "could not synchronize directory \"%s\": %m"
+msgstr "無法同步目錄 \"%s\": %m"
+
+# commands/tablespace.c:154 commands/tablespace.c:162
+# commands/tablespace.c:168
+#: relfilenumber.c:433
+#, c-format
+msgid "could not synchronize parent directory of \"%s\": %m"
+msgstr "無法同步 \"%s\" 的父目錄: %m"
+
+#: relfilenumber.c:593
+#, c-format
+msgid "error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "檢查關聯 \"%s.%s\" 的檔案是否存在時發生錯誤 (\"%s\" 至 \"%s\"): %m"
+
+#: relfilenumber.c:610
+#, c-format
+msgid "rewriting \"%s\" to \"%s\""
+msgstr "將 \"%s\" 重寫為 \"%s\""
+
+#: relfilenumber.c:618
+#, c-format
+msgid "cloning \"%s\" to \"%s\""
+msgstr "clone \"%s\" 至 \"%s\""
+
+#: relfilenumber.c:623
+#, c-format
+msgid "copying \"%s\" to \"%s\""
+msgstr "複製 \"%s\" 至 \"%s\""
+
+#: relfilenumber.c:628
+#, c-format
+msgid "copying \"%s\" to \"%s\" with copy_file_range"
+msgstr "正在使用 copy_file_range 將 \"%s\" 複製到 \"%s\""
+
+#: relfilenumber.c:633
+#, c-format
+msgid "linking \"%s\" to \"%s\""
+msgstr "連結 \"%s\" 至 \"%s\""
+
+#: relfilenumber.c:639
+#, c-format
+msgid "should never happen"
+msgstr "絕不應發生此情況"
+
+#: server.c:39 server.c:145 util.c:248 util.c:278
+#, c-format
+msgid "Failure, exiting\n"
+msgstr "失敗，結束\n"
+
+#: server.c:135
+#, c-format
+msgid "executing: %s"
+msgstr "執行: %s"
+
+#: server.c:141
+#, c-format
+msgid ""
+"SQL command failed\n"
+"%s\n"
+"%s"
+msgstr ""
+"SQL 命令失敗\n"
+"%s\n"
+"%s"
+
+#: server.c:262
+#, c-format
+msgid ""
+"\n"
+"%s"
+msgstr ""
+"\n"
+"%s"
+
+#: server.c:266
+#, c-format
+msgid ""
+"could not connect to source postmaster started with the command:\n"
+"%s"
+msgstr ""
+"無法連線到用以下命令啟動的來源 postmaster:\n"
+"%s"
+
+#: server.c:270
+#, c-format
+msgid ""
+"could not connect to target postmaster started with the command:\n"
+"%s"
+msgstr ""
+"無法連線到用以下命令啟動的目標 postmaster:\n"
+"%s"
+
+#: server.c:284
+#, c-format
+msgid "pg_ctl failed to start the source server, or connection failed"
+msgstr "pg_ctl 啟動來源伺服器失敗或連線失敗"
+
+#: server.c:286
+#, c-format
+msgid "pg_ctl failed to start the target server, or connection failed"
+msgstr "pg_ctl 啟動目標伺服器失敗或連線失敗"
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: server.c:331 task.c:197
+#, c-format
+msgid "out of memory"
+msgstr "記憶體不足"
+
+#: server.c:344
+#, c-format
+msgid "libpq environment variable %s has a non-local server value: %s"
+msgstr "libpq 環境變數 %s 具有非本地伺服器值: %s"
+
+# access/transam/xlog.c:1659 access/transam/xlog.c:2942
+# access/transam/xlog.c:5397 access/transam/xlog.c:5448
+# access/transam/xlog.c:5520 access/transam/xlog.c:5545
+# access/transam/xlog.c:5583
+#: slru_io.c:131
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "無法讀取檔案 \"%s\": %m"
+
+#: slru_io.c:136
+#, c-format
+msgid "unexpected EOF reading file \"%s\" at offset %u, reading as zeros"
+msgstr "讀取檔案 \"%s\" 位移 %u 處時非預期地遇到檔案結尾，將以零讀取"
+
+# access/transam/xlog.c:5319 access/transam/xlog.c:5439
+#: slru_io.c:229 slru_io.c:253
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "無法寫入檔案 \"%s\": %m"
+
+#: tablespace.c:36
+#, c-format
+msgid ""
+"Cannot upgrade to/from the same system catalog version when\n"
+"using tablespaces."
+msgstr "使用表空間時，不能在系統目錄版本相同的\n來源叢集和目標叢集之間升級。"
+
+#: tablespace.c:122
+#, c-format
+msgid "tablespace directory \"%s\" does not exist"
+msgstr "表空間目錄 \"%s\" 不存在"
+
+#: tablespace.c:126
+#, c-format
+msgid "could not stat tablespace directory \"%s\": %m"
+msgstr "無法取得表空間目錄 \"%s\" 的狀態: %m"
+
+#: tablespace.c:131
+#, c-format
+msgid "tablespace path \"%s\" is not a directory"
+msgstr "表空間路徑 \"%s\" 不是目錄"
+
+# postmaster/postmaster.c:2603
+#: task.c:218 task.c:269 task.c:284 task.c:295
+#, c-format
+msgid "connection failure: %s"
+msgstr "連線失敗: %s"
+
+# utils/adt/encode.c:307
+#: task.c:397
+#, c-format
+msgid "invalid socket"
+msgstr "無效的 socket"
+
+#: util.c:53 util.c:56 util.c:139 util.c:170 util.c:172
+#, c-format
+msgid "%-*s"
+msgstr "%-*s"
+
+# utils/init/postinit.c:283
+#: util.c:107
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "無法存取目錄 \"%s\": %m"
+
+#: util.c:287
+#, c-format
+msgid "ok"
+msgstr "成功"
+
+#: version.c:62
+#, c-format
+msgid "Checking for hash indexes"
+msgstr "檢查雜湊索引"
+
+#: version.c:141
+#, c-format
+msgid ""
+"\n"
+"Your installation contains hash indexes.  These indexes have different\n"
+"internal formats between your old and new clusters, so they must be\n"
+"reindexed with the REINDEX command.  After upgrading, you will be given\n"
+"REINDEX instructions."
+msgstr "\n您的安裝包含雜湊索引。這些索引在您的舊叢集和新叢集之間具有不同的\n內部格式，因此必須使用 REINDEX 命令重建其索引。升級完成後，您\n將收到 REINDEX 指示。"
+
+#: version.c:147
+#, c-format
+msgid ""
+"\n"
+"Your installation contains hash indexes.  These indexes have different\n"
+"internal formats between your old and new clusters, so they must be\n"
+"reindexed with the REINDEX command.  The file\n"
+"    %s\n"
+"when executed by psql by the database superuser will recreate all invalid\n"
+"indexes; until then, none of these indexes will be used."
+msgstr "\n您的安裝包含雜湊索引。這些索引在您的舊叢集和新叢集之間具有不同的\n內部格式，因此必須使用 REINDEX 命令重建其索引。當檔案\n    %s\n被資料庫超級使用者用 psql 執行時，將重建所有無效的索引。在此之前，\n這些索引將不會被使用。"
+
+#: version.c:203
+#, c-format
+msgid "Checking for extension updates"
+msgstr "檢查擴充模組更新"
+
+#: version.c:217
+#, c-format
+msgid "notice"
+msgstr "注意"
+
+#: version.c:218
+#, c-format
+msgid ""
+"\n"
+"Your installation contains extensions that should be updated\n"
+"with the ALTER EXTENSION command.  The file\n"
+"    %s\n"
+"when executed by psql by the database superuser will update\n"
+"these extensions."
+msgstr "\n您的安裝包含建議使用 ALTER EXTENSION 命令更新的擴充模組。\n當檔案\n    %s\n被資料庫超級使用者用 psql 執行時，會更新這些擴充模組。"
+
+#, c-format
+#~ msgid "Checking for incompatible \"jsonb\" data type"
+#~ msgstr "檢查不相容的 \"jsonb\" 資料型別"
+
+#, c-format
+#~ msgid "Setting oldest multixact ID in new cluster"
+#~ msgstr "為新叢集設定最早的 multixact ID"
+
+#, c-format
+#~ msgid "check for \"%s\" failed: %s"
+#~ msgstr "檢查 \"%s\" 失敗: %s"
+
+#, c-format
+#~ msgid "could not create file \"%s\": %s"
+#~ msgstr "無法建立檔案 \"%s\": %s"
+
+#, c-format
+#~ msgid "could not create worker process: %s"
+#~ msgstr "無法建立工作行程: %s"
+
+#, c-format
+#~ msgid "could not open file \"%s\" for reading: %s"
+#~ msgstr "無法開啟檔案 \"%s\" 進行讀取: %s"
+
+# fe-lobj.c:410
+# fe-lobj.c:495
+#, c-format
+#~ msgid "could not open file \"%s\": %s"
+#~ msgstr "無法開啟檔案 \"%s\":%s"
+
+#, c-format
+#~ msgid "could not read permissions of directory \"%s\": %s"
+#~ msgstr "無法讀取目錄 \"%s\" 的權限: %s"
+

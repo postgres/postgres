@@ -1,165 +1,203 @@
 # Traditional Chinese message translation file for pg_test_fsync
-# Copyright (C) 2023 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_test_fsync (PostgreSQL) package.
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # Zhenbang Wei <znbang@gmail.com>, 2023.
+# Ruohang Feng <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_fsync (PostgreSQL) 16\n"
+"Project-Id-Version: pg_test_fsync (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-11 20:52+0000\n"
-"PO-Revision-Date: 2023-11-06 08:49+0800\n"
-"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
-"Language-Team: \n"
+"POT-Creation-Date: 2026-09-18 04:26+0000\n"
+"PO-Revision-Date: 2026-09-19 12:00+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.1\n"
 
 # libpq/be-secure.c:294 libpq/be-secure.c:387
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "錯誤: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
-msgstr "詳細內容: "
+msgstr "詳情: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "提示: "
 
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "記憶體不足\n"
+
+# common.c:78
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能複製空指標(內部錯誤)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu * %zu\n"
+
 #. translator: maintain alignment with NA_FORMAT
-#: pg_test_fsync.c:32
+#: pg_test_fsync.c:37
 #, c-format
 msgid "%13.3f ops/sec  %6.0f usecs/op\n"
 msgstr "%13.3f ops/sec  %6.0f usecs/op\n"
 
-#: pg_test_fsync.c:50
+#: pg_test_fsync.c:55
 #, c-format
 msgid "could not create thread for alarm"
-msgstr "無法為警報建立執行緒"
+msgstr "無法建立定時通知執行緒"
 
-#: pg_test_fsync.c:95
+#: pg_test_fsync.c:99
 #, c-format
 msgid "%s: %m"
 msgstr "%s: %m"
 
-#: pg_test_fsync.c:159
+#: pg_test_fsync.c:162
 #, c-format
 msgid "Usage: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
-msgstr "用法: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
+msgstr "用法: %s [-f 檔案名稱] [-s 每次測試秒數]\n"
 
-#: pg_test_fsync.c:185
+#: pg_test_fsync.c:188
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "選項 %s 的參數無效"
 
 # tcop/postgres.c:2636 tcop/postgres.c:2652
-#: pg_test_fsync.c:186 pg_test_fsync.c:198 pg_test_fsync.c:207
+#: pg_test_fsync.c:189 pg_test_fsync.c:201 pg_test_fsync.c:210
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "用 \"%s --help\" 取得更多資訊。"
 
-#: pg_test_fsync.c:192
+#: pg_test_fsync.c:195
 #, c-format
 msgid "%s must be in range %u..%u"
 msgstr "%s 必須在範圍 %u..%u 內"
 
-#: pg_test_fsync.c:205
+#: pg_test_fsync.c:208
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "命令列參數過多(第一個是 \"%s\")"
+msgstr "命令列參數過多(第一個多餘參數是 \"%s\")"
 
-#: pg_test_fsync.c:211
+#: pg_test_fsync.c:214
 #, c-format
 msgid "%u second per test\n"
 msgid_plural "%u seconds per test\n"
 msgstr[0] "每個測試 %u 秒\n"
 
-#: pg_test_fsync.c:216
+#: pg_test_fsync.c:219
 #, c-format
 msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
-msgstr "此平臺的 open_datasync 和 open_sync 支援 O_DIRECT。\n"
+msgstr "此平台的 open_datasync 和 open_sync 支援 O_DIRECT。\n"
 
-#: pg_test_fsync.c:218
+#: pg_test_fsync.c:221
 #, c-format
 msgid "F_NOCACHE supported on this platform for open_datasync and open_sync.\n"
-msgstr "此平臺的 open_datasync 和 open_sync 支援 F_NOCACHE。\n"
+msgstr "此平台的 open_datasync 和 open_sync 支援 F_NOCACHE。\n"
 
-#: pg_test_fsync.c:220
+#: pg_test_fsync.c:223
 #, c-format
 msgid "Direct I/O is not supported on this platform.\n"
-msgstr "此平臺不支援直接 I/O。\n"
+msgstr "此平台不支援直接 I/O。\n"
 
-#: pg_test_fsync.c:245 pg_test_fsync.c:335 pg_test_fsync.c:357
-#: pg_test_fsync.c:381 pg_test_fsync.c:525 pg_test_fsync.c:537
-#: pg_test_fsync.c:553 pg_test_fsync.c:559 pg_test_fsync.c:581
+#: pg_test_fsync.c:246 pg_test_fsync.c:336 pg_test_fsync.c:358
+#: pg_test_fsync.c:382 pg_test_fsync.c:526 pg_test_fsync.c:538
+#: pg_test_fsync.c:554 pg_test_fsync.c:560 pg_test_fsync.c:582
 msgid "could not open output file"
 msgstr "無法開啟輸出檔"
 
-#: pg_test_fsync.c:249 pg_test_fsync.c:319 pg_test_fsync.c:344
-#: pg_test_fsync.c:366 pg_test_fsync.c:390 pg_test_fsync.c:429
-#: pg_test_fsync.c:488 pg_test_fsync.c:527 pg_test_fsync.c:555
-#: pg_test_fsync.c:586
+#: pg_test_fsync.c:250 pg_test_fsync.c:320 pg_test_fsync.c:345
+#: pg_test_fsync.c:367 pg_test_fsync.c:391 pg_test_fsync.c:430
+#: pg_test_fsync.c:489 pg_test_fsync.c:528 pg_test_fsync.c:556
+#: pg_test_fsync.c:587
 msgid "write failed"
 msgstr "寫入失敗"
 
-#: pg_test_fsync.c:253 pg_test_fsync.c:368 pg_test_fsync.c:392
-#: pg_test_fsync.c:529 pg_test_fsync.c:561
+#: pg_test_fsync.c:254 pg_test_fsync.c:369 pg_test_fsync.c:393
+#: pg_test_fsync.c:530 pg_test_fsync.c:562
 msgid "fsync failed"
 msgstr "fsync 失敗"
 
-#: pg_test_fsync.c:292
+#: pg_test_fsync.c:293
 #, c-format
 msgid ""
 "\n"
 "Compare file sync methods using one %dkB write:\n"
-msgstr ""
-"\n"
-"比較使用一個 %dkB 寫入的檔案同步方式:\n"
+msgstr "\n比較使用一次 %dkB 寫入的檔案同步方式:\n"
 
-#: pg_test_fsync.c:294
+#: pg_test_fsync.c:295
 #, c-format
 msgid ""
 "\n"
 "Compare file sync methods using two %dkB writes:\n"
-msgstr ""
-"\n"
-"比較使用兩個 %dkB 寫入的檔案同步方式:\n"
+msgstr "\n比較使用兩次 %dkB 寫入的檔案同步方式:\n"
 
-#: pg_test_fsync.c:295
+#: pg_test_fsync.c:296
 #, c-format
-msgid "(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
-msgstr "(按照 wal_sync_method 的優先順序，除了 fdatasync 是 Linux 的預設選項)\n"
+msgid "(in \"wal_sync_method\" preference order, except fdatasync is Linux's default)\n"
+msgstr "(按 \"wal_sync_method\" 的優先順序排列，但 Linux 預設使用 fdatasync)\n"
 
-#: pg_test_fsync.c:306 pg_test_fsync.c:409 pg_test_fsync.c:476
+#: pg_test_fsync.c:307 pg_test_fsync.c:410 pg_test_fsync.c:477
 msgid "n/a*"
 msgstr "n/a*"
 
-#: pg_test_fsync.c:325 pg_test_fsync.c:397 pg_test_fsync.c:435
-#: pg_test_fsync.c:494
+#: pg_test_fsync.c:326 pg_test_fsync.c:398 pg_test_fsync.c:436
+#: pg_test_fsync.c:495
 msgid "n/a"
 msgstr "n/a"
 
-#: pg_test_fsync.c:440
+#: pg_test_fsync.c:441
 #, c-format
 msgid ""
 "* This file system and its mount options do not support direct\n"
 "  I/O, e.g. ext4 in journaled mode.\n"
 msgstr "* 這個檔案系統及其掛載選項不支援直接 I/O，例如 ext4 的日誌模式。\n"
 
-#: pg_test_fsync.c:448
+#: pg_test_fsync.c:449
 #, c-format
 msgid ""
 "\n"
@@ -168,50 +206,48 @@ msgstr ""
 "\n"
 "比較使用不同寫入大小的 open_sync:\n"
 
-#: pg_test_fsync.c:449
+#: pg_test_fsync.c:450
 #, c-format
 msgid ""
 "(This is designed to compare the cost of writing 16kB in different write\n"
 "open_sync sizes.)\n"
 msgstr "(這是為了比較在不同的 open_sync 寫入大小下寫入 16kB 的成本而設計的。)\n"
 
-#: pg_test_fsync.c:452
+#: pg_test_fsync.c:453
 msgid " 1 * 16kB open_sync write"
 msgstr " 1 * 16kB open_sync 寫入"
 
-#: pg_test_fsync.c:453
+#: pg_test_fsync.c:454
 msgid " 2 *  8kB open_sync writes"
 msgstr " 2 *  8kB open_sync 寫入"
 
-#: pg_test_fsync.c:454
+#: pg_test_fsync.c:455
 msgid " 4 *  4kB open_sync writes"
 msgstr " 4 *  4kB open_sync 寫入"
 
-#: pg_test_fsync.c:455
+#: pg_test_fsync.c:456
 msgid " 8 *  2kB open_sync writes"
 msgstr " 8 *  2kB open_sync 寫入"
 
-#: pg_test_fsync.c:456
+#: pg_test_fsync.c:457
 msgid "16 *  1kB open_sync writes"
 msgstr "16 *  1kB open_sync 寫入"
-
-#: pg_test_fsync.c:510
-#, c-format
-msgid ""
-"\n"
-"Test if fsync on non-write file descriptor is honored:\n"
-msgstr ""
-"\n"
-"測試 fsync 非寫入檔案描述符是否被尊重:\n"
 
 #: pg_test_fsync.c:511
 #, c-format
 msgid ""
+"\n"
+"Test if fsync on non-write file descriptor is honored:\n"
+msgstr "\n測試對未用於寫入的檔案描述符執行 fsync 是否生效:\n"
+
+#: pg_test_fsync.c:512
+#, c-format
+msgid ""
 "(If the times are similar, fsync() can sync data written on a different\n"
 "descriptor.)\n"
-msgstr "(如果時間相近，fsync() 可以同步被寫入不同描述符的資料。)\n"
+msgstr "(如果時間相近，fsync() 可以同步透過其他描述符寫入的資料。)\n"
 
-#: pg_test_fsync.c:576
+#: pg_test_fsync.c:577
 #, c-format
 msgid ""
 "\n"
@@ -219,3 +255,4 @@ msgid ""
 msgstr ""
 "\n"
 "不使用同步的 %dkB 寫入:\n"
+

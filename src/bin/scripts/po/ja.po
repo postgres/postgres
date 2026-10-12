@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: scripts (PostgreSQL 19)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-08-17 11:08+0900\n"
-"PO-Revision-Date: 2026-08-17 15:16+0900\n"
+"POT-Creation-Date: 2026-10-07 13:59+0900\n"
+"PO-Revision-Date: 2026-10-07 14:19+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -267,18 +267,18 @@ msgid ""
 msgstr "%sはデータベース内で事前にクラスタ化されているすべてのテーブルをクラスタ化します。\n"
 
 #: clusterdb.c:274 createdb.c:300 createuser.c:417 dropdb.c:171 dropuser.c:171
-#: pg_isready.c:226 reindexdb.c:898 vacuumdb.c:351
+#: pg_isready.c:226 reindexdb.c:901 vacuumdb.c:351
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: clusterdb.c:275 reindexdb.c:899 vacuumdb.c:352
+#: clusterdb.c:275 reindexdb.c:902 vacuumdb.c:352
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [オプション]... [データベース名]\n"
 
 #: clusterdb.c:276 createdb.c:302 createuser.c:419 dropdb.c:173 dropuser.c:173
-#: pg_isready.c:229 reindexdb.c:900 vacuumdb.c:353
+#: pg_isready.c:229 reindexdb.c:903 vacuumdb.c:353
 #, c-format
 msgid ""
 "\n"
@@ -328,7 +328,7 @@ msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                このヘルプを表示して終了\n"
 
 #: clusterdb.c:285 createdb.c:319 createuser.c:450 dropdb.c:180 dropuser.c:180
-#: pg_isready.c:235 reindexdb.c:915 vacuumdb.c:384
+#: pg_isready.c:235 reindexdb.c:918 vacuumdb.c:384
 #, c-format
 msgid ""
 "\n"
@@ -379,7 +379,7 @@ msgstr ""
 "詳細は SQL コマンドの CLUSTER の説明を参照してください。\n"
 
 #: clusterdb.c:293 createdb.c:327 createuser.c:456 dropdb.c:187 dropuser.c:186
-#: pg_isready.c:240 reindexdb.c:923 vacuumdb.c:392
+#: pg_isready.c:240 reindexdb.c:926 vacuumdb.c:392
 #, c-format
 msgid ""
 "\n"
@@ -389,7 +389,7 @@ msgstr ""
 "バグは<%s>に報告してください。\n"
 
 #: clusterdb.c:294 createdb.c:328 createuser.c:457 dropdb.c:188 dropuser.c:187
-#: pg_isready.c:241 reindexdb.c:924 vacuumdb.c:393
+#: pg_isready.c:241 reindexdb.c:927 vacuumdb.c:393
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"
@@ -456,7 +456,7 @@ msgstr "  %s [オプション]... [データベース名] [説明]\n"
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=TABLESPACE  データベースのデフォルトテーブルスペース名\n"
 
-#: createdb.c:304 reindexdb.c:904
+#: createdb.c:304 reindexdb.c:907
 #, c-format
 msgid "  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo                   サーバーへ送信されるコマンドを表示\n"
@@ -521,44 +521,44 @@ msgstr "  -S, --strategy=STRATEGY      データベース生成方法 wal_log �
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=TEMPLATE      コピーするテンプレートデータベース\n"
 
-#: createdb.c:317 reindexdb.c:913
+#: createdb.c:317 reindexdb.c:916
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                バージョン情報を表示して終了\n"
 
-#: createdb.c:318 reindexdb.c:914
+#: createdb.c:318 reindexdb.c:917
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   このヘルプを表示して終了\n"
 
-#: createdb.c:320 reindexdb.c:916
+#: createdb.c:320 reindexdb.c:919
 #, c-format
 msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr ""
 "  -h, --host=HOSTNAME          データベースサーバーホストまたはソケット\n"
 "                               ディレクトリ\n"
 
-#: createdb.c:321 reindexdb.c:917
+#: createdb.c:321 reindexdb.c:920
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              データベースサーバーのポート番号\n"
 
-#: createdb.c:322 reindexdb.c:918
+#: createdb.c:322 reindexdb.c:921
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=USERNAME      接続する際のユーザー名\n"
 
-#: createdb.c:323 reindexdb.c:919
+#: createdb.c:323 reindexdb.c:922
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            パスワード入力を要求しない\n"
 
-#: createdb.c:324 reindexdb.c:920
+#: createdb.c:324 reindexdb.c:923
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               パスワードプロンプトを強制\n"
 
-#: createdb.c:325 reindexdb.c:921
+#: createdb.c:325 reindexdb.c:924
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAME      別の保守用データベースを指定\n"
@@ -944,12 +944,17 @@ msgstr "  -U, --username=USERNAME  このユーザー名で接続する\n"
 msgid "cannot use multiple jobs to reindex system catalogs"
 msgstr "システムカタログのインデックス再構築では複数ジョブを使用できません"
 
-#: reindexdb.c:222
+#: reindexdb.c:220
+#, c-format
+msgid "cannot use multiple jobs to reindex indexes concurrently"
+msgstr "インデックスの並列再構築をする場合、複数ジョブは使用できません"
+
+#: reindexdb.c:225
 #, c-format
 msgid "cannot reindex all databases and a specific one at the same time"
 msgstr "全データベースと特定のデータベースは同時に再インデックス化はできません"
 
-#: reindexdb.c:302 reindexdb.c:309 vacuuming.c:211 vacuuming.c:218
+#: reindexdb.c:305 reindexdb.c:312 vacuuming.c:211 vacuuming.c:218
 #: vacuuming.c:225 vacuuming.c:232 vacuuming.c:239 vacuuming.c:246
 #: vacuuming.c:253 vacuuming.c:260 vacuuming.c:267 vacuuming.c:274
 #: vacuuming.c:281 vacuuming.c:288
@@ -957,37 +962,37 @@ msgstr "全データベースと特定のデータベースは同時に再イン
 msgid "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
 msgstr "PostgreSQL %2$sよりも古いサーバーバージョンでは\"%1$s\"オプションは使えません"
 
-#: reindexdb.c:597
+#: reindexdb.c:600
 #, c-format
 msgid "reindexing of database \"%s\" failed: %s"
 msgstr "データベース\"%s\"のインデックス再構築に失敗しました: %s"
 
-#: reindexdb.c:601
+#: reindexdb.c:604
 #, c-format
 msgid "reindexing of index \"%s\" in database \"%s\" failed: %s"
 msgstr "データベース\"%2$s\"中にあるインデックス\"%1$s\"の再作成に失敗しました: %3$s"
 
-#: reindexdb.c:605
+#: reindexdb.c:608
 #, c-format
 msgid "reindexing of schema \"%s\" in database \"%s\" failed: %s"
 msgstr "データベース\"%2$s\"中にあるスキーマ\"%1$s\"のインデックス再構築に失敗しました: %3$s"
 
-#: reindexdb.c:609
+#: reindexdb.c:612
 #, c-format
 msgid "reindexing of system catalogs in database \"%s\" failed: %s"
 msgstr "データベース\"%s\"中のシステムカタログのインデックス再構築に失敗しました: %s"
 
-#: reindexdb.c:613
+#: reindexdb.c:616
 #, c-format
 msgid "reindexing of table \"%s\" in database \"%s\" failed: %s"
 msgstr "データベース\"%2$s\"中にあるテーブル\"%1$s\"のインでックス再構築に失敗しました: %3$s"
 
-#: reindexdb.c:854
+#: reindexdb.c:857
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: データベース\"%s\"を再インデックス化しています\n"
 
-#: reindexdb.c:897
+#: reindexdb.c:900
 #, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
@@ -996,62 +1001,62 @@ msgstr ""
 "%sはPostgreSQLデータベースを再インデックス化します。\n"
 "\n"
 
-#: reindexdb.c:901
+#: reindexdb.c:904
 #, c-format
 msgid "  -a, --all                    reindex all databases\n"
 msgstr "  -a, --all                    全データベースでインデックス再構築を行う\n"
 
-#: reindexdb.c:902
+#: reindexdb.c:905
 #, c-format
 msgid "      --concurrently           reindex concurrently\n"
 msgstr "      --concurrently           並行インデックス再構築\n"
 
-#: reindexdb.c:903
+#: reindexdb.c:906
 #, c-format
 msgid "  -d, --dbname=DBNAME          database to reindex\n"
 msgstr "  -d, --dbname=DBNAME          インデックス再構築対象のデータベース\n"
 
-#: reindexdb.c:905
+#: reindexdb.c:908
 #, c-format
 msgid "  -i, --index=INDEX            recreate specific index(es) only\n"
 msgstr "  -i, --index=INDEX            指定したインデックス(群)のみを再構築\n"
 
-#: reindexdb.c:906
+#: reindexdb.c:909
 #, c-format
 msgid "  -j, --jobs=NUM               use this many concurrent connections to reindex\n"
 msgstr "  -j, --jobs=NUM               インデックス再構築にこの数の並列接続を使用\n"
 
-#: reindexdb.c:907
+#: reindexdb.c:910
 #, c-format
 msgid "  -q, --quiet                  don't write any messages\n"
 msgstr "  -q, --quiet                  メッセージを一切出力しない\n"
 
-#: reindexdb.c:908
+#: reindexdb.c:911
 #, c-format
 msgid "  -s, --system                 reindex system catalogs only\n"
 msgstr "  -s, --system                 システムカタログのインデックスのみを再構築\n"
 
-#: reindexdb.c:909
+#: reindexdb.c:912
 #, c-format
 msgid "  -S, --schema=SCHEMA          reindex specific schema(s) only\n"
 msgstr "  -S, --schema=SCHEMA          指定したスキーマ(群)のインデックスのみを再構築\n"
 
-#: reindexdb.c:910
+#: reindexdb.c:913
 #, c-format
 msgid "  -t, --table=TABLE            reindex specific table(s) only\n"
 msgstr "  -t, --table=TABLE            指定したテーブル(群)のインデックスを再構築\n"
 
-#: reindexdb.c:911
+#: reindexdb.c:914
 #, c-format
 msgid "      --tablespace=TABLESPACE  tablespace where indexes are rebuilt\n"
 msgstr "  -D, --tablespace=TABLESPACE  インデックス再構築先のテーブル空間\n"
 
-#: reindexdb.c:912
+#: reindexdb.c:915
 #, c-format
 msgid "  -v, --verbose                write a lot of output\n"
 msgstr "  -v, --verbose                多量のメッセージを出力\n"
 
-#: reindexdb.c:922
+#: reindexdb.c:925
 #, c-format
 msgid ""
 "\n"

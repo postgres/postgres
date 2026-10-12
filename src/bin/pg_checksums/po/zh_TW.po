@@ -1,42 +1,202 @@
 # Traditional Chinese message translation file for pg_checksums
-# Copyright (C) 2023 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_checksums (PostgreSQL) package.
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # Zhenbang Wei <znbang@gmail.com>, 2023.
+# Ruohang Feng <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_checksums (PostgreSQL) 16\n"
+"Project-Id-Version: pg_checksums (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-11 20:52+0000\n"
-"PO-Revision-Date: 2023-11-06 08:49+0800\n"
-"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
-"Language-Team: \n"
+"POT-Creation-Date: 2026-09-18 04:27+0000\n"
+"PO-Revision-Date: 2026-09-20 12:27+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.1\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 # libpq/be-secure.c:294 libpq/be-secure.c:387
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "錯誤: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
-msgstr "詳細內容: "
+msgstr "詳情: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "提示: "
+
+# commands/copy.c:1031
+#: ../../common/controldata_utils.c:98
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "無法開啟檔案 \"%s\" 以讀取: %m"
+
+# access/transam/xlog.c:1659 access/transam/xlog.c:2942
+# access/transam/xlog.c:5397 access/transam/xlog.c:5448
+# access/transam/xlog.c:5520 access/transam/xlog.c:5545
+# access/transam/xlog.c:5583
+#: ../../common/controldata_utils.c:111
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "無法讀取檔案 \"%s\": %m"
+
+# access/transam/xlog.c:1659 access/transam/xlog.c:2942
+# access/transam/xlog.c:5397 access/transam/xlog.c:5448
+# access/transam/xlog.c:5520 access/transam/xlog.c:5545
+# access/transam/xlog.c:5583
+#: ../../common/controldata_utils.c:120
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "無法讀取檔案 \"%1$s\": 應讀取 %3$zu，實際讀取 %2$d"
+
+# access/transam/slru.c:680 access/transam/xlog.c:1567
+# access/transam/xlog.c:1691 access/transam/xlog.c:3013
+#: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "無法關閉檔案 \"%s\": %m"
+
+#: ../../common/controldata_utils.c:169
+msgid "byte ordering mismatch"
+msgstr "位元組順序不一致"
+
+#: ../../common/controldata_utils.c:171
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"位元組順序可能不一致\n"
+"用於儲存 pg_control 檔案的位元組順序可能與此程式使用的位元組順序不同。\n"
+"在這種情況下，下面的結果將不正確，且 PostgreSQL 安裝將與這個資料目錄\n"
+"不相容。"
+
+# access/transam/slru.c:638 access/transam/xlog.c:1631
+# access/transam/xlog.c:2742 access/transam/xlog.c:2832
+# access/transam/xlog.c:2930 libpq/hba.c:911 libpq/hba.c:935
+# utils/error/elog.c:1118 utils/init/miscinit.c:783 utils/init/miscinit.c:889
+# utils/misc/database.c:68
+#: ../../common/controldata_utils.c:231 ../../common/file_utils.c:69
+#: ../../common/file_utils.c:370 ../../common/file_utils.c:428
+#: ../../common/file_utils.c:502 pg_checksums.c:192
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "無法開啟檔案 \"%s\": %m"
+
+# access/transam/xlog.c:5319 access/transam/xlog.c:5439
+#: ../../common/controldata_utils.c:250
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "無法寫入檔案 \"%s\": %m"
+
+# access/transam/slru.c:673 access/transam/xlog.c:1562
+# access/transam/xlog.c:1686 access/transam/xlog.c:3008
+#: ../../common/controldata_utils.c:269 ../../common/file_utils.c:440
+#: ../../common/file_utils.c:510
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "無法對檔案 \"%s\" 執行 fsync: %m"
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "記憶體不足\n"
+
+# common.c:78
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能複製空指標(內部錯誤)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu * %zu\n"
+
+# libpq/be-fsstubs.c:484
+#: ../../common/file_utils.c:75
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "無法同步檔案 \"%s\" 所在的檔案系統: %m"
+
+# access/transam/xlog.c:1936 access/transam/xlog.c:2038
+# access/transam/xlog.c:5291
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
+#: ../../fe_utils/version.c:60 pg_checksums.c:338 pg_checksums.c:407
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "無法取得檔案 \"%s\" 的狀態: %m"
+
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "此建置版本不支援同步方法 \"%s\""
+
+# access/transam/slru.c:930 commands/tablespace.c:529
+# commands/tablespace.c:694 utils/adt/misc.c:174
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
+#: pg_checksums.c:310
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "無法開啟目錄 \"%s\": %m"
+
+# access/transam/slru.c:967 commands/tablespace.c:577
+# commands/tablespace.c:721
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "無法讀取目錄 \"%s\": %m"
+
+# access/transam/xlog.c:3037 access/transam/xlog.c:3819
+# access/transam/xlog.c:3862 commands/user.c:282 commands/user.c:412
+# postmaster/pgarch.c:597
+#: ../../common/file_utils.c:520
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "無法將檔案 \"%s\" 重新命名為 \"%s\": %m"
 
 # utils/adt/formatting.c:2044
 #: ../../fe_utils/option_utils.c:69
@@ -49,7 +209,33 @@ msgstr "選項 %2$s 的值 \"%1$s\" 無效"
 msgid "%s must be in range %d..%d"
 msgstr "%s 必須在範圍 %d..%d 內"
 
-#: pg_checksums.c:79
+# utils/adt/acl.c:197
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "無法識別的同步方法: %s"
+
+#: ../../fe_utils/option_utils.c:139
+#, c-format
+msgid "options %s and %s cannot be used together"
+msgstr "不能同時使用 %s 和 %s 選項"
+
+#: ../../fe_utils/version.c:57
+#, c-format
+msgid "could not open version file \"%s\": %m"
+msgstr "無法開啟版本檔 \"%s\": %m"
+
+#: ../../fe_utils/version.c:62
+#, c-format
+msgid "file \"%s\" is too large"
+msgstr "檔案 \"%s\" 過大"
+
+#: ../../fe_utils/version.c:66
+#, c-format
+msgid "could not parse version file \"%s\""
+msgstr "無法解析版本檔 \"%s\""
+
+#: pg_checksums.c:70
 #, c-format
 msgid ""
 "%s enables, disables, or verifies data checksums in a PostgreSQL database cluster.\n"
@@ -58,17 +244,17 @@ msgstr ""
 "%s 可以啟動、關閉或驗證 PostgreSQL 資料庫叢集中的資料檢查碼。\n"
 "\n"
 
-#: pg_checksums.c:80
+#: pg_checksums.c:71
 #, c-format
 msgid "Usage:\n"
 msgstr "用法:\n"
 
-#: pg_checksums.c:81
+#: pg_checksums.c:72
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
-msgstr "  %s [OPTION]... [DATADIR]\n"
+msgstr "  %s [選項]... [資料目錄]\n"
 
-#: pg_checksums.c:82
+#: pg_checksums.c:73
 #, c-format
 msgid ""
 "\n"
@@ -77,57 +263,62 @@ msgstr ""
 "\n"
 "選項:\n"
 
-#: pg_checksums.c:83
+#: pg_checksums.c:74
 #, c-format
 msgid " [-D, --pgdata=]DATADIR    data directory\n"
 msgstr " [-D, --pgdata=]DATADIR    資料目錄\n"
 
-#: pg_checksums.c:84
+#: pg_checksums.c:75
 #, c-format
 msgid "  -c, --check              check data checksums (default)\n"
 msgstr "  -c, --check              檢查資料檢查碼(預設)\n"
 
-#: pg_checksums.c:85
+#: pg_checksums.c:76
 #, c-format
 msgid "  -d, --disable            disable data checksums\n"
 msgstr "  -d, --disable            關閉資料檢查碼\n"
 
-#: pg_checksums.c:86
+#: pg_checksums.c:77
 #, c-format
 msgid "  -e, --enable             enable data checksums\n"
 msgstr "  -e, --enable             啟動資料檢查碼\n"
 
-#: pg_checksums.c:87
+#: pg_checksums.c:78
 #, c-format
 msgid "  -f, --filenode=FILENODE  check only relation with specified filenode\n"
 msgstr "  -f, --filenode=FILENODE  只檢查指定 filenode 的關聯\n"
 
-#: pg_checksums.c:88
+#: pg_checksums.c:79
 #, c-format
 msgid "  -N, --no-sync            do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --no-sync            不等待變更安全寫入磁碟\n"
 
-#: pg_checksums.c:89
+#: pg_checksums.c:80
 #, c-format
 msgid "  -P, --progress           show progress information\n"
 msgstr "  -P, --progress           顯示進度資訊\n"
 
-#: pg_checksums.c:90
+#: pg_checksums.c:81
+#, c-format
+msgid "      --sync-method=METHOD set method for syncing files to disk\n"
+msgstr "      --sync-method=METHOD 設定將檔案同步到磁碟的方法\n"
+
+#: pg_checksums.c:82
 #, c-format
 msgid "  -v, --verbose            output verbose messages\n"
 msgstr "  -v, --verbose            顯示詳細訊息\n"
 
-#: pg_checksums.c:91
+#: pg_checksums.c:83
 #, c-format
 msgid "  -V, --version            output version information, then exit\n"
 msgstr "  -V, --version            顯示版本，然後結束\n"
 
-#: pg_checksums.c:92
+#: pg_checksums.c:84
 #, c-format
 msgid "  -?, --help               show this help, then exit\n"
 msgstr "  -?, --help               顯示說明，然後結束\n"
 
-#: pg_checksums.c:93
+#: pg_checksums.c:85
 #, c-format
 msgid ""
 "\n"
@@ -139,204 +330,193 @@ msgstr ""
 "若未指定資料目錄(DATADIR)就用環境變數 PGDATA。\n"
 "\n"
 
-#: pg_checksums.c:95
+#: pg_checksums.c:87
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "回報錯誤至 <%s>。\n"
 
-#: pg_checksums.c:96
+#: pg_checksums.c:88
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "%s 網站: <%s>\n"
+msgstr "%s 首頁: <%s>\n"
 
-#: pg_checksums.c:153
+#: pg_checksums.c:145
 #, c-format
-msgid "%lld/%lld MB (%d%%) computed"
-msgstr "%lld/%lld MB (%d%%) 已被計算"
-
-# access/transam/slru.c:638 access/transam/xlog.c:1631
-# access/transam/xlog.c:2742 access/transam/xlog.c:2832
-# access/transam/xlog.c:2930 libpq/hba.c:911 libpq/hba.c:935
-# utils/error/elog.c:1118 utils/init/miscinit.c:783 utils/init/miscinit.c:889
-# utils/misc/database.c:68
-#: pg_checksums.c:200
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "無法開啟檔案\"%s\": %m"
+msgid "%<PRId64>/%<PRId64> MB (%d%%) computed"
+msgstr "已計算 %<PRId64>/%<PRId64> MB (%d%%)"
 
 # utils/init/miscinit.c:539
-#: pg_checksums.c:214
+#: pg_checksums.c:206
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
-msgstr "無法讀取檔案 \"%2$s\" 的 block %1$u: %3$m"
+msgstr "無法讀取檔案 \"%2$s\" 的區塊 %1$u: %3$m"
 
-#: pg_checksums.c:217
+#: pg_checksums.c:209
 #, c-format
 msgid "could not read block %u in file \"%s\": read %d of %d"
-msgstr "無法讀取檔案 \"%2$s\" 的 block %1$u: 已讀取 %3$d / %4$d"
+msgstr "無法讀取檔案 \"%2$s\" 的區塊 %1$u: 應讀取 %4$d，實際讀取 %3$d"
 
-#: pg_checksums.c:240
+#: pg_checksums.c:232
 #, c-format
 msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
-msgstr "在檔案 \"%s\" 驗證檢查碼失敗，區塊 %u: 算得檢查碼 %X 但是區塊為 %X"
+msgstr "檔案 \"%s\" 中區塊 %u 的檢查碼驗證失敗: 算得檢查碼 %X，但區塊包含 %X"
 
-#: pg_checksums.c:263
+#: pg_checksums.c:255
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
-msgstr "在檔案 \"%2$s\" 中 seek 區塊 %1$u 失敗: %3$m"
+msgstr "在檔案 \"%2$s\" 中定位區塊 %1$u 失敗: %3$m"
 
 # utils/init/miscinit.c:672 utils/init/miscinit.c:682
-#: pg_checksums.c:270
+#: pg_checksums.c:262
 #, c-format
 msgid "could not write block %u in file \"%s\": %m"
-msgstr "無法寫入檔案 \"%2$s\" 的 block %1$u: %3$m"
+msgstr "無法寫入檔案 \"%2$s\" 的區塊 %1$u: %3$m"
 
-#: pg_checksums.c:273
+#: pg_checksums.c:265
 #, c-format
 msgid "could not write block %u in file \"%s\": wrote %d of %d"
-msgstr "無法寫入檔案 \"%2$s\" 中的區塊 %1$u: 已寫入 %3$d / %4$d"
+msgstr "無法寫入檔案 \"%2$s\" 中的區塊 %1$u: 應寫入 %4$d，實際寫入 %3$d"
 
-#: pg_checksums.c:285
+#: pg_checksums.c:277
 #, c-format
 msgid "checksums verified in file \"%s\""
 msgstr "檔案 \"%s\" 中已驗證檢查碼"
 
-#: pg_checksums.c:287
+#: pg_checksums.c:279
 #, c-format
 msgid "checksums enabled in file \"%s\""
 msgstr "檔案 \"%s\" 中已啟動檢查碼"
 
-# access/transam/slru.c:930 commands/tablespace.c:529
-# commands/tablespace.c:694 utils/adt/misc.c:174
-#: pg_checksums.c:318
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "無法開啟目錄\"%s\": %m"
-
-# access/transam/xlog.c:1936 access/transam/xlog.c:2038
-# access/transam/xlog.c:5291
-#: pg_checksums.c:342 pg_checksums.c:411
-#, c-format
-msgid "could not stat file \"%s\": %m"
-msgstr "無法取得檔案 \"%s\" 的狀態: %m"
-
-#: pg_checksums.c:366
+#: pg_checksums.c:362
 #, c-format
 msgid "invalid segment number %d in file name \"%s\""
-msgstr "檔名 \"%2$s\" 中的片段編號 %1$d 無效"
+msgstr "檔名 \"%2$s\" 中的區段編號 %1$d 無效"
 
 # tcop/postgres.c:2636 tcop/postgres.c:2652
-#: pg_checksums.c:508 pg_checksums.c:524 pg_checksums.c:534 pg_checksums.c:542
+#: pg_checksums.c:511 pg_checksums.c:527 pg_checksums.c:537 pg_checksums.c:545
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "用 \"%s --help\" 取得更多資訊。"
 
-#: pg_checksums.c:523
+#: pg_checksums.c:526
 #, c-format
 msgid "no data directory specified"
 msgstr "未指定資料目錄"
 
-#: pg_checksums.c:532
+#: pg_checksums.c:535
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "命令列參數過多(第一個是 \"%s\")"
+msgstr "命令列參數過多(第一個多餘參數是 \"%s\")"
 
-#: pg_checksums.c:541
+#: pg_checksums.c:544
 #, c-format
 msgid "option -f/--filenode can only be used with --check"
 msgstr "選項 -f/--filenode 只能與 --check 一起使用"
 
-#: pg_checksums.c:549
+# postmaster/postmaster.c:912
+#: pg_checksums.c:557
+#, c-format
+msgid "data directory is of wrong version"
+msgstr "資料目錄版本錯誤"
+
+# utils/init/miscinit.c:908
+#: pg_checksums.c:558
+#, c-format
+msgid "File \"%s\" contains \"%s\", which is not compatible with this program's version \"%s\"."
+msgstr "檔案 \"%s\" 包含 \"%s\"，與本程式的版本 \"%s\" 不相容。"
+
+#: pg_checksums.c:566
 #, c-format
 msgid "pg_control CRC value is incorrect"
 msgstr "pg_control 的 CRC 值不正確"
 
-#: pg_checksums.c:552
+#: pg_checksums.c:569
 #, c-format
 msgid "cluster is not compatible with this version of pg_checksums"
 msgstr "叢集與這版 pg_checksums 不相容"
 
-#: pg_checksums.c:556
+#: pg_checksums.c:573
 #, c-format
 msgid "database cluster is not compatible"
 msgstr "資料庫叢集不相容"
 
-#: pg_checksums.c:557
+#: pg_checksums.c:574
 #, c-format
 msgid "The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u."
 msgstr "資料庫叢集使用區塊大小 %u 進行初始化，但 pg_checksums 編譯時使用區塊大小 %u。"
 
-#: pg_checksums.c:569
+#: pg_checksums.c:586
 #, c-format
 msgid "cluster must be shut down"
 msgstr "必須關閉叢集"
 
-#: pg_checksums.c:573
+#: pg_checksums.c:590
 #, c-format
 msgid "data checksums are not enabled in cluster"
 msgstr "叢集未啟動資料檢查碼"
 
-#: pg_checksums.c:577
+#: pg_checksums.c:594
 #, c-format
 msgid "data checksums are already disabled in cluster"
 msgstr "叢集已關閉資料檢查碼"
 
-#: pg_checksums.c:581
+#: pg_checksums.c:598
 #, c-format
 msgid "data checksums are already enabled in cluster"
 msgstr "叢集已啟動資料檢查碼"
 
-#: pg_checksums.c:605
+#: pg_checksums.c:622
 #, c-format
 msgid "Checksum operation completed\n"
-msgstr "驗證檢查碼作業完成\n"
+msgstr "檢查碼作業完成\n"
 
-#: pg_checksums.c:606
+#: pg_checksums.c:623
 #, c-format
-msgid "Files scanned:   %lld\n"
-msgstr "已掃描檔案: %lld\n"
+msgid "Files scanned:   %<PRId64>\n"
+msgstr "已掃描檔案:      %<PRId64>\n"
 
-#: pg_checksums.c:607
+#: pg_checksums.c:624
 #, c-format
-msgid "Blocks scanned:  %lld\n"
-msgstr "已掃描區塊: %lld\n"
+msgid "Blocks scanned:  %<PRId64>\n"
+msgstr "已掃描區塊:      %<PRId64>\n"
 
-#: pg_checksums.c:610
+#: pg_checksums.c:627
 #, c-format
-msgid "Bad checksums:  %lld\n"
-msgstr "不正確的檢查碼: %lld\n"
+msgid "Bad checksums:  %<PRId64>\n"
+msgstr "不正確的檢查碼:  %<PRId64>\n"
 
-#: pg_checksums.c:611 pg_checksums.c:643
+#: pg_checksums.c:628 pg_checksums.c:660
 #, c-format
 msgid "Data checksum version: %u\n"
-msgstr "資料檢查碼版本: %u\n"
-
-#: pg_checksums.c:618
-#, c-format
-msgid "Files written:  %lld\n"
-msgstr "已寫入檔案: %lld\n"
-
-#: pg_checksums.c:619
-#, c-format
-msgid "Blocks written: %lld\n"
-msgstr "已寫入區塊: %lld\n"
+msgstr "資料檢查碼版本:  %u\n"
 
 #: pg_checksums.c:635
 #, c-format
-msgid "syncing data directory"
-msgstr "同步資料目錄"
+msgid "Files written:  %<PRId64>\n"
+msgstr "已寫入檔案:      %<PRId64>\n"
 
-#: pg_checksums.c:639
+#: pg_checksums.c:636
+#, c-format
+msgid "Blocks written: %<PRId64>\n"
+msgstr "已寫入區塊:      %<PRId64>\n"
+
+#: pg_checksums.c:652
+#, c-format
+msgid "syncing data directory"
+msgstr "正在同步資料目錄"
+
+#: pg_checksums.c:656
 #, c-format
 msgid "updating control file"
-msgstr "更新控制檔"
+msgstr "正在更新控制檔"
 
-#: pg_checksums.c:645
+#: pg_checksums.c:662
 #, c-format
 msgid "Checksums enabled in cluster\n"
 msgstr "叢集已啟動檢查碼\n"
 
-#: pg_checksums.c:647
+#: pg_checksums.c:664
 #, c-format
 msgid "Checksums disabled in cluster\n"
 msgstr "叢集已關閉檢查碼\n"
+

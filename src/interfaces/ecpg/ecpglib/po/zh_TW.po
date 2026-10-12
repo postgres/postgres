@@ -1,31 +1,32 @@
 # Traditional Chinese message translation file for ecpglib
-# Copyright (C) 2023 PostgreSQL Global Development Group
-# This file is distributed under the same license as the ecpglib (PostgreSQL) package.
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # 2023-09-06 Zhenbang Wei <znbang@gmail.com>
+# Ruohang Feng <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpglib (PostgreSQL) 16\n"
+"Project-Id-Version: ecpglib (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-05 20:39+0000\n"
-"PO-Revision-Date: 2023-11-06 08:48+0800\n"
-"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
-"Language-Team: \n"
+"POT-Creation-Date: 2026-09-18 04:10+0000\n"
+"PO-Revision-Date: 2026-09-19 12:00+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.1\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-#: connect.c:243
+#: connect.c:226
 msgid "empty message text"
 msgstr "空白的訊息內容"
 
-#: connect.c:410 connect.c:675
+#: connect.c:393 connect.c:665
 msgid "<DEFAULT>"
-msgstr "<DEFAULT>"
+msgstr "<預設>"
 
-#: descriptor.c:876 misc.c:119
+#: descriptor.c:485 descriptor.c:883 misc.c:88
 msgid "NULL"
 msgstr "NULL"
 
@@ -45,7 +46,7 @@ msgstr "第 %d 行記憶體不足"
 #: error.c:47
 #, c-format
 msgid "unsupported type \"%s\" on line %d"
-msgstr "第 %2$d 行有不支援的類型 \"%1$s\""
+msgstr "第 %2$d 行有不支援的型別 \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:54
@@ -63,25 +64,25 @@ msgstr "第 %d 行參數過少"
 #: error.c:68
 #, c-format
 msgid "invalid input syntax for type int: \"%s\", on line %d"
-msgstr "第 %2$d 行無效的 int 類型輸入語法: \"%1$s\""
+msgstr "第 %2$d 行無效的 int 型別輸入語法: \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:75
 #, c-format
 msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
-msgstr "第 %2$d 行無效的 unsigned int 類型輸入語法: \" %1$s\""
+msgstr "第 %2$d 行無效的 unsigned int 型別輸入語法: \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:82
 #, c-format
 msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
-msgstr "第 %2$d 行無效的浮點數類型輸入語法: \"%1$s\""
+msgstr "第 %2$d 行無效的浮點數型別輸入語法: \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:90
 #, c-format
 msgid "invalid syntax for type boolean: \"%s\", on line %d"
-msgstr "第 %2$d 行無效的布林語法: \"%1$s\""
+msgstr "第 %2$d 行無效的 boolean 型別語法: \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:95
@@ -99,13 +100,13 @@ msgstr "第 %d 行的查詢為空"
 #: error.c:109
 #, c-format
 msgid "null value without indicator on line %d"
-msgstr "第 %d 行沒有指示符號的空值"
+msgstr "第 %d 行的空值沒有指示器"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:116
 #, c-format
 msgid "variable does not have an array type on line %d"
-msgstr "第 %d 行變數並非陣列類型"
+msgstr "第 %d 行變數並非陣列型別"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:123
@@ -122,78 +123,85 @@ msgstr "第 %d 行不支援插入變數陣列"
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:137
 #, c-format
+msgid "invalid input syntax for type bytea: \"%s\", on line %d"
+msgstr "第 %2$d 行無效的 bytea 型別輸入語法: \"%1$s\""
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
+#, c-format
 msgid "connection \"%s\" does not exist on line %d"
 msgstr "第 %2$d 行連線 \"%1$s\" 不存在"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:144
+#: error.c:151
 #, c-format
 msgid "not connected to connection \"%s\" on line %d"
 msgstr "第 %2$d 行未連接至連線 \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:151
+#: error.c:158
 #, c-format
 msgid "invalid statement name \"%s\" on line %d"
-msgstr "第 %2$d 行無效的陳述名稱 \"%1$s\""
+msgstr "第 %2$d 行無效的敘述名稱 \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:158
+#: error.c:165
 #, c-format
 msgid "descriptor \"%s\" not found on line %d"
 msgstr "第 %2$d 行找不到描述符 \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:165
+#: error.c:172
 #, c-format
 msgid "descriptor index out of range on line %d"
 msgstr "第 %d 行描述符索引超出範圍"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:172
-#, c-format
-msgid "unrecognized descriptor item \"%s\" on line %d"
-msgstr "第 %2$d 行無法識別的描述符 \"%1$s\""
-
-#. translator: this string will be truncated at 149 characters expanded.
 #: error.c:179
 #, c-format
-msgid "variable does not have a numeric type on line %d"
-msgstr "第 %d 行變數並非數值類型"
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "第 %2$d 行無法識別的描述符項目 \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:186
 #, c-format
-msgid "variable does not have a character type on line %d"
-msgstr "第 %d 行變數並非字符類型"
+msgid "variable does not have a numeric type on line %d"
+msgstr "第 %d 行變數並非數值型別"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:193
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "第 %d 行變數並非字元型別"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:200
 #, c-format
 msgid "error in transaction processing on line %d"
 msgstr "第 %d 行交易處理中發生錯誤"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:200
+#: error.c:207
 #, c-format
 msgid "could not connect to database \"%s\" on line %d"
 msgstr "第 %2$d 行無法連線至資料庫 \"%1$s\""
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:207
+#: error.c:214
 #, c-format
 msgid "SQL error %d on line %d"
 msgstr "第 %2$d 行 SQL 錯誤 %1$d"
 
-#: error.c:253
+#: error.c:260
 msgid "the connection to the server was lost"
 msgstr "與伺服器的連線已中斷"
 
-#: error.c:345
+#: error.c:352
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "SQL 錯誤: %s\n"
 
-#: execute.c:2188 execute.c:2195
+#: execute.c:2209 execute.c:2216
 msgid "<empty>"
-msgstr "<empty>"
+msgstr "<空>"
+
