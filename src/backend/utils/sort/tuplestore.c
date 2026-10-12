@@ -1575,16 +1575,11 @@ tuplestore_updatemax(Tuplestorestate *state)
  *		tuplestore_trim() or tuplestore_clear().
  */
 void
-tuplestore_get_stats(Tuplestorestate *state, char **max_storage_type,
-					 int64 *max_space)
+tuplestore_get_stats(Tuplestorestate *state, bool *used_disk, int64 *max_space)
 {
 	tuplestore_updatemax(state);
 
-	if (state->usedDisk)
-		*max_storage_type = "Disk";
-	else
-		*max_storage_type = "Memory";
-
+	*used_disk = state->usedDisk;
 	*max_space = state->maxSpace;
 }
 
