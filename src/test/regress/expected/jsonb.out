@@ -2862,6 +2862,12 @@ SELECT count(*) FROM testjsonb WHERE j @@ '$.age == 25.0';
      2
 (1 row)
 
+SELECT count(*) FROM testjsonb WHERE j @@ '$.age == "25".double()';
+ count 
+-------
+     2
+(1 row)
+
 SELECT count(*) FROM testjsonb WHERE j @@ 'exists($)';
  count 
 -------
@@ -3068,6 +3074,12 @@ SELECT count(*) FROM testjsonb WHERE j @@ '$.age == 25.0';
      2
 (1 row)
 
+SELECT count(*) FROM testjsonb WHERE j @@ '$.age == "25".double()';
+ count 
+-------
+     2
+(1 row)
+
 SELECT count(*) FROM testjsonb WHERE j @@ '$.array[*] == "foo"';
  count 
 -------
@@ -3078,6 +3090,12 @@ SELECT count(*) FROM testjsonb WHERE j @@ '$.array[*] == "bar"';
  count 
 -------
      3
+(1 row)
+
+SELECT count(*) FROM testjsonb WHERE j @@ '!(!($.bad == false) && $.coauthors == 98)';
+ count 
+-------
+   850
 (1 row)
 
 SELECT count(*) FROM testjsonb WHERE j @@ 'exists($ ? (@.array[*] == "bar"))';
@@ -3397,6 +3415,12 @@ SELECT count(*) FROM testjsonb WHERE j @@ '$.age == 25.0';
      2
 (1 row)
 
+SELECT count(*) FROM testjsonb WHERE j @@ '$.age == "25".double()';
+ count 
+-------
+     2
+(1 row)
+
 SELECT count(*) FROM testjsonb WHERE j @@ '$.array[*] == "foo"';
  count 
 -------
@@ -3407,6 +3431,12 @@ SELECT count(*) FROM testjsonb WHERE j @@ '$.array[*] == "bar"';
  count 
 -------
      3
+(1 row)
+
+SELECT count(*) FROM testjsonb WHERE j @@ '!(!($.bad == false) && $.coauthors == 98)';
+ count 
+-------
+   850
 (1 row)
 
 SELECT count(*) FROM testjsonb WHERE j @@ 'exists($ ? (@.array[*] == "bar"))';
