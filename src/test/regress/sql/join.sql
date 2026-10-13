@@ -3898,6 +3898,20 @@ JOIN (
 	) _t2t3t4
 ON sj_t1.id = _t2t3t4.id;
 
+-- Check SJE interaction with aggpresorted optimization.
+CREATE TEMP TABLE sje_agg (id int PRIMARY KEY, p int, q int);
+INSERT INTO sje_agg SELECT i, i % 3, (i * 7) % 10 FROM generate_series(1, 30) i;
+ANALYZE sje_agg;
+
+EXPLAIN (COSTS OFF)
+SELECT count(DISTINCT a.p) AS dp, count(DISTINCT a.q) AS dq,
+       sum(DISTINCT a2.q) AS sq
+FROM sje_agg a JOIN sje_agg a2 ON a.id = a2.id;
+
+SELECT count(DISTINCT a.p) AS dp, count(DISTINCT a.q) AS dq,
+       sum(DISTINCT a2.q) AS sq
+FROM sje_agg a JOIN sje_agg a2 ON a.id = a2.id;
+
 --
 -- Test RowMarks-related code
 --
