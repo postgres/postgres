@@ -25,10 +25,10 @@
 /*
  * Types related to shared memory storage of statistics.
  *
- * Per-object statistics are stored in the "shared stats" hashtable. That
- * table's entries (PgStatShared_HashEntry) contain a pointer to the actual stats
- * data for the object (the size of the stats data varies depending on the
- * kind of stats). The table is keyed by PgStat_HashKey.
+ * Per-object statistics are stored in shared stats hashtables. Those tables'
+ * entries (PgStatShared_HashEntry) contain a pointer to the actual stats data
+ * for the object (the size of the stats data varies depending on the kind of
+ * stats). The tables are keyed by PgStat_HashKey.
  *
  * Once a backend has a reference to a shared stats entry, it increments the
  * entry's refcount. Even after stats data is dropped (e.g., due to a DROP
@@ -36,16 +36,16 @@
  * released.
  *
  * These refcounts, in combination with a backend local hashtable
- * (pgStatEntryRefHash, with entries pointing to PgStat_EntryRef) in front of
- * the shared hash table, mean that most stats work can happen without
- * touching the shared hash table, reducing contention.
+ * (pgStatEntryRefHash, with entries pointing to PgStat_EntryRef) that caches
+ * references to shared stats hashtable entries, mean that most stats work can
+ * happen without touching the shared stats hashtables, reducing contention.
  *
  * Once there are pending stats updates for a table PgStat_EntryRef->pending
  * is allocated to contain a working space for as-of-yet-unapplied stats
  * updates. Once the stats are flushed, PgStat_EntryRef->pending is freed.
  *
- * Each stat kind in the shared hash table has a fixed member
- * PgStatShared_Common as the first element.
+ * Each variable-numbered shared stats struct has PgStatShared_Common as the
+ * first element.
  */
 
 /*
@@ -186,7 +186,7 @@ typedef struct PgStat_EntryRef
 	 * stats eventually. Each stats kind utilizing pending data defines what
 	 * format its pending data has and needs to provide a
 	 * PgStat_KindInfo->flush_pending_cb callback to merge pending entries
-	 * into the shared stats hash table.
+	 * into shared stats hashtable entries.
 	 */
 	void	   *pending;
 	dlist_node	pending_node;	/* membership in pgStatPending list */
@@ -252,9 +252,19 @@ typedef struct PgStat_KindInfo
 	bool		track_entry_count:1;
 
 	/*
-	 * The size of an entry in the shared stats hash table (pointed to by
-	 * PgStatShared_HashEntry->body).  For fixed-numbered statistics, this is
-	 * the size of an entry in PgStat_ShmemControl->custom_data.
+	 * Should entries of this kind be stored in a dedicated dshash table
+	 * rather than the shared hash table? For variable-numbered stats only.
+	 *
+	 * A kind setting this option creates its own DSA area in the main shared
+	 * memory.  This is worth only for kinds expected to hold a large number
+	 * of entries.
+	 */
+	bool		own_hash:1;
+
+	/*
+	 * The size of an entry pointed to by PgStatShared_HashEntry->body.  For
+	 * fixed-numbered statistics, this is the size of an entry in
+	 * PgStat_ShmemControl->custom_data.
 	 */
 	uint32		shared_size;
 
@@ -541,7 +551,7 @@ typedef struct PgStatShared_Backend
 /*
  * Central shared memory entry for the cumulative stats system.
  *
- * Fixed amount stats, the dynamic shared memory hash table for
+ * Fixed amount stats, the dynamic shared memory hashtables for
  * non-fixed-amount stats, as well as remaining bits and pieces are all
  * reached from here.
  */
@@ -549,11 +559,12 @@ typedef struct PgStat_ShmemControl
 {
 	void	   *raw_dsa_area;
 
-	/*
-	 * Stats for variable-numbered objects are kept in this shared hash table.
-	 * See comment above PgStat_Kind for details.
-	 */
-	dshash_table_handle hash_handle;	/* shared dbstat hash */
+	/* Shared hash for variable-numbered stats kinds without own_hash set. */
+	dshash_table_handle hash_handle;	/* shared stats hash */
+
+	/* Dedicated hash and DSA for variable-numbered kinds with own_hash set. */
+	dshash_table_handle kind_hash_handles[PGSTAT_KIND_MAX + 1];
+	void	   *raw_kind_dsa_area[PGSTAT_KIND_MAX + 1];
 
 	/* Has the stats system already been shut down? Just a debugging check. */
 	bool		is_shutdown;
@@ -568,12 +579,12 @@ typedef struct PgStat_ShmemControl
 	pg_atomic_uint64 gc_request_count;
 
 	/*
-	 * Counters for the number of entries associated to a single stats kind
-	 * that uses variable-numbered objects stored in the shared hash table.
-	 * These counters can be enabled on a per-kind basis, when
-	 * track_entry_count is set.  This counter is incremented each time a new
-	 * entry is created (not reused) in the shared hash table, and is
-	 * decremented each time an entry is freed from the shared hash table.
+	 * Counters for the number of entries associated to a single
+	 * variable-numbered stats kind.  These counters can be enabled on a
+	 * per-kind basis, when track_entry_count is set.  A counter is
+	 * incremented each time a new entry is created (not reused) in a stats
+	 * hashtable, and is decremented each time an entry is freed from a stats
+	 * hashtable.
 	 */
 	pg_atomic_uint64 entry_counts[PGSTAT_KIND_MAX];
 
@@ -643,8 +654,12 @@ typedef struct PgStat_Snapshot
 typedef struct PgStat_LocalState
 {
 	PgStat_ShmemControl *shmem;
-	dsa_area   *dsa;
-	dshash_table *shared_hash;
+	dsa_area   *kind_dsa[PGSTAT_KIND_MAX + 1];
+	dshash_table *kind_hash[PGSTAT_KIND_MAX + 1];
+
+	/* Variable-numbered stats hash tables to iterate, built at attach time. */
+	dshash_table *var_hashes[PGSTAT_KIND_MAX + 1];
+	int			num_var_hashes;
 
 	/* the current statistics snapshot */
 	PgStat_Snapshot snapshot;
