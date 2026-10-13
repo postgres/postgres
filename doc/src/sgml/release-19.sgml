@@ -2925,18 +2925,6 @@ Change function prototypes to use <literal>uint*</literal> instead of <literal>b
 </listitem>
 
 <!--
-Author: Álvaro Herrera <alvherre@kurilemu.de>
-2026-04-07 [0d3dba38c] Allow logical replication snapshots to be database-speci
--->
-
-<listitem>
-<para>
-Allow <link linkend="logicaldecoding-pgoutput">logical decoding plugins</link> to specify if they do not access shared catalogs (Antonin Houska)
-<ulink url="&commit_baseurl;0d3dba38c">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
 Author: Jacob Champion <jchampion@postgresql.org>
 2026-04-03 [d438a3659] oauth: Let validators provide failure DETAILs
 -->
