@@ -261,13 +261,6 @@ restart:
 	generate_base_implied_equalities(root);
 
 	/*
-	 * We have completed merging equivalence sets, so it's now possible to
-	 * generate pathkeys in canonical form; so compute query_pathkeys and
-	 * other pathkeys fields in PlannerInfo.
-	 */
-	(*qp_callback) (root, qp_extra);
-
-	/*
 	 * Examine any "placeholder" expressions generated during subquery pullup.
 	 * Make sure that the Vars they need are marked as needed at the relevant
 	 * join level.  This must be done before join removal because it might
@@ -304,6 +297,13 @@ restart:
 	 * No more join simplifications apply, so we're done looping.  Code below
 	 * this point does not need to be able to restart.
 	 */
+
+	/*
+	 * We have completed merging equivalence sets, so it's now possible to
+	 * generate pathkeys in canonical form; so compute query_pathkeys and
+	 * other pathkeys fields in PlannerInfo.
+	 */
+	(*qp_callback) (root, qp_extra);
 
 	/*
 	 * Now distribute "placeholders" to base rels as needed.  This has to be
