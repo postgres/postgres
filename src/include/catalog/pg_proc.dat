@@ -6075,9 +6075,10 @@
 { oid => '8683', descr => 'statistics: information about statistics kinds',
   proname => 'pg_stat_get_kind_info', prorows => '20', proretset => 't',
   provolatile => 'v', proparallel => 'r', prorettype => 'record',
-  proargtypes => '', proallargtypes => '{int4,text,bool,bool,bool,bool,int8}',
-  proargmodes => '{o,o,o,o,o,o,o}',
-  proargnames => '{id,name,builtin,fixed_amount,accessed_across_databases,write_to_file,entry_count}',
+  proargtypes => '',
+  proallargtypes => '{int4,text,bool,bool,bool,bool,bool,int8}',
+  proargmodes => '{o,o,o,o,o,o,o,o}',
+  proargnames => '{id,name,builtin,fixed_amount,accessed_across_databases,write_to_file,own_hash,entry_count}',
   prosrc => 'pg_stat_get_kind_info' },
 
 { oid => '1136', descr => 'statistics: information about WAL activity',

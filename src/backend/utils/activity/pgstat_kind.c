@@ -31,7 +31,7 @@
 Datum
 pg_stat_get_kind_info(PG_FUNCTION_ARGS)
 {
-#define PG_STAT_KIND_INFO_COLS	7
+#define PG_STAT_KIND_INFO_COLS	8
 	ReturnSetInfo *rsinfo;
 
 	InitMaterializedSRF(fcinfo, 0);
@@ -54,15 +54,16 @@ pg_stat_get_kind_info(PG_FUNCTION_ARGS)
 		values[3] = BoolGetDatum(info->fixed_amount);
 		values[4] = BoolGetDatum(info->accessed_across_databases);
 		values[5] = BoolGetDatum(info->write_to_file);
+		values[6] = BoolGetDatum(info->own_hash);
 
 		/*
 		 * When track_entry_count is disabled, use NULL.  Fixed-sized stats
 		 * kinds report NULL here.
 		 */
 		if (info->track_entry_count)
-			values[6] = Int64GetDatum(pgstat_get_entry_count(kind));
+			values[7] = Int64GetDatum(pgstat_get_entry_count(kind));
 		else
-			nulls[6] = true;
+			nulls[7] = true;
 
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}

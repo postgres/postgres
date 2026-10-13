@@ -33,12 +33,12 @@ $node->safe_psql('postgres', q(CREATE EXTENSION test_custom_fixed_stats));
 $result = $node->safe_psql(
 	'postgres',
 	q(SELECT id, name, builtin, fixed_amount, accessed_across_databases,
-	         write_to_file
+	         write_to_file, own_hash
 	    FROM pg_stat_kind_info
 	    WHERE name LIKE 'test_custom%' ORDER BY id));
 is( $result,
-	qq{25|test_custom_var_stats|f|f|t|t
-26|test_custom_fixed_stats|f|t|f|t},
+	qq{25|test_custom_var_stats|f|f|t|t|f
+26|test_custom_fixed_stats|f|t|f|t|f},
 	"custom stats kinds visible in pg_stat_kind_info");
 
 my @var_stats_kinds = (
@@ -65,6 +65,10 @@ foreach my $stats_kind (@var_stats_kinds)
 	$node->adjust_conf('postgresql.conf', 'test_custom_var_stats.kind',
 		"'$kind_name'");
 	$node->restart;
+
+	$result = $node->safe_psql('postgres',
+		"SELECT own_hash FROM pg_stat_kind_info WHERE name = '$kind_name'");
+	is($result, $own_hash, "dedicated hash reported for $kind_name");
 
 	# Create entries for variable-sized stats.
 	$node->safe_psql('postgres',

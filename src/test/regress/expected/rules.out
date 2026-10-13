@@ -1973,8 +1973,9 @@ pg_stat_kind_info| SELECT id,
     fixed_amount,
     accessed_across_databases,
     write_to_file,
+    own_hash,
     entry_count
-   FROM pg_stat_get_kind_info() k(id, name, builtin, fixed_amount, accessed_across_databases, write_to_file, entry_count);
+   FROM pg_stat_get_kind_info() k(id, name, builtin, fixed_amount, accessed_across_databases, write_to_file, own_hash, entry_count);
 pg_stat_lock| SELECT locktype,
     waits,
     wait_time,

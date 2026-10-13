@@ -1290,6 +1290,7 @@ CREATE VIEW pg_stat_kind_info AS
         k.fixed_amount,
         k.accessed_across_databases,
         k.write_to_file,
+        k.own_hash,
         k.entry_count
     FROM pg_stat_get_kind_info() k;
 
