@@ -11909,8 +11909,6 @@ static void
 accum_sum_add(NumericSumAccum *accum, const NumericVar *val)
 {
 	int32	   *accum_digits;
-	int			i,
-				val_i;
 	int			val_ndigits;
 	NumericDigit *val_digits;
 
@@ -11940,12 +11938,9 @@ accum_sum_add(NumericSumAccum *accum, const NumericVar *val)
 	val_ndigits = val->ndigits;
 	val_digits = val->digits;
 
-	i = accum->weight - val->weight;
-	for (val_i = 0; val_i < val_ndigits; val_i++)
-	{
-		accum_digits[i] += (int32) val_digits[val_i];
-		i++;
-	}
+	accum_digits += accum->weight - val->weight;
+	for (int i = 0; i < val_ndigits; i++)
+		accum_digits[i] += (int32) val_digits[i];
 
 	accum->num_uncarried++;
 }
