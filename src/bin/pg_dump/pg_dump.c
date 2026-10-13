@@ -9473,8 +9473,17 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			tbinfo->typstorage[j] = *(PQgetvalue(res, r, i_typstorage));
 			tbinfo->attidentity[j] = *(PQgetvalue(res, r, i_attidentity));
 			tbinfo->attgenerated[j] = *(PQgetvalue(res, r, i_attgenerated));
-			tbinfo->needs_override = tbinfo->needs_override || (tbinfo->attidentity[j] == ATTRIBUTE_IDENTITY_ALWAYS);
 			tbinfo->attisdropped[j] = (PQgetvalue(res, r, i_attisdropped)[0] == 't');
+
+			/*
+			 * ALTER TABLE DROP COLUMN does not clear attidentity, so we must
+			 * ignore dropped columns here or we'd emit a spurious OVERRIDING
+			 * SYSTEM VALUE clause for the table's data.
+			 */
+			if (tbinfo->attidentity[j] == ATTRIBUTE_IDENTITY_ALWAYS &&
+				!tbinfo->attisdropped[j])
+				tbinfo->needs_override = true;
+
 			tbinfo->attlen[j] = atoi(PQgetvalue(res, r, i_attlen));
 			tbinfo->attalign[j] = *(PQgetvalue(res, r, i_attalign));
 			tbinfo->attislocal[j] = (PQgetvalue(res, r, i_attislocal)[0] == 't');

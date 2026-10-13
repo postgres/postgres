@@ -2043,6 +2043,29 @@ my %tests = (
 		},
 	},
 
+	'COPY test_table_identity_dropped' => {
+		create_order => 54,
+		create_sql =>
+		  'INSERT INTO dump_test.test_table_identity_dropped (col2) VALUES (\'test\');',
+		regexp => qr/^
+			\QCOPY dump_test.test_table_identity_dropped (col2) FROM stdin;\E
+			\ntest\n\\\.\n
+			/xm,
+		like => {
+			%full_runs,
+			%dump_test_schema_runs,
+			data_only => 1,
+			no_schema => 1,
+			section_data => 1,
+		},
+		unlike => {
+			binary_upgrade => 1,
+			exclude_dump_test_schema => 1,
+			schema_only => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
 	'INSERT INTO test_table' => {
 		regexp => qr/^
 			(?:INSERT\ INTO\ dump_test\.test_table\ \(col1,\ col2,\ col3,\ col4\)\ VALUES\ \(\d,\ NULL,\ NULL,\ NULL\);\n){9}
@@ -2098,6 +2121,28 @@ my %tests = (
 		regexp =>
 		  qr/^\QINSERT INTO dump_test.test_table_identity (col1, col2) OVERRIDING SYSTEM VALUE VALUES (1, 'test');\E/m,
 		like => { column_inserts => 1, },
+	},
+
+	'INSERT INTO test_table_identity_dropped' => {
+		regexp =>
+		  qr/^\QINSERT INTO dump_test.test_table_identity_dropped (col2) VALUES ('test');\E/m,
+		like => { column_inserts => 1, },
+	},
+
+	'INSERT INTO test_table_identity_dropped (no column list)' => {
+		regexp =>
+		  qr/^\QINSERT INTO dump_test.test_table_identity_dropped VALUES ('test');\E/m,
+		like => { inserts => 1, },
+	},
+
+	'OVERRIDING SYSTEM VALUE for dropped identity column' => {
+		regexp => qr/^
+			\QINSERT INTO dump_test.test_table_identity_dropped\E
+			.*\QOVERRIDING SYSTEM VALUE\E
+			/xm,
+
+		# the table has no identity column anymore, so this must never appear
+		like => {},
 	},
 
 	'CREATE ROLE regress_dump_test_role' => {
@@ -3864,6 +3909,28 @@ my %tests = (
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
+	'CREATE TABLE test_table_identity_dropped' => {
+		create_order => 3,
+		create_sql => 'CREATE TABLE dump_test.test_table_identity_dropped (
+						   col1 int generated always as identity,
+						   col2 text
+					   );
+					   ALTER TABLE dump_test.test_table_identity_dropped
+						   DROP COLUMN col1;',
+		regexp => qr/^
+			\QCREATE TABLE dump_test.test_table_identity_dropped (\E\n
+			\s+\Qcol2 text\E\n
+			\);
+			/xm,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => {
+			binary_upgrade => 1,
 			exclude_dump_test_schema => 1,
 			only_dump_measurement => 1,
 		},
