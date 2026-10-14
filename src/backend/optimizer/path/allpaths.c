@@ -3900,7 +3900,8 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
 		 * using a plugin, GEQO, or the regular join search code.
 		 *
 		 * We put the initial_rels list into a PlannerInfo field because
-		 * has_legal_joinclause() needs to look at it (ugly :-().
+		 * has_legal_joinclause() and join_is_legal() need to look at it (ugly
+		 * :-().
 		 */
 		root->initial_rels = initial_rels;
 

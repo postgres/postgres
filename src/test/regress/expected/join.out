@@ -6978,6 +6978,108 @@ select count(*) from int4_tbl t1 left join
 (1 row)
 
 --
+-- check that a join is disallowed when its lateral reference can only be
+-- satisfied by way of a rel that laterally references the join itself
+--
+explain (costs off)
+select 1 from int4_tbl t1 left join int4_tbl t2 on true,
+  lateral (select t2.f1 offset 0) s1 left join int8_tbl t3 on s1.f1 = t3.q1,
+  lateral (select t3.q2 offset 0) s2
+where s2.q2 > t1.f1;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Nested Loop
+   Join Filter: ((t3.q2) > t1.f1)
+   ->  Hash Left Join
+         Hash Cond: ((t2.f1) = t3.q1)
+         ->  Nested Loop
+               ->  Nested Loop Left Join
+                     ->  Seq Scan on int4_tbl t1
+                     ->  Materialize
+                           ->  Seq Scan on int4_tbl t2
+               ->  Result
+         ->  Hash
+               ->  Seq Scan on int8_tbl t3
+   ->  Result
+(13 rows)
+
+select 1 from int4_tbl t1 left join int4_tbl t2 on true,
+  lateral (select t2.f1 offset 0) s1 left join int8_tbl t3 on s1.f1 = t3.q1,
+  lateral (select t3.q2 offset 0) s2
+where s2.q2 > t1.f1;
+ ?column? 
+----------
+(0 rows)
+
+-- likewise when the outer join above the lateral referencer is a full join
+explain (costs off)
+select count(*) from int4_tbl t1 left join int4_tbl t2 on true,
+  lateral (select t2.f1 offset 0) s1 full join int8_tbl t3 on s1.f1 = t3.q1,
+  lateral (select t3.q2 offset 0) s2
+where s2.q2 > t1.f1;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         Join Filter: ((t3.q2) > t1.f1)
+         ->  Nested Loop
+               ->  Nested Loop Left Join
+                     ->  Seq Scan on int4_tbl t1
+                     ->  Materialize
+                           ->  Seq Scan on int4_tbl t2
+               ->  Hash Full Join
+                     Hash Cond: (t3.q1 = (t2.f1))
+                     ->  Seq Scan on int8_tbl t3
+                     ->  Hash
+                           ->  Result
+         ->  Result
+(14 rows)
+
+select count(*) from int4_tbl t1 left join int4_tbl t2 on true,
+  lateral (select t2.f1 offset 0) s1 full join int8_tbl t3 on s1.f1 = t3.q1,
+  lateral (select t3.q2 offset 0) s2
+where s2.q2 > t1.f1;
+ count 
+-------
+    80
+(1 row)
+
+-- likewise when the lateral referencer is part of a sub-joinlist
+set from_collapse_limit to 4;
+explain (costs off)
+select count(*) from int4_tbl t1 left join int4_tbl t2 on true,
+  lateral (select t2.f1 offset 0) s1 join int8_tbl t3 on s1.f1 = t3.q1,
+  lateral (select t3.q2 offset 0) s2
+where s2.q2 > t1.f1;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         Join Filter: ((t3.q2) > t1.f1)
+         ->  Nested Loop
+               ->  Nested Loop Left Join
+                     ->  Seq Scan on int4_tbl t1
+                     ->  Materialize
+                           ->  Seq Scan on int4_tbl t2
+               ->  Hash Join
+                     Hash Cond: (t3.q1 = (t2.f1))
+                     ->  Seq Scan on int8_tbl t3
+                     ->  Hash
+                           ->  Result
+         ->  Result
+(14 rows)
+
+select count(*) from int4_tbl t1 left join int4_tbl t2 on true,
+  lateral (select t2.f1 offset 0) s1 join int8_tbl t3 on s1.f1 = t3.q1,
+  lateral (select t3.q2 offset 0) s2
+where s2.q2 > t1.f1;
+ count 
+-------
+     0
+(1 row)
+
+reset from_collapse_limit;
+--
 -- check that a cloned outer-join qual is not enforced multiple times when
 -- it is moved into a parameterized join
 --
