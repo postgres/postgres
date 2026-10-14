@@ -42,6 +42,32 @@ spg_quad_config(PG_FUNCTION_ARGS)
 	DatumGetBool(DirectFunctionCall2(f, PointPGetDatum(x), PointPGetDatum(y)))
 
 /*
+ * Compare one coordinate of a point against that of the centroid
+ */
+static int
+getAxisSide(float8 tst, float8 centroid)
+{
+	/*
+	 * Test FPeq first so that points on a centroid axis get the same result
+	 * as getQuadrant.
+	 */
+	if (FPeq(tst, centroid))
+		return 0;
+	if (FPgt(tst, centroid))
+		return 1;
+	if (FPlt(tst, centroid))
+		return -1;
+	/* fall back to exact comparison */
+	if (tst > centroid)
+		return 1;
+	if (tst < centroid)
+		return -1;
+
+	elog(ERROR, "getQuadrant: impossible case");
+	return 0;
+}
+
+/*
  * Determine which quadrant a point falls into, relative to the centroid.
  *
  * Quadrants are identified like this:
@@ -56,6 +82,9 @@ spg_quad_config(PG_FUNCTION_ARGS)
 static int16
 getQuadrant(Point *centroid, Point *tst)
 {
+	int			xside;
+	int			yside;
+
 	if ((SPTEST(point_above, tst, centroid) ||
 		 SPTEST(point_horiz, tst, centroid)) &&
 		(SPTEST(point_right, tst, centroid) ||
@@ -76,8 +105,18 @@ getQuadrant(Point *centroid, Point *tst)
 		SPTEST(point_left, tst, centroid))
 		return 4;
 
-	elog(ERROR, "getQuadrant: impossible case");
-	return 0;
+	/*
+	 * The fuzzy tests above can all fail on one axis, because FPeq() rounds a
+	 * difference while FPlt() and FPgt() round a sum.  Compare exactly only
+	 * on that axis.  On the other axis, keep the result of the fuzzy tests,
+	 * because searches route by that result too.
+	 */
+	xside = getAxisSide(tst->x, centroid->x);
+	yside = getAxisSide(tst->y, centroid->y);
+
+	if (xside >= 0)
+		return (yside >= 0) ? 1 : 2;
+	return (yside <= 0) ? 3 : 4;
 }
 
 /* Returns bounding box of a given quadrant inside given bounding box */
