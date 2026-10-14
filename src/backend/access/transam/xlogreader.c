@@ -235,7 +235,7 @@ XLogReaderRegisterResetCallback(XLogReaderState *state)
 }
 
 #ifdef USE_ZSTD
-/* Release the zstd decomoression context. */
+/* Release the zstd decompression context. */
 static void
 XLogReaderFreeZstdContext(void *arg)
 {
