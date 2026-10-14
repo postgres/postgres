@@ -140,8 +140,12 @@ typedef struct ReorderBufferChange
 		CommandId	command_id;
 
 		/*
-		 * New cid mapping for catalog changing transaction, set when action
-		 * == *_INTERNAL_TUPLECID.
+		 * tuplecid changes are used to follow catalog tuple movements (i.e.,
+		 * DDL changes); we need them to create the HistoricTupleCidHash table
+		 * used with historical snapshots.  For historical reasons we store
+		 * these with the toplevel txn, not each subtxn; and yet we need to
+		 * remove them on subxact aborts, so we record the subxid separately.
+		 * Set when action == *_INTERNAL_TUPLECID.
 		 */
 		struct
 		{
@@ -150,6 +154,7 @@ typedef struct ReorderBufferChange
 			CommandId	cmin;
 			CommandId	cmax;
 			CommandId	combocid;
+			TransactionId subxid;
 		}			tuplecid;
 
 		/* Invalidation. */
@@ -659,15 +664,23 @@ void		ReorderBufferCommitChild(ReorderBuffer *, TransactionId, TransactionId,
 void		ReorderBufferAbort(ReorderBuffer *, TransactionId, XLogRecPtr lsn);
 void		ReorderBufferAbortOld(ReorderBuffer *, TransactionId xid);
 void		ReorderBufferForget(ReorderBuffer *, TransactionId, XLogRecPtr lsn);
+void		ReorderBufferCleanupAbortedTupleCids(ReorderBuffer *rb,
+												 TransactionId xid,
+												 int nsubxacts,
+												 TransactionId *subxacts);
 void		ReorderBufferInvalidate(ReorderBuffer *, TransactionId, XLogRecPtr lsn);
 
 void		ReorderBufferSetBaseSnapshot(ReorderBuffer *, TransactionId, XLogRecPtr lsn, struct SnapshotData *snap);
 void		ReorderBufferAddSnapshot(ReorderBuffer *, TransactionId, XLogRecPtr lsn, struct SnapshotData *snap);
 void		ReorderBufferAddNewCommandId(ReorderBuffer *, TransactionId, XLogRecPtr lsn,
 										 CommandId cid);
-void		ReorderBufferAddNewTupleCids(ReorderBuffer *, TransactionId, XLogRecPtr lsn,
-										 RelFileNode node, ItemPointerData pt,
-										 CommandId cmin, CommandId cmax, CommandId combocid);
+void		ReorderBufferAddNewTupleCids(ReorderBuffer *rb, TransactionId xid,
+										 TransactionId subxid,
+										 XLogRecPtr lsn, RelFileNode node,
+										 ItemPointerData tid,
+										 CommandId cmin, CommandId cmax,
+										 CommandId combocid);
+
 void		ReorderBufferAddInvalidations(ReorderBuffer *, TransactionId, XLogRecPtr lsn,
 										  Size nmsgs, SharedInvalidationMessage *msgs);
 void		ReorderBufferAddDistributedInvalidations(ReorderBuffer *rb, TransactionId xid,
