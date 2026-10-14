@@ -488,6 +488,12 @@ select * from
   asptab
 where asptab.id > ss.b::int;
 
+-- check that a SubPlan in a pruning expression is not used for startup-time
+-- pruning, which has no parent PlanState to evaluate the SubPlan with
+
+explain (costs off)
+select * from asptab where id = (null::int in (select f1 from int4_tbl))::int;
+
 drop table asptab;
 
 --
