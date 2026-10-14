@@ -4209,3 +4209,21 @@ SELECT COUNT(*) FROM onek t1 LEFT JOIN tenk1 t2
     ON (t2.thousand = t1.tenthous OR t2.thousand = t1.thousand);
 SELECT COUNT(*) FROM onek t1 LEFT JOIN tenk1 t2
     ON (t2.thousand = t1.tenthous OR t2.thousand = t1.thousand);
+
+--
+-- Test that a qual from above an antijoin made from a sublink is not pushed
+-- down into the antijoin's RHS.
+--
+
+EXPLAIN (COSTS OFF)
+SELECT s.*
+FROM (VALUES (1)) AS v(z) LEFT JOIN
+  (SELECT 123456 AS c, t1.f1 AS x FROM int4_tbl t1
+   WHERE NOT EXISTS (SELECT 1 FROM tenk1 t2 WHERE t2.unique1 = t1.f1)) s ON true
+WHERE s.x = s.c;
+
+SELECT s.*
+FROM (VALUES (1)) AS v(z) LEFT JOIN
+  (SELECT 123456 AS c, t1.f1 AS x FROM int4_tbl t1
+   WHERE NOT EXISTS (SELECT 1 FROM tenk1 t2 WHERE t2.unique1 = t1.f1)) s ON true
+WHERE s.x = s.c;
