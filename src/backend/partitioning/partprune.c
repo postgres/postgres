@@ -46,6 +46,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/appendinfo.h"
+#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
@@ -2073,12 +2074,21 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 
 			/*
 			 * See if there are any exec Params.  If so, we can only use this
-			 * expression during per-scan pruning.
+			 * expression during per-scan pruning.  The same is true if it
+			 * contains a SubPlan, as evaluating that requires the parent
+			 * node's PlanState, which startup-time pruning hasn't got.  (A
+			 * SubPlan's testexpr normally contains exec Params, so we'd have
+			 * caught it above, but the testexpr can be folded to a Const.)
 			 */
 			paramids = pull_exec_paramids(expr);
 			if (!bms_is_empty(paramids))
 			{
 				context->has_exec_param = true;
+				if (context->target != PARTTARGET_EXEC)
+					return PARTCLAUSE_UNSUPPORTED;
+			}
+			else if (contain_subplans((Node *) expr))
+			{
 				if (context->target != PARTTARGET_EXEC)
 					return PARTCLAUSE_UNSUPPORTED;
 			}

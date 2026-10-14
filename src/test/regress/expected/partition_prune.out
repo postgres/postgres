@@ -2106,6 +2106,22 @@ where asptab.id > ss.b::int;
      ->  Seq Scan on int4_tbl tinner
 (14 rows)
 
+-- check that a SubPlan in a pruning expression is not used for startup-time
+-- pruning, which has no parent PlanState to evaluate the SubPlan with
+explain (costs off)
+select * from asptab where id = (null::int in (select f1 from int4_tbl))::int;
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Append
+   ->  Index Only Scan using asptab0_pkey on asptab0 asptab_1
+         Index Cond: (id = ((ANY NULL::boolean))::integer)
+         SubPlan any_1
+           ->  Materialize
+                 ->  Seq Scan on int4_tbl
+   ->  Index Only Scan using asptab1_pkey on asptab1 asptab_2
+         Index Cond: (id = ((ANY NULL::boolean))::integer)
+(8 rows)
+
 drop table asptab;
 --
 -- Test Partition pruning for HASH partitioning
