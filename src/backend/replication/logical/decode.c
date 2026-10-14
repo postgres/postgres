@@ -860,7 +860,6 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 			xl_xact_parsed_abort *parsed, TransactionId xid,
 			bool two_phase)
 {
-	int			i;
 	XLogRecPtr	origin_lsn = InvalidXLogRecPtr;
 	TimestampTz abort_time = parsed->xact_time;
 	ReplOriginId origin_id = XLogRecGetOrigin(buf->record);
@@ -892,7 +891,15 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	}
 	else
 	{
-		for (i = 0; i < parsed->nsubxacts; i++)
+		/*
+		 * Remove tuplecid changes queued by the aborted subtransactions from
+		 * the toplevel's list.
+		 */
+		ReorderBufferCleanupAbortedTupleCids(ctx->reorder, xid,
+											 parsed->nsubxacts,
+											 parsed->subxacts);
+
+		for (int i = 0; i < parsed->nsubxacts; i++)
 		{
 			ReorderBufferAbort(ctx->reorder, parsed->subxacts[i],
 							   buf->record->EndRecPtr, abort_time);

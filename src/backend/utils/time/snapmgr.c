@@ -160,7 +160,7 @@ TransactionId TransactionXmin = FirstNormalTransactionId;
 TransactionId RecentXmin = FirstNormalTransactionId;
 
 /* (table, ctid) => (cmin, cmax) mapping during timetravel */
-static HTAB *tuplecid_data = NULL;
+static HTAB *HistoricTupleCidHash = NULL;
 
 /*
  * Elements of the active snapshot stack.
@@ -1708,7 +1708,7 @@ SetupHistoricSnapshot(Snapshot historic_snapshot, HTAB *tuplecids)
 	HistoricSnapshot = historic_snapshot;
 
 	/* setup (cmin, cmax) lookup hash */
-	tuplecid_data = tuplecids;
+	HistoricTupleCidHash = tuplecids;
 }
 
 
@@ -1719,7 +1719,7 @@ void
 TeardownHistoricSnapshot(bool is_error)
 {
 	HistoricSnapshot = NULL;
-	tuplecid_data = NULL;
+	HistoricTupleCidHash = NULL;
 }
 
 bool
@@ -1732,7 +1732,7 @@ HTAB *
 HistoricSnapshotGetTupleCids(void)
 {
 	Assert(HistoricSnapshotActive());
-	return tuplecid_data;
+	return HistoricTupleCidHash;
 }
 
 /*
