@@ -513,6 +513,34 @@ cvt_timestamptz_timestamp(Datum input)
 
 	result = timestamptz2timestamp_safe(val, (Node *) &escontext);
 	/* We can ignore errors, since result is useful as-is */
+
+	/*
+	 * It is critical that result <= val, else the index scan can begin after
+	 * potentially-matching index entries.  There are two known ways that this
+	 * might fail to be true:
+	 *
+	 * 1. In the to-be-repeated hour of a fall-back DST transition, the
+	 * ambiguous converted timestamp will be interpreted by <= as the later
+	 * (standard-time) timestamptz, thus comparing later than the given val.
+	 *
+	 * 2. timestamptz2timestamp_safe will return +Infinity if the input is
+	 * close to the range limit of timestamptz and its rotated value would
+	 * exceed the limit of timestamp.  (In itself this might not cause any
+	 * failures, but if #1 also applies then it possibly could.  In any case
+	 * we don't want to be repeatedly subtracting an hour from +Infinity.)
+	 *
+	 * To fix both things, first replace +Infinity with the maximum finite
+	 * timestamp, and then back up an hour at a time until we have a result
+	 * that compares <= val.  (It won't hurt if we end with a result that is
+	 * slightly less than the nominal lower limit of timestamp.)  This may
+	 * result in scanning more index entries than we really need to, but we
+	 * won't miss any we need.
+	 */
+	if (TIMESTAMP_IS_NOEND(result))
+		result = END_TIMESTAMP;
+	while (timestamp_cmp_timestamptz_internal(result, val) > 0)
+		result -= USECS_PER_HOUR;
+
 	return TimestampGetDatum(result);
 }
 
