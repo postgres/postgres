@@ -727,7 +727,11 @@ GetFileBackupMethod(IncrementalBackupInfo *ib, const char *path,
 		ipath = GetIncrementalFilePath(dboid, spcoid, relfilenumber,
 									   forknum, segno);
 		if (backup_file_lookup(ib->manifest_files, ipath) == NULL)
+		{
+			pfree(ipath);
 			return BACK_UP_FILE_FULLY;
+		}
+		pfree(ipath);
 	}
 
 	/*

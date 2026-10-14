@@ -100,6 +100,7 @@ tests += {
     'tests': [
       't/010_pg_basebackup.pl',
       't/011_in_place_tablespace.pl',
+      't/012_incremental_progress.pl',
       't/020_pg_receivewal.pl',
       't/030_pg_recvlogical.pl',
       't/040_pg_createsubscriber.pl',
