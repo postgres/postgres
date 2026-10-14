@@ -31,6 +31,7 @@
 #include "statistics/extended_stats_internal.h"
 #include "statistics/statistics.h"
 #include "utils/fmgrprotos.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 #include "varatt.h"
@@ -92,12 +93,17 @@ statext_ndistinct_build(double totalrows, StatsBuildData *data)
 	int			itemcnt;
 	int			numattrs = data->nattnums;
 	int			numcombs = num_combinations(numattrs);
+	MemoryContext cxt;
 
 	result = palloc(offsetof(MVNDistinct, items) +
 					numcombs * sizeof(MVNDistinctItem));
 	result->magic = STATS_NDISTINCT_MAGIC;
 	result->type = STATS_NDISTINCT_TYPE_BASIC;
 	result->nitems = numcombs;
+
+	cxt = AllocSetContextCreate(CurrentMemoryContext,
+								"ndistinct_for_combination cxt",
+								ALLOCSET_DEFAULT_SIZES);
 
 	itemcnt = 0;
 	for (k = 2; k <= numattrs; k++)
@@ -112,6 +118,7 @@ statext_ndistinct_build(double totalrows, StatsBuildData *data)
 		{
 			MVNDistinctItem *item = &result->items[itemcnt];
 			int			j;
+			MemoryContext oldcxt;
 
 			item->attributes = palloc(sizeof(AttrNumber) * k);
 			item->nattributes = k;
@@ -124,8 +131,12 @@ statext_ndistinct_build(double totalrows, StatsBuildData *data)
 				Assert(AttributeNumberIsValid(item->attributes[j]));
 			}
 
+			/* release memory used by ndistinct calculation */
+			oldcxt = MemoryContextSwitchTo(cxt);
 			item->ndistinct =
 				ndistinct_for_combination(totalrows, data, k, combination);
+			MemoryContextSwitchTo(oldcxt);
+			MemoryContextReset(cxt);
 
 			itemcnt++;
 			Assert(itemcnt <= result->nitems);
@@ -133,6 +144,8 @@ statext_ndistinct_build(double totalrows, StatsBuildData *data)
 
 		generator_free(generator);
 	}
+
+	MemoryContextDelete(cxt);
 
 	/* must consume exactly the whole output array */
 	Assert(itemcnt == result->nitems);
