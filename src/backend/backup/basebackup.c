@@ -315,10 +315,10 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 
 				if (tmp->path == NULL)
 					tmp->size = sendDir(sink, ".", 1, true, state.tablespaces,
-										true, NULL, InvalidOid, NULL);
+										true, NULL, InvalidOid, ib);
 				else
 					tmp->size = sendTablespace(sink, tmp->path, tmp->oid, true,
-											   NULL, NULL);
+											   NULL, ib);
 				state.bytes_total += tmp->size;
 			}
 			state.bytes_total_is_valid = true;
@@ -1183,7 +1183,8 @@ sendTablespace(bbsink *sink, char *path, Oid spcoid, bool sizeonly,
 /*
  * Include all files from the given directory in the output tar stream. If
  * 'sizeonly' is true, we just calculate a total length and return it, without
- * actually sending anything.
+ * actually sending anything. A file that will be sent incrementally is
+ * counted at the size of the incremental file.
  *
  * Omit any directory in the tablespaces list, to avoid backing up
  * tablespaces twice when they were created inside PGDATA.
