@@ -2109,6 +2109,7 @@ CheckTablespaceDirectory(void)
 					 errdetail("All directory entries in pg_tblspc/ should be symbolic links."),
 					 errhint("Remove those directories, or set allow_in_place_tablespaces to ON transiently to let recovery complete.")));
 	}
+	FreeDir(dir);
 }
 
 /*
