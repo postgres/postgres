@@ -66,7 +66,8 @@ static void create_new_objects(void);
 static void copy_xact_xlog_xid(void);
 static void set_frozenxids(void);
 static void make_outputdirs(char *pgdata);
-static void setup(char *argv0);
+static void check_bin_dirs(char *argv0);
+static void check_clusters_stopped(void);
 static void create_logical_replication_slots(void);
 static void create_conflict_detection_slot(void);
 
@@ -106,6 +107,12 @@ main(int argc, char **argv)
 
 	get_restricted_token();
 
+	/*
+	 * Resolve old and new binary dirs before adjust_data_dir(), because
+	 * adjust_data_dir() might need to call the binaries.
+	 */
+	check_bin_dirs(argv[0]);
+
 	adjust_data_dir(&old_cluster);
 	adjust_data_dir(&new_cluster);
 
@@ -125,7 +132,11 @@ main(int argc, char **argv)
 	 */
 	make_outputdirs(new_cluster.pgdata);
 
-	setup(argv[0]);
+	check_current_dir_write_permissions();
+
+	check_data_dir(&old_cluster);
+	check_data_dir(&new_cluster);
+	check_clusters_stopped();
 
 	output_check_banner();
 
@@ -359,14 +370,8 @@ make_outputdirs(char *pgdata)
 
 
 static void
-setup(char *argv0)
+check_bin_dirs(char *argv0)
 {
-	/*
-	 * make sure the user has a clean environment, otherwise, we may confuse
-	 * libpq when we connect to one (or both) of the servers.
-	 */
-	check_pghost_envvar();
-
 	/*
 	 * In case the user hasn't specified the directory for the new binaries
 	 * with -B, default to using the path of the currently executed pg_upgrade
@@ -384,7 +389,18 @@ setup(char *argv0)
 		new_cluster.bindir = pg_strdup(exec_path);
 	}
 
-	verify_directories();
+	check_bin_dir(&old_cluster, false);
+	check_bin_dir(&new_cluster, true);
+}
+
+static void
+check_clusters_stopped(void)
+{
+	/*
+	 * make sure the user has a clean environment, otherwise, we may confuse
+	 * libpq when we connect to one (or both) of the servers.
+	 */
+	check_pghost_envvar();
 
 	/* no postmasters should be running, except for a live check */
 	if (pid_lock_file_exists(old_cluster.pgdata))

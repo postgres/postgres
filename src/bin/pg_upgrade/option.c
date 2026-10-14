@@ -422,9 +422,10 @@ check_required_directory(char **dirpath, const char *envVarName, bool useCwd,
  * by querying the running server.  This has limited checking because we
  * can't check for a running server because we can't find postmaster.pid.
  *
- * On entry, cluster->pgdata has been set from command line or env variable,
- * but cluster->pgconfig isn't set.  We fill both variables with corrected
- * values.
+ * On entry, cluster->bindir has already been set, and cluster->pgdata has
+ * been initially set from the command line or env variable.  We fill
+ * cluster->pgconfig, and adjust cluster->pgdata with a corrected value if the
+ * real data directory is in a different location.
  */
 void
 adjust_data_dir(ClusterInfo *cluster)

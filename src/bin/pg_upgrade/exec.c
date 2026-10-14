@@ -15,8 +15,6 @@
 #include "fe_utils/version.h"
 #include "pg_upgrade.h"
 
-static void check_data_dir(ClusterInfo *cluster);
-static void check_bin_dir(ClusterInfo *cluster, bool check_versions);
 static void get_bin_version(ClusterInfo *cluster);
 static void check_exec(const char *dir, const char *program, bool check_version);
 
@@ -244,15 +242,10 @@ pid_lock_file_exists(const char *datadir)
 
 
 /*
- * verify_directories()
- *
- * does all the hectic work of verifying directories and executables
- * of old and new server.
- *
- * NOTE: May update the values of all parameters
+ * Check that the current directory is writable
  */
 void
-verify_directories(void)
+check_current_dir_write_permissions(void)
 {
 #ifndef WIN32
 	if (access(".", R_OK | W_OK | X_OK) != 0)
@@ -260,13 +253,7 @@ verify_directories(void)
 	if (win32_check_directory_write_permissions() != 0)
 #endif
 		pg_fatal("You must have read and write access in the current directory.");
-
-	check_bin_dir(&old_cluster, false);
-	check_data_dir(&old_cluster);
-	check_bin_dir(&new_cluster, true);
-	check_data_dir(&new_cluster);
 }
-
 
 #ifdef WIN32
 /*
@@ -329,7 +316,7 @@ check_single_dir(const char *pg_data, const char *subdir)
  *	us) we display an error message and exit()
  *
  */
-static void
+void
 check_data_dir(ClusterInfo *cluster)
 {
 	const char *pg_data = cluster->pgdata;
@@ -361,7 +348,7 @@ check_data_dir(ClusterInfo *cluster)
  *	against the version of this pg_upgrade.  This is for checking the target
  *	bindir.
  */
-static void
+void
 check_bin_dir(ClusterInfo *cluster, bool check_versions)
 {
 	struct stat statBuf;

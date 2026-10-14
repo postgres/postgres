@@ -391,7 +391,9 @@ void		generate_old_dump(void);
 
 bool		exec_prog(const char *log_filename, const char *opt_log_file,
 					  bool report_error, bool exit_on_error, const char *fmt, ...) pg_attribute_printf(5, 6);
-void		verify_directories(void);
+void		check_current_dir_write_permissions(void);
+void		check_bin_dir(ClusterInfo *cluster, bool check_versions);
+void		check_data_dir(ClusterInfo *cluster);
 bool		pid_lock_file_exists(const char *datadir);
 
 

@@ -561,35 +561,12 @@ $oldnode->safe_psql(
 # Upgrade the instance.
 $oldnode->stop;
 
-# Cause a failure at the start of pg_upgrade, this should create the logging
-# directory pg_upgrade_output.d but leave it around.  Keep --check for an
-# early exit.
-command_checks_all(
-	[
-		'pg_upgrade', '--no-sync',
-		'--old-datadir' => $oldnode->data_dir,
-		'--new-datadir' => $newnode->data_dir,
-		'--old-bindir' => $oldbindir . '/does/not/exist/',
-		'--new-bindir' => $newbindir,
-		'--socketdir' => $newnode->host,
-		'--old-port' => $oldnode->port,
-		'--new-port' => $newnode->port,
-		$mode, '--check',
-	],
-	1,
-	[qr{check for ".*?does/not/exist" failed}],
-	[],
-	'run of pg_upgrade --check for new instance with incorrect binary path');
-ok(-d $newnode->data_dir . "/pg_upgrade_output.d",
-	"pg_upgrade_output.d/ not removed after pg_upgrade failure");
-rmtree($newnode->data_dir . "/pg_upgrade_output.d");
-
 # Check that pg_upgrade aborts when encountering an invalid database
 # (However, versions that were out of support by commit c66a7d75e652 don't
 # know how to do this, so skip this test there.)
 SKIP:
 {
-	skip "database invalidation not implemented", 1
+	skip "database invalidation not implemented", 4
 	  if $oldnode->pg_version < 11;
 
 	command_checks_all(
@@ -608,6 +585,12 @@ SKIP:
 		[qr/datconnlimit/],
 		[qr/^$/],
 		'invalid database causes failure');
+
+	# Check that the failure creates the logging directory pg_upgrade_output.d
+	# and leaves it around
+	ok(-d $newnode->data_dir . "/pg_upgrade_output.d",
+		"pg_upgrade_output.d/ not removed after pg_upgrade failure");
+
 	rmtree($newnode->data_dir . "/pg_upgrade_output.d");
 }
 
