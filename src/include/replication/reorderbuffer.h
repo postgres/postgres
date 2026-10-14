@@ -136,8 +136,12 @@ typedef struct ReorderBufferChange
 		CommandId	command_id;
 
 		/*
-		 * New cid mapping for catalog changing transaction, set when action
-		 * == *_INTERNAL_TUPLECID.
+		 * tuplecid changes are used to follow catalog tuple movements (i.e.,
+		 * DDL changes); we need them to create the HistoricTupleCidHash table
+		 * used with historical snapshots.  For historical reasons we store
+		 * these with the toplevel txn, not each subtxn; and yet we need to
+		 * remove them on subxact aborts, so we record the subxid separately.
+		 * Set when action == *_INTERNAL_TUPLECID.
 		 */
 		struct
 		{
@@ -146,6 +150,7 @@ typedef struct ReorderBufferChange
 			CommandId	cmin;
 			CommandId	cmax;
 			CommandId	combocid;
+			TransactionId subxid;
 		}			tuplecid;
 
 		/* Invalidation. */
@@ -740,6 +745,10 @@ extern void ReorderBufferAbort(ReorderBuffer *rb, TransactionId xid, XLogRecPtr 
 							   TimestampTz abort_time);
 extern void ReorderBufferAbortOld(ReorderBuffer *rb, TransactionId oldestRunningXid);
 extern void ReorderBufferForget(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn);
+extern void ReorderBufferCleanupAbortedTupleCids(ReorderBuffer *rb,
+												 TransactionId xid,
+												 int nsubxacts,
+												 TransactionId *subxacts);
 extern void ReorderBufferInvalidate(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn);
 
 extern void ReorderBufferSetBaseSnapshot(ReorderBuffer *rb, TransactionId xid,
@@ -749,6 +758,7 @@ extern void ReorderBufferAddSnapshot(ReorderBuffer *rb, TransactionId xid,
 extern void ReorderBufferAddNewCommandId(ReorderBuffer *rb, TransactionId xid,
 										 XLogRecPtr lsn, CommandId cid);
 extern void ReorderBufferAddNewTupleCids(ReorderBuffer *rb, TransactionId xid,
+										 TransactionId subxid,
 										 XLogRecPtr lsn, RelFileLocator locator,
 										 ItemPointerData tid,
 										 CommandId cmin, CommandId cmax, CommandId combocid);
