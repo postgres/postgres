@@ -3304,3 +3304,21 @@ SELECT 1 FROM group_tbl t1
 GROUP BY s.c1, s.c2;
 
 DROP TABLE group_tbl;
+
+--
+-- Test that a qual from above an antijoin made from a sublink is not pushed
+-- down into the antijoin's RHS.
+--
+
+EXPLAIN (COSTS OFF)
+SELECT s.*
+FROM (VALUES (1)) AS v(z) LEFT JOIN
+  (SELECT 123456 AS c, t1.f1 AS x FROM int4_tbl t1
+   WHERE NOT EXISTS (SELECT 1 FROM tenk1 t2 WHERE t2.unique1 = t1.f1)) s ON true
+WHERE s.x = s.c;
+
+SELECT s.*
+FROM (VALUES (1)) AS v(z) LEFT JOIN
+  (SELECT 123456 AS c, t1.f1 AS x FROM int4_tbl t1
+   WHERE NOT EXISTS (SELECT 1 FROM tenk1 t2 WHERE t2.unique1 = t1.f1)) s ON true
+WHERE s.x = s.c;
