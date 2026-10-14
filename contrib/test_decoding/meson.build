@@ -29,6 +29,8 @@ test_decoding_isolation = [
   'twophase_snapshot',
   'skip_snapshot_restore',
   'invalidation_distribution',
+  'tuplecid_nested',
+  'tuplecid_restart',
 ]
 
 # slot_creation_error terminates another backend, whose FATAL message can be
