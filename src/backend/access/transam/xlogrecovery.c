@@ -2149,6 +2149,7 @@ CheckTablespaceDirectory(void)
 							   PG_TBLSPC_DIR),
 					 errhint("Remove those directories, or set \"allow_in_place_tablespaces\" to ON transiently to let recovery complete.")));
 	}
+	FreeDir(dir);
 }
 
 /*
