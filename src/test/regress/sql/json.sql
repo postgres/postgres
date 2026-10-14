@@ -695,6 +695,20 @@ SELECT json_build_object(json '{"a":1,"b":2}', 3);
 
 SELECT json_build_object('{1,2,3}'::int[], 3);
 
+-- handling of NULL values
+SELECT json_object_agg(1, NULL::json);
+SELECT json_object_agg(NULL, '{"a":1}');
+
+SELECT json_object_agg_unique(i, null) OVER (ORDER BY i)
+  FROM generate_series(1, 10) g(i);
+
+SELECT json_object_agg_unique_strict(i, null) OVER (ORDER BY i)
+  FROM generate_series(1, 10) g(i);
+
+-- a NULL-valued pair must still count as a duplicate key
+SELECT i, json_object_agg_unique_strict(k, v) OVER (ORDER BY i)
+  FROM (VALUES (1, 'a', null::int), (2, 'a', 1)) t(i, k, v);
+
 CREATE TEMP TABLE foo (serial_num int, name text, type text);
 INSERT INTO foo VALUES (847001,'t15','GE1043');
 INSERT INTO foo VALUES (847002,'t16','GE1043');
@@ -707,6 +721,13 @@ SELECT json_object_agg(name, type) FROM foo;
 
 INSERT INTO foo VALUES (999999, NULL, 'bar');
 SELECT json_object_agg(name, type) FROM foo;
+
+-- the final function runs once per row, but later pairs must still win
+SELECT g, json_object_agg(k, v) OVER (ORDER BY g)
+  FROM (VALUES (1,'a',1),(1,'a',2),(1,'a',3),(1,'b',5),(2,'b',6),(3,'a',7)) t(g,k,v);
+
+-- edge case for parser
+SELECT json_object_agg(DISTINCT 'a', 'abc');
 
 -- json_object
 

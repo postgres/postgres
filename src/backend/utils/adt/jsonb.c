@@ -1708,6 +1708,7 @@ jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 {
 	JsonbAggState *arg;
 	JsonbInState result;
+	JsonbParseState copyps;
 	Jsonb	   *out;
 
 	/* cannot be called directly because of internal-type argument */
@@ -1725,11 +1726,28 @@ jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 	 * itself, so we can simply invoke pushJsonbValue on a local copy of that.
 	 * Note that this will run uniqueifyJsonbObject each time; that's hard to
 	 * avoid, since duplicate pairs may have been added since the previous
-	 * finalization.  We assume uniqueifyJsonbObject can be applied repeatedly
-	 * (with the same unique_keys/skip_nulls options) without damaging the
-	 * data structure.
+	 * finalization.  uniqueifyJsonbObject can be applied repeatedly (with the
+	 * same unique_keys/skip_nulls options) without breaking the data
+	 * structure invariants, except that it removes null values if told to.
+	 * That's problematic when unique_keys is also set, since that might
+	 * prevent detection of a later-added key that duplicates an existing one
+	 * with null value.  Therefore, when both options are set, make a copy of
+	 * the pairs array and uniqueify that, keeping the original unmodified.
 	 */
 	result = arg->pstate;
+	if (result.parseState->unique_keys && result.parseState->skip_nulls)
+	{
+		JsonbParseState *oldps = result.parseState;
+		int			npairs = oldps->contVal.val.object.nPairs;
+
+		Assert(oldps->next == NULL);
+		copyps = *oldps;
+		copyps.contVal.val.object.pairs = palloc_array(JsonbPair, npairs);
+		memcpy(copyps.contVal.val.object.pairs,
+			   oldps->contVal.val.object.pairs,
+			   npairs * sizeof(JsonbPair));
+		result.parseState = &copyps;
+	}
 
 	pushJsonbValue(&result, WJB_END_OBJECT, NULL);
 

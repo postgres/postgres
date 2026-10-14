@@ -2032,15 +2032,17 @@ lengthCompareJsonbString(const char *val1, int len1, const char *val2, int len2)
 }
 
 /*
- * qsort_arg() comparator to compare JsonbPair values.
+ * qsort_arg() comparator to compare JsonbPair keys.
  *
- * Third argument 'binequal' may point to a bool. If it's set, *binequal is set
- * to true iff a and b have full binary equality, since some callers have an
- * interest in whether the two values are equal or merely equivalent.
+ * Third argument 'binequal' may point to a bool. If it's not NULL, and
+ * the two pairs have equal keys, *binequal is set to true.  This allows
+ * uniqueifyJsonbObject to cheaply detect whether there were duplicate keys.
  *
  * N.B: String comparisons here are "length-wise"
  *
- * Pairs with equals keys are ordered such that the order field is respected.
+ * Pairs with equal keys are sorted by descending order fields.  Since
+ * uniqueifyJsonbObject will keep the first pair of any group with equal
+ * keys, this ensures "last one wins" behavior as desired.
  */
 static int
 lengthCompareJsonbPair(const void *a, const void *b, void *binequal)
@@ -2053,10 +2055,7 @@ lengthCompareJsonbPair(const void *a, const void *b, void *binequal)
 	if (res == 0 && binequal)
 		*((bool *) binequal) = true;
 
-	/*
-	 * Guarantee keeping order of equal pair.  Unique algorithm will prefer
-	 * first element as value.
-	 */
+	/* If equal key strings, sort by descending "order" */
 	if (res == 0)
 		res = (pa->order > pb->order) ? -1 : 1;
 
@@ -2103,6 +2102,13 @@ uniqueifyJsonbObject(JsonbValue *object, bool unique_keys, bool skip_nulls)
 			/* Emit this pair, but avoid no-op copy */
 			if (i > nNewPairs)
 				pairs[nNewPairs] = *ptr;
+
+			/*
+			 * Renumber so that order fields again match pairs' array indexes.
+			 * This ensures that if any more pairs are added later, they will
+			 * correctly be seen as later than these.
+			 */
+			pairs[nNewPairs].order = nNewPairs;
 			nNewPairs++;
 		}
 		object->val.object.nPairs = nNewPairs;
