@@ -151,13 +151,15 @@ remove_useless_outer_joins(PlannerInfo *root)
 		 * As in pull_up_simple_subquery, discard no-longer-needed subqueries.
 		 * This is not just an optimization, but is necessary to prevent
 		 * subsequent processing from descending into stale subtrees and
-		 * seeing inconsistent data.  Likewise discard any securityQuals of
-		 * the removed rel.  (Although simple_rte_array[] will be rebuilt
-		 * shortly, we can still use it to find the RTE in the parse tree.)
+		 * seeing inconsistent data.  For the same reason, discard any
+		 * tablesample and securityQuals subtrees of the removed rel.
+		 * (Although simple_rte_array[] will be rebuilt shortly, we can still
+		 * use it to find the RTE in the parse tree.)
 		 */
 		rte = root->simple_rte_array[innerrelid];
 		if (rte->rtekind == RTE_SUBQUERY)
 			rte->subquery = NULL;
+		rte->tablesample = NULL;
 		rte->securityQuals = NIL;
 
 		/*
@@ -1268,6 +1270,13 @@ remove_self_join_rel(PlannerInfo *root,
 	if (root->append_rel_list != NIL)
 		ChangeVarNodes((Node *) root->append_rel_list, toRemove->relid,
 					   toKeep->relid, 0);
+
+	/*
+	 * As in remove_useless_outer_joins, discard the securityQuals of the
+	 * removed rel, so that later passes don't visit them.  We know the kept
+	 * rel has the same quals.  (tablesample is already known NULL.)
+	 */
+	root->simple_rte_array[toRemove->relid]->securityQuals = NIL;
 
 	/* Clean up the quals that the substitution has messed with */
 	fixup_selfjoin_jointree(root, (Node *) root->parse->jointree,
