@@ -2048,6 +2048,14 @@ pgstat_read_statsfile(void)
 								 key.objid, t);
 							goto error;
 						}
+
+						if (kind_info->fixed_amount)
+						{
+							elog(WARNING, "invalid fixed_amount in stats kind for entry %u/%u/%" PRIu64 " of type %c",
+								 key.kind, key.dboid,
+								 key.objid, t);
+							goto error;
+						}
 					}
 					else
 					{
