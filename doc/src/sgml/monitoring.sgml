@@ -8150,8 +8150,9 @@ FROM pg_stat_get_backend_idset() AS backendid;
        <structfield>backup_total</structfield> <type>bigint</type>
       </para>
       <para>
-       Total amount of data that will be streamed. This is estimated and
-       reported as of the beginning of
+       Total amount of data that will be streamed. This counts archive data
+       before any server-side compression. The estimate is reported as of
+       the beginning of the
        <literal>streaming database files</literal> phase. Note that
        this is only an approximation since the database
        may change during <literal>streaming database files</literal> phase
@@ -8170,7 +8171,8 @@ FROM pg_stat_get_backend_idset() AS backendid;
        <structfield>backup_streamed</structfield> <type>bigint</type>
       </para>
       <para>
-       Amount of data streamed. This counter only advances
+       Amount of data streamed. This counts archive data before any server-side
+       compression. This counter only advances
        when the phase is <literal>streaming database files</literal> or
        <literal>transferring wal files</literal>.
       </para></entry>
