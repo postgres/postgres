@@ -1446,12 +1446,14 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 	 */
 	if (!ConditionalLockBufferForCleanup(obuf))
 	{
+		_hash_dropbuf(rel, bucket_nbuf);
 		hash_destroy(tidhtab);
 		return;
 	}
 	if (!ConditionalLockBufferForCleanup(bucket_nbuf))
 	{
 		LockBuffer(obuf, BUFFER_LOCK_UNLOCK);
+		_hash_dropbuf(rel, bucket_nbuf);
 		hash_destroy(tidhtab);
 		return;
 	}
