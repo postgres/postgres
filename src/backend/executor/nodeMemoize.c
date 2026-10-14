@@ -1162,7 +1162,16 @@ ExecEndMemoize(MemoizeState *node)
 
 		Assert(ParallelWorkerNumber < node->shared_info->num_workers);
 		si = &node->shared_info->sinstrument[ParallelWorkerNumber];
-		memcpy(si, &node->stats, sizeof(MemoizeInstrumentation));
+
+		/*
+		 * Gather and GatherMerge spin up new workers on rescan, so add these
+		 * counters to accumulate the values over all scans.
+		 */
+		si->cache_hits += node->stats.cache_hits;
+		si->cache_misses += node->stats.cache_misses;
+		si->cache_evictions += node->stats.cache_evictions;
+		si->cache_overflows += node->stats.cache_overflows;
+		si->mem_peak = Max(si->mem_peak, node->stats.mem_peak);
 	}
 
 	/* Remove the cache context */
