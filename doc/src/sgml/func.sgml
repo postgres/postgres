@@ -19589,7 +19589,10 @@ SELECT NULLIF(value, '(none)') ...
         Collects all the key/value pairs into a JSON object.  Key arguments
         are coerced to text; value arguments are converted as
         per <function>to_json</function> or <function>to_jsonb</function>.
-        Values can be null, but not keys.
+        Values can be null, but keys cannot.
+        If a key appears more than once, the <type>json</type> result keeps
+        every pair, while the <type>jsonb</type> result keeps only the last
+        value for that key.
        </para></entry>
        <entry>No</entry>
       </row>
