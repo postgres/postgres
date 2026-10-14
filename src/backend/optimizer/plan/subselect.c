@@ -93,6 +93,7 @@ static bool contain_outer_selfref_walker(Node *node, Index *depth);
 static void inline_cte(PlannerInfo *root, CommonTableExpr *cte);
 static bool inline_cte_walker(Node *node, inline_cte_walker_context *context);
 static bool sublink_testexpr_is_not_nullable(PlannerInfo *root, SubLink *sublink);
+static int	add_antijoin_rte(Query *parse);
 static bool simplify_EXISTS_query(PlannerInfo *root, Query *query);
 static Query *convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 									Node **testexpr, List **paramIds);
@@ -1469,7 +1470,8 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	result->join_using_alias = NULL;
 	result->quals = quals;
 	result->alias = NULL;
-	result->rtindex = 0;		/* we don't need an RTE for it */
+	/* a semijoin doesn't need an RTE, but see add_antijoin_rte() */
+	result->rtindex = under_not ? add_antijoin_rte(parse) : 0;
 
 	return result;
 }
@@ -1781,9 +1783,54 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	result->join_using_alias = NULL;
 	result->quals = whereClause;
 	result->alias = NULL;
-	result->rtindex = 0;		/* we don't need an RTE for it */
+	/* a semijoin doesn't need an RTE, but see add_antijoin_rte() */
+	result->rtindex = under_not ? add_antijoin_rte(parse) : 0;
 
 	return result;
+}
+
+/*
+ * add_antijoin_rte: make a join RTE for an antijoin built from a sublink
+ *
+ * Giving the antijoin a relid, like an antijoin made by reducing a left join
+ * has, is what tells the rest of the planner that anything coming from above
+ * the join must not be evaluated within its RHS.  Normally nothing above can
+ * reference the RHS at all, but a PlaceHolderVar whose phrels cover the whole
+ * join can make a qual appear to; the join's relid in phrels then keeps such
+ * a qual from being pushed down into the RHS, where it would have the
+ * opposite of the intended effect.  (For a semijoin that would be harmless,
+ * so those are left without a relid.)
+ *
+ * Returns the new RTE's index.
+ */
+static int
+add_antijoin_rte(Query *parse)
+{
+	RangeTblEntry *rte;
+
+	/* Manufacture a join RTE to use. */
+	rte = makeNode(RangeTblEntry);
+	rte->rtekind = RTE_JOIN;
+	rte->jointype = JOIN_ANTI;
+	rte->joinmergedcols = 0;
+	rte->joinaliasvars = NIL;	/* nothing can reference the join's output */
+	rte->joinleftcols = NIL;	/* so it has no columns */
+	rte->joinrightcols = NIL;	/* ditto */
+	rte->join_using_alias = NULL;
+
+	rte->alias = NULL;
+	rte->eref = makeAlias("*ANTI*", NIL);
+	rte->lateral = false;
+	rte->inh = false;
+	rte->inFromCl = false;		/* not something the user wrote in FROM */
+
+	/*
+	 * Add completed RTE to the query's range table list, so that we know its
+	 * index.
+	 */
+	parse->rtable = lappend(parse->rtable, rte);
+
+	return list_length(parse->rtable);
 }
 
 /*

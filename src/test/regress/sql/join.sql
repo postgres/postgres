@@ -4647,3 +4647,46 @@ SELECT COUNT(*) FROM onek t1 LEFT JOIN tenk1 t2
     ON (t2.thousand = t1.tenthous OR t2.thousand = t1.thousand);
 SELECT COUNT(*) FROM onek t1 LEFT JOIN tenk1 t2
     ON (t2.thousand = t1.tenthous OR t2.thousand = t1.thousand);
+
+--
+-- Test that a qual from above an antijoin made from a sublink is not pushed
+-- down into the antijoin's RHS.
+--
+
+EXPLAIN (COSTS OFF)
+SELECT s.*
+FROM (VALUES (1)) AS v(z) LEFT JOIN
+  (SELECT 123456 AS c, t1.f1 AS x FROM int4_tbl t1
+   WHERE NOT EXISTS (SELECT 1 FROM tenk1 t2 WHERE t2.unique1 = t1.f1)) s ON true
+WHERE s.x = s.c;
+
+SELECT s.*
+FROM (VALUES (1)) AS v(z) LEFT JOIN
+  (SELECT 123456 AS c, t1.f1 AS x FROM int4_tbl t1
+   WHERE NOT EXISTS (SELECT 1 FROM tenk1 t2 WHERE t2.unique1 = t1.f1)) s ON true
+WHERE s.x = s.c;
+
+-- Test the same for NOT IN, which needs non-nullable inputs to become an
+-- antijoin
+BEGIN;
+
+CREATE TEMP TABLE not_null_tab (f1 int4 NOT NULL);
+INSERT INTO not_null_tab VALUES (0), (123456), (-123456);
+ANALYZE not_null_tab;
+
+EXPLAIN (COSTS OFF)
+SELECT s.*
+FROM (VALUES (1)) AS v(z) LEFT JOIN
+  (SELECT 123456 AS c, t1.f1 AS x FROM not_null_tab t1
+   WHERE t1.f1 NOT IN (SELECT t2.unique1 FROM tenk1 t2
+                       WHERE t2.unique1 IS NOT NULL)) s ON true
+WHERE s.x = s.c;
+
+SELECT s.*
+FROM (VALUES (1)) AS v(z) LEFT JOIN
+  (SELECT 123456 AS c, t1.f1 AS x FROM not_null_tab t1
+   WHERE t1.f1 NOT IN (SELECT t2.unique1 FROM tenk1 t2
+                       WHERE t2.unique1 IS NOT NULL)) s ON true
+WHERE s.x = s.c;
+
+ROLLBACK;

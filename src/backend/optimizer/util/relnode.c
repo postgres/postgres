@@ -2964,11 +2964,9 @@ eager_aggregation_possible_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	 * computed on the inner side would not survive the join and could not be
 	 * combined by the final aggregation.
 	 *
-	 * Note that an anti join reduced from an outer join null-extends its
-	 * inner side, so that inner relation already carries nulling_relids and
-	 * is handled by the outer-join check above.  The case this check adds is
-	 * a semi/anti join that does not null-extend its inner side, such as one
-	 * formed from an EXISTS, IN, NOT EXISTS, or NOT IN sublink.
+	 * Note that the inner side of an anti join already carries nulling_relids
+	 * and so is handled by the outer-join check above.  The case this check
+	 * adds is a semi join, which has no relid.
 	 */
 	foreach(lc, root->join_info_list)
 	{

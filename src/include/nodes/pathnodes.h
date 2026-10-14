@@ -3165,8 +3165,7 @@ typedef struct PlaceHolderVar
  * join_info_list member are only LEFT, FULL, SEMI, or ANTI.
  *
  * ojrelid is the RT index of the join RTE representing this outer join,
- * if there is one.  It is zero when jointype is INNER or SEMI, and can be
- * zero for jointype ANTI (if the join was transformed from a SEMI join).
+ * if there is one.  It is zero when jointype is INNER or SEMI.
  * One use for this field is that when constructing the output targetlist of a
  * join relation that implements this OJ, we add ojrelid to the varnullingrels
  * and phnullingrels fields of nullable (RHS) output columns, so that the

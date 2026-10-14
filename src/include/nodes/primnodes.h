@@ -2326,8 +2326,9 @@ typedef struct RangeTblRef
  * During parse analysis, an RTE is created for the Join, and its index
  * is filled into rtindex.  This RTE is present mainly so that Vars can
  * be created that refer to the outputs of the join.  The planner sometimes
- * generates JoinExprs internally; these can have rtindex = 0 if there are
- * no join alias variables referencing such joins.
+ * generates JoinExprs internally.  Those for semijoins have rtindex = 0,
+ * since no join alias variables can reference them; but an antijoin is
+ * given an RTE anyway, because it needs a relid as other outer joins do.
  *----------
  */
 typedef struct JoinExpr
