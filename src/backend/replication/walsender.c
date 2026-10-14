@@ -351,6 +351,9 @@ WalSndErrorCleanup(void)
 	if (xlogreader != NULL && xlogreader->seg.ws_file >= 0)
 		wal_segment_close(xlogreader);
 
+	xlogreader = NULL;
+	logical_decoding_ctx = NULL;
+
 	if (MyReplicationSlot != NULL)
 		ReplicationSlotRelease();
 
@@ -1009,6 +1012,9 @@ StartReplication(StartReplicationCmd *cmd)
 		Assert(streamingDoneSending && streamingDoneReceiving);
 	}
 
+	XLogReaderFree(xlogreader);
+	xlogreader = NULL;
+
 	if (cmd->slotname)
 		ReplicationSlotRelease();
 
@@ -1561,6 +1567,8 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	WalSndLoop(XLogSendLogical);
 
 	FreeDecodingContext(logical_decoding_ctx);
+	logical_decoding_ctx = NULL;
+	xlogreader = NULL;
 	ReplicationSlotRelease();
 
 	replication_active = false;
@@ -2064,6 +2072,9 @@ exec_replication_command(const char *cmd_string)
 
 	CHECK_FOR_INTERRUPTS();
 
+	Assert(xlogreader == NULL);
+	Assert(logical_decoding_ctx == NULL);
+
 	/*
 	 * Prepare to parse and execute the command.
 	 */
@@ -2204,7 +2215,6 @@ exec_replication_command(const char *cmd_string)
 				/* dupe, but necessary per libpqrcv_endstreaming */
 				EndReplicationCommand(cmdtag);
 
-				Assert(xlogreader != NULL);
 				break;
 			}
 
