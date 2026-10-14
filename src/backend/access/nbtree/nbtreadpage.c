@@ -548,6 +548,7 @@ _bt_start_array_keys(IndexScanDesc scan, ScanDirection dir)
 		ScanKey		skey = &so->keyData[array->scan_key];
 
 		Assert(skey->sk_flags & SK_SEARCHARRAY);
+		Assert(skey->sk_strategy == BTEqualStrategyNumber);
 
 		_bt_array_set_low_or_high(rel, skey, array,
 								  ScanDirectionIsForward(dir));
@@ -1196,18 +1197,17 @@ _bt_checkkeys(IndexScanDesc scan, BTReadPageState *pstate, bool arrayKeys,
 #endif
 
 	/*
-	 * Only one _bt_check_compare call is required in the common case where
-	 * there are no equality strategy array scan keys.  With array keys, we
-	 * can only accept _bt_check_compare's answer unreservedly when it set
-	 * pstate.continuescan=true.
+	 * Only one _bt_check_compare call is required when there are no array
+	 * scan keys.  Otherwise, we can only accept _bt_check_compare's answer
+	 * unreservedly when it set pstate.continuescan=true.
 	 */
 	if (!arrayKeys || pstate->continuescan)
 		return res;
 
 	/*
-	 * _bt_check_compare call set continuescan=false in the presence of
-	 * equality type array keys.  This could mean that the tuple is just past
-	 * the end of matches for the current array keys.
+	 * _bt_check_compare call set continuescan=false in the presence of array
+	 * keys.  This could mean that the tuple is just past the end of matches
+	 * for the current array keys.
 	 *
 	 * It's also possible that the scan is still _before_ the _start_ of
 	 * tuples matching the current set of array keys.  Check for that first.
@@ -1501,14 +1501,12 @@ _bt_check_compare(IndexScanDesc scan, ScanDirection dir,
 				*continuescan = false;
 
 			/*
-			 * If this is a non-required equality-type array key, the tuple
-			 * needs to be checked against every possible array key.  Handle
-			 * this by "advancing" the scan key's array to a matching value
-			 * (if we're successful then the tuple might match the qual).
+			 * If this is a non-required array key, the tuple needs to be
+			 * checked against every possible array key.  Handle this by
+			 * "advancing" the scan key's array to a matching value (if we're
+			 * successful then the tuple might match the qual).
 			 */
-			else if (advancenonrequired &&
-					 key->sk_strategy == BTEqualStrategyNumber &&
-					 (key->sk_flags & SK_SEARCHARRAY))
+			else if (advancenonrequired && (key->sk_flags & SK_SEARCHARRAY))
 				return _bt_advance_array_keys(scan, NULL, tuple, tupnatts,
 											  tupdesc, *ikey, false);
 
@@ -2242,16 +2240,15 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 		int32		result;
 		int			set_elem = 0;
 
-		if (cur->sk_strategy == BTEqualStrategyNumber)
+		if (cur->sk_flags & SK_SEARCHARRAY)
 		{
 			/* Manage array state */
-			if (cur->sk_flags & SK_SEARCHARRAY)
-			{
-				array = &so->arrayKeys[arrayidx++];
-				Assert(array->scan_key == ikey);
-			}
+			array = &so->arrayKeys[arrayidx++];
+
+			Assert(array->scan_key == ikey);
+			Assert(cur->sk_strategy == BTEqualStrategyNumber);
 		}
-		else
+		else if (cur->sk_strategy != BTEqualStrategyNumber)
 		{
 			/*
 			 * Are any inequalities required in the opposite direction only
@@ -3683,9 +3680,11 @@ _bt_verify_keys_with_arraykeys(IndexScanDesc scan)
 		ScanKey		cur = so->keyData + ikey;
 		BTArrayKeyInfo *array;
 
-		if (cur->sk_strategy != BTEqualStrategyNumber ||
-			!(cur->sk_flags & SK_SEARCHARRAY))
+		if (!(cur->sk_flags & SK_SEARCHARRAY))
 			continue;
+
+		if (cur->sk_strategy != BTEqualStrategyNumber)
+			return false;
 
 		array = &so->arrayKeys[arrayidx++];
 		if (array->scan_key != ikey)

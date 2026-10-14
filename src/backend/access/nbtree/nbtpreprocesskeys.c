@@ -286,9 +286,11 @@ _bt_preprocess_keys(IndexScanDesc scan)
 			 * (we'll miss out on the single value array transformation, but
 			 * that's not nearly as important when there's only one scan key)
 			 */
-			Assert(so->keyData[0].sk_flags & SK_SEARCHARRAY);
+			Assert(so->keyData[0].sk_strategy == BTEqualStrategyNumber ||
+				   !(so->keyData[0].sk_flags & SK_SEARCHARRAY));
 			Assert(so->keyData[0].sk_strategy != BTEqualStrategyNumber ||
-				   (so->arrayKeys[0].scan_key == 0 &&
+				   ((so->keyData[0].sk_flags & SK_SEARCHARRAY) &&
+					so->arrayKeys[0].scan_key == 0 &&
 					!(so->keyData[0].sk_flags & SK_BT_SKIP) &&
 					OidIsValid(so->orderProcs[0].fn_oid)));
 		}
@@ -493,10 +495,10 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		/* check strategy this key's operator corresponds to */
 		j = inkey->sk_strategy - 1;
 
-		if (inkey->sk_strategy == BTEqualStrategyNumber &&
-			(inkey->sk_flags & SK_SEARCHARRAY))
+		if (inkey->sk_flags & SK_SEARCHARRAY)
 		{
 			/* must track how input scan keys map to arrays */
+			Assert(inkey->sk_strategy == BTEqualStrategyNumber);
 			Assert(arrayKeyData);
 			arrayidx++;
 		}
@@ -565,8 +567,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 					/*
 					 * New key is more restrictive, and so replaces old key...
 					 */
-					if (j != (BTEqualStrategyNumber - 1) ||
-						!(xform[j].inkey->sk_flags & SK_SEARCHARRAY))
+					if (!(xform[j].inkey->sk_flags & SK_SEARCHARRAY))
 					{
 						xform[j].inkey = inkey;
 						xform[j].inkeyi = i;
@@ -975,10 +976,8 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 		bool		leftarray,
 					rightarray;
 
-		leftarray = ((leftarg->sk_flags & SK_SEARCHARRAY) &&
-					 leftarg->sk_strategy == BTEqualStrategyNumber);
-		rightarray = ((rightarg->sk_flags & SK_SEARCHARRAY) &&
-					  rightarg->sk_strategy == BTEqualStrategyNumber);
+		leftarray = (leftarg->sk_flags & SK_SEARCHARRAY) != 0;
+		rightarray = (rightarg->sk_flags & SK_SEARCHARRAY) != 0;
 
 		/*
 		 * _bt_preprocess_array_keys is responsible for merging together array
@@ -1102,10 +1101,9 @@ _bt_compare_array_scankey_args(IndexScanDesc scan, ScanKey arraysk, ScanKey skey
 	Assert(!(arraysk->sk_flags & (SK_ISNULL | SK_ROW_HEADER | SK_ROW_MEMBER)));
 	Assert((arraysk->sk_flags & SK_SEARCHARRAY) &&
 		   arraysk->sk_strategy == BTEqualStrategyNumber);
-	/* don't expect to have to deal with NULLs/row comparison scan keys */
-	Assert(!(skey->sk_flags & (SK_ISNULL | SK_ROW_HEADER | SK_ROW_MEMBER)));
-	Assert(!(skey->sk_flags & SK_SEARCHARRAY) ||
-		   skey->sk_strategy != BTEqualStrategyNumber);
+	/* don't expect to have to deal with array/IS NULL/row compare skey */
+	Assert(!(skey->sk_flags &
+			 (SK_SEARCHARRAY | SK_ISNULL | SK_ROW_HEADER | SK_ROW_MEMBER)));
 
 	/*
 	 * Just call the appropriate helper function based on whether it's a SAOP
@@ -2078,6 +2076,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan, int *new_numberOfKeys)
 					_bt_find_extreme_element(scan, cur, elemtype,
 											 BTGreaterStrategyNumber,
 											 elem_values, num_nonnulls);
+				cur->sk_flags &= ~SK_SEARCHARRAY;
 				numArrayKeyData++;	/* keep this transformed scan key */
 				continue;
 			case BTEqualStrategyNumber:
@@ -2089,6 +2088,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan, int *new_numberOfKeys)
 					_bt_find_extreme_element(scan, cur, elemtype,
 											 BTLessStrategyNumber,
 											 elem_values, num_nonnulls);
+				cur->sk_flags &= ~SK_SEARCHARRAY;
 				numArrayKeyData++;	/* keep this transformed scan key */
 				continue;
 			default:
