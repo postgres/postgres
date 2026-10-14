@@ -89,3 +89,16 @@ select box(point(i,j))
   from generate_series(1,100,5) i,
        generate_series(1,10,5) j;
 -- leave this table around, to help in testing dump/restore
+
+-- Bug #19597: coverage of getQuadrant for a point just over EPSILON from the centroid
+create table spgist_quad_fp_tbl(p point);
+insert into spgist_quad_fp_tbl select point(i, 5) from generate_series(1, 300) i;
+create index spgist_quad_fp_idx on spgist_quad_fp_tbl using spgist(p);
+insert into spgist_quad_fp_tbl values (point(3, 5 + 1e-6));
+
+-- Bug #19597: needs exact comparison on one axis, within EPSILON on the other
+insert into spgist_quad_fp_tbl values (point(114 - 5e-7, 5 + 1e-6));
+set enable_seqscan = off;
+select count(*) from spgist_quad_fp_tbl
+  where p <@ box(point(113.999999, 5.0000004), point(113.9999999, 5.0000016));
+reset enable_seqscan;
