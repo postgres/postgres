@@ -25,7 +25,8 @@ ISOLATION = basic \
 	    syscache-update-pruned \
 	    $(WAIT_CLEANUP_TST) \
 	    heap_lock_update \
-	    on_conflict_probe_window
+	    on_conflict_probe_window \
+	    multixact-aborted-updater
 
 TAP_TESTS = 1
 
