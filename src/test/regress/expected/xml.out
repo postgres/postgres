@@ -682,6 +682,35 @@ SELECT xmlserialize(CONTENT  'text node<foo>    <bar></bar>   </foo>' AS text IN
  </foo>
 (1 row)
 
+-- check some encoding-dependent behaviors
+-- (this is mostly checking for libxml2 bugs, not our bugs...)
+DO $$
+DECLARE
+  result text;
+BEGIN
+  IF getdatabaseencoding() = 'UTF8' THEN
+    -- U+FEFF after an XML declaration is content, not a byte-order mark
+    result := xmlserialize(CONTENT xmlparse(CONTENT
+              '<?xml version="1.0"?>' || chr(65279) || 'abc') AS text INDENT);
+    IF result <> '&#xFEFF;abc' THEN
+      RAISE WARNING 'U+FEFF was not preserved: %', result;
+    END IF;
+    -- non-ASCII characters are converted to hex entities if in data
+    result := xmlserialize(CONTENT xmlparse(CONTENT
+              'ni' || chr(241) || 'o') AS text INDENT);
+    IF result <> 'ni&#xF1;o' THEN
+      RAISE WARNING 'U+F1 was not converted to a hex entity: %', result;
+    END IF;
+    -- non-ASCII characters are preserved in tag attributes
+    result := xmlserialize(CONTENT xmlparse(CONTENT
+              '<a attr="ni' || chr(241) || 'o"/>') AS text INDENT);
+    IF result <> '<a attr="ni' || chr(241) || 'o"/>' THEN
+      RAISE WARNING 'U+F1 was not preserved in a tag: %', result;
+    END IF;
+  END IF;
+END
+$$;
+-- IS DOCUMENT
 SELECT xml '<foo>bar</foo>' IS DOCUMENT;
  ?column? 
 ----------
