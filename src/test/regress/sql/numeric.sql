@@ -713,6 +713,8 @@ SELECT x1, x2,
   log(x1, x2)
 FROM v AS v1(x1), v AS v2(x2);
 
+SELECT log('0.5'::numeric, 'inf');
+SELECT log('1'::numeric, 'inf');
 SELECT log('0'::numeric, '10');
 SELECT log('10'::numeric, '0');
 SELECT log('-inf'::numeric, '10');
