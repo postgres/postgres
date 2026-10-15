@@ -1,0 +1,84 @@
+Parsed test spec with 4 sessions
+
+starting permutation: s1begin s1update s2lock s1abort s3nowait wake
+step s1begin: BEGIN;
+step s1update: UPDATE mxact_abort SET filler = 's1' WHERE id = 1;
+step s2lock: SELECT * FROM mxact_abort WHERE id = 1 FOR KEY SHARE;
+id|filler 
+--+-------
+ 1|initial
+(1 row)
+
+step s1abort: ROLLBACK; <waiting ...>
+step s3nowait: SELECT * FROM mxact_abort WHERE id = 1 FOR NO KEY UPDATE NOWAIT;
+ERROR:  could not obtain lock on row in relation "mxact_abort"
+step wake: 
+	SELECT FROM injection_points_detach('transaction-abort-after-clog');
+	SELECT FROM injection_points_wakeup('transaction-abort-after-clog');
+
+step s1abort: <... completed>
+
+starting permutation: s1begin s1update s2lock s1abort s3update wake
+step s1begin: BEGIN;
+step s1update: UPDATE mxact_abort SET filler = 's1' WHERE id = 1;
+step s2lock: SELECT * FROM mxact_abort WHERE id = 1 FOR KEY SHARE;
+id|filler 
+--+-------
+ 1|initial
+(1 row)
+
+step s1abort: ROLLBACK; <waiting ...>
+step s3update: UPDATE mxact_abort SET filler = 's3' WHERE id = 1; <waiting ...>
+step wake: 
+	SELECT FROM injection_points_detach('transaction-abort-after-clog');
+	SELECT FROM injection_points_wakeup('transaction-abort-after-clog');
+
+step s3update: <... completed>
+step s1abort: <... completed>
+
+starting permutation: s1begin s1update s2lock s1abort s3delete wake s3check
+step s1begin: BEGIN;
+step s1update: UPDATE mxact_abort SET filler = 's1' WHERE id = 1;
+step s2lock: SELECT * FROM mxact_abort WHERE id = 1 FOR KEY SHARE;
+id|filler 
+--+-------
+ 1|initial
+(1 row)
+
+step s1abort: ROLLBACK; <waiting ...>
+step s3delete: DELETE FROM mxact_abort WHERE id = 1; <waiting ...>
+step wake: 
+	SELECT FROM injection_points_detach('transaction-abort-after-clog');
+	SELECT FROM injection_points_wakeup('transaction-abort-after-clog');
+
+step s3delete: <... completed>
+step s1abort: <... completed>
+step s3check: SELECT * FROM mxact_abort ORDER BY id;
+id|filler
+--+------
+(0 rows)
+
+
+starting permutation: s1begin s1update s2lock s1abort s3keyupdate wake s3check
+step s1begin: BEGIN;
+step s1update: UPDATE mxact_abort SET filler = 's1' WHERE id = 1;
+step s2lock: SELECT * FROM mxact_abort WHERE id = 1 FOR KEY SHARE;
+id|filler 
+--+-------
+ 1|initial
+(1 row)
+
+step s1abort: ROLLBACK; <waiting ...>
+step s3keyupdate: UPDATE mxact_abort SET id = 2 WHERE id = 1; <waiting ...>
+step wake: 
+	SELECT FROM injection_points_detach('transaction-abort-after-clog');
+	SELECT FROM injection_points_wakeup('transaction-abort-after-clog');
+
+step s3keyupdate: <... completed>
+step s1abort: <... completed>
+step s3check: SELECT * FROM mxact_abort ORDER BY id;
+id|filler 
+--+-------
+ 2|initial
+(1 row)
+

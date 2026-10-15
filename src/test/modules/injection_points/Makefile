@@ -22,7 +22,8 @@ ISOLATION = inplace \
 	    syscache-update-pruned \
 	    $(WAIT_CLEANUP_TST) \
 	    heap_lock_update \
-	    on_conflict_probe_window
+	    on_conflict_probe_window \
+	    multixact-aborted-updater
 
 # The injection points are cluster-wide, so disable installcheck
 NO_INSTALLCHECK = 1
