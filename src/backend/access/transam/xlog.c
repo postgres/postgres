@@ -1850,6 +1850,7 @@ WALReadFromBuffers(char *dstbuf, XLogRecPtr startptr, Size count,
 	XLogRecPtr	recptr = startptr;
 	XLogRecPtr	inserted;
 	Size		nbytes = count;
+	uint32		npages = 0;
 
 	if (RecoveryInProgress() || tli != GetWALInsertionTimeLine())
 		return 0;
@@ -1940,9 +1941,14 @@ WALReadFromBuffers(char *dstbuf, XLogRecPtr startptr, Size count,
 		pdst += npagebytes;
 		recptr += npagebytes;
 		nbytes -= npagebytes;
+		npages++;
 	}
 
 	Assert(pdst - dstbuf <= count);
+
+	/* Report the pages read from the WAL buffers. */
+	if (npages > 0)
+		pgstat_count_io_op(IOOBJECT_WAL, IOCONTEXT_NORMAL, IOOP_HIT, npages, 0);
 
 	return pdst - dstbuf;
 }

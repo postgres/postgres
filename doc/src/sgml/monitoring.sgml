@@ -3316,7 +3316,11 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>hits</structfield> <type>bigint</type>
        </para>
        <para>
-        The number of times a desired block was found in a shared buffer.
+        The number of times a desired block was found in a shared buffer, or
+        in the WAL buffers for <varname>object</varname>
+        <literal>wal</literal>. For <varname>object</varname>
+        <literal>wal</literal>, a page that is only partially read counts as
+        one hit.
        </para>
       </entry>
      </row>
@@ -3424,6 +3428,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
    <varname>writes</varname> and <varname>write_time</varname>
    track the write activity of WAL files done in
    <function>XLogWrite</function>.
+   <varname>hits</varname> tracks the reads of WAL from the WAL buffers done
+   in <function>WALReadFromBuffers</function>, which avoid reading a WAL file.
    See <xref linkend="wal-configuration"/> for more information.
   </para>
 
