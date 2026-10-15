@@ -50,6 +50,7 @@ tests += {
       't/054_unlogged_sequence_promotion.pl',
       't/055_cascade_reconnect.pl',
       't/056_standby_snapshot_export.pl',
+      't/060_multixact_crashed_updater.pl',
     ],
   },
 }
