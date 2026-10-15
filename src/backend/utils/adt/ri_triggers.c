@@ -304,7 +304,8 @@ static bool ri_LockPKTuple(Relation pk_rel, TupleTableSlot *slot, Snapshot snap,
 						   bool *concurrently_updated);
 static bool ri_fastpath_is_applicable(const RI_ConstraintInfo *riinfo);
 static bool ri_check_fastpath_index(RI_ConstraintInfo *riinfo,
-									Relation pk_rel, Relation idx_rel);
+									Relation fk_rel, Relation pk_rel,
+									Relation idx_rel);
 static void ri_CheckPermissions(const RI_ConstraintInfo *riinfo,
 								Relation query_rel);
 static bool recheck_matched_pk_tuple(Relation idxrel, ScanKeyData *skeys,
@@ -435,8 +436,9 @@ RI_FKey_check(TriggerData *trigdata)
 	 * the per-row executor overhead.
 	 *
 	 * ri_FastPathCheck() reports the violation itself if no matching PK row
-	 * is found.  It returns false if the index checks made after opening the
-	 * relations require a SPI fallback.
+	 * is found.  It returns false if the checks made after opening the
+	 * relations, on the index and on whether the FK values need a coercion to
+	 * reach the equality operator's input type, require a SPI fallback.
 	 */
 	if (ri_fastpath_is_applicable(riinfo) &&
 		ri_FastPathCheck(riinfo, fk_rel, newslot))
@@ -2488,7 +2490,7 @@ get_ri_constraint_root(Oid constrOid)
 }
 
 /*
- * Callback for pg_constraint and pg_amop inval events
+ * Callback for pg_constraint, pg_amop and pg_cast inval events
  *
  * While most syscache callbacks just flush all their entries, pg_constraint
  * gets enough update traffic that it's probably worth being smarter.
@@ -2522,6 +2524,14 @@ InvalidateConstraintCacheCallBack(Datum arg, SysCacheIdentifier cacheid,
 	 * rare.
 	 */
 	if (cacheid == AMOPOPID)
+		hashvalue = 0;
+
+	/*
+	 * Likewise for pg_cast: whether a constraint's FK values are
+	 * binary-coercible to the operator's input type, which decides fast-path
+	 * eligibility, can depend on a binary cast, which may be replaced.
+	 */
+	if (cacheid == CASTSOURCETARGET)
 		hashvalue = 0;
 
 	/*
@@ -2813,7 +2823,7 @@ ri_FastPathCheck(RI_ConstraintInfo *riinfo,
 
 	idx_rel = index_open(riinfo->conindid, AccessShareLock);
 
-	if (!ri_check_fastpath_index(riinfo, pk_rel, idx_rel))
+	if (!ri_check_fastpath_index(riinfo, fk_rel, pk_rel, idx_rel))
 	{
 		index_close(idx_rel, NoLock);
 		table_close(pk_rel, NoLock);
@@ -3017,8 +3027,11 @@ ri_LockPKTuple(Relation pk_rel, TupleTableSlot *slot, Snapshot snap,
 }
 
 /*
- * Apply the checks that do not require opening the referenced index.  An
- * unknown state still needs ri_check_fastpath_index() before using it.
+ * Apply the cheap checks that depend only on riinfo; this runs for every
+ * row.  Checks that need the referenced index or catalog lookups are made
+ * once by ri_check_fastpath_index(), which caches the result in
+ * fastpath_state; an unknown state still needs it before using the fast
+ * path.
  */
 static bool
 ri_fastpath_is_applicable(const RI_ConstraintInfo *riinfo)
@@ -3043,16 +3056,18 @@ ri_fastpath_is_applicable(const RI_ConstraintInfo *riinfo)
 }
 
 /*
- * Check index-dependent eligibility lazily, like fast-path scan metadata.
- * Cache both success and failure until the constraint information is reloaded.
+ * Check eligibility that depends on the index or on the FK column types
+ * lazily, like fast-path scan metadata.  Cache both success and failure until
+ * the constraint information is reloaded.
  *
  * The caller has locked the referenced table, reloaded conindid, and opened
  * the index.  Looking up index properties in ri_LoadConstraintInfo() would
  * race with REINDEX CONCURRENTLY dropping an index read before that lock.
- * The index-property checks use the held relation descriptors.
+ * The index-property checks use the held relation descriptors, and the check
+ * of the FK column types uses fk_rel.
  */
 static bool
-ri_check_fastpath_index(RI_ConstraintInfo *riinfo,
+ri_check_fastpath_index(RI_ConstraintInfo *riinfo, Relation fk_rel,
 						Relation pk_rel, Relation idx_rel)
 {
 	/* Opening the index can have processed further invalidations. */
@@ -3112,6 +3127,27 @@ ri_check_fastpath_index(RI_ConstraintInfo *riinfo,
 
 		if (get_op_opfamily_strategy(riinfo->pf_eq_oprs[i],
 									 idx_rel->rd_opfamily[idx_col]) != BTEqualStrategyNumber)
+		{
+			riinfo->fastpath_state = RI_FASTPATH_UNUSABLE;
+			return false;
+		}
+	}
+
+	/*
+	 * The fast path passes FK values to the equality operator as they are, so
+	 * it needs the FK type to be binary-coercible to the operator's right
+	 * input type.  That covers cross-type operators, which take the FK type
+	 * directly, domains, and binary-compatible types.  Any other coercion is
+	 * left to SPI, which applies it as part of the query.
+	 */
+	for (int i = 0; i < riinfo->nkeys; i++)
+	{
+		Oid			fk_type = RIAttType(fk_rel, riinfo->fk_attnums[i]);
+		Oid			lefttype;
+		Oid			righttype;
+
+		op_input_types(riinfo->pf_eq_oprs[i], &lefttype, &righttype);
+		if (!IsBinaryCoercible(fk_type, righttype))
 		{
 			riinfo->fastpath_state = RI_FASTPATH_UNUSABLE;
 			return false;
@@ -3235,9 +3271,10 @@ recheck_matched_pk_tuple(Relation idxrel, ScanKeyData *skeys, int nkeys,
  *
  * This parallels the checks ExecInitFunc() performs when the SPI path
  * initializes its generated query, where the equality operator's function
- * appears in the WHERE clause and the cast function, if any, in the cast
- * applied to the parameter.  Call with the user id already switched to the
- * referenced table's owner.
+ * appears in the WHERE clause.  The fast path is not used when the FK values
+ * need coercion (see ri_check_fastpath_index()), so that is the only function
+ * to check.  Call with the user id already switched to the referenced table's
+ * owner.
  */
 static void
 ri_CheckFunctionPermissions(const RI_ConstraintInfo *riinfo,
@@ -3633,11 +3670,14 @@ ri_InitHashTables(void)
 									  RI_INIT_CONSTRAINTHASHSIZE,
 									  &ctl, HASH_ELEM | HASH_BLOBS);
 
-	/* Arrange to flush cache on pg_constraint or pg_amop changes */
+	/* Arrange to flush cache on pg_constraint, pg_amop or pg_cast changes */
 	CacheRegisterSyscacheCallback(CONSTROID,
 								  InvalidateConstraintCacheCallBack,
 								  (Datum) 0);
 	CacheRegisterSyscacheCallback(AMOPOPID,
+								  InvalidateConstraintCacheCallBack,
+								  (Datum) 0);
+	CacheRegisterSyscacheCallback(CASTSOURCETARGET,
 								  InvalidateConstraintCacheCallBack,
 								  (Datum) 0);
 
