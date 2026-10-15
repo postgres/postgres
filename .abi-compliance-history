@@ -18,6 +18,15 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+83be644888b860bf74fa88cc18104f58c278d870
+#
+# Reorderbuffer: handle catalog-change-bearing aborted subxacts better
+# Wed Oct 14 19:42:04 2026 +0200
+#
+# ReorderBufferAddNewTupleCids()'s signature changes and struct
+# ReorderBufferChange gains a field, but no known third-party calls the
+# former or constructs the latter.
+
 1a358b8f2a28aaf3a7bfc8cf710de7a39c98436d
 #
 # Check for USAGE privilege on types used by stored expressions.
