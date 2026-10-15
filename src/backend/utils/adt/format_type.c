@@ -20,7 +20,9 @@
 #include "access/htup_details.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
+#include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -447,42 +449,30 @@ Datum
 oidvectortypes(PG_FUNCTION_ARGS)
 {
 	oidvector  *oidArray = (oidvector *) PG_GETARG_POINTER(0);
-	char	   *result;
+	StringInfoData result;
 	int			numargs;
 	int			num;
-	size_t		total;
-	size_t		left;
 
 	/* validate input before fetching dim1 */
 	check_valid_oidvector(oidArray);
 	numargs = oidArray->dim1;
 
-	total = 20 * numargs + 1;
-	result = palloc(total);
-	result[0] = '\0';
-	left = total - 1;
+	initStringInfo(&result);
 
 	for (num = 0; num < numargs; num++)
 	{
-		char	   *typename = format_type_extended(oidArray->values[num], -1,
-													FORMAT_TYPE_ALLOW_INVALID);
-		size_t		slen = strlen(typename);
+		char	   *typename;
 
-		if (left < (slen + 2))
-		{
-			total += slen + 2;
-			result = repalloc(result, total);
-			left += slen + 2;
-		}
+		CHECK_FOR_INTERRUPTS();
+
+		typename = format_type_extended(oidArray->values[num], -1,
+										FORMAT_TYPE_ALLOW_INVALID);
 
 		if (num > 0)
-		{
-			strcat(result, ", ");
-			left -= 2;
-		}
-		strcat(result, typename);
-		left -= slen;
+			appendStringInfoString(&result, ", ");
+		appendStringInfoString(&result, typename);
+		pfree(typename);
 	}
 
-	PG_RETURN_TEXT_P(cstring_to_text(result));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result.data, result.len));
 }
