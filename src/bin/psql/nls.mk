@@ -25,6 +25,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    ../../common/username.c \
                    ../../common/wait_error.c
 GETTEXT_TRIGGERS = $(FRONTEND_COMMON_GETTEXT_TRIGGERS) \
-                   HELP0 HELPN N_ simple_prompt simple_prompt_extended
+                   HELP0 HELPN N_ addQueryComment:2 simple_prompt \
+                   simple_prompt_extended
 GETTEXT_FLAGS    = $(FRONTEND_COMMON_GETTEXT_FLAGS) \
                    HELPN:1:c-format

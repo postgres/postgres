@@ -2618,6 +2618,28 @@ command_no_begin(const char *query)
 
 
 /*
+ * addQueryComment
+ *
+ * Reset buf and insert a comment holding label.  The comment will show up
+ * in -E output and in the server log.
+ *
+ * If it's safe, we attempt to translate the label string.
+ * (addQueryComment is marked as a gettext trigger, so this requires no
+ * special effort at call sites.)
+ */
+void
+addQueryComment(PQExpBuffer buf, const char *label)
+{
+#if defined(ENABLE_NLS)
+	/* This will become conditional once we've settled on the tests to use */
+	label = _(label);
+#endif
+
+	printfPQExpBuffer(buf, "/* %s */\n", label);
+}
+
+
+/*
  * Test if the current user is a database superuser.
  */
 bool

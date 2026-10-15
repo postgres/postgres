@@ -36,6 +36,8 @@ extern int	PSQLexecWatch(const char *query, const printQueryOpt *opt, FILE *prin
 
 extern bool SendQuery(const char *query, int num_copy_from_stdin);
 
+extern void addQueryComment(PQExpBuffer buf, const char *label);
+
 extern bool is_superuser(void);
 extern bool standard_strings(void);
 extern const char *session_username(void);
