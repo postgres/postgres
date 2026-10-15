@@ -6222,7 +6222,7 @@ lookup_object_oid(EditableObjectType obj_type, const char *desc,
 			 * query to retrieve the function's OID using a cast to regproc or
 			 * regprocedure (as appropriate).
 			 */
-			printfPQExpBuffer(query, "/* %s */\n", _("Get function's OID"));
+			addQueryComment(query, "Get function's OID");
 			appendPQExpBufferStr(query, "SELECT ");
 			appendStringLiteralConn(query, desc, pset.db);
 			appendPQExpBuffer(query, "::pg_catalog.%s::pg_catalog.oid",
@@ -6236,7 +6236,7 @@ lookup_object_oid(EditableObjectType obj_type, const char *desc,
 			 * this code doesn't check if the relation is actually a view.
 			 * We'll detect that in get_create_object_cmd().
 			 */
-			printfPQExpBuffer(query, "/* %s */\n", _("Get view's OID"));
+			addQueryComment(query, "Get view's OID");
 			appendPQExpBufferStr(query, "SELECT ");
 			appendStringLiteralConn(query, desc, pset.db);
 			appendPQExpBufferStr(query, "::pg_catalog.regclass::pg_catalog.oid");
@@ -6278,7 +6278,7 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 	switch (obj_type)
 	{
 		case EditableFunction:
-			printfPQExpBuffer(query, "/* %s */\n", _("Get function's definition"));
+			addQueryComment(query, "Get function's definition");
 			appendPQExpBuffer(query,
 							  "SELECT pg_catalog.pg_get_functiondef(%u)",
 							  oid);
@@ -6298,7 +6298,7 @@ get_create_object_cmd(EditableObjectType obj_type, Oid oid,
 			 * separately.  Materialized views (introduced in 9.3) may have
 			 * arbitrary storage parameter reloptions.
 			 */
-			printfPQExpBuffer(query, "/* %s */\n", _("Get view's definition and details"));
+			addQueryComment(query, "Get view's definition and details");
 			if (pset.sversion >= 90400)
 			{
 				appendPQExpBuffer(query,
