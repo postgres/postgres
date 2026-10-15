@@ -2713,11 +2713,11 @@ COMMIT;
 DROP TABLE fp_pk_defer, fp_fk_defer;
 
 -- A deferred FK check queued while firing deferred triggers at commit must
--- not be lost.  The RI fast-path runs during the deferred firing loop
--- and can run user cast/equality code whose DML queues a further deferred
--- check; that check must still fire.  fk_defer_main's deferred fast-path check
--- runs a cast whose function inserts a violating row into fk_defer_t2,
--- queueing fk_defer_t2's own deferred check, which must still be reported.
+-- not be lost.  An RI check runs during the deferred firing loop and can run
+-- user cast code whose DML queues a further deferred check; that check must
+-- still fire.  fk_defer_main's deferred check runs a cast whose function
+-- inserts a violating row into fk_defer_t2, queueing fk_defer_t2's own
+-- deferred check, which must still be reported.
 CREATE TABLE fk_defer_t2_pk (id int PRIMARY KEY);
 CREATE TABLE fk_defer_t2 (a int REFERENCES fk_defer_t2_pk(id)
     DEFERRABLE INITIALLY DEFERRED);
@@ -2771,11 +2771,13 @@ INSERT INTO fp_fk_cci VALUES (1), (2), (3);
 DROP TABLE fp_fk_cci, fp_pk_cci;
 DROP FUNCTION fp_auto_pk;
 
--- The fast path must check EXECUTE, as the referenced table's owner, on the
--- functions it invokes on the FK values: the equality operator's function
--- and, for a cross-type FK, the implicit cast function.  Validation of a new
--- constraint by a role that cannot use the bulk check (RLS is enabled on the
--- referenced table) runs per-row checks through the fast path.
+-- An FK check must check EXECUTE, as the referenced table's owner, on the
+-- functions it applies to the FK values: the equality operator's function
+-- and, for an FK needing an implicit cast function, the cast.  Validation of
+-- a new constraint by a role that cannot use the bulk check (RLS is enabled
+-- on the referenced table) runs per-row checks, through the fast path for
+-- the operator case and through SPI for the cast case, since FK values that
+-- need a cast function are not checked by the fast path.
 --
 -- Wrapped with BEGIN...ROLLBACK to ensure opclasses used here don't interfere
 -- with nearby tests.
@@ -2839,7 +2841,7 @@ ALTER TABLE fktable_acl_op
 ROLLBACK TO SAVEPOINT s;
 SAVEPOINT s;
 ALTER TABLE fktable_acl_cast
-  ADD FOREIGN KEY (a) REFERENCES pktable_acl_cast (a);	-- fails
+  ADD FOREIGN KEY (a) REFERENCES pktable_acl_cast (a);	-- fails (SPI path message)
 ROLLBACK TO SAVEPOINT s;
 SAVEPOINT s;
 ALTER TABLE fktable_acl_op
@@ -2852,39 +2854,42 @@ ROLLBACK TO SAVEPOINT s;
 RESET ROLE;
 ROLLBACK;
 
--- A STABLE cast used by an FK check must see changes made by earlier AFTER
--- triggers, using the check's snapshot rather than the outer query's snapshot.
--- Compare the per-row fast path with a partitioned-parent SPI check.
+-- A STABLE equality function used by an FK check must see changes made by
+-- earlier AFTER triggers, using the check's snapshot rather than the outer
+-- query's snapshot.  Compare the fast path (pk_fast) with a partitioned-parent
+-- SPI check (pk_spi).  The equality function of the referenced index's
+-- opclass is the user code that runs during a fast-path check.
 BEGIN;
 CREATE SCHEMA ri_snapshot;
 SET LOCAL search_path = ri_snapshot, pg_catalog;
 
-CREATE TYPE lookup_key AS (v int);
 CREATE TABLE lookup_rows (v int);
-CREATE FUNCTION lookup_key_to_int(k lookup_key) RETURNS int
+-- Considers two values equal only if a lookup row exists for them.
+CREATE FUNCTION lookup_eq(a int, b int) RETURNS bool
 LANGUAGE plpgsql STABLE AS $$
-DECLARE
-    result int;
 BEGIN
-    SELECT r.v INTO result FROM lookup_rows AS r WHERE r.v = k.v;
-    RETURN coalesce(result, -1);
+    RETURN a = b AND EXISTS (SELECT 1 FROM lookup_rows AS r WHERE r.v = a);
 END;
 $$;
-CREATE CAST (lookup_key AS int)
-    WITH FUNCTION lookup_key_to_int(lookup_key) AS IMPLICIT;
+CREATE OPERATOR === (LEFTARG = int, RIGHTARG = int, FUNCTION = lookup_eq);
+CREATE OPERATOR CLASS lookup_ops FOR TYPE int USING btree AS
+    OPERATOR 1 <, OPERATOR 2 <=, OPERATOR 3 ===, OPERATOR 4 >=, OPERATOR 5 >,
+    FUNCTION 1 btint4cmp(int, int);
 
-CREATE TABLE pk_fast (v int PRIMARY KEY);
-CREATE TABLE pk_spi (v int PRIMARY KEY) PARTITION BY RANGE (v);
+CREATE TABLE pk_fast (v int);
+CREATE UNIQUE INDEX ON pk_fast (v lookup_ops);
+CREATE TABLE pk_spi (v int) PARTITION BY RANGE (v lookup_ops);
 CREATE TABLE pk_spi_p PARTITION OF pk_spi
     FOR VALUES FROM (MINVALUE) TO (MAXVALUE);
+CREATE UNIQUE INDEX ON pk_spi (v lookup_ops);
 INSERT INTO pk_fast VALUES (1);
 INSERT INTO pk_spi VALUES (1);
-CREATE TABLE fk_fast (k lookup_key REFERENCES pk_fast(v));
-CREATE TABLE fk_spi (k lookup_key REFERENCES pk_spi(v));
+CREATE TABLE fk_fast (k int REFERENCES pk_fast(v));
+CREATE TABLE fk_spi (k int REFERENCES pk_spi(v));
 
 CREATE FUNCTION add_lookup_row() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-    INSERT INTO lookup_rows VALUES ((NEW.k).v);
+    INSERT INTO lookup_rows VALUES (NEW.k);
     RETURN NEW;
 END;
 $$;
@@ -2894,26 +2899,12 @@ CREATE TRIGGER "AAA_lookup" AFTER INSERT ON fk_fast
 CREATE TRIGGER "AAA_lookup" AFTER INSERT ON fk_spi
     FOR EACH ROW EXECUTE FUNCTION add_lookup_row();
 
--- Invoke the fast-path check from another FK's cast.  Even with batching
--- enabled, a check nested inside the end-of-batch flush takes the per-row path.
-CREATE TYPE driver_key AS (v int);
-CREATE FUNCTION driver_key_to_int(k driver_key) RETURNS int
-LANGUAGE plpgsql VOLATILE AS $$
-BEGIN
-    INSERT INTO fk_fast VALUES (ROW(k.v)::lookup_key);
-    RETURN k.v;
-END;
-$$;
-CREATE CAST (driver_key AS int)
-    WITH FUNCTION driver_key_to_int(driver_key) AS IMPLICIT;
-CREATE TABLE driver (k driver_key REFERENCES pk_fast(v));
-
--- Both checks must succeed.  Without an active snapshot for the per-row
--- check, its STABLE cast misses the lookup row and returns -1 instead of 1.
-INSERT INTO driver VALUES (ROW(1)::driver_key);
+-- Both checks must succeed.  Without the check's snapshot active, the
+-- STABLE equality function misses the lookup row, so no PK row matches.
+INSERT INTO fk_fast VALUES (1);
 SELECT count(*) FROM fk_fast;
 DELETE FROM lookup_rows;
-INSERT INTO fk_spi VALUES (ROW(1)::lookup_key);
+INSERT INTO fk_spi VALUES (1);
 SELECT count(*) FROM fk_spi;
 ROLLBACK;
 
@@ -2988,7 +2979,7 @@ INSERT INTO fp_fk_dom VALUES (NULL);
 DROP TABLE fp_fk_dom, fp_pk_dom;
 DROP DOMAIN fp_int8dom;
 
--- Re-entrant FK fast-path: DML on the same FK table from a cast function
+-- Re-entrant FK check: DML on the same FK table from a cast function
 CREATE TABLE fp_reentry_pk (id int PRIMARY KEY);
 INSERT INTO fp_reentry_pk VALUES (1), (2);
 CREATE TYPE fp_vch AS (v int);
@@ -3013,22 +3004,17 @@ DROP TYPE fp_vch;
 --
 -- Cache invalidation arriving during a fast-path check.
 --
--- A cross-type foreign key runs the user's cast function while building its
--- index scan keys.  A cast that performs DDL raises an invalidation there,
--- detaching the constraint's fast-path metadata while the check is still
--- using it.
+-- The equality function of the referenced index's opclass runs while the
+-- fast path scans the index.  One that performs DDL raises an invalidation
+-- there, detaching the constraint's fast-path metadata while the check is
+-- still using it.  This is done in a transaction that is rolled back, so that
+-- other tests never see the operator class.
 --
-CREATE TYPE fkint;
-CREATE FUNCTION fkint_in(cstring) RETURNS fkint
-  AS 'int4in' LANGUAGE internal IMMUTABLE STRICT;
-CREATE FUNCTION fkint_out(fkint) RETURNS cstring
-  AS 'int4out' LANGUAGE internal IMMUTABLE STRICT;
-CREATE TYPE fkint (INPUT = fkint_in, OUTPUT = fkint_out, LIKE = int4);
-
+BEGIN;
 -- Renames the constraint the first time it is called, and so raises an
 -- invalidation partway through the check.  Guarded on the catalog so the
 -- second and later calls are no-ops.
-CREATE FUNCTION fkint_to_int4(fkint) RETURNS int4 AS $$
+CREATE FUNCTION fp_inval_eq(int4, int4) RETURNS bool AS $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_constraint
                 WHERE conrelid = 'fktable_inval'::regclass
@@ -3036,35 +3022,33 @@ BEGIN
         EXECUTE 'ALTER TABLE fktable_inval'
                 ' RENAME CONSTRAINT fktable_inval_fk TO fktable_inval_fk2';
     END IF;
-    RETURN format('%s', $1)::int4;
+    RETURN $1 OPERATOR(pg_catalog.=) $2;
 END $$ LANGUAGE plpgsql;
+CREATE OPERATOR =@= (LEFTARG = int4, RIGHTARG = int4, FUNCTION = fp_inval_eq);
+CREATE OPERATOR CLASS fp_inval_ops FOR TYPE int4 USING btree AS
+    OPERATOR 1 pg_catalog.<, OPERATOR 2 pg_catalog.<=, OPERATOR 3 =@=,
+    OPERATOR 4 pg_catalog.>=, OPERATOR 5 pg_catalog.>,
+    FUNCTION 1 btint4cmp(int4, int4);
 
-CREATE CAST (fkint AS int4) WITH FUNCTION fkint_to_int4(fkint) AS IMPLICIT;
-
-CREATE TABLE pktable_inval (a int4, b int4, PRIMARY KEY (a, b));
+CREATE TABLE pktable_inval (a int4, b int4);
+CREATE UNIQUE INDEX pktable_inval_a_b ON pktable_inval (a fp_inval_ops, b);
 INSERT INTO pktable_inval VALUES (1, 1), (2, 2);
-
--- Cross-type on column a, so the cast above is invoked.
-CREATE TABLE fktable_inval (a fkint, b int4,
+CREATE TABLE fktable_inval (a int4, b int4,
   CONSTRAINT fktable_inval_fk FOREIGN KEY (a, b)
     REFERENCES pktable_inval (a, b));
 
 -- The first row invalidates the metadata; the second check must repopulate
 -- and use it safely.
-INSERT INTO fktable_inval VALUES ('1', 1), ('2', 2);
+INSERT INTO fktable_inval VALUES (1, 1), (2, 2);
 
--- Confirms the cast actually ran and raised the invalidation.  Without this
--- the insert above could pass merely by not exercising the path at all.
+-- Confirms the equality function actually ran and raised the invalidation.
+-- Without this the insert above could pass merely by not exercising the path
+-- at all.
 SELECT conname FROM pg_constraint
   WHERE conrelid = 'fktable_inval'::regclass AND contype = 'f';
 
 SELECT count(*) FROM fktable_inval;
-
-DROP TABLE fktable_inval;
-DROP TABLE pktable_inval;
-DROP CAST (fkint AS int4);
-DROP FUNCTION fkint_to_int4(fkint);
-DROP TYPE fkint CASCADE;
+ROLLBACK;
 
 -- An FK check locks the referenced row, which a read-only transaction does
 -- not allow unless the referenced table is temporary.
@@ -3114,4 +3098,100 @@ CREATE TABLE fp_fk_cid (a int REFERENCES fp_pk_cid (id));
 SAVEPOINT fp_cid;
 INSERT INTO fp_fk_cid VALUES (1);	-- fails, as a violation
 ROLLBACK TO SAVEPOINT fp_cid;
+ROLLBACK;
+
+--
+-- FK values that need a coercion to reach the equality operator's input type
+-- are checked through SPI, which applies the coercion as part of the query.
+-- The fast path used to call the cast function directly.
+--
+BEGIN;
+CREATE SCHEMA ri_cast;
+SET LOCAL search_path = ri_cast, pg_catalog;
+
+-- A cast that returns NULL for a non-NULL key: an FK violation, as for any
+-- other key without a match, not an internal error.
+CREATE TYPE ri_word AS ENUM ('one', 'none');
+CREATE FUNCTION ri_word_to_int4(ri_word) RETURNS int4
+    LANGUAGE sql IMMUTABLE AS $$ SELECT CASE WHEN $1::text = 'one' THEN 1 END $$;
+CREATE CAST (ri_word AS int4) WITH FUNCTION ri_word_to_int4(ri_word) AS IMPLICIT;
+CREATE TABLE ri_pk (id int4 PRIMARY KEY);
+INSERT INTO ri_pk VALUES (1);
+CREATE TABLE ri_fk (a ri_word REFERENCES ri_pk);
+INSERT INTO ri_fk VALUES ('one');
+SAVEPOINT s;
+INSERT INTO ri_fk VALUES ('none');	-- fails
+ROLLBACK TO SAVEPOINT s;
+
+-- Replacing the cast and dropping its old function must not leave a later
+-- check in this session calling the dropped function.
+CREATE FUNCTION ri_word_to_int4_v2(ri_word) RETURNS int4
+    LANGUAGE sql IMMUTABLE AS $$ SELECT 1 $$;
+DROP CAST (ri_word AS int4);
+CREATE CAST (ri_word AS int4) WITH FUNCTION ri_word_to_int4_v2(ri_word) AS IMPLICIT;
+DROP FUNCTION ri_word_to_int4(ri_word);
+INSERT INTO ri_fk VALUES ('none');	-- succeeds through the new cast
+
+-- A collation-sensitive cast from a collatable type gets the input
+-- collation an expression would give it.
+CREATE TYPE ri_ctext;
+CREATE FUNCTION ri_ctext_in(cstring) RETURNS ri_ctext
+    AS 'textin' LANGUAGE internal IMMUTABLE STRICT;
+CREATE FUNCTION ri_ctext_out(ri_ctext) RETURNS cstring
+    AS 'textout' LANGUAGE internal IMMUTABLE STRICT;
+CREATE TYPE ri_ctext (INPUT = ri_ctext_in, OUTPUT = ri_ctext_out,
+                      LIKE = text, COLLATABLE = true);
+CREATE FUNCTION ri_ctext_lower(ri_ctext) RETURNS text
+    AS 'lower' LANGUAGE internal IMMUTABLE STRICT;
+CREATE CAST (ri_ctext AS text) WITH FUNCTION ri_ctext_lower(ri_ctext) AS IMPLICIT;
+CREATE TABLE ri_pk_text (k text PRIMARY KEY);
+INSERT INTO ri_pk_text VALUES ('abc');
+CREATE TABLE ri_fk_text (a ri_ctext REFERENCES ri_pk_text);
+INSERT INTO ri_fk_text VALUES ('ABC');	-- succeeds; the cast lowercases
+
+-- An array coercion (int2[] to int4[], allowed with an opclass declared for
+-- int4[]) has no single cast function to call.
+CREATE FUNCTION ri_i4a_lt(int4[], int4[]) RETURNS bool
+    AS 'array_lt' LANGUAGE internal IMMUTABLE STRICT;
+CREATE FUNCTION ri_i4a_le(int4[], int4[]) RETURNS bool
+    AS 'array_le' LANGUAGE internal IMMUTABLE STRICT;
+CREATE FUNCTION ri_i4a_eq(int4[], int4[]) RETURNS bool
+    AS 'array_eq' LANGUAGE internal IMMUTABLE STRICT;
+CREATE FUNCTION ri_i4a_ge(int4[], int4[]) RETURNS bool
+    AS 'array_ge' LANGUAGE internal IMMUTABLE STRICT;
+CREATE FUNCTION ri_i4a_gt(int4[], int4[]) RETURNS bool
+    AS 'array_gt' LANGUAGE internal IMMUTABLE STRICT;
+CREATE FUNCTION ri_i4a_cmp(int4[], int4[]) RETURNS int4
+    AS 'btarraycmp' LANGUAGE internal IMMUTABLE STRICT;
+CREATE OPERATOR ri_cast.<<< (LEFTARG = int4[], RIGHTARG = int4[], FUNCTION = ri_i4a_lt);
+CREATE OPERATOR ri_cast.<<= (LEFTARG = int4[], RIGHTARG = int4[], FUNCTION = ri_i4a_le);
+CREATE OPERATOR ri_cast.=== (LEFTARG = int4[], RIGHTARG = int4[], FUNCTION = ri_i4a_eq);
+CREATE OPERATOR ri_cast.>>= (LEFTARG = int4[], RIGHTARG = int4[], FUNCTION = ri_i4a_ge);
+CREATE OPERATOR ri_cast.>>> (LEFTARG = int4[], RIGHTARG = int4[], FUNCTION = ri_i4a_gt);
+CREATE OPERATOR CLASS ri_i4a_ops FOR TYPE int4[] USING btree AS
+    OPERATOR 1 ri_cast.<<<, OPERATOR 2 ri_cast.<<=, OPERATOR 3 ri_cast.===,
+    OPERATOR 4 ri_cast.>>=, OPERATOR 5 ri_cast.>>>,
+    FUNCTION 1 ri_i4a_cmp(int4[], int4[]);
+CREATE TABLE ri_pk_arr (k int4[]);
+CREATE UNIQUE INDEX ON ri_pk_arr (k ri_i4a_ops);
+INSERT INTO ri_pk_arr VALUES ('{1,2}');
+CREATE TABLE ri_fk_arr (a int2[] REFERENCES ri_pk_arr (k));
+INSERT INTO ri_fk_arr VALUES ('{1,2}');	-- succeeds
+SAVEPOINT s;
+INSERT INTO ri_fk_arr VALUES ('{3}');	-- fails
+ROLLBACK TO SAVEPOINT s;
+
+-- A coercion via I/O has no cast function to call either.
+CREATE TYPE ri_ioint;
+CREATE FUNCTION ri_ioint_in(cstring) RETURNS ri_ioint
+    AS 'int4in' LANGUAGE internal IMMUTABLE STRICT;
+CREATE FUNCTION ri_ioint_out(ri_ioint) RETURNS cstring
+    AS 'int4out' LANGUAGE internal IMMUTABLE STRICT;
+CREATE TYPE ri_ioint (INPUT = ri_ioint_in, OUTPUT = ri_ioint_out, LIKE = int4);
+CREATE CAST (ri_ioint AS int4) WITH INOUT AS IMPLICIT;
+CREATE TABLE ri_fk_io (a ri_ioint REFERENCES ri_pk);
+INSERT INTO ri_fk_io VALUES ('1');	-- succeeds
+SAVEPOINT s;
+INSERT INTO ri_fk_io VALUES ('2');	-- fails
+ROLLBACK TO SAVEPOINT s;
 ROLLBACK;
