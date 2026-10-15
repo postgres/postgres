@@ -49,9 +49,13 @@ do { \
 /* WIN32 doesn't support alarm, so we create a thread and sleep there */
 #define START_TIMER \
 do { \
+	HANDLE		alarm_thread; \
+\
 	alarm_triggered = false; \
-	if (CreateThread(NULL, 0, process_alarm, NULL, 0, NULL) == NULL) \
+	alarm_thread = CreateThread(NULL, 0, process_alarm, NULL, 0, NULL); \
+	if (alarm_thread == NULL) \
 		pg_fatal("could not create thread for alarm"); \
+	CloseHandle(alarm_thread); \
 	gettimeofday(&start_t, NULL); \
 } while (0)
 #endif
