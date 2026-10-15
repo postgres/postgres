@@ -3157,11 +3157,16 @@ EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 	 * and MergeAppend subplans as the parent did.
 	 */
 	rcestate->es_part_prune_infos = parentestate->es_part_prune_infos;
-	rcestate->es_part_prune_states = parentestate->es_part_prune_states;
 	rcestate->es_part_prune_results = parentestate->es_part_prune_results;
 
 	/* We'll also borrow the es_partition_directory from the parent state */
 	rcestate->es_partition_directory = parentestate->es_partition_directory;
+
+	/*
+	 * The PartitionPruneStates can't be borrowed, though, since exec pruning
+	 * must see our own es_param_exec_vals.
+	 */
+	ExecCreatePartitionPruneStates(rcestate);
 
 	/*
 	 * Initialize private state information for each SubPlan.  We must do this

@@ -1966,6 +1966,36 @@ ExecDoInitialPruning(EState *estate)
 }
 
 /*
+ * ExecCreatePartitionPruneStates
+ *		Create a PartitionPruneState for each PartitionPruneInfo entry in
+ *		estate->es_part_prune_infos, without performing initial pruning.
+ *
+ * This is for an EState that must reuse the initial pruning results of
+ * another EState, such as an EPQ recheck's EState, for which the caller must
+ * have set es_part_prune_results.  The PartitionPruneStates can't be shared
+ * with the other EState, since exec pruning must evaluate PARAM_EXEC Params
+ * using this EState's es_param_exec_vals.
+ */
+void
+ExecCreatePartitionPruneStates(EState *estate)
+{
+	ListCell   *lc;
+
+	Assert(estate->es_part_prune_states == NIL);
+
+	foreach(lc, estate->es_part_prune_infos)
+	{
+		PartitionPruneInfo *pruneinfo = lfirst_node(PartitionPruneInfo, lc);
+		Bitmapset  *all_leafpart_rtis = NULL;
+
+		estate->es_part_prune_states =
+			lappend(estate->es_part_prune_states,
+					CreatePartitionPruneState(estate, pruneinfo,
+											  &all_leafpart_rtis));
+	}
+}
+
+/*
  * ExecInitPartitionExecPruning
  *		Initialize the data structures needed for runtime "exec" partition
  *		pruning and return the result of initial pruning, if available.
@@ -2116,8 +2146,6 @@ CreatePartitionPruneState(EState *estate, PartitionPruneInfo *pruneinfo,
 	prunestate->other_subplans = bms_copy(pruneinfo->other_subplans);
 	prunestate->do_initial_prune = false;	/* may be set below */
 	prunestate->do_exec_prune = false;	/* may be set below */
-	prunestate->initialized = false;	/* set in
-										 * InitExecPartitionPruneContexts */
 	prunestate->num_partprunedata = n_part_hierarchies;
 
 	/*
@@ -2462,16 +2490,6 @@ InitExecPartitionPruneContexts(PartitionPruneState *prunestate,
 	Assert(prunestate->do_exec_prune);
 	Assert(parent_plan != NULL);
 	estate = parent_plan->state;
-
-	/*
-	 * PartitionPruneStates are sometimes shared and this one may have been
-	 * initialized already.  Sharing of states occurs for EPQ, for example.
-	 * See EvalPlanQualStart().
-	 */
-	if (prunestate->initialized)
-		return;
-
-	prunestate->initialized = true;
 
 	/*
 	 * No need to fix subplans maps if initial pruning didn't eliminate any
