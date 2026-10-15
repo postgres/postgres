@@ -701,10 +701,12 @@ BEGIN
     IF result <> 'ni&#xF1;o' THEN
       RAISE WARNING 'U+F1 was not converted to a hex entity: %', result;
     END IF;
-    -- non-ASCII characters are preserved in tag attributes
+    -- non-ASCII characters in tag attributes may or may not get converted,
+    -- depending on libxml2 version
     result := xmlserialize(CONTENT xmlparse(CONTENT
               '<a attr="ni' || chr(241) || 'o"/>') AS text INDENT);
-    IF result <> '<a attr="ni' || chr(241) || 'o"/>' THEN
+    IF result <> '<a attr="ni&#xF1;o"/>' AND
+       result <> '<a attr="ni' || chr(241) || 'o"/>' THEN
       RAISE WARNING 'U+F1 was not preserved in a tag: %', result;
     END IF;
   END IF;
