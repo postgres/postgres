@@ -18,6 +18,15 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+624bd2b1fc0c9750c28a55b436e17b109b72d701
+#
+# Reorderbuffer: handle catalog-change-bearing aborted subxacts better
+# Wed Oct 14 19:42:04 2026 +0200
+#
+# ReorderBufferAddNewTupleCids()'s signature changes and struct
+# ReorderBufferChange gains a field, but no known third-party calls the
+# former or constructs the latter.
+
 0405dcf7c6b1162dd1e4377d1862aa0a38629e6b
 #
 # Fix tuple search during apply after concurrent index DDL.
