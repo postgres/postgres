@@ -684,6 +684,9 @@ vacuum(List *relations, const VacuumParams *params, BufferAccessStrategy bstrate
 		VacuumCostActive = false;
 		VacuumFailsafeActive = false;
 		VacuumCostBalance = 0;
+		VacuumCostBalanceLocal = 0;
+		VacuumSharedCostBalance = NULL;
+		VacuumActiveNWorkers = NULL;
 	}
 	PG_END_TRY();
 
