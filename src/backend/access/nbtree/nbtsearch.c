@@ -1872,8 +1872,13 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno,
 			(ScanDirectionIsForward(dir) ?
 			 !so->currPos.moreRight : !so->currPos.moreLeft))
 		{
-			/* most recent _bt_readpage call (for lastcurrblkno) ended scan */
-			Assert(so->currPos.currPage == lastcurrblkno && !seized);
+			/*
+			 * most recent _bt_readpage call (for lastcurrblkno) ended scan,
+			 * or lastcurrblkno is a half-dead leftmost page (not read by
+			 * _bt_readpage, so so->currPos doesn't describe it)
+			 */
+			Assert(so->currPos.currPage == lastcurrblkno || blkno == P_NONE);
+			Assert(!seized);
 			BTScanPosInvalidate(so->currPos);
 			_bt_parallel_done(scan);	/* iff !so->needPrimScan */
 			return false;
