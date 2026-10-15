@@ -3882,8 +3882,9 @@ TerminateOtherDBBackends(Oid databaseId)
 		 * Permissions checks relax the pg_terminate_backend checks in two
 		 * ways, both by omitting the !OidIsValid(proc->roleId) check:
 		 *
-		 * - Accept terminating autovacuum workers, since DROP DATABASE
-		 * without FORCE terminates them.
+		 * - Accept terminating autovacuum workers and the parallel workers
+		 * launched by them, since DROP DATABASE without FORCE terminates
+		 * them.
 		 *
 		 * - Accept terminating bgworkers.  For bgworker authors, it's
 		 * convenient to be able to recommend FORCE if a worker is blocking
@@ -3900,14 +3901,30 @@ TerminateOtherDBBackends(Oid databaseId)
 
 			if (proc != NULL)
 			{
-				if (superuser_arg(proc->roleId) && !superuser())
+				PGPROC	   *leader = proc->lockGroupLeader;
+				Oid			roleId = proc->roleId;
+
+				/*
+				 * An autovacuum worker and a bgworker with no user name
+				 * advertise no role in PGPROC and run as the bootstrap
+				 * superuser (see InitializeSessionUserIdStandalone()
+				 * callsites in postinit.c). The parallel workers they launch
+				 * inherit the same superuser and advertise it in their
+				 * PGPROC. Accept such parallel workers for terminating as
+				 * well.
+				 */
+				if (leader != NULL && leader != proc &&
+					!OidIsValid(leader->roleId))
+					roleId = leader->roleId;
+
+				if (superuser_arg(roleId) && !superuser())
 					ereport(ERROR,
 							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 							 errmsg("permission denied to terminate process"),
 							 errdetail("Only roles with the %s attribute may terminate processes of roles with the %s attribute.",
 									   "SUPERUSER", "SUPERUSER")));
 
-				if (!has_privs_of_role(GetUserId(), proc->roleId) &&
+				if (!has_privs_of_role(GetUserId(), roleId) &&
 					!has_privs_of_role(GetUserId(), ROLE_PG_SIGNAL_BACKEND))
 					ereport(ERROR,
 							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

@@ -47,6 +47,7 @@
 #include "storage/bufmgr.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
+#include "utils/injection_point.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 
@@ -1288,6 +1289,9 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	Assert(MyProc->statusFlags == PROC_IN_VACUUM);
 
 	elog(DEBUG1, "starting parallel vacuum worker");
+
+	/* Used by tests to hold a worker while it is attached to its leader */
+	INJECTION_POINT("parallel-vacuum-worker-start", NULL);
 
 	shared = (PVShared *) shm_toc_lookup(toc, PARALLEL_VACUUM_KEY_SHARED, false);
 
