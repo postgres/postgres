@@ -1757,57 +1757,33 @@ split_selfjoin_quals(PlannerInfo *root, List *joinquals, List **selfjoinquals,
 }
 
 /*
- * Check for a case when uniqueness is at least partly derived from a
- * baserestrictinfo clause. In this case, we have a chance to return only
- * one row (if such clauses on both sides of SJ are equal) or nothing (if they
- * are different).
+ * Check that each base restriction used to prove uniqueness of relid has
+ * a matching restriction in outer->baserestrictinfo, after replacing
+ * relid with outer->relid.
+ *
+ * Require equal() clauses, including the operator and input collation.
+ * Formerly this tried to match commuted forms of clauses, but that added
+ * a great deal of extra complication without much extra value.
  */
 static bool
 match_unique_clauses(PlannerInfo *root, RelOptInfo *outer, List *uclauses,
 					 Index relid)
 {
+	Assert(outer->relid > 0 && relid > 0);
+
 	foreach_node(RestrictInfo, rinfo, uclauses)
 	{
 		Expr	   *clause;
-		Node	   *iclause;
-		Node	   *c1;
 		bool		matched = false;
 
-		Assert(outer->relid > 0 && relid > 0);
-
-		/* Only filters like f(R.x1,...,R.xN) == expr we should consider. */
-		Assert(bms_is_empty(rinfo->left_relids) ^
-			   bms_is_empty(rinfo->right_relids));
-
+		/* Convert the clause from uclauses to use outer's Vars */
 		clause = (Expr *) copyObject(rinfo->clause);
 		ChangeVarNodes((Node *) clause, relid, outer->relid, 0);
 
-		iclause = bms_is_empty(rinfo->left_relids) ? get_rightop(clause) :
-			get_leftop(clause);
-		c1 = bms_is_empty(rinfo->left_relids) ? get_leftop(clause) :
-			get_rightop(clause);
-
-		/*
-		 * Compare these left and right sides with the corresponding sides of
-		 * the outer's filters. If no one is detected - return immediately.
-		 */
+		/* Look for a matching restriction on the outer relation */
 		foreach_node(RestrictInfo, orinfo, outer->baserestrictinfo)
 		{
-			Node	   *oclause;
-			Node	   *c2;
-
-			if (orinfo->mergeopfamilies == NIL)
-				/* Don't consider clauses that aren't similar to 'F(X)=G(Y)' */
-				continue;
-
-			Assert(is_opclause(orinfo->clause));
-
-			oclause = bms_is_empty(orinfo->left_relids) ?
-				get_rightop(orinfo->clause) : get_leftop(orinfo->clause);
-			c2 = (bms_is_empty(orinfo->left_relids) ?
-				  get_leftop(orinfo->clause) : get_rightop(orinfo->clause));
-
-			if (equal(iclause, oclause) && equal(c1, c2))
+			if (equal(clause, orinfo->clause))
 			{
 				matched = true;
 				break;
