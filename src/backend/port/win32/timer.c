@@ -103,7 +103,7 @@ setitimer(int which, const struct itimerval *value, struct itimerval *ovalue)
 		InitializeCriticalSection(&timerCommArea.crit_sec);
 
 		timerThreadHandle = CreateThread(NULL, 0, pg_timer_thread, NULL, 0, NULL);
-		if (timerThreadHandle == INVALID_HANDLE_VALUE)
+		if (timerThreadHandle == NULL)
 			ereport(FATAL,
 					(errmsg_internal("could not create timer thread: error code %lu",
 									 GetLastError())));
