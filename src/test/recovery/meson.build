@@ -67,6 +67,7 @@ tests += {
       't/056_standby_snapshot_export.pl',
       't/057_snapshot_commit_race.pl',
       't/059_remote_apply_status_interval.pl',
+      't/060_multixact_crashed_updater.pl',
     ],
   },
 }
