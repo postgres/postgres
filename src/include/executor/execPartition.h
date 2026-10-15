@@ -113,8 +113,6 @@ typedef struct PartitionPruningData
  *						startup (at any hierarchy level).
  * do_exec_prune		true if pruning should be performed during
  *						executor run (at any hierarchy level).
- * initialized			true if InitExecPartitionPruneContexts has been called
- *						on this PartitionPruneState
  * num_partprunedata	Number of items in "partprunedata" array.
  * partprunedata		Array of PartitionPruningData pointers for the plan's
  *						partitioned relation(s), one for each partitioning
@@ -128,12 +126,12 @@ typedef struct PartitionPruneState
 	MemoryContext prune_context;
 	bool		do_initial_prune;
 	bool		do_exec_prune;
-	bool		initialized;
 	int			num_partprunedata;
 	PartitionPruningData *partprunedata[FLEXIBLE_ARRAY_MEMBER];
 } PartitionPruneState;
 
 extern void ExecDoInitialPruning(EState *estate);
+extern void ExecCreatePartitionPruneStates(EState *estate);
 extern PartitionPruneState *ExecInitPartitionExecPruning(PlanState *planstate,
 														 int n_total_subplans,
 														 int part_prune_index,
