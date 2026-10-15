@@ -44,8 +44,7 @@ do { \
 #define START_TIMER \
 do { \
 	alarm_triggered = false; \
-	if (CreateThread(NULL, 0, process_alarm, NULL, 0, NULL) == \
-		INVALID_HANDLE_VALUE) \
+	if (CreateThread(NULL, 0, process_alarm, NULL, 0, NULL) == NULL) \
 	{ \
 		pg_log_error("could not create thread for alarm"); \
 		exit(1); \
