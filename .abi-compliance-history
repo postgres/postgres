@@ -18,6 +18,32 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+57193b3a09ed3555e9c6e3822173427a3249b335
+#
+# Fix EPQ run-time pruning using the parent's PARAM_EXEC values
+# 2026-10-15 15:50:11 +1300
+#
+# Removes "initialized" field that was added in c7328770b and restores the ABI
+# state to what it was in c7328770b~1
+
+5eae2800a854cd60e973b576fd9dac9db299dfd1
+#
+# Reorderbuffer: handle catalog-change-bearing aborted subxacts better
+# 2026-10-14 19:42:04 +0200
+#
+# ReorderBufferAddNewTupleCids()'s signature changes and struct
+# ReorderBufferChange gains a field, but no known third-party calls the
+# former or constructs the latter.
+
+c7328770ba50f6250930cb023effe3354c49de32
+#
+# Fix incorrect reinit of run-time pruning for EPQ rechecks
+# 2026-10-09 11:04:22 +1300
+#
+# Introduces a new boolean field into padding bytes of PartitionPruningData.
+# This change was removed later in 57193b3a0, as another issue was discovered
+# that made this fix inadequate.
+
 af48a67026145bd02fa953524fcdb0d84c1d9de6
 #
 # Fix tuple search during apply after concurrent index DDL.
