@@ -50,8 +50,7 @@ do { \
 #define START_TIMER \
 do { \
 	alarm_triggered = false; \
-	if (CreateThread(NULL, 0, process_alarm, NULL, 0, NULL) == \
-		INVALID_HANDLE_VALUE) \
+	if (CreateThread(NULL, 0, process_alarm, NULL, 0, NULL) == NULL) \
 		pg_fatal("could not create thread for alarm"); \
 	gettimeofday(&start_t, NULL); \
 } while (0)
