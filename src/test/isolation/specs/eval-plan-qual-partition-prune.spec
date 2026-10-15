@@ -8,16 +8,19 @@ setup
   INSERT INTO lp VALUES (1, 1), (2, 1);
   CREATE TABLE lk (id int PRIMARY KEY, n int);
   INSERT INTO lk VALUES (1, 0);
+  CREATE TABLE lt (id int PRIMARY KEY, k int, v int, done bool DEFAULT false);
+  INSERT INTO lt VALUES (1, 1, 1);
 }
 
 teardown
 {
-  DROP TABLE lp, lk;
+  DROP TABLE lp, lk, lt;
 }
 
 session s1
 step s1_begin	{ BEGIN; }
 step s1_update	{ UPDATE lk SET n = n + 1 WHERE id = 1; }
+step s1_update_lt	{ UPDATE lt SET k = 2, v = 2 WHERE id = 1; }
 step s1_commit	{ COMMIT; }
 
 session s2
@@ -38,6 +41,14 @@ step s2_update
   )
   SELECT * FROM upd ORDER BY a;
 }
+# The correlated subquery's exec pruning must use the EPQ's param values
+step s2_update_lt
+{
+  UPDATE lt SET done = true
+  WHERE lt.v = (SELECT lp.a FROM lp WHERE lp.a = lt.k)
+  RETURNING *;
+}
 step s2_select	{ SELECT * FROM lp ORDER BY a; }
 
 permutation s1_begin s1_update s2_update s1_commit s2_select
+permutation s1_begin s1_update_lt s2_update_lt s1_commit
