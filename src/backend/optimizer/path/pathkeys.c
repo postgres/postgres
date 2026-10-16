@@ -1262,10 +1262,18 @@ find_var_for_subquery_tle(RelOptInfo *rel, TargetEntry *tle)
 	{
 		Var		   *var = (Var *) lfirst(lc);
 
-		/* Ignore placeholders */
+		/* Ignore placeholders and other non-Var expressions */
 		if (!IsA(var, Var))
 			continue;
-		Assert(var->varno == rel->relid);
+
+		/*
+		 * Ordinarily, a Var in a rel's targetlist must belong to that rel;
+		 * but there are corner cases involving LATERAL references where that
+		 * isn't so.  If the Var has the wrong varno, ignore it, since it
+		 * cannot be referencing the subquery's output.
+		 */
+		if (var->varno != rel->relid)
+			continue;
 
 		/* If we find a Var referencing this TLE, we're good */
 		if (var->varattno == tle->resno)
