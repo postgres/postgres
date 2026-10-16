@@ -537,6 +537,42 @@ SELECT relname, old.level, old.relkind, old.relfilenode = new.relfilenode FROM o
  clstrpart33 |     2 | r       | f
 (7 rows)
 
+-- Check that partitions that are foreign tables are skipped, with a warning
+CREATE FOREIGN DATA WRAPPER clstr_fdw;
+CREATE SERVER clstr_fserv FOREIGN DATA WRAPPER clstr_fdw;
+CREATE FOREIGN TABLE clstrpart4 PARTITION OF clstrpart FOR VALUES FROM (20) TO (30) SERVER clstr_fserv;
+CREATE FOREIGN TABLE clstrpart121 PARTITION OF clstrpart12 FOR VALUES FROM (5) TO (10) SERVER clstr_fserv;
+CLUSTER clstrpart USING clstrpart_idx;
+WARNING:  skipping "clstrpart4" --- cannot execute CLUSTER on foreign tables
+WARNING:  skipping "clstrpart121" --- cannot execute CLUSTER on foreign tables
+REPACK clstrpart USING INDEX clstrpart_idx;
+WARNING:  skipping "clstrpart4" --- cannot execute REPACK on foreign tables
+WARNING:  skipping "clstrpart121" --- cannot execute REPACK on foreign tables
+REPACK clstrpart;
+WARNING:  skipping "clstrpart4" --- cannot execute REPACK on foreign tables
+WARNING:  skipping "clstrpart121" --- cannot execute REPACK on foreign tables
+-- ... while processing a foreign table directly is still an error
+REPACK clstrpart4;
+ERROR:  "clstrpart4" is not a table or materialized view
+DROP FOREIGN TABLE clstrpart4, clstrpart121;
+-- ... and privileges are checked first, giving one warning per partition
+CREATE TABLE clstrfpart (a int) PARTITION BY RANGE (a);
+CREATE INDEX clstrfpart_idx ON clstrfpart (a);
+CREATE TABLE clstrfpart1 PARTITION OF clstrfpart FOR VALUES FROM (0) TO (10);
+CREATE FOREIGN TABLE clstrfpart2 PARTITION OF clstrfpart FOR VALUES FROM (10) TO (20) SERVER clstr_fserv;
+CREATE ROLE regress_clstr_fowner;
+ALTER TABLE clstrfpart OWNER TO regress_clstr_fowner;
+ALTER TABLE clstrfpart1 OWNER TO regress_clstr_fowner;
+SET SESSION AUTHORIZATION regress_clstr_fowner;
+REPACK clstrfpart;
+WARNING:  permission denied to execute REPACK on "clstrfpart2", skipping it
+REPACK clstrfpart USING INDEX clstrfpart_idx;
+WARNING:  permission denied to execute REPACK on "clstrfpart2", skipping it
+RESET SESSION AUTHORIZATION;
+DROP TABLE clstrfpart;
+DROP ROLE regress_clstr_fowner;
+DROP SERVER clstr_fserv;
+DROP FOREIGN DATA WRAPPER clstr_fdw;
 -- Ownership of partitions is checked
 CREATE TABLE ptnowner(i int unique not null) PARTITION BY LIST (i);
 CREATE INDEX ptnowner_i_idx ON ptnowner(i);

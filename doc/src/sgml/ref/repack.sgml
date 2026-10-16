@@ -202,7 +202,8 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
   <para>
    Repacking a partitioned table repacks each of its partitions. If an index
    is specified, each partition is repacked using the partition of that
-   index. <command>REPACK</command> on a partitioned table cannot be executed
+   index. Partitions that are foreign tables are skipped.
+   <command>REPACK</command> on a partitioned table cannot be executed
    inside a transaction block.
   </para>
 

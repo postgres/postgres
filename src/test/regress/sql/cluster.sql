@@ -248,6 +248,34 @@ REPACK clstrpart;
 CREATE TEMP TABLE new_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
 SELECT relname, old.level, old.relkind, old.relfilenode = new.relfilenode FROM old_cluster_info AS old JOIN new_cluster_info AS new USING (relname) ORDER BY relname COLLATE "C";
 
+-- Check that partitions that are foreign tables are skipped, with a warning
+CREATE FOREIGN DATA WRAPPER clstr_fdw;
+CREATE SERVER clstr_fserv FOREIGN DATA WRAPPER clstr_fdw;
+CREATE FOREIGN TABLE clstrpart4 PARTITION OF clstrpart FOR VALUES FROM (20) TO (30) SERVER clstr_fserv;
+CREATE FOREIGN TABLE clstrpart121 PARTITION OF clstrpart12 FOR VALUES FROM (5) TO (10) SERVER clstr_fserv;
+CLUSTER clstrpart USING clstrpart_idx;
+REPACK clstrpart USING INDEX clstrpart_idx;
+REPACK clstrpart;
+-- ... while processing a foreign table directly is still an error
+REPACK clstrpart4;
+DROP FOREIGN TABLE clstrpart4, clstrpart121;
+-- ... and privileges are checked first, giving one warning per partition
+CREATE TABLE clstrfpart (a int) PARTITION BY RANGE (a);
+CREATE INDEX clstrfpart_idx ON clstrfpart (a);
+CREATE TABLE clstrfpart1 PARTITION OF clstrfpart FOR VALUES FROM (0) TO (10);
+CREATE FOREIGN TABLE clstrfpart2 PARTITION OF clstrfpart FOR VALUES FROM (10) TO (20) SERVER clstr_fserv;
+CREATE ROLE regress_clstr_fowner;
+ALTER TABLE clstrfpart OWNER TO regress_clstr_fowner;
+ALTER TABLE clstrfpart1 OWNER TO regress_clstr_fowner;
+SET SESSION AUTHORIZATION regress_clstr_fowner;
+REPACK clstrfpart;
+REPACK clstrfpart USING INDEX clstrfpart_idx;
+RESET SESSION AUTHORIZATION;
+DROP TABLE clstrfpart;
+DROP ROLE regress_clstr_fowner;
+DROP SERVER clstr_fserv;
+DROP FOREIGN DATA WRAPPER clstr_fdw;
+
 -- Ownership of partitions is checked
 CREATE TABLE ptnowner(i int unique not null) PARTITION BY LIST (i);
 CREATE INDEX ptnowner_i_idx ON ptnowner(i);

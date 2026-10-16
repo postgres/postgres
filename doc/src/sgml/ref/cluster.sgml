@@ -118,8 +118,9 @@ CLUSTER [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
    <para>
     Clustering a partitioned table clusters each of its partitions using the
     partition of the specified partitioned index.  When clustering a partitioned
-    table, the index may not be omitted.  <command>CLUSTER</command> on a
-    partitioned table cannot be executed inside a transaction block.
+    table, the index may not be omitted.  Partitions that are foreign tables
+    are skipped.  <command>CLUSTER</command> on a partitioned table cannot be
+    executed inside a transaction block.
    </para>
 
  </refsect1>
