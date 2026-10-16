@@ -440,4 +440,48 @@ SKIP:
 	upgrade_and_compare($tag, $old, $new);
 }
 
+# Offset wraparound at the last multixid: The members of the newest
+# multixid end exactly at the 32-bit offset wraparound point, so that
+# the old cluster's next offset is 0.
+SKIP:
+{
+	skip
+	  "skipping mxoffset conversion tests because upgrading from the old version does not require conversion"
+	  if ($old_version >= '19devel');
+
+	my $tag = 'last_wraparound';
+	my $old =
+	  PostgreSQL::Test::Cluster->new("${tag}_oldnode",
+		install_path => $ENV{oldinstall});
+	my $new = PostgreSQL::Test::Cluster->new("${tag}_newnode");
+
+	$old->init(extra => ['-k']);
+
+	reset_mxid_mxoffset_pre_v19($old, 0xFFFFFA00, 0xFFFFFFFE);
+
+	# Create one multixid with two members, a locker and an updater
+	$old->start;
+	$old->safe_psql(
+		'postgres', qq[
+		CREATE TABLE mxofftest (id INT PRIMARY KEY, n_updated INT)
+		  WITH (AUTOVACUUM_ENABLED=FALSE);
+		INSERT INTO mxofftest SELECT G, 0 FROM GENERATE_SERIES(1, 2) G;
+	]);
+	my $locker =
+	  $new->background_psql('', connstr => $old->connstr('postgres'));
+	$locker->query_safe("BEGIN");
+	$locker->query_safe("SELECT * FROM mxofftest WHERE id = 1 FOR KEY SHARE");
+	$old->safe_psql('postgres',
+		"UPDATE mxofftest SET n_updated = n_updated + 1 WHERE id = 1");
+	$locker->query_safe("COMMIT");
+	$locker->quit;
+	$old->stop;
+
+	my (undef, undef, $finish_mxoff) = read_multixid_fields($old);
+	is($finish_mxoff, 0, "mxoff wrapped around to 0 in old cluster");
+
+	$new->init;
+	upgrade_and_compare($tag, $old, $new);
+}
+
 done_testing();
