@@ -1776,7 +1776,7 @@ AllocSetCheck(MemoryContext context)
 			 * Check for overwrite of padding space in an allocated chunk.
 			 */
 			if (dsize != InvalidAllocSize && dsize < chsize &&
-				!sentinel_ok(chunk, ALLOC_CHUNKHDRSZ + dsize))
+				!sentinel_ok(MemoryChunkGetPointer(chunk), dsize))
 				elog(WARNING, "problem in alloc set %s: detected write past chunk end in block %p, chunk %p",
 					 name, block, chunk);
 

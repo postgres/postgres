@@ -1167,7 +1167,7 @@ SlabCheck(MemoryContext context)
 
 					/* check the sentinel byte is intact */
 					Assert(slab->chunkSize < (slab->fullChunkSize - Slab_CHUNKHDRSZ));
-					if (!sentinel_ok(chunk, Slab_CHUNKHDRSZ + slab->chunkSize))
+					if (!sentinel_ok(MemoryChunkGetPointer(chunk), slab->chunkSize))
 						elog(WARNING, "problem in slab %s: detected write past chunk end in block %p, chunk %p",
 							 name, block, chunk);
 				}

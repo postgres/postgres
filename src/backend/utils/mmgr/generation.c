@@ -1208,7 +1208,7 @@ GenerationCheck(MemoryContext context)
 
 				/* check sentinel */
 				Assert(chunk->requested_size < chunksize);
-				if (!sentinel_ok(chunk, Generation_CHUNKHDRSZ + chunk->requested_size))
+				if (!sentinel_ok(MemoryChunkGetPointer(chunk), chunk->requested_size))
 					elog(WARNING, "problem in Generation %s: detected write past chunk end in block %p, chunk %p",
 						 name, block, chunk);
 			}
