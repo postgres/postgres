@@ -395,6 +395,14 @@ table_block_parallelscan_reinitialize(Relation rel, ParallelTableScanDesc pscan)
 {
 	ParallelBlockTableScanDesc bpscan = (ParallelBlockTableScanDesc) pscan;
 
+	/*
+	 * Reset the start block and block limit too.  These are set by the first
+	 * participant to call table_block_parallelscan_startblock_init(), and a
+	 * rescan may want to scan a different range of blocks, e.g. a TID Range
+	 * Scan with different TID bounds.
+	 */
+	pg_atomic_write_u32(&bpscan->phs_startblock, InvalidBlockNumber);
+	pg_atomic_write_u32(&bpscan->phs_numblock, InvalidBlockNumber);
 	pg_atomic_write_u64(&bpscan->phs_nallocated, 0);
 }
 

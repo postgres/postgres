@@ -427,5 +427,36 @@ WHERE t.ctid < '(1,0)';
  (0,5) | 5
 (5 rows)
 
+-- Parallel rescans with a different TID range on each rescan
+EXPLAIN (COSTS OFF)
+SELECT r.lo,
+       (SELECT count(*) FROM parallel_tidrangescan t
+        WHERE t.ctid >= (SELECT r.lo)) c
+FROM (VALUES ('(30,0)'::tid), ('(10,0)'), ('(0,0)')) r(lo);
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Values Scan on "*VALUES*"
+   SubPlan expr_1
+     ->  Finalize Aggregate
+           InitPlan expr_2
+             ->  Result
+           ->  Gather
+                 Workers Planned: 4
+                 ->  Partial Aggregate
+                       ->  Parallel Tid Range Scan on parallel_tidrangescan t
+                             TID Cond: (ctid >= (InitPlan expr_2).col1)
+(10 rows)
+
+SELECT r.lo,
+       (SELECT count(*) FROM parallel_tidrangescan t
+        WHERE t.ctid >= (SELECT r.lo)) c
+FROM (VALUES ('(30,0)'::tid), ('(10,0)'), ('(0,0)')) r(lo);
+   lo   |  c  
+--------+-----
+ (30,0) |  50
+ (10,0) | 150
+ (0,0)  | 200
+(3 rows)
+
 ROLLBACK;
 RESET enable_seqscan;
