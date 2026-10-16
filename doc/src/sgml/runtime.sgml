@@ -1344,10 +1344,10 @@ default:\
     The default virtual memory behavior on Linux is not
     optimal for <productname>PostgreSQL</productname>. Because of the
     way that the kernel implements memory overcommit, the kernel might
-    terminate the <productname>PostgreSQL</productname> postmaster (the
-    supervisor server process) if the memory demands of either
-    <productname>PostgreSQL</productname> or another process cause the
-    system to run out of virtual memory.
+    terminate a <productname>PostgreSQL</productname> server process,
+    including the postmaster (the supervisor server process), if the memory
+    demands of either <productname>PostgreSQL</productname> or another process
+    cause the system to run out of virtual memory.
    </para>
 
    <para>
@@ -1359,9 +1359,15 @@ Out of Memory: Killed process 12345 (postgres).
 </programlisting>
     This indicates that the <filename>postgres</filename> process
     has been terminated due to memory pressure.
-    Although existing database connections will continue to function
-    normally, no new connections will be accepted.  To recover,
-    <productname>PostgreSQL</productname> will need to be restarted.
+    If the postmaster is terminated, all connections will eventually be
+    terminated.  To recover, <productname>PostgreSQL</productname> will
+    need to be restarted.
+    If a child process is terminated, <productname>PostgreSQL</productname> will
+    typically terminate all remaining connections and either recover
+    automatically, if
+    <link linkend="guc-restart-after-crash"><varname>restart_after_crash</varname></link>
+    is enabled, or shut down. If <productname>PostgreSQL</productname> shuts
+    down, it will need to be restarted to recover.
    </para>
 
    <para>
