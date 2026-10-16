@@ -664,9 +664,9 @@ DisableLogicalDecoding(void)
 }
 
 /*
- * Updates the logical decoding status at end of recovery, and ensures that
- * all running processes have the updated XLogLogicalInfo status. This
- * function must be called before accepting writes.
+ * Update the logical decoding status at end of recovery, synchronizing
+ * process-local WAL logging state when necessary. This function must
+ * be called before accepting writes.
  */
 void
 UpdateLogicalDecodingStatusEndOfRecovery(void)
@@ -746,16 +746,25 @@ UpdateLogicalDecodingStatusEndOfRecovery(void)
 		LWLockRelease(LogicalDecodingControlLock);
 
 	/*
-	 * Ensure all running processes have the updated status. We don't need to
-	 * wait for running transactions to finish as we don't accept any writes
-	 * yet. On the other hand, we need to wait for synchronizing
-	 * XLogLogicalInfo even if we've not updated the status above as the
-	 * status have been turned on and off during recovery, having running
-	 * processes have different status on their local caches.
+	 * With wal_level = logical, XLogLogicalInfoActive() is always true, so no
+	 * barrier is needed.
+	 *
+	 * Otherwise, notify all processes to refresh XLogLogicalInfo. Wait only
+	 * if new_status is true, even if the shared status is unchanged, since
+	 * recovery may have left stale caches. Writes are not yet allowed, so we
+	 * need not wait for running transactions to finish.
+	 *
+	 * If new_status is false, stale caches only cause extra logical
+	 * information in WAL, which is safe (see DisableLogicalDecoding()).
 	 */
-	if (IsUnderPostmaster)
-		WaitForProcSignalBarrier(
-								 EmitProcSignalBarrier(PROCSIGNAL_BARRIER_UPDATE_XLOG_LOGICAL_INFO));
+	if (IsUnderPostmaster && wal_level != WAL_LEVEL_LOGICAL)
+	{
+		uint64		generation;
+
+		generation = EmitProcSignalBarrier(PROCSIGNAL_BARRIER_UPDATE_XLOG_LOGICAL_INFO);
+		if (new_status)
+			WaitForProcSignalBarrier(generation);
+	}
 
 	INJECTION_POINT("startup-logical-decoding-status-change-end-of-recovery", NULL);
 }
