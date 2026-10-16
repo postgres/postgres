@@ -2991,7 +2991,7 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         </indexterm>
         <function>pg_get_multixact_stats</function> ()
         <returnvalue>record</returnvalue>
-        ( <parameter>num_mxids</parameter> <type>integer</type>,
+        ( <parameter>num_mxids</parameter> <type>bigint</type>,
           <parameter>num_members</parameter> <type>bigint</type>,
           <parameter>members_size</parameter> <type>bigint</type>,
           <parameter>oldest_multixact</parameter> <type>xid</type> )
