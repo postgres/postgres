@@ -226,7 +226,11 @@ GetOldMultiXactIdSingleMember(OldMultiXactReader *state, MultiXactId multi,
 
 	if (nextMXact == tmpMXact)
 	{
-		/* Corner case 1: there is no next multixact */
+		/*
+		 * Corner case 1: there is no next multixact.  nextOffset can be zero
+		 * here, if the members of this multixact ended exactly at offset
+		 * wraparound.  The length calculation below copes with that.
+		 */
 		nextMXOffset = nextOffset;
 	}
 	else
@@ -246,13 +250,14 @@ GetOldMultiXactIdSingleMember(OldMultiXactReader *state, MultiXactId multi,
 		offptr = (MultiXactOffset32 *) buf;
 		offptr += entryno;
 		nextMXOffset = *offptr;
+
+		if (nextMXOffset == 0)
+		{
+			/* Invalid entry.  These can be left behind on a server crash. */
+			return false;
+		}
 	}
 
-	if (nextMXOffset == 0)
-	{
-		/* Invalid entry.  These can be left behind on a server crash. */
-		return false;
-	}
 	length = nextMXOffset - offset;
 
 	if (length < 0)
