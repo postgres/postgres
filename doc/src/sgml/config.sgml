@@ -9858,7 +9858,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
          per-autovacuum worker equivalent of the <literal>PARALLEL</literal>
          option of the <link linkend="sql-vacuum"><command>VACUUM</command></link>
          command. Setting this value to 0 disables parallel vacuum during autovacuum.
-         The default is 0.
+         The default is 0.  This parameter can only be set in the
+         <filename>postgresql.conf</filename> file or on the server command
+         line; but the setting can be reduced for individual tables by
+         changing the
+         <link linkend="reloption-autovacuum-parallel-workers">corresponding
+         table storage parameter</link>.
         </para>
        </listitem>
      </varlistentry>
