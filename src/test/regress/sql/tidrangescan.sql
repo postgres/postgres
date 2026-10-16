@@ -153,5 +153,17 @@ SELECT t.ctid,t2.c FROM parallel_tidrangescan t,
 LATERAL (SELECT count(*) c FROM parallel_tidrangescan t2 WHERE t2.ctid <= t.ctid) t2
 WHERE t.ctid < '(1,0)';
 
+-- Parallel rescans with a different TID range on each rescan
+EXPLAIN (COSTS OFF)
+SELECT r.lo,
+       (SELECT count(*) FROM parallel_tidrangescan t
+        WHERE t.ctid >= (SELECT r.lo)) c
+FROM (VALUES ('(30,0)'::tid), ('(10,0)'), ('(0,0)')) r(lo);
+
+SELECT r.lo,
+       (SELECT count(*) FROM parallel_tidrangescan t
+        WHERE t.ctid >= (SELECT r.lo)) c
+FROM (VALUES ('(30,0)'::tid), ('(10,0)'), ('(0,0)')) r(lo);
+
 ROLLBACK;
 RESET enable_seqscan;
