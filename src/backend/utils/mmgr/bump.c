@@ -823,6 +823,10 @@ BumpCheck(MemoryContext context)
 			if (chunkblock != block)
 				elog(WARNING, "problem in Bump %s: bogus block link in block %p, chunk %p",
 					 name, block, chunk);
+
+			if (!sentinel_ok(MemoryChunkGetPointer(chunk), chunk->requested_size))
+				elog(WARNING, "problem in Bump %s: detected write past chunk end in block %p, chunk %p",
+					 name, block, chunk);
 		}
 
 		if (has_external_chunk && nchunks > 1)
