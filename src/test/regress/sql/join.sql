@@ -3754,6 +3754,13 @@ select * from generate_series(100,200) g,
   lateral (select * from int8_tbl a where g = q1 union all
            select * from int8_tbl b where g = q2) ss;
 
+-- lateral with UNION ALL subselect, where a member is a subquery whose
+-- output contains a lateral reference
+explain (costs off)
+  select ss.v from int8_tbl x,
+    lateral (select x.q1 from (select distinct q2 from int8_tbl) s union all
+             select q2 from int8_tbl) ss(v);
+
 -- lateral with VALUES
 explain (costs off)
   select count(*) from tenk1 a,
