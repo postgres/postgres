@@ -8690,7 +8690,7 @@ buffer_readv_complete_one(PgAioTargetData *td, uint8 buf_off, Buffer buffer,
 			buffer_readv_encode_error(&result_one, is_temp,
 									  *zeroed_buffer,
 									  *ignored_checksum,
-									  *buffer_invalid,
+									  *buffer_invalid ? 1 : 0,
 									  *zeroed_buffer ? 1 : 0,
 									  *failed_checksum ? 1 : 0,
 									  buf_off, buf_off, buf_off);
