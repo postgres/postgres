@@ -97,21 +97,15 @@ unlike(
 	qr/cannot acquire lock mode AccessExclusiveLock/,
 	'no AccessExclusiveLock FATAL on standby login');
 
-# Finally exercise the primary-side cleanup that the standby is meant
-# to defer to.  Opening a fresh session against regress_login_evt on
-# the primary enters EventTriggerOnLogin()'s cleanup branch with the
-# trigger list empty; AccessExclusiveLock is allowed outside recovery,
-# so the flag is cleared in place.  The in-place update emits a
-# XLOG_HEAP_INPLACE record but does not assign an xid or write a
-# commit record, so the WAL is not auto-flushed -- force a flush via
-# pg_switch_wal() so the record reaches the standby.
-$primary->safe_psql('regress_login_evt', 'SELECT 1');
-is( $primary->safe_psql(
-		'postgres',
-		"SELECT dathasloginevt FROM pg_database WHERE datname = 'regress_login_evt'"
-	),
-	'f',
-	'primary clears dathasloginevt on next login after DROP');
+# Cleanup's conditional database lock can fail, so retry fresh logins.
+# The in-place update emits a XLOG_HEAP_INPLACE record but does not assign
+# an xid or write a commit record, so the WAL is not auto-flushed -- force
+# a flush via pg_switch_wal() so the record reaches the standby.
+ok( $primary->poll_query_until(
+		'regress_login_evt',
+		"SELECT dathasloginevt FROM pg_database WHERE datname = 'regress_login_evt'",
+		'f'),
+	'primary eventually clears dathasloginevt after DROP');
 
 $primary->safe_psql('postgres', 'SELECT pg_switch_wal()');
 $primary->wait_for_replay_catchup($standby);
