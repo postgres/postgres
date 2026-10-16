@@ -66,6 +66,14 @@
  </para>
 
  <para>
+  Stashed advice is applied only when a query is planned. Adding, replacing,
+  or removing a stash entry, or changing
+  <literal>pg_stash_advice.stash_name</literal>, does not affect plans that
+  have already been cached. See
+  <xref linkend="pgplanadvice-limitations"/>.
+ </para>
+
+ <para>
   Generally, the fact that the planner is able to change query plans as
   the underlying distribution of data changes is a feature, not a bug.
   Moreover, applying plan advice can have a noticeable performance cost even
