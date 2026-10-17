@@ -734,14 +734,11 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 	/* If it's a row header, fix row member flags and strategies similarly */
 	if (skey->sk_flags & SK_ROW_HEADER)
 	{
+		bool		satisfiable;
 		ScanKey		subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
 
-		if (subkey->sk_flags & SK_ISNULL)
-		{
-			/* First row member is NULL, so RowCompare is unsatisfiable */
-			Assert(subkey->sk_flags & SK_ROW_MEMBER);
-			return false;
-		}
+		/* If first row member is NULL, RowCompare is unsatisfiable */
+		satisfiable = !(subkey->sk_flags & SK_ISNULL);
 
 		for (;;)
 		{
@@ -754,6 +751,8 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 				break;
 			subkey++;
 		}
+
+		return satisfiable;
 	}
 
 	return true;
