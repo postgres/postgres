@@ -2114,6 +2114,13 @@ make_outerjoininfo(PlannerInfo *root,
 	 */
 	strict_relids = find_nonnullable_rels((Node *) clause);
 
+	/*
+	 * find_nonnullable_rels looks inside PlaceHolderVars, so it can report
+	 * rels that the clause references only laterally.  Ignore those, since
+	 * like clause_relids we treat a PHV as computed at its ph_eval_at.
+	 */
+	strict_relids = bms_int_members(strict_relids, clause_relids);
+
 	/* Remember whether the clause is strict for any LHS relations */
 	sjinfo->lhs_strict = bms_overlap(strict_relids, left_rels);
 
