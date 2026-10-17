@@ -2045,6 +2045,20 @@ where s2.q2 > t1.f1;
 reset from_collapse_limit;
 
 --
+-- check that an outer join is not taken to commute with a lower outer join
+-- when its clause references the lower join's RHS only laterally within a
+-- PlaceHolderVar
+--
+
+explain (costs off)
+select 1 from int4_tbl t1
+  left join int4_tbl t2 on true
+  left join lateral (select t2.f1, 1 from int4_tbl t3) s(x, y) on true
+  left join int4_tbl t4 on t4.f1 = s.x
+  join int4_tbl t5 on true
+where s.y is not null;
+
+--
 -- test successful handling of full join underneath left join (bug #14105)
 --
 
