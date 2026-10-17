@@ -1457,6 +1457,20 @@ select * from int4_tbl left join (
 ) ss(x) on true
 where ss.x is null;
 
+-- Test a join qual referencing a nulled appendrel output only within a PHV
+explain (verbose, costs off)
+select 1 from int4_tbl t1
+  left join (select 1 as x union all select 2) s on true
+  left join lateral (select s.x as y from int4_tbl t2) ss on true
+  left join int4_tbl t3 on ss.y is null;
+
+-- Same, but the join qual's required_relids don't include the nulling OJ
+explain (verbose, costs off)
+select 1 from ((int4_tbl t1 left join (select 1 as x union all select 2) s on t1.f1 < s.x)
+   join lateral (select coalesce(s.x, t2.f1) as y from int4_tbl t2) ss on true)
+  full join int4_tbl t3 on t3.f1 = t1.f1 and ss.y = t3.f1
+  right join int4_tbl t4 on t3.f1 = t4.f1;
+
 -- Test computation of varnullingrels when translating appendrel Var
 begin;
 
