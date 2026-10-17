@@ -4858,6 +4858,84 @@ where ss.x is null;
                      Output: 'bar'::text
 (12 rows)
 
+-- Test a join qual referencing a nulled appendrel output only within a PHV
+explain (verbose, costs off)
+select 1 from int4_tbl t1
+  left join (select 1 as x union all select 2) s on true
+  left join lateral (select s.x as y from int4_tbl t2) ss on true
+  left join int4_tbl t3 on ss.y is null;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Nested Loop Left Join
+   Output: 1
+   Join Filter: (((1)) IS NULL)
+   ->  Nested Loop Left Join
+         Output: ((1))
+         ->  Nested Loop Left Join
+               Output: (1)
+               ->  Seq Scan on public.int4_tbl t1
+                     Output: t1.f1
+               ->  Materialize
+                     Output: (1)
+                     ->  Append
+                           ->  Result
+                                 Output: 1
+                           ->  Result
+                                 Output: 2
+         ->  Memoize
+               Output: ((1))
+               Cache Key: (1)
+               Cache Mode: binary
+               ->  Seq Scan on public.int4_tbl t2
+                     Output: (1)
+   ->  Materialize
+         ->  Seq Scan on public.int4_tbl t3
+(24 rows)
+
+-- Same, but the join qual's required_relids don't include the nulling OJ
+explain (verbose, costs off)
+select 1 from ((int4_tbl t1 left join (select 1 as x union all select 2) s on t1.f1 < s.x)
+   join lateral (select coalesce(s.x, t2.f1) as y from int4_tbl t2) ss on true)
+  full join int4_tbl t3 on t3.f1 = t1.f1 and ss.y = t3.f1
+  right join int4_tbl t4 on t3.f1 = t4.f1;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Hash Right Join
+   Output: 1
+   Hash Cond: (t3.f1 = t4.f1)
+   ->  Hash Right Join
+         Output: t3.f1
+         Hash Cond: ((t1.f1 = t3.f1) AND ((COALESCE((1), t2.f1)) = t3.f1))
+         ->  Nested Loop
+               Output: t1.f1, (COALESCE((1), t2.f1))
+               ->  Nested Loop Left Join
+                     Output: t1.f1, (1)
+                     Join Filter: (t1.f1 < (1))
+                     ->  Seq Scan on public.int4_tbl t1
+                           Output: t1.f1
+                     ->  Materialize
+                           Output: (1)
+                           ->  Append
+                                 ->  Result
+                                       Output: 1
+                                 ->  Result
+                                       Output: 2
+               ->  Memoize
+                     Output: (COALESCE((1), t2.f1))
+                     Cache Key: (1)
+                     Cache Mode: binary
+                     ->  Seq Scan on public.int4_tbl t2
+                           Output: COALESCE((1), t2.f1)
+         ->  Hash
+               Output: t3.f1
+               ->  Seq Scan on public.int4_tbl t3
+                     Output: t3.f1
+   ->  Hash
+         Output: t4.f1
+         ->  Seq Scan on public.int4_tbl t4
+               Output: t4.f1
+(34 rows)
+
 -- Test computation of varnullingrels when translating appendrel Var
 begin;
 create temp table t_append (a int not null, b int);
