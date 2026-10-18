@@ -86,7 +86,8 @@ foreach my $stats_kind (@var_stats_kinds)
 		q(select test_custom_stats_var_update(name)
 		  from (values ('entry1', 2), ('entry2', 3),
 		               ('entry3', 2), ('entry4', 3)) as stats(name, n),
-		       generate_series(1, n)));
+		       generate_series(1, n);
+		  select pg_stat_force_next_flush()));
 
 	# Test data reports.
 	$result = $node->safe_psql('postgres',
