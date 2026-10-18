@@ -2243,18 +2243,6 @@ Allow event triggers to be written using <link linkend="plpython"><application>P
 
     <itemizedlist>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-2025-07-13 [092f3c63e] libpq: Add "servicefile" connection option
--->
-
-<listitem>
-<para>
-Allow libpq connections to specify a service file via <link linkend="libpq-connect-servicefile"><literal>servicefile</literal></link> (Torsten Förtsch, Ryo Kanbayashi)
-<ulink url="&commit_baseurl;092f3c63e">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
 Author: Jacob Champion <jchampion@postgresql.org>
 2026-02-06 [d8d7c5dc8] libpq: Prepare for protocol grease during 19beta
 -->
@@ -2398,18 +2386,6 @@ Allow control over how booleans are displayed in <link linkend="app-psql"><appli
 
 <para>
 The \pset variables are <link linkend="app-psql-meta-command-pset-display-true"><varname>display_true</varname></link> and <link linkend="app-psql-meta-command-pset-display-false"><varname>display_false</varname></link>.
-</para>
-</listitem>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2025-07-14 [6b1c4d326] psql: Add variable SERVICEFILE
--->
-
-<listitem>
-<para>
-Add <link linkend="app-psql"><application>psql</application></link> variable <link linkend="app-psql-variables-servicefile"><varname>SERVICEFILE</varname></link> to reference the service file location (Ryo Kanbayashi)
-<ulink url="&commit_baseurl;6b1c4d326">&sect;</ulink>
 </para>
 </listitem>
 
