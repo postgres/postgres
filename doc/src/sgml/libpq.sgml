@@ -2320,19 +2320,6 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-connect-servicefile" xreflabel="servicefile">
-      <term><literal>servicefile</literal></term>
-      <listitem>
-       <para>
-        This option specifies the name of the per-user connection service file
-        (see <xref linkend="libpq-pgservice"/>).
-        Defaults to <filename>~/.pg_service.conf</filename>, or
-        <filename>%APPDATA%\postgresql\.pg_service.conf</filename> on
-        Microsoft Windows.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="libpq-connect-target-session-attrs" xreflabel="target_session_attrs">
       <term><literal>target_session_attrs</literal></term>
       <listitem>
@@ -9055,8 +9042,12 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGSERVICEFILE</envar></primary>
       </indexterm>
-      <envar>PGSERVICEFILE</envar> behaves the same as the
-      <xref linkend="libpq-connect-servicefile"/> connection parameter.
+      <envar>PGSERVICEFILE</envar> specifies the name of the per-user
+      connection service file
+      (see <xref linkend="libpq-pgservice"/>).
+      Defaults to <filename>~/.pg_service.conf</filename>, or
+      <filename>%APPDATA%\postgresql\.pg_service.conf</filename> on
+      Microsoft Windows.
      </para>
     </listitem>
 
@@ -9497,8 +9488,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    On Microsoft Windows, it is named
    <filename>%APPDATA%\postgresql\.pg_service.conf</filename> (where
    <filename>%APPDATA%</filename> refers to the Application Data subdirectory
-   in the user's profile).  A different file name can be specified using the
-   <literal>servicefile</literal> key word in a libpq connection string or by
+   in the user's profile).  A different file name can be specified by
    setting the environment variable <envar>PGSERVICEFILE</envar>.
    The system-wide file is named <filename>pg_service.conf</filename>.
    By default it is sought in the <filename>etc</filename> directory

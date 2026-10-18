@@ -4688,15 +4688,6 @@ bar
         </listitem>
       </varlistentry>
 
-      <varlistentry id="app-psql-variables-servicefile">
-        <term><varname>SERVICEFILE</varname></term>
-        <listitem>
-        <para>
-        The service file name, if applicable.
-        </para>
-        </listitem>
-      </varlistentry>
-
       <varlistentry id="app-psql-variables-shell-error">
        <term><varname>SHELL_ERROR</varname></term>
        <listitem>

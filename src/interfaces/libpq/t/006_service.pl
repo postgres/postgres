@@ -49,12 +49,6 @@ copy($srvfile_valid, $srvfile_nested)
   or die "Could not copy $srvfile_valid to $srvfile_nested: $!";
 append_to_file($srvfile_nested, "service=invalid_srv\n");
 
-# Service file with nested "servicefile" defined.
-my $srvfile_nested_2 = "$td/pg_service_nested_2.conf";
-copy($srvfile_valid, $srvfile_nested_2)
-  or die "Could not copy $srvfile_valid to $srvfile_nested_2: $!";
-append_to_file($srvfile_nested_2, 'servicefile=' . $srvfile_default . "\n");
-
 # Set the fallback directory lookup of the service file to the temporary
 # directory of this test.  PGSYSCONFDIR is used if the service file
 # defined in PGSERVICEFILE cannot be found, or when a service file is
@@ -143,14 +137,6 @@ local $ENV{PGSERVICEFILE} = "$srvfile_empty";
 		sql => "SELECT 'connect2_3'",
 		expected_stdout => qr/connect2_3/);
 
-	my $srvfile_empty_win_cared = $srvfile_empty;
-	$srvfile_empty_win_cared =~ s/\\/\\\\/g;
-	$dummy_node->connect_ok(
-		q{service=my_srv servicefile='} . $srvfile_empty_win_cared . q{'},
-		'SERVICEFILE updated when service is found in default pg_service.conf',
-		sql => '\echo :SERVICEFILE',
-		expected_stdout => qr/^\Q$srvfile_default\E$/);
-
 	local $ENV{PGSERVICE} = 'undefined-service';
 	$dummy_node->connect_fails(
 		'',
@@ -168,77 +154,9 @@ local $ENV{PGSERVICEFILE} = "$srvfile_empty";
 
 	$dummy_node->connect_fails(
 		'service=my_srv',
-		'connection with "service" in nested service file',
+		'connection with nested service file',
 		expected_stderr =>
-		  qr/nested "service" specifications not supported in service file/);
-
-	local $ENV{PGSERVICEFILE} = $srvfile_nested_2;
-
-	$dummy_node->connect_fails(
-		'service=my_srv',
-		'connection with "servicefile" in nested service file',
-		expected_stderr =>
-		  qr/nested "servicefile" specifications not supported in service file/
-	);
-}
-
-# Properly escape backslashes in the path, to ensure the generation of
-# correct connection strings.
-my $srvfile_win_cared = $srvfile_valid;
-$srvfile_win_cared =~ s/\\/\\\\/g;
-
-# Checks that the "servicefile" option works as expected
-{
-	$dummy_node->connect_ok(
-		q{service=my_srv servicefile='} . $srvfile_win_cared . q{'},
-		'connection with valid servicefile in connection string',
-		sql => "SELECT 'connect3_1'",
-		expected_stdout => qr/connect3_1/);
-
-	# Encode slashes and backslash
-	my $encoded_srvfile = $srvfile_valid =~ s{([\\/])}{
-		$1 eq '/' ? '%2F' : '%5C'
-	}ger;
-
-	# Additionally encode a colon in servicefile path of Windows
-	$encoded_srvfile =~ s/:/%3A/g;
-
-	$dummy_node->connect_ok(
-		'postgresql:///?service=my_srv&servicefile=' . $encoded_srvfile,
-		'connection with valid servicefile in URI',
-		sql => "SELECT 'connect3_2'",
-		expected_stdout => qr/connect3_2/);
-
-	local $ENV{PGSERVICE} = 'my_srv';
-	$dummy_node->connect_ok(
-		q{servicefile='} . $srvfile_win_cared . q{'},
-		'connection with PGSERVICE and servicefile in connection string',
-		sql => "SELECT 'connect3_3'",
-		expected_stdout => qr/connect3_3/);
-
-	$dummy_node->connect_ok(
-		'postgresql://?servicefile=' . $encoded_srvfile,
-		'connection with PGSERVICE and servicefile in URI',
-		sql => "SELECT 'connect3_4'",
-		expected_stdout => qr/connect3_4/);
-}
-
-# Check that the "servicefile" option takes priority over the PGSERVICEFILE
-# environment variable.
-{
-	local $ENV{PGSERVICEFILE} = 'non-existent-file.conf';
-
-	$dummy_node->connect_fails(
-		'service=my_srv',
-		'connection with invalid PGSERVICEFILE',
-		expected_stderr =>
-		  qr/service file "non-existent-file\.conf" not found/);
-
-	$dummy_node->connect_ok(
-		q{service=my_srv servicefile='} . $srvfile_win_cared . q{'},
-		'connection with both servicefile and PGSERVICEFILE',
-		sql => "SELECT 'connect4_1'",
-		expected_stdout => qr/connect4_1/);
+		  qr/nested service specifications not supported in service file/);
 }
 
 $node->teardown_node;
