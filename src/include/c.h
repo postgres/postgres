@@ -305,6 +305,21 @@ extern "C++"
 #endif
 
 /*
+ * pg_attribute_returns_nonnull means the function never returns NULL.  It
+ * must be placed in front of the declaration, which is where the MSVC
+ * annotation _Ret_notnull_ requires it to be.
+ *
+ * https://gcc.gnu.org/onlinedocs/gcc/Common-Attributes.html#index-returns_005fnonnull
+ */
+#if __has_attribute (returns_nonnull)
+#define pg_attribute_returns_nonnull __attribute__((returns_nonnull))
+#elif defined(_MSC_VER)
+#define pg_attribute_returns_nonnull _Ret_notnull_
+#else
+#define pg_attribute_returns_nonnull
+#endif
+
+/*
  * pg_attribute_target allows specifying different target options that the
  * function should be compiled with (e.g., for using special CPU instructions).
  * Note that there still needs to be a configure-time check to verify that a
