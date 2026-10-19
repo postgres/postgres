@@ -105,7 +105,7 @@ typedef struct
 	PROC_HDR   *ProcGlobal;
 	PGPROC	   *AuxiliaryProcs;
 	PGPROC	   *PreparedXactProcs;
-	volatile PMSignalData *PMSignalState;
+	PMSignalData *PMSignalState;
 	ProcSignalHeader *ProcSignal;
 	pid_t		PostmasterPid;
 	TimestampTz PgStartTime;
