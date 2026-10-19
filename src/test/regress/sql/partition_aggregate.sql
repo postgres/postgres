@@ -233,8 +233,8 @@ SET parallel_setup_cost = 0;
 
 -- Full aggregation at level 1 as GROUP BY clause matches with PARTITION KEY
 -- for level 1 only. For subpartitions, GROUP BY clause does not match with
--- PARTITION KEY, but still we do not see a partial aggregation as array_agg()
--- is not partial agg safe.
+-- PARTITION KEY, but still we do not see a partial aggregation as
+-- array_agg(distinct) is not partial agg safe.
 EXPLAIN (COSTS OFF)
 SELECT a, sum(b), array_agg(distinct c), count(*) FROM pagg_tab_ml GROUP BY a HAVING avg(b) < 3 ORDER BY 1, 2, 3;
 SELECT a, sum(b), array_agg(distinct c), count(*) FROM pagg_tab_ml GROUP BY a HAVING avg(b) < 3 ORDER BY 1, 2, 3;
@@ -255,7 +255,7 @@ SELECT a, sum(b), count(*) FROM pagg_tab_ml GROUP BY a HAVING avg(b) < 3 ORDER B
 -- Partial aggregation at all levels as GROUP BY clause does not match with
 -- PARTITION KEY
 EXPLAIN (COSTS OFF)
-SELECT b, sum(a), count(*) FROM pagg_tab_ml GROUP BY b ORDER BY 1, 2, 3;
+SELECT b, sum(a), count(*) FROM pagg_tab_ml GROUP BY b HAVING avg(a) < 15 ORDER BY 1, 2, 3;
 SELECT b, sum(a), count(*) FROM pagg_tab_ml GROUP BY b HAVING avg(a) < 15 ORDER BY 1, 2, 3;
 
 -- Full aggregation at all levels as GROUP BY clause matches with PARTITION KEY
@@ -278,7 +278,7 @@ SELECT a, sum(b), count(*) FROM pagg_tab_ml GROUP BY a HAVING avg(b) < 3 ORDER B
 -- Partial aggregation at all levels as GROUP BY clause does not match with
 -- PARTITION KEY
 EXPLAIN (COSTS OFF)
-SELECT b, sum(a), count(*) FROM pagg_tab_ml GROUP BY b ORDER BY 1, 2, 3;
+SELECT b, sum(a), count(*) FROM pagg_tab_ml GROUP BY b HAVING avg(a) < 15 ORDER BY 1, 2, 3;
 SELECT b, sum(a), count(*) FROM pagg_tab_ml GROUP BY b HAVING avg(a) < 15 ORDER BY 1, 2, 3;
 
 -- Full aggregation at all levels as GROUP BY clause matches with PARTITION KEY
