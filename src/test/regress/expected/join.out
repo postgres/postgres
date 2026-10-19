@@ -5348,6 +5348,89 @@ select * from (values (1),(2)) v(x)
  2 |  
 (2 rows)
 
+-- Nor an RTE_RESULT whose PHV is nested in a PHV evaluated at some but not
+-- all of the sibling rels
+explain (verbose, costs off)
+select ss.z
+from (select 1) s1 left join
+  ((select 1) s2 left join (select 1 as x) v on true
+   cross join (lateral (select coalesce(v.x, 0) as z, f1 from int4_tbl) ss
+               cross join lateral (select ss.f1 offset 0) g))
+  on true;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Nested Loop Left Join
+   Output: (COALESCE((1), 0))
+   ->  Result
+   ->  Nested Loop
+         Output: (COALESCE((1), 0))
+         ->  Nested Loop
+               Output: int4_tbl.f1, (COALESCE((1), 0))
+               ->  Result
+                     Output: 1
+               ->  Seq Scan on public.int4_tbl
+                     Output: int4_tbl.f1, COALESCE((1), 0)
+         ->  Result
+               Output: NULL::integer
+(13 rows)
+
+select ss.z
+from (select 1) s1 left join
+  ((select 1) s2 left join (select 1 as x) v on true
+   cross join (lateral (select coalesce(v.x, 0) as z, f1 from int4_tbl) ss
+               cross join lateral (select ss.f1 offset 0) g))
+  on true;
+ z 
+---
+ 1
+ 1
+ 1
+ 1
+ 1
+(5 rows)
+
+-- Same, with the PHVs coming from grouping sets
+explain (costs off)
+select s1.x
+from (values (1)) as v(x),
+     lateral (select v.x + 1, 2) as s1(x, y)
+     cross join generate_series(s1.y, s1.y) as g
+group by grouping sets (1, 1);
+                   QUERY PLAN                   
+------------------------------------------------
+ HashAggregate
+   Hash Key: (((1) + 1))
+   Hash Key: (((1) + 1))
+   ->  Nested Loop
+         ->  Nested Loop
+               ->  Result
+               ->  Result
+         ->  Function Scan on generate_series g
+(8 rows)
+
+select s1.x
+from (values (1)) as v(x),
+     lateral (select v.x + 1, 2) as s1(x, y)
+     cross join generate_series(s1.y, s1.y) as g
+group by grouping sets (1, 1);
+ x 
+---
+ 2
+ 2
+(2 rows)
+
+-- But we can remove it if the outer PHV covers all of the sibling rels
+explain (costs off)
+select s.y from (values (1)) v(x), lateral (select v.x + f1 as y from int4_tbl) s
+group by grouping sets (1, ());
+          QUERY PLAN           
+-------------------------------
+ MixedAggregate
+   Hash Key: (1 + int4_tbl.f1)
+   Group Key: ()
+   ->  Seq Scan on int4_tbl
+(4 rows)
+
 -- This example demonstrates the folly of our old "have_dangerous_phv" logic
 begin;
 set local from_collapse_limit to 2;

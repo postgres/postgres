@@ -1832,6 +1832,40 @@ select * from (values (1),(2)) v(x)
   left join (select q from (select 7 as q from (select where false) ss1) ss2
              left join (select 8 as z) ss3 on true) ss4 on true;
 
+-- Nor an RTE_RESULT whose PHV is nested in a PHV evaluated at some but not
+-- all of the sibling rels
+explain (verbose, costs off)
+select ss.z
+from (select 1) s1 left join
+  ((select 1) s2 left join (select 1 as x) v on true
+   cross join (lateral (select coalesce(v.x, 0) as z, f1 from int4_tbl) ss
+               cross join lateral (select ss.f1 offset 0) g))
+  on true;
+select ss.z
+from (select 1) s1 left join
+  ((select 1) s2 left join (select 1 as x) v on true
+   cross join (lateral (select coalesce(v.x, 0) as z, f1 from int4_tbl) ss
+               cross join lateral (select ss.f1 offset 0) g))
+  on true;
+
+-- Same, with the PHVs coming from grouping sets
+explain (costs off)
+select s1.x
+from (values (1)) as v(x),
+     lateral (select v.x + 1, 2) as s1(x, y)
+     cross join generate_series(s1.y, s1.y) as g
+group by grouping sets (1, 1);
+select s1.x
+from (values (1)) as v(x),
+     lateral (select v.x + 1, 2) as s1(x, y)
+     cross join generate_series(s1.y, s1.y) as g
+group by grouping sets (1, 1);
+
+-- But we can remove it if the outer PHV covers all of the sibling rels
+explain (costs off)
+select s.y from (values (1)) v(x), lateral (select v.x + f1 as y from int4_tbl) s
+group by grouping sets (1, ());
+
 -- This example demonstrates the folly of our old "have_dangerous_phv" logic
 begin;
 set local from_collapse_limit to 2;
