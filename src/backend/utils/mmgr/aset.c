@@ -321,6 +321,50 @@ AllocSetFreeIndex(Size size)
 	return idx;
 }
 
+/* ----------
+ * AllocSetFreeIndex -
+ *
+ *		Compute and return the multi-chunk block chunk size limit for the
+ *		given maximum block size.
+ * ----------
+ */
+static inline uint32
+AllocSetComputeChunkLimit(Size maxBlockSize)
+{
+	uint32		allocChunkLimit;
+
+	/*
+	 * Compute the allocation chunk size limit for this context.  It can't be
+	 * more than ALLOC_CHUNK_LIMIT because of the fixed number of freelists.
+	 * If maxBlockSize is small then requests exceeding the maxBlockSize, or
+	 * even a significant fraction of it, should be treated as large chunks
+	 * too.  For the typical case of maxBlockSize a power of 2, the chunk size
+	 * limit will be at most 1/8th maxBlockSize, so that given a stream of
+	 * requests that are all the maximum chunk size we will waste at most
+	 * 1/8th of the allocated space.
+	 *
+	 * Also, allocChunkLimit must not exceed ALLOCSET_SEPARATE_THRESHOLD.
+	 */
+	StaticAssertStmt(ALLOC_CHUNK_LIMIT == ALLOCSET_SEPARATE_THRESHOLD,
+		"ALLOC_CHUNK_LIMIT != ALLOCSET_SEPARATE_THRESHOLD");
+
+	/*
+	 * Determine the maximum size that a chunk can be before we allocate an
+	 * entire AllocBlock dedicated for that chunk.  We set the absolute limit
+	 * of that size as ALLOC_CHUNK_LIMIT but we reduce it further so that we
+	 * can fit about ALLOC_CHUNK_FRACTION chunks this size on a maximally
+	 * sized block.  (We opt to keep allocChunkLimit a power-of-2 value
+	 * primarily for legacy reasons rather than calculating it so that exactly
+	 * ALLOC_CHUNK_FRACTION chunks fit on a maximally sized block.)
+	 */
+	allocChunkLimit = ALLOC_CHUNK_LIMIT;
+	while ((Size)(allocChunkLimit + ALLOC_CHUNKHDRSZ) >
+		(Size)((maxBlockSize - ALLOC_BLOCKHDRSZ) / ALLOC_CHUNK_FRACTION))
+		allocChunkLimit >>= 1;
+
+	return allocChunkLimit;
+}
+
 
 /*
  * Public routines
@@ -412,8 +456,18 @@ AllocSetContextCreateInternal(MemoryContext parent,
 			freelist->first_free = (AllocSet) set->header.nextchild;
 			freelist->num_free--;
 
-			/* Update its maxBlockSize; everything else should be OK */
-			set->maxBlockSize = maxBlockSize;
+			/* nextBlockSize should have been reset in AllocSetReset() */
+			Assert(set->nextBlockSize == set->initBlockSize);
+
+			if (set->maxBlockSize != maxBlockSize)
+			{
+				/*
+				 * Update its maxBlockSize and allocChunkLimit; everything
+				 * else should be OK.
+				 */
+				set->maxBlockSize = maxBlockSize;
+				set->allocChunkLimit = AllocSetComputeChunkLimit(maxBlockSize);
+			}
 
 			/* Reinitialize its header, installing correct name and parent */
 			MemoryContextCreate((MemoryContext) set,
@@ -479,35 +533,7 @@ AllocSetContextCreateInternal(MemoryContext parent,
 	set->maxBlockSize = (uint32) maxBlockSize;
 	set->nextBlockSize = (uint32) initBlockSize;
 	set->freeListIndex = freeListIndex;
-
-	/*
-	 * Compute the allocation chunk size limit for this context.  It can't be
-	 * more than ALLOC_CHUNK_LIMIT because of the fixed number of freelists.
-	 * If maxBlockSize is small then requests exceeding the maxBlockSize, or
-	 * even a significant fraction of it, should be treated as large chunks
-	 * too.  For the typical case of maxBlockSize a power of 2, the chunk size
-	 * limit will be at most 1/8th maxBlockSize, so that given a stream of
-	 * requests that are all the maximum chunk size we will waste at most
-	 * 1/8th of the allocated space.
-	 *
-	 * Also, allocChunkLimit must not exceed ALLOCSET_SEPARATE_THRESHOLD.
-	 */
-	StaticAssertStmt(ALLOC_CHUNK_LIMIT == ALLOCSET_SEPARATE_THRESHOLD,
-					 "ALLOC_CHUNK_LIMIT != ALLOCSET_SEPARATE_THRESHOLD");
-
-	/*
-	 * Determine the maximum size that a chunk can be before we allocate an
-	 * entire AllocBlock dedicated for that chunk.  We set the absolute limit
-	 * of that size as ALLOC_CHUNK_LIMIT but we reduce it further so that we
-	 * can fit about ALLOC_CHUNK_FRACTION chunks this size on a maximally
-	 * sized block.  (We opt to keep allocChunkLimit a power-of-2 value
-	 * primarily for legacy reasons rather than calculating it so that exactly
-	 * ALLOC_CHUNK_FRACTION chunks fit on a maximally sized block.)
-	 */
-	set->allocChunkLimit = ALLOC_CHUNK_LIMIT;
-	while ((Size) (set->allocChunkLimit + ALLOC_CHUNKHDRSZ) >
-		   (Size) ((maxBlockSize - ALLOC_BLOCKHDRSZ) / ALLOC_CHUNK_FRACTION))
-		set->allocChunkLimit >>= 1;
+	set->allocChunkLimit = AllocSetComputeChunkLimit(maxBlockSize);
 
 	/* Finally, do the type-independent part of context creation */
 	MemoryContextCreate((MemoryContext) set,
