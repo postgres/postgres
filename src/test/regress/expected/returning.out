@@ -972,7 +972,7 @@ CREATE OR REPLACE FUNCTION public.foo_update()
  LANGUAGE sql
 BEGIN ATOMIC
  WITH u1 AS (
-          UPDATE foo foo_1 SET f1 = (foo_1.f1 + 1)
+          UPDATE foo AS foo_1 SET f1 = (foo_1.f1 + 1)
            RETURNING old.f1,
              old.f2,
              old.f4,
@@ -980,7 +980,7 @@ BEGIN ATOMIC
              new.f2,
              new.f4
          ), u2 AS (
-          UPDATE foo foo_1 SET f1 = (foo_1.f1 + 1)
+          UPDATE foo AS foo_1 SET f1 = (foo_1.f1 + 1)
            RETURNING WITH (OLD AS "old foo") "old foo".f1,
              "old foo".f2,
              "old foo".f4,
@@ -988,7 +988,7 @@ BEGIN ATOMIC
              new.f2,
              new.f4
          ), u3 AS (
-          UPDATE foo foo_1 SET f1 = (foo_1.f1 + 1)
+          UPDATE foo AS foo_1 SET f1 = (foo_1.f1 + 1)
            RETURNING WITH (NEW AS "new foo") old.f1,
              old.f2,
              old.f4,

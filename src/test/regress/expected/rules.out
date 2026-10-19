@@ -3333,7 +3333,7 @@ Rules:
   RETURNING trgt.f1,
     trgt.f2
     r6 AS
-    ON UPDATE TO rules_src DO INSTEAD  UPDATE rules_log trgt SET tag = 'updated'::text
+    ON UPDATE TO rules_src DO INSTEAD  UPDATE rules_log AS trgt SET tag = 'updated'::text
   WHERE trgt.f1 = new.f1
     r7 AS
     ON DELETE TO rules_src DO INSTEAD  WITH wins AS (
@@ -3341,10 +3341,10 @@ Rules:
           VALUES (0)
           RETURNING trgt_1.f1
         ), wupd AS (
-         UPDATE int4_tbl trgt_1 SET f1 = trgt_1.f1 + 1
+         UPDATE int4_tbl AS trgt_1 SET f1 = trgt_1.f1 + 1
           RETURNING trgt_1.f1
         ), wdel AS (
-         DELETE FROM int4_tbl trgt_1
+         DELETE FROM int4_tbl AS trgt_1
           WHERE trgt_1.f1 = 0
           RETURNING trgt_1.f1
         )
@@ -3372,7 +3372,7 @@ create rule rr as on update to rule_t1 do instead UPDATE rule_dest trgt
  f2     | integer |           |          |         | plain   |              | 
 Rules:
     rr AS
-    ON UPDATE TO rule_t1 DO INSTEAD  UPDATE rule_dest trgt SET (f2[1], f1, tag) = ( SELECT new.f2,
+    ON UPDATE TO rule_t1 DO INSTEAD  UPDATE rule_dest AS trgt SET (f2[1], f1, tag) = ( SELECT new.f2,
             new.f1,
             'updated'::character varying AS "varchar")
   WHERE trgt.f1 = new.f1
@@ -3993,7 +3993,7 @@ CREATE OR REPLACE FUNCTION public.merge_sf_test()
  RETURNS TABLE(action text, a integer, b text, id integer, data text, filling integer[], old_id integer, old_data text, old_filling integer[], new_id integer, new_data text, new_filling integer[])
  LANGUAGE sql
 BEGIN ATOMIC
- MERGE INTO sf_target t
+ MERGE INTO sf_target AS t
     USING rule_merge1 s
     ON (s.a = t.id)
     WHEN MATCHED
@@ -4061,7 +4061,7 @@ CREATE OR REPLACE FUNCTION public.merge_sf_test2()
  RETURNS void
  LANGUAGE sql
 BEGIN ATOMIC
- MERGE INTO sf_target t
+ MERGE INTO sf_target AS t
     USING rule_merge1 s
     ON (s.a = t.id)
     WHEN NOT MATCHED BY TARGET
