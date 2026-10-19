@@ -1294,6 +1294,16 @@ select jsonb_set_lax('{"a":1,"b":2}', '{b}', null, null_value_treatment => 'retu
 select jsonb_set_lax('{"a":1,"b":2}', '{b}', null, null_value_treatment => 'delete_key') as delete_key;
 select jsonb_set_lax('{"a":1,"b":2}', '{b}', null, null_value_treatment => 'use_json_null') as use_json_null;
 
+-- multi-row cases with a constant NULL new_value
+select jsonb_set_lax(j, '{a}', null, true, t)
+from (values ('{"a":1}'::jsonb, 'use_json_null'),
+             ('{"a":1}'::jsonb, 'delete_key')) v(j, t);
+select jsonb_set_lax(j, '{a}', null, true, t)
+from (values ('{"a":1}'::jsonb, 'use_json_null'),
+             ('{"a":1}'::jsonb, 'return_target')) v(j, t);
+select jsonb_set_lax(j, '{a}', null)
+from (values ('{"a":1}'::jsonb), ('{"a":2}'::jsonb), ('{"a":3}'::jsonb)) v(j);
+
 \pset null ''
 
 -- jsonb_insert

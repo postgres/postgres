@@ -4934,9 +4934,11 @@ jsonb_set_lax(PG_FUNCTION_ARGS)
 
 		newval = DirectFunctionCall1(jsonb_in, CStringGetDatum("null"));
 
-		fcinfo->args[2].value = newval;
-		fcinfo->args[2].isnull = false;
-		return jsonb_set(fcinfo);
+		return DirectFunctionCall4(jsonb_set,
+								   PG_GETARG_DATUM(0),
+								   PG_GETARG_DATUM(1),
+								   newval,
+								   PG_GETARG_DATUM(3));
 	}
 	else if (strcmp(handle_val, "delete_key") == 0)
 	{
