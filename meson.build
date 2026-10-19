@@ -4138,12 +4138,24 @@ add_test_setup('running',
 ###############################################################
 
 headerscheck = files('src/tools/pginclude/headerscheck')
+
+# These checks compile headers, so all the headers they might include
+# need to have been generated.
+headerscheck_depends = [
+  generated_headers_stamp,
+  generated_backend_headers_stamp,
+  backend_parser,
+  jsonpath_gram,
+]
+
 run_target('headerscheck',
-  command: [headerscheck, meson.project_source_root(), meson.project_build_root()]
+  command: [headerscheck, meson.project_source_root(), meson.project_build_root()],
+  depends: headerscheck_depends,
 )
 
 run_target('cpluspluscheck',
-  command: [headerscheck, '--cplusplus', meson.project_source_root(), meson.project_build_root()]
+  command: [headerscheck, '--cplusplus', meson.project_source_root(), meson.project_build_root()],
+  depends: headerscheck_depends,
 )
 
 
