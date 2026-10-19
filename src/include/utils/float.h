@@ -37,10 +37,10 @@ extern float8 float_overflow_error_ext(struct Node *escontext);
 extern float8 float_underflow_error_ext(struct Node *escontext);
 extern float8 float_zero_divide_error_ext(struct Node *escontext);
 extern int	is_infinite(float8 val);
-extern float8 float8in_internal(char *num, char **endptr_p,
+extern float8 float8in_internal(const char *num, char **endptr_p,
 								const char *type_name, const char *orig_string,
 								struct Node *escontext);
-extern float4 float4in_internal(char *num, char **endptr_p,
+extern float4 float4in_internal(const char *num, char **endptr_p,
 								const char *type_name, const char *orig_string,
 								struct Node *escontext);
 extern char *float8out_internal(float8 num);

@@ -221,12 +221,12 @@ float4in(PG_FUNCTION_ARGS)
  * comments also apply here, except regarding use in geometric types.
  */
 float4
-float4in_internal(char *num, char **endptr_p,
+float4in_internal(const char *num, char **endptr_p,
 				  const char *type_name, const char *orig_string,
 				  struct Node *escontext)
 {
 	float		val;
-	char	   *endptr;
+	const char *endptr;
 
 	/*
 	 * endptr points to the first character _after_ the sequence we recognized
@@ -249,7 +249,7 @@ float4in_internal(char *num, char **endptr_p,
 						type_name, orig_string)));
 
 	errno = 0;
-	val = strtof(num, &endptr);
+	val = strtof(num, unconstify(char **, &endptr));
 
 	/* did we not see anything that looks like a double? */
 	if (endptr == num || errno != 0)
@@ -342,7 +342,7 @@ float4in_internal(char *num, char **endptr_p,
 
 	/* report stopping point if wanted, else complain if not end of string */
 	if (endptr_p)
-		*endptr_p = endptr;
+		*endptr_p = unconstify(char *, endptr);
 	else if (*endptr != '\0')
 		ereturn(escontext, 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -428,17 +428,14 @@ float8in(PG_FUNCTION_ARGS)
  * If escontext points to an ErrorSaveContext node, that is filled instead
  * of throwing an error; the caller must check SOFT_ERROR_OCCURRED()
  * to detect errors.
- *
- * "num" could validly be declared "const char *", but that results in an
- * unreasonable amount of extra casting both here and in callers, so we don't.
  */
 float8
-float8in_internal(char *num, char **endptr_p,
+float8in_internal(const char *num, char **endptr_p,
 				  const char *type_name, const char *orig_string,
 				  struct Node *escontext)
 {
 	double		val;
-	char	   *endptr;
+	const char *endptr;
 
 	/* skip leading whitespace */
 	while (*num != '\0' && isspace((unsigned char) *num))
@@ -455,7 +452,7 @@ float8in_internal(char *num, char **endptr_p,
 						type_name, orig_string)));
 
 	errno = 0;
-	val = strtod(num, &endptr);
+	val = strtod(num, unconstify(char **, &endptr));
 
 	/* did we not see anything that looks like a double? */
 	if (endptr == num || errno != 0)
@@ -544,7 +541,7 @@ float8in_internal(char *num, char **endptr_p,
 
 	/* report stopping point if wanted, else complain if not end of string */
 	if (endptr_p)
-		*endptr_p = endptr;
+		*endptr_p = unconstify(char *, endptr);
 	else if (*endptr != '\0')
 		ereturn(escontext, 0,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),

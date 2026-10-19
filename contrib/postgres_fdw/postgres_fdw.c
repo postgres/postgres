@@ -6476,7 +6476,7 @@ set_float_arg(NullableDatum *arg, const char *s)
 {
 	if (s)
 	{
-		float4		val = float4in_internal((char *) s, NULL, "float", s, NULL);
+		float4		val = float4in_internal(s, NULL, "float", s, NULL);
 
 		arg->value = Float4GetDatum(val);
 		arg->isnull = false;
