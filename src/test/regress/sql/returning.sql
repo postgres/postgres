@@ -425,6 +425,30 @@ END;
 \sf foo_update
 DROP FUNCTION foo_update;
 
+-- Deparsing must print the OLD/NEW aliases of the ModifyTable that owns a
+-- RETURNING list also inside its SubPlans, even when a data-modifying CTE
+-- has set different aliases.
+CREATE TABLE returning_e1 (k int, c int);
+CREATE TABLE returning_e2 (k int, c int);
+
+EXPLAIN (VERBOSE, COSTS OFF)
+WITH x AS (UPDATE returning_e2 SET c = c + 1
+           RETURNING WITH (OLD AS o, NEW AS n) o.k)
+UPDATE returning_e1 SET c = c + 1
+  RETURNING WITH (OLD AS p, NEW AS q) p.c,
+    (SELECT count(*) FROM returning_e2 WHERE returning_e2.c = p.c) AS m,
+    (SELECT count(*) FROM returning_e2 WHERE returning_e2.c = q.c) AS m2;
+
+-- likewise when a SubPlan compares values returned by the CTE
+EXPLAIN (VERBOSE, COSTS OFF)
+WITH x AS (UPDATE returning_e2 SET c = c + 1
+           RETURNING WITH (OLD AS o, NEW AS n) n.k, o.c AS oc)
+UPDATE returning_e1 SET c = c + 1
+  RETURNING WITH (OLD AS p) p.c,
+    (SELECT count(*) FROM x WHERE x.oc = p.c) AS m;
+
+DROP TABLE returning_e1, returning_e2;
+
 -- Test that the planner does not fold OLD/NEW IS NULL tests to constants
 -- based on NOT NULL constraints, since OLD is NULL for INSERT and NEW is
 -- NULL for DELETE.
