@@ -5804,14 +5804,14 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 						++Np->inout_p;
 					}
 				}
-				else
+				else if (*Np->number_p)
 				{
 					*Np->inout_p = *Np->number_p;	/* Write DIGIT */
 					++Np->inout_p;
 					Np->num_in = true;
 				}
 			}
-			/* do no exceed string length */
+			/* do not advance past end of string */
 			if (*Np->number_p)
 				++Np->number_p;
 		}
