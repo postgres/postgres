@@ -90,12 +90,13 @@ gettoken(WORKSTATE *state, int32 *val)
 				else
 				{
 					long		lval;
+					char	   *endptr;
 
 					nnn[innn] = '\0';
 					errno = 0;
-					lval = strtol(nnn, NULL, 0);
+					lval = strtol(nnn, &endptr, 10);
 					*val = (int32) lval;
-					if (errno != 0 || (long) *val != lval)
+					if (errno != 0 || *endptr != '\0' || (long) *val != lval)
 						return ERR;
 					state->state = WAITOPERATOR;
 					return (state->count && *(state->buf) == '\0')
