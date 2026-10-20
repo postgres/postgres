@@ -2124,6 +2124,12 @@ SELECT to_char('100'::numeric, 'FM999.');
  100
 (1 row)
 
+SELECT to_char('100'::numeric, 'FM999.SG "items"');
+  to_char   
+------------
+ 100+ items
+(1 row)
+
 SELECT to_char('100'::numeric, 'FM999');
  to_char 
 ---------

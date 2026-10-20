@@ -1035,6 +1035,7 @@ FROM v;
 
 SELECT to_char('100'::numeric, 'FM999.9');
 SELECT to_char('100'::numeric, 'FM999.');
+SELECT to_char('100'::numeric, 'FM999.SG "items"');
 SELECT to_char('100'::numeric, 'FM999');
 SELECT to_char('12345678901'::float8, 'FM9999999999D9999900000000000000000');
 
