@@ -711,6 +711,16 @@ CREATE RULE "_RETURN" AS ON SELECT TO tt28 DO INSTEAD SELECT * FROM tt26;
 CREATE RULE "_RETURN" AS ON SELECT TO tt28 DO INSTEAD SELECT * FROM tt26;
 ROLLBACK;
 
+-- xml IS DOCUMENT needs to be treated specially
+create operator ||
+  (function = xmlconcat2, leftarg=xml, rightarg=xml);
+create view tt261v as
+select x is document as c1,
+       (x || x) is document as c2,
+       f = (x is document) as c3
+from (values(false,null::xml)) v(f,x);
+select pg_get_viewdef('tt261v', true);
+
 -- test restriction on non-system view expansion.
 create table tt27v_tbl (a int);
 create view tt27v as select a from tt27v_tbl;
