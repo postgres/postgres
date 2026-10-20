@@ -112,25 +112,6 @@ sub adjust_database_contents
 			'drop extension if exists test_ext7');
 	}
 
-	# We can no longer upgrade bpchar indexes that claim deduplication ability
-	# (amcheck will complain about them), so drop them if source is pre-v14.
-	if ($old_version < 14)
-	{
-		if ($dbnames{"regression"})
-		{
-			_add_st($result, 'regression',
-					'drop index if exists public.hslot_hubname',
-					'drop index if exists public.hslot_name',
-					'drop index if exists public.hub_name',
-					'drop index if exists public.iface_name',
-					'drop index if exists public.phone_name',
-					'drop index if exists public.pline_name',
-					'drop index if exists public.pslot_name',
-					'drop index if exists public.room_rno',
-					'drop index if exists public.wslot_name');
-		}
-	}
-
 	# refint was removed in v20
 	if ($old_version < 20)
 	{
@@ -232,6 +213,22 @@ sub adjust_database_contents
 		{
 			_add_st($result, 'contrib_regression_seg',
 				"delete from test_seg where s = '4.6 .. ~7.0'");
+		}
+
+		# We can no longer upgrade bpchar indexes that claim deduplication
+		# ability (amcheck will complain about them)
+		if ($dbnames{'regression'})
+		{
+			_add_st($result, 'regression',
+					'drop index if exists public.hslot_hubname',
+					'drop index if exists public.hslot_name',
+					'drop index if exists public.hub_name',
+					'drop index if exists public.iface_name',
+					'drop index if exists public.phone_name',
+					'drop index if exists public.pline_name',
+					'drop index if exists public.pslot_name',
+					'drop index if exists public.room_rno',
+					'drop index if exists public.wslot_name');
 		}
 	}
 
@@ -397,6 +394,17 @@ sub adjust_old_dumpfile
 		$dump =~ s {^(\s+OPERATOR\s1\s=\(text,text\))\s,\n
                     \s+FUNCTION\s2\s\(text,\stext\)\spublic\.part_hashtext_length\(text,bigint\);}
 				   {$1;}mxg;
+	}
+
+	if ($old_version < 14)
+	{
+		# Fix up some rule definitions that ruleutils now prints with AS.
+		$dump =~ s {DO INSTEAD  UPDATE public\.rules_log trgt SET tag}
+		{DO INSTEAD  UPDATE public.rules_log AS trgt SET tag};
+		$dump =~ s {UPDATE public\.int4_tbl trgt_1 SET}
+		{UPDATE public.int4_tbl AS trgt_1 SET};
+		$dump =~ s {DELETE FROM public\.int4_tbl trgt_1}
+		{DELETE FROM public.int4_tbl AS trgt_1};
 	}
 
 	# Change trigger definitions to say ... EXECUTE FUNCTION ...
