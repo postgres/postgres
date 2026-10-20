@@ -3840,13 +3840,6 @@ set_deparse_context_plan(List *dpcontext, Plan *plan, List *ancestors)
 	dpns->ancestors = ancestors;
 	set_deparse_plan(dpns, plan);
 
-	/* For ModifyTable, set aliases for OLD and NEW in RETURNING */
-	if (IsA(plan, ModifyTable))
-	{
-		dpns->ret_old_alias = ((ModifyTable *) plan)->returningOldAlias;
-		dpns->ret_new_alias = ((ModifyTable *) plan)->returningNewAlias;
-	}
-
 	return dpcontext;
 }
 
@@ -5149,10 +5142,10 @@ get_rtable_name(int rtindex, deparse_context *context)
  * of a given Plan node
  *
  * This sets the plan, outer_plan, inner_plan, outer_tlist, inner_tlist,
- * and index_tlist fields.  Caller must already have adjusted the ancestors
- * list if necessary.  Note that the rtable, subplans, and ctes fields do
- * not need to change when shifting attention to different plan nodes in a
- * single plan tree.
+ * index_tlist, ret_old_alias, and ret_new_alias fields as appropriate.
+ * Caller must already have adjusted the ancestors list if necessary.
+ * Note that the rtable, subplans, and ctes fields do not need to change
+ * when shifting attention to different plan nodes in a single plan tree.
  */
 static void
 set_deparse_plan(deparse_namespace *dpns, Plan *plan)
@@ -5228,6 +5221,15 @@ set_deparse_plan(deparse_namespace *dpns, Plan *plan)
 		dpns->index_tlist = ((CustomScan *) plan)->custom_scan_tlist;
 	else
 		dpns->index_tlist = NIL;
+
+	/* Set up table aliases for OLD and NEW in RETURNING */
+	if (IsA(plan, ModifyTable))
+	{
+		dpns->ret_old_alias = ((ModifyTable *) plan)->returningOldAlias;
+		dpns->ret_new_alias = ((ModifyTable *) plan)->returningNewAlias;
+	}
+	else
+		dpns->ret_old_alias = dpns->ret_new_alias = NULL;
 }
 
 /*
@@ -7736,9 +7738,15 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 		/* might be returning old/new column value */
 		if (var->varreturningtype == VAR_RETURNING_OLD)
+		{
 			refname = dpns->ret_old_alias;
+			Assert(refname);
+		}
 		else if (var->varreturningtype == VAR_RETURNING_NEW)
+		{
 			refname = dpns->ret_new_alias;
+			Assert(refname);
+		}
 		else
 			refname = (char *) list_nth(dpns->rtable_names, varno - 1);
 
