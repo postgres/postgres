@@ -2276,6 +2276,23 @@ select pg_get_viewdef('tt26v', true);
     FROM ( VALUES (1,2,3)) v(x, y, z);
 (1 row)
 
+-- xml IS DOCUMENT needs to be treated specially
+create operator ||
+  (function = xmlconcat2, leftarg=xml, rightarg=xml);
+create view tt261v as
+select x is document as c1,
+       (x || x) is document as c2,
+       f = (x is document) as c3
+from (values(false,null::xml)) v(f,x);
+select pg_get_viewdef('tt261v', true);
+                pg_get_viewdef                
+----------------------------------------------
+  SELECT x IS DOCUMENT AS c1,                +
+     (x || x) IS DOCUMENT AS c2,             +
+     f = (x IS DOCUMENT) AS c3               +
+    FROM ( VALUES (false,NULL::xml)) v(f, x);
+(1 row)
+
 -- test restriction on non-system view expansion.
 create table tt27v_tbl (a int);
 create view tt27v as select a from tt27v_tbl;
@@ -2322,7 +2339,7 @@ drop cascades to view aliased_view_2
 drop cascades to view aliased_view_3
 drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 80 other objects
+NOTICE:  drop cascades to 82 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -2401,5 +2418,7 @@ drop cascades to view tt23v
 drop cascades to view tt24v
 drop cascades to view tt25v
 drop cascades to view tt26v
+drop cascades to operator ||(xml,xml)
+drop cascades to view tt261v
 drop cascades to table tt27v_tbl
 drop cascades to view tt27v
