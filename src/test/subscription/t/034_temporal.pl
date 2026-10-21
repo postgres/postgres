@@ -628,4 +628,75 @@ is( $result, qq{[1,2)|[2000-01-01,2010-01-01)|a
 
 drop_everything();
 
+
+# #################################
+# Test with a lossy REPLICA IDENTITY index (multirange key)
+#
+# A temporal key over a multirange column is backed by a lossy GiST index: two
+# distinct multiranges that share a bounding range are indistinguishable in the
+# index, so an index probe can return candidate tuples that are not exact
+# matches. The apply worker must recheck each candidate against the actual row
+# values, otherwise it could apply the change to the wrong row.
+# #################################
+
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE temporal_mltrng (id int4multirange, valid_at daterange, a text, PRIMARY KEY (id, valid_at WITHOUT OVERLAPS))"
+);
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLE temporal_mltrng (id int4multirange, valid_at daterange, a text, PRIMARY KEY (id, valid_at WITHOUT OVERLAPS))"
+);
+
+# Two different multiranges that share the bounding range [1,5), with the same
+# valid_at. They do not conflict (their ids are not equal), but the GiST index
+# cannot tell them apart without a recheck.
+$node_publisher->safe_psql(
+	'postgres',
+	"INSERT INTO temporal_mltrng (id, valid_at, a)
+   VALUES ('{[1,5)}', '[2000-01-01,2010-01-01)', 'a'),
+          ('{[1,2),[3,5)}', '[2000-01-01,2010-01-01)', 'b')");
+
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION pub1 FOR ALL TABLES");
+$node_subscriber->safe_psql('postgres',
+	"CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub1"
+);
+$node_subscriber->wait_for_subscription_sync;
+
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT id, a FROM temporal_mltrng ORDER BY a");
+is( $result, qq{{[1,5)}|a
+{[1,2),[3,5)}|b}, 'synced temporal_mltrng lossy identity');
+
+# Update each row. Each apply probes the identity index and gets *both* rows as
+# candidates; without a recheck the wrong row would be updated.
+$node_publisher->safe_psql('postgres',
+	"UPDATE temporal_mltrng SET a = 'a2' WHERE id = '{[1,5)}'");
+$node_publisher->safe_psql('postgres',
+	"UPDATE temporal_mltrng SET a = 'b2' WHERE id = '{[1,2),[3,5)}'");
+
+$node_publisher->wait_for_catchup('sub1');
+
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT id, a FROM temporal_mltrng ORDER BY a");
+is( $result, qq{{[1,5)}|a2
+{[1,2),[3,5)}|b2}, 'replicated temporal_mltrng UPDATE to correct rows');
+
+# Same for DELETE: remove only one of the two bounding-range twins.
+$node_publisher->safe_psql('postgres',
+	"DELETE FROM temporal_mltrng WHERE id = '{[1,2),[3,5)}'");
+
+$node_publisher->wait_for_catchup('sub1');
+
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT id, a FROM temporal_mltrng ORDER BY a");
+is($result, qq{{[1,5)}|a2},
+	'replicated temporal_mltrng DELETE of correct row');
+
+# cleanup
+
+$node_publisher->safe_psql('postgres', "DROP TABLE temporal_mltrng");
+$node_subscriber->safe_psql('postgres', "DROP TABLE temporal_mltrng");
+$node_publisher->safe_psql('postgres', "DROP PUBLICATION pub1");
+$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION sub1");
+
 done_testing();

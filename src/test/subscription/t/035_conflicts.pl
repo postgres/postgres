@@ -440,6 +440,92 @@ $node_A->safe_psql('postgres', "DROP TABLE tab_defer");
 $node_B->safe_psql('postgres', "DROP TABLE tab_defer");
 
 ###############################################################################
+# Check that the search for a deleted tuple rechecks a candidate found through
+# a lossy replica identity index (a GiST index on a multirange, which stores
+# only the bounding range), instead of blaming the transaction that deleted an
+# unrelated row.
+#
+# The publisher updates a row that never existed on the subscriber, while the
+# subscriber locally deleted a different row whose multirange key shares the
+# same bounding range. Without a recheck, the deleted row would be accepted
+# as the update target and the conflict would be misreported as update_deleted
+# instead of update_missing.
+###############################################################################
+
+# Publisher table holding the row that will be updated.
+$node_B->safe_psql(
+	'postgres', "
+	CREATE TABLE tab_mr (id int4multirange, valid_at daterange, v int);
+	ALTER TABLE tab_mr REPLICA IDENTITY FULL;
+	INSERT INTO tab_mr VALUES ('{[1,5)}', '[2000-01-01,2010-01-01)', 1);
+	ALTER PUBLICATION tap_pub_B ADD TABLE tab_mr;
+");
+
+# Subscriber table with the lossy replica identity index. The index is
+# created before the conflict detection slot's xmin is pinned below, so that
+# it can be used to find deleted tuples.
+$node_A->safe_psql('postgres',
+	"CREATE TABLE tab_mr (id int4multirange, valid_at daterange, v int, PRIMARY KEY (id, valid_at WITHOUT OVERLAPS))"
+);
+
+$node_A->safe_psql('postgres',
+	"ALTER SUBSCRIPTION $subname_AB REFRESH PUBLICATION WITH (copy_data = false)"
+);
+$node_A->wait_for_subscription_sync($node_B, $subname_AB);
+
+# Pin the conflict detection slot's xmin: hold an open transaction with an
+# assigned transaction ID so that oldest_nonremovable_xid cannot advance past
+# it. This keeps the row deleted below retained and recently dead, making the
+# test independent of timing.
+my $holder = $node_A->background_psql('postgres');
+$holder->query_safe('BEGIN');
+my $pinned_xid = $holder->query_safe('SELECT txid_current()');
+
+ok( $node_A->poll_query_until(
+		'postgres',
+		"SELECT xmin = $pinned_xid FROM pg_replication_slots WHERE slot_name = 'pg_conflict_detection'"
+	),
+	"conflict detection slot xmin pinned at $pinned_xid");
+
+# Insert and locally delete the row: a different multirange with the
+# same bounding range as the publisher's key.
+$node_A->safe_psql(
+	'postgres', "
+	INSERT INTO tab_mr VALUES ('{[1,2),[3,5)}', '[2000-01-01,2010-01-01)', 9);
+	DELETE FROM tab_mr WHERE id = '{[1,2),[3,5)}';
+");
+
+$log_location = -s $node_A->logfile;
+
+# The publisher updates its row; the old key sent is '{[1,5)}'.
+$node_B->safe_psql('postgres',
+	"UPDATE tab_mr SET v = 2 WHERE id = '{[1,5)}'");
+
+$node_B->wait_for_catchup($subname_AB);
+
+$logfile = slurp_file($node_A->logfile(), $log_location);
+
+# The decoy row must not be mistaken for the update target.
+like(
+	$logfile,
+	qr/conflict detected on relation "public.tab_mr": conflict=update_missing.*
+.*DETAIL:.* Could not find the row to be updated: remote row \(\Q{[1,5)}\E, \Q[2000-01-01,2010-01-01)\E, 2\), replica identity \(id, valid_at\)=\(\Q{[1,5)}\E, \Q[2000-01-01,2010-01-01)\E\)/,
+	'update target reported as missing');
+
+ok( $logfile !~ /conflict detected on relation "public.tab_mr": conflict=update_deleted/,
+	'deleted row sharing the bounding range is not reported as update_deleted');
+
+# Clean up
+$holder->query_safe('COMMIT');
+ok($holder->quit, 'release the pinned transaction');
+$node_B->safe_psql('postgres',
+	"ALTER PUBLICATION tap_pub_B DROP TABLE tab_mr");
+$node_A->safe_psql('postgres',
+	"ALTER SUBSCRIPTION $subname_AB REFRESH PUBLICATION");
+$node_A->safe_psql('postgres', "DROP TABLE tab_mr");
+$node_B->safe_psql('postgres', "DROP TABLE tab_mr");
+
+###############################################################################
 # Check that the xmin value of the conflict detection slot can be advanced when
 # the subscription has no tables.
 ###############################################################################
