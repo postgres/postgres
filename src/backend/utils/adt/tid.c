@@ -23,6 +23,7 @@
 #include "access/heapam.h"
 #include "access/sysattr.h"
 #include "access/tableam.h"
+#include "access/xlog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
@@ -305,6 +306,12 @@ currtid_internal(Relation rel, ItemPointer tid)
 		elog(ERROR, "cannot look at latest visible tid for relation \"%s.%s\"",
 			 get_namespace_name(RelationGetNamespace(rel)),
 			 RelationGetRelationName(rel));
+
+	/* Temporary and unlogged relations are inaccessible during recovery. */
+	if (!RelationIsPermanent(rel) && RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary or unlogged relations during recovery")));
 
 	ItemPointerCopy(tid, result);
 
