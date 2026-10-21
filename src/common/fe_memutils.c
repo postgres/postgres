@@ -151,7 +151,6 @@ char *
 pnstrdup(const char *in, Size size)
 {
 	char	   *tmp;
-	int			len;
 
 	if (!in)
 	{
@@ -160,16 +159,16 @@ pnstrdup(const char *in, Size size)
 		exit(EXIT_FAILURE);
 	}
 
-	len = strnlen(in, size);
-	tmp = malloc(len + 1);
+	size = strnlen(in, size);
+	tmp = malloc(size + 1);
 	if (tmp == NULL)
 	{
 		fprintf(stderr, _("out of memory\n"));
 		exit(EXIT_FAILURE);
 	}
 
-	memcpy(tmp, in, len);
-	tmp[len] = '\0';
+	memcpy(tmp, in, size);
+	tmp[size] = '\0';
 
 	return tmp;
 }
