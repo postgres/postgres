@@ -11670,6 +11670,93 @@ order by 1, 2;
   0 | 4567890123456789 | 1
 (5 rows)
 
+-- check that lateral references in a sort key added below a mergejoin are
+-- replaced with nestloop params
+set enable_hashjoin to off;
+set enable_nestloop to off;
+explain (verbose, costs off)
+select * from int4_tbl t1
+  left join lateral
+    (select t1.f1 from int4_tbl t3 where t3.f1 = 0) s(x) on true
+  join int4_tbl t2 on -s.x = t2.f1
+where t1.f1 = 123456;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Nested Loop
+   Disabled: true
+   Output: t1.f1, (t1.f1), t2.f1
+   ->  Seq Scan on public.int4_tbl t1
+         Output: t1.f1
+         Filter: (t1.f1 = 123456)
+   ->  Merge Join
+         Output: (t1.f1), t2.f1
+         Merge Cond: (((- t1.f1)) = t2.f1)
+         ->  Sort
+               Output: (t1.f1), ((- t1.f1))
+               Sort Key: ((- t1.f1))
+               ->  Seq Scan on public.int4_tbl t3
+                     Output: t1.f1, (- t1.f1)
+                     Filter: (t3.f1 = 0)
+         ->  Sort
+               Output: t2.f1
+               Sort Key: t2.f1
+               ->  Seq Scan on public.int4_tbl t2
+                     Output: t2.f1
+(20 rows)
+
+select * from int4_tbl t1
+  left join lateral
+    (select t1.f1 from int4_tbl t3 where t3.f1 = 0) s(x) on true
+  join int4_tbl t2 on -s.x = t2.f1
+where t1.f1 = 123456;
+   f1   |   x    |   f1    
+--------+--------+---------
+ 123456 | 123456 | -123456
+(1 row)
+
+reset enable_nestloop;
+-- same, with the sort key computed atop a join
+explain (verbose, costs off)
+select count(*) from int4_tbl t1
+  left join lateral
+    (select t1.f1, t3.g from generate_series(1, 1000) t3(g), int4_tbl t4) s(x, y) on true
+  join tenk1 t2 on s.x + s.y = t2.unique1
+where t1.f1 = 0;
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Aggregate
+   Output: count(*)
+   ->  Nested Loop
+         ->  Seq Scan on public.int4_tbl t1
+               Output: t1.f1
+               Filter: (t1.f1 = 0)
+         ->  Merge Join
+               Merge Cond: (((t1.f1 + t3.g)) = t2.unique1)
+               ->  Sort
+                     Output: t3.g, (t1.f1), ((t1.f1 + t3.g))
+                     Sort Key: ((t1.f1 + t3.g))
+                     ->  Nested Loop
+                           Output: t3.g, t1.f1, (t1.f1 + t3.g)
+                           ->  Function Scan on pg_catalog.generate_series t3
+                                 Output: t3.g
+                                 Function Call: generate_series(1, 1000)
+                           ->  Materialize
+                                 ->  Seq Scan on public.int4_tbl t4
+               ->  Index Only Scan using tenk1_unique1 on public.tenk1 t2
+                     Output: t2.unique1
+(20 rows)
+
+select count(*) from int4_tbl t1
+  left join lateral
+    (select t1.f1, t3.g from generate_series(1, 1000) t3(g), int4_tbl t4) s(x, y) on true
+  join tenk1 t2 on s.x + s.y = t2.unique1
+where t1.f1 = 0;
+ count 
+-------
+  5000
+(1 row)
+
+reset enable_hashjoin;
 -- test some error cases where LATERAL should have been used but wasn't
 select f1,g from int4_tbl a, (select f1 as g) ss;
 ERROR:  column "f1" does not exist

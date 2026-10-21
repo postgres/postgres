@@ -4390,6 +4390,40 @@ from int4_tbl i4,
 where i4.f1 = 0
 order by 1, 2;
 
+-- check that lateral references in a sort key added below a mergejoin are
+-- replaced with nestloop params
+set enable_hashjoin to off;
+set enable_nestloop to off;
+
+explain (verbose, costs off)
+select * from int4_tbl t1
+  left join lateral
+    (select t1.f1 from int4_tbl t3 where t3.f1 = 0) s(x) on true
+  join int4_tbl t2 on -s.x = t2.f1
+where t1.f1 = 123456;
+select * from int4_tbl t1
+  left join lateral
+    (select t1.f1 from int4_tbl t3 where t3.f1 = 0) s(x) on true
+  join int4_tbl t2 on -s.x = t2.f1
+where t1.f1 = 123456;
+
+reset enable_nestloop;
+
+-- same, with the sort key computed atop a join
+explain (verbose, costs off)
+select count(*) from int4_tbl t1
+  left join lateral
+    (select t1.f1, t3.g from generate_series(1, 1000) t3(g), int4_tbl t4) s(x, y) on true
+  join tenk1 t2 on s.x + s.y = t2.unique1
+where t1.f1 = 0;
+select count(*) from int4_tbl t1
+  left join lateral
+    (select t1.f1, t3.g from generate_series(1, 1000) t3(g), int4_tbl t4) s(x, y) on true
+  join tenk1 t2 on s.x + s.y = t2.unique1
+where t1.f1 = 0;
+
+reset enable_hashjoin;
+
 -- test some error cases where LATERAL should have been used but wasn't
 select f1,g from int4_tbl a, (select f1 as g) ss;
 select f1,g from int4_tbl a, (select a.f1 as g) ss;
