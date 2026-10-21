@@ -6176,7 +6176,7 @@ make_incrementalsort(Plan *lefttree, int numCols, int nPresortedCols,
  * Input parameters:
  *	  'lefttree' is the plan node which yields input tuples
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
- *	  'relids' identifies the child relation being sorted, if any
+ *	  'relids' identifies the relation being sorted, or is NULL
  *	  'reqColIdx' is NULL or an array of required sort key column numbers
  *	  'adjust_tlist_in_place' is true if lefttree must be modified in-place
  *
@@ -6188,7 +6188,9 @@ make_incrementalsort(Plan *lefttree, int numCols, int nPresortedCols,
  * When looking for matches to an EquivalenceClass's members, we will only
  * consider child EC members if they belong to given 'relids'.  This protects
  * against possible incorrect matches to child expressions that contain no
- * Vars.
+ * Vars.  When computing a sort expression for a child relation, we will not
+ * use parent EC members either, since their PlaceHolderVars could falsely
+ * match the translated ones in the child's tlist.
  *
  * If reqColIdx isn't NULL then it contains sort key column numbers that
  * we should match.  This is used when making child plans for a MergeAppend;

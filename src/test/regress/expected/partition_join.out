@@ -829,6 +829,50 @@ SELECT t1.a, t1.c, t2.a, t2.c FROM prt4 t1 LEFT JOIN
 
 RESET enable_hashjoin;
 RESET enable_mergejoin;
+-- bug with sorting a child join by an expression containing a PlaceHolderVar
+SET enable_seqscan TO false;
+EXPLAIN (COSTS OFF)
+SELECT s.x + 0 FROM prt1 t0 LEFT JOIN
+  (SELECT t1.a, COALESCE(t2.a, t1.b) AS x FROM prt1 t1 JOIN prt2 t2 ON t1.a = t2.b) s
+  ON true WHERE s.a = s.x + 0 AND t0.a = 0 ORDER BY 1;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Nested Loop
+   ->  Merge Append
+         Sort Key: ((COALESCE(t2.a, t1.b) + 0))
+         ->  Merge Join
+               Merge Cond: (t1_1.a = t2_1.b)
+               Join Filter: (t1_1.a = (COALESCE(t2_1.a, t1_1.b) + 0))
+               ->  Index Scan using iprt1_p1_a on prt1_p1 t1_1
+               ->  Index Scan using iprt2_p1_b on prt2_p1 t2_1
+         ->  Merge Join
+               Merge Cond: (t1_2.a = t2_2.b)
+               Join Filter: (t1_2.a = (COALESCE(t2_2.a, t1_2.b) + 0))
+               ->  Index Scan using iprt1_p2_a on prt1_p2 t1_2
+               ->  Index Scan using iprt2_p2_b on prt2_p2 t2_2
+         ->  Nested Loop
+               Join Filter: (t1_3.a = (COALESCE(t2_3.a, t1_3.b) + 0))
+               ->  Index Scan using iprt2_p3_b on prt2_p3 t2_3
+               ->  Index Scan using iprt1_p3_a on prt1_p3 t1_3
+                     Index Cond: (a = t2_3.b)
+   ->  Materialize
+         ->  Index Only Scan using iprt1_p1_a on prt1_p1 t0
+               Index Cond: (a = 0)
+(21 rows)
+
+SELECT s.x + 0 FROM prt1 t0 LEFT JOIN
+  (SELECT t1.a, COALESCE(t2.a, t1.b) AS x FROM prt1 t1 JOIN prt2 t2 ON t1.a = t2.b) s
+  ON true WHERE s.a = s.x + 0 AND t0.a = 0 ORDER BY 1;
+ ?column? 
+----------
+        0
+        6
+       12
+       18
+       24
+(5 rows)
+
+RESET enable_seqscan;
 -- bug in freeing the SpecialJoinInfo of a child-join
 EXPLAIN (COSTS OFF)
 SELECT * FROM prt1 t1 JOIN prt1 t2 ON t1.a = t2.a WHERE t1.a IN (SELECT a FROM prt1 t3);
