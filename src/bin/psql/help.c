@@ -220,7 +220,8 @@ slashUsage(unsigned short int pager)
 	HELP0("Informational\n");
 	HELP0("  (options: S = show system objects, x = expanded mode, + = additional detail)\n");
 	HELP0("  \\d[Sx+]                list tables, views, and sequences\n");
-	HELP0("  \\d[S+]   NAME          describe table, view, sequence, or index\n");
+	HELP0("  \\d[Sx+]  NAME          describe table, view, sequence, or index\n");
+	HELP0("                         (x applies only to sequences)\n");
 	HELP0("  \\da[Sx]  [PATTERN]     list aggregates\n");
 	HELP0("  \\dA[x+]  [PATTERN]     list access methods\n");
 	HELP0("  \\dAc[x+] [AMPTRN [TYPEPTRN]]  list operator classes\n");
