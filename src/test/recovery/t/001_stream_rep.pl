@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 49;
+use Test::More tests => 50;
 
 # Initialize primary node
 my $node_primary = get_new_node('primary');
@@ -61,6 +61,20 @@ $result =
   $node_standby_2->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 print "standby 2: $result\n";
 is($result, qq(1002), 'check streamed content on standby 2');
+
+# Check that COPY TO rejects unlogged tables on standby
+$node_primary->safe_psql(
+	'postgres', q{
+CREATE UNLOGGED TABLE ultab (a int);
+});
+$node_primary->wait_for_catchup($node_standby_1, 'replay',
+	$node_primary->lsn('flush'));
+my ($copy_ret, $copy_stdout, $copy_stderr) =
+  $node_standby_1->psql('postgres', 'COPY ultab TO STDOUT');
+like(
+	$copy_stderr,
+	qr/cannot access temporary or unlogged relations during recovery/,
+	'COPY TO of unlogged table on standby 1');
 
 # Check that only READ-only queries can run on standbys
 is($node_standby_1->psql('postgres', 'INSERT INTO tab_int VALUES (1)'),

@@ -400,6 +400,11 @@ BeginCopyTo(ParseState *pstate,
 							RelationGetRelationName(rel))));
 	}
 
+	/* Temporary and unlogged relations are inaccessible during recovery. */
+	if (rel != NULL && !RelationIsPermanent(rel) && RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary or unlogged relations during recovery")));
 
 	/* Allocate workspace and zero all fields */
 	cstate = (CopyToStateData *) palloc0(sizeof(CopyToStateData));
