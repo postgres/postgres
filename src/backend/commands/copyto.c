@@ -21,6 +21,7 @@
 #include "access/table.h"
 #include "access/tableam.h"
 #include "access/tupconvert.h"
+#include "access/xlog.h"
 #include "catalog/pg_inherits.h"
 #include "commands/copyapi.h"
 #include "commands/progress.h"
@@ -877,6 +878,19 @@ BeginCopyTo(ParseState *pstate,
 							errhint("Try the COPY (SELECT ...) TO variant."));
 				}
 
+				/* Unlogged partitions are inaccessible during recovery. */
+				if (RecoveryInProgress() &&
+					get_rel_persistence(child) == RELPERSISTENCE_UNLOGGED)
+				{
+					char	   *relation_name = get_rel_name(child);
+
+					ereport(ERROR,
+							errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("cannot access temporary or unlogged relations during recovery"),
+							errdetail("Partition \"%s\" is an unlogged table in partitioned table \"%s\".",
+									  relation_name, RelationGetRelationName(rel)));
+				}
+
 				/* Exclude tables with no data */
 				if (RELKIND_HAS_PARTITIONS(relkind))
 					children = foreach_delete_current(children, child);
@@ -889,6 +903,11 @@ BeginCopyTo(ParseState *pstate,
 							RelationGetRelationName(rel))));
 	}
 
+	/* Temporary and unlogged relations are inaccessible during recovery. */
+	if (rel != NULL && !RelationIsPermanent(rel) && RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary or unlogged relations during recovery")));
 
 	/* Allocate workspace and zero all fields */
 	cstate = palloc0_object(CopyToStateData);
