@@ -84,6 +84,19 @@ is($node_standby_1->safe_psql('postgres',
 	"SELECT pg_sequence_last_value('ulseq'::regclass) IS NULL"),
 	't', 'pg_sequence_last_value() on unlogged sequence on standby 1');
 
+# Check that COPY TO rejects unlogged tables on standby
+$node_primary->safe_psql(
+	'postgres', q{
+CREATE UNLOGGED TABLE ultab (a int);
+});
+$node_primary->wait_for_replay_catchup($node_standby_1);
+my ($copy_ret, $copy_stdout, $copy_stderr) =
+  $node_standby_1->psql('postgres', 'COPY ultab TO STDOUT');
+like(
+	$copy_stderr,
+	qr/cannot access temporary or unlogged relations during recovery/,
+	'COPY TO of unlogged table on standby 1');
+
 # Check that only READ-only queries can run on standbys
 is($node_standby_1->psql('postgres', 'INSERT INTO tab_int VALUES (1)'),
 	3, 'read-only queries on standby 1');
