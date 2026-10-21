@@ -262,7 +262,8 @@ static IncrementalSort *make_incrementalsort(Plan *lefttree,
 											 int numCols, int nPresortedCols,
 											 AttrNumber *sortColIdx, Oid *sortOperators,
 											 Oid *collations, bool *nullsFirst);
-static Plan *prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
+static Plan *prepare_sort_from_pathkeys(PlannerInfo *root,
+										Plan *lefttree, List *pathkeys,
 										Relids relids,
 										const AttrNumber *reqColIdx,
 										bool adjust_tlist_in_place,
@@ -271,10 +272,13 @@ static Plan *prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 										Oid **p_sortOperators,
 										Oid **p_collations,
 										bool **p_nullsFirst);
-static Sort *make_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
-									 Relids relids);
-static IncrementalSort *make_incrementalsort_from_pathkeys(Plan *lefttree,
-														   List *pathkeys, Relids relids, int nPresortedCols);
+static Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
+									 List *pathkeys, Relids relids);
+static IncrementalSort *make_incrementalsort_from_pathkeys(PlannerInfo *root,
+														   Plan *lefttree,
+														   List *pathkeys,
+														   Relids relids,
+														   int nPresortedCols);
 static Sort *make_sort_from_groupcols(List *groupcls,
 									  AttrNumber *grpColIdx,
 									  Plan *lefttree);
@@ -1218,7 +1222,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 		 * function result; it must be the same plan node.  However, we then
 		 * need to detect whether any tlist entries were added.
 		 */
-		(void) prepare_sort_from_pathkeys((Plan *) plan, pathkeys,
+		(void) prepare_sort_from_pathkeys(root, (Plan *) plan, pathkeys,
 										  best_path->path.parent->relids,
 										  NULL,
 										  true,
@@ -1262,7 +1266,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 			 * don't need an explicit sort, to make sure they are returning
 			 * the same sort key columns the Append expects.
 			 */
-			subplan = prepare_sort_from_pathkeys(subplan, pathkeys,
+			subplan = prepare_sort_from_pathkeys(root, subplan, pathkeys,
 												 subpath->parent->relids,
 												 nodeSortColIdx,
 												 false,
@@ -1404,7 +1408,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 	 * function result; it must be the same plan node.  However, we then need
 	 * to detect whether any tlist entries were added.
 	 */
-	(void) prepare_sort_from_pathkeys(plan, pathkeys,
+	(void) prepare_sort_from_pathkeys(root, plan, pathkeys,
 									  best_path->path.parent->relids,
 									  NULL,
 									  true,
@@ -1435,7 +1439,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 		subplan = create_plan_recurse(root, subpath, CP_EXACT_TLIST);
 
 		/* Compute sort column info, and adjust subplan's tlist as needed */
-		subplan = prepare_sort_from_pathkeys(subplan, pathkeys,
+		subplan = prepare_sort_from_pathkeys(root, subplan, pathkeys,
 											 subpath->parent->relids,
 											 node->sortColIdx,
 											 false,
@@ -1922,7 +1926,7 @@ create_gather_merge_plan(PlannerInfo *root, GatherMergePath *best_path)
 	Assert(pathkeys != NIL);
 
 	/* Compute sort column info, and adjust subplan's tlist as needed */
-	subplan = prepare_sort_from_pathkeys(subplan, pathkeys,
+	subplan = prepare_sort_from_pathkeys(root, subplan, pathkeys,
 										 best_path->subpath->parent->relids,
 										 gm_plan->sortColIdx,
 										 false,
@@ -2141,7 +2145,7 @@ create_sort_plan(PlannerInfo *root, SortPath *best_path, int flags)
 	 * relids. Thus, if this sort path is based on a child relation, we must
 	 * pass its relids.
 	 */
-	plan = make_sort_from_pathkeys(subplan, best_path->path.pathkeys,
+	plan = make_sort_from_pathkeys(root, subplan, best_path->path.pathkeys,
 								   IS_OTHER_REL(best_path->subpath->parent) ?
 								   best_path->path.parent->relids : NULL);
 
@@ -2165,7 +2169,7 @@ create_incrementalsort_plan(PlannerInfo *root, IncrementalSortPath *best_path,
 	/* See comments in create_sort_plan() above */
 	subplan = create_plan_recurse(root, best_path->spath.subpath,
 								  flags | CP_SMALL_TLIST);
-	plan = make_incrementalsort_from_pathkeys(subplan,
+	plan = make_incrementalsort_from_pathkeys(root, subplan,
 											  best_path->spath.path.pathkeys,
 											  IS_OTHER_REL(best_path->spath.subpath->parent) ?
 											  best_path->spath.path.parent->relids : NULL,
@@ -4440,7 +4444,7 @@ create_mergejoin_plan(PlannerInfo *root,
 	if (best_path->outersortkeys)
 	{
 		Relids		outer_relids = outer_path->parent->relids;
-		Sort	   *sort = make_sort_from_pathkeys(outer_plan,
+		Sort	   *sort = make_sort_from_pathkeys(root, outer_plan,
 												   best_path->outersortkeys,
 												   outer_relids);
 
@@ -4454,7 +4458,7 @@ create_mergejoin_plan(PlannerInfo *root,
 	if (best_path->innersortkeys)
 	{
 		Relids		inner_relids = inner_path->parent->relids;
-		Sort	   *sort = make_sort_from_pathkeys(inner_plan,
+		Sort	   *sort = make_sort_from_pathkeys(root, inner_plan,
 												   best_path->innersortkeys,
 												   inner_relids);
 
@@ -6043,6 +6047,7 @@ make_incrementalsort(Plan *lefttree, int numCols, int nPresortedCols,
  * adjusts the plan targetlist if needed to add resjunk sort columns.
  *
  * Input parameters:
+ *	  'root' is the PlannerInfo, needed to replace lateral references
  *	  'lefttree' is the plan node which yields input tuples
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
  *	  'relids' identifies the relation being sorted, or is NULL
@@ -6078,7 +6083,7 @@ make_incrementalsort(Plan *lefttree, int numCols, int nPresortedCols,
  * or a Result stacked atop lefttree).
  */
 static Plan *
-prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
+prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 						   Relids relids,
 						   const AttrNumber *reqColIdx,
 						   bool adjust_tlist_in_place,
@@ -6113,6 +6118,7 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 		EquivalenceClass *ec = pathkey->pk_eclass;
 		EquivalenceMember *em;
 		TargetEntry *tle = NULL;
+		Node	   *sortexpr;
 		Oid			pk_datatype = InvalidOid;
 		Oid			sortop;
 		ListCell   *j;
@@ -6213,9 +6219,11 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 			adjust_tlist_in_place = true;
 
 			/*
-			 * Add resjunk entry to input's tlist
+			 * Add resjunk entry to input's tlist, replacing lateral
+			 * references.
 			 */
-			tle = makeTargetEntry(copyObject(em->em_expr),
+			sortexpr = replace_nestloop_params(root, (Node *) em->em_expr);
+			tle = makeTargetEntry(copyObject((Expr *) sortexpr),
 								  list_length(tlist) + 1,
 								  NULL,
 								  true);
@@ -6258,12 +6266,14 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
  * make_sort_from_pathkeys
  *	  Create sort plan to sort according to given pathkeys
  *
+ *	  'root' is the PlannerInfo required by prepare_sort_from_pathkeys()
  *	  'lefttree' is the node which yields input tuples
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
  *	  'relids' is the set of relations required by prepare_sort_from_pathkeys()
  */
 static Sort *
-make_sort_from_pathkeys(Plan *lefttree, List *pathkeys, Relids relids)
+make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
+						Relids relids)
 {
 	int			numsortkeys;
 	AttrNumber *sortColIdx;
@@ -6272,7 +6282,7 @@ make_sort_from_pathkeys(Plan *lefttree, List *pathkeys, Relids relids)
 	bool	   *nullsFirst;
 
 	/* Compute sort column info, and adjust lefttree as needed */
-	lefttree = prepare_sort_from_pathkeys(lefttree, pathkeys,
+	lefttree = prepare_sort_from_pathkeys(root, lefttree, pathkeys,
 										  relids,
 										  NULL,
 										  false,
@@ -6292,14 +6302,16 @@ make_sort_from_pathkeys(Plan *lefttree, List *pathkeys, Relids relids)
  * make_incrementalsort_from_pathkeys
  *	  Create sort plan to sort according to given pathkeys
  *
+ *	  'root' is the PlannerInfo required by prepare_sort_from_pathkeys()
  *	  'lefttree' is the node which yields input tuples
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
  *	  'relids' is the set of relations required by prepare_sort_from_pathkeys()
  *	  'nPresortedCols' is the number of presorted columns in input tuples
  */
 static IncrementalSort *
-make_incrementalsort_from_pathkeys(Plan *lefttree, List *pathkeys,
-								   Relids relids, int nPresortedCols)
+make_incrementalsort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
+								   List *pathkeys, Relids relids,
+								   int nPresortedCols)
 {
 	int			numsortkeys;
 	AttrNumber *sortColIdx;
@@ -6308,7 +6320,7 @@ make_incrementalsort_from_pathkeys(Plan *lefttree, List *pathkeys,
 	bool	   *nullsFirst;
 
 	/* Compute sort column info, and adjust lefttree as needed */
-	lefttree = prepare_sort_from_pathkeys(lefttree, pathkeys,
+	lefttree = prepare_sort_from_pathkeys(root, lefttree, pathkeys,
 										  relids,
 										  NULL,
 										  false,
