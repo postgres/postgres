@@ -982,7 +982,8 @@ find_ec_member_matching_expr(EquivalenceClass *ec,
  * compute an expression in this way, setrefs.c is going to insist on exact
  * matches of Vars to the source tlist.
  *
- * Child EC members are ignored unless they belong to given 'relids'.
+ * If 'relids' is given, EC members are ignored unless they belong to it.  If
+ * 'relids' is NULL, all child members are ignored.
  * Also, non-parallel-safe expressions are ignored if 'require_parallel_safe'.
  *
  * Note: some callers pass root == NULL for notational reasons.  This is OK
@@ -1024,9 +1025,13 @@ find_computable_ec_member(PlannerInfo *root,
 			continue;
 
 		/*
-		 * Ignore child members unless they belong to the requested rel.
+		 * Ignore child members unless they belong to the requested rel.  If
+		 * 'relids' is given, ignore parent members that don't belong to it
+		 * either: for a child rel, a parent member's PlaceHolderVars would
+		 * otherwise match the translated ones in "exprs", since equal()
+		 * ignores phexpr and phrels when comparing PlaceHolderVars.
 		 */
-		if (em->em_is_child &&
+		if ((em->em_is_child || relids != NULL) &&
 			!bms_is_subset(em->em_relids, relids))
 			continue;
 
