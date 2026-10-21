@@ -178,4 +178,42 @@ ok(-f "$stats_file", "stats file must exist after shutdown");
 
 $bpgsql->quit;
 
+# Session holding a stale reference to a slot stats entry, reinitialized
+# then dropped again.  It must be freed on exit.
+$node->start;
+
+my $slot_name_stale = 'regression_slot6';
+$node->safe_psql('postgres',
+	"SELECT pg_create_logical_replication_slot('$slot_name_stale', 'test_decoding');"
+);
+
+$bpgsql = $node->background_psql('postgres', on_error_stop => 1);
+$bpgsql->query_safe(
+	"SELECT pg_logical_slot_peek_binary_changes('$slot_name_stale', NULL, NULL)"
+);
+
+# Entry dropped, still kept by the session with a reference.
+$node->safe_psql('postgres',
+	"SELECT pg_drop_replication_slot('$slot_name_stale')");
+
+# Entry reinitialized for the new slot, then dropped again.  The session
+# still holds its reference.
+$node->safe_psql(
+	'postgres', qq[
+	SELECT pg_create_logical_replication_slot('regression_slot7', 'test_decoding');
+	SELECT pg_drop_replication_slot('regression_slot7');
+]);
+
+# This session is the last referrer, and frees the entry on exit.
+$bpgsql->quit;
+
+$node->stop;
+
+command_like(
+	[ 'pg_controldata', $node->data_dir ],
+	qr/Database cluster state:\s+shut down\n/,
+	'node shut down ok with stale stats reference');
+ok(-f "$stats_file",
+	"stats file must exist after shutdown with stale stats reference");
+
 done_testing();
