@@ -176,6 +176,17 @@ SELECT t1.a, t1.c, t2.a, t2.c FROM prt4 t1 LEFT JOIN
 RESET enable_hashjoin;
 RESET enable_mergejoin;
 
+-- bug with sorting a child join by an expression containing a PlaceHolderVar
+SET enable_seqscan TO false;
+EXPLAIN (COSTS OFF)
+SELECT s.x + 0 FROM prt1 t0 LEFT JOIN
+  (SELECT t1.a, COALESCE(t2.a, t1.b) AS x FROM prt1 t1 JOIN prt2 t2 ON t1.a = t2.b) s
+  ON true WHERE s.a = s.x + 0 AND t0.a = 0 ORDER BY 1;
+SELECT s.x + 0 FROM prt1 t0 LEFT JOIN
+  (SELECT t1.a, COALESCE(t2.a, t1.b) AS x FROM prt1 t1 JOIN prt2 t2 ON t1.a = t2.b) s
+  ON true WHERE s.a = s.x + 0 AND t0.a = 0 ORDER BY 1;
+RESET enable_seqscan;
+
 --
 -- partitioned by expression
 --
