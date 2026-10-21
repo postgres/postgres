@@ -271,7 +271,7 @@ GetLocalVictimBuffer(void)
 		else if (--trycounter == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
-					 errmsg("no empty local buffer available")));
+					 errmsg("could not find an unpinned local buffer")));
 	}
 
 	/*

@@ -456,7 +456,7 @@ SELECT test_temp_pin(0, 9);
 
 -- should fail, too many buffers pinned
 SELECT test_temp_pin(10, 105);
-ERROR:  no empty local buffer available
+ERROR:  could not find an unpinned local buffer
 ROLLBACK;
 BEGIN;
 -- have some working cursors to test after errors
@@ -475,7 +475,7 @@ FETCH NEXT FROM c_3;
 -- exhaust buffer pins in subtrans, check things work after
 SAVEPOINT rescue_me;
 SELECT test_temp_pin(10, 105);
-ERROR:  no empty local buffer available
+ERROR:  could not find an unpinned local buffer
 ROLLBACK TO SAVEPOINT rescue_me;
 -- pre-subtrans cursors continue to work
 FETCH NEXT FROM c_3;

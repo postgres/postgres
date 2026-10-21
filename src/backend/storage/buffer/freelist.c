@@ -271,7 +271,9 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint64 *buf_state, bool *from_r
 					 * one eventually, but it's probably better to fail than
 					 * to risk getting stuck in an infinite loop.
 					 */
-					elog(ERROR, "no unpinned buffers available");
+					ereport(ERROR,
+							errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+							errmsg("could not find an unpinned shared buffer"));
 				}
 				break;
 			}
