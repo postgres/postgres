@@ -75,7 +75,8 @@
  * locales must casefold the inputs before matching.
  */
 #ifdef MATCH_LOWER
-#define GETCHAR(t) pg_ascii_tolower(t)
+/* cast to char to match data types in caller */
+#define GETCHAR(t) ((char) pg_ascii_tolower(t))
 #else
 #define GETCHAR(t) (t)
 #endif
