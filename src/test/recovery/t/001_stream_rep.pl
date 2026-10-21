@@ -113,6 +113,33 @@ is( $node_standby_1->safe_psql(
 	't',
 	'pg_sequence_last_value() on unlogged sequence on standby 1');
 
+# Check that COPY TO rejects unlogged tables on standby, including when
+# reached through a partitioned table, but still copies permanent ones
+$node_primary->safe_psql(
+	'postgres', q{
+CREATE UNLOGGED TABLE ultab (a int);
+CREATE TABLE ulpart (a int) PARTITION BY RANGE (a);
+CREATE UNLOGGED TABLE ulpart_1 PARTITION OF ulpart FOR VALUES FROM (0) TO (10);
+CREATE TABLE lpart (a int) PARTITION BY RANGE (a);
+CREATE TABLE lpart_1 PARTITION OF lpart FOR VALUES FROM (0) TO (10);
+INSERT INTO lpart VALUES (1);
+});
+$node_primary->wait_for_replay_catchup($node_standby_1);
+my ($copy_ret, $copy_stdout, $copy_stderr) =
+  $node_standby_1->psql('postgres', 'COPY ultab TO STDOUT');
+like(
+	$copy_stderr,
+	qr/cannot access temporary or unlogged relations during recovery/,
+	'COPY TO of unlogged table on standby 1');
+($copy_ret, $copy_stdout, $copy_stderr) =
+  $node_standby_1->psql('postgres', 'COPY ulpart TO STDOUT');
+like(
+	$copy_stderr,
+	qr/cannot access temporary or unlogged relations during recovery.*\n.*DETAIL:  Partition "ulpart_1" is an unlogged table in partitioned table "ulpart"/,
+	'COPY TO of partitioned table with unlogged partition on standby 1');
+is($node_standby_1->safe_psql('postgres', 'COPY lpart TO STDOUT'),
+	'1', 'COPY TO of partitioned table on standby 1');
+
 # Check that only READ-only queries can run on standbys
 is($node_standby_1->psql('postgres', 'INSERT INTO tab_int VALUES (1)'),
 	3, 'read-only queries on standby 1');
