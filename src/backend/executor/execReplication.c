@@ -40,6 +40,8 @@
 
 static bool tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 						 TypeCacheEntry **eq, Bitmapset *columns);
+static bool repl_index_key_equal(Relation idxrel, TupleTableSlot *slot1,
+								 TupleTableSlot *slot2, ScanKey skey);
 
 /*
  * Setup a ScanKey for a search in the relation 'rel' for a tuple 'key' that
@@ -179,8 +181,11 @@ should_refetch_tuple(TM_Result res, TM_FailureData *tmfd)
  * contents, and return true.  Return false otherwise.
  *
  * 'skipduplicates' specifies whether the first matching tuple can be used
- * without comparing it against 'searchslot'. If false, all matching tuples are
- * compared against 'searchslot', which must contain a complete row.
+ * without comparing it against 'searchslot', unless the index scan sets
+ * xs_recheck (as with a lossy GiST index for WITHOUT OVERLAPS), in which case
+ * only the index key columns are compared, using the index's own equality
+ * semantics. If false, all matching tuples are compared against 'searchslot',
+ * which must contain a complete row.
  */
 bool
 RelationFindReplTupleByIndex(Relation rel, Oid idxoid,
@@ -220,7 +225,8 @@ retry:
 	{
 		/*
 		 * Avoid expensive equality check if the index is primary key or
-		 * replica identity index.
+		 * replica identity index, unless the index scan indicates that a
+		 * recheck is needed.
 		 */
 		if (!skipduplicates)
 		{
@@ -230,6 +236,9 @@ retry:
 			if (!tuples_equal(outslot, searchslot, eq, NULL))
 				continue;
 		}
+		else if (scan->xs_recheck &&
+				 !repl_index_key_equal(idxrel, outslot, searchslot, skey))
+			continue;
 
 		ExecMaterializeSlot(outslot);
 
@@ -352,6 +361,51 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
 											att->attcollation,
 											slot1->tts_values[attrnum],
 											slot2->tts_values[attrnum])))
+			return false;
+	}
+
+	return true;
+}
+
+/*
+ * Compare the key columns of index 'idxrel' between the two slots, using the
+ * equality operators and collations of the scan key 'skey' built by
+ * build_replindex_scan_key().
+ */
+static bool
+repl_index_key_equal(Relation idxrel, TupleTableSlot *slot1,
+					 TupleTableSlot *slot2, ScanKey skey)
+{
+	Assert(slot1->tts_tupleDescriptor->natts ==
+		   slot2->tts_tupleDescriptor->natts);
+
+	for (int i = 0; i < idxrel->rd_index->indnkeyatts; i++)
+	{
+		AttrNumber	keycol = idxrel->rd_index->indkey.values[i];
+		Datum		value1;
+		Datum		value2;
+		bool		isnull1;
+		bool		isnull2;
+
+		value1 = slot_getattr(slot1, keycol, &isnull1);
+		value2 = slot_getattr(slot2, keycol, &isnull2);
+
+		/*
+		 * If one value is NULL and other is not, then they are certainly not
+		 * equal
+		 */
+		if (isnull1 != isnull2)
+			return false;
+
+		/*
+		 * If both are NULL, they can be considered equal.
+		 */
+		if (isnull1 || isnull2)
+			continue;
+
+		if (!DatumGetBool(FunctionCall2Coll(&skey[i].sk_func,
+											skey[i].sk_collation,
+											value1, value2)))
 			return false;
 	}
 
@@ -700,7 +754,8 @@ RelationFindDeletedTupleInfoByIndex(Relation rel, Oid idxoid,
 	{
 		/*
 		 * Avoid expensive equality check if the index is primary key or
-		 * replica identity index.
+		 * replica identity index, unless the index scan indicates that a
+		 * recheck is needed.
 		 */
 		if (!skipduplicates)
 		{
@@ -710,6 +765,9 @@ RelationFindDeletedTupleInfoByIndex(Relation rel, Oid idxoid,
 			if (!tuples_equal(scanslot, searchslot, eq, NULL))
 				continue;
 		}
+		else if (scan->xs_recheck &&
+				 !repl_index_key_equal(idxrel, scanslot, searchslot, skey))
+			continue;
 
 		update_most_recent_deletion_info(scanslot, oldestxmin, delete_xid,
 										 delete_time, delete_origin);
