@@ -39,6 +39,7 @@
 #include "access/xlog_internal.h"
 #include "access/xlogarchive.h"
 #include "access/xlogdefs.h"
+#include "common/pg_parse_lsn.h"
 #include "pgstat.h"
 #include "storage/fd.h"
 #include "utils/wait_event.h"
@@ -128,10 +129,13 @@ readTimeLineHistory(TimeLineID targetTLI)
 		char		fline[MAXPGPATH];
 		char	   *res;
 		char	   *ptr;
+		char	   *token_end;
+		char		save;
 		TimeLineID	tli;
-		uint32		switchpoint_hi;
-		uint32		switchpoint_lo;
-		int			nfields;
+		XLogRecPtr	switchpoint;
+		bool		valid_switchpoint = false;
+		int			nchars;
+		size_t		nspaces;
 
 		pgstat_report_wait_start(WAIT_EVENT_TIMELINE_HISTORY_READ);
 		res = fgets(fline, sizeof(fline), fd);
@@ -155,16 +159,33 @@ readTimeLineHistory(TimeLineID targetTLI)
 		if (*ptr == '\0' || *ptr == '#')
 			continue;
 
-		nfields = sscanf(fline, "%u\t%X/%08X", &tli, &switchpoint_hi, &switchpoint_lo);
-
-		if (nfields < 1)
+		if (sscanf(fline, "%u%n", &tli, &nchars) != 1)
 		{
 			/* expect a numeric timeline ID as first field of line */
 			ereport(FATAL,
 					(errmsg("syntax error in history file: %s", fline),
 					 errhint("Expected a numeric timeline ID.")));
 		}
-		if (nfields != 3)
+
+		/* the switchpoint location follows, separated by whitespace */
+		ptr = fline + nchars;
+		nspaces = strspn(ptr, " \t\n\r\f\v");
+		if (nspaces > 0)
+		{
+			ptr += nspaces;
+
+			/*
+			 * isolate the location from the rest of the line before parsing
+			 * it
+			 */
+			token_end = ptr + strcspn(ptr, " \t\n\r\f\v");
+			save = *token_end;
+			*token_end = '\0';
+			valid_switchpoint = pg_parse_lsn(ptr, &switchpoint);
+			*token_end = save;
+		}
+
+		if (!valid_switchpoint)
 			ereport(FATAL,
 					(errmsg("syntax error in history file: %s", fline),
 					 errhint("Expected a write-ahead log switchpoint location.")));
@@ -179,7 +200,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 		entry = palloc_object(TimeLineHistoryEntry);
 		entry->tli = tli;
 		entry->begin = prevend;
-		entry->end = ((uint64) (switchpoint_hi)) << 32 | (uint64) switchpoint_lo;
+		entry->end = switchpoint;
 		prevend = entry->end;
 
 		/* Build list with newest item first */
