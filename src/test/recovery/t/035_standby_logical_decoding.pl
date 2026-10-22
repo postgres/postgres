@@ -930,7 +930,7 @@ is( $node_standby->safe_psql(
 	'f',
 	'database dropped on standby');
 
-check_slots_dropped('drop_db', $handle);
+check_slots_dropped('drop_db_', $handle);
 
 is($node_standby->slot('otherslot')->{'slot_type'},
 	'logical', 'otherslot on standby not dropped');
