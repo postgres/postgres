@@ -23,6 +23,7 @@
 #include <sys/time.h>
 
 #include "common/connect.h"
+#include "common/pg_parse_lsn.h"
 #include "funcapi.h"
 #include "libpq-fe.h"
 #include "libpq/libpq-be-fe-helpers.h"
@@ -458,15 +459,11 @@ libpqrcv_identify_system(WalReceiverConn *conn, TimeLineID *primary_tli,
 	/* Column 2 is the server's current WAL flush position */
 	if (server_lsn)
 	{
-		uint32		hi,
-					lo;
-
-		if (sscanf(PQgetvalue(res, 0, 2), "%X/%X", &hi, &lo) != 2)
+		if (!pg_parse_lsn(PQgetvalue(res, 0, 2), server_lsn))
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("could not parse WAL location \"%s\"",
 							PQgetvalue(res, 0, 2))));
-		*server_lsn = ((uint64) hi) << 32 | lo;
 	}
 
 	PQclear(res);
