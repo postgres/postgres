@@ -3185,7 +3185,7 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("DROP", "INDEX", MatchAny))
 		COMPLETE_WITH("CASCADE", "RESTRICT");
 	else if (Matches("DROP", "INDEX", "CONCURRENTLY", MatchAny))
-		COMPLETE_WITH("CASCADE", "RESTRICT");
+		COMPLETE_WITH("RESTRICT");
 
 	/* DROP MATERIALIZED VIEW */
 	else if (Matches("DROP", "MATERIALIZED"))
