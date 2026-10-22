@@ -45,6 +45,18 @@ like(
 	qr/replication slot "test_slot" was not created in this database/,
 	"Logical decoding correctly fails to start");
 
+for my $lsn ('123456789/0', '0/123456789')
+{
+	($result, $stdout, $stderr) = $node_primary->psql(
+		'template1',
+		qq[START_REPLICATION $lsn],
+		replication => 'database');
+	like(
+		$stderr,
+		qr/invalid streaming start location/,
+		"START_REPLICATION rejects overlong LSN $lsn");
+}
+
 ($result, $stdout, $stderr) = $node_primary->psql(
 	'template1',
 	qq[READ_REPLICATION_SLOT test_slot;],

@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "common/pg_parse_lsn.h"
 #include "nodes/parsenodes.h"
 #include "utils/builtins.h"
 #include "parser/scansup.h"
@@ -153,11 +154,8 @@ UPLOAD_MANIFEST		{ return K_UPLOAD_MANIFEST; }
 				}
 
 {hexdigit}+\/{hexdigit}+		{
-					uint32	hi,
-							lo;
-					if (sscanf(yytext, "%X/%08X", &hi, &lo) != 2)
+					if (!pg_parse_lsn(yytext, &yylval->recptr))
 						replication_yyerror(NULL, yyscanner, "invalid streaming start location");
-					yylval->recptr = ((uint64) hi) << 32 | lo;
 					return RECPTR;
 				}
 
