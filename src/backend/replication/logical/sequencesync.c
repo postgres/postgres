@@ -164,6 +164,22 @@ get_sequences_string(List *seqindexes, StringInfo buf)
 }
 
 /*
+ * Error callback to give more context info about the sequence being
+ * synchronized.
+ */
+static void
+sequence_sync_error_callback(void *arg)
+{
+	LogicalRepSequenceInfo *seqinfo = *(LogicalRepSequenceInfo **) arg;
+
+	if (seqinfo == NULL)
+		return;
+
+	errcontext("synchronizing sequence \"%s.%s\" for subscription \"%s\"",
+			   seqinfo->nspname, seqinfo->seqname, MySubscription->name);
+}
+
+/*
  * report_sequence_errors
  *
  * Report discrepancies found during sequence synchronization between
@@ -621,9 +637,10 @@ copy_sequences(WalReceiverConn *conn)
 		while (tuplestore_gettupleslot(res->tuplestore, true, false, slot))
 		{
 			CopySeqResult sync_status;
-			LogicalRepSequenceInfo *seqinfo;
+			LogicalRepSequenceInfo *seqinfo = NULL;
 			Relation	sequence_rel = NULL;
 			int			seqidx;
+			ErrorContextCallback errcallback;
 
 			CHECK_FOR_INTERRUPTS();
 
@@ -633,11 +650,24 @@ copy_sequences(WalReceiverConn *conn)
 				ProcessConfigFile(PGC_SIGHUP);
 			}
 
+			/*
+			 * Set up callback to identify the sequence in error messages.
+			 * seqinfo will be filled once get_and_validate_seq_info()
+			 * resolves the sequence index.
+			 */
+			errcallback.callback = sequence_sync_error_callback;
+			errcallback.arg = &seqinfo;
+			errcallback.previous = error_context_stack;
+			error_context_stack = &errcallback;
+
 			sync_status = get_and_validate_seq_info(slot, &sequence_rel,
 													&seqinfo, &seqidx);
 			if (sync_status == COPYSEQ_SUCCESS)
 				sync_status = copy_sequence(seqinfo,
 											sequence_rel->rd_rel->relowner);
+
+			/* Pop the error context stack */
+			error_context_stack = errcallback.previous;
 
 			switch (sync_status)
 			{
