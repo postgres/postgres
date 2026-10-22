@@ -1283,10 +1283,13 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 	 * Fill in the left-pointers. Checks that the tree is well-formed as a
 	 * side-effect.
 	 */
-	findoprnd(item, size, &needcleanup);
+	if (size > 0)
+	{
+		findoprnd(item, size, &needcleanup);
 
-	/* Can't have found any QI_VALSTOP nodes */
-	Assert(!needcleanup);
+		/* Can't have found any QI_VALSTOP nodes */
+		Assert(!needcleanup);
+	}
 
 	/* Copy operands to output struct */
 	for (uint32 i = 0; i < size; i++)
