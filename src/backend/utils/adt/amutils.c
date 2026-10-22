@@ -449,7 +449,7 @@ Datum
 pg_indexam_progress_phasename(PG_FUNCTION_ARGS)
 {
 	Oid			amoid = PG_GETARG_OID(0);
-	int32		phasenum = PG_GETARG_INT32(1);
+	int64		phasenum = PG_GETARG_INT64(1);
 	const IndexAmRoutine *routine;
 	char	   *name;
 
