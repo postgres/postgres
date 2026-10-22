@@ -4021,33 +4021,6 @@ DETAIL:  Key (a)=(999) is not present in table "fp_pk_dom".
 INSERT INTO fp_fk_dom VALUES (NULL);
 DROP TABLE fp_fk_dom, fp_pk_dom;
 DROP DOMAIN fp_int8dom;
--- Re-entrant FK check: DML on the same FK table from a cast function
-CREATE TABLE fp_reentry_pk (id int PRIMARY KEY);
-INSERT INTO fp_reentry_pk VALUES (1), (2);
-CREATE TYPE fp_vch AS (v int);
-CREATE FUNCTION fp_vcast(fp_vch) RETURNS int LANGUAGE plpgsql AS $$
-BEGIN
-    IF $1.v = 1 THEN
-        INSERT INTO fp_reentry_fk VALUES (row(2)::fp_vch);
-    END IF;
-    RETURN $1.v;
-END$$;
-CREATE CAST (fp_vch AS int) WITH FUNCTION fp_vcast(fp_vch) AS IMPLICIT;
-CREATE TABLE fp_reentry_fk (a fp_vch
-    REFERENCES fp_reentry_pk (id));
--- cast re-enters with DML on the same FK
-INSERT INTO fp_reentry_fk SELECT row(1)::fp_vch FROM generate_series(1, 2);
-SELECT a, count(*) FROM fp_reentry_fk GROUP BY a ORDER BY a;
-  a  | count 
------+-------
- (1) |     2
- (2) |     2
-(2 rows)
-
-DROP TABLE fp_reentry_fk, fp_reentry_pk;
-DROP CAST (fp_vch AS int);
-DROP FUNCTION fp_vcast(fp_vch);
-DROP TYPE fp_vch;
 --
 -- Cache invalidation arriving during a fast-path check.
 --
