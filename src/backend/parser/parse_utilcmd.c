@@ -136,7 +136,7 @@ static void transformCheckConstraints(CreateStmtContext *cxt,
 static void transformConstraintAttrs(ParseState *pstate,
 									 List *constraintList);
 static void transformColumnType(CreateStmtContext *cxt, ColumnDef *column);
-static void checkSchemaNameRV(CreateSchemaStmtContext *cxt, RangeVar *relation);
+static void setSchemaNameRV(CreateSchemaStmtContext *cxt, RangeVar *relation);
 static CreateStmt *transformCreateSchemaCreateTable(ParseState *pstate,
 													CreateStmt *stmt,
 													List **fk_elements);
@@ -4127,7 +4127,7 @@ transformColumnType(CreateStmtContext *cxt, ColumnDef *column)
  * transformCreateSchemaStmtElements -
  *	  analyzes the elements of a CREATE SCHEMA statement
  *
- * This presently has two responsibilities.  We verify that no subcommands
+ * This presently has two responsibilities.  We ensure that no subcommands
  * are trying to create objects outside the new schema.  We also attempt to
  * re-order the subcommands such that there are no forward references
  * (e.g. GRANT to a table created later in the list).  Note that the logic
@@ -4159,6 +4159,9 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 	List	   *result;
 	ListCell   *elements;
 
+	/* We fill in schema names below, so work on a copy */
+	schemaElts = copyObject(schemaElts);
+
 	cxt.pstate = pstate;
 	cxt.schemaname = schemaName;
 	cxt.sequences = NIL;
@@ -4170,9 +4173,8 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 	cxt.foreign_keys = NIL;
 
 	/*
-	 * Run through each schema element in the schema element list.  Check
-	 * target schema names, separate statements by type, and do preliminary
-	 * analysis.
+	 * Run through each schema element in the schema element list.  Set target
+	 * schema names, separate statements by type, and do preliminary analysis.
 	 */
 	foreach(elements, schemaElts)
 	{
@@ -4184,7 +4186,7 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 				{
 					CreateSeqStmt *elp = (CreateSeqStmt *) element;
 
-					checkSchemaNameRV(&cxt, elp->sequence);
+					setSchemaNameRV(&cxt, elp->sequence);
 					cxt.sequences = lappend(cxt.sequences, element);
 				}
 				break;
@@ -4193,7 +4195,7 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 				{
 					CreateStmt *elp = (CreateStmt *) element;
 
-					checkSchemaNameRV(&cxt, elp->relation);
+					setSchemaNameRV(&cxt, elp->relation);
 					/* Pull out any foreign key clauses, add to fk_elements */
 					elp = transformCreateSchemaCreateTable(pstate,
 														   elp,
@@ -4210,7 +4212,7 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 				{
 					ViewStmt   *elp = (ViewStmt *) element;
 
-					checkSchemaNameRV(&cxt, elp->view);
+					setSchemaNameRV(&cxt, elp->view);
 
 					/*
 					 * XXX todo: deal with references between views
@@ -4223,7 +4225,7 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 				{
 					IndexStmt  *elp = (IndexStmt *) element;
 
-					checkSchemaNameRV(&cxt, elp->relation);
+					setSchemaNameRV(&cxt, elp->relation);
 					cxt.indexes = lappend(cxt.indexes, element);
 				}
 				break;
@@ -4232,7 +4234,7 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 				{
 					CreateTrigStmt *elp = (CreateTrigStmt *) element;
 
-					checkSchemaNameRV(&cxt, elp->relation);
+					setSchemaNameRV(&cxt, elp->relation);
 					cxt.triggers = lappend(cxt.triggers, element);
 				}
 				break;
@@ -4260,21 +4262,21 @@ transformCreateSchemaStmtElements(ParseState *pstate, List *schemaElts,
 }
 
 /*
- * checkSchemaNameRV
- *		Check schema name in an element of a CREATE SCHEMA command,
+ * setSchemaNameRV
+ *		Set or check schema name in an element of a CREATE SCHEMA command,
  *		where the element's name is given by a RangeVar
  *
- * It's okay if the command doesn't specify a target schema name, because
- * CreateSchemaCommand will set up the default creation schema to be the
- * new schema.  But if a target schema name is given, it had better match.
+ * If the command doesn't specify a target schema name, fill in the new
+ * schema's name.  But if a target schema name is given, it had better match.
  * We also have to check that the command doesn't say CREATE TEMP, since
  * that would likewise put the object into the wrong schema.
  */
 static void
-checkSchemaNameRV(CreateSchemaStmtContext *cxt, RangeVar *relation)
+setSchemaNameRV(CreateSchemaStmtContext *cxt, RangeVar *relation)
 {
-	if (relation->schemaname != NULL &&
-		strcmp(cxt->schemaname, relation->schemaname) != 0)
+	if (relation->schemaname == NULL)
+		relation->schemaname = pstrdup(cxt->schemaname);
+	else if (strcmp(cxt->schemaname, relation->schemaname) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_SCHEMA_DEFINITION),
 				 errmsg("CREATE specifies a schema (%s) "
