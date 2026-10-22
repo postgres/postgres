@@ -2413,13 +2413,24 @@ SignalBackends(void)
  *	This is called at transaction abort.
  *
  *	Revert any staged listen/unlisten changes and clean up transaction state.
- *	This only does anything if we abort after PreCommit_Notify has staged
- *	some entries.
  */
 void
 AtAbort_Notify(void)
 {
-	/* Revert staged listen/unlisten changes */
+	/*
+	 * If we failed during asyncQueueReadAllNotifications(), clear our
+	 * isAdvancing flag, else SignalBackends() would never wake us again.
+	 * Since only our own process changes this flag, it is safe to check it
+	 * without the lock.
+	 */
+	if (amRegisteredListener && QUEUE_BACKEND_IS_ADVANCING(MyProcNumber))
+	{
+		LWLockAcquire(NotifyQueueLock, LW_SHARED);
+		QUEUE_BACKEND_IS_ADVANCING(MyProcNumber) = false;
+		LWLockRelease(NotifyQueueLock);
+	}
+
+	/* Revert any staged listen/unlisten changes */
 	ApplyPendingListenActions(false);
 
 	/* If we're no longer listening on anything, unregister */
