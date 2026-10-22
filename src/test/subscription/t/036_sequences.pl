@@ -382,4 +382,54 @@ $node_subscriber->wait_for_log(
 	qr/WARNING: ( [A-Z0-9]+:)? missing sequence on publisher \("public.regress_s2"\)/,
 	$log_offset);
 
+# Remove the dropped sequence (regress_s2) from the subscription so that the
+# apply worker does not keep starting the sequencesync worker for the missing
+# sequence, which would pollute the logs and delay the next worker launch.
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_seq_sub REFRESH PUBLICATION WITH (copy_data = false)"
+);
+
+##########
+# Ensure that an error raised while synchronizing a sequence includes the
+# sequence name in the error context.
+##########
+
+# Disable the subscription and wait for its workers to stop before changing its
+# connection and owner.
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_seq_sub DISABLE");
+$node_subscriber->poll_query_until(
+	'postgres', qq(
+	SELECT count(1) = 0 FROM pg_stat_subscription
+	WHERE subname = 'regress_seq_sub' AND pid IS NOT NULL;
+)) or die "Timed out while waiting for subscription workers to stop";
+
+# Change the subscription owner to regress_seq_sub_owner, and make regress_s4
+# owned by a separate role (regress_seq_other) that regress_seq_sub_owner
+# cannot SET ROLE to. With run_as_owner = false (the default), synchronizing
+# regress_s4 will fail when switching to its owner.
+$node_subscriber->safe_psql(
+	'postgres', qq(
+	ALTER SUBSCRIPTION regress_seq_sub CONNECTION '$publisher_connstr';
+	ALTER SUBSCRIPTION regress_seq_sub SET (password_required = false);
+	CREATE ROLE regress_seq_sub_owner LOGIN;
+	CREATE ROLE regress_seq_other;
+	ALTER SEQUENCE regress_s1 OWNER TO regress_seq_sub_owner;
+	ALTER SEQUENCE regress_s3 OWNER TO regress_seq_sub_owner;
+	ALTER SEQUENCE "regress'quote" OWNER TO regress_seq_sub_owner;
+	ALTER SEQUENCE regress_s4 OWNER TO regress_seq_other;
+	ALTER SUBSCRIPTION regress_seq_sub OWNER TO regress_seq_sub_owner;
+	ALTER SUBSCRIPTION regress_seq_sub ENABLE;
+));
+
+$log_offset = -s $node_subscriber->logfile;
+
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION regress_seq_sub REFRESH SEQUENCES");
+
+# Verify that the SET ROLE error reports the failing sequence in CONTEXT.
+$node_subscriber->wait_for_log(
+	qr/ERROR: ( [A-Z0-9]+:)? role "regress_seq_sub_owner" cannot SET ROLE to "regress_seq_other"\n.*CONTEXT:  synchronizing sequence "public\.regress_s4" for subscription "regress_seq_sub"/,
+	$log_offset);
+
 done_testing();
