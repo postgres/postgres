@@ -36,6 +36,7 @@ REGRESS = \
 	parallel \
 	plancache \
 	squashing \
+	sqljson \
 	cleanup \
 	oldextversions
 

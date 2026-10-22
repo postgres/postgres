@@ -58,6 +58,7 @@ tests += {
       'parallel',
       'plancache',
       'squashing',
+      'sqljson',
       'cleanup',
       'oldextversions',
     ],
