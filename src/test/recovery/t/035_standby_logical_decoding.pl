@@ -71,12 +71,13 @@ sub drop_logical_slots
 }
 
 # Acquire one of the standby logical slots created by create_logical_slots().
-# In case wait is true we are waiting for an active pid on the 'activeslot' slot.
-# If wait is not true it means we are testing a known failure scenario.
+# If wait is true, wait for pg_recvlogical to enter streaming mode.
+# Otherwise, starting replication is expected to fail.
 sub make_slot_active
 {
 	my ($node, $slot_prefix, $wait, $to_stdout, $to_stderr) = @_;
 	my $slot_user_handle;
+	my $timeout = IPC::Run::timeout($default_timeout);
 
 	my $active_slot = $slot_prefix . 'activeslot';
 	$slot_user_handle = IPC::Run::start(
@@ -87,19 +88,20 @@ sub make_slot_active
 			'--option' => 'include-xids=0',
 			'--option' => 'skip-empty-xacts=1',
 			'--file' => '-',
+			'--verbose',
 			'--no-loop',
 			'--start',
 		],
 		'>' => $to_stdout,
 		'2>' => $to_stderr,
-		IPC::Run::timeout($default_timeout));
+		$timeout);
 
 	if ($wait)
 	{
-		# make sure activeslot is in use
-		$node->poll_query_until('testdb',
-			qq[SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = '$active_slot' AND active_pid IS NOT NULL)]
-		) or die "slot never became active";
+		# Make sure that pg_recvlogical has entered streaming mode.
+		pump_until($slot_user_handle, $timeout, $to_stderr,
+			qr/streaming initiated/)
+		  or die "pg_recvlogical did not enter streaming mode";
 	}
 	return $slot_user_handle;
 }
