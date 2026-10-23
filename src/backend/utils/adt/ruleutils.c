@@ -7737,15 +7737,9 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 		/* might be returning old/new column value */
 		if (var->varreturningtype == VAR_RETURNING_OLD)
-		{
 			refname = dpns->ret_old_alias;
-			Assert(refname);
-		}
 		else if (var->varreturningtype == VAR_RETURNING_NEW)
-		{
 			refname = dpns->ret_new_alias;
-			Assert(refname);
-		}
 		else
 			refname = (char *) list_nth(dpns->rtable_names, varno - 1);
 
