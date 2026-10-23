@@ -8995,6 +8995,24 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
     </listitem>
 
 <!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2024-12-02 [086c84b23] Fix error code for referential action RESTRICT
+-->
+
+      <listitem>
+      <para>
+      Report <literal>RESTRICT</literal> <link
+      linkend="sql-createtable-parms-references">foreign key</link>
+      violations with <link
+      linkend="errcodes-appendix"><literal>SQLSTATE</literal></link>
+      <literal>23001</literal> (<literal>restrict_violation</literal>)
+      instead of <literal>23503</literal>
+      (<literal>foreign_key_violation</literal>) (Peter Eisentraut)
+      <ulink url="&commit_baseurl;086c84b23">&sect;</ulink>
+      </para>
+      </listitem>
+
+<!--
 Author: Fujii Masao <fujii@postgresql.org>
 2024-09-12 [fefa76f70] Remove old RULE privilege completely.
 -->
@@ -10744,7 +10762,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       <para>
       Require <link
       linkend="sql-createtable-parms-references">primary/foreign key</link>
-      relationships to use either deterministic collations or the the
+      relationships to use either deterministic collations or the
       same nondeterministic collations (Peter Eisentraut)
       <ulink url="&commit_baseurl;9321d2fdf">&sect;</ulink>
       </para>
