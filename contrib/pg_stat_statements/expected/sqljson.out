@@ -72,11 +72,11 @@ SELECT JSON_VALUE(js, '$.a' DEFAULT 1 ON EMPTY DEFAULT 2 ON ERROR) FROM pgss_sql
 SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C", calls;
  calls |                                          query                                          
 -------+-----------------------------------------------------------------------------------------
-     2 | SELECT JSON_VALUE(js, $1 $2 ON EMPTY ERROR ON ERROR) FROM pgss_sqljson_tab
      1 | SELECT JSON_VALUE(js, $1 DEFAULT $2 ON EMPTY DEFAULT $3 ON ERROR) FROM pgss_sqljson_tab
      2 | SELECT JSON_VALUE(js, $1 DEFAULT $2 ON EMPTY) FROM pgss_sqljson_tab
      1 | SELECT JSON_VALUE(js, $1 DEFAULT $2 ON ERROR) FROM pgss_sqljson_tab
-     2 | SELECT JSON_VALUE(js, $1 ERROR ON EMPTY $2 ON ERROR) FROM pgss_sqljson_tab
+     2 | SELECT JSON_VALUE(js, $1 ERROR ON EMPTY NULL ON ERROR) FROM pgss_sqljson_tab
+     2 | SELECT JSON_VALUE(js, $1 NULL ON EMPTY ERROR ON ERROR) FROM pgss_sqljson_tab
      3 | SELECT JSON_VALUE(js, $1) FROM pgss_sqljson_tab
      1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (7 rows)
@@ -219,19 +219,19 @@ SELECT JSON_QUERY(js, '$.a' EMPTY ARRAY ON EMPTY EMPTY OBJECT ON ERROR)
 (0 rows)
 
 SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C", calls;
- calls |                                query                                
--------+---------------------------------------------------------------------
-     1 | SELECT JSON_QUERY(js, $1 $2 ARRAY ON EMPTY $3 OBJECT ON ERROR)     +
-       |   FROM pgss_sqljson_tab
-     2 | SELECT JSON_QUERY(js, $1 $2 ARRAY ON EMPTY) FROM pgss_sqljson_tab
-     1 | SELECT JSON_QUERY(js, $1 $2 OBJECT ON EMPTY) FROM pgss_sqljson_tab
-     1 | SELECT JSON_QUERY(js, $1 $2 OBJECT ON ERROR) FROM pgss_sqljson_tab
-     1 | SELECT JSON_QUERY(js, $1 $2 ON EMPTY) FROM pgss_sqljson_tab
-     2 | SELECT JSON_QUERY(js, $1 $2 ON ERROR) FROM pgss_sqljson_tab
+ calls |                                 query                                 
+-------+-----------------------------------------------------------------------
      1 | SELECT JSON_QUERY(js, $1 DEFAULT $2 ON EMPTY) FROM pgss_sqljson_tab
      1 | SELECT JSON_QUERY(js, $1 DEFAULT $2 ON ERROR) FROM pgss_sqljson_tab
+     1 | SELECT JSON_QUERY(js, $1 EMPTY ARRAY ON EMPTY EMPTY OBJECT ON ERROR) +
+       |   FROM pgss_sqljson_tab
+     2 | SELECT JSON_QUERY(js, $1 EMPTY ARRAY ON EMPTY) FROM pgss_sqljson_tab
+     1 | SELECT JSON_QUERY(js, $1 EMPTY OBJECT ON EMPTY) FROM pgss_sqljson_tab
+     1 | SELECT JSON_QUERY(js, $1 EMPTY OBJECT ON ERROR) FROM pgss_sqljson_tab
+     2 | SELECT JSON_QUERY(js, $1 EMPTY ON ERROR) FROM pgss_sqljson_tab
      1 | SELECT JSON_QUERY(js, $1 ERROR ON EMPTY) FROM pgss_sqljson_tab
      1 | SELECT JSON_QUERY(js, $1 ERROR ON ERROR) FROM pgss_sqljson_tab
+     1 | SELECT JSON_QUERY(js, $1 NULL ON EMPTY) FROM pgss_sqljson_tab
      1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (11 rows)
 
@@ -429,13 +429,13 @@ SELECT JSON_EXISTS(js, '$.a ? (@ > $x)' PASSING 2 AS x) FROM pgss_sqljson_tab;
 (0 rows)
 
 SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C", calls;
- calls |                              query                               
--------+------------------------------------------------------------------
-     1 | SELECT JSON_EXISTS(js, $1 $2 ON ERROR) FROM pgss_sqljson_tab
-     1 | SELECT JSON_EXISTS(js, $1 $2 ON ERROR) FROM pgss_sqljson_tab
-     2 | SELECT JSON_EXISTS(js, $1 $2 ON ERROR) FROM pgss_sqljson_tab
+ calls |                               query                               
+-------+-------------------------------------------------------------------
      1 | SELECT JSON_EXISTS(js, $1 ERROR ON ERROR) FROM pgss_sqljson_tab
+     2 | SELECT JSON_EXISTS(js, $1 FALSE ON ERROR) FROM pgss_sqljson_tab
      2 | SELECT JSON_EXISTS(js, $1 PASSING $2 AS x) FROM pgss_sqljson_tab
+     1 | SELECT JSON_EXISTS(js, $1 TRUE ON ERROR) FROM pgss_sqljson_tab
+     1 | SELECT JSON_EXISTS(js, $1 UNKNOWN ON ERROR) FROM pgss_sqljson_tab
      1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (6 rows)
 
@@ -995,7 +995,7 @@ SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C", calls;
  calls |                               query                               
 -------+-------------------------------------------------------------------
      3 | SELECT * FROM pgss_sqljson_tab,                                  +
-       |   JSON_TABLE(js, $1 COLUMNS (a int PATH '$.a') $2 ON ERROR) jt
+       |   JSON_TABLE(js, $1 COLUMNS (a int PATH '$.a') EMPTY ON ERROR) jt
      1 | SELECT * FROM pgss_sqljson_tab,                                  +
        |   JSON_TABLE(js, $1 COLUMNS (a int PATH '$.a') ERROR ON ERROR) jt
      2 | SELECT * FROM pgss_sqljson_tab,                                  +
