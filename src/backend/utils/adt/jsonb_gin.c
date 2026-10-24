@@ -435,13 +435,14 @@ jsonb_ops__extract_nodes(JsonPathGinContext *cxt, JsonPathGinPath path,
 			 * keys, we may extract key or non-key entry or even both.  In the
 			 * latter case we create OR-node.  It is possible in lax mode
 			 * where arrays are automatically unwrapped, or in strict mode for
-			 * jpiAny items.
+			 * jpiAny items.  Also, root scalars are stored as single-element
+			 * arrays, so those will be key entries.
 			 */
 
 			if (cxt->lax)
 				key_entry = GIN_MAYBE;
 			else if (!last)		/* root ($) */
-				key_entry = GIN_FALSE;
+				key_entry = GIN_TRUE;
 			else if (last->type == jpiAnyArray || last->type == jpiIndexArray)
 				key_entry = GIN_TRUE;
 			else if (last->type == jpiAny)
