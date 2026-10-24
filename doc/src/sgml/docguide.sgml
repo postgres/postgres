@@ -61,9 +61,6 @@
    OASIS group</ulink>.  The <ulink url="https://www.oasis-open.org/docbook/">
    official DocBook site</ulink> has good introductory and reference documentation and
    a complete O'Reilly book for your online reading pleasure.
-   The <ulink url="https://www.freebsd.org/docproj/">
-   FreeBSD Documentation Project</ulink> also uses DocBook and has some good
-   information, including a number of style guidelines that might be
    worth considering.
   </para>
  </sect1>
