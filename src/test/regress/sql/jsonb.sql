@@ -922,6 +922,14 @@ SELECT count(*) FROM testjsonb WHERE j @? '$';
 SELECT count(*) FROM testjsonb WHERE j @? '$.public';
 SELECT count(*) FROM testjsonb WHERE j @? '$.bar';
 
+-- check indexed lookup of root scalars
+INSERT INTO testjsonb VALUES('"a scalar"');
+SELECT count(*) FROM testjsonb WHERE j @@ 'strict $ == "a scalar"';
+SELECT count(*) FROM testjsonb WHERE j @? 'strict $ ? (@ == "a scalar")';
+SELECT count(*) FROM testjsonb WHERE j @@ 'lax $ == "a scalar"';
+SELECT count(*) FROM testjsonb WHERE j @? 'lax $ ? (@ == "a scalar")';
+DELETE FROM testjsonb WHERE j = '"a scalar"';
+
 -- array exists - array elements should behave as keys (for GIN index scans too)
 CREATE INDEX jidx_array ON testjsonb USING gin((j->'array'));
 SELECT count(*) from testjsonb  WHERE j->'array' ? 'bar';
