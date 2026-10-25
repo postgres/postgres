@@ -1,0 +1,22 @@
+# Meson cross file for cross compiling to Windows with the Debian
+# mingw-w64 toolchain, as used by the CompilerWarnings CI job.
+#
+# ccache is spelled out here because meson's automatic ccache
+# detection does not apply to compilers that are named in a cross
+# file.
+
+[constants]
+prefix = 'x86_64-w64-mingw32ucrt-'
+
+[binaries]
+c = ['ccache', prefix + 'gcc']
+cpp = ['ccache', prefix + 'g++']
+ar = prefix + 'ar'
+strip = prefix + 'strip'
+windres = prefix + 'windres'
+
+[host_machine]
+system = 'windows'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'
