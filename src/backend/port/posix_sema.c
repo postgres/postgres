@@ -65,7 +65,10 @@ static PGSemaphore sharedSemas; /* array of PGSemaphoreData in shared memory */
 #endif
 static int	numSems;			/* number of semas acquired so far */
 static int	maxSems;			/* allocated size of above arrays */
+
+#ifdef USE_NAMED_POSIX_SEMAPHORES
 static int	nextSemKey;			/* next name to try */
+#endif
 
 
 static void ReleaseSemaphores(int status, Datum arg);
@@ -197,6 +200,7 @@ PGSemaphoreShmemRequest(int maxSemas)
 void
 PGSemaphoreInit(int maxSemas)
 {
+#ifdef USE_NAMED_POSIX_SEMAPHORES
 	struct stat statbuf;
 
 	/*
@@ -210,6 +214,8 @@ PGSemaphoreInit(int maxSemas)
 				(errcode_for_file_access(),
 				 errmsg("could not stat data directory \"%s\": %m",
 						DataDir)));
+	nextSemKey = statbuf.st_ino;
+#endif
 
 #ifdef USE_NAMED_POSIX_SEMAPHORES
 	mySemPointers = (sem_t **) malloc(maxSemas * sizeof(sem_t *));
@@ -219,7 +225,6 @@ PGSemaphoreInit(int maxSemas)
 
 	numSems = 0;
 	maxSems = maxSemas;
-	nextSemKey = statbuf.st_ino;
 
 	on_shmem_exit(ReleaseSemaphores, 0);
 }
