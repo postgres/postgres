@@ -843,7 +843,7 @@ typedef struct RecordIOData
 	/* this field is used only if target type is domain over composite: */
 	void	   *domain_info;	/* opaque cache for domain checks */
 	int			ncolumns;
-	ColumnIOData columns[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(ncolumns) ColumnIOData columns[FLEXIBLE_ARRAY_MEMBER];
 } RecordIOData;
 
 PG_FUNCTION_INFO_V1(hstore_from_record);

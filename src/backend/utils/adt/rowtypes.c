@@ -45,7 +45,7 @@ typedef struct RecordIOData
 	Oid			record_type;
 	int32		record_typmod;
 	int			ncolumns;
-	ColumnIOData columns[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(ncolumns) ColumnIOData columns[FLEXIBLE_ARRAY_MEMBER];
 } RecordIOData;
 
 /*
@@ -63,7 +63,7 @@ typedef struct RecordCompareData
 	int32		record1_typmod;
 	Oid			record2_type;
 	int32		record2_typmod;
-	ColumnCompareData columns[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(ncolumns) ColumnCompareData columns[FLEXIBLE_ARRAY_MEMBER];
 } RecordCompareData;
 
 

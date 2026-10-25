@@ -1216,7 +1216,7 @@ typedef struct
 {
 	/* Array of OIDs to be passed to SetTempTablespaces() */
 	int			numSpcs;
-	Oid			tblSpcs[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(numSpcs) Oid tblSpcs[FLEXIBLE_ARRAY_MEMBER];
 } temp_tablespaces_extra;
 
 /* check_hook: validate new temp_tablespaces */

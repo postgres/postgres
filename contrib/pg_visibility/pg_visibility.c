@@ -34,7 +34,7 @@ typedef struct vbits
 {
 	BlockNumber next;
 	BlockNumber count;
-	uint8		bits[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(count) uint8 bits[FLEXIBLE_ARRAY_MEMBER];
 } vbits;
 
 typedef struct corrupt_items

@@ -190,7 +190,7 @@ typedef struct Ranges
 	int			target_maxvalues;
 
 	/* values stored for this range - either raw values, or ranges */
-	Datum		values[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(maxvalues) Datum values[FLEXIBLE_ARRAY_MEMBER];
 } Ranges;
 
 /*

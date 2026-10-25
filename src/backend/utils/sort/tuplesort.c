@@ -362,7 +362,7 @@ struct Sharedsort
 	 * Tapes array used by workers to report back information needed by the
 	 * leader to concatenate all worker tapes into one for merging
 	 */
-	TapeShare	tapes[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(nTapes) TapeShare tapes[FLEXIBLE_ARRAY_MEMBER];
 };
 
 /*

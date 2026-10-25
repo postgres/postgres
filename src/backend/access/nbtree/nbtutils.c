@@ -413,7 +413,7 @@ typedef struct BTVacInfo
 	BTCycleId	cycle_ctr;		/* cycle ID most recently assigned */
 	int			num_vacuums;	/* number of currently active VACUUMs */
 	int			max_vacuums;	/* allocated length of vacuums[] array */
-	BTOneVacInfo vacuums[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(max_vacuums) BTOneVacInfo vacuums[FLEXIBLE_ARRAY_MEMBER];
 } BTVacInfo;
 
 static BTVacInfo *btvacinfo;

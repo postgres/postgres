@@ -93,7 +93,7 @@ typedef struct dsm_control_header
 	uint32		magic;
 	uint32		nitems;
 	uint32		maxitems;
-	dsm_control_item item[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(maxitems) dsm_control_item item[FLEXIBLE_ARRAY_MEMBER];
 } dsm_control_header;
 
 static void dsm_cleanup_for_mmap(void);

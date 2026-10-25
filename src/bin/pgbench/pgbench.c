@@ -98,7 +98,7 @@ typedef struct socket_set
 {
 	int			maxfds;			/* allocated length of pollfds[] array */
 	int			curfds;			/* number currently in use */
-	struct pollfd pollfds[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(maxfds) struct pollfd pollfds[FLEXIBLE_ARRAY_MEMBER];
 } socket_set;
 
 #endif							/* POLL_USING_PPOLL */

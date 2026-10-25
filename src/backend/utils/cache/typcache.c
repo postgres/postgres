@@ -155,7 +155,7 @@ typedef struct TypeCacheEnumData
 	Oid			bitmap_base;	/* OID corresponding to bit 0 of bitmapset */
 	Bitmapset  *sorted_values;	/* Set of OIDs known to be in order */
 	int			num_values;		/* total number of values in enum */
-	EnumItem	enum_values[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(num_values) EnumItem enum_values[FLEXIBLE_ARRAY_MEMBER];
 } TypeCacheEnumData;
 
 /*

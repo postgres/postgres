@@ -235,7 +235,7 @@ typedef struct SerializedTransactionState
 	FullTransactionId currentFullTransactionId;
 	CommandId	currentCommandId;
 	int			nParallelCurrentXids;
-	TransactionId parallelCurrentXids[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(nParallelCurrentXids) TransactionId parallelCurrentXids[FLEXIBLE_ARRAY_MEMBER];
 } SerializedTransactionState;
 
 /* The size of SerializedTransactionState, not including the final array. */

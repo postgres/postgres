@@ -640,7 +640,7 @@ typedef struct _loInfo
 	DumpableAcl dacl;
 	const char *rolname;
 	int			numlos;
-	Oid			looids[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(numlos) Oid looids[FLEXIBLE_ARRAY_MEMBER];
 } LoInfo;
 
 /*

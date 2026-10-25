@@ -171,7 +171,7 @@ typedef struct ReorderBufferIterTXNState
 	binaryheap *heap;
 	Size		nr_txns;
 	dlist_head	old_change;
-	ReorderBufferIterTXNEntry entries[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(nr_txns) ReorderBufferIterTXNEntry entries[FLEXIBLE_ARRAY_MEMBER];
 } ReorderBufferIterTXNState;
 
 /* toast datastructures */

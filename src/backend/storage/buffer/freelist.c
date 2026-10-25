@@ -90,7 +90,7 @@ typedef struct BufferAccessStrategyData
 	 * simplicity this is palloc'd together with the fixed fields of the
 	 * struct.
 	 */
-	Buffer		buffers[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(nbuffers) Buffer buffers[FLEXIBLE_ARRAY_MEMBER];
 }			BufferAccessStrategyData;
 
 

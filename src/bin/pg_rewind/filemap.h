@@ -101,7 +101,7 @@ typedef struct filemap_t
 	uint64		fetch_size;		/* number of bytes that needs to be copied */
 
 	int			nentries;		/* size of 'entries' array */
-	file_entry_t *entries[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(nentries) file_entry_t *entries[FLEXIBLE_ARRAY_MEMBER];
 } filemap_t;
 
 /* Functions for populating the filemap */

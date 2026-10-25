@@ -96,7 +96,7 @@ typedef struct
 	Oid			currentlyReindexedHeap;
 	Oid			currentlyReindexedIndex;
 	int			numPendingReindexedIndexes;
-	Oid			pendingReindexedIndexes[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(numPendingReindexedIndexes) Oid pendingReindexedIndexes[FLEXIBLE_ARRAY_MEMBER];
 } SerializedReindexState;
 
 /* non-export function prototypes */

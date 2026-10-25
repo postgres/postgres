@@ -113,7 +113,7 @@ typedef struct LsnReadQueue
 	uint32		head;
 	uint32		tail;
 	uint32		size;
-	struct
+	pg_attribute_counted_by(size) struct
 	{
 		bool		io;
 		XLogRecPtr	lsn;

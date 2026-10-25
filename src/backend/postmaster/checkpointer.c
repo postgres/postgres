@@ -140,7 +140,7 @@ typedef struct
 								 * buffer */
 
 	/* The ring buffer of pending checkpointer requests */
-	CheckpointerRequest requests[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(max_requests) CheckpointerRequest requests[FLEXIBLE_ARRAY_MEMBER];
 } CheckpointerShmemStruct;
 
 static CheckpointerShmemStruct *CheckpointerShmem;

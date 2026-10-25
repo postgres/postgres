@@ -3669,7 +3669,7 @@ typedef struct SetConstraintStateData
 	bool		all_isdeferred;
 	int			numstates;		/* number of trigstates[] entries in use */
 	int			numalloc;		/* allocated size of trigstates[] */
-	SetConstraintTriggerData trigstates[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(numalloc) SetConstraintTriggerData trigstates[FLEXIBLE_ARRAY_MEMBER];
 } SetConstraintStateData;
 
 typedef SetConstraintStateData *SetConstraintState;

@@ -64,7 +64,7 @@ struct SharedTuplestore
 	char		name[NAMEDATALEN];	/* A name for this tuplestore. */
 
 	/* Followed by per-participant shared state. */
-	SharedTuplestoreParticipant participants[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(nparticipants) SharedTuplestoreParticipant participants[FLEXIBLE_ARRAY_MEMBER];
 };
 
 /* Per-participant state that lives in backend-local memory. */
