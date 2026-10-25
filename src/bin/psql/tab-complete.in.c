@@ -5072,10 +5072,8 @@ match_previous_words(int pattern_id,
 	else if (Matches("REFRESH", "MATERIALIZED", "VIEW", MatchAny, "WITH"))
 		COMPLETE_WITH("NO DATA", "DATA");
 	else if (Matches("REFRESH", "MATERIALIZED", "VIEW", "CONCURRENTLY", MatchAny, "WITH"))
-		COMPLETE_WITH("NO DATA", "DATA");
-	else if (Matches("REFRESH", "MATERIALIZED", "VIEW", MatchAny, "WITH", "NO"))
 		COMPLETE_WITH("DATA");
-	else if (Matches("REFRESH", "MATERIALIZED", "VIEW", "CONCURRENTLY", MatchAny, "WITH", "NO"))
+	else if (Matches("REFRESH", "MATERIALIZED", "VIEW", MatchAny, "WITH", "NO"))
 		COMPLETE_WITH("DATA");
 
 /* REINDEX */
