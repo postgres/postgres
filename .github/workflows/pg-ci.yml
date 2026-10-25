@@ -1166,6 +1166,8 @@ jobs:
       # Use larger ccache cache as this job compiles with multiple
       # compilers / flag combinations.
       CCACHE_MAXSIZE: "1G"
+      CCACHE_SLOPPINESS: pch_defines,time_macros
+      CCACHE_DEPEND: 1
 
       # Enable everything else in LINUX_CONFIGURE_FEATURES but not in
       # MESON_COMMON_FEATURES.
@@ -1235,6 +1237,7 @@ jobs:
         env:
           CONF: >-
             --cross-file src/tools/ci/mingw-cross-file.txt
+            -Db_pch=true
             -Dcassert=true
             -Dauto_features=disabled
             -Dzlib=enabled
