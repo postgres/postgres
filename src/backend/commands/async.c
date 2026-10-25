@@ -188,6 +188,7 @@
 #include "utils/ps_status.h"
 #include "utils/snapmgr.h"
 #include "utils/timestamp.h"
+#include "utils/tuplestore.h"
 
 
 /*
@@ -1087,53 +1088,38 @@ Async_UnlistenAll(void)
 /*
  * SQL function: return a set of the channel names this backend is actively
  * listening to.
- *
- * Note: this coding relies on the fact that the localChannelTable cannot
- * change within a transaction.
  */
 Datum
 pg_listening_channels(PG_FUNCTION_ARGS)
 {
-	FuncCallContext *funcctx;
-	HASH_SEQ_STATUS *status;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	/* stuff done only on the first call of the function */
-	if (SRF_IS_FIRSTCALL())
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC);
+
+	/*
+	 * Complete the hash scan in one call, since the caller might not fetch
+	 * all the rows and would otherwise leave the scan registered until
+	 * transaction end.
+	 */
+	if (localChannelTable != NULL)
 	{
-		/* create a function context for cross-call persistence */
-		funcctx = SRF_FIRSTCALL_INIT();
+		HASH_SEQ_STATUS status;
+		ChannelName *channelEntry;
 
-		/* Initialize hash table iteration if we have any channels */
-		if (localChannelTable != NULL)
+		hash_seq_init(&status, localChannelTable);
+		while ((channelEntry = (ChannelName *) hash_seq_search(&status)) != NULL)
 		{
-			MemoryContext oldcontext;
+			Datum		values[1];
+			bool		nulls[1];
 
-			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-			status = palloc_object(HASH_SEQ_STATUS);
-			hash_seq_init(status, localChannelTable);
-			funcctx->user_fctx = status;
-			MemoryContextSwitchTo(oldcontext);
-		}
-		else
-		{
-			funcctx->user_fctx = NULL;
+			values[0] = CStringGetTextDatum(channelEntry->channel);
+			nulls[0] = false;
+			tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
+								 values, nulls);
 		}
 	}
 
-	/* stuff done on every call of the function */
-	funcctx = SRF_PERCALL_SETUP();
-	status = (HASH_SEQ_STATUS *) funcctx->user_fctx;
-
-	if (status != NULL)
-	{
-		ChannelName *entry;
-
-		entry = (ChannelName *) hash_seq_search(status);
-		if (entry != NULL)
-			SRF_RETURN_NEXT(funcctx, CStringGetTextDatum(entry->channel));
-	}
-
-	SRF_RETURN_DONE(funcctx);
+	return (Datum) 0;
 }
 
 /*

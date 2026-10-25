@@ -30,6 +30,13 @@ ERROR:  channel name too long
 --Should work. Valid NOTIFY/LISTEN/UNLISTEN commands
 NOTIFY notify_async2;
 LISTEN notify_async2;
+-- Check cleanup when a target-list SRF is abandoned early.
+SELECT pg_listening_channels() LIMIT 1;
+ pg_listening_channels 
+-----------------------
+ notify_async2
+(1 row)
+
 UNLISTEN notify_async2;
 UNLISTEN *;
 -- Should return zero while there are no pending notifications.

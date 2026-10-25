@@ -15,6 +15,10 @@ SELECT pg_notify('notify_async_channel_name_too_long____________________________
 --Should work. Valid NOTIFY/LISTEN/UNLISTEN commands
 NOTIFY notify_async2;
 LISTEN notify_async2;
+
+-- Check cleanup when a target-list SRF is abandoned early.
+SELECT pg_listening_channels() LIMIT 1;
+
 UNLISTEN notify_async2;
 UNLISTEN *;
 
