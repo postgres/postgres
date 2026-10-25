@@ -22630,8 +22630,13 @@ validatePartitionedIndex(Relation partedIdx, Relation partedTbl)
 
 		validatePartitionedIndex(parentIdx, parentTbl);
 
-		relation_close(parentIdx, AccessExclusiveLock);
-		relation_close(parentTbl, AccessExclusiveLock);
+		/*
+		 * Keep these locks until commit so that the concurrent validator of
+		 * another index partition cannot miss our uncommitted changes, which
+		 * would leave the parent index invalid.
+		 */
+		relation_close(parentIdx, NoLock);
+		relation_close(parentTbl, NoLock);
 	}
 }
 
