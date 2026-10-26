@@ -2865,7 +2865,6 @@ add_child_rel_equivalences(PlannerInfo *root,
 			{
 				/* OK, generate transformed child version */
 				Expr	   *child_expr;
-				Relids		new_relids;
 
 				if (parent_rel->reloptkind == RELOPT_BASEREL)
 				{
@@ -2886,20 +2885,17 @@ add_child_rel_equivalences(PlannerInfo *root,
 				}
 
 				/*
-				 * Transform em_relids to match.  Note we do *not* do
+				 * The member's relids are all within the parent, so the child
+				 * version's relids are just the child's.  Note we do *not* do
 				 * pull_varnos(child_expr) here, as for example the
 				 * transformation might have substituted a constant, but we
 				 * don't want the child member to be marked as constant.
 				 */
-				new_relids = bms_difference(cur_em->em_relids,
-											top_parent_relids);
-				new_relids = bms_add_members(new_relids, child_relids);
-
 				add_child_eq_member(root,
 									cur_ec,
 									i,
 									child_expr,
-									new_relids,
+									bms_copy(child_relids),
 									cur_em->em_jdomain,
 									cur_em,
 									cur_em->em_datatype,
@@ -2977,12 +2973,14 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 			if (bms_membership(cur_em->em_relids) != BMS_MULTIPLE)
 				continue;
 
-			/* Does this member reference child's topmost parent rel? */
-			if (bms_overlap(cur_em->em_relids, top_parent_relids))
+			/*
+			 * Consider only members that can be computed at child's topmost
+			 * parent joinrel, as in add_child_rel_equivalences.
+			 */
+			if (bms_is_subset(cur_em->em_relids, top_parent_relids))
 			{
-				/* Yes, generate transformed child version */
+				/* OK, generate transformed child version */
 				Expr	   *child_expr;
-				Relids		new_relids;
 
 				if (parent_joinrel->reloptkind == RELOPT_JOINREL)
 				{
@@ -3004,16 +3002,6 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 				}
 
 				/*
-				 * Transform em_relids to match.  Note we do *not* do
-				 * pull_varnos(child_expr) here, as for example the
-				 * transformation might have substituted a constant, but we
-				 * don't want the child member to be marked as constant.
-				 */
-				new_relids = bms_difference(cur_em->em_relids,
-											top_parent_relids);
-				new_relids = bms_add_members(new_relids, child_relids);
-
-				/*
 				 * Add new child member to the EquivalenceClass.  Because this
 				 * is a RELOPT_OTHER_JOINREL which has multiple component
 				 * relids, there is no ideal place to store these members in
@@ -3032,12 +3020,15 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 				 * for all the component relids, then that would just result
 				 * in eclass_member_iterator_next() finding the member
 				 * multiple times, which is a waste of effort.
+				 *
+				 * As in add_child_rel_equivalences, the child member's relids
+				 * are just the child's.
 				 */
 				add_child_eq_member(root,
 									cur_ec,
 									-1,
 									child_expr,
-									new_relids,
+									bms_copy(child_relids),
 									cur_em->em_jdomain,
 									cur_em,
 									cur_em->em_datatype,
