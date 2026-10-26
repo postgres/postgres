@@ -597,7 +597,8 @@ ok(-d "$tempdir/tbackup/tbl=spc2", 'tablespace with = sign was relocated');
 $node->safe_psql('postgres', "DROP TABLESPACE tblspc2;");
 rmtree("$tempdir/backup3");
 
-mkdir "$tempdir/$superlongname";
+mkdir "$real_sys_tempdir/$superlongname"
+  or BAIL_OUT "could not create $real_sys_tempdir/$superlongname: $!";
 $realTsDir = "$real_sys_tempdir/$superlongname";
 $node->safe_psql('postgres',
 	"CREATE TABLESPACE tblspc3 LOCATION '$realTsDir';");
