@@ -652,7 +652,7 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 	 */
 	if (extra->inner_unique &&
 		(inner_path->param_info == NULL ||
-		 bms_num_members(inner_path->param_info->ppi_serials) <
+		 bms_num_members(get_param_path_clause_serials(inner_path)) <
 		 list_length(extra->restrictlist)))
 		return NULL;
 
