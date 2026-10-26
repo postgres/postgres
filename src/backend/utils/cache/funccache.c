@@ -420,6 +420,7 @@ cfunc_resolve_polymorphic_argtypes(int numargs,
 					argtypes[i] = INT4RANGEOID;
 					break;
 				case ANYMULTIRANGEOID:
+				case ANYCOMPATIBLEMULTIRANGEOID:
 					argtypes[i] = INT4MULTIRANGEOID;
 					break;
 				default:
