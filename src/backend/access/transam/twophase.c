@@ -90,6 +90,7 @@
 #include "access/xlogutils.h"
 #include "catalog/pg_type.h"
 #include "catalog/storage.h"
+#include "common/string.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
@@ -1721,6 +1722,7 @@ static void
 RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 {
 	char		path[MAXPGPATH];
+	char		tmppath[MAXPGPATH];
 	pg_crc32c	statefile_crc;
 	int			fd;
 
@@ -1731,12 +1733,15 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 
 	TwoPhaseFilePath(path, xid);
 
-	fd = OpenTransientFile(path,
+	/* Write to a temp file and rename it into place */
+	snprintf(tmppath, sizeof(tmppath), "%s.tmp", path);
+
+	fd = OpenTransientFile(tmppath,
 						   O_CREAT | O_TRUNC | O_WRONLY | PG_BINARY);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not recreate file \"%s\": %m", path)));
+				 errmsg("could not recreate file \"%s\": %m", tmppath)));
 
 	/* Write content and CRC */
 	errno = 0;
@@ -1748,7 +1753,7 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 			errno = ENOSPC;
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write file \"%s\": %m", path)));
+				 errmsg("could not write file \"%s\": %m", tmppath)));
 	}
 	if (write(fd, &statefile_crc, sizeof(pg_crc32c)) != sizeof(pg_crc32c))
 	{
@@ -1757,7 +1762,7 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 			errno = ENOSPC;
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write file \"%s\": %m", path)));
+				 errmsg("could not write file \"%s\": %m", tmppath)));
 	}
 	pgstat_report_wait_end();
 
@@ -1769,13 +1774,23 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 	if (pg_fsync(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not fsync file \"%s\": %m", path)));
+				 errmsg("could not fsync file \"%s\": %m", tmppath)));
 	pgstat_report_wait_end();
 
 	if (CloseTransientFile(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not close file \"%s\": %m", path)));
+				 errmsg("could not close file \"%s\": %m", tmppath)));
+
+	/*
+	 * No durable_rename(), as CheckPointTwoPhase() fsyncs the parent
+	 * directory.
+	 */
+	if (rename(tmppath, path) != 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
+						tmppath, path)));
 }
 
 /*
@@ -1889,6 +1904,19 @@ restoreTwoPhaseData(void)
 	cldir = AllocateDir(TWOPHASE_DIR);
 	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
 	{
+		/* Ignore temp files created by RecreateTwoPhaseFile(). */
+		if (pg_str_endswith(clde->d_name, ".tmp"))
+		{
+			char		path[MAXPGPATH];
+
+			snprintf(path, MAXPGPATH, TWOPHASE_DIR "/%s", clde->d_name);
+			if (unlink(path) < 0)
+				ereport(WARNING,
+						(errcode_for_file_access(),
+						 errmsg("could not remove file \"%s\": %m", path)));
+			continue;
+		}
+
 		if (strlen(clde->d_name) == 8 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 8)
 		{
