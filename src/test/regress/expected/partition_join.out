@@ -806,12 +806,11 @@ SELECT t1.a, t1.c, t2.a, t2.c FROM prt4 t1 LEFT JOIN
                ->  Seq Scan on prt1_p3 t4_3
                      Filter: (b = 0)
                ->  Nested Loop
-                     Join Filter: (((COALESCE(t3_3.c, t4_3.c)))::text = (t1_3.c)::text)
                      ->  Index Scan using prt3_p3_a_idx on prt3_p3 t3_3
                            Index Cond: ((a = t4_3.a) AND (a IS NOT NULL))
                      ->  Index Only Scan using prt4_p3_c_a_idx on prt4_p3 t1_3
                            Index Cond: ((c = ((COALESCE(t3_3.c, t4_3.c)))::text) AND (a = t3_3.a))
-(28 rows)
+(27 rows)
 
 SELECT t1.a, t1.c, t2.a, t2.c FROM prt4 t1 LEFT JOIN
   (SELECT t3.a, COALESCE(t3.c, t4.c) AS c FROM prt3 t3 JOIN prt1 t4 ON t3.a = t4.a
@@ -873,6 +872,125 @@ SELECT s.x + 0 FROM prt1 t0 LEFT JOIN
 (5 rows)
 
 RESET enable_seqscan;
+-- bug with duplicate clauses for a parameterized child join, when an
+-- EquivalenceClass member references a rel outside the join
+EXPLAIN (COSTS OFF)
+SELECT t1.a, t1.c, t3.c, t5.f1 FROM prt4 t1 JOIN prt3 t2 ON t1.a = t2.a
+  JOIN prt1 t3 ON t2.a = t3.a, int4_tbl t5
+  WHERE t1.c = COALESCE(t3.c, t5.f1::text) AND t3.b = 0 ORDER BY t1.a, t5.f1;
+                                               QUERY PLAN                                               
+--------------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: t1.a, t5.f1
+   ->  Nested Loop
+         ->  Nested Loop
+               Join Filter: ((t1.c)::text = (COALESCE(t3.c, ((t5.f1)::text)::character varying))::text)
+               ->  Append
+                     ->  Hash Join
+                           Hash Cond: (t1_1.a = t3_1.a)
+                           ->  Seq Scan on prt4_p1 t1_1
+                           ->  Hash
+                                 ->  Seq Scan on prt1_p1 t3_1
+                                       Filter: (b = 0)
+                     ->  Hash Join
+                           Hash Cond: (t1_2.a = t3_2.a)
+                           ->  Seq Scan on prt4_p2 t1_2
+                           ->  Hash
+                                 ->  Seq Scan on prt1_p2 t3_2
+                                       Filter: (b = 0)
+                     ->  Hash Join
+                           Hash Cond: (t1_3.a = t3_3.a)
+                           ->  Seq Scan on prt4_p3 t1_3
+                           ->  Hash
+                                 ->  Seq Scan on prt1_p3 t3_3
+                                       Filter: (b = 0)
+               ->  Materialize
+                     ->  Seq Scan on int4_tbl t5
+         ->  Append
+               ->  Index Only Scan using prt3_p1_a_idx on prt3_p1 t2_1
+                     Index Cond: (a = t1.a)
+               ->  Index Only Scan using prt3_p2_a_idx on prt3_p2 t2_2
+                     Index Cond: (a = t1.a)
+               ->  Index Only Scan using prt3_p3_a_idx on prt3_p3 t2_3
+                     Index Cond: (a = t1.a)
+(33 rows)
+
+SELECT t1.a, t1.c, t3.c, t5.f1 FROM prt4 t1 JOIN prt3 t2 ON t1.a = t2.a
+  JOIN prt1 t3 ON t2.a = t3.a, int4_tbl t5
+  WHERE t1.c = COALESCE(t3.c, t5.f1::text) AND t3.b = 0 ORDER BY t1.a, t5.f1;
+ a |  c   |  c   |     f1      
+---+------+------+-------------
+ 0 | 0000 | 0000 | -2147483647
+ 0 | 0000 | 0000 | -2147483647
+ 0 | 0000 | 0000 |     -123456
+ 0 | 0000 | 0000 |     -123456
+ 0 | 0000 | 0000 |           0
+ 0 | 0000 | 0000 |           0
+ 0 | 0000 | 0000 |      123456
+ 0 | 0000 | 0000 |      123456
+ 0 | 0000 | 0000 |  2147483647
+ 0 | 0000 | 0000 |  2147483647
+(10 rows)
+
+-- same, with the child joins built repeatedly by GEQO
+SET geqo_threshold = 2;
+EXPLAIN (COSTS OFF)
+SELECT t1.a, t1.c, t2.a, t2.c FROM prt4 t1 LEFT JOIN
+  (SELECT t3.a, COALESCE(t3.c, t4.c) AS c FROM prt3 t3 JOIN prt1 t4 ON t3.a = t4.a
+   WHERE t4.b = 0) t2 ON t1.a = t2.a
+  WHERE t1.c = t2.c AND t2.a IS NOT NULL ORDER BY t1.a, t1.c;
+                                               QUERY PLAN                                               
+--------------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: t1.a, t1.c
+   ->  Append
+         ->  Nested Loop
+               Join Filter: ((t3_1.a = t4_1.a) AND ((t1_1.c)::text = (COALESCE(t3_1.c, t4_1.c))::text))
+               ->  Hash Join
+                     Hash Cond: (t1_1.a = t4_1.a)
+                     ->  Seq Scan on prt4_p1 t1_1
+                     ->  Hash
+                           ->  Seq Scan on prt1_p1 t4_1
+                                 Filter: (b = 0)
+               ->  Index Scan using prt3_p1_a_idx on prt3_p1 t3_1
+                     Index Cond: ((a = t1_1.a) AND (a IS NOT NULL))
+         ->  Nested Loop
+               Join Filter: ((t3_2.a = t4_2.a) AND ((t1_2.c)::text = (COALESCE(t3_2.c, t4_2.c))::text))
+               ->  Hash Join
+                     Hash Cond: (t1_2.a = t4_2.a)
+                     ->  Seq Scan on prt4_p2 t1_2
+                     ->  Hash
+                           ->  Seq Scan on prt1_p2 t4_2
+                                 Filter: (b = 0)
+               ->  Index Scan using prt3_p2_a_idx on prt3_p2 t3_2
+                     Index Cond: ((a = t1_2.a) AND (a IS NOT NULL))
+         ->  Nested Loop
+               Join Filter: ((t3_3.a = t4_3.a) AND ((t1_3.c)::text = (COALESCE(t3_3.c, t4_3.c))::text))
+               ->  Hash Join
+                     Hash Cond: (t1_3.a = t4_3.a)
+                     ->  Seq Scan on prt4_p3 t1_3
+                     ->  Hash
+                           ->  Seq Scan on prt1_p3 t4_3
+                                 Filter: (b = 0)
+               ->  Index Scan using prt3_p3_a_idx on prt3_p3 t3_3
+                     Index Cond: ((a = t1_3.a) AND (a IS NOT NULL))
+(33 rows)
+
+SELECT t1.a, t1.c, t2.a, t2.c FROM prt4 t1 LEFT JOIN
+  (SELECT t3.a, COALESCE(t3.c, t4.c) AS c FROM prt3 t3 JOIN prt1 t4 ON t3.a = t4.a
+   WHERE t4.b = 0) t2 ON t1.a = t2.a
+  WHERE t1.c = t2.c AND t2.a IS NOT NULL ORDER BY t1.a, t1.c;
+  a  |  c   |  a  |  c   
+-----+------+-----+------
+   0 | 0000 |   0 | 0000
+   0 | 0001 |   0 | 0001
+ 250 | 0000 | 250 | 0000
+ 250 | 0001 | 250 | 0001
+ 500 | 0000 | 500 | 0000
+ 500 | 0001 | 500 | 0001
+(6 rows)
+
+RESET geqo_threshold;
 -- bug in freeing the SpecialJoinInfo of a child-join
 EXPLAIN (COSTS OFF)
 SELECT * FROM prt1 t1 JOIN prt1 t2 ON t1.a = t2.a WHERE t1.a IN (SELECT a FROM prt1 t3);

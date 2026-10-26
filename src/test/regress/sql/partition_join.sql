@@ -202,6 +202,31 @@ SELECT s.x + 0 FROM prt1 t0 LEFT JOIN
   ON true WHERE s.a = s.x + 0 AND t0.a = 0 ORDER BY 1;
 RESET enable_seqscan;
 
+-- bug with duplicate clauses for a parameterized child join, when an
+-- EquivalenceClass member references a rel outside the join
+EXPLAIN (COSTS OFF)
+SELECT t1.a, t1.c, t3.c, t5.f1 FROM prt4 t1 JOIN prt3 t2 ON t1.a = t2.a
+  JOIN prt1 t3 ON t2.a = t3.a, int4_tbl t5
+  WHERE t1.c = COALESCE(t3.c, t5.f1::text) AND t3.b = 0 ORDER BY t1.a, t5.f1;
+SELECT t1.a, t1.c, t3.c, t5.f1 FROM prt4 t1 JOIN prt3 t2 ON t1.a = t2.a
+  JOIN prt1 t3 ON t2.a = t3.a, int4_tbl t5
+  WHERE t1.c = COALESCE(t3.c, t5.f1::text) AND t3.b = 0 ORDER BY t1.a, t5.f1;
+
+-- same, with the child joins built repeatedly by GEQO
+SET geqo_threshold = 2;
+
+EXPLAIN (COSTS OFF)
+SELECT t1.a, t1.c, t2.a, t2.c FROM prt4 t1 LEFT JOIN
+  (SELECT t3.a, COALESCE(t3.c, t4.c) AS c FROM prt3 t3 JOIN prt1 t4 ON t3.a = t4.a
+   WHERE t4.b = 0) t2 ON t1.a = t2.a
+  WHERE t1.c = t2.c AND t2.a IS NOT NULL ORDER BY t1.a, t1.c;
+SELECT t1.a, t1.c, t2.a, t2.c FROM prt4 t1 LEFT JOIN
+  (SELECT t3.a, COALESCE(t3.c, t4.c) AS c FROM prt3 t3 JOIN prt1 t4 ON t3.a = t4.a
+   WHERE t4.b = 0) t2 ON t1.a = t2.a
+  WHERE t1.c = t2.c AND t2.a IS NOT NULL ORDER BY t1.a, t1.c;
+
+RESET geqo_threshold;
+
 -- bug in freeing the SpecialJoinInfo of a child-join
 EXPLAIN (COSTS OFF)
 SELECT * FROM prt1 t1 JOIN prt1 t2 ON t1.a = t2.a WHERE t1.a IN (SELECT a FROM prt1 t3);
