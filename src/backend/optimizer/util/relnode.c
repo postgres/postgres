@@ -2153,6 +2153,27 @@ get_appendrel_parampathinfo(RelOptInfo *appendrel, Relids required_outer)
 }
 
 /*
+ * get_wrapper_parampathinfo
+ *		Get the ParamPathInfo for a parameterized wrapper path.
+ *
+ * If a wrapper-type path, such as a MaterialPath, might be parameterized,
+ * use this function to compute its param_info.  This is suitable only when
+ * the wrapper path cannot add or remove any parameterization from its
+ * subpath, which typically means that it evaluates no quals nor tlist
+ * expressions.
+ */
+ParamPathInfo *
+get_wrapper_parampathinfo(Path *subpath)
+{
+	/*
+	 * Currently we just re-use the subpath's ParamPathInfo, if any.  The
+	 * ppi_req_outer value is correct given the assumption stated above, and
+	 * none of the other fields are required to be valid for a wrapper path.
+	 */
+	return subpath->param_info;
+}
+
+/*
  * Returns a ParamPathInfo for the parameterization given by required_outer, if
  * already available in the given rel. Returns NULL otherwise.
  */
@@ -2176,6 +2197,8 @@ find_param_path_info(RelOptInfo *rel, Relids required_outer)
  * get_param_path_clause_serials
  *		Given a parameterized Path, return the set of pushed-down clauses
  *		(identified by rinfo_serial numbers) enforced within the Path.
+ *
+ * Callers should use this in preference to fetching ppi_serials themselves.
  */
 Bitmapset *
 get_param_path_clause_serials(Path *path)
@@ -2183,72 +2206,114 @@ get_param_path_clause_serials(Path *path)
 	if (path->param_info == NULL)
 		return NULL;			/* not parameterized */
 
-	/*
-	 * We don't currently support parameterized MergeAppend paths, as
-	 * explained in the comments for generate_orderedappend_paths.
-	 */
-	Assert(!IsA(path, MergeAppendPath));
-
-	if (IsA(path, NestPath) ||
-		IsA(path, MergePath) ||
-		IsA(path, HashPath))
+	switch (nodeTag(path))
 	{
-		/*
-		 * For a join path, combine clauses enforced within either input path
-		 * with those enforced as joinrestrictinfo in this path.  Note that
-		 * joinrestrictinfo may include some non-pushed-down clauses, but for
-		 * current purposes it's okay if we include those in the result. (To
-		 * be more careful, we could check for clause_relids overlapping the
-		 * path parameterization, but it's not worth the cycles for now.)
-		 */
-		JoinPath   *jpath = (JoinPath *) path;
-		Bitmapset  *pserials;
-		ListCell   *lc;
+		case T_NestPath:
+		case T_MergePath:
+		case T_HashPath:
+			{
+				/*
+				 * For a join path, combine clauses enforced within either
+				 * input path with those enforced as joinrestrictinfo in this
+				 * path.  Note that joinrestrictinfo may include some
+				 * non-pushed-down clauses, but for current purposes it's okay
+				 * if we include those in the result.  (To be more careful, we
+				 * could check for clause_relids overlapping the path
+				 * parameterization, but it's not worth the cycles for now.)
+				 */
+				JoinPath   *jpath = (JoinPath *) path;
+				Bitmapset  *pserials;
+				ListCell   *lc;
 
-		pserials = NULL;
-		pserials = bms_add_members(pserials,
-								   get_param_path_clause_serials(jpath->outerjoinpath));
-		pserials = bms_add_members(pserials,
-								   get_param_path_clause_serials(jpath->innerjoinpath));
-		foreach(lc, jpath->joinrestrictinfo)
-		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+				pserials = NULL;
+				pserials = bms_add_members(pserials,
+										   get_param_path_clause_serials(jpath->outerjoinpath));
+				pserials = bms_add_members(pserials,
+										   get_param_path_clause_serials(jpath->innerjoinpath));
+				foreach(lc, jpath->joinrestrictinfo)
+				{
+					RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
-			pserials = bms_add_member(pserials, rinfo->rinfo_serial);
-		}
-		return pserials;
-	}
-	else if (IsA(path, AppendPath))
-	{
-		/*
-		 * For an appendrel, take the intersection of the sets of clauses
-		 * enforced in each input path.
-		 */
-		AppendPath *apath = (AppendPath *) path;
-		Bitmapset  *pserials;
-		ListCell   *lc;
+					pserials = bms_add_member(pserials, rinfo->rinfo_serial);
+				}
+				return pserials;
+			}
+		case T_AppendPath:
+			{
+				/*
+				 * For an appendrel, take the intersection of the sets of
+				 * clauses enforced in each input path.
+				 */
+				AppendPath *apath = (AppendPath *) path;
+				Bitmapset  *pserials;
+				ListCell   *lc;
 
-		pserials = NULL;
-		foreach(lc, apath->subpaths)
-		{
-			Path	   *subpath = (Path *) lfirst(lc);
-			Bitmapset  *subserials;
+				pserials = NULL;
+				foreach(lc, apath->subpaths)
+				{
+					Path	   *subpath = (Path *) lfirst(lc);
+					Bitmapset  *subserials;
 
-			subserials = get_param_path_clause_serials(subpath);
-			if (lc == list_head(apath->subpaths))
-				pserials = bms_copy(subserials);
-			else
-				pserials = bms_int_members(pserials, subserials);
-		}
-		return pserials;
-	}
-	else
-	{
-		/*
-		 * Otherwise, it's a baserel path and we can use the
-		 * previously-computed set of serial numbers.
-		 */
-		return path->param_info->ppi_serials;
+					subserials = get_param_path_clause_serials(subpath);
+					if (lc == list_head(apath->subpaths))
+						pserials = bms_copy(subserials);
+					else
+						pserials = bms_int_members(pserials, subserials);
+					if (bms_is_empty(pserials))
+						break;	/* no point in continuing */
+				}
+				return pserials;
+			}
+		case T_MergeAppendPath:
+
+			/*
+			 * We don't currently support parameterized MergeAppend paths, as
+			 * explained in the comments for generate_orderedappend_paths.
+			 */
+			Assert(false);
+			return NULL;
+		case T_GatherPath:
+		case T_GatherMergePath:
+
+			/*
+			 * Gather and GatherMerge paths are never parameterized, since we
+			 * don't generate parameterized partial paths (see
+			 * add_partial_path).
+			 */
+			Assert(false);
+			return NULL;
+
+			/*
+			 * A path that merely wraps another path enforces no clauses of
+			 * its own, so recurse through such paths.  We can't just use its
+			 * ppi_serials, as that is the same as the subpath's, and won't be
+			 * valid for join or append subpaths.  The set of path types
+			 * listed here should match the set for which pathnode.c uses
+			 * get_wrapper_parampathinfo().
+			 */
+		case T_MaterialPath:
+			return get_param_path_clause_serials(((MaterialPath *) path)->subpath);
+		case T_MemoizePath:
+			return get_param_path_clause_serials(((MemoizePath *) path)->subpath);
+		case T_ProjectionPath:
+			return get_param_path_clause_serials(((ProjectionPath *) path)->subpath);
+		case T_SortPath:
+			return get_param_path_clause_serials(((SortPath *) path)->subpath);
+		case T_IncrementalSortPath:
+			return get_param_path_clause_serials(((IncrementalSortPath *) path)->spath.subpath);
+		case T_UniquePath:
+			return get_param_path_clause_serials(((UniquePath *) path)->subpath);
+		case T_AggPath:
+			return get_param_path_clause_serials(((AggPath *) path)->subpath);
+		case T_GroupingSetsPath:
+			return get_param_path_clause_serials(((GroupingSetsPath *) path)->subpath);
+		default:
+
+			/*
+			 * Otherwise, it's a baserel path and we can use the
+			 * previously-computed set of serial numbers.
+			 */
+			return path->param_info->ppi_serials;
 	}
 }
 

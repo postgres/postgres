@@ -801,16 +801,16 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 	 */
 	if (extra->inner_unique)
 	{
-		Bitmapset  *ppi_serials;
+		Bitmapset  *pserials;
 
 		if (inner_path->param_info == NULL)
 			return NULL;
 
-		ppi_serials = inner_path->param_info->ppi_serials;
+		pserials = get_param_path_clause_serials(inner_path);
 
 		foreach_node(RestrictInfo, rinfo, extra->restrictlist)
 		{
-			if (!bms_is_member(rinfo->rinfo_serial, ppi_serials))
+			if (!bms_is_member(rinfo->rinfo_serial, pserials))
 				return NULL;
 		}
 	}

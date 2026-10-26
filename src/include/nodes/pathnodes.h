@@ -1904,16 +1904,35 @@ typedef struct PathTarget
  * avoid recalculations, but mostly to ensure that the estimated rowcount
  * is in fact the same for every such path.
  *
- * Note: ppi_clauses is only used in ParamPathInfos for base relation paths;
+ * ppi_req_outer, which is the lookup key for ParamPathInfo, is currently
+ * the only field that is guaranteed to be valid in all cases.
+ *
+ * ppi_rows is maintained for base rels and join rels, but it's not presently
+ * meaningful for append relations nor for wrapper paths.  We copy it into
+ * parameterized Paths formed for base and join rels, but append paths and
+ * wrapper paths compute their rows estimates independently of it.
+ *
+ * ppi_clauses is the set of join clauses that could be evaluated at the
+ * given relation given the specified outer rels as parameter sources.
+ * ppi_clauses is only used in ParamPathInfos for base relation paths;
  * in join cases it's NIL because the set of relevant clauses varies depending
  * on how the join is formed.  The relevant clauses will appear in each
  * parameterized join path's joinrestrictinfo list, instead.  ParamPathInfos
- * for append relations don't bother with this, either.
+ * for append relations likewise set ppi_clauses to NIL, mainly because
+ * there could be a join underneath, rendering the append's clause set just
+ * as variable as the join's is.  The exception is that create_append_path
+ * uses get_baserel_parampathinfo for an appendrel that is a baserel; its
+ * ppi_clauses can then include clauses that no child path enforces, such as
+ * one derived from an EquivalenceClass member that also references another
+ * rel and so has no child version.
  *
  * ppi_serials is the set of rinfo_serial numbers for quals that are enforced
- * by this path.  As with ppi_clauses, it's only maintained for baserels.
- * (We could construct it on-the-fly from ppi_clauses, but it seems better
- * to materialize a copy.)
+ * by this path.  As with ppi_clauses, it's only maintained for baserels, and
+ * for a baserel appendrel it can likewise claim clauses that are not really
+ * enforced.  (We could construct it on-the-fly from ppi_clauses, but it seems
+ * better to materialize a copy.)  Use get_param_path_clause_serials() to
+ * compute the set of rinfo_serial numbers for a Path that might not be for a
+ * baserel.
  */
 typedef struct ParamPathInfo
 {

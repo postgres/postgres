@@ -4217,6 +4217,29 @@ select * from
              on z.q2 = ss.v)
     on y.q1 = 1;
 
+-- check that a clause the UNION ALL members cannot enforce is not dropped
+-- from the join above as already enforced, even through a Materialize
+begin;
+
+set local join_collapse_limit to 1;
+
+explain (costs off)
+select * from int4_tbl t1 join
+  (int4_tbl t2 cross join lateral
+     (select q1 from int8_tbl where q2 < t1.f1
+      union all
+      select q1 from int8_tbl where q2 < t1.f1) s)
+  on t1.f1 = s.q1 + t1.f1;
+
+select * from int4_tbl t1 join
+  (int4_tbl t2 cross join lateral
+     (select q1 from int8_tbl where q2 < t1.f1
+      union all
+      select q1 from int8_tbl where q2 < t1.f1) s)
+  on t1.f1 = s.q1 + t1.f1;
+
+rollback;
+
 -- lateral can result in join conditions appearing below their
 -- real semantic level
 explain (verbose, costs off)
