@@ -454,6 +454,24 @@ JOIN relnodes_new n ON o.relname = n.relname
 WHERE o.relfilenode <> n.relfilenode
 ORDER BY o.relname;
 
+-- CLUSTER with rollbacked subtransaction, where the same row is inserted,
+-- updated, then rollbacked.
+BEGIN;
+-- Index scan required for CLUSTER, force it.
+SET LOCAL random_page_cost = 0.0001;
+SET LOCAL seq_page_cost = 1000;
+CREATE TABLE cluster_aborted_upd (a int, b int);
+CREATE INDEX cluster_aborted_upd_idx ON cluster_aborted_upd (b);
+INSERT INTO cluster_aborted_upd VALUES (1, 3);
+SAVEPOINT sp;
+UPDATE cluster_aborted_upd SET a = 2;
+ROLLBACK TO sp;
+CLUSTER cluster_aborted_upd USING cluster_aborted_upd_idx;
+COMMIT;
+-- One row expected.
+SELECT count(*) FROM cluster_aborted_upd;
+SELECT * FROM cluster_aborted_upd;
+
 -- clean up
 DROP TABLE clustertest;
 DROP TABLE clstr_1;
@@ -462,5 +480,6 @@ DROP TABLE clstr_3;
 DROP TABLE clstr_4;
 DROP TABLE clstr_expression;
 DROP TABLE clstrpart;
+DROP TABLE cluster_aborted_upd;
 
 DROP USER regress_clstr_user;
