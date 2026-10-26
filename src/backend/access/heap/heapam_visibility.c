@@ -1261,6 +1261,8 @@ HeapTupleSatisfiesVacuumHorizon(HeapTuple htup, Buffer buffer, TransactionId *de
 			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tuple)))
 				return HEAPTUPLE_DELETE_IN_PROGRESS;
 			/* deleting subtransaction must have aborted */
+			SetHintBits(tuple, buffer, HEAP_XMAX_INVALID,
+						InvalidTransactionId);
 			return HEAPTUPLE_INSERT_IN_PROGRESS;
 		}
 		else if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmin(tuple)))
