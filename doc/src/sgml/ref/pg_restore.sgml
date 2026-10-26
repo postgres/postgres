@@ -630,7 +630,7 @@ PostgreSQL documentation
          <listitem>
           <para>
            <literal>index</literal>: indexes, works like the
-           <option>-I</option>/<option>--indexes</option> option. This keyword
+           <option>-I</option>/<option>--index</option> option. This keyword
            can only be used with the <literal>include</literal> keyword.
           </para>
          </listitem>
