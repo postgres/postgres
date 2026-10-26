@@ -2397,7 +2397,15 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	 * right.
 	 */
 	if (target != leafblkno)
+	{
 		_bt_lockbuf(rel, leafbuf, BT_WRITE);
+
+		/* Leaf page's left sibling may have split while we held no lock */
+		page = BufferGetPage(leafbuf);
+		opaque = BTPageGetOpaque(page);
+		leafleftsib = opaque->btpo_prev;
+		leafrightsib = opaque->btpo_next;
+	}
 	if (leftsib != P_NONE)
 	{
 		lbuf = _bt_getbuf(rel, leftsib, BT_WRITE);
@@ -2617,9 +2625,9 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	 *
 	 * Note: We rely on the fact that a buffer pin on the leaf page has been
 	 * held since leafhikey was initialized.  This is safe, though only
-	 * because the page was already half-dead at that point.  The leaf page
-	 * cannot have been modified by any other backend during the period when
-	 * no lock was held.
+	 * because the page was already half-dead at that point.  The leaf page's
+	 * items cannot have been modified by any other backend during the period
+	 * when no lock was held.
 	 */
 	if (target != leafblkno)
 		BTreeTupleSetTopParent(leafhikey, leaftopparent);
