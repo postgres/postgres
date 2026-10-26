@@ -76,6 +76,7 @@ extern PGDLLIMPORT SnapshotData SnapshotToastData;
 
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);
+extern Snapshot GetSecondarySnapshot(void);
 extern void SnapshotSetCommandId(CommandId curcid);
 
 extern Snapshot GetCatalogSnapshot(Oid relid);

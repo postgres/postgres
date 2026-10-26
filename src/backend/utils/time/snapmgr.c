@@ -377,6 +377,36 @@ GetLatestSnapshot(void)
 }
 
 /*
+ * GetSecondarySnapshot
+ *		Get a snapshot that is up-to-date as of the current instant.
+ *
+ * This differs from GetLatestSnapshot() in that it will never set the
+ * transaction snapshot, so that it does not need to block waiting for a safe
+ * snapshot in RO deferrable serializable transaction mode.  That makes it
+ * semantically dubious to use the result for testing tuple visibility.
+ * Current callers only use it to test whether XIDs are still running.
+ *
+ * An additional constraint is that if the caller registers the snapshot, it
+ * must unregister it before any possible call of GetTransactionSnapshot();
+ * else the empty-heap Assert therein could fire.
+ */
+Snapshot
+GetSecondarySnapshot(void)
+{
+	/*
+	 * We might be able to relax this, but nothing that could otherwise work
+	 * needs it.
+	 */
+	if (IsInParallelMode())
+		elog(ERROR,
+			 "cannot update SecondarySnapshot during a parallel operation");
+
+	SecondarySnapshot = GetSnapshotData(&SecondarySnapshotData);
+
+	return SecondarySnapshot;
+}
+
+/*
  * GetCatalogSnapshot
  *		Get a snapshot that is sufficiently up-to-date for scan of the
  *		system catalog with the specified OID.

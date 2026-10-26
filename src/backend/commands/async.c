@@ -2656,9 +2656,14 @@ asyncQueueReadAllNotifications(void)
 	 * BecomeRegisteredListener has already added us to the listener array,
 	 * so no not-yet-committed messages can be removed from the queue
 	 * before we see them.
+	 *
+	 * Since we'll only use this snapshot to check whether XIDs are still
+	 * running, and we will release it before returning, it's okay to use
+	 * GetSecondarySnapshot(); that avoids possibly blocking on other
+	 * transactions in SERIALIZABLE READ ONLY DEFERRABLE mode.
 	 *----------
 	 */
-	snapshot = RegisterSnapshot(GetLatestSnapshot());
+	snapshot = RegisterSnapshot(GetSecondarySnapshot());
 
 	/*
 	 * It is possible that we fail while trying to send a message to our
