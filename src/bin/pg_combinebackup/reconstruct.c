@@ -486,6 +486,12 @@ make_incremental_rfile(char *filename)
 			pg_malloc0(sizeof(BlockNumber) * rf->num_blocks);
 		read_bytes(rf, rf->relative_block_numbers,
 				   sizeof(BlockNumber) * rf->num_blocks);
+		for (unsigned i = 0; i < rf->num_blocks; i++)
+		{
+			if (rf->relative_block_numbers[i] >= RELSEG_SIZE)
+				pg_fatal("file \"%s\" has block number %u in excess of segment size %u",
+						 filename, rf->relative_block_numbers[i], RELSEG_SIZE);
+		}
 	}
 
 	/* Remember length of header. */
