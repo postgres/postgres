@@ -167,6 +167,7 @@ be_tls_init(bool isServerStart)
 	int			ssl_ver_max = -1;
 	host_cache_hash *host_cache = NULL;
 	bool		hasWarned = false;
+	int			nloaded = 0;
 
 	/*
 	 * Since we don't know which host we're using until the ClientHello is
@@ -331,10 +332,20 @@ be_tls_init(bool isServerStart)
 			 * Create the SSL context only once the entry has been accepted
 			 * and added to new_hosts, as the cleanup callback can only free
 			 * contexts of entries it can reach from there.
+			 *
+			 * An EXEC_BACKEND child has no previous configuration to fall
+			 * back on, so rather than leaving the backend without SSL for all
+			 * hosts we keep a failed entry without a context.  Connections
+			 * selecting it will fail the handshake.
 			 */
-			if (!init_host_context(host, isServerStart, &hasWarned))
+			if (init_host_context(host, isServerStart, &hasWarned))
+				nloaded++;
+			else if (!IsUnderPostmaster)
 				goto error;
 		}
+
+		if (nloaded == 0)
+			goto error;
 	}
 
 	/*
@@ -2098,6 +2109,17 @@ sni_clienthello_cb(SSL *ssl, int *al, void *arg)
 	}
 
 found:
+	if (install_config->ssl_ctx == NULL)
+	{
+		*al = SSL_AD_INTERNAL_ERROR;
+		ereport(COMMERROR,
+				errcode(ERRCODE_CONFIG_FILE_ERROR),
+				errmsg("SSL configuration for host could not be loaded, terminating connection"),
+				errcontext("line %d of configuration file \"%s\"",
+						   install_config->linenumber, install_config->sourcefile));
+		return SSL_CLIENT_HELLO_ERROR;
+	}
+
 	if (!ssl_update_ssl(ssl, install_config))
 	{
 		*al = SSL_AD_INTERNAL_ERROR;

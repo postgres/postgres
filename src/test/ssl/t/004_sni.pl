@@ -504,6 +504,38 @@ SKIP:
 		'log reload failure due to passphrase command reloading');
 }
 
+# A host whose key cannot be loaded in an EXEC_BACKEND child must only affect
+# connections to that host.
+ok(unlink($node->data_dir . '/pg_hosts.conf'));
+$node->append_conf('pg_hosts.conf',
+	'localhost server-cn-only.crt server-cn-only.key');
+$node->append_conf('pg_hosts.conf',
+	'example.org server-cn-only.crt server-password.key root+client_ca.crt "echo secret1" off'
+);
+$node->restart;
+$node_loglocation = -s $node->logfile;
+
+$node->connect_ok(
+	"$connstr sslrootcert=ssl/root+server_ca.crt sslmode=require host=localhost",
+	"pg_hosts.conf: connect to host next to a passphrase host without reload"
+);
+
+if ($windows_os || $exec_backend =~ /on/)
+{
+	$node->connect_fails(
+		"$connstr sslrootcert=ssl/root+server_ca.crt sslmode=require host=example.org",
+		"pg_hosts.conf: connect to passphrase host without reload fails",
+		expected_stderr => qr/internal error/);
+	$node->wait_for_log(qr/SSL configuration for host could not be loaded/,
+		$node_loglocation);
+}
+else
+{
+	$node->connect_ok(
+		"$connstr sslrootcert=ssl/root+server_ca.crt sslmode=require host=example.org",
+		"pg_hosts.conf: connect to passphrase host without reload");
+}
+
 # Configure with only non-SNI connections allowed
 ok(unlink($node->data_dir . '/pg_hosts.conf'));
 $node->append_conf('pg_hosts.conf',
