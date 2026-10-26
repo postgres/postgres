@@ -328,10 +328,14 @@ wc_iscased_libc_utf8(pg_wchar wc, pg_locale_t locale)
 
 	/*
 	 * For UTF8, pg_wchar is a codepoint and we assume we can pass it directly
-	 * to iswupper_l()/iswlower_l().
+	 * to iswupper_l()/iswlower_l().  Some C libraries case-map characters
+	 * that they do not classify as upper or lower, so also check the mapping,
+	 * which is what ILIKE uses.
 	 */
 	return iswupper_l((wint_t) wc, locale->lt) ||
-		iswlower_l((wint_t) wc, locale->lt);
+		iswlower_l((wint_t) wc, locale->lt) ||
+		towupper_l((wint_t) wc, locale->lt) != (wint_t) wc ||
+		towlower_l((wint_t) wc, locale->lt) != (wint_t) wc;
 }
 
 static pg_wchar
