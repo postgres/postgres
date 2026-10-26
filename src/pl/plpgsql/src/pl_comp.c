@@ -410,7 +410,8 @@ plpgsql_compile_callback(FunctionCallInfo fcinfo,
 					else if (rettypeid == ANYRANGEOID ||
 							 rettypeid == ANYCOMPATIBLERANGEOID)
 						rettypeid = INT4RANGEOID;
-					else if (rettypeid == ANYMULTIRANGEOID)
+					else if (rettypeid == ANYMULTIRANGEOID ||
+							 rettypeid == ANYCOMPATIBLEMULTIRANGEOID)
 						rettypeid = INT4MULTIRANGEOID;
 					else		/* ANYELEMENT or ANYNONARRAY or ANYCOMPATIBLE */
 						rettypeid = INT4OID;
