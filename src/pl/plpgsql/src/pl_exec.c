@@ -1199,6 +1199,13 @@ plpgsql_exec_event_trigger(PLpgSQL_function *func, EventTriggerData *trigdata)
 	estate.err_text = gettext_noop("during initialization of execution state");
 	copy_plpgsql_datums(&estate, func);
 
+	estate.err_text = gettext_noop("during function entry");
+
+	/*
+	 * Set the magic variable FOUND to false
+	 */
+	exec_set_found(&estate, false);
+
 	/*
 	 * Let the instrumentation plugin peek at this function
 	 */
