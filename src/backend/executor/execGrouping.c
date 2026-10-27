@@ -203,18 +203,37 @@ BuildTupleHashTable(PlanState *parent,
 
 	/*
 	 * tuplehash_create requires a uint32 element count, so we had better
-	 * clamp the given nelements to fit in that.  As long as we have to do
-	 * that, we might as well protect against completely insane input like
-	 * zero or NaN.  But it is not our job here to enforce issues like staying
-	 * within hash_mem: the caller should have done that, and we don't have
-	 * enough info to second-guess.
+	 * clamp the given nelements to fit in that.  We'd also better do
+	 * something sane when faced with a zero or NaN estimate.  There are
+	 * various reasons why the planner might not be able to provide a good
+	 * estimate here; for example, recursive CTEs don't base their estimate
+	 * on anything reliable and can yield some rather large estimates.  Here
+	 * we cap nbuckets to hash_mem to help prevent insane memory allocations.
+	 * The hash table can still grow when the bucket count is insufficient.
+	 * That will make the query a little slower, but that's better than
+	 * outright failing due to OOM if we were to request an insane bucket
+	 * count.  Queries being slightly slower with smaller work_mem values is
+	 * also aligned to user expectations.  We purposefully don't include the
+	 * tuple width in this calculation, as that would make the cap depend on
+	 * planner estimates for the tuple width, which could also be unreliable.
 	 */
 	if (isnan(nelements) || nelements <= 0)
 		nbuckets = 1;
-	else if (nelements >= PG_UINT32_MAX)
-		nbuckets = PG_UINT32_MAX;
 	else
-		nbuckets = (uint32) nelements;
+	{
+		size_t		entrysize;
+		size_t		hash_mem_limit;
+
+		if (nelements >= PG_UINT32_MAX)
+			nbuckets = PG_UINT32_MAX;
+		else
+			nbuckets = (uint32) nelements;
+
+		entrysize = sizeof(TupleHashEntryData) + additionalsize;
+		hash_mem_limit = get_hash_memory_limit() / entrysize;
+		if (nbuckets > hash_mem_limit)
+			nbuckets = hash_mem_limit;
+	}
 
 	/* tuplescxt must be separate, else ResetTupleHashTable breaks things */
 	Assert(metacxt != tuplescxt);
