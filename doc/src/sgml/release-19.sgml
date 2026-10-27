@@ -932,6 +932,17 @@ Add system view <link linkend="pg-stat-recovery-view"><structname>pg_stat_recove
 </listitem>
 
 <!--
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+2026-03-10 [ac58465e0] Introduce the REPACK command
+-->
+
+<listitem>
+<para>
+Add system view <link linkend="pg-stat-progress-repack-view"><structname>pg_stat_progress_repack</structname></link> to report the progress of <command>REPACK</command>, <command>CLUSTER</command>, and <command>VACUUM FULL</command> (Álvaro Herrera)
+</para>
+</listitem>
+
+<!--
 Author: Nathan Bossart <nathan@postgresql.org>
 2026-04-06 [87f61f0c8] Add pg_stat_autovacuum_scores system view.
 -->
@@ -940,21 +951,6 @@ Author: Nathan Bossart <nathan@postgresql.org>
 <para>
 Add system view <link linkend="pg-stat-autovacuum-scores-view"><structname>pg_stat_autovacuum_scores</structname></link> to report per-table <link linkend="autovacuum">autovacuum</link> details (Sami Imseih)
 <ulink url="&commit_baseurl;87f61f0c8">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: Nathan Bossart <nathan@postgresql.org>
-2025-07-09 [167ed8082] Introduce pg_dsm_registry_allocations view.
-Author: Nathan Bossart <nathan@postgresql.org>
-2025-12-02 [f894acb24] Show size of DSAs and dshashes in pg_dsm_registry_alloca
--->
-
-<listitem>
-<para>
-Add system view <link linkend="view-pg-dsm-registry-allocations"><structname>pg_dsm_registry_allocations</structname></link> to report <link linkend="guc-dynamic-shared-memory-type">dynamic shared memory</link> details (Florents Tselai, Nathan Bossart)
-<ulink url="&commit_baseurl;167ed8082">&sect;</ulink>
-<ulink url="&commit_baseurl;f894acb24">&sect;</ulink>
 </para>
 </listitem>
 
@@ -987,6 +983,21 @@ Add analyze initiation details to system view <link linkend="pg-stat-progress-an
 
 <para>
 The new <structfield>started_by</structfield> column reports the initiator of the analyze.
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-07-09 [167ed8082] Introduce pg_dsm_registry_allocations view.
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-12-02 [f894acb24] Show size of DSAs and dshashes in pg_dsm_registry_alloca
+-->
+
+<listitem>
+<para>
+Add system view <link linkend="view-pg-dsm-registry-allocations"><structname>pg_dsm_registry_allocations</structname></link> to report <link linkend="guc-dynamic-shared-memory-type">dynamic shared memory</link> details (Florents Tselai, Nathan Bossart)
+<ulink url="&commit_baseurl;167ed8082">&sect;</ulink>
+<ulink url="&commit_baseurl;f894acb24">&sect;</ulink>
 </para>
 </listitem>
 
