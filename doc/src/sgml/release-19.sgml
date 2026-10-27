@@ -1542,8 +1542,7 @@ Allow sequence values stored in subscribers to match the publisher (Vignesh C)
 </para>
 
 <para>
-This is enabled during <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>, <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command></link>, and <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link>.  The latter only updates values, not sequence
-existence.  Function <link linkend="func-pg-get-sequence-data"><function>pg_get_sequence_data()</function></link> allows inspection of sequence synchronization.
+This is enabled during <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... [ADD|SET|REFRESH|DROP] PUBLICATION</command></link>.  Function <link linkend="func-pg-get-sequence-data"><function>pg_get_sequence_data()</function></link> allows inspection of sequence synchronization.
 </para>
 </listitem>
 
