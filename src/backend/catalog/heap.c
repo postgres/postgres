@@ -2280,6 +2280,16 @@ StoreRelNotNull(Relation rel, const char *nnname, AttrNumber attnum,
 
 	Assert(attnum > InvalidAttrNumber);
 
+	/*
+	 * Partitioned tables do not contain any rows themselves, so a NO INHERIT
+	 * constraint makes no sense.
+	 */
+	if (is_no_inherit &&
+		rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		ereport(ERROR,
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("not-null constraints on partitioned tables cannot be NO INHERIT"));
+
 	constrOid =
 		CreateConstraintEntry(nnname,
 							  RelationGetNamespace(rel),
