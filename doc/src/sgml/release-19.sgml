@@ -1366,7 +1366,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Issue warnings when the <link linkend="vacuum-for-wraparound">wraparound</link> of xid and multi-xids is less than 100 million (Nathan Bossart)
+Issue warnings when the <link linkend="vacuum-for-wraparound">wraparound</link> of transaction IDs or multixacts is less than 100 million away (Nathan Bossart)
 <ulink url="&commit_baseurl;48f11bfa0">&sect;</ulink>
 </para>
 
@@ -2922,7 +2922,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 
 <listitem>
 <para>
-Make <link linkend="functions-info-snapshot">multixid members</link> 64-bit (Maxim Orlov)
+Make <link linkend="functions-info-snapshot">multixact members</link> 64-bit (Maxim Orlov)
 <ulink url="&commit_baseurl;bd8d9c9bd">&sect;</ulink>
 </para>
 </listitem>
