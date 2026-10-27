@@ -271,6 +271,22 @@ Lock size allocation has changed, so effectively settings must now be doubled to
 </listitem>
 
 <!--
+Author: Thomas Munro <tmunro@postgresql.org>
+2026-04-08 [d1c01b79d] aio: Adjust I/O worker pool automatically.
+-->
+
+<listitem>
+<para>
+Remove server variable <varname>io_workers</varname> (Thomas Munro)
+<ulink url="&commit_baseurl;d1c01b79d">&sect;</ulink>
+</para>
+
+<para>
+This has been replaced by four new variables;  see <xref linkend="release-19-performance"/>.
+</para>
+</listitem>
+
+<!--
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
 2026-04-02 [7f8c88c2b] jit: Change the default to off.
 -->
@@ -310,8 +326,20 @@ Author: Andres Freund <andres@anarazel.de>
 
 <listitem>
 <para>
-Rename wait event type <literal>BUFFERPIN</literal> to <literal>BUFFER</literal> (Andres Freund)
+Rename wait event <emphasis>type</emphasis> <literal>BUFFERPIN</literal> to <literal>BUFFER</literal> and rename wait event <literal>BufferPin</literal> to <literal>BufferCleanup</literal> (Andres Freund)
 <ulink url="&commit_baseurl;6c5c393b7">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+2026-01-15 [fcb9c977a] bufmgr: Implement buffer content locks independently of
+-->
+
+<listitem>
+<para>
+Remove wait event <literal>BufferContent</literal> and add more precise wait events <literal>BufferShared</literal>, <literal>BufferShareExclusive</literal>, and <literal>BufferExclusive</literal> (Andres Freund)
+<ulink url="&commit_baseurl;fcb9c977a">&sect;</ulink>
 </para>
 </listitem>
 
@@ -2228,7 +2256,8 @@ Add <link linkend="textsearch-snowball-dictionary">full text stemmers</link> for
 </para>
 
 <para>
-The Dutch stemmer has also been updated.  The old Dutch stemmer is available via <link linkend="textsearch-snowball-dictionary"><literal>dutch_porter</literal></link>.
+The Dutch, English, and German stemmers have also been updated.
+The previous Dutch stemmer is available via <link linkend="textsearch-snowball-dictionary"><literal>dutch_porter</literal></link>.
 </para>
 </listitem>
 
