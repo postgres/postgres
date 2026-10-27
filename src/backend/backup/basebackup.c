@@ -23,9 +23,11 @@
 #include "backup/basebackup_incremental.h"
 #include "backup/basebackup_sink.h"
 #include "backup/basebackup_target.h"
+#include "catalog/pg_control.h"
 #include "catalog/pg_tablespace_d.h"
 #include "commands/defrem.h"
 #include "common/compression.h"
+#include "common/controldata_utils.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "lib/stringinfo.h"
@@ -42,6 +44,7 @@
 #include "storage/checksum.h"
 #include "storage/dsm_impl.h"
 #include "storage/ipc.h"
+#include "storage/lwlock.h"
 #include "storage/reinit.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
@@ -332,9 +335,11 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 
 			if (ti->path == NULL)
 			{
-				struct stat statbuf;
 				bool		sendtblspclinks = true;
 				char	   *backup_label;
+				ControlFileData *controlData;
+				bool		crc_ok;
+				char		controlFile[PG_CONTROL_FILE_SIZE];
 
 				bbsink_begin_archive(sink, "base.tar");
 
@@ -357,14 +362,22 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 						sendtblspclinks, &manifest, InvalidOid, ib);
 
 				/* ... and pg_control after everything else. */
-				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
+				LWLockAcquire(ControlFileLock, LW_SHARED);
+				controlData = get_controlfile(DataDir, &crc_ok);
+				LWLockRelease(ControlFileLock);
+
+				if (!crc_ok)
 					ereport(ERROR,
-							(errcode_for_file_access(),
-							 errmsg("could not stat file \"%s\": %m",
-									XLOG_CONTROL_FILE)));
-				sendFile(sink, XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf,
-						 false, InvalidOid, InvalidOid,
-						 InvalidRelFileNumber, 0, &manifest, 0, NULL, 0);
+							(errmsg("calculated CRC checksum does not match value stored in file")));
+
+				/* Send the full file, zero-padded as it is on disk */
+				memset(controlFile, 0, PG_CONTROL_FILE_SIZE);
+				memcpy(controlFile, controlData, sizeof(ControlFileData));
+				pfree(controlData);
+
+				sendFileWithContent(sink, XLOG_CONTROL_FILE,
+									controlFile, PG_CONTROL_FILE_SIZE,
+									&manifest);
 			}
 			else
 			{
