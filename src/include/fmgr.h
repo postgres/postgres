@@ -349,6 +349,19 @@ extern varlena *pg_detoast_datum_packed(varlena *datum);
 /* A few internal functions return void (which is not the same as NULL!) */
 #define PG_RETURN_VOID()	 return (Datum) 0
 
+/*
+ * A shortcut to allow functions to return the value of the given input
+ * parameter, NULL if that parameter was NULL, and the value of the parameter
+ * otherwise.  The caller is responsible for ensuring the types match and
+ * that it's safe to return non-byval inputs without making a copy or
+ * detoasting variable-length types.
+ */
+#define PG_RETURN_ARG(n) \
+	do { \
+		fcinfo->isnull = fcinfo->args[n].isnull; \
+		return fcinfo->args[n].value; \
+	} while (0)
+
 /* Macros for returning results of standard types */
 
 #define PG_RETURN_DATUM(x)	 return (x)

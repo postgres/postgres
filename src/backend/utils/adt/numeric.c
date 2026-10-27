@@ -6357,21 +6357,19 @@ int2_sum(PG_FUNCTION_ARGS)
 	int64		oldsum;
 	int64		newval;
 
+	if (PG_ARGISNULL(1))
+	{
+		/* NULL value being aggregated, so return state unchanged */
+		PG_RETURN_ARG(0);
+	}
+
 	if (PG_ARGISNULL(0))
 	{
-		/* No non-null input seen so far... */
-		if (PG_ARGISNULL(1))
-			PG_RETURN_NULL();	/* still no non-null */
 		/* This is the first non-null input. */
-		newval = (int64) PG_GETARG_INT16(1);
-		PG_RETURN_INT64(newval);
+		PG_RETURN_INT64((int64) PG_GETARG_INT16(1));
 	}
 
 	oldsum = PG_GETARG_INT64(0);
-
-	/* Leave sum unchanged if new input is null. */
-	if (PG_ARGISNULL(1))
-		PG_RETURN_INT64(oldsum);
 
 	/* OK to do the addition. */
 	newval = oldsum + (int64) PG_GETARG_INT16(1);
@@ -6385,21 +6383,19 @@ int4_sum(PG_FUNCTION_ARGS)
 	int64		oldsum;
 	int64		newval;
 
+	if (PG_ARGISNULL(1))
+	{
+		/* NULL value being aggregated, so return state unchanged */
+		PG_RETURN_ARG(0);
+	}
+
 	if (PG_ARGISNULL(0))
 	{
-		/* No non-null input seen so far... */
-		if (PG_ARGISNULL(1))
-			PG_RETURN_NULL();	/* still no non-null */
 		/* This is the first non-null input. */
-		newval = (int64) PG_GETARG_INT32(1);
-		PG_RETURN_INT64(newval);
+		PG_RETURN_INT64((int64) PG_GETARG_INT32(1));
 	}
 
 	oldsum = PG_GETARG_INT64(0);
-
-	/* Leave sum unchanged if new input is null. */
-	if (PG_ARGISNULL(1))
-		PG_RETURN_INT64(oldsum);
 
 	/* OK to do the addition. */
 	newval = oldsum + (int64) PG_GETARG_INT32(1);
@@ -6423,12 +6419,6 @@ int8_sum(PG_FUNCTION_ARGS)
 		/* This is the first non-null input. */
 		PG_RETURN_NUMERIC(int64_to_numeric(PG_GETARG_INT64(1)));
 	}
-
-	/*
-	 * Note that we cannot special-case the aggregate case here, as we do for
-	 * int2_sum and int4_sum: numeric is of variable size, so we cannot modify
-	 * our first parameter in-place.
-	 */
 
 	oldsum = PG_GETARG_NUMERIC(0);
 
