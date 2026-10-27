@@ -55,6 +55,10 @@ typedef struct QueryDesc
 
 	/* This field is allocated by ExecutorStart if needed */
 	struct Instrumentation *query_instr;	/* query level instrumentation */
+
+	/* Private state of extensions; see GetQueryDescExtensionId() */
+	void	  **extension_state;
+	int			extension_state_allocated;
 } QueryDesc;
 
 /* in pquery.c */
@@ -68,5 +72,10 @@ extern QueryDesc *CreateQueryDesc(PlannedStmt *plannedstmt,
 								  int instrument_options);
 
 extern void FreeQueryDesc(QueryDesc *qdesc);
+
+extern int	GetQueryDescExtensionId(const char *extension_name);
+extern void *GetQueryDescExtensionState(QueryDesc *qdesc, int extension_id);
+extern void SetQueryDescExtensionState(QueryDesc *qdesc, int extension_id,
+									   void *opaque);
 
 #endif							/* EXECDESC_H  */

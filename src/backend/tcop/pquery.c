@@ -23,11 +23,11 @@
 #include "executor/tstoreReceiver.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
+#include "port/pg_bitutils.h"
 #include "tcop/pquery.h"
 #include "tcop/utility.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
-
 
 /*
  * ActivePortal is the currently executing Portal (the most closely nested,
@@ -35,6 +35,10 @@
  */
 Portal		ActivePortal = NULL;
 
+/* Private data for QueryDesc.extension_state. */
+static const char **QueryDescExtensionNameArray = NULL;
+static int	QueryDescExtensionNamesAssigned = 0;
+static int	QueryDescExtensionNamesAllocated = 0;
 
 static void ProcessQuery(PlannedStmt *plan,
 						 const char *sourceText,
@@ -97,6 +101,10 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 	/* not yet executed */
 	qd->already_executed = false;
 
+	/* no extension state yet */
+	qd->extension_state = NULL;
+	qd->extension_state_allocated = 0;
+
 	return qd;
 }
 
@@ -113,8 +121,103 @@ FreeQueryDesc(QueryDesc *qdesc)
 	UnregisterSnapshot(qdesc->snapshot);
 	UnregisterSnapshot(qdesc->crosscheck_snapshot);
 
-	/* Only the QueryDesc itself need be freed */
+	/* Free extension state pointers */
+	if (qdesc->extension_state != NULL)
+		pfree(qdesc->extension_state);
+
+	/* Free the QueryDesc itself */
 	pfree(qdesc);
+}
+
+/*
+ * Map the name of an extension to an integer ID, to be used with
+ * SetQueryDescExtensionState() and GetQueryDescExtensionState().
+ *
+ * Within the lifetime of a particular backend, the same name will be mapped
+ * to the same ID every time.  IDs are not stable across backends.
+ */
+int
+GetQueryDescExtensionId(const char *extension_name)
+{
+	/* Search for an existing extension by this name; if found, return ID. */
+	for (int i = 0; i < QueryDescExtensionNamesAssigned; ++i)
+		if (strcmp(QueryDescExtensionNameArray[i], extension_name) == 0)
+			return i;
+
+	/* If there is no array yet, create one. */
+	if (QueryDescExtensionNameArray == NULL)
+	{
+		QueryDescExtensionNamesAllocated = 16;
+		QueryDescExtensionNameArray = (const char **)
+			MemoryContextAlloc(TopMemoryContext,
+							   QueryDescExtensionNamesAllocated
+							   * sizeof(char *));
+	}
+
+	/* If there's an array but it's currently full, expand it. */
+	if (QueryDescExtensionNamesAssigned >= QueryDescExtensionNamesAllocated)
+	{
+		int			i = pg_nextpower2_32(QueryDescExtensionNamesAssigned + 1);
+
+		QueryDescExtensionNameArray =
+			repalloc_array(QueryDescExtensionNameArray, const char *, i);
+		QueryDescExtensionNamesAllocated = i;
+	}
+
+	/* Assign and return new ID.  The name is copied, to be on the safe side. */
+	QueryDescExtensionNameArray[QueryDescExtensionNamesAssigned] =
+		MemoryContextStrdup(TopMemoryContext, extension_name);
+	return QueryDescExtensionNamesAssigned++;
+}
+
+/*
+ * Get extension-specific state from a QueryDesc, or NULL if none was set.
+ */
+void *
+GetQueryDescExtensionState(QueryDesc *qdesc, int extension_id)
+{
+	Assert(extension_id >= 0);
+
+	if (extension_id >= qdesc->extension_state_allocated)
+		return NULL;
+
+	return qdesc->extension_state[extension_id];
+}
+
+/*
+ * Store extension-specific state into a QueryDesc.
+ *
+ * The array of pointers is allocated in the memory context of the QueryDesc,
+ * and is freed by FreeQueryDesc().
+ */
+void
+SetQueryDescExtensionState(QueryDesc *qdesc, int extension_id, void *opaque)
+{
+	Assert(extension_id >= 0);
+
+	/* If there is no array yet, create one. */
+	if (qdesc->extension_state == NULL)
+	{
+		qdesc->extension_state_allocated =
+			Max(4, pg_nextpower2_32(extension_id + 1));
+		qdesc->extension_state =
+			MemoryContextAllocZero(GetMemoryChunkContext(qdesc),
+								   qdesc->extension_state_allocated
+								   * sizeof(void *));
+	}
+
+	/* If there's an array but it's currently full, expand it. */
+	if (extension_id >= qdesc->extension_state_allocated)
+	{
+		int			i = pg_nextpower2_32(extension_id + 1);
+
+		qdesc->extension_state =
+			repalloc0_array(qdesc->extension_state, void *,
+							qdesc->extension_state_allocated, i);
+		qdesc->extension_state_allocated = i;
+	}
+
+	qdesc->extension_state[extension_id] = opaque;
 }
 
 
