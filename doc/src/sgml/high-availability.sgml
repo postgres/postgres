@@ -1571,6 +1571,38 @@ postgres=# WAIT FOR LSN '0/306EE20';
     read-only queries from the primary, not for high availability purposes,
     you don't need to promote.
    </para>
+
+   <note>
+    <para>
+     On a standby with <xref linkend="guc-wal-level"/> set to
+     <literal>replica</literal> that has a valid logical replication slot at
+     the end of recovery, including a failover slot synchronized from the
+     primary, promotion waits until every process has refreshed its setting for
+     whether to include logical decoding information in WAL records.  A backend
+     that is blocked sending data to a client that has stopped reading cannot
+     do that, so promotion waits until the client goes away or the connection
+     is dropped, which can take a long time. While it waits, the startup
+     process logs a message of the form <literal>still waiting for backend with
+     PID <replaceable>nnn</replaceable> to accept ProcSignalBarrier</literal>
+     every 5 seconds.
+    </para>
+
+    <para>
+     If promotion is already waiting, calling
+     <function>pg_terminate_backend()</function> on the logged process ID lets
+     promotion finish.  This does not work if the backend is blocked sending
+     an error message, because the error is sent with interrupts held.  In
+     that case, close the client connection.
+    </para>
+
+    <para>
+     To bound such waits, configure <xref linkend="guc-tcp-user-timeout"/>
+     on the standby ahead of time, for example in
+     <filename>postgresql.conf</filename>, where supported by the operating
+     system.  Setting it after a backend is already blocked sending data has
+     no effect on that backend.
+    </para>
+   </note>
   </sect1>
 
  <sect1 id="hot-standby">
