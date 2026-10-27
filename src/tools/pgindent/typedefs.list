@@ -4124,6 +4124,7 @@ pgsql_thing_t
 pgssEntry
 pgssGlobalStats
 pgssHashKey
+pgssQueryState
 pgssSharedState
 pgssStoreKind
 pgssVersion

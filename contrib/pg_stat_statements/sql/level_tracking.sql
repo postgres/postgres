@@ -262,6 +262,17 @@ COMMIT;
 SELECT toplevel, calls, query FROM pg_stat_statements
   ORDER BY query COLLATE "C";
 
+-- DECLARE CURSOR, all-level tracking with implicit close.
+SET pg_stat_statements.track = 'all';
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+BEGIN;
+DECLARE FOOCUR CURSOR FOR SELECT * FROM stats_track_tab WHERE x = 1;
+FETCH FORWARD 1 FROM foocur;
+COMMIT;
+SELECT toplevel, calls, query FROM pg_stat_statements
+  WHERE query LIKE 'DECLARE FOOCUR%'
+  ORDER BY query COLLATE "C", toplevel;
+
 -- DECLARE CURSOR, top-level tracking.
 SET pg_stat_statements.track = 'top';
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;

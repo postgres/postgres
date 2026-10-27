@@ -274,6 +274,19 @@ static const ShmemCallbacks pgss_shmem_callbacks = {
 /* Current nesting depth of planner/ExecutorRun/ProcessUtility calls */
 static int	nesting_level = 0;
 
+/*
+ * State saved in a QueryDesc at ExecutorStart, for use at ExecutorEnd.  A
+ * query may end at a different nesting level than the one it started at,
+ * for example a cursor declared in a transaction and closed at COMMIT.
+ */
+typedef struct pgssQueryState
+{
+	int			nesting_level;	/* nesting level at ExecutorStart */
+} pgssQueryState;
+
+/* ID of pg_stat_statements for QueryDesc extension state */
+static int	pgss_queryDesc_id = -1;
+
 /* Saved hook values */
 static post_parse_analyze_hook_type prev_post_parse_analyze_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
@@ -356,6 +369,7 @@ static void pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 								DestReceiver *dest, QueryCompletion *qc);
 static void pgss_store(const char *query, int64 queryId,
 					   int query_location, int query_len,
+					   bool toplevel,
 					   pgssStoreKind kind,
 					   double total_time, uint64 rows,
 					   const BufferUsage *bufusage,
@@ -473,6 +487,11 @@ _PG_init(void)
 	 * Register our shared memory needs.
 	 */
 	RegisterShmemCallbacks(&pgss_shmem_callbacks);
+
+	/*
+	 * Get an ID to store state in QueryDesc.
+	 */
+	pgss_queryDesc_id = GetQueryDescExtensionId("pg_stat_statements");
 
 	/*
 	 * Install hooks.
@@ -866,6 +885,7 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query, const JumbleState *jst
 				   query->queryId,
 				   query->stmt_location,
 				   query->stmt_len,
+				   nesting_level == 0,
 				   PGSS_INVALID,
 				   0,
 				   0,
@@ -948,6 +968,7 @@ pgss_planner(Query *parse,
 				   parse->queryId,
 				   parse->stmt_location,
 				   parse->stmt_len,
+				   nesting_level == 0,
 				   PGSS_PLAN,
 				   INSTR_TIME_GET_MILLISEC(duration),
 				   0,
@@ -992,6 +1013,8 @@ pgss_planner(Query *parse,
 static void
 pgss_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
+	pgssQueryState *qstate;
+
 	/*
 	 * If query has queryId zero, don't track it.  This prevents double
 	 * counting of optimizable statements that are directly contained in
@@ -1001,6 +1024,12 @@ pgss_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	{
 		/* Request all summary instrumentation, i.e. timing, buffers and WAL */
 		queryDesc->query_instr_options |= INSTRUMENT_ALL;
+
+		/* Remember the nesting level for ExecutorEnd */
+		qstate = MemoryContextAlloc(GetMemoryChunkContext(queryDesc),
+									sizeof(pgssQueryState));
+		qstate->nesting_level = nesting_level;
+		SetQueryDescExtensionState(queryDesc, pgss_queryDesc_id, qstate);
 	}
 
 	if (prev_ExecutorStart)
@@ -1058,14 +1087,22 @@ static void
 pgss_ExecutorEnd(QueryDesc *queryDesc)
 {
 	int64		queryId = queryDesc->plannedstmt->queryId;
+	pgssQueryState *qstate = GetQueryDescExtensionState(queryDesc,
+														pgss_queryDesc_id);
 
+	/*
+	 * Use the nesting level saved at ExecutorStart, if available, since the
+	 * query may end at a different level (e.g. a cursor closed at COMMIT).
+	 */
 	if (queryId != INT64CONST(0) && queryDesc->query_instr &&
-		pgss_enabled(nesting_level))
+		qstate != NULL &&
+		pgss_enabled(qstate->nesting_level))
 	{
 		pgss_store(queryDesc->sourceText,
 				   queryId,
 				   queryDesc->plannedstmt->stmt_location,
 				   queryDesc->plannedstmt->stmt_len,
+				   qstate->nesting_level == 0,
 				   PGSS_EXEC,
 				   INSTR_TIME_GET_MILLISEC(queryDesc->query_instr->total),
 				   queryDesc->estate->es_total_processed,
@@ -1202,6 +1239,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 				   saved_queryId,
 				   saved_stmt_location,
 				   saved_stmt_len,
+				   nesting_level == 0,
 				   PGSS_EXEC,
 				   INSTR_TIME_GET_MILLISEC(duration),
 				   rows,
@@ -1267,6 +1305,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 static void
 pgss_store(const char *query, int64 queryId,
 		   int query_location, int query_len,
+		   bool toplevel,
 		   pgssStoreKind kind,
 		   double total_time, uint64 rows,
 		   const BufferUsage *bufusage,
@@ -1310,7 +1349,7 @@ pgss_store(const char *query, int64 queryId,
 	key.userid = GetUserId();
 	key.dbid = MyDatabaseId;
 	key.queryid = queryId;
-	key.toplevel = (nesting_level == 0);
+	key.toplevel = toplevel;
 
 	/* Lookup the hash table entry with shared lock. */
 	LWLockAcquire(&pgss->lock.lock, LW_SHARED);
