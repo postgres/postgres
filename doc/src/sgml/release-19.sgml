@@ -599,7 +599,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Enable proper optimizer statistics for functions returning boolean values (Tom Lane)
+Add proper optimizer statistics for functions returning boolean values (Tom Lane)
 <ulink url="&commit_baseurl;1eccb9315">&sect;</ulink>
 </para>
 </listitem>
@@ -1570,7 +1570,7 @@ Allow sequence values stored in subscribers to match the publisher (Vignesh C)
 </para>
 
 <para>
-This is enabled during <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... [ADD|SET|REFRESH|DROP] PUBLICATION</command></link>.  Function <link linkend="func-pg-get-sequence-data"><function>pg_get_sequence_data()</function></link> allows inspection of sequence synchronization.
+This occurs during <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... [ADD|SET|REFRESH|DROP] PUBLICATION</command></link>.  Function <link linkend="func-pg-get-sequence-data"><function>pg_get_sequence_data()</function></link> allows inspection of sequence synchronization.
 </para>
 </listitem>
 
