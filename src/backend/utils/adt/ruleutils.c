@@ -9974,9 +9974,49 @@ looks_like_function(Node *node)
 	switch (nodeTag(node))
 	{
 		case T_FuncExpr:
-			/* OK, unless it's going to deparse as a cast */
-			return (((FuncExpr *) node)->funcformat == COERCE_EXPLICIT_CALL ||
-					((FuncExpr *) node)->funcformat == COERCE_SQL_SYNTAX);
+			/* OK if it will print as a normal function call */
+			if (((FuncExpr *) node)->funcformat == COERCE_EXPLICIT_CALL)
+				return true;
+			/* SQL_SYNTAX needs case-by-case analysis; all else is unsafe */
+			if (((FuncExpr *) node)->funcformat != COERCE_SQL_SYNTAX)
+				return false;
+
+			/*
+			 * Most SQL-syntax functions are accepted by func_expr_windowless,
+			 * but get_func_sql_syntax() prints AT TIME ZONE, OVERLAPS and IS
+			 * xxx NORMALIZED in forms that aren't accepted.  All of the
+			 * associated functions must be listed here.
+			 */
+			switch (((FuncExpr *) node)->funcid)
+			{
+					/* AT TIME ZONE: */
+				case F_TIMEZONE_INTERVAL_TIMESTAMP:
+				case F_TIMEZONE_INTERVAL_TIMESTAMPTZ:
+				case F_TIMEZONE_INTERVAL_TIMETZ:
+				case F_TIMEZONE_TEXT_TIMESTAMP:
+				case F_TIMEZONE_TEXT_TIMESTAMPTZ:
+				case F_TIMEZONE_TEXT_TIMETZ:
+					/* OVERLAPS: */
+				case F_OVERLAPS_TIMESTAMPTZ_INTERVAL_TIMESTAMPTZ_INTERVAL:
+				case F_OVERLAPS_TIMESTAMPTZ_INTERVAL_TIMESTAMPTZ_TIMESTAMPTZ:
+				case F_OVERLAPS_TIMESTAMPTZ_TIMESTAMPTZ_TIMESTAMPTZ_INTERVAL:
+				case F_OVERLAPS_TIMESTAMPTZ_TIMESTAMPTZ_TIMESTAMPTZ_TIMESTAMPTZ:
+				case F_OVERLAPS_TIMESTAMP_INTERVAL_TIMESTAMP_INTERVAL:
+				case F_OVERLAPS_TIMESTAMP_INTERVAL_TIMESTAMP_TIMESTAMP:
+				case F_OVERLAPS_TIMESTAMP_TIMESTAMP_TIMESTAMP_INTERVAL:
+				case F_OVERLAPS_TIMESTAMP_TIMESTAMP_TIMESTAMP_TIMESTAMP:
+				case F_OVERLAPS_TIMETZ_TIMETZ_TIMETZ_TIMETZ:
+				case F_OVERLAPS_TIME_INTERVAL_TIME_INTERVAL:
+				case F_OVERLAPS_TIME_INTERVAL_TIME_TIME:
+				case F_OVERLAPS_TIME_TIME_TIME_INTERVAL:
+				case F_OVERLAPS_TIME_TIME_TIME_TIME:
+					/* IS xxx NORMALIZED: */
+				case F_IS_NORMALIZED:
+					return false;
+				default:
+					break;
+			}
+			return true;
 		case T_NullIfExpr:
 		case T_CoalesceExpr:
 		case T_MinMaxExpr:
@@ -10331,6 +10371,11 @@ get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
  *
  * Returns true if we successfully deparsed, false if we did not
  * recognize the function.
+ *
+ * Most of these print as constructs that func_expr_windowless accepts.
+ * But AT TIME ZONE, OVERLAPS and IS xxx NORMALIZED print as a
+ * parenthesized a_expr instead, so a function added to them, or another
+ * one printed that way, must also be listed in looks_like_function().
  */
 static bool
 get_func_sql_syntax(FuncExpr *expr, deparse_context *context)

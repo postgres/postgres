@@ -696,7 +696,8 @@ select * from
   current_date as d,
   localtimestamp(3) as t,
   cast(1+2 as int4) as i4,
-  cast(1+2 as int8) as i8;
+  cast(1+2 as int8) as i8,
+  cast('foo' is normalized as boolean) as isn;
 select pg_get_viewdef('tt20v', true);
 
 -- reverse-listing of various special function syntaxes required by SQL
