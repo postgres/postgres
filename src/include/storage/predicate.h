@@ -43,9 +43,6 @@ typedef void *SerializableXactHandle;
  */
 extern void CheckPointPredicate(void);
 
-/* predicate lock reporting */
-extern bool PageIsPredicateLocked(Relation relation, BlockNumber blkno);
-
 /* predicate lock maintenance */
 extern Snapshot GetSerializableTransactionSnapshot(Snapshot snapshot);
 extern void SetSerializableTransactionSnapshot(Snapshot snapshot,
