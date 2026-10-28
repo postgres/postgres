@@ -32,6 +32,7 @@ injection_points_isolation = [
   'basic',
   'inplace',
   'reindex_concurrently_deferred',
+  'reindex_concurrently_toast',
   'syscache-update-pruned',
   'heap_lock_update',
   'on_conflict_probe_window',
