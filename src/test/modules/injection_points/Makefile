@@ -19,6 +19,7 @@ WAIT_CLEANUP_TST = $(if $(filter win32,$(PORTNAME)),,wait_cleanup)
 
 ISOLATION = inplace \
 	    reindex_concurrently_deferred \
+	    reindex_concurrently_toast \
 	    syscache-update-pruned \
 	    $(WAIT_CLEANUP_TST) \
 	    heap_lock_update \
