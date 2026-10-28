@@ -87,8 +87,15 @@ typedef struct pgpa_join_state
 	Bitmapset  *rel_indexes;
 } pgpa_join_state;
 
+typedef struct pgpa_baserel_state
+{
+	/* Force partial paths to be discarded? */
+	bool		discard_partial_paths;
+} pgpa_baserel_state;
+
 /* Saved hook values */
 static build_simple_rel_hook_type prev_build_simple_rel = NULL;
+static set_rel_pathlist_hook_type prev_set_rel_pathlist = NULL;
 static join_path_setup_hook_type prev_join_path_setup = NULL;
 static joinrel_setup_hook_type prev_joinrel_setup = NULL;
 static planner_setup_hook_type prev_planner_setup = NULL;
@@ -108,6 +115,10 @@ static void pgpa_planner_shutdown(PlannerGlobal *glob, Query *parse,
 								  const char *query_string, PlannedStmt *pstmt);
 static void pgpa_build_simple_rel(PlannerInfo *root,
 								  RelOptInfo *rel,
+								  RangeTblEntry *rte);
+static void pgpa_set_rel_pathlist(PlannerInfo *root,
+								  RelOptInfo *rel,
+								  Index rti,
 								  RangeTblEntry *rte);
 static void pgpa_joinrel_setup(PlannerInfo *root,
 							   RelOptInfo *joinrel,
@@ -188,6 +199,8 @@ pgpa_planner_install_hooks(void)
 	planner_shutdown_hook = pgpa_planner_shutdown;
 	prev_build_simple_rel = build_simple_rel_hook;
 	build_simple_rel_hook = pgpa_build_simple_rel;
+	prev_set_rel_pathlist = set_rel_pathlist_hook;
+	set_rel_pathlist_hook = pgpa_set_rel_pathlist;
 	prev_joinrel_setup = joinrel_setup_hook;
 	joinrel_setup_hook = pgpa_joinrel_setup;
 	prev_join_path_setup = join_path_setup_hook;
@@ -465,6 +478,28 @@ pgpa_build_simple_rel(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Pass call to previous hook. */
 	if (prev_build_simple_rel)
 		(*prev_build_simple_rel) (root, rel, rte);
+}
+
+/*
+ * Hook function for set_rel_pathlist().
+ */
+static void
+pgpa_set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, Index rti,
+					  RangeTblEntry *rte)
+{
+	pgpa_baserel_state *pbs;
+
+	if (prev_set_rel_pathlist)
+		(*prev_set_rel_pathlist) (root, rel, rti, rte);
+
+	/*
+	 * Discard any partial paths, if we were asked to do so. We do this after
+	 * calling any previous hook, so that we can discard whatever paths it may
+	 * have added in addition to whatever came from the core code.
+	 */
+	pbs = GetRelOptInfoExtensionState(rel, planner_extension_id);
+	if (pbs != NULL && pbs->discard_partial_paths)
+		rel->partial_pathlist = NIL;
 }
 
 /*
@@ -1652,6 +1687,8 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 	const uint64 all_scan_mask = PGS_SCAN_ANY | PGS_APPEND |
 		PGS_MERGE_APPEND | PGS_CONSIDER_INDEXONLY;
 	bool		gather_conflict = false;
+	bool		saw_no_gather = false;
+	bool		saw_gather = false;
 	Bitmapset  *gather_partial_match = NULL;
 	Bitmapset  *gather_full_match = NULL;
 	int			i = -1;
@@ -1777,11 +1814,13 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 				my_gather_mask = PGS_GATHER;
 			else
 				my_gather_mask = PGS_GATHER_MERGE;
+			saw_gather = true;
 		}
 		else if (my_entry->tag == PGPA_TAG_NO_GATHER)
 		{
 			Assert(just_one_rel);
 			my_gather_mask = PGS_CONSIDER_NONPARTIAL;
+			saw_no_gather = true;
 		}
 
 		/*
@@ -1841,6 +1880,68 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 				if (index != matched_index)
 					index->disabled = true;
 			}
+		}
+	}
+
+	/*
+	 * NO_GATHER is documented to both discard partial paths for the current
+	 * relation and also to disable placement of a Gather or Gather Merge node
+	 * above a scan or join containing this target.
+	 *
+	 * These may sound like the same thing, but they aren't. Preventing a
+	 * Gather or Gather Merge node above a scan or join containing this target
+	 * only disables the use of parallel query within the same join problem.
+	 * If that were the only thing we prohibited, then a scan of a parent
+	 * table, or an outer subquery, would potentially still be able to use a
+	 * Parallel Seq Scan or similar on this table.
+	 *
+	 * Since that's counterintuitive, we also arrange to discard all partial
+	 * paths for this relation. That doesn't totally block parallel query,
+	 * either. An especially notable case is that a non-partial path can be
+	 * joined to a partial path to produce a new partial path.
+	 *
+	 * Even taken together, these are *still* not a total prohibition.  An
+	 * outer subquery won't be able to scan this relation in parallel, but it
+	 * can still use a non-partial scan of this relation at some point in the
+	 * plan tree that is below a Gather or Gather Merge. Also, NO_GATHER on a
+	 * child blocks a parallel scan of that child, but a parent could still
+	 * create a Parallel Append node that incorporates a non-partial scan of
+	 * that child.
+	 *
+	 * Possibly the whole definition of NO_GATHER needs rethinking in the
+	 * future, but it needs careful thought, because we must be able to
+	 * distinguish between closely-related cases; for example, it's easy to
+	 * argue that NO_GATHER on a subquery rel should prohibit parallelism
+	 * entirely at outer levels, but advice is supposed to be able to describe
+	 * every plan shape, and that definition would make it impossible to
+	 * request that the subquery plan avoid parallel scans while at the same
+	 * time demanding a Gather or Gather Merge in the outer query.
+	 *
+	 * Before changing anything here, please review the documentation, which
+	 * discusses the current behavior in some detail.
+	 */
+	if (saw_no_gather)
+	{
+		if (saw_gather)
+		{
+			/*
+			 * GATHER((this other)) and NO_GATHER(this) produce the same
+			 * gather_mask; in such cases, only this code notices the
+			 * conflict.
+			 */
+			gather_conflict = true;
+		}
+		else
+		{
+			pgpa_baserel_state *pbs;
+
+			/*
+			 * Let pgpa_set_rel_pathlist know that it should discard partial
+			 * paths for this relation.
+			 */
+			pbs = palloc_object(pgpa_baserel_state);
+			pbs->discard_partial_paths = true;
+			SetRelOptInfoExtensionState(rel, planner_extension_id, pbs);
 		}
 	}
 

@@ -4079,6 +4079,7 @@ pgp_armor_headers_state
 pgpa_advice_item
 pgpa_advice_tag_type
 pgpa_advice_target
+pgpa_baserel_state
 pgpa_identifier
 pgpa_index_target
 pgpa_itm_type

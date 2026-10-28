@@ -110,3 +110,40 @@ EXPLAIN (COSTS OFF, PLAN_ADVICE)
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 	SELECT * FROM gt_part WHERE id < 500 AND val = 42;
 COMMIT;
+
+-- Test interaction of NO_GATHER with UNION. By default, we expect a
+-- Gather over a Parallel Append, but no_gather on the setop arms is
+-- enough to suppress it.
+BEGIN;
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION SELECT dim_id FROM gt_fact;
+SET LOCAL pg_plan_advice.advice = 'NO_GATHER(gt_fact@setop_1 gt_fact@setop_2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION SELECT dim_id FROM gt_fact;
+COMMIT;
+
+-- Test interaction of NO_GATHER with a UNION that has just one surviving
+-- arm. In this case, the Append node is elided.
+BEGIN;
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION SELECT dim_id FROM gt_fact WHERE false;
+SET LOCAL pg_plan_advice.advice = 'NO_GATHER(gt_fact@setop_1)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION SELECT dim_id FROM gt_fact WHERE false;
+COMMIT;
+
+-- Test interaction of NO_GATHER with a UNION ALL. This UNION ALL is
+-- "flattened" by the planner and the subqueries are pulled up, so the relation
+-- identifiers are different from the preceding examples. In this case,
+-- we can ask for either a Parallel Append with non-partial children, or
+-- suppress Gather and Gather Merge completely.
+BEGIN;
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION ALL SELECT dim_id FROM gt_fact;
+SET LOCAL pg_plan_advice.advice = 'GATHER(unnamed_subquery) NO_GATHER(gt_fact gt_fact#2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION ALL SELECT dim_id FROM gt_fact;
+SET LOCAL pg_plan_advice.advice = 'NO_GATHER(unnamed_subquery)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION ALL SELECT dim_id FROM gt_fact;
+COMMIT;

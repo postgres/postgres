@@ -242,7 +242,8 @@ pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
  * during tree traversal to each of these query features.
  *
  * If beneath_any_gather == true, some higher level of the tree traversal found
- * a Gather or Gather Merge node.
+ * a Gather or Gather Merge node, except that we reset it for the non-partial
+ * children of a Parallel Append, for reasons explained in the comments below.
  */
 static void
 pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
@@ -257,6 +258,7 @@ pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
 	ListCell   *lc;
 	List	   *extraplans = NIL;
 	List	   *elided_nodes = NIL;
+	int			first_partial_plan = 0;
 
 	Assert(within_join_problem || join_unroller == NULL);
 
@@ -444,6 +446,8 @@ pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
 				Append	   *aplan = (Append *) plan;
 
 				extraplans = aplan->appendplans;
+				if (aplan->plan.parallel_aware)
+					first_partial_plan = aplan->first_partial_plan;
 			}
 			break;
 		case T_MergeAppend:
@@ -479,9 +483,21 @@ pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
 	foreach(lc, extraplans)
 	{
 		Plan	   *subplan = lfirst(lc);
+		bool		child_beneath_any_gather = beneath_any_gather;
+
+		/*
+		 * NO_GATHER() is defined to both suppress placement of Gather and
+		 * Gather Merge nodes within a join problem, and also to suppress
+		 * generation of partial paths. For a non-partial child of a Parallel
+		 * Append, both behaviors are appropriate, even though such a plan
+		 * node is necessarily beneath a Gather or Gather Merge node. Hence,
+		 * we fudge.
+		 */
+		if (foreach_current_index(lc) < first_partial_plan)
+			child_beneath_any_gather = false;
 
 		pgpa_walk_recursively(walker, subplan, false, NULL, NIL,
-							  beneath_any_gather);
+							  child_beneath_any_gather);
 	}
 }
 
