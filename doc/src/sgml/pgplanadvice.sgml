@@ -503,8 +503,9 @@ NO_GATHER(<replaceable>advice_target</replaceable> [ ... ])
    <para>
     <literal>NO_GATHER</literal> specifies that no <literal>Gather</literal> or
     <literal>Gather Merge</literal> node should appear above any of the
-    targets, but it only constrains the planning of an individual subquery,
-    and outer subquery levels can still use parallel query. For example,
+    targets, but it only constrains planning within a given join problem,
+    and parent tables or outer subquery levels can still use parallel query.
+    For example,
     <literal>NO_GATHER(inner_example@any_1)</literal> precludes using a
     <literal>Parallel Seq Scan</literal> to access the
     <literal>inner_example</literal> table within the <literal>any_1</literal>
@@ -541,6 +542,14 @@ Aggregate
                 -> Parallel Seq Scan on inner_example
                      Filter: (something_else > 100)
 </programlisting>
+
+   <para>
+    Similarly, when <literal>NO_GATHER</literal> is applied to an individual
+    partition, it precludes a parallel scan of that particular partition, but
+    it is still possible for a <literal>Parallel Append</literal> node to use
+    a non-parallel scan of that partition. To rule out that possibility,
+    use <literal>NO_GATHER</literal> on the parent rather than on the child.
+   </para>
 
   </sect3>
  </sect2>

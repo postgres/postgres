@@ -435,3 +435,132 @@ EXPLAIN (COSTS OFF, PLAN_ADVICE)
 (8 rows)
 
 COMMIT;
+-- Test interaction of NO_GATHER with UNION. By default, we expect a
+-- Gather over a Parallel Append, but no_gather on the setop arms is
+-- enough to suppress it.
+BEGIN;
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION SELECT dim_id FROM gt_fact;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ HashAggregate
+   Group Key: gt_fact.dim_id
+   ->  Gather
+         Workers Planned: 1
+         ->  Parallel Append
+               ->  Parallel Seq Scan on gt_fact
+               ->  Parallel Seq Scan on gt_fact gt_fact_1
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact@setop_1 gt_fact@setop_2)
+   GATHER((unnamed_subquery unnamed_subquery#2))
+(10 rows)
+
+SET LOCAL pg_plan_advice.advice = 'NO_GATHER(gt_fact@setop_1 gt_fact@setop_2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION SELECT dim_id FROM gt_fact;
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
+ HashAggregate
+   Group Key: gt_fact.dim_id
+   ->  Append
+         ->  Seq Scan on gt_fact
+         ->  Seq Scan on gt_fact gt_fact_1
+ Supplied Plan Advice:
+   NO_GATHER(gt_fact@setop_1) /* matched */
+   NO_GATHER(gt_fact@setop_2) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact@setop_1 gt_fact@setop_2)
+   NO_GATHER(unnamed_subquery unnamed_subquery#2 gt_fact@setop_1 gt_fact@setop_2)
+(11 rows)
+
+COMMIT;
+-- Test interaction of NO_GATHER with a UNION that has just one surviving
+-- arm. In this case, the Append node is elided.
+BEGIN;
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION SELECT dim_id FROM gt_fact WHERE false;
+                    QUERY PLAN                    
+--------------------------------------------------
+ HashAggregate
+   Group Key: gt_fact.dim_id
+   ->  Gather
+         Workers Planned: 1
+         ->  Parallel Seq Scan on gt_fact
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact@setop_1)
+   GATHER(gt_fact@setop_1)
+   NO_GATHER(unnamed_subquery unnamed_subquery#2)
+(9 rows)
+
+SET LOCAL pg_plan_advice.advice = 'NO_GATHER(gt_fact@setop_1)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION SELECT dim_id FROM gt_fact WHERE false;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ HashAggregate
+   Group Key: gt_fact.dim_id
+   ->  Seq Scan on gt_fact
+ Supplied Plan Advice:
+   NO_GATHER(gt_fact@setop_1) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact@setop_1)
+   NO_GATHER(unnamed_subquery unnamed_subquery#2 gt_fact@setop_1)
+(8 rows)
+
+COMMIT;
+-- Test interaction of NO_GATHER with a UNION ALL. This UNION ALL is
+-- "flattened" by the planner and the subqueries are pulled up, so the relation
+-- identifiers are different from the preceding examples. In this case,
+-- we can ask for either a Parallel Append with non-partial children, or
+-- suppress Gather and Gather Merge completely.
+BEGIN;
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION ALL SELECT dim_id FROM gt_fact;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Gather
+   Workers Planned: 1
+   ->  Parallel Append
+         ->  Parallel Seq Scan on gt_fact
+         ->  Parallel Seq Scan on gt_fact gt_fact_1
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact gt_fact#2)
+   GATHER(unnamed_subquery)
+(8 rows)
+
+SET LOCAL pg_plan_advice.advice = 'GATHER(unnamed_subquery) NO_GATHER(gt_fact gt_fact#2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION ALL SELECT dim_id FROM gt_fact;
+                QUERY PLAN                 
+-------------------------------------------
+ Gather
+   Workers Planned: 1
+   ->  Parallel Append
+         ->  Seq Scan on gt_fact
+         ->  Seq Scan on gt_fact gt_fact_1
+ Supplied Plan Advice:
+   GATHER(unnamed_subquery) /* matched */
+   NO_GATHER(gt_fact) /* matched */
+   NO_GATHER(gt_fact#2) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact gt_fact#2)
+   GATHER(unnamed_subquery)
+   NO_GATHER(gt_fact gt_fact#2)
+(13 rows)
+
+SET LOCAL pg_plan_advice.advice = 'NO_GATHER(unnamed_subquery)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact UNION ALL SELECT dim_id FROM gt_fact;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Append
+   ->  Seq Scan on gt_fact
+   ->  Seq Scan on gt_fact gt_fact_1
+ Supplied Plan Advice:
+   NO_GATHER(unnamed_subquery) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact gt_fact#2)
+   NO_GATHER(unnamed_subquery gt_fact gt_fact#2)
+(8 rows)
+
+COMMIT;
