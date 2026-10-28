@@ -1,0 +1,46 @@
+Parsed test spec with 3 sessions
+
+starting permutation: lock reindex ins1 unlock snapshot wake inserted ins2 release reindexed read
+injection_points_attach
+-----------------------
+                       
+(1 row)
+
+step lock: BEGIN; LOCK TABLE reind_toast IN ROW EXCLUSIVE MODE;
+step reindex: REINDEX TABLE CONCURRENTLY reind_toast; <waiting ...>
+step ins1: INSERT INTO reind_toast VALUES (2, repeat('y', 10000)); <waiting ...>
+step unlock: COMMIT;
+step snapshot: BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT 1;
+?column?
+--------
+       1
+(1 row)
+
+step wake: 
+    SELECT injection_points_detach('toast-save-datum-indexes-opened');
+    SELECT injection_points_wakeup('toast-save-datum-indexes-opened');
+
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
+injection_points_wakeup
+-----------------------
+                       
+(1 row)
+
+step ins1: <... completed>
+step inserted: 
+step ins2: INSERT INTO reind_toast VALUES (3, repeat('z', 10000));
+step release: COMMIT;
+step reindex: <... completed>
+step reindexed: 
+step read: SELECT id, left(val, 1) FROM reind_toast ORDER BY id;
+id|left
+--+----
+ 1|x   
+ 2|y   
+ 3|z   
+(3 rows)
+

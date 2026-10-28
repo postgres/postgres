@@ -24,6 +24,7 @@
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "utils/fmgroids.h"
+#include "utils/injection_point.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 
@@ -225,6 +226,8 @@ toast_save_datum(Relation rel, Datum value,
 									RowExclusiveLock,
 									&toastidxs,
 									&num_indexes);
+
+	INJECTION_POINT("toast-save-datum-indexes-opened", NULL);
 
 	/*
 	 * Get the data pointer and length, and compute va_rawsize and va_extinfo.

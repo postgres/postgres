@@ -30,6 +30,7 @@ injection_points_isolation = [
   'basic',
   'inplace',
   'reindex_concurrently_deferred',
+  'reindex_concurrently_toast',
   'repack',
   'repack_commit_race',
   'repack_decode',
