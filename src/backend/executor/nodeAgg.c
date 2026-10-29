@@ -1229,7 +1229,7 @@ prepare_hash_slot(AggStatePerHash perhash,
  * read as null in the context of the current grouping set.  Also stash the
  * current group bitmap where GroupingExpr can get at it.
  *
- * This relies on three conditions:
+ * This relies on four conditions:
  *
  * 1) Nothing is ever going to try and extract the whole tuple from this slot,
  * only reference it in evaluations, which will only access individual
@@ -1241,6 +1241,12 @@ prepare_hash_slot(AggStatePerHash perhash,
  *
  * 3) Within a given phase, we never need to recover the value of an attribute
  * once it has been set to null.
+ *
+ * 4) We must extract all remaining required attributes from the tuple before
+ * manually adjusting the tts_isnull elements.  This is required to prevent
+ * further deforming that might be required for the HAVING clause or
+ * projection step from re-extracting the NULL bitmap into the tts_isnull
+ * array and overwriting our manual adjustments.
  *
  * Poking into the slot this way is a bit ugly, but the consensus is that the
  * alternative was worse.
@@ -1267,8 +1273,15 @@ prepare_projection_slot(AggState *aggstate, TupleTableSlot *slot, int currentSet
 		{
 			ListCell   *lc;
 
-			/* all_grouped_cols is arranged in desc order */
-			slot_getsomeattrs(slot, linitial_int(aggstate->all_grouped_cols));
+			/*
+			 * Sanity check on max_colno_needed value.  all_grouped_cols is
+			 * arranged in desc order.
+			 */
+			Assert(aggstate->max_colno_needed >=
+				   linitial_int(aggstate->all_grouped_cols));
+
+			/* deform all remaining columns, per condition #4 above */
+			slot_getsomeattrs(slot, aggstate->max_colno_needed);
 
 			foreach(lc, aggstate->all_grouped_cols)
 			{
@@ -3722,6 +3735,19 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		/* Initialize this to 1, meaning nothing spilled, yet */
 		aggstate->hash_batches_used = 1;
+	}
+	else if (aggstate->all_grouped_cols != NIL)
+	{
+		Bitmapset  *varattnos;
+		Bitmapset  *aggvarattnos;
+		int			max_varattno;
+
+		/* Figure out the highest outer-side varattno required. */
+		find_cols(aggstate, &aggvarattnos, &varattnos);
+		max_varattno = bms_prev_member(varattnos, -1);
+		max_varattno = Max(max_varattno, bms_prev_member(aggvarattnos, -1));
+
+		aggstate->max_colno_needed = max_varattno;
 	}
 
 	/*
