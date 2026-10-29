@@ -251,7 +251,7 @@ pgpa_build_unrolled_join(pgpa_plan_walker_context *walker,
 	ujoin->outer.scan =
 		pgpa_build_scan(walker, ujoin->outer.plan,
 						ujoin->outer.elided_node,
-						join_unroller->outer_beneath_any_gather,
+						!join_unroller->outer_beneath_any_gather,
 						true);
 
 	/*
@@ -281,7 +281,7 @@ pgpa_build_unrolled_join(pgpa_plan_walker_context *walker,
 			ujoin->inner[i].scan =
 				pgpa_build_scan(walker, ujoin->inner[i].plan,
 								ujoin->inner[i].elided_node,
-								join_unroller->inner_beneath_any_gather[k],
+								!join_unroller->inner_beneath_any_gather[k],
 								true);
 	}
 

@@ -23,6 +23,7 @@
 #include "utils/lsyscache.h"
 
 static void pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
+								  bool within_setop,
 								  bool within_join_problem,
 								  pgpa_join_unroller *join_unroller,
 								  List *active_query_features,
@@ -90,7 +91,8 @@ pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
 	walker->pstmt = pstmt;
 
 	/* Walk the main plan tree. */
-	pgpa_walk_recursively(walker, pstmt->planTree, false, NULL, NIL, false);
+	pgpa_walk_recursively(walker, pstmt->planTree, false, false, NULL, NIL,
+						  false);
 
 	/* Main plan tree walk won't reach subplans, so walk those. */
 	foreach(lc, pstmt->subplans)
@@ -98,7 +100,8 @@ pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
 		Plan	   *plan = lfirst(lc);
 
 		if (plan != NULL)
-			pgpa_walk_recursively(walker, plan, false, NULL, NIL, false);
+			pgpa_walk_recursively(walker, plan, false, false, NULL, NIL,
+								  false);
 	}
 
 	/* Adjust RTIs from sj_unique_rels for the flattened range table. */
@@ -165,6 +168,11 @@ pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
 	 * that we won't advise either GATHER or GATHER_MERGE or NO_GATHER in such
 	 * cases, which might be something we want to improve in the future.
 	 *
+	 * The same thing happens when a Gather or Gather Merge node sits atop a
+	 * set operation that was not flattened, because we decline to add RTIs
+	 * from unflattened set operations to query features. In that case,
+	 * there's no planner hook that would allow us to enforce the advice.
+	 *
 	 * (Should the Partial Aggregates in such a case be created in an
 	 * UPPERREL_GROUP_AGG with a non-empty relid set? Right now that doesn't
 	 * happen, but it seems like it would make life easier for us if it did.)
@@ -224,6 +232,9 @@ pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
 /*
  * Main workhorse for the plan tree walk.
  *
+ * If within_setop is true, the portion of the plan tree in which this node
+ * occurs was generated while planning an unflattened set operation.
+ *
  * If within_join_problem is true, we encountered a join at some higher level
  * of the tree walk and haven't yet descended out of the portion of the plan
  * tree that is part of that same join problem. We're no longer in the same
@@ -247,6 +258,7 @@ pgpa_plan_walker(pgpa_plan_walker_context *walker, PlannedStmt *pstmt,
  */
 static void
 pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
+					  bool within_setop,
 					  bool within_join_problem,
 					  pgpa_join_unroller *join_unroller,
 					  List *active_query_features,
@@ -257,7 +269,6 @@ pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
 	bool		join_unroller_toplevel = false;
 	ListCell   *lc;
 	List	   *extraplans = NIL;
-	List	   *elided_nodes = NIL;
 	int			first_partial_plan = 0;
 
 	Assert(within_join_problem || join_unroller == NULL);
@@ -283,61 +294,59 @@ pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
 	}
 
 	/*
-	 * Find all elided nodes for this Plan node.
+	 * Process elided nodes that pertain to this Plan node. In the pstmt's
+	 * list, the logically uppermost elided node appears last, so we walk the
+	 * list in reverse order.
 	 */
-	foreach_node(ElidedNode, n, walker->pstmt->elidedNodes)
+	for (int n = list_length(walker->pstmt->elidedNodes) - 1; n >= 0; --n)
 	{
-		if (n->plan_node_id == plan->plan_node_id)
-			elided_nodes = lappend(elided_nodes, n);
-	}
+		ElidedNode *elided_node = list_nth(walker->pstmt->elidedNodes, n);
 
-	/* If we found any elided_nodes, handle them. */
-	if (elided_nodes != NIL)
-	{
-		int			num_elided_nodes = list_length(elided_nodes);
-		ElidedNode *last_elided_node;
+		/* Ignore elided nodes that do not pertain to this plan node. */
+		if (elided_node->plan_node_id != plan->plan_node_id)
+			continue;
+
+		/* Did an unflattened set operation produce this ElidedNode? */
+		if (!within_setop)
+			within_setop = pgpa_is_setop_parent(plan, elided_node,
+												walker->pstmt->rtable);
 
 		/*
-		 * RTIs for the final -- and thus logically uppermost -- elided node
-		 * should be collected for query features passed down by the caller.
-		 * However, elided nodes act as barriers to query features, which
-		 * means that (1) the remaining elided nodes, if any, should be
-		 * ignored for purposes of query features and (2) the list of active
-		 * query features should be reset to empty so that we do not add RTIs
-		 * from the plan node that is logically beneath the elided node to the
-		 * query features passed down from the caller.
+		 * Collect RTIs for any currently-active query features, unless we're
+		 * within a set operation. There's no hook to enforce any advice
+		 * pertaining to set operations, so we shouldn't generate any.
 		 */
-		last_elided_node = list_nth(elided_nodes, num_elided_nodes - 1);
-		pgpa_qf_add_rtis(active_query_features,
-						 pgpa_filter_out_join_relids(last_elided_node->relids,
-													 walker->pstmt->rtable));
-		active_query_features = NIL;
+		if (!within_setop)
+			pgpa_qf_add_rtis(active_query_features,
+							 pgpa_filter_out_join_relids(elided_node->relids,
+														 walker->pstmt->rtable));
+
+		/* Sanity check. */
+		if (within_setop && within_join_problem)
+			elog(ERROR, "set operations cannot be part of a join problem");
 
 		/*
-		 * If we're within a join problem, the join_unroller is responsible
-		 * for building the scan for the final elided node, so throw it out.
+		 * If we're within a join problem, the join unroller is responsible
+		 * for building any required scan. If not, we do it here.
 		 */
-		if (within_join_problem)
-			elided_nodes = list_truncate(elided_nodes, num_elided_nodes - 1);
-
-		/* Build scans for all (or the remaining) elided nodes. */
-		foreach_node(ElidedNode, elided_node, elided_nodes)
-		{
+		if (!within_join_problem)
 			(void) pgpa_build_scan(walker, plan, elided_node,
-								   beneath_any_gather, within_join_problem);
-		}
+								   !beneath_any_gather && !within_setop,
+								   false);
+
+		/* Set operations can't span a subquery boundary. */
+		if (elided_node->elided_type == T_SubqueryScan)
+			within_setop = false;
 
 		/*
-		 * If there were any elided nodes, then everything beneath those nodes
-		 * is not part of the same join problem.
-		 *
-		 * In more detail, if an Append or MergeAppend was elided, then a
-		 * partitionwise join was chosen and only a single child survived; if
-		 * a SubqueryScan was elided, the subquery was planned without
-		 * flattening it into the parent.
+		 * Everything below an elided node is not part of the same join
+		 * problem.
 		 */
 		within_join_problem = false;
 		join_unroller = NULL;
+
+		/* Elided nodes act as barriers to query features. */
+		active_query_features = NIL;
 	}
 
 	/*
@@ -366,12 +375,22 @@ pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
 		beneath_any_gather = true;
 	}
 
+	/* Did an unflattened set operation produce this Plan node? */
+	if (!within_setop)
+		within_setop = pgpa_is_setop_parent(plan, NULL, walker->pstmt->rtable);
+
+	/* Sanity check. */
+	if (within_setop && within_join_problem)
+		elog(ERROR, "set operations cannot be part of a join problem");
+
 	/*
 	 * If we're within a join problem, the join unroller is responsible for
 	 * building any required scan for this node. If not, we do it here.
 	 */
 	if (!within_join_problem)
-		(void) pgpa_build_scan(walker, plan, NULL, beneath_any_gather, false);
+		(void) pgpa_build_scan(walker, plan, NULL,
+							   !beneath_any_gather && !within_setop,
+							   false);
 
 	/*
 	 * If this join needs to be unrolled but there's no join unroller already
@@ -393,8 +412,14 @@ pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
 		pgpa_unroll_join(walker, plan, beneath_any_gather, join_unroller,
 						 &outer_join_unroller, &inner_join_unroller);
 
-	/* Add RTIs from the plan node to all active query features. */
-	pgpa_qf_add_plan_rtis(active_query_features, plan, walker->pstmt->rtable);
+	/*
+	 * Collect RTIs for any currently-active query features, unless we're
+	 * within a set operation. There's no hook to enforce any advice
+	 * pertaining to set operations, so we shouldn't generate any.
+	 */
+	if (!within_setop)
+		pgpa_qf_add_plan_rtis(active_query_features, plan,
+							  walker->pstmt->rtable);
 
 	/*
 	 * Recurse into the outer and inner subtrees.
@@ -410,13 +435,13 @@ pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
 	if (!IsA(plan, ForeignScan))
 	{
 		if (plan->lefttree != NULL)
-			pgpa_walk_recursively(walker, plan->lefttree, within_join_problem,
-								  outer_join_unroller, active_query_features,
-								  beneath_any_gather);
+			pgpa_walk_recursively(walker, plan->lefttree, within_setop,
+								  within_join_problem, outer_join_unroller,
+								  active_query_features, beneath_any_gather);
 		if (plan->righttree != NULL)
-			pgpa_walk_recursively(walker, plan->righttree, within_join_problem,
-								  inner_join_unroller, active_query_features,
-								  beneath_any_gather);
+			pgpa_walk_recursively(walker, plan->righttree, within_setop,
+								  within_join_problem, inner_join_unroller,
+								  active_query_features, beneath_any_gather);
 	}
 
 	/*
@@ -470,7 +495,7 @@ pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
 			 * those are specific to a subquery level.
 			 */
 			pgpa_walk_recursively(walker, ((SubqueryScan *) plan)->subplan,
-								  0, NULL, NIL, beneath_any_gather);
+								  false, false, NULL, NIL, beneath_any_gather);
 			break;
 		case T_CustomScan:
 			extraplans = ((CustomScan *) plan)->custom_plans;
@@ -496,8 +521,8 @@ pgpa_walk_recursively(pgpa_plan_walker_context *walker, Plan *plan,
 		if (foreach_current_index(lc) < first_partial_plan)
 			child_beneath_any_gather = false;
 
-		pgpa_walk_recursively(walker, subplan, false, NULL, NIL,
-							  child_beneath_any_gather);
+		pgpa_walk_recursively(walker, subplan, within_setop, false, NULL,
+							  NIL, child_beneath_any_gather);
 	}
 }
 
