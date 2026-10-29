@@ -528,6 +528,15 @@ EXPLAIN (COSTS OFF) SELECT a, b, count(*), max(a), max(b) FROM gstest3 GROUP BY 
 SELECT a, b, count(*), max(a), max(b) FROM gstest3 GROUP BY GROUPING SETS(a, b,()) ORDER BY a, b;
 COMMIT;
 
+-- Verify handling of injecting NULL values for the rollup row works correctly
+-- when additional columns need to be deformed from the tuple after the NULL
+-- is added.
+begin;
+insert into gstest3 values(3,4,null,5);
+set enable_hashagg = false;
+select b, c, d, grouping(b, c) AS g from gstest3 where a = 3 group by grouping sets ((a, b), (a, c));
+rollback;
+
 -- More rescan tests
 select * from (values (1),(2)) v(a) left join lateral (select v.a, four, ten, count(*) from onek group by cube(four,ten)) s on true order by v.a,four,ten;
 select array(select row(v.a,s1.*) from (select two,four, count(*) from onek group by cube(two,four) order by two,four) s1) from (values (1),(2)) v(a);
