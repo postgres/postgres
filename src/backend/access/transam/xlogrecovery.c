@@ -2479,7 +2479,12 @@ verifyBackupPageConsistency(XLogReaderState *record)
 			continue;
 		}
 
-		Assert(XLogRecHasBlockImage(record, block_id));
+		/*
+		 * Blocks registered with REGBUF_NO_CHANGE may have no image, see
+		 * XLogRecordAssemble().  Nothing to compare for these.
+		 */
+		if (!XLogRecHasBlockImage(record, block_id))
+			continue;
 
 		if (XLogRecBlockImageApply(record, block_id))
 		{
