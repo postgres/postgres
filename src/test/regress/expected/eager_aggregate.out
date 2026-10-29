@@ -466,6 +466,26 @@ GROUP BY t1.a ORDER BY t1.a;
                      ->  Seq Scan on eager_agg_t1 t1
 (9 rows)
 
+-- Ensure eager aggregation is not applied below a volatile join clause
+EXPLAIN (COSTS OFF)
+SELECT t1.a, avg(t2.c)
+  FROM eager_agg_t1 t1
+  JOIN eager_agg_t2 t2 ON t1.b = t2.b AND t1.c > t2.b * random()
+GROUP BY t1.a ORDER BY t1.a;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ GroupAggregate
+   Group Key: t1.a
+   ->  Sort
+         Sort Key: t1.a
+         ->  Hash Join
+               Hash Cond: (t2.b = t1.b)
+               Join Filter: (t1.c > ((t2.b)::double precision * random()))
+               ->  Seq Scan on eager_agg_t2 t2
+               ->  Hash
+                     ->  Seq Scan on eager_agg_t1 t1
+(10 rows)
+
 -- Eager aggregation must not push a partial aggregate onto the inner side of a
 -- SEMI or ANTI join
 EXPLAIN (VERBOSE, COSTS OFF)

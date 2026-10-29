@@ -2989,6 +2989,19 @@ eager_aggregation_possible_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	}
 
 	/*
+	 * We cannot push a partial aggregation down below a join clause that
+	 * contains volatile functions, because the clause would then be evaluated
+	 * once per group rather than once per input row.
+	 */
+	foreach(lc, rel->joininfo)
+	{
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
+
+		if (contain_volatile_functions((Node *) rinfo))
+			return false;
+	}
+
+	/*
 	 * For now we don't try to support PlaceHolderVars.
 	 */
 	foreach(lc, rel->reltarget->exprs)

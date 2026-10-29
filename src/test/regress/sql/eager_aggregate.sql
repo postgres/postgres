@@ -177,6 +177,13 @@ SELECT t1.a, avg(t2.c) FILTER (WHERE random() > 0.5)
   JOIN eager_agg_t2 t2 ON t1.b = t2.b
 GROUP BY t1.a ORDER BY t1.a;
 
+-- Ensure eager aggregation is not applied below a volatile join clause
+EXPLAIN (COSTS OFF)
+SELECT t1.a, avg(t2.c)
+  FROM eager_agg_t1 t1
+  JOIN eager_agg_t2 t2 ON t1.b = t2.b AND t1.c > t2.b * random()
+GROUP BY t1.a ORDER BY t1.a;
+
 -- Eager aggregation must not push a partial aggregate onto the inner side of a
 -- SEMI or ANTI join
 EXPLAIN (VERBOSE, COSTS OFF)
