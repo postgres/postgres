@@ -19,8 +19,6 @@
 #include "utils/numeric.h"
 #include "utils/pg_lsn.h"
 
-#define MAXPG_LSNLEN			17
-
 /*----------------------------------------------------------
  * Formatting and conversion routines.
  *---------------------------------------------------------*/

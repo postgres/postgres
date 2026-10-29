@@ -15,6 +15,8 @@
 
 #include "access/xlogdefs.h"
 
+#define MAXPG_LSNLEN	    	17
+
 extern bool pg_parse_lsn(const char *str, XLogRecPtr *result);
 
 #endif							/* PG_PARSE_LSN_H */

@@ -44,6 +44,7 @@
 #include "catalog/pg_control.h"
 #include "commands/tablespace.h"
 #include "common/file_utils.h"
+#include "common/pg_parse_lsn.h"
 #include "miscadmin.h"
 #include "nodes/miscnodes.h"
 #include "pgstat.h"
@@ -1190,8 +1191,7 @@ read_backup_label(XLogRecPtr *checkPointLoc, TimeLineID *backupLabelTLI,
 	char		backupfrom[20];
 	char		backuplabel[MAXPGPATH];
 	char		backuptime[128];
-	uint32		hi,
-				lo;
+	char		lsn[MAXPG_LSNLEN + 1];
 
 	/* suppress possible uninitialized-variable warnings */
 	*checkPointLoc = InvalidXLogRecPtr;
@@ -1218,19 +1218,23 @@ read_backup_label(XLogRecPtr *checkPointLoc, TimeLineID *backupLabelTLI,
 	 * is pretty crude, but we are not expecting any variability in the file
 	 * format).
 	 */
-	if (fscanf(lfp, "START WAL LOCATION: %X/%08X (file %08X%16s)%c",
-			   &hi, &lo, &tli_from_walseg, startxlogfilename, &ch) != 5 || ch != '\n')
+	if (fscanf(lfp,
+			   "START WAL LOCATION: %" CppAsString2(MAXPG_LSNLEN) "[0123456789ABCDEFabcdef/] (file %08X%16s)%c",
+			   lsn, &tli_from_walseg, startxlogfilename, &ch) != 4 ||
+		ch != '\n' ||
+		!pg_parse_lsn(lsn, &RedoStartLSN))
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
-	RedoStartLSN = ((uint64) hi) << 32 | lo;
 	RedoStartTLI = tli_from_walseg;
-	if (fscanf(lfp, "CHECKPOINT LOCATION: %X/%08X%c",
-			   &hi, &lo, &ch) != 3 || ch != '\n')
+	if (fscanf(lfp,
+			   "CHECKPOINT LOCATION: %" CppAsString2(MAXPG_LSNLEN) "[0123456789ABCDEFabcdef/]%c", lsn,
+			   &ch) != 2 ||
+		ch != '\n' ||
+		!pg_parse_lsn(lsn, checkPointLoc))
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
-	*checkPointLoc = ((uint64) hi) << 32 | lo;
 	*backupLabelTLI = tli_from_walseg;
 
 	/*
@@ -1297,7 +1301,12 @@ read_backup_label(XLogRecPtr *checkPointLoc, TimeLineID *backupLabelTLI,
 								 tli_from_file, BACKUP_LABEL_FILE)));
 	}
 
-	if (fscanf(lfp, "INCREMENTAL FROM LSN: %X/%08X\n", &hi, &lo) > 0)
+	/*
+	 * INCREMENTAL FROM LSN indicates that this is an incremental backup.  The
+	 * LSN itself need not be parsed, so reading its first character is
+	 * sufficient.
+	 */
+	if (fscanf(lfp, "INCREMENTAL FROM LSN: %c", &ch) == 1)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("this is an incremental backup, not a data directory"),
