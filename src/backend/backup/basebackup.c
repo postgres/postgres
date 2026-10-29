@@ -347,7 +347,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 				char	   *backup_label;
 				ControlFileData *controlData;
 				bool		crc_ok;
-				char		controlFile[PG_CONTROL_FILE_SIZE];
+				char	   *controlFile;
 
 				bbsink_begin_archive(sink, "base.tar");
 
@@ -379,13 +379,14 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 							(errmsg("calculated CRC checksum does not match value stored in file")));
 
 				/* Send the full file, zero-padded as it is on disk */
-				memset(controlFile, 0, PG_CONTROL_FILE_SIZE);
+				controlFile = palloc0(PG_CONTROL_FILE_SIZE);
 				memcpy(controlFile, controlData, sizeof(ControlFileData));
 				pfree(controlData);
 
 				sendFileWithContent(sink, XLOG_CONTROL_FILE,
 									controlFile, PG_CONTROL_FILE_SIZE,
 									&manifest);
+				pfree(controlFile);
 			}
 			else
 			{
