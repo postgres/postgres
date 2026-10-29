@@ -5186,6 +5186,20 @@ ExecEvalJsonCoercion(ExprState *state, ExprEvalStep *op,
 	ErrorSaveContext *escontext = op->d.jsonexpr_coercion.escontext;
 
 	/*
+	 * If an error was saved while evaluating the ON ERROR or ON EMPTY DEFAULT
+	 * expression whose result we are to coerce, that result is going to be
+	 * discarded when the following COERCION_FINISH step throws the error.
+	 * Don't coerce it; doing so might throw a hard error or overwrite the
+	 * saved error.
+	 */
+	if (SOFT_ERROR_OCCURRED(escontext))
+	{
+		*op->resnull = true;
+		*op->resvalue = (Datum) 0;
+		return;
+	}
+
+	/*
 	 * Prepare to call json_populate_type() to coerce the boolean result of
 	 * JSON_EXISTS_OP to the target type.  If the target type is integer or a
 	 * domain over integer, call the boolean-to-integer cast function instead,
