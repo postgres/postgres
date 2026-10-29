@@ -79,7 +79,9 @@ typedef struct pgpa_scan
 
 extern pgpa_scan *pgpa_build_scan(pgpa_plan_walker_context *walker, Plan *plan,
 								  ElidedNode *elided_node,
-								  bool beneath_any_gather,
+								  bool needs_no_gather,
 								  bool within_join_problem);
+extern bool pgpa_is_setop_parent(Plan *plan, ElidedNode *elided_node,
+								 List *rtable);
 
 #endif

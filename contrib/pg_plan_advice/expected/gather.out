@@ -452,14 +452,13 @@ EXPLAIN (COSTS OFF, PLAN_ADVICE)
                ->  Parallel Seq Scan on gt_fact gt_fact_1
  Generated Plan Advice:
    SEQ_SCAN(gt_fact@setop_1 gt_fact@setop_2)
-   GATHER((unnamed_subquery unnamed_subquery#2))
-(10 rows)
+(9 rows)
 
 SET LOCAL pg_plan_advice.advice = 'NO_GATHER(gt_fact@setop_1 gt_fact@setop_2)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 	SELECT dim_id FROM gt_fact UNION SELECT dim_id FROM gt_fact;
-                                    QUERY PLAN                                    
-----------------------------------------------------------------------------------
+                  QUERY PLAN                  
+----------------------------------------------
  HashAggregate
    Group Key: gt_fact.dim_id
    ->  Append
@@ -470,7 +469,7 @@ EXPLAIN (COSTS OFF, PLAN_ADVICE)
    NO_GATHER(gt_fact@setop_2) /* matched */
  Generated Plan Advice:
    SEQ_SCAN(gt_fact@setop_1 gt_fact@setop_2)
-   NO_GATHER(unnamed_subquery unnamed_subquery#2 gt_fact@setop_1 gt_fact@setop_2)
+   NO_GATHER(gt_fact@setop_1 gt_fact@setop_2)
 (11 rows)
 
 COMMIT;
@@ -479,8 +478,8 @@ COMMIT;
 BEGIN;
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 	SELECT dim_id FROM gt_fact UNION SELECT dim_id FROM gt_fact WHERE false;
-                    QUERY PLAN                    
---------------------------------------------------
+                QUERY PLAN                
+------------------------------------------
  HashAggregate
    Group Key: gt_fact.dim_id
    ->  Gather
@@ -489,14 +488,13 @@ EXPLAIN (COSTS OFF, PLAN_ADVICE)
  Generated Plan Advice:
    SEQ_SCAN(gt_fact@setop_1)
    GATHER(gt_fact@setop_1)
-   NO_GATHER(unnamed_subquery unnamed_subquery#2)
-(9 rows)
+(8 rows)
 
 SET LOCAL pg_plan_advice.advice = 'NO_GATHER(gt_fact@setop_1)';
 EXPLAIN (COSTS OFF, PLAN_ADVICE)
 	SELECT dim_id FROM gt_fact UNION SELECT dim_id FROM gt_fact WHERE false;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                 QUERY PLAN                 
+--------------------------------------------
  HashAggregate
    Group Key: gt_fact.dim_id
    ->  Seq Scan on gt_fact
@@ -504,8 +502,57 @@ EXPLAIN (COSTS OFF, PLAN_ADVICE)
    NO_GATHER(gt_fact@setop_1) /* matched */
  Generated Plan Advice:
    SEQ_SCAN(gt_fact@setop_1)
-   NO_GATHER(unnamed_subquery unnamed_subquery#2 gt_fact@setop_1)
+   NO_GATHER(gt_fact@setop_1)
 (8 rows)
+
+COMMIT;
+-- Test a UNION that has no surviving arms at all. No advice should be
+-- generated.
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact WHERE false UNION
+	SELECT dim_id FROM gt_fact WHERE false;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Result
+   Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1
+   One-Time Filter: false
+(3 rows)
+
+-- Test interaction of NO_GATHER with INTERSECT. By default, we expect
+-- a HashSetOp with a Gather on each side, but NO_GATHER on the setop arms
+-- is enough to suppress it.
+BEGIN;
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact INTERSECT SELECT dim_id FROM gt_fact;
+                     QUERY PLAN                     
+----------------------------------------------------
+ HashSetOp Intersect
+   ->  Gather
+         Workers Planned: 1
+         ->  Parallel Seq Scan on gt_fact
+   ->  Gather
+         Workers Planned: 1
+         ->  Parallel Seq Scan on gt_fact gt_fact_1
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact@setop_1 gt_fact@setop_2)
+   GATHER(gt_fact@setop_1 gt_fact@setop_2)
+(10 rows)
+
+SET LOCAL pg_plan_advice.advice = 'NO_GATHER(gt_fact@setop_1 gt_fact@setop_2)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+	SELECT dim_id FROM gt_fact INTERSECT SELECT dim_id FROM gt_fact;
+                  QUERY PLAN                  
+----------------------------------------------
+ HashSetOp Intersect
+   ->  Seq Scan on gt_fact
+   ->  Seq Scan on gt_fact gt_fact_1
+ Supplied Plan Advice:
+   NO_GATHER(gt_fact@setop_1) /* matched */
+   NO_GATHER(gt_fact@setop_2) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact@setop_1 gt_fact@setop_2)
+   NO_GATHER(gt_fact@setop_1 gt_fact@setop_2)
+(9 rows)
 
 COMMIT;
 -- Test interaction of NO_GATHER with a UNION ALL. This UNION ALL is
@@ -562,5 +609,99 @@ EXPLAIN (COSTS OFF, PLAN_ADVICE)
    SEQ_SCAN(gt_fact gt_fact#2)
    NO_GATHER(unnamed_subquery gt_fact gt_fact#2)
 (8 rows)
+
+COMMIT;
+-- Test interaction of NO_GATHER with a UNION ALL that can be flattened,
+-- but subqueries that cannot be pulled up. We must use OFFSET '0' here,
+-- because writing OFFSET 0 causes the planner to think that the subquery
+-- isn't parallel-safe, which is probably something that should be fixed in
+-- the core planner. By default, we get a normal Gather over Parallel Append
+-- plan, but by varying the advice, we can get a separate Gather over each
+-- child, a Parallel Append with a non-partial child, or no parallelism at all.
+BEGIN;
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM (
+	SELECT * FROM (SELECT dim_id FROM gt_fact OFFSET '0') x
+	UNION ALL
+	SELECT * FROM (SELECT dim_id FROM gt_fact OFFSET '0') y
+) s;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Gather
+   Workers Planned: 1
+   ->  Parallel Append
+         ->  Parallel Seq Scan on gt_fact
+         ->  Parallel Seq Scan on gt_fact gt_fact_1
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact@x gt_fact@y)
+   GATHER(s)
+(8 rows)
+
+SET LOCAL pg_plan_advice.advice = 'NO_GATHER(s)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM (
+	SELECT * FROM (SELECT dim_id FROM gt_fact OFFSET '0') x
+	UNION ALL
+	SELECT * FROM (SELECT dim_id FROM gt_fact OFFSET '0') y
+) s;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Append
+   ->  Gather
+         Workers Planned: 1
+         ->  Parallel Seq Scan on gt_fact
+   ->  Gather
+         Workers Planned: 1
+         ->  Parallel Seq Scan on gt_fact gt_fact_1
+ Supplied Plan Advice:
+   NO_GATHER(s) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact@x gt_fact@y)
+   GATHER(gt_fact@x gt_fact@y)
+   NO_GATHER(s x y)
+(13 rows)
+
+SET LOCAL pg_plan_advice.advice = 'NO_GATHER(gt_fact@x)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM (
+	SELECT * FROM (SELECT dim_id FROM gt_fact OFFSET '0') x
+	UNION ALL
+	SELECT * FROM (SELECT dim_id FROM gt_fact OFFSET '0') y
+) s;
+                     QUERY PLAN                     
+----------------------------------------------------
+ Gather
+   Workers Planned: 1
+   ->  Parallel Append
+         ->  Seq Scan on gt_fact
+         ->  Parallel Seq Scan on gt_fact gt_fact_1
+ Supplied Plan Advice:
+   NO_GATHER(gt_fact@x) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact@x gt_fact@y)
+   GATHER(s)
+   NO_GATHER(x gt_fact@x)
+(11 rows)
+
+SET LOCAL pg_plan_advice.advice = 'NO_GATHER(s gt_fact@x gt_fact@y)';
+EXPLAIN (COSTS OFF, PLAN_ADVICE)
+SELECT * FROM (
+	SELECT * FROM (SELECT dim_id FROM gt_fact OFFSET '0') x
+	UNION ALL
+	SELECT * FROM (SELECT dim_id FROM gt_fact OFFSET '0') y
+) s;
+               QUERY PLAN               
+----------------------------------------
+ Append
+   ->  Seq Scan on gt_fact
+   ->  Seq Scan on gt_fact gt_fact_1
+ Supplied Plan Advice:
+   NO_GATHER(s) /* matched */
+   NO_GATHER(gt_fact@x) /* matched */
+   NO_GATHER(gt_fact@y) /* matched */
+ Generated Plan Advice:
+   SEQ_SCAN(gt_fact@x gt_fact@y)
+   NO_GATHER(s x y gt_fact@x gt_fact@y)
+(10 rows)
 
 COMMIT;

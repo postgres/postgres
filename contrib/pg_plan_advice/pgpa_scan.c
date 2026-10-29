@@ -33,9 +33,8 @@ static RTEKind unique_nonjoin_rtekind(Bitmapset *relids, List *rtable);
  * If there is at least one ElidedNode for this plan node, pass the uppermost
  * one as elided_node, else pass NULL.
  *
- * Set the 'beneath_any_gather' node if we are underneath a Gather or
- * Gather Merge node (except for a single-copy Gather node, for which
- * GATHER or GATHER_MERGE advice should not be emitted).
+ * Set the 'needs_no_gather' flag if NO_GATHER advice should be generated for
+ * this scan.
  *
  * Set the 'within_join_problem' flag if we're inside of a join problem and
  * not otherwise.
@@ -43,7 +42,7 @@ static RTEKind unique_nonjoin_rtekind(Bitmapset *relids, List *rtable);
 pgpa_scan *
 pgpa_build_scan(pgpa_plan_walker_context *walker, Plan *plan,
 				ElidedNode *elided_node,
-				bool beneath_any_gather, bool within_join_problem)
+				bool needs_no_gather, bool within_join_problem)
 {
 	pgpa_scan_strategy strategy = PGPA_SCAN_ORDINARY;
 	Bitmapset  *relids = NULL;
@@ -224,17 +223,12 @@ pgpa_build_scan(pgpa_plan_walker_context *walker, Plan *plan,
 		return NULL;
 	}
 
-	/*
-	 * Add the appropriate set of RTIs to walker->no_gather_scans.
-	 *
-	 * Add nothing if we're beneath a Gather or Gather Merge node, since
-	 * NO_GATHER advice is clearly inappropriate in that situation.
-	 */
-	if (!beneath_any_gather)
+	/* Caller tells us whether NO_GATHER() advice for this scan is needed. */
+	if (needs_no_gather)
 		walker->no_gather_scans =
 			bms_add_members(walker->no_gather_scans, relids);
 
-	/* Caller tells us whether NO_GATHER() advice for this scan is needed. */
+	/* Now create and return the final pgpa_scan object. */
 	return pgpa_make_scan(walker, plan, strategy, relids);
 }
 
@@ -258,6 +252,80 @@ pgpa_make_scan(pgpa_plan_walker_context *walker, Plan *plan,
 											scan);
 
 	return scan;
+}
+
+/*
+ * Does this Plan node or associated ElidedNode look like the topmost node
+ * generated while planning an unflattened set operation?
+ *
+ * The return value of this function is a little bit inexact, because for
+ * example if a set operation produces a HashAggregate on top of an Append,
+ * this function will only identify the latter. Since the HashAggregate
+ * node is not RTI-bearing, the difference doesn't currently matter.
+ *
+ * Pass the plan node as 'plan', and if we're considering an elided node
+ * associated with that plan node, also pass it as 'elided_node'.
+ */
+bool
+pgpa_is_setop_parent(Plan *plan, ElidedNode *elided_node, List *rtable)
+{
+	Bitmapset  *relids;
+	int			rti = -1;
+
+	/*
+	 * If we're considering a SetOp or RecursiveUnion, then this is definitely
+	 * a setop parent. If we're considering an Append, a MergeAppend, or an
+	 * upper Result node, this might be a setop parent. If it's anything else,
+	 * this is not a setop parent.
+	 */
+	if (elided_node != NULL)
+	{
+		if (elided_node->elided_type == T_Append ||
+			elided_node->elided_type == T_MergeAppend)
+			relids = elided_node->relids;
+		else
+			return false;
+	}
+	else
+	{
+		if (IsA(plan, SetOp) || IsA(plan, RecursiveUnion))
+			return true;
+		else if (IsA(plan, Append) || IsA(plan, MergeAppend) ||
+				 (IsA(plan, Result) &&
+				  (((Result *) plan)->result_type == RESULT_TYPE_UPPER)))
+			relids = pgpa_relids(plan);
+		else
+			return false;
+	}
+
+	/*
+	 * As of this writing, we reach here with relids == NULL only for a
+	 * partitionwise aggregate, which is not a setop parent.
+	 */
+	if (relids == NULL)
+		return false;
+
+	/*
+	 * Conceptually, this Append or MergeAppend, or the Result node that
+	 * replaced it, could be a partitionwise scan, a partitionwise join, a
+	 * flattened UNION ALL, or an unflattened set operation. We want to return
+	 * true only in that last case; for our purposes, if a UNION ALL is
+	 * flattened, it no longer counts as a set operation.
+	 *
+	 * An unflattened set operation has no RTI of its own, so a plan node
+	 * implementing one carries the RTIs of its children, which must always be
+	 * subqueries with rte->inh == false. A flattened set operation does have
+	 * an RTI, and that one has rte->inh == true.
+	 */
+	while ((rti = bms_next_member(relids, rti)) >= 0)
+	{
+		RangeTblEntry *rte = rt_fetch(rti, rtable);
+
+		if (rte->rtekind != RTE_SUBQUERY || rte->inh)
+			return false;
+	}
+
+	return true;
 }
 
 /*
