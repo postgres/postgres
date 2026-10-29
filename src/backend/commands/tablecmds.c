@@ -12673,6 +12673,21 @@ ATExecAlterCheckConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
 	}
 
 	/*
+	 * The constraint is about to be marked validated, so a descendant that is
+	 * enforced but not yet valid conflicts with it, as in ALTER TABLE ...
+	 * INHERIT.
+	 */
+	if (recursing && cmdcon->is_enforced &&
+		currcon->conenforced && !currcon->convalidated)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				errmsg("constraint \"%s\" conflicts with NOT VALID constraint on child table \"%s\"",
+					   NameStr(currcon->conname), RelationGetRelationName(rel)),
+				errhint("You may need to use %s on table \"%s\" first.",
+						"ALTER TABLE ... VALIDATE CONSTRAINT",
+						RelationGetRelationName(rel)));
+
+	/*
 	 * Update to the merged enforceability if needed. This may differ from the
 	 * requested enforceability when another matching parent constraint
 	 * remains enforced.

@@ -319,6 +319,17 @@ select * from check_constraint_status;
 drop table parted_ch;
 drop view check_constraint_status;
 
+create table parted_ch(
+  a int, b int,
+  constraint cc check (a > 10) not enforced
+) partition by list(a);
+
+create table parted_ch_1(a int, b int);
+alter table parted_ch_1 add constraint cc check (a > 10) not valid;
+alter table parted_ch attach partition parted_ch_1  for values in (0, 1);
+alter table parted_ch alter constraint cc enforced; -- error
+drop table parted_ch;
+
 --
 -- Primary keys
 --
