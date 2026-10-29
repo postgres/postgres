@@ -838,9 +838,9 @@ pgpa_planner_apply_joinrel_advice(uint64 *pgs_mask_p, char *plan_name,
 			}
 
 			/*
-			 * Otherwise, if the specified targets exactly match this
-			 * joinrel, arrange to enforce it here; see comments below for
-			 * details on what we do when there is not an exact match.
+			 * Otherwise, if the specified targets exactly match this joinrel,
+			 * arrange to enforce it here; see comments below for details on
+			 * what we do when there is not an exact match.
 			 */
 			if (itm == PGPA_ITM_EQUAL)
 			{
