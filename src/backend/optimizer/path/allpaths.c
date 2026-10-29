@@ -1348,10 +1348,15 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 * If set_append_rel_size() decided the parent appendrel was
 		 * parallel-unsafe at some point after visiting this child rel, we
 		 * need to propagate the unsafety marking down to the child, so that
-		 * we don't generate useless partial paths for it.
+		 * we don't generate useless partial paths for it.  Also, zap any
+		 * partial paths that already exist from places such as
+		 * set_subquery_pathlist().
 		 */
 		if (!rel->consider_parallel)
+		{
+			childrel->partial_pathlist = NIL;
 			childrel->consider_parallel = false;
+		}
 
 		/*
 		 * Compute the child's access paths.
