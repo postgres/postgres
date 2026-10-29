@@ -1305,6 +1305,30 @@ select * from
       left join zv1 on (f3 = f1)
 where f2 = 53;
 
+-- the zt3/zt1b join clause must be kept when zt2/zt3 is commuted into zt1/zt2
+explain (costs off)
+select * from
+  zt1 left join zt2 on (zt1.f1 = f2)
+      left join zt3 on (f2 = f3)
+      left join zt1 zt1b on (f3 = zt1b.f1)
+where zt1.f1 = 53;
+
+select * from
+  zt1 left join zt2 on (zt1.f1 = f2)
+      left join zt3 on (f2 = f3)
+      left join zt1 zt1b on (f3 = zt1b.f1)
+where zt1.f1 = 53;
+
+-- likewise for the zt3/zt2 join clause when zt1b/zt3 is commuted into zt1/zt1b
+explain (costs off)
+select * from
+  zt1 left join zt1 zt1b on (zt1.f1 = zt1b.f1 and zt1b.f1 = 53)
+      left join (zt3 left join zt2 on (f3 = f2)) on (zt1b.f1 = f3);
+
+select * from
+  zt1 left join zt1 zt1b on (zt1.f1 = zt1b.f1 and zt1b.f1 = 53)
+      left join (zt3 left join zt2 on (f3 = f2)) on (zt1b.f1 = f3);
+
 --
 -- regression test for improper extraction of OR indexqual conditions
 -- (as seen in early 8.3.x releases)

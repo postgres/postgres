@@ -4296,6 +4296,71 @@ where f2 = 53;
  53 |    |    | 
 (1 row)
 
+-- the zt3/zt1b join clause must be kept when zt2/zt3 is commuted into zt1/zt2
+explain (costs off)
+select * from
+  zt1 left join zt2 on (zt1.f1 = f2)
+      left join zt3 on (f2 = f3)
+      left join zt1 zt1b on (f3 = zt1b.f1)
+where zt1.f1 = 53;
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Nested Loop Left Join
+   Join Filter: (zt3.f3 = zt1b.f1)
+   ->  Nested Loop Left Join
+         Join Filter: (zt2.f2 = zt3.f3)
+         ->  Nested Loop Left Join
+               ->  Index Only Scan using zt1_pkey on zt1
+                     Index Cond: (f1 = 53)
+               ->  Index Only Scan using zt2_pkey on zt2
+                     Index Cond: (f2 = 53)
+         ->  Index Only Scan using zt3_pkey on zt3
+               Index Cond: (f3 = 53)
+   ->  Index Only Scan using zt1_pkey on zt1 zt1b
+         Index Cond: (f1 = 53)
+(13 rows)
+
+select * from
+  zt1 left join zt2 on (zt1.f1 = f2)
+      left join zt3 on (f2 = f3)
+      left join zt1 zt1b on (f3 = zt1b.f1)
+where zt1.f1 = 53;
+ f1 | f2 | f3 | f1 
+----+----+----+----
+ 53 | 53 |    |   
+(1 row)
+
+-- likewise for the zt3/zt2 join clause when zt1b/zt3 is commuted into zt1/zt1b
+explain (costs off)
+select * from
+  zt1 left join zt1 zt1b on (zt1.f1 = zt1b.f1 and zt1b.f1 = 53)
+      left join (zt3 left join zt2 on (f3 = f2)) on (zt1b.f1 = f3);
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Hash Left Join
+   Hash Cond: (zt1.f1 = zt1b.f1)
+   ->  Seq Scan on zt1
+   ->  Hash
+         ->  Nested Loop Left Join
+               Join Filter: (zt3.f3 = zt2.f2)
+               ->  Nested Loop Left Join
+                     Join Filter: (zt1b.f1 = zt3.f3)
+                     ->  Index Only Scan using zt1_pkey on zt1 zt1b
+                           Index Cond: (f1 = 53)
+                     ->  Index Only Scan using zt3_pkey on zt3
+                           Index Cond: (f3 = 53)
+               ->  Index Only Scan using zt2_pkey on zt2
+                     Index Cond: (f2 = 53)
+(14 rows)
+
+select * from
+  zt1 left join zt1 zt1b on (zt1.f1 = zt1b.f1 and zt1b.f1 = 53)
+      left join (zt3 left join zt2 on (f3 = f2)) on (zt1b.f1 = f3);
+ f1 | f1 | f3 | f2 
+----+----+----+----
+ 53 | 53 |    |   
+(1 row)
+
 --
 -- regression test for improper extraction of OR indexqual conditions
 -- (as seen in early 8.3.x releases)
@@ -6962,6 +7027,7 @@ where tt1.f1 = ss1.c0;
                Output: tt4.f1
                ->  Nested Loop Left Join
                      Output: tt4.f1
+                     Join Filter: (tt3.f1 = tt4.f1)
                      ->  Seq Scan on public.text_tbl tt3
                            Output: tt3.f1
                            Filter: (tt3.f1 = 'foo'::text)
@@ -6979,7 +7045,7 @@ where tt1.f1 = ss1.c0;
                      Output: (tt4.f1)
                      ->  Seq Scan on public.text_tbl tt5
                            Output: tt4.f1
-(32 rows)
+(33 rows)
 
 select 1 from
   text_tbl as tt1

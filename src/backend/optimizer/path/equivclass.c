@@ -2156,6 +2156,12 @@ create_join_clause(PlannerInfo *root,
  * We handle this by generating a constant-TRUE clause that is marked with
  * the same required_relids etc as the removed outer-join clause, thus
  * making it a join clause between the correct relations.
+ *
+ * However, we can't do that for a clone clause, since it may be applied
+ * above a commuted outer join that has already null-extended OUTERVAR but
+ * whose relid has not yet been added to the joinrel.  The original strict
+ * clause is needed there to reject the null-extended rows, so we throw
+ * back a clone as-is, marked redundant for selectivity estimation.
  */
 void
 reconsider_outer_join_clauses(PlannerInfo *root)
@@ -2181,6 +2187,15 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 				/* remove it from the list */
 				root->left_join_clauses =
 					foreach_delete_current(root->left_join_clauses, cell);
+				/* throw back a clone as-is (see notes above) */
+				if (rinfo->has_clone || rinfo->is_clone)
+				{
+					/* but the thrown-back clause has no extra selectivity */
+					rinfo->norm_selec = 2.0;
+					rinfo->outer_selec = 1.0;
+					distribute_restrictinfo_to_rels(root, rinfo);
+					continue;
+				}
 				/* throw back a dummy replacement clause (see notes above) */
 				rinfo = make_restrictinfo(root,
 										  (Expr *) makeBoolConst(true, false),
@@ -2209,6 +2224,15 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 				/* remove it from the list */
 				root->right_join_clauses =
 					foreach_delete_current(root->right_join_clauses, cell);
+				/* throw back a clone as-is (see notes above) */
+				if (rinfo->has_clone || rinfo->is_clone)
+				{
+					/* but the thrown-back clause has no extra selectivity */
+					rinfo->norm_selec = 2.0;
+					rinfo->outer_selec = 1.0;
+					distribute_restrictinfo_to_rels(root, rinfo);
+					continue;
+				}
 				/* throw back a dummy replacement clause (see notes above) */
 				rinfo = make_restrictinfo(root,
 										  (Expr *) makeBoolConst(true, false),
