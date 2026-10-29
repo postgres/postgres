@@ -3520,6 +3520,7 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 	Datum	   *domainval = NULL;
 	bool	   *domainnull = NULL;
 	ListCell   *l;
+	List	   *skipjumps = NIL;
 
 	scratch->d.domaincheck.resulttype = ctest->resulttype;
 	/* we'll allocate workspace only if needed */
@@ -3569,6 +3570,24 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 		bool	   *save_innermost_domainnull;
 
 		scratch->d.domaincheck.constraintname = con->name;
+
+		/*
+		 * If this CoerceToDomain is being evaluated softly and its argument,
+		 * or a constraint checked before this one, has already failed, the
+		 * result is going to be discarded, so don't check the remaining
+		 * constraints against it; doing so might throw a hard error or
+		 * overwrite the saved error.
+		 */
+		if (state->escontext != NULL)
+		{
+			ExprEvalStep jump = {0};
+
+			jump.opcode = EEOP_JUMP_IF_NULL;
+			jump.resnull = &state->escontext->error_occurred;
+			jump.d.jump.jumpdone = -1;	/* set below */
+			skipjumps = lappend_int(skipjumps, state->steps_len);
+			ExprEvalPushStep(state, &jump);
+		}
 
 		switch (con->constrainttype)
 		{
@@ -3650,6 +3669,10 @@ ExecInitCoerceToDomain(ExprEvalStep *scratch, CoerceToDomain *ctest,
 				break;
 		}
 	}
+
+	/* Now that we know where the constraint steps end, fix up the jumps. */
+	foreach_int(jumpno, skipjumps)
+		state->steps[jumpno].d.jump.jumpdone = state->steps_len;
 }
 
 /*
