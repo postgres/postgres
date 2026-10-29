@@ -1515,6 +1515,23 @@ ERROR:  invalid ON ERROR behavior
 LINE 1: SELECT JSON_QUERY(jsonb '1', '$' TRUE ON ERROR);
                                          ^
 DETAIL:  Only ERROR, NULL, EMPTY ARRAY, EMPTY OBJECT, or DEFAULT expression is allowed in ON ERROR for JSON_QUERY().
+-- soft errors raised by the ON ERROR or ON EMPTY DEFAULT expression must always
+-- be rethrown
+SELECT JSON_VALUE('"a"', '$' RETURNING sqljsonb_int_not_null DEFAULT NULL ON ERROR);
+ERROR:  could not coerce ON ERROR expression (DEFAULT) to the RETURNING type
+DETAIL:  domain sqljsonb_int_not_null does not allow null values
+SELECT JSON_VALUE('"a"', '$' RETURNING int DEFAULT (NULL::sqljsonb_int_not_null + 0) ON ERROR);
+ERROR:  could not coerce ON ERROR expression (DEFAULT) to the RETURNING type
+DETAIL:  domain sqljsonb_int_not_null does not allow null values
+SELECT JSON_QUERY('"a"', '$' RETURNING int DEFAULT (NULL::sqljsonb_int_not_null + 0) ON ERROR);
+ERROR:  could not coerce ON ERROR expression (DEFAULT) to the RETURNING type
+DETAIL:  domain sqljsonb_int_not_null does not allow null values
+SELECT JSON_VALUE('"a"', '$' RETURNING int DEFAULT (('a' || (random() * 0)::int)::int + 0) ON ERROR);
+ERROR:  could not coerce ON ERROR expression (DEFAULT) to the RETURNING type
+DETAIL:  invalid input syntax for type integer: "a0"
+SELECT JSON_QUERY('"a"', '$' RETURNING int DEFAULT (('a' || (random() * 0)::int)::int + 0) ON ERROR);
+ERROR:  could not coerce ON ERROR expression (DEFAULT) to the RETURNING type
+DETAIL:  invalid input syntax for type integer: "a0"
 -- Test implicit coercion to a domain over fixed-length type specified in
 -- RETURNING
 CREATE DOMAIN queryfuncs_char2 AS char(2);
