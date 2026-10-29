@@ -145,12 +145,18 @@ transformJsonTable(ParseState *pstate, JsonTable *jt)
 	/*
 	 * Transform JsonFuncExpr representing the top JSON_TABLE context_item and
 	 * pathspec into a dummy JSON_TABLE_OP JsonExpr.
+	 *
+	 * The raw PASSING arguments are transformed here and again for each
+	 * column that has a path (see transformJsonTableColumn()).  Since
+	 * transformExpr() modifies some raw nodes in place, such as replacing a
+	 * SubLink's subselect with its Query, each transformation must be given
+	 * its own copy, so that jt->passing stays untouched.
 	 */
 	jfe = makeNode(JsonFuncExpr);
 	jfe->op = JSON_TABLE_OP;
 	jfe->context_item = jt->context_item;
 	jfe->pathspec = (Node *) rootPathSpec->string;
-	jfe->passing = jt->passing;
+	jfe->passing = copyObject(jt->passing);
 	jfe->on_empty = NULL;
 	jfe->on_error = jt->on_error;
 	jfe->location = jt->location;
@@ -529,7 +535,8 @@ transformJsonTableColumn(JsonTableColumn *jtc, Node *contextItemExpr,
 		pathspec = makeStringConst(path.data, -1);
 	}
 	jfexpr->pathspec = pathspec;
-	jfexpr->passing = passingArgs;
+	/* Each column gets its own copy; see transformJsonTable(). */
+	jfexpr->passing = copyObject(passingArgs);
 	jfexpr->output = makeNode(JsonOutput);
 	jfexpr->output->typeName = jtc->typeName;
 	jfexpr->output->returning = makeNode(JsonReturning);

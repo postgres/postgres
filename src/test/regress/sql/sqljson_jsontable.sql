@@ -351,6 +351,55 @@ FROM JSON_TABLE(
 		COLUMNS (a text FORMAT JSON PATH '$ ? (@ < $y)')
 	) jt;
 
+-- PASSING arguments containing sublinks, used by the row pattern and by
+-- regular, FORMAT JSON and EXISTS columns
+SELECT *
+FROM JSON_TABLE(
+	jsonb '[1,2,3]',
+	'$[*] ? (@ < $x)'
+		PASSING (SELECT 3) AS x, 1 + (SELECT 1) AS y
+		COLUMNS (
+			a int PATH '$',
+			b text FORMAT JSON PATH '$ ? (@ == $y)',
+			c bool EXISTS PATH '$ ? (@ >= $y)'
+		)
+	) jt;
+
+-- Correlated sublinks of various kinds in PASSING, used only under NESTED PATH
+SELECT x, jt.*
+FROM
+	generate_series(1, 3) x,
+	JSON_TABLE(
+		jsonb '[[1,2,3]]',
+		'$[*]'
+		PASSING (SELECT x) AS x,
+				EXISTS (SELECT 1 WHERE x > 1) AS e,
+				x IN (SELECT 2) AS i,
+				to_jsonb(ARRAY(SELECT x)) AS arr
+		COLUMNS (
+			NESTED PATH '$[*] ? (@ >= $x)'
+			COLUMNS (
+				z int PATH '$',
+				e bool PATH '$e',
+				i bool PATH '$i',
+				arr jsonb PATH '$arr'
+			)
+		)
+	) jt;
+
+-- Sublinks in PASSING arguments survive a view's definition
+CREATE VIEW jsonb_table_view_passing_sublink AS
+SELECT *
+FROM JSON_TABLE(
+	jsonb '[1,2,3]',
+	'$[*] ? (@ < $x)'
+		PASSING (SELECT 3) AS x
+		COLUMNS (a int PATH '$', b bool EXISTS PATH '$ ? (@ == $x - 1)')
+	) jt;
+\sv jsonb_table_view_passing_sublink
+SELECT * FROM jsonb_table_view_passing_sublink;
+DROP VIEW jsonb_table_view_passing_sublink;
+
 -- Should fail (not supported)
 SELECT * FROM JSON_TABLE(jsonb '{"a": 123}', '$' || '.' || 'a' COLUMNS (foo int));
 
