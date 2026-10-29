@@ -39,6 +39,10 @@ $node_london->append_conf(
 	log_checkpoints = true
 ));
 $node_london->start;
+$node_london->log_check(
+	'No prepared transactions at startup',
+	0,
+	log_unlike => [qr/LOG:  recovered \d+ prepared transaction/]);
 $node_london->backup('london_backup');
 
 # Setup paris node
@@ -82,8 +86,9 @@ $cur_primary->psql(
 	SAVEPOINT s1;
 	INSERT INTO t_009_tbl VALUES (4, 'issued to ${cur_primary_name}');
 	PREPARE TRANSACTION 'xact_009_2';");
-$cur_primary->stop;
-$cur_primary->start;
+$cur_primary->restart(
+	log_like => qr/LOG:  recovered 2 prepared transactions\r?$/m,
+	log_unlike => qr/LOG:  recovering prepared transaction /);
 
 $psql_rc = $cur_primary->psql('postgres', "COMMIT PREPARED 'xact_009_1'");
 is($psql_rc, '0', 'Commit prepared transaction after restart');
@@ -223,6 +228,7 @@ $cur_primary->psql(
 	INSERT INTO t_009_tbl VALUES (22, 'issued to ${cur_primary_name}');
 	PREPARE TRANSACTION 'xact_009_10';");
 $cur_primary->stop;
+my $log_offset = -s $cur_standby->logfile;
 $cur_standby->promote;
 
 # change roles
@@ -235,6 +241,11 @@ $cur_primary_name = $cur_primary->name;
 $psql_rc = $cur_primary->psql('postgres',
 	"SET synchronous_commit = off; COMMIT PREPARED 'xact_009_10'");
 is($psql_rc, '0', "Restore of prepared transaction on promoted standby");
+$cur_primary->log_check(
+	'Prepared transaction recovery logging after promotion',
+	$log_offset,
+	log_like => [qr/LOG:  recovered 1 prepared transaction\r?$/m],
+	log_unlike => [qr/LOG:  recovering prepared transaction /]);
 
 # restart old primary as new standby
 $cur_standby->enable_streaming($cur_primary);
