@@ -311,6 +311,11 @@ SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS
 SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS PATH '$.b' ERROR ON ERROR));
 SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS PATH '$.b' FALSE ON ERROR));
 SELECT a, a::bool FROM JSON_TABLE(jsonb '{"a":1}', '$' COLUMNS (a dint4_0 EXISTS PATH '$.b' TRUE ON ERROR));
+-- soft errors in the ON EMPTY expression must be rethrown
+SELECT * FROM JSON_TABLE('{}', '$' COLUMNS (a int PATH '$.a' DEFAULT (0::dint4_0 + 0) ON EMPTY));
+SELECT * FROM JSON_TABLE('{}', '$' COLUMNS (a int PATH '$.a' KEEP QUOTES DEFAULT (0::dint4_0 + 0) ON EMPTY));
+SELECT * FROM JSON_TABLE('{}', '$' COLUMNS (a int PATH '$.a' DEFAULT (('a' || (random() * 0)::int)::int + 0) ON EMPTY));
+SELECT * FROM JSON_TABLE('{}', '$' COLUMNS (a int PATH '$.a' KEEP QUOTES DEFAULT (('a' || (random() * 0)::int)::int + 0) ON EMPTY));
 DROP DOMAIN dint4, dint4_0;
 
 -- JSON_TABLE: WRAPPER/QUOTES clauses on scalar columns

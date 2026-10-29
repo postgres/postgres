@@ -4948,19 +4948,14 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 								 resv, resnull);
 
 		/*
-		 * Add a COERCION_FINISH step to check for errors that may occur when
-		 * coercing and rethrow them.
+		 * Add a COERCION_FINISH step to throw any error saved while
+		 * evaluating the ON ERROR expression or coercing its result.
 		 */
-		if (jsexpr->on_error->coerce ||
-			IsA(jsexpr->on_error->expr, CoerceViaIO) ||
-			IsA(jsexpr->on_error->expr, CoerceToDomain))
-		{
-			scratch->opcode = EEOP_JSONEXPR_COERCION_FINISH;
-			scratch->resvalue = resv;
-			scratch->resnull = resnull;
-			scratch->d.jsonexpr.jsestate = jsestate;
-			ExprEvalPushStep(state, scratch);
-		}
+		scratch->opcode = EEOP_JSONEXPR_COERCION_FINISH;
+		scratch->resvalue = resv;
+		scratch->resnull = resnull;
+		scratch->d.jsonexpr.jsestate = jsestate;
+		ExprEvalPushStep(state, scratch);
 
 		/* JUMP to end to skip the ON EMPTY steps added below. */
 		jumps_to_end = lappend_int(jumps_to_end, state->steps_len);
@@ -4995,8 +4990,10 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 		ExprEvalPushStep(state, scratch);
 
 		/*
-		 * Steps to evaluate the ON EMPTY expression; handle errors softly to
-		 * rethrow them in COERCION_FINISH step that will be added later.
+		 * Steps to evaluate the ON EMPTY expression.  Unless ON ERROR is
+		 * ERROR, errors are handled softly, to be rethrown by the
+		 * COERCION_FINISH step added below; otherwise they are thrown
+		 * directly.
 		 */
 		saved_escontext = state->escontext;
 		state->escontext = escontext;
@@ -5011,14 +5008,12 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 								 resv, resnull);
 
 		/*
-		 * Add a COERCION_FINISH step to check for errors that may occur when
-		 * coercing and rethrow them.
+		 * If the ON EMPTY expression was evaluated softly, add a
+		 * COERCION_FINISH step to throw any error saved while evaluating it
+		 * or coercing its result.
 		 */
-		if (jsexpr->on_empty->coerce ||
-			IsA(jsexpr->on_empty->expr, CoerceViaIO) ||
-			IsA(jsexpr->on_empty->expr, CoerceToDomain))
+		if (escontext)
 		{
-
 			scratch->opcode = EEOP_JSONEXPR_COERCION_FINISH;
 			scratch->resvalue = resv;
 			scratch->resnull = resnull;
