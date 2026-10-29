@@ -112,6 +112,16 @@ EXPLAIN (PLAN_ADVICE, COSTS OFF)
 SELECT * FROM pt1, ptmismatch WHERE pt1.id = ptmismatch.id;
 COMMIT;
 
+-- PARTITIONWISE is only applicable to inheritance parents.
+BEGIN;
+SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE(pt3a)';
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM pt1, pt3a WHERE pt1.id = pt3a.id;
+SET LOCAL pg_plan_advice.advice = 'PARTITIONWISE((pt1 pt3a))';
+EXPLAIN (PLAN_ADVICE, COSTS OFF)
+SELECT * FROM pt1, pt3a WHERE pt1.id = pt3a.id;
+COMMIT;
+
 -- Force join order for a particular branch of the partitionwise join.
 BEGIN;
 SET LOCAL pg_plan_advice.advice = 'JOIN_ORDER(pt3/public.pt3a pt2/public.pt2a pt1/public.pt1a)';

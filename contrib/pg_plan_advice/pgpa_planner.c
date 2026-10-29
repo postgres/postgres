@@ -144,6 +144,7 @@ static void pgpa_planner_apply_join_path_advice(JoinType jointype,
 												char *plan_name,
 												pgpa_join_state *pjs);
 static void pgpa_planner_apply_scan_advice(RelOptInfo *rel,
+										   RangeTblEntry *rte,
 										   pgpa_trove_entry *scan_entries,
 										   Bitmapset *scan_indexes,
 										   pgpa_trove_entry *rel_entries,
@@ -453,6 +454,7 @@ pgpa_build_simple_rel(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 			uint64		original_mask = rel->pgs_mask;
 
 			pgpa_planner_apply_scan_advice(rel,
+										   rte,
 										   tresult_scan.entries,
 										   tresult_scan.indexes,
 										   tresult_rel.entries,
@@ -823,6 +825,23 @@ pgpa_planner_apply_joinrel_advice(uint64 *pgs_mask_p, char *plan_name,
 												entry->target);
 			Assert(itm != PGPA_ITM_DISJOINT);
 
+			/*
+			 * If this entry has previously been marked inapplicable, don't
+			 * enforce it. However, if appropriate, we still mark it fully
+			 * matched.
+			 */
+			if ((entry->flags & PGPA_FB_INAPPLICABLE) != 0)
+			{
+				if (itm == PGPA_ITM_EQUAL)
+					entry->flags |= PGPA_FB_MATCH_FULL;
+				continue;
+			}
+
+			/*
+			 * Otherwise, if the specified targets exactly match this
+			 * joinrel, arrange to enforce it here; see comments below for
+			 * details on what we do when there is not an exact match.
+			 */
 			if (itm == PGPA_ITM_EQUAL)
 			{
 				full_match = true;
@@ -1012,7 +1031,14 @@ pgpa_planner_apply_join_path_advice(JoinType jointype, uint64 *pgs_mask_p,
 		pgpa_itm_type inner_itm;
 		pgpa_itm_type outer_itm;
 
-		if (entry->tag != PGPA_TAG_PARTITIONWISE)
+		/*
+		 * This loop only considers PARTITIONWISE advice, and disregards any
+		 * that has previously been marked inapplicable. Note that any
+		 * inapplicable advice will already be marked fully matched by this
+		 * point, so we don't need to worry about that here.
+		 */
+		if (entry->tag != PGPA_TAG_PARTITIONWISE ||
+			(entry->flags & PGPA_FB_INAPPLICABLE) != 0)
 			continue;
 
 		outer_itm = pgpa_identifiers_match_target(pjs->outer_count,
@@ -1679,6 +1705,7 @@ pgpa_semijoin_permits_join(int outer_count, int inner_count,
  */
 static void
 pgpa_planner_apply_scan_advice(RelOptInfo *rel,
+							   RangeTblEntry *rte,
 							   pgpa_trove_entry *scan_entries,
 							   Bitmapset *scan_indexes,
 							   pgpa_trove_entry *rel_entries,
@@ -1781,7 +1808,18 @@ pgpa_planner_apply_scan_advice(RelOptInfo *rel,
 		 */
 		if (my_entry->tag == PGPA_TAG_PARTITIONWISE)
 		{
-			if (just_one_rel)
+			if (!rte->inh)
+			{
+				/*
+				 * Can't apply PARTITIONWISE advice to something that is not
+				 * an inheritance parent.
+				 */
+				my_entry->flags |=
+					PGPA_FB_MATCH_PARTIAL | PGPA_FB_INAPPLICABLE;
+				if (just_one_rel)
+					my_entry->flags |= PGPA_FB_MATCH_FULL;
+			}
+			else if (just_one_rel)
 			{
 				const uint64 my_scan_type = PGS_APPEND | PGS_MERGE_APPEND;
 
