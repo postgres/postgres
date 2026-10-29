@@ -38,7 +38,9 @@
 									 * will be skipped) */
 #define REGBUF_KEEP_DATA	0x10	/* include data even if a full-page image
 									 * is taken */
-#define REGBUF_NO_CHANGE	0x20	/* intentionally register clean buffer */
+#define REGBUF_NO_CHANGE	0x20	/* intentionally register clean buffer; no
+									 * image is forced for WAL consistency
+									 * checking */
 
 /* prototypes for public functions in xloginsert.c: */
 extern void XLogBeginInsert(void);
