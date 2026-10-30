@@ -406,6 +406,32 @@ upgrade, and to recompute any stored <type>tsvector</type> values.
 </listitem>
 
 <!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2026-01-12 [e39ece034] Make dmetaphone collation-aware
+Author: Jeff Davis <jdavis@postgresql.org>
+2026-01-12 [b96a9fd76f3] fuzzystrmatch: use pg_ascii_toupper().
+-->
+
+<listitem>
+<para>
+Change how <xref linkend="fuzzystrmatch"/> functions handle
+non-<acronym>ASCII</acronym> characters (Peter Eisentraut, Jeff Davis)
+<ulink url="&commit_baseurl;e39ece034">&sect;</ulink>
+<ulink url="&commit_baseurl;b96a9fd76f3">&sect;</ulink>
+</para>
+
+<para>
+<function>dmetaphone()</function> and <function>dmetaphone_alt()</function>
+now upper-case their input using the database's default collation rather than
+always using libc, and <function>soundex()</function>,
+<function>metaphone()</function>, and <function>difference()</function> now
+treat only <acronym>ASCII</acronym> letters as letters.  When upgrading with
+<link linkend="pgupgrade"><application>pg_upgrade</application></link>, it is
+recommended to reindex any indexes that use these functions after the upgrade.
+</para>
+</listitem>
+
+<!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2026-04-08 [77645d44e] Remove MULE_INTERNAL encoding.
 -->
@@ -3260,18 +3286,6 @@ Author: Michael Paquier <michael@paquier.xyz>
 Improve performance of <xref linkend="pgstattuple"/> by using streaming reads (Xuneng Zhou)
 <ulink url="&commit_baseurl;213f0079b">&sect;</ulink>
 <ulink url="&commit_baseurl;ae58189a4">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2026-01-12 [e39ece034] Make dmetaphone collation-aware
--->
-
-<listitem>
-<para>
-Allow <xref linkend="fuzzystrmatch"/>'s <function>dmetaphone()</function> to use single-byte encodings beyond <acronym>ASCII</acronym> (Peter Eisentraut)
-<ulink url="&commit_baseurl;e39ece034">&sect;</ulink>
 </para>
 </listitem>
 
