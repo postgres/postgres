@@ -1627,9 +1627,9 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	DropRelationFiles(delrels, ndelrels, false);
 
 	if (isCommit)
-		pgstat_execute_transactional_drops(hdr->ncommitstats, commitstats, false);
+		pgstat_execute_transactional_drops(hdr->ncommitstats, commitstats);
 	else
-		pgstat_execute_transactional_drops(hdr->nabortstats, abortstats, false);
+		pgstat_execute_transactional_drops(hdr->nabortstats, abortstats);
 
 	/*
 	 * Handle cache invalidation messages.

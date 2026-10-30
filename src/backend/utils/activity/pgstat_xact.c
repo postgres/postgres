@@ -310,7 +310,7 @@ pgstat_get_transactional_drops(bool isCommit, xl_xact_stats_item **items)
  * during normal 2PC COMMIT/ABORT PREPARED processing.
  */
 void
-pgstat_execute_transactional_drops(int ndrops, struct xl_xact_stats_item *items, bool is_redo)
+pgstat_execute_transactional_drops(int ndrops, struct xl_xact_stats_item *items)
 {
 	int			not_freed_count = 0;
 

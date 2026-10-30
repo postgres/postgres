@@ -937,7 +937,7 @@ extern void AtPrepare_PgStat(void);
 extern void PostPrepare_PgStat(void);
 struct xl_xact_stats_item;
 extern int	pgstat_get_transactional_drops(bool isCommit, struct xl_xact_stats_item **items);
-extern void pgstat_execute_transactional_drops(int ndrops, struct xl_xact_stats_item *items, bool is_redo);
+extern void pgstat_execute_transactional_drops(int ndrops, struct xl_xact_stats_item *items);
 
 
 /*
