@@ -102,11 +102,13 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 		pqTraceOutputMessage(conn, conn->inBuffer + conn->inStart, false);
 
 	/* Only try to acquire credentials if GSS delegation isn't disabled. */
-	if (!pg_GSS_have_cred_cache(&conn->gcred))
-		conn->gcred = GSS_C_NO_CREDENTIAL;
-
 	if (conn->gssdelegation && conn->gssdelegation[0] == '1')
-		gss_flags |= GSS_C_DELEG_FLAG;
+	{
+		if (conn->gcred == GSS_C_NO_CREDENTIAL)
+			conn->gcred = pg_GSS_get_cred_cache();
+		if (conn->gcred != GSS_C_NO_CREDENTIAL)
+			gss_flags |= GSS_C_DELEG_FLAG;
+	}
 
 	maj_stat = gss_init_sec_context(&min_stat,
 									conn->gcred,
