@@ -657,12 +657,15 @@ sub init
 	# disabled, use a previously initdb'd cluster as a template by copying it.
 	# For a lot of tests, that's substantially cheaper. It does not seem
 	# worth figuring out whether extra parameters affect compatibility, so
-	# initdb is forced if any are defined.
+	# initdb is forced if any are defined.  The template was created by the
+	# installation under test, so it can't be used for a node using a
+	# different installation.
 	#
 	# There's very similar code in pg_regress.c, but we can't easily
 	# deduplicate it until we require perl at build time.
 	if (   $params{force_initdb}
 		or defined $params{extra}
+		or defined $self->{_install_path}
 		or !defined $ENV{INITDB_TEMPLATE})
 	{
 		note("initializing database system by running initdb");
