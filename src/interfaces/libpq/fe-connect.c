@@ -3205,14 +3205,21 @@ keep_going:						/* We will come back to here until there is
 
 				/*
 				 * If GSSAPI encryption is enabled, then call
-				 * pg_GSS_have_cred_cache() which will return true if we can
-				 * acquire credentials (and give us a handle to use in
-				 * conn->gcred), and then send a packet to the server asking
-				 * for GSSAPI Encryption (and skip past SSL negotiation and
-				 * regular startup below).
+				 * pg_GSS_get_cred_cache() to try to acquire credentials, and
+				 * then send a packet to the server asking for GSSAPI
+				 * Encryption (and skip past SSL negotiation and regular
+				 * startup below).
 				 */
 				if (conn->try_gss && !conn->gctx)
-					conn->try_gss = pg_GSS_have_cred_cache(&conn->gcred);
+				{
+					/* We shouldn't have a credential yet, but check anyway */
+					if (conn->gcred == GSS_C_NO_CREDENTIAL)
+					{
+						conn->gcred = pg_GSS_get_cred_cache();
+						if (conn->gcred == GSS_C_NO_CREDENTIAL)
+							conn->try_gss = false;
+					}
+				}
 				if (conn->try_gss && !conn->gctx)
 				{
 					ProtocolVersion pv = pg_hton32(NEGOTIATE_GSS_CODE);
@@ -4333,6 +4340,10 @@ makeEmptyPGconn(void)
 	conn->show_context = PQSHOW_CONTEXT_ERRORS;
 	conn->sock = PGINVALID_SOCKET;
 	conn->Pfdebug = NULL;
+
+#ifdef ENABLE_GSS
+	conn->gcred = GSS_C_NO_CREDENTIAL;	/* let's not assume this is 0 */
+#endif
 
 	/*
 	 * We try to send at least 8K at a time, which is the usual size of pipe
