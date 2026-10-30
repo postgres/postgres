@@ -7,3 +7,7 @@ patterns:
 - typanalyze function registered to a custom type, returning false.
 - typanalyze function registered to a custom type, registering invalid stats
   data.
+- typanalyze function registered to a custom type, returning false when
+  given a stats target.
+- typanalyze function registered to a custom type, returning false on its
+  second call with a stats target.

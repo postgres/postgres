@@ -98,6 +98,34 @@ SELECT tablename,
 SELECT COUNT(*) FROM test_table GROUP BY (func_int_custom(data));
 DROP STATISTICS test_stats;
 
+-- Switch type to use typanalyze function that returns false with stats
+-- target.
+ALTER TYPE int_custom SET (ANALYZE = int_custom_typanalyze_false_target);
+
+-- Expression rejected at evaluation.
+CREATE STATISTICS test_stats ON func_int_custom(data), (id) FROM test_table;
+-- Computation of the stats fails, no data generated.
+ANALYZE test_table;
+SELECT stxname, d.stxoid IS NULL AS no_data
+  FROM pg_statistic_ext s
+  LEFT JOIN pg_statistic_ext_data d ON s.oid = d.stxoid
+  WHERE stxname = 'test_stats';
+DROP STATISTICS test_stats;
+
+-- Switch type to use typanalyze function that returns false on second call
+-- with a stats target.
+ALTER TYPE int_custom SET (ANALYZE = int_custom_typanalyze_false_second);
+
+-- Expression rejected at build.
+CREATE STATISTICS test_stats ON func_int_custom(data), (id) FROM test_table;
+-- Computation of the stats fails, no data generated.
+ANALYZE test_table;
+SELECT stxname, d.stxoid IS NULL AS no_data
+  FROM pg_statistic_ext s
+  LEFT JOIN pg_statistic_ext_data d ON s.oid = d.stxoid
+  WHERE stxname = 'test_stats';
+DROP STATISTICS test_stats;
+
 -- Cleanup
 DROP FUNCTION func_int_custom;
 DROP TABLE test_table;
