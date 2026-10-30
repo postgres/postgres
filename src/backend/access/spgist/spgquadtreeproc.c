@@ -393,7 +393,7 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 					r |= 1 << getQuadrant(centroid, &p);
 					p = boxQuery->high;
 					r |= 1 << getQuadrant(centroid, &p);
-					p.x = boxQuery->low.x;
+					p.y = boxQuery->low.y;
 					r |= 1 << getQuadrant(centroid, &p);
 
 					which &= r;
