@@ -3281,7 +3281,8 @@ keep_going:						/* We will come back to here until there is
 						}
 						if (conn->gcred == GSS_C_NO_CREDENTIAL)
 						{
-							if (!pg_GSS_have_cred_cache(&conn->gcred))
+							conn->gcred = pg_GSS_get_cred_cache();
+							if (conn->gcred == GSS_C_NO_CREDENTIAL)
 							{
 								libpq_append_conn_error(conn,
 														"GSSAPI encryption required but no credential cache");
@@ -4847,15 +4848,16 @@ select_next_encryption_method(PGconn *conn, bool have_valid_connection)
 	if ((remaining_methods & ENC_GSSAPI) != 0)
 	{
 		/*
-		 * If GSSAPI encryption is enabled, then call pg_GSS_have_cred_cache()
-		 * which will return true if we can acquire credentials (and give us a
-		 * handle to use in conn->gcred), and then send a packet to the server
+		 * If GSSAPI encryption is enabled, then call pg_GSS_get_cred_cache()
+		 * to try to acquire credentials, and then send a packet to the server
 		 * asking for GSSAPI Encryption (and skip past SSL negotiation and
 		 * regular startup below).
 		 */
 		if (!conn->gctx)
 		{
-			if (!pg_GSS_have_cred_cache(&conn->gcred))
+			if (conn->gcred == GSS_C_NO_CREDENTIAL)
+				conn->gcred = pg_GSS_get_cred_cache();
+			if (conn->gcred == GSS_C_NO_CREDENTIAL)
 			{
 				conn->allowed_enc_methods &= ~ENC_GSSAPI;
 				remaining_methods &= ~ENC_GSSAPI;
@@ -5019,6 +5021,10 @@ pqMakeEmptyPGconn(void)
 	conn->sock = PGINVALID_SOCKET;
 	conn->altsock = PGINVALID_SOCKET;
 	conn->Pfdebug = NULL;
+
+#ifdef ENABLE_GSS
+	conn->gcred = GSS_C_NO_CREDENTIAL;	/* let's not assume this is 0 */
+#endif
 
 	/*
 	 * We try to send at least 8K at a time, which is the usual size of pipe

@@ -640,9 +640,9 @@ pqsecure_open_gss(PGconn *conn)
 
 	if (conn->gssdelegation && conn->gssdelegation[0] == '1')
 	{
-		/* Acquire credentials if possible */
+		/* Attempt to acquire credentials, if we didn't already */
 		if (conn->gcred == GSS_C_NO_CREDENTIAL)
-			(void) pg_GSS_have_cred_cache(&conn->gcred);
+			conn->gcred = pg_GSS_get_cred_cache();
 
 		/*
 		 * We have credentials and gssdelegation is enabled, so request
