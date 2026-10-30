@@ -1925,6 +1925,24 @@ select * from
 
 rollback;
 
+-- nestloop parameter PHV whose ph_eval_at mentions an outer join that is
+-- computed in the rels supplying the parameters
+explain (verbose, costs off)
+select v.k from (select 1) d
+  left join (select t1.f1, 1 from int4_tbl t1, onerow t2
+               left join onerow t3 on true) s(x, y) on true
+  left join lateral (select s.y from onerow t4) v(k) on true
+where v.k > s.x;
+
+-- likewise, where an upper nestloop could wrongly claim the parameter
+explain (verbose, costs off)
+select v.k, g from (select 1) d
+  left join (select t1.f1, 1 from int4_tbl t1, onerow t2
+               left join onerow t3 on true) s(x, y) on true
+  left join lateral (select s.y from onerow t4) v(k) on true,
+  lateral generate_series(v.k, 1) g
+where v.k > s.x;
+
 -- PHVs containing SubLinks are quite tricky to get right
 explain (verbose, costs off)
 select *

@@ -4306,6 +4306,15 @@ create_nestloop_plan(PlannerInfo *root,
 	}
 
 	/*
+	 * Required-outer sets can lack outer-join relids that appear in
+	 * ph_eval_at (see create_lateral_join_info), so add the outer joins
+	 * already computed in the rels supplying our parameters.
+	 */
+	req_outer = bms_union(req_outer,
+						  bms_intersect(root->curOuterRels,
+										root->outer_join_rels));
+
+	/*
 	 * Identify any nestloop parameters that should be supplied by this join
 	 * node, and remove them from root->curOuterParams.
 	 */

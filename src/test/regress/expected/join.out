@@ -5601,6 +5601,59 @@ select * from
 (21 rows)
 
 rollback;
+-- nestloop parameter PHV whose ph_eval_at mentions an outer join that is
+-- computed in the rels supplying the parameters
+explain (verbose, costs off)
+select v.k from (select 1) d
+  left join (select t1.f1, 1 from int4_tbl t1, onerow t2
+               left join onerow t3 on true) s(x, y) on true
+  left join lateral (select s.y from onerow t4) v(k) on true
+where v.k > s.x;
+                 QUERY PLAN                 
+--------------------------------------------
+ Nested Loop
+   Output: ((1))
+   ->  Nested Loop Left Join
+         ->  Seq Scan on pg_temp.onerow t2
+         ->  Seq Scan on pg_temp.onerow t3
+   ->  Nested Loop
+         Output: ((1))
+         ->  Seq Scan on public.int4_tbl t1
+               Output: t1.f1, 1
+         ->  Seq Scan on pg_temp.onerow t4
+               Output: (1)
+               Filter: ((1) > t1.f1)
+(12 rows)
+
+-- likewise, where an upper nestloop could wrongly claim the parameter
+explain (verbose, costs off)
+select v.k, g from (select 1) d
+  left join (select t1.f1, 1 from int4_tbl t1, onerow t2
+               left join onerow t3 on true) s(x, y) on true
+  left join lateral (select s.y from onerow t4) v(k) on true,
+  lateral generate_series(v.k, 1) g
+where v.k > s.x;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Nested Loop
+   Output: ((1)), g.g
+   ->  Nested Loop
+         Output: ((1))
+         ->  Nested Loop Left Join
+               ->  Seq Scan on pg_temp.onerow t2
+               ->  Seq Scan on pg_temp.onerow t3
+         ->  Nested Loop
+               Output: ((1))
+               ->  Seq Scan on public.int4_tbl t1
+                     Output: t1.f1, 1
+               ->  Seq Scan on pg_temp.onerow t4
+                     Output: (1)
+                     Filter: ((1) > t1.f1)
+   ->  Function Scan on pg_catalog.generate_series g
+         Output: g.g
+         Function Call: generate_series(((1)), 1)
+(17 rows)
+
 -- PHVs containing SubLinks are quite tricky to get right
 explain (verbose, costs off)
 select *
