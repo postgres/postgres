@@ -55,10 +55,11 @@ pg_GSS_error(const char *mprefix, PGconn *conn,
 }
 
 /*
- * Check if we can acquire credentials at all (and yield them if so).
+ * Attempt to acquire credentials, and return the token if successful.
+ * Return GSS_C_NO_CREDENTIAL if not.
  */
-bool
-pg_GSS_have_cred_cache(gss_cred_id_t *cred_out)
+gss_cred_id_t
+pg_GSS_get_cred_cache(void)
 {
 	OM_uint32	major,
 				minor;
@@ -67,12 +68,8 @@ pg_GSS_have_cred_cache(gss_cred_id_t *cred_out)
 	major = gss_acquire_cred(&minor, GSS_C_NO_NAME, 0, GSS_C_NO_OID_SET,
 							 GSS_C_INITIATE, &cred, NULL, NULL);
 	if (major != GSS_S_COMPLETE)
-	{
-		*cred_out = NULL;
-		return false;
-	}
-	*cred_out = cred;
-	return true;
+		return GSS_C_NO_CREDENTIAL;
+	return cred;
 }
 
 /*
