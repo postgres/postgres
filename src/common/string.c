@@ -21,6 +21,8 @@
 #include "postgres_fe.h"
 #endif
 
+#include <limits.h>
+
 #include "common/string.h"
 
 
@@ -45,6 +47,9 @@ pg_str_endswith(const char *str, const char *end)
 
 /*
  * strtoint --- just like strtol, but returns int not long
+ *
+ * The result is clamped to INT_MIN..INT_MAX, not LONG_MIN..LONG_MAX,
+ * but otherwise this has the same behavior as strtol.
  */
 int
 strtoint(const char *pg_restrict str, char **pg_restrict endptr, int base)
@@ -53,7 +58,10 @@ strtoint(const char *pg_restrict str, char **pg_restrict endptr, int base)
 
 	val = strtol(str, endptr, base);
 	if (val != (int) val)
+	{
+		val = (val < 0) ? INT_MIN : INT_MAX;
 		errno = ERANGE;
+	}
 	return (int) val;
 }
 
