@@ -1,4 +1,4 @@
-# version 2026e
+# version 2026f
 # redo posix_only
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
@@ -1700,8 +1700,10 @@ R Q 2009 2010 - Mar Su>=8 0s 1 D
 R Q 2011 o - Mar Su>=15 0s 1 D
 R Q 2011 o - N 13 0s 0 S
 R Q 2012 o - Ap 1 0s 1 D
-R Q 2012 ma - N Su>=1 0s 0 S
-R Q 2013 ma - Mar Su>=8 0s 1 D
+R Q 2012 2025 - N Su>=1 0s 0 S
+R Q 2013 2026 - Mar Su>=8 0s 1 D
+R Q 2027 ma - N Su>=1 0s 0 S
+R Q 2028 ma - Mar Su>=8 0s 1 D
 R DO 1966 o - O 30 0 1 EDT
 R DO 1967 o - F 28 0 0 EST
 R DO 1969 1973 - O lastSu 0 0:30 -0430
@@ -1771,19 +1773,20 @@ R A 2008 o - O Su>=15 0 1 -
 R Sa 2008 2009 - Mar Su>=8 0 0 -
 R Sa 2007 2008 - O Su>=8 0 1 -
 R B 1931 o - O 3 11 1 -
-R B 1932 1933 - Ap 1 0 0 -
+R B 1932 1933 - Mar 31 24 0 -
 R B 1932 o - O 3 0 1 -
 R B 1949 1952 - D 1 0 1 -
 R B 1950 o - Ap 16 1 0 -
-R B 1951 1952 - Ap 1 0 0 -
-R B 1953 o - Mar 1 0 0 -
+R B 1951 1952 - Mar 31 24 0 -
+R B 1953 o - F 28 24 0 -
 R B 1963 o - D 9 0 1 -
 R B 1964 o - Mar 1 0 0 -
 R B 1965 o - Ja 31 0 1 -
-R B 1965 o - Mar 31 0 0 -
-R B 1965 o - D 1 0 1 -
-R B 1966 1968 - Mar 1 0 0 -
+R B 1965 o - Mar 31 24 0 -
+R B 1965 o - N 30 24 1 -
+R B 1966 o - Mar 1 1 0 -
 R B 1966 1967 - N 1 0 1 -
+R B 1967 1968 - Mar 1 0 0 -
 R B 1985 o - N 2 0 1 -
 R B 1986 o - Mar 15 0 0 -
 R B 1986 o - O 25 0 1 -
