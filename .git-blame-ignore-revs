@@ -14,6 +14,15 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+cab16d214bc5b70dd3514c5631ffa1f0acb3fed3 # 2026-10-29 17:46:24 -0400
+# Fix poorly-formatted comment.
+
+227de22095c8101905ce41e1ebf425239feed079 # 2026-10-28 11:42:22 +1300
+# Fix broken indentation caused by 34d52e6d3
+
+f15036f20b992c782564001372d9dfe044a2beb8 # 2026-09-10 13:46:26 -0400
+# pg_plan_advice: pgindent
+
 978772cf5dd642b093382e9ff4b3a353e8a5d1a2 # 2026-09-02 09:27:56 +0200
 # pgindent fix for a63df2664225d06d5be
 
@@ -40,6 +49,9 @@ d69fdf79b8ba7549a9c449e255aab0734cc67a4f # 2026-07-02 13:05:50 -0500
 
 3f815dd11374b54deb29228dc0040179864af828 # 2026-06-29 15:16:25 -0400
 # Sync typedefs.list with the buildfarm.
+
+02f699c1416380c0411fbc0f53061f86b2f52ed3 # 2026-06-27 20:05:06 -0400
+# pgindent fix for commit effb923d9de
 
 bd57abbb1910e51e45761b59985745d094ae9e03 # 2026-06-04 10:15:37 -0500
 # Re-pgindent nodeModifyTable.c after commit 993a7aa0e4.
