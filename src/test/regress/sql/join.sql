@@ -2585,6 +2585,23 @@ select count(*) from int4_tbl t1 left join
     (select c.f1 as cnt from int4_tbl c where c.f1 = t2.one offset 0) t3
     on t2.bx = t3.cnt;
 
+-- but a function scan can compute the PHV's expression itself, so the join
+-- is allowed
+explain (costs off)
+select count(*), sum(f) from int8_tbl d left join
+  (select coalesce(t2.q1, 0) as x, t2.q1 as q
+   from int8_tbl t1 left join int8_tbl t2 on true) ss
+    on true
+  left join lateral generate_series(ss.x, 124) f
+    on ss.q = 123;
+
+select count(*), sum(f) from int8_tbl d left join
+  (select coalesce(t2.q1, 0) as x, t2.q1 as q
+   from int8_tbl t1 left join int8_tbl t2 on true) ss
+    on true
+  left join lateral generate_series(ss.x, 124) f
+    on ss.q = 123;
+
 --
 -- check that a join is disallowed when its lateral reference can only be
 -- satisfied by way of a rel that laterally references the join itself

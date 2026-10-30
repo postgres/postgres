@@ -1223,8 +1223,20 @@ create_lateral_join_info(PlannerInfo *root)
 				PlaceHolderInfo *phinfo = find_placeholder_info(root, phv);
 
 				found_laterals = true;
-				lateral_relids = bms_add_members(lateral_relids,
-												 phinfo->ph_eval_at);
+
+				/*
+				 * A subquery needs the PHV as a whole, so any outer joins in
+				 * its ph_eval_at must be formed first.  Other rels can
+				 * compute the PHV's expression themselves, so they need only
+				 * the baserels.
+				 */
+				if (brel->rtekind == RTE_SUBQUERY)
+					lateral_relids = bms_add_members(lateral_relids,
+													 phinfo->ph_eval_at);
+				else
+					lateral_relids = bms_add_members(lateral_relids,
+													 bms_intersect(phinfo->ph_eval_at,
+																   root->all_baserels));
 			}
 			else
 				Assert(false);

@@ -7257,6 +7257,41 @@ select count(*) from int4_tbl t1 left join
     25
 (1 row)
 
+-- but a function scan can compute the PHV's expression itself, so the join
+-- is allowed
+explain (costs off)
+select count(*), sum(f) from int8_tbl d left join
+  (select coalesce(t2.q1, 0) as x, t2.q1 as q
+   from int8_tbl t1 left join int8_tbl t2 on true) ss
+    on true
+  left join lateral generate_series(ss.x, 124) f
+    on ss.q = 123;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Aggregate
+   ->  Nested Loop Left Join
+         ->  Seq Scan on int8_tbl d
+         ->  Materialize
+               ->  Nested Loop Left Join
+                     ->  Seq Scan on int8_tbl t1
+                     ->  Materialize
+                           ->  Nested Loop Left Join
+                                 Join Filter: (t2.q1 = 123)
+                                 ->  Seq Scan on int8_tbl t2
+                                 ->  Function Scan on generate_series f
+(11 rows)
+
+select count(*), sum(f) from int8_tbl d left join
+  (select coalesce(t2.q1, 0) as x, t2.q1 as q
+   from int8_tbl t1 left join int8_tbl t2 on true) ss
+    on true
+  left join lateral generate_series(ss.x, 124) f
+    on ss.q = 123;
+ count |  sum  
+-------+-------
+   175 | 12350
+(1 row)
+
 --
 -- check that a join is disallowed when its lateral reference can only be
 -- satisfied by way of a rel that laterally references the join itself
