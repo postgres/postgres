@@ -2282,8 +2282,15 @@ Add <link linkend="textsearch-snowball-dictionary">full text stemmers</link> for
 </para>
 
 <para>
-The Dutch, English, and German stemmers have also been updated.
-The previous Dutch stemmer is available via <link linkend="textsearch-snowball-dictionary"><literal>dutch_porter</literal></link>.
+The Dutch stemmer now uses a different algorithm, which changes the stems of
+many words; the previous algorithm is available via <link
+linkend="textsearch-snowball-dictionary"><literal>dutch_porter</literal></link>.
+</para>
+
+<para>
+The English, French, German, Lithuanian, Norwegian, Spanish, Swedish, and
+Turkish stemmers have also been updated and produce different stems for some
+words.
 </para>
 </listitem>
 
