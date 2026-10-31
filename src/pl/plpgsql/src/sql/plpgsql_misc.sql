@@ -66,3 +66,7 @@ begin
   raise notice 'r.x = %', r.x;
   raise notice 'r."foreach" = %', r."foreach";  -- ok
 end $$;
+
+-- unterminated constructs should complain about the missing terminator
+do $$ begin if true $$;
+do $$ declare x int; begin x := 1 $$;

@@ -2790,11 +2790,12 @@ read_sql_construct(int until,
 		tok = yylex(yylvalp, yyllocp, yyscanner);
 		if (startlocation < 0)	/* remember loc of first token */
 			startlocation = *yyllocp;
+		/* until2 and until3 are zero if unused; don't let them match EOF */
 		if (tok == until && parenlevel == 0)
 			break;
-		if (tok == until2 && parenlevel == 0)
+		if (until2 != 0 && tok == until2 && parenlevel == 0)
 			break;
-		if (tok == until3 && parenlevel == 0)
+		if (until3 != 0 && tok == until3 && parenlevel == 0)
 			break;
 		if (tok == '(' || tok == '[')
 			parenlevel++;

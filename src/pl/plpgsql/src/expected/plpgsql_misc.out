@@ -101,3 +101,12 @@ begin
 end $$;
 NOTICE:  r.x = 1
 NOTICE:  r."foreach" = 2
+-- unterminated constructs should complain about the missing terminator
+do $$ begin if true $$;
+ERROR:  missing "THEN" at end of SQL expression
+LINE 1: do $$ begin if true $$;
+                            ^
+do $$ declare x int; begin x := 1 $$;
+ERROR:  missing ";" at end of SQL statement
+LINE 1: do $$ declare x int; begin x := 1 $$;
+                                          ^
