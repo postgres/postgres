@@ -3236,12 +3236,22 @@ schema_to_xml_internal(Oid nspid, const char *xmlschema, bool nulls,
 					   bool tableforest, const char *targetns, bool top_level)
 {
 	StringInfo	result;
+	char	   *nspname;
 	char	   *xmlsn;
 	List	   *relid_list;
 	ListCell   *cell;
 
-	xmlsn = map_sql_identifier_to_xml_name(get_namespace_name(nspid),
-										   true, false);
+	/*
+	 * The schema may have been dropped concurrently, as we hold no lock on
+	 * it.  Report that rather than passing a NULL name below.
+	 */
+	nspname = get_namespace_name(nspid);
+	if (nspname == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema with OID %u does not exist", nspid)));
+
+	xmlsn = map_sql_identifier_to_xml_name(nspname, true, false);
 	result = makeStringInfo();
 
 	xmldata_root_element_start(result, xmlsn, xmlschema, targetns, top_level);
@@ -3685,6 +3695,15 @@ map_sql_schema_to_xmlschema_types(Oid nspid, List *relid_list, bool nulls,
 	dbname = get_database_name(MyDatabaseId);
 	nspname = get_namespace_name(nspid);
 
+	/*
+	 * The schema may have been dropped concurrently, as we hold no lock on
+	 * it.  Report that rather than passing a NULL name below.
+	 */
+	if (nspname == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema with OID %u does not exist", nspid)));
+
 	initStringInfo(&result);
 
 	xmlsn = map_sql_identifier_to_xml_name(nspname, true, false);
@@ -3774,11 +3793,18 @@ map_sql_catalog_to_xmlschema_types(List *nspid_list, bool nulls,
 	{
 		Oid			nspid = lfirst_oid(cell);
 		char	   *nspname = get_namespace_name(nspid);
-		char	   *xmlsn = map_sql_identifier_to_xml_name(nspname, true, false);
-		char	   *schematypename = map_multipart_sql_identifier_to_xml_name("SchemaType",
-																			  dbname,
-																			  nspname,
-																			  NULL);
+		char	   *xmlsn;
+		char	   *schematypename;
+
+		/* Skip a schema that was concurrently dropped; it was not scanned. */
+		if (nspname == NULL)
+			continue;
+
+		xmlsn = map_sql_identifier_to_xml_name(nspname, true, false);
+		schematypename = map_multipart_sql_identifier_to_xml_name("SchemaType",
+																  dbname,
+																  nspname,
+																  NULL);
 
 		appendStringInfo(&result,
 						 "    <xsd:element name=\"%s\" type=\"%s\"/>\n",
