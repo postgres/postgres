@@ -142,6 +142,7 @@ static void manifest_process_wal_range(JsonManifestParseContext *context,
 pg_noreturn static void manifest_report_error(JsonManifestParseContext *context,
 											  const char *fmt, ...)
 			pg_attribute_printf(2, 3);
+static int	compare_wal_summary_start_lsn(const ListCell *a, const ListCell *b);
 static int	compare_block_numbers(const void *a, const void *b);
 
 /*
@@ -559,6 +560,12 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 		if (tle->tli == earliest_wal_range_tli)
 			break;
 	}
+
+	/*
+	 * Merge summaries in ascending start LSN order so that applying a limit
+	 * block does not discard block references from later summaries.
+	 */
+	list_sort(required_wslist, compare_wal_summary_start_lsn);
 
 	/*
 	 * Read all of the required block reference table files and merge all of
@@ -1043,6 +1050,18 @@ manifest_report_error(JsonManifestParseContext *context, const char *fmt, ...)
 
 	ereport(ERROR,
 			errmsg_internal("%s", errbuf.data));
+}
+
+/*
+ * List comparator for WAL summary files, ordered by ascending start LSN.
+ */
+static int
+compare_wal_summary_start_lsn(const ListCell *a, const ListCell *b)
+{
+	WalSummaryFile *ws1 = lfirst(a);
+	WalSummaryFile *ws2 = lfirst(b);
+
+	return pg_cmp_u64(ws1->start_lsn, ws2->start_lsn);
 }
 
 /*
