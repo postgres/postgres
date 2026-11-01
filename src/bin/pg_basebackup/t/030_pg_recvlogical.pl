@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use TestLib;
 use PostgresNode;
-use Test::More tests => 15;
+use Test::More tests => 17;
 
 program_help_ok('pg_recvlogical');
 program_version_ok('pg_recvlogical');
@@ -63,3 +63,36 @@ $node->command_ok(
 		'--start', '--endpos', "$nextlsn", '--no-loop', '-f', '-'
 	],
 	'replayed a transaction');
+
+# Check that pgoutput rejects options that require a parameter when passed
+# without a value.
+$node->safe_psql('postgres',
+	"SELECT pg_create_logical_replication_slot('pgoutput_slot', 'pgoutput')");
+
+$node->command_fails(
+	[
+		'pg_recvlogical',
+		'--slot' => 'pgoutput_slot',
+		'--dbname' => $node->connstr('postgres'),
+		'--start',
+		'--option' => 'proto_version',
+		'--no-loop',
+		'--file' => '-',
+	],
+	'pgoutput proto_version option without a value');
+
+$node->command_fails(
+	[
+		'pg_recvlogical',
+		'--slot' => 'pgoutput_slot',
+		'--dbname' => $node->connstr('postgres'),
+		'--start',
+		'--option' => 'proto_version=1',
+		'--option' => 'publication_names',
+		'--no-loop',
+		'--file' => '-',
+	],
+	'pgoutput publication_names option without a value');
+
+$node->safe_psql('postgres',
+	"SELECT pg_drop_replication_slot('pgoutput_slot')");
