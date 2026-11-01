@@ -458,3 +458,13 @@ ERROR:  error fetching next item from iterator
 DETAIL:  spiexceptions.InvalidDatetimeFormat: invalid value "xy" for "DD"
 CONTEXT:  Traceback (most recent call last):
 PL/Python function "python_error_detail"
+/* test the presently-unsupported case of polymorphic functions
+ */
+CREATE FUNCTION python_poly_ret(x anyelement) RETURNS anyelement AS $$
+  return x
+$$ LANGUAGE plpython3u;
+ERROR:  PL/Python functions cannot return type anyelement
+CREATE FUNCTION python_poly_arg(x anyelement) RETURNS int AS $$
+  return x
+$$ LANGUAGE plpython3u;
+ERROR:  PL/Python functions cannot accept type anyelement

@@ -242,6 +242,9 @@ cfunc_hashtable_delete(CachedFunction *function)
  * The hashkey is returned into the caller-provided storage at *hashkey.
  * Note however that if a callResultType is incorporated, we've not done
  * anything about copying that.
+ *
+ * See comments for cached_function_compile() about how much of *fcinfo
+ * we're allowed to consider when forValidator is true.
  */
 static void
 compute_function_hashkey(FunctionCallInfo fcinfo,
@@ -326,9 +329,12 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 	 * a function returning RECORD may depend on a column definition list to
 	 * determine its output rowtype.  If the caller needs the exact result
 	 * type to be part of the hash lookup key, we must run
-	 * get_call_result_type() to find that out.
+	 * get_call_result_type() to find that out.  However, in validation mode
+	 * the supplied fcinfo will likely not be complete enough for that to
+	 * work, so leave callResultType unfilled (implying that the resulting
+	 * hash entry will never match any actual calls for such functions).
 	 */
-	if (includeResultType)
+	if (includeResultType && !forValidator)
 	{
 		Oid			resultTypeId;
 		TupleDesc	tupdesc;
@@ -482,7 +488,10 @@ delete_function(CachedFunction *func)
  * include the actual result descriptor in the cache lookup key.
  *
  * If forValidator is true, we're only compiling for validation purposes,
- * and so some checks are skipped.
+ * and so some checks are skipped.  In this case the passed fcinfo need
+ * only provide the function OID and indications of whether the function
+ * is a trigger or event trigger (as tested via CALLED_AS_TRIGGER or
+ * CALLED_AS_EVENT_TRIGGER).
  *
  * Note: it's important for this to fall through quickly if the function
  * has already been compiled.

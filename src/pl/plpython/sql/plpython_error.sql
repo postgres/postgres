@@ -355,3 +355,13 @@ CREATE FUNCTION python_error_detail() RETURNS SETOF text AS $$
 $$ LANGUAGE plpython3u;
 
 SELECT python_error_detail();
+
+/* test the presently-unsupported case of polymorphic functions
+ */
+CREATE FUNCTION python_poly_ret(x anyelement) RETURNS anyelement AS $$
+  return x
+$$ LANGUAGE plpython3u;
+
+CREATE FUNCTION python_poly_arg(x anyelement) RETURNS int AS $$
+  return x
+$$ LANGUAGE plpython3u;
