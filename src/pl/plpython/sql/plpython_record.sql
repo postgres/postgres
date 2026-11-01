@@ -132,6 +132,23 @@ ALTER TYPE type_record ADD ATTRIBUTE second int4;
 
 SELECT * FROM test_type_record_as('obj', 'one', 1, false);
 
+-- check handling of record types defined by the calling query
+
+CREATE FUNCTION test_returns_record() RETURNS record AS $$
+   return (1, 2)
+$$ LANGUAGE plpython3u;
+
+SELECT * FROM test_returns_record() AS (a int, b int);
+SELECT * FROM test_returns_record();  -- fail
+
+-- alternate spelling of identical functionality
+CREATE FUNCTION test_returns_out_record(OUT r record) AS $$
+   return (1, 2)
+$$ LANGUAGE plpython3u;
+
+SELECT * FROM test_returns_out_record() AS (a int, b int);
+SELECT * FROM test_returns_out_record();  -- fail
+
 -- errors cases
 
 CREATE FUNCTION test_type_record_error1() RETURNS type_record AS $$

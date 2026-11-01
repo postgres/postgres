@@ -10,6 +10,7 @@
 #include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "plpy_elog.h"
 #include "plpy_exec.h"
@@ -17,7 +18,9 @@
 #include "plpy_plpymodule.h"
 #include "plpy_subxactobject.h"
 #include "plpy_util.h"
+#include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
@@ -111,6 +114,11 @@ plpython3_validator(PG_FUNCTION_ARGS)
 	Oid			funcoid = PG_GETARG_OID(0);
 	HeapTuple	tuple;
 	Form_pg_proc procStruct;
+	Oid			rettype;
+	Oid		   *argtypes;
+	char	  **argnames,
+			   *argmodes;
+	int			nargs;
 	PLyTrigType is_trigger;
 	TriggerData trigdata;
 	EventTriggerData etrigdata;
@@ -120,18 +128,60 @@ plpython3_validator(PG_FUNCTION_ARGS)
 	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
 		PG_RETURN_VOID();
 
-	if (!check_function_bodies)
-		PG_RETURN_VOID();
-
 	/* Get the new function's pg_proc entry */
 	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	procStruct = (Form_pg_proc) GETSTRUCT(tuple);
 
+	/* Disallow pseudotype result, except for void or record */
+	rettype = procStruct->prorettype;
+	if (get_typtype(rettype) == TYPTYPE_PSEUDO)
+	{
+		if (rettype == VOIDOID || rettype == RECORDOID)
+			 /* okay */ ;
+		else if (rettype == TRIGGEROID || rettype == EVENT_TRIGGEROID)
+			 /* okay */ ;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("PL/Python functions cannot return type %s",
+							format_type_be(rettype))));
+	}
+
+	/* Disallow pseudotype arguments, except for output records */
+	nargs = get_func_arg_info(tuple, &argtypes, &argnames, &argmodes);
+	for (int i = 0; i < nargs; i++)
+	{
+		if (get_typtype(argtypes[i]) == TYPTYPE_PSEUDO)
+		{
+			if (argmodes &&
+				(argmodes[i] == PROARGMODE_OUT ||
+				 argmodes[i] == PROARGMODE_TABLE))
+			{
+				if (rettype == RECORDOID)
+					 /* okay */ ;
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("PL/Python functions cannot return type %s",
+									format_type_be(argtypes[i]))));
+			}
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("PL/Python functions cannot accept type %s",
+								format_type_be(argtypes[i]))));
+		}
+	}
+
 	is_trigger = PLy_procedure_is_trigger(procStruct);
 
 	ReleaseSysCache(tuple);
+
+	/* The rest is not needed/wanted if check_function_bodies is off */
+	if (!check_function_bodies)
+		PG_RETURN_VOID();
 
 	/*
 	 * Set up a fake flinfo/fcinfo with just enough info to satisfy

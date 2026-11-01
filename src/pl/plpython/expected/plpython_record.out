@@ -337,6 +337,34 @@ SELECT * FROM test_type_record_as('obj', 'one', 1, false);
  one   |      1
 (1 row)
 
+-- check handling of record types defined by the calling query
+CREATE FUNCTION test_returns_record() RETURNS record AS $$
+   return (1, 2)
+$$ LANGUAGE plpython3u;
+SELECT * FROM test_returns_record() AS (a int, b int);
+ a | b 
+---+---
+ 1 | 2
+(1 row)
+
+SELECT * FROM test_returns_record();  -- fail
+ERROR:  a column definition list is required for functions returning "record"
+LINE 1: SELECT * FROM test_returns_record();
+                      ^
+-- alternate spelling of identical functionality
+CREATE FUNCTION test_returns_out_record(OUT r record) AS $$
+   return (1, 2)
+$$ LANGUAGE plpython3u;
+SELECT * FROM test_returns_out_record() AS (a int, b int);
+ a | b 
+---+---
+ 1 | 2
+(1 row)
+
+SELECT * FROM test_returns_out_record();  -- fail
+ERROR:  a column definition list is required for functions returning "record"
+LINE 1: SELECT * FROM test_returns_out_record();
+                      ^
 -- errors cases
 CREATE FUNCTION test_type_record_error1() RETURNS type_record AS $$
     return { 'first': 'first' }

@@ -110,7 +110,7 @@ $$ LANGUAGE plpython3u;
 SELECT * FROM singleout_composite();
 SELECT * FROM multiout_composite();
 
--- composite OUT parameters in functions returning RECORD not supported yet
+-- composite OUT parameters in functions returning RECORD
 CREATE FUNCTION multiout_composite(INOUT n integer, OUT type_record) AS $$
 return (n, (n * 2, n * 3))
 $$ LANGUAGE plpython3u;
@@ -146,6 +146,15 @@ SELECT * FROM multiout_table_type_setof('obj', 'f', 5);
 SELECT * FROM multiout_table_type_setof('str', 'f', 6);
 SELECT * FROM multiout_table_type_setof('str', 'f', 7);
 SELECT * FROM multiout_table_type_setof('dict', 't', 3);
+
+-- But RECORD, rather than a named type, doesn't work in this context
+-- for lack of a way to identify its concrete type
+CREATE FUNCTION multiout_record(INOUT n integer, OUT record) AS $$
+return (n, (n * 2, n * 3))
+$$ LANGUAGE plpython3u;
+
+SELECT * FROM multiout_record(2);
+
 
 -- check what happens if a type changes under us
 

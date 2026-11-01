@@ -217,36 +217,16 @@ PLy_procedure_create(PLyProcedure *proc,
 		if (is_trigger == PLPY_NOT_TRIGGER)
 		{
 			Oid			rettype = procStruct->prorettype;
-			HeapTuple	rvTypeTup;
-			Form_pg_type rvTypeStruct;
 
-			rvTypeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rettype));
-			if (!HeapTupleIsValid(rvTypeTup))
-				elog(ERROR, "cache lookup failed for type %u", rettype);
-			rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
-
-			/* Disallow pseudotype result, except for void or record */
-			if (rvTypeStruct->typtype == TYPTYPE_PSEUDO)
-			{
-				if (rettype == VOIDOID ||
-					rettype == RECORDOID)
-					 /* okay */ ;
-				else if (rettype == TRIGGEROID || rettype == EVENT_TRIGGEROID)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("trigger functions can only be called as triggers")));
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("PL/Python functions cannot return type %s",
-									format_type_be(rettype))));
-			}
+			/* reject if function is in fact a trigger function */
+			if (rettype == TRIGGEROID || rettype == EVENT_TRIGGEROID)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("trigger functions can only be called as triggers")));
 
 			/* set up output function for procedure result */
 			PLy_output_setup_func(&proc->result, proc->mcxt,
 								  rettype, -1, proc);
-
-			ReleaseSysCache(rvTypeTup);
 		}
 		else
 		{
@@ -296,28 +276,12 @@ PLy_procedure_create(PLyProcedure *proc,
 
 			for (i = pos = 0; i < total; i++)
 			{
-				HeapTuple	argTypeTup;
-				Form_pg_type argTypeStruct;
-
 				if (modes &&
 					(modes[i] == PROARGMODE_OUT ||
 					 modes[i] == PROARGMODE_TABLE))
 					continue;	/* skip OUT arguments */
 
 				Assert(types[i] == procStruct->proargtypes.values[pos]);
-
-				argTypeTup = SearchSysCache1(TYPEOID,
-											 ObjectIdGetDatum(types[i]));
-				if (!HeapTupleIsValid(argTypeTup))
-					elog(ERROR, "cache lookup failed for type %u", types[i]);
-				argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
-
-				/* disallow pseudotype arguments */
-				if (argTypeStruct->typtype == TYPTYPE_PSEUDO)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("PL/Python functions cannot accept type %s",
-									format_type_be(types[i]))));
 
 				/* set up I/O function info */
 				PLy_input_setup_func(&proc->args[pos], proc->mcxt,
@@ -326,8 +290,6 @@ PLy_procedure_create(PLyProcedure *proc,
 
 				/* get argument name */
 				proc->argnames[pos] = names ? pstrdup(names[i]) : NULL;
-
-				ReleaseSysCache(argTypeTup);
 
 				pos++;
 			}

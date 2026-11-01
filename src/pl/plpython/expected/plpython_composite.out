@@ -302,7 +302,7 @@ SELECT * FROM multiout_composite();
  3     |      4
 (2 rows)
 
--- composite OUT parameters in functions returning RECORD not supported yet
+-- composite OUT parameters in functions returning RECORD
 CREATE FUNCTION multiout_composite(INOUT n integer, OUT type_record) AS $$
 return (n, (n * 2, n * 3))
 $$ LANGUAGE plpython3u;
@@ -430,6 +430,15 @@ SELECT * FROM multiout_table_type_setof('dict', 't', 3);
  2 | 
 (3 rows)
 
+-- But RECORD, rather than a named type, doesn't work in this context
+-- for lack of a way to identify its concrete type
+CREATE FUNCTION multiout_record(INOUT n integer, OUT record) AS $$
+return (n, (n * 2, n * 3))
+$$ LANGUAGE plpython3u;
+SELECT * FROM multiout_record(2);
+ERROR:  record type has not been registered
+CONTEXT:  while creating return value
+PL/Python function "multiout_record"
 -- check what happens if a type changes under us
 CREATE TABLE changing (
     i integer,
