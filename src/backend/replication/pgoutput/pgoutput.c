@@ -312,6 +312,7 @@ parse_output_parameters(List *options, PGOutputData *data)
 		{
 			unsigned long parsed;
 			char	   *endptr;
+			const char *val = defGetString(defel);
 
 			if (protocol_version_given)
 				ereport(ERROR,
@@ -320,8 +321,8 @@ parse_output_parameters(List *options, PGOutputData *data)
 			protocol_version_given = true;
 
 			errno = 0;
-			parsed = strtoul(strVal(defel->arg), &endptr, 10);
-			if (errno != 0 || *endptr != '\0')
+			parsed = strtoul(val, &endptr, 10);
+			if (endptr == val || errno != 0 || *endptr != '\0')
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid proto_version")));
@@ -329,8 +330,7 @@ parse_output_parameters(List *options, PGOutputData *data)
 			if (parsed > PG_UINT32_MAX)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("proto_version \"%s\" out of range",
-								strVal(defel->arg))));
+						 errmsg("proto_version \"%s\" out of range", val)));
 
 			data->protocol_version = (uint32) parsed;
 		}
@@ -346,7 +346,7 @@ parse_output_parameters(List *options, PGOutputData *data)
 			 * Pass a copy of the DefElem->arg since SplitIdentifierString
 			 * modifies its input.
 			 */
-			if (!SplitIdentifierString(pstrdup(strVal(defel->arg)), ',',
+			if (!SplitIdentifierString(pstrdup(defGetString(defel)), ',',
 									   &data->publication_names))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_NAME),
