@@ -100,6 +100,41 @@ $node->command_ok(
 	],
 	'slot dropped');
 
+# Check that pgoutput rejects options that require a parameter when passed
+# without a value.
+$node->safe_psql('postgres',
+	"SELECT pg_create_logical_replication_slot('pgoutput_slot', 'pgoutput')");
+
+$node->command_fails_like(
+	[
+		'pg_recvlogical',
+		'--slot' => 'pgoutput_slot',
+		'--dbname' => $node->connstr('postgres'),
+		'--start',
+		'--option' => 'proto_version',
+		'--no-loop',
+		'--file' => '-',
+	],
+	qr/proto_version requires a parameter/,
+	'pgoutput proto_version option without a value');
+
+$node->command_fails_like(
+	[
+		'pg_recvlogical',
+		'--slot' => 'pgoutput_slot',
+		'--dbname' => $node->connstr('postgres'),
+		'--start',
+		'--option' => 'proto_version=1',
+		'--option' => 'publication_names',
+		'--no-loop',
+		'--file' => '-',
+	],
+	qr/publication_names requires a parameter/,
+	'pgoutput publication_names option without a value');
+
+$node->safe_psql('postgres',
+	"SELECT pg_drop_replication_slot('pgoutput_slot')");
+
 #test with two-phase option enabled
 $node->command_ok(
 	[
