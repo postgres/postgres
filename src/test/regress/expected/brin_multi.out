@@ -991,3 +991,8 @@ TRUNCATE brin_overflow_test;
 INSERT INTO brin_overflow_test VALUES (1), (1e500);
 CREATE INDEX ON brin_overflow_test USING brin (n numeric_minmax_multi_ops);
 DROP TABLE brin_overflow_test;
+-- OID values should not be treated as negative int4 values
+CREATE TABLE brin_oid_overflow_test (o oid);
+INSERT INTO brin_oid_overflow_test VALUES (1), (3000000000);
+CREATE INDEX ON brin_oid_overflow_test USING brin (o oid_minmax_multi_ops);
+DROP TABLE brin_oid_overflow_test;

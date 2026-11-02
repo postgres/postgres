@@ -1983,6 +1983,27 @@ brin_minmax_multi_distance_int8(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Compute the distance between two oid values (plain subtraction).
+ *
+ * OIDs are unsigned, so we can't use the int4 function - values above
+ * PG_INT32_MAX would be interpreted as negative, breaking the ordering.
+ */
+Datum
+brin_minmax_multi_distance_oid(PG_FUNCTION_ARGS)
+{
+	Oid			a1 = PG_GETARG_OID(0);
+	Oid			a2 = PG_GETARG_OID(1);
+
+	/*
+	 * We know the values are range boundaries, but the range may be collapsed
+	 * (i.e. single points), with equal values.
+	 */
+	Assert(a1 <= a2);
+
+	PG_RETURN_FLOAT8((double) a2 - (double) a1);
+}
+
+/*
  * Compute the distance between two tid values (by mapping them to float8 and
  * then subtracting them).
  */

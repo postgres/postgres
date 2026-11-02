@@ -1129,7 +1129,7 @@
   amproc => 'brin_minmax_multi_options' },
 { amprocfamily => 'brin/oid_minmax_multi_ops', amproclefttype => 'oid',
   amprocrighttype => 'oid', amprocnum => '11',
-  amproc => 'brin_minmax_multi_distance_int4' },
+  amproc => 'brin_minmax_multi_distance_oid' },
 
 # bloom oid
 { amprocfamily => 'brin/oid_bloom_ops', amproclefttype => 'oid',
