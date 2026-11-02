@@ -1754,7 +1754,32 @@ create_memoize_plan(PlannerInfo *root, MemoizePath *best_path, int flags)
 		i++;
 	}
 
-	keyparamids = pull_paramids((Expr *) param_exprs);
+	/*
+	 * A Param may be left out of the cache purge on rescan only if its value
+	 * is determined by the cache keys.  That holds for the nestloop Params
+	 * just introduced, as the inner scan's every reference to the outer rels
+	 * is a cache key.  It doesn't hold for an upper-level Param buried inside
+	 * a larger key expression, as two Param values can produce the same key
+	 * value while affecting the results elsewhere, say in a base qual.
+	 */
+	keyparamids = bms_del_members(pull_paramids((Expr *) param_exprs),
+								  pull_paramids((Expr *) best_path->param_exprs));
+
+	/*
+	 * A Param which is a cache key by itself is determined by the keys too,
+	 * but only in binary mode, as in logical mode the hash equality operator
+	 * may not distinguish values that affect the results differently.
+	 */
+	if (best_path->binary_mode)
+	{
+		foreach(lc, best_path->param_exprs)
+		{
+			Param	   *param = (Param *) lfirst(lc);
+
+			if (IsA(param, Param) && param->paramkind == PARAM_EXEC)
+				keyparamids = bms_add_member(keyparamids, param->paramid);
+		}
+	}
 
 	plan = make_memoize(subplan, operators, collations, param_exprs,
 						best_path->singlerow, best_path->binary_mode,

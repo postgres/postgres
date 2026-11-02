@@ -218,6 +218,65 @@ WHERE unique1 < 3
 	INNER JOIN tenk1 t2 ON t1.unique1 = t2.hundred
 	WHERE t0.ten = t1.twenty AND t0.two <> t2.four OFFSET 0);
 
+-- Ensure a Param which is buried inside a larger cache key expression is made
+-- a cache key by itself too.
+
+-- Ensure we get a Memoize plan with both cache keys
+EXPLAIN (COSTS OFF)
+SELECT sum(c) FROM (
+  SELECT (SELECT count(*) FROM tenk1 t1
+          INNER JOIN tenk1 t2 ON t1.unique1 = t2.hundred + t0.ten
+          WHERE t1.twenty = t0.ten) AS c
+  FROM tenk1 t0 WHERE t0.unique1 < 2) s;
+
+-- Ensure the above query returns the correct result
+SELECT sum(c) FROM (
+  SELECT (SELECT count(*) FROM tenk1 t1
+          INNER JOIN tenk1 t2 ON t1.unique1 = t2.hundred + t0.ten
+          WHERE t1.twenty = t0.ten) AS c
+  FROM tenk1 t0 WHERE t0.unique1 < 2) s;
+
+-- Ensure a buried Param which can't be made a cache key, here of type point,
+-- still purges the cache when it changes.
+
+-- Ensure we get a Memoize plan without the Param as a cache key
+EXPLAIN (COSTS OFF)
+SELECT sum(c) FROM (
+  SELECT (SELECT count(*) FROM tenk1 t1
+          INNER JOIN tenk1 t2
+          ON t1.unique1 = t2.hundred + (t0.p <-> point '(0,0)')::int
+          WHERE t1.twenty = (t0.p <-> point '(0,0)')::int) AS c
+  FROM (VALUES (point '(0,0)'), (point '(1,0)')) t0(p)) s;
+
+-- Ensure the above query returns the correct result
+SELECT sum(c) FROM (
+  SELECT (SELECT count(*) FROM tenk1 t1
+          INNER JOIN tenk1 t2
+          ON t1.unique1 = t2.hundred + (t0.p <-> point '(0,0)')::int
+          WHERE t1.twenty = (t0.p <-> point '(0,0)')::int) AS c
+  FROM (VALUES (point '(0,0)'), (point '(1,0)')) t0(p)) s;
+
+-- Ensure an external Param inside a cache key isn't mistaken for the executor
+-- Param of the same number.  The initplan takes executor Param 0, so the
+-- point Param gets number 1, the same as $1.
+SET plan_cache_mode TO force_generic_plan;
+PREPARE memoize_extern_param(int) AS
+SELECT sum(c) FROM (
+  SELECT (SELECT sum(t1.unique1) FROM tenk1 t1
+          INNER JOIN tenk1 t2 ON t1.unique1 = t2.hundred + $1
+                              AND t2.hundred >= (SELECT 0)
+          WHERE t1.twenty = (t0.p <-> point '(0,0)')::int) AS c
+  FROM (VALUES (point '(0,0)'), (point '(1,0)')) t0(p)) s;
+
+-- Ensure we get a Memoize plan with the external Param in the cache key
+EXPLAIN (COSTS OFF) EXECUTE memoize_extern_param(0);
+
+-- Ensure the above query returns the correct result
+EXECUTE memoize_extern_param(0);
+
+DEALLOCATE memoize_extern_param;
+RESET plan_cache_mode;
+
 RESET enable_seqscan;
 RESET enable_material;
 RESET enable_mergejoin;
