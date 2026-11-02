@@ -733,6 +733,7 @@ xmltotext_with_options(xmltype *data, XmlOptionType xmloption_arg, bool indent)
 	PG_TRY();
 	{
 		size_t		decl_len = 0;
+		int			close_result;
 
 		xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
@@ -817,12 +818,12 @@ xmltotext_with_options(xmltype *data, XmlOptionType xmloption_arg, bool indent)
 			xmlFreeNode(newline);
 		}
 
-		if (xmlSaveClose(ctxt) == -1 || xmlerrcxt->err_occurred)
-		{
-			ctxt = NULL;		/* don't try to close it again */
+		close_result = xmlSaveClose(ctxt);
+		/* xmlSaveClose frees ctxt whether or not it succeeds */
+		ctxt = NULL;			/* don't try to close it again */
+		if (close_result == -1 || xmlerrcxt->err_occurred)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INTERNAL_ERROR,
 						"could not close xmlSaveCtxtPtr");
-		}
 
 		/*
 		 * xmlDocContentDumpOutput may add a trailing newline, so remove that.
