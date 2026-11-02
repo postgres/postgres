@@ -23,7 +23,7 @@
  *		4	port number
  *		5	first Unix socket directory path (empty if none)
  *		6	first listen_address (IP address or "*"; empty if no TCP port)
- *		7	shared memory key (empty on Windows)
+ *		7	shared memory key and ID (empty on Windows)
  *		8	postmaster status (see values below)
  *
  * Lines 6 and up are added via AddToDataDirLockFile() after initial file

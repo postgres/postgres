@@ -174,7 +174,9 @@ last started with</entry>
   Unix-domain socket directory path (could be empty),
   first valid listen_address (IP address or <literal>*</literal>, or empty if
   not listening on TCP),
-  and shared memory segment key and ID
+  shared memory segment key and ID (empty on Windows),
+  and postmaster status (<literal>starting</literal>, <literal>ready</literal>,
+  <literal>standby</literal>, or <literal>stopping</literal>)
   (this file is not present after server shutdown)</entry>
 </row>
 
