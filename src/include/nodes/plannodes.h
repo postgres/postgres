@@ -818,7 +818,8 @@ typedef struct Memoize
 	uint32		est_entries;	/* The maximum number of entries that the
 								 * planner expects will fit in the cache, or 0
 								 * if unknown */
-	Bitmapset   *keyparamids;	/* paramids from param_exprs */
+	Bitmapset  *keyparamids;	/* paramids which needn't purge the cache; see
+								 * create_memoize_plan() */
 } Memoize;
 
 /* ----------------
