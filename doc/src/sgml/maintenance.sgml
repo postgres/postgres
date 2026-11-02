@@ -1051,8 +1051,8 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
     per-table <literal>autovacuum_vacuum_cost_delay</literal> or
     <literal>autovacuum_vacuum_cost_limit</literal> storage parameters have been set
     are not considered in the balancing algorithm.
-    Parallel workers launched for <xref linkend="parallel-vacuum"/> are using
-    the same cost delay parameters as the leader worker. If any of these
+    For <xref linkend="parallel-vacuum"/>, the leader and its parallel workers
+    use the same cost delay but share the cost limit. If any of these
     parameters are changed in the leader worker, it will propagate the new
     parameter values to all of its parallel workers.
    </para>

@@ -10012,7 +10012,16 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        delay is calculated as <varname>vacuum_cost_delay</varname> *
        <varname>accumulated_balance</varname> /
        <varname>vacuum_cost_limit</varname> with a maximum of
-       <varname>vacuum_cost_delay</varname> * 4.
+       <varname>vacuum_cost_delay</varname> * 4 for a non-parallel vacuum.
+       For <xref linkend="parallel-vacuum"/>, each process
+       uses a share of the limit, so the delay is calculated as
+       <varname>vacuum_cost_delay</varname> *
+       <varname>accumulated_balance</varname> *
+       <varname>active_processes</varname> /
+       <varname>vacuum_cost_limit</varname> with a maximum of
+       <varname>vacuum_cost_delay</varname> * 4 *
+       <varname>active_processes</varname>, and never more than one second
+       at once.
       </para>
      </note>
     </sect2>

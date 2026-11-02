@@ -2545,15 +2545,21 @@ vacuum_delay_point(bool is_analyze)
 	if (VacuumSharedCostBalance != NULL)
 		msec = compute_parallel_delay();
 	else if (VacuumCostBalance >= vacuum_cost_limit)
+	{
 		msec = vacuum_cost_delay * VacuumCostBalance / vacuum_cost_limit;
+
+		/*
+		 * Avoid uselessly long delays. The cost can accumulate far higher
+		 * than the limit, as delays are not applied while critical locks are
+		 * held or interrupts are pending.
+		 */
+		msec = Min(msec, vacuum_cost_delay * 4);
+	}
 
 	/* Nap if appropriate */
 	if (msec > 0)
 	{
 		instr_time	delay_start;
-
-		if (msec > vacuum_cost_delay * 4)
-			msec = vacuum_cost_delay * 4;
 
 		if (track_cost_delay_timing)
 			INSTR_TIME_SET_CURRENT(delay_start);
@@ -2649,10 +2655,11 @@ vacuum_delay_point(bool is_analyze)
  * We allow each worker to update it as and when it has incurred any cost and
  * then based on that decide whether it needs to sleep.  We compute the time
  * to sleep for a worker based on the cost it has incurred
- * (VacuumCostBalanceLocal) and then reduce the VacuumSharedCostBalance by
- * that amount.  This avoids putting to sleep those workers which have done less
- * I/O than other workers and therefore ensure that workers
- * which are doing more I/O got throttled more.
+ * (VacuumCostBalanceLocal) and the number of active workers, as the cost
+ * limit is for the whole vacuum and not for each worker, and then reduce the
+ * VacuumSharedCostBalance by that amount. This avoids putting to sleep those
+ * workers which have done less I/O than other workers and therefore ensure
+ * that workers which are doing more I/O got throttled more.
  *
  * We allow a worker to sleep only if it has performed I/O above a certain
  * threshold, which is calculated based on the number of active workers
@@ -2685,8 +2692,18 @@ compute_parallel_delay(void)
 	if ((shared_balance >= vacuum_cost_limit) &&
 		(VacuumCostBalanceLocal > 0.5 * ((double) vacuum_cost_limit / nworkers)))
 	{
-		/* Compute sleep time based on the local cost balance */
-		msec = vacuum_cost_delay * VacuumCostBalanceLocal / vacuum_cost_limit;
+		/* Compute sleep time based on the local cost balance and nworkers */
+		msec = vacuum_cost_delay * VacuumCostBalanceLocal * nworkers /
+			vacuum_cost_limit;
+
+		/*
+		 * Avoid uselessly long delays, as in a non-parallel vacuum. Also
+		 * never sleep more than 1s at once, as sleeping any longer in
+		 * pg_usleep() keeps the process from responding to latches and
+		 * signals promptly.
+		 */
+		msec = Min(msec, Min(vacuum_cost_delay * 4 * nworkers, 1000));
+
 		pg_atomic_sub_fetch_u32(VacuumSharedCostBalance, VacuumCostBalanceLocal);
 		VacuumCostBalanceLocal = 0;
 	}
