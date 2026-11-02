@@ -2006,10 +2006,10 @@ brin_minmax_multi_distance_tid(PG_FUNCTION_ARGS)
 	 * We use the no-check variants here, because user-supplied values may
 	 * have (ip_posid == 0). See ItemPointerCompare.
 	 */
-	da1 = ItemPointerGetBlockNumberNoCheck(pa1) * MaxHeapTuplesPerPage +
+	da1 = (double) ItemPointerGetBlockNumberNoCheck(pa1) * MaxHeapTuplesPerPage +
 		ItemPointerGetOffsetNumberNoCheck(pa1);
 
-	da2 = ItemPointerGetBlockNumberNoCheck(pa2) * MaxHeapTuplesPerPage +
+	da2 = (double) ItemPointerGetBlockNumberNoCheck(pa2) * MaxHeapTuplesPerPage +
 		ItemPointerGetOffsetNumberNoCheck(pa2);
 
 	PG_RETURN_FLOAT8(da2 - da1);
