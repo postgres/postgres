@@ -1485,6 +1485,7 @@ ExecForceStoreHeapTuple(HeapTuple tuple,
 		oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
 		bslot->base.tuple = heap_copytuple(tuple);
 		slot->tts_flags |= TTS_FLAG_SHOULDFREE;
+		slot->tts_tid = tuple->t_self;
 		MemoryContextSwitchTo(oldContext);
 
 		if (shouldFree)
@@ -1496,6 +1497,7 @@ ExecForceStoreHeapTuple(HeapTuple tuple,
 		heap_deform_tuple(tuple, slot->tts_tupleDescriptor,
 						  slot->tts_values, slot->tts_isnull);
 		ExecStoreVirtualTuple(slot);
+		slot->tts_tid = tuple->t_self;
 
 		if (shouldFree)
 		{
