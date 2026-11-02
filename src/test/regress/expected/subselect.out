@@ -1476,6 +1476,39 @@ where o.ten = 0;
 (1 row)
 
 --
+-- Test rescan of a hashed subplan that is referenced more than once (here
+-- the equivalence class produces two copies of it in the scan filter)
+--
+explain (costs off)
+select i4.f1, (select count(*) from onek
+               where two = four and two = (0 in (select i4.f1))::int)
+from int4_tbl i4 order by i4.f1;
+                                                                         QUERY PLAN                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: i4.f1
+   ->  Seq Scan on int4_tbl i4
+         SubPlan expr_1
+           ->  Aggregate
+                 ->  Seq Scan on onek
+                       Filter: ((two = ((ANY (0 = (hashed SubPlan any_1).col1)))::integer) AND (four = ((ANY (0 = (hashed SubPlan any_1).col1)))::integer))
+                       SubPlan any_1
+                         ->  Result
+(9 rows)
+
+select i4.f1, (select count(*) from onek
+               where two = four and two = (0 in (select i4.f1))::int)
+from int4_tbl i4 order by i4.f1;
+     f1      | count 
+-------------+-------
+ -2147483647 |   250
+     -123456 |   250
+           0 |   250
+      123456 |   250
+  2147483647 |   250
+(5 rows)
+
+--
 -- Test rescan of a hashed SetOp node
 --
 begin;
