@@ -104,7 +104,6 @@ ExecHashSubPlan(SubPlanState *node,
 {
 	bool		result = false;
 	SubPlan    *subplan = node->subplan;
-	PlanState  *planstate = node->planstate;
 	TupleTableSlot *slot;
 
 	/* Shouldn't have any direct correlation Vars */
@@ -115,7 +114,7 @@ ExecHashSubPlan(SubPlanState *node,
 	 * If first time through or we need to rescan the subplan, build the hash
 	 * table.
 	 */
-	if (node->hashtable == NULL || planstate->chgParam != NULL)
+	if (node->hashtable == NULL || node->hashtablestale)
 		buildSubPlanHash(node, econtext);
 
 	/*
@@ -512,6 +511,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	MemoryContextReset(node->hashtablecxt);
 	node->havehashrows = false;
 	node->havenullrows = false;
+	node->hashtablestale = false;
 
 	nbuckets = clamp_cardinality_to_long(planstate->plan->plan_rows);
 	if (nbuckets < 1)
@@ -839,6 +839,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 	sstate->projRight = NULL;
 	sstate->hashtable = NULL;
 	sstate->hashnulls = NULL;
+	sstate->hashtablestale = false;
 	sstate->hashtablecxt = NULL;
 	sstate->hashtempcxt = NULL;
 	sstate->innerecontext = NULL;
