@@ -18,6 +18,14 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+f5b8f05ee960ae5e534a56b8b7e4164a06db92ff
+#
+# Fix reuse of stale hash tables by duplicated hashed SubPlans
+# 2026-11-02 14:40:58 +0900
+#
+# SubPlanState gains a bool field in existing alignment padding, so
+# existing member offsets and sizeof(SubPlanState) remain unchanged.
+
 0a6dc4fe1832107755cce4ac6c296a065c8ec725
 #
 # Reorderbuffer: handle catalog-change-bearing aborted subxacts better
