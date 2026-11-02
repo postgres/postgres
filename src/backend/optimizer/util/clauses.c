@@ -5485,7 +5485,8 @@ substitute_actual_srf_parameters_mutator(Node *node,
 
 /*
  * pull_paramids
- *		Returns a Bitmapset containing the paramids of all Params in 'expr'.
+ *		Returns a Bitmapset containing the paramids of all PARAM_EXEC Params
+ *		in 'expr'.
  */
 Bitmapset *
 pull_paramids(Expr *expr)
@@ -5506,7 +5507,8 @@ pull_paramids_walker(Node *node, Bitmapset **context)
 	{
 		Param	   *param = (Param *) node;
 
-		*context = bms_add_member(*context, param->paramid);
+		if (param->paramkind == PARAM_EXEC)
+			*context = bms_add_member(*context, param->paramid);
 		return false;
 	}
 	return expression_tree_walker(node, pull_paramids_walker, context);
