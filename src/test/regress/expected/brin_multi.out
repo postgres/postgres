@@ -972,3 +972,13 @@ SELECT * FROM brin_interval_test WHERE a = '30 years'::interval;
 DROP TABLE brin_interval_test;
 RESET enable_seqscan;
 RESET datestyle;
+-- test handling of overflow in numeric values
+CREATE TABLE brin_overflow_test (n numeric);
+-- overflow in subtraction
+INSERT INTO brin_overflow_test VALUES (-repeat('9', 131072)::numeric), (repeat('9', 131072)::numeric);
+CREATE INDEX ON brin_overflow_test USING brin (n numeric_minmax_multi_ops);
+TRUNCATE brin_overflow_test;
+-- overflow in conversion to float8
+INSERT INTO brin_overflow_test VALUES (1), (1e500);
+CREATE INDEX ON brin_overflow_test USING brin (n numeric_minmax_multi_ops);
+DROP TABLE brin_overflow_test;

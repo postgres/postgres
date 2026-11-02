@@ -77,6 +77,7 @@
 #include "utils/inet.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/numeric.h"
 #include "utils/pg_lsn.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -2020,19 +2021,45 @@ brin_minmax_multi_distance_tid(PG_FUNCTION_ARGS)
 Datum
 brin_minmax_multi_distance_numeric(PG_FUNCTION_ARGS)
 {
-	Datum		d;
-	Datum		a1 = PG_GETARG_DATUM(0);
-	Datum		a2 = PG_GETARG_DATUM(1);
+	Numeric		d;
+	Numeric		a1 = PG_GETARG_NUMERIC(0);
+	Numeric		a2 = PG_GETARG_NUMERIC(1);
+	float8		distance;
+	bool		have_error = false;
+
+	/* if both values are NaN, then we consider them the same */
+	if (numeric_is_nan(a1) && numeric_is_nan(a2))
+		PG_RETURN_FLOAT8(0.0);
+
+	/* if one value is NaN, use infinite distance */
+	if (numeric_is_nan(a1) || numeric_is_nan(a2))
+		PG_RETURN_FLOAT8(get_float8_infinity());
 
 	/*
 	 * We know the values are range boundaries, but the range may be collapsed
 	 * (i.e. single points), with equal values.
 	 */
-	Assert(DatumGetBool(DirectFunctionCall2(numeric_le, a1, a2)));
+	Assert(DatumGetBool(DirectFunctionCall2(numeric_le, NumericGetDatum(a1),
+											NumericGetDatum(a2))));
 
-	d = DirectFunctionCall2(numeric_sub, a2, a1);	/* a2 - a1 */
+	/*
+	 * Calculate the float8 distance in an overflow-safe way. Return infinity
+	 * instead of error-ing out.
+	 */
+	d = numeric_sub_opt_error(a2, a1, &have_error);
+	if (have_error)
+		distance = get_float8_infinity();
+	else
+	{
+		distance = DatumGetFloat8(DirectFunctionCall1(numeric_float8_no_overflow,
+													  NumericGetDatum(d)));
+		pfree(d);
+	}
 
-	PG_RETURN_DATUM(DirectFunctionCall1(numeric_float8, d));
+	PG_FREE_IF_COPY(a1, 0);
+	PG_FREE_IF_COPY(a2, 1);
+
+	PG_RETURN_FLOAT8(distance);
 }
 
 /*
