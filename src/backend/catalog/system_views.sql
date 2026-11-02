@@ -1380,6 +1380,8 @@ CREATE VIEW pg_stat_progress_repack AS
                       WHEN 6 THEN 'swapping relation files'
                       WHEN 7 THEN 'rebuilding index'
                       WHEN 8 THEN 'performing final cleanup'
+                      WHEN 9 THEN 'enabling logical decoding'
+                      WHEN 10 THEN 'initializing logical decoding'
                       END AS phase,
         CAST(S.param3 AS oid) AS repack_index_relid,
         S.param4 AS heap_tuples_scanned,

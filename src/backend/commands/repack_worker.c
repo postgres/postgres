@@ -19,6 +19,7 @@
 #include "access/xlog_internal.h"
 #include "access/xlogutils.h"
 #include "access/xlogwait.h"
+#include "commands/progress.h"
 #include "commands/repack.h"
 #include "commands/repack_internal.h"
 #include "libpq/libpq.h"
@@ -33,7 +34,10 @@
 #define PGREPACK_PLUGIN   "pgrepack"
 
 static void RepackWorkerShutdown(int code, Datum arg);
-static LogicalDecodingContext *repack_setup_logical_decoding(Oid relid);
+static void set_repack_worker_setup_phase(DecodingWorkerShared *shared,
+										  int setup_phase);
+static LogicalDecodingContext *repack_setup_logical_decoding(Oid relid,
+															 DecodingWorkerShared *shared);
 static void repack_cleanup_logical_decoding(LogicalDecodingContext *ctx);
 static void export_initial_snapshot(Snapshot snapshot,
 									DecodingWorkerShared *shared);
@@ -139,7 +143,7 @@ RepackWorkerMain(Datum main_arg)
 	/*
 	 * Prepare to capture the concurrent data changes ourselves.
 	 */
-	decoding_ctx = repack_setup_logical_decoding(shared->relid);
+	decoding_ctx = repack_setup_logical_decoding(shared->relid, shared);
 
 	/* Announce that we're ready. */
 	SpinLockAcquire(&shared->mutex);
@@ -213,6 +217,19 @@ AmRepackWorker(void)
 }
 
 /*
+ * Tell the backend running REPACK which progress phase to report while we
+ * initialize the decoding.
+ */
+static void
+set_repack_worker_setup_phase(DecodingWorkerShared *shared, int setup_phase)
+{
+	SpinLockAcquire(&shared->mutex);
+	shared->setup_phase = setup_phase;
+	SpinLockRelease(&shared->mutex);
+	ConditionVariableSignal(&shared->cv);
+}
+
+/*
  * This function is much like pg_create_logical_replication_slot() except that
  * the new slot is neither released (if anyone else could read changes from
  * our slot, we could miss changes other backends do while we copy the
@@ -220,7 +237,7 @@ AmRepackWorker(void)
  * crash by restarting all the work from scratch).
  */
 static LogicalDecodingContext *
-repack_setup_logical_decoding(Oid relid)
+repack_setup_logical_decoding(Oid relid, DecodingWorkerShared *shared)
 {
 	Relation	rel;
 	Oid			toastrelid;
@@ -249,6 +266,8 @@ repack_setup_logical_decoding(Oid relid)
 	snprintf(slotname, NAMEDATALEN, "pg_repack_%d", MyProcPid);
 	ReplicationSlotCreate(slotname, true, RS_TEMPORARY, false, true,
 						  false, false);
+	set_repack_worker_setup_phase(shared,
+								  PROGRESS_REPACK_PHASE_ENABLE_LOGICAL_DECODING);
 	EnsureLogicalDecodingEnabled();
 
 	/*
@@ -271,6 +290,9 @@ repack_setup_logical_decoding(Oid relid)
 		table_close(toastrel, AccessShareLock);
 	}
 	table_close(rel, AccessShareLock);
+
+	set_repack_worker_setup_phase(shared,
+								  PROGRESS_REPACK_PHASE_INIT_LOGICAL_DECODING);
 
 	/*
 	 * Set up our logical decoding context.  We initially use the blocking

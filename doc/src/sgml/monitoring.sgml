@@ -7619,20 +7619,34 @@ FROM pg_stat_get_backend_idset() AS backendid;
     <row>
      <entry><literal>initializing</literal></entry>
      <entry>
-       The command is preparing to begin scanning the heap.  This phase is
-       expected to be very brief, except for
-       <command>REPACK CONCURRENTLY</command>, where it also covers enabling
-       logical decoding and then initializing it.  Enabling has nothing to do
-       if <xref linkend="guc-effective-wal-level"/> is already
-       <literal>logical</literal>; otherwise it waits for all processes to
-       acknowledge that they started writing the additional WAL information
-       that logical decoding requires.  Initializing then waits for the
-       transactions that have been assigned a transaction ID to end, including
-       ones that started while this wait was in progress, so this phase can
-       last longer than the longest transaction running when the command
-       started.  This includes any other
+       The command is performing initial setup.  For
+       <command>REPACK CONCURRENTLY</command>, this includes starting the
+       logical decoding worker.  This phase is expected to be very brief.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>enabling logical decoding</literal></entry>
+     <entry>
+       <command>REPACK CONCURRENTLY</command> is enabling logical decoding.
+       This has nothing to do if <xref linkend="guc-effective-wal-level"/> is
+       already <literal>logical</literal>; otherwise it waits for all processes
+       to acknowledge that they started writing the additional WAL information
+       that logical decoding requires.
+       This phase is skipped when not in concurrent mode.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>initializing logical decoding</literal></entry>
+     <entry>
+       <command>REPACK CONCURRENTLY</command> is initializing logical
+       decoding and obtaining the initial snapshot used to copy the table.
+       This waits for the transactions that have been assigned a transaction ID
+       to end, including ones that started while this wait was in progress, so
+       this phase can last longer than the longest transaction running when the
+       command started.  This includes any other
        <command>REPACK CONCURRENTLY</command>, which holds a transaction ID
        until it finishes.
+       This phase is skipped when not in concurrent mode.
      </entry>
     </row>
     <row>

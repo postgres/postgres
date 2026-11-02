@@ -68,6 +68,13 @@ typedef struct DecodingWorkerShared
 	bool		initialized;
 
 	/*
+	 * The progress phase (a PROGRESS_REPACK_PHASE_* value) that the backend
+	 * should report while the worker initializes the decoding.  Zero means
+	 * the initial phase, which the backend reports on its own.
+	 */
+	int			setup_phase;
+
+	/*
 	 * Once the worker has reached this LSN, it should close the current
 	 * output file and either create a new one or exit, according to the field
 	 * 'done'. If the value is InvalidXLogRecPtr, the worker should decode all

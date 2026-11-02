@@ -3852,6 +3852,7 @@ start_repack_decoding_worker(Oid relid)
 	DecodingWorkerShared *shared;
 	shm_mq	   *mq;
 	BackgroundWorker bgw;
+	int			reported_phase = 0;
 
 	decoding_worker = palloc0_object(DecodingWorker);
 
@@ -3862,6 +3863,7 @@ start_repack_decoding_worker(Oid relid)
 
 	shared = (DecodingWorkerShared *) dsm_segment_address(decoding_worker->seg);
 	shared->initialized = false;
+	shared->setup_phase = 0;
 	shared->lsn_upto = InvalidXLogRecPtr;
 	shared->done = false;
 	SharedFileSetInit(&shared->sfs, decoding_worker->seg);
@@ -3927,15 +3929,25 @@ start_repack_decoding_worker(Oid relid)
 	 * for any reason, otherwise the worker might end up in a deadlock,
 	 * waiting for the caller's transaction to end. Therefore wait here until
 	 * the worker indicates that it has the logical decoding initialized.
+	 * While waiting, report the phase the worker asks us to report.
 	 */
 	ConditionVariablePrepareToSleep(&shared->cv);
 	for (;;)
 	{
 		bool		initialized;
+		int			setup_phase;
 
 		SpinLockAcquire(&shared->mutex);
 		initialized = shared->initialized;
+		setup_phase = shared->setup_phase;
 		SpinLockRelease(&shared->mutex);
+
+		/* Report each phase once. */
+		if (setup_phase != reported_phase)
+		{
+			pgstat_progress_update_param(PROGRESS_REPACK_PHASE, setup_phase);
+			reported_phase = setup_phase;
+		}
 
 		if (initialized)
 			break;

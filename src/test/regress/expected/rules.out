@@ -2168,6 +2168,8 @@ pg_stat_progress_repack| SELECT s.pid,
             WHEN 6 THEN 'swapping relation files'::text
             WHEN 7 THEN 'rebuilding index'::text
             WHEN 8 THEN 'performing final cleanup'::text
+            WHEN 9 THEN 'enabling logical decoding'::text
+            WHEN 10 THEN 'initializing logical decoding'::text
             ELSE NULL::text
         END AS phase,
     (s.param3)::oid AS repack_index_relid,
