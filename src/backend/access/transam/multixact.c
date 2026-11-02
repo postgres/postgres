@@ -774,6 +774,16 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 
 	INJECTION_POINT_CACHED("multixact-create-from-members", NULL);
 
+	/*
+	 * Prevent checkpoints from starting between the WAL record and the update
+	 * of the OFFSETs and MEMBERs pages.  Otherwise the checkpoint could flush
+	 * the pages before they hold the new multixact, while recovery after a
+	 * crash would begin after the WAL record, and the multixact would be lost
+	 * even though data pages might already refer to it.
+	 */
+	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
+	MyProc->delayChkptFlags |= DELAY_CHKPT_START;
+
 	/* Make an XLOG entry describing the new MXID. */
 	xlrec.mid = multi;
 	xlrec.moff = offset;
@@ -793,6 +803,8 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 
 	/* Now enter the information into the OFFSETs and MEMBERs logs */
 	RecordNewMultiXact(multi, offset, nmembers, members);
+
+	MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
 
 	/* Done with critical section */
 	END_CRIT_SECTION();
