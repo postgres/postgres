@@ -589,15 +589,42 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 	}
 
 	/*
-	 * A Param buried inside a larger cache key expression isn't determined by
-	 * the key's value, so create_memoize_plan() arranges for the cache to be
-	 * purged whenever it changes, which commonly happens on every rescan of
-	 * the enclosing plan.  We're better off making a cache key of the Param
-	 * by itself so that the cached results survive.  This is only an
-	 * optimization, so we needn't refuse to memoize when one isn't hashable.
+	 * A Param which the inner scan uses other than as a cache key by itself,
+	 * whether buried inside a larger cache key expression or used elsewhere,
+	 * isn't determined by the cache keys, so create_memoize_plan() arranges
+	 * for the cache to be purged whenever it changes, which commonly happens
+	 * on every rescan of the enclosing plan.  We're better off making a cache
+	 * key of the Param by itself so that the cached results survive.  This is
+	 * only an optimization, so we needn't track down every last such Param,
+	 * nor refuse to memoize when one isn't hashable.
 	 */
 	params = NIL;
 	(void) pull_exec_params_walker((Node *) *param_exprs, &params);
+	foreach(lc, innerrel->baserestrictinfo)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		(void) pull_exec_params_walker((Node *) rinfo->clause, &params);
+	}
+	(void) pull_exec_params_walker((Node *) innerrel->reltarget->exprs, &params);
+
+	/*
+	 * Only the outer side of each ppi_clause became a cache key above, so the
+	 * inner sides must be examined here.
+	 */
+	if (param_info != NULL)
+	{
+		foreach(lc, param_info->ppi_clauses)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+			OpExpr	   *opexpr = (OpExpr *) rinfo->clause;
+
+			(void) pull_exec_params_walker(rinfo->outer_is_left ?
+										   (Node *) lsecond(opexpr->args) :
+										   (Node *) linitial(opexpr->args),
+										   &params);
+		}
+	}
 
 	foreach(lc, params)
 		(void) memoize_add_cache_key((Node *) lfirst(lc), param_exprs,

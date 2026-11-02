@@ -415,9 +415,9 @@ ON t1.a = t2.a;', false);
 
 DROP TABLE prt;
 RESET enable_partitionwise_join;
--- Exercise Memoize code that flushes the cache when a parameter changes which
--- is not part of the cache key.
--- Ensure we get a Memoize plan
+-- Ensure Params which are part of the base quals are also added as a cache
+-- key.
+-- Ensure we get a Memoize plan with the Param as a cache key
 EXPLAIN (COSTS OFF)
 SELECT unique1 FROM tenk1 t0
 WHERE unique1 < 3
@@ -435,8 +435,8 @@ WHERE unique1 < 3
            ->  Index Scan using tenk1_hundred on tenk1 t2
                  Filter: (t0.two <> four)
            ->  Memoize
-                 Cache Key: t2.hundred
-                 Cache Mode: logical
+                 Cache Key: t2.hundred, t0.ten
+                 Cache Mode: binary
                  ->  Index Scan using tenk1_unique1 on tenk1 t1
                        Index Cond: (unique1 = t2.hundred)
                        Filter: (t0.ten = twenty)

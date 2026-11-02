@@ -198,10 +198,10 @@ DROP TABLE prt;
 
 RESET enable_partitionwise_join;
 
--- Exercise Memoize code that flushes the cache when a parameter changes which
--- is not part of the cache key.
+-- Ensure Params which are part of the base quals are also added as a cache
+-- key.
 
--- Ensure we get a Memoize plan
+-- Ensure we get a Memoize plan with the Param as a cache key
 EXPLAIN (COSTS OFF)
 SELECT unique1 FROM tenk1 t0
 WHERE unique1 < 3
