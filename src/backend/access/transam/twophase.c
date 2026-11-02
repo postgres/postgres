@@ -2410,6 +2410,18 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	START_CRIT_SECTION();
 
 	/*
+	 * We have to set delayChkpt here, too; otherwise a checkpoint starting
+	 * immediately after the WAL record is inserted could complete without
+	 * flushing our pg_xact update, while the 2PC state file is on disk.
+	 * The abort record would not be replayed after a crash and the
+	 * transaction would be recovered as prepared.  (This is essentially the
+	 * same kind of race condition as the COMMIT-to-clog-write case that
+	 * RecordTransactionCommit uses delayChkpt for; see notes there.)
+	 */
+	Assert(!MyProc->delayChkpt);
+	MyProc->delayChkpt = true;
+
+	/*
 	 * Emit the XLOG commit record. Note that we mark 2PC aborts as
 	 * potentially having AccessExclusiveLocks since we don't know whether or
 	 * not they do.
@@ -2428,11 +2440,11 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	/* Always flush, since we're about to remove the 2PC state file */
 	XLogFlush(recptr);
 
-	/*
-	 * Mark the transaction aborted in clog.  This is not absolutely necessary
-	 * but we may as well do it while we are here.
-	 */
+	/* Mark the transaction aborted in clog */
 	TransactionIdAbortTree(xid, nchildren, children);
+
+	/* Checkpoint can proceed now */
+	MyProc->delayChkpt = false;
 
 	END_CRIT_SECTION();
 
