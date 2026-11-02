@@ -1655,8 +1655,8 @@ replace_selfjoin_qual(Node *qual)
  * itself.
  */
 static void
-split_selfjoin_quals(PlannerInfo *root, List *joinquals, List **selfjoinquals,
-					 List **otherjoinquals, int from, int to)
+split_selfjoin_quals(List *joinquals, List **selfjoinquals,
+					 List **otherjoinquals)
 {
 	List	   *sjoinquals = NIL;
 	List	   *ojoinquals = NIL;
@@ -1727,8 +1727,7 @@ split_selfjoin_quals(PlannerInfo *root, List *joinquals, List **selfjoinquals,
  * a great deal of extra complication without much extra value.
  */
 static bool
-match_unique_clauses(PlannerInfo *root, RelOptInfo *outer, List *uclauses,
-					 Index relid)
+match_unique_clauses(RelOptInfo *outer, List *uclauses, Index relid)
 {
 	Assert(outer->relid > 0 && relid > 0);
 
@@ -1881,8 +1880,7 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 			 * other quals. e.g., "x = x" goes to selfjoinquals and "a = b" to
 			 * otherjoinquals.
 			 */
-			split_selfjoin_quals(root, restrictlist, &selfjoinquals,
-								 &otherjoinquals, rrel->relid, krel->relid);
+			split_selfjoin_quals(restrictlist, &selfjoinquals, &otherjoinquals);
 
 			Assert(list_length(restrictlist) ==
 				   (list_length(selfjoinquals) + list_length(otherjoinquals)));
@@ -1919,7 +1917,7 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 			 * expressions, or we won't match the same row on each side of the
 			 * join.
 			 */
-			if (!match_unique_clauses(root, rrel, uclauses, krel->relid))
+			if (!match_unique_clauses(rrel, uclauses, krel->relid))
 				continue;
 
 			/* OK, remove rrel from the query */
