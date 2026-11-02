@@ -104,7 +104,7 @@ struct SharedExecutorInstrumentation
 	int			instrument_offset;
 	int			num_workers;
 	int			num_plan_nodes;
-	int			plan_node_id[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(num_plan_nodes) int plan_node_id[FLEXIBLE_ARRAY_MEMBER];
 
 	/*
 	 * Array of num_plan_nodes * num_workers NodeInstrumentation objects

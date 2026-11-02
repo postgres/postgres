@@ -34,7 +34,7 @@ typedef struct BrinOpcInfo
 	void	   *oi_opaque;
 
 	/* Type cache entries of the stored columns */
-	TypeCacheEntry *oi_typcache[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(oi_nstored) TypeCacheEntry *oi_typcache[FLEXIBLE_ARRAY_MEMBER];
 } BrinOpcInfo;
 
 /* the size of a BrinOpcInfo for the given number of columns */

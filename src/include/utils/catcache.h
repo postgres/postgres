@@ -179,7 +179,7 @@ typedef struct catclist
 	short		nkeys;			/* number of lookup keys specified */
 	int			n_members;		/* number of member tuples */
 	CatCache   *my_cache;		/* link to owning catcache */
-	CatCTup    *members[FLEXIBLE_ARRAY_MEMBER]; /* members */
+	pg_attribute_counted_by(n_members) CatCTup *members[FLEXIBLE_ARRAY_MEMBER]; /* members */
 } CatCList;
 
 

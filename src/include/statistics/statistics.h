@@ -36,7 +36,7 @@ typedef struct MVNDistinct
 	uint32		magic;			/* magic constant marker */
 	uint32		type;			/* type of ndistinct (BASIC) */
 	uint32		nitems;			/* number of items in the statistic */
-	MVNDistinctItem items[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(nitems) MVNDistinctItem items[FLEXIBLE_ARRAY_MEMBER];
 } MVNDistinct;
 
 /* Multivariate functional dependencies */
@@ -51,7 +51,7 @@ typedef struct MVDependency
 {
 	double		degree;			/* degree of validity (0-1) */
 	AttrNumber	nattributes;	/* number of attributes */
-	AttrNumber	attributes[FLEXIBLE_ARRAY_MEMBER];	/* attribute numbers */
+	pg_attribute_counted_by(nattributes) AttrNumber attributes[FLEXIBLE_ARRAY_MEMBER];	/* attribute numbers */
 } MVDependency;
 
 typedef struct MVDependencies
@@ -59,7 +59,7 @@ typedef struct MVDependencies
 	uint32		magic;			/* magic constant marker */
 	uint32		type;			/* type of MV Dependencies (BASIC) */
 	uint32		ndeps;			/* number of dependencies */
-	MVDependency *deps[FLEXIBLE_ARRAY_MEMBER];	/* dependencies */
+	pg_attribute_counted_by(ndeps) MVDependency *deps[FLEXIBLE_ARRAY_MEMBER];	/* dependencies */
 } MVDependencies;
 
 /* used to flag stats serialized to bytea */
@@ -91,7 +91,7 @@ typedef struct MCVList
 	uint32		nitems;			/* number of MCV items in the array */
 	AttrNumber	ndimensions;	/* number of dimensions */
 	Oid			types[STATS_MAX_DIMENSIONS];	/* OIDs of data types */
-	MCVItem		items[FLEXIBLE_ARRAY_MEMBER];	/* array of MCV items */
+	pg_attribute_counted_by(nitems) MCVItem items[FLEXIBLE_ARRAY_MEMBER];	/* array of MCV items */
 } MCVList;
 
 extern MVNDistinct *statext_ndistinct_load(Oid mvoid, bool inh);

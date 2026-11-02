@@ -26,7 +26,7 @@ typedef struct PLySavedArgs
 	PyObject   *args;			/* "args" element of globals dict */
 	PyObject   *td;				/* "TD" element of globals dict, if trigger */
 	int			nargs;			/* length of namedargs array */
-	PyObject   *namedargs[FLEXIBLE_ARRAY_MEMBER];	/* named args */
+	pg_attribute_counted_by(nargs) PyObject *namedargs[FLEXIBLE_ARRAY_MEMBER];	/* named args */
 } PLySavedArgs;
 
 /* saved state for a set-returning function */

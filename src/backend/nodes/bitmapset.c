@@ -1106,13 +1106,13 @@ bms_replace_members(Bitmapset *a, const Bitmapset *b)
 	if (a->nwords < b->nwords)
 		a = (Bitmapset *) repalloc(a, BITMAPSET_SIZE(b->nwords));
 
+	a->nwords = b->nwords;
+
 	i = 0;
 	do
 	{
 		a->words[i] = b->words[i];
 	} while (++i < b->nwords);
-
-	a->nwords = b->nwords;
 
 #ifdef REALLOCATE_BITMAPSETS
 

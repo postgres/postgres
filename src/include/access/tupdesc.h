@@ -158,7 +158,7 @@ typedef struct TupleDescData
 										 * compact_attrs element. */
 	TupleConstr *constr;		/* constraints, or NULL if none */
 	/* compact_attrs[N] is the compact metadata of Attribute Number N+1 */
-	CompactAttribute compact_attrs[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(natts) CompactAttribute compact_attrs[FLEXIBLE_ARRAY_MEMBER];
 }			TupleDescData;
 typedef struct TupleDescData *TupleDesc;
 

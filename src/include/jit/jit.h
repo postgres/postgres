@@ -51,7 +51,7 @@ typedef struct JitInstrumentation
 typedef struct SharedJitInstrumentation
 {
 	int			num_workers;
-	JitInstrumentation jit_instr[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(num_workers) JitInstrumentation jit_instr[FLEXIBLE_ARRAY_MEMBER];
 } SharedJitInstrumentation;
 
 typedef struct JitContext

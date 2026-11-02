@@ -84,7 +84,7 @@ typedef struct PartitionedRelPruningData
 typedef struct PartitionPruningData
 {
 	int			num_partrelprunedata;	/* number of array entries */
-	PartitionedRelPruningData partrelprunedata[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(num_partrelprunedata) PartitionedRelPruningData partrelprunedata[FLEXIBLE_ARRAY_MEMBER];
 } PartitionPruningData;
 
 /*
@@ -127,7 +127,7 @@ typedef struct PartitionPruneState
 	bool		do_initial_prune;
 	bool		do_exec_prune;
 	int			num_partprunedata;
-	PartitionPruningData *partprunedata[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(num_partprunedata) PartitionPruningData *partprunedata[FLEXIBLE_ARRAY_MEMBER];
 } PartitionPruneState;
 
 extern void ExecDoInitialPruning(EState *estate);

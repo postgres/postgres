@@ -115,7 +115,7 @@ typedef struct NodeInstrumentation
 typedef struct WorkerNodeInstrumentation
 {
 	int			num_workers;	/* # of structures that follow */
-	NodeInstrumentation instrument[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(num_workers) NodeInstrumentation instrument[FLEXIBLE_ARRAY_MEMBER];
 } WorkerNodeInstrumentation;
 
 typedef struct TriggerInstrumentation

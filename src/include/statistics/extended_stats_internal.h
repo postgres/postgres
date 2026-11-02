@@ -45,7 +45,7 @@ typedef struct MultiSortSupportData
 {
 	int			ndims;			/* number of dimensions */
 	/* sort support data for each dimension: */
-	SortSupportData ssup[FLEXIBLE_ARRAY_MEMBER];
+	pg_attribute_counted_by(ndims) SortSupportData ssup[FLEXIBLE_ARRAY_MEMBER];
 } MultiSortSupportData;
 
 typedef MultiSortSupportData *MultiSortSupport;
