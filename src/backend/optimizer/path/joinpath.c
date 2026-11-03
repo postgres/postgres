@@ -404,6 +404,8 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 
 {
 	List	   *params;
+	Bitmapset  *outer_paramids;
+	PlannerInfo *proot;
 	ListCell   *lc;
 
 	*param_exprs = NIL;
@@ -486,13 +488,41 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 	 * the enclosing plan.  We're better off making a cache key of the Param
 	 * by itself so that the cached results survive.  This is only an
 	 * optimization, so we needn't refuse to memoize when one isn't hashable.
+	 *
+	 * Only Params supplied by an outer query level are safe to evaluate as
+	 * cache keys.  Others, such as the output Params of initPlans and
+	 * SubPlans, may not have a value yet.  Outer query levels list the Params
+	 * they supply in their plan_params.
 	 */
+	if (root->glob->paramExecTypes == NIL)
+		return true;			/* no PARAM_EXEC Params at all */
+
+	outer_paramids = NULL;
+	for (proot = root->parent_root; proot != NULL; proot = proot->parent_root)
+	{
+		foreach(lc, proot->plan_params)
+		{
+			PlannerParamItem *pitem = lfirst_node(PlannerParamItem, lc);
+
+			outer_paramids = bms_add_member(outer_paramids, pitem->paramId);
+		}
+	}
+
+	/* Nothing to do if no outer level supplies any Params */
+	if (outer_paramids == NULL)
+		return true;
+
 	params = NIL;
 	(void) pull_exec_params_walker((Node *) *param_exprs, &params);
 
 	foreach(lc, params)
-		(void) memoize_add_cache_key((Node *) lfirst(lc), param_exprs,
-									 operators, binary_mode);
+	{
+		Param	   *param = lfirst_node(Param, lc);
+
+		if (bms_is_member(param->paramid, outer_paramids))
+			(void) memoize_add_cache_key((Node *) param, param_exprs,
+										 operators, binary_mode);
+	}
 
 	/* We're okay to use memoize */
 	return true;

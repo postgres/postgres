@@ -224,6 +224,30 @@ EXECUTE memoize_extern_param(0);
 DEALLOCATE memoize_extern_param;
 RESET plan_cache_mode;
 
+-- Ensure an initplan's output Param isn't made a cache key, as that would run
+-- the initplan where it's not needed.
+
+-- Ensure we get a Memoize plan without the initplan Param as a cache key
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1 t1 INNER JOIN tenk1 t2
+  ON t1.unique1 = COALESCE(t2.twenty, (SELECT 1 / unique1 FROM tenk1 WHERE unique1 = 0));
+
+-- Ensure the above query doesn't run the initplan
+SELECT count(*) FROM tenk1 t1 INNER JOIN tenk1 t2
+  ON t1.unique1 = COALESCE(t2.twenty, (SELECT 1 / unique1 FROM tenk1 WHERE unique1 = 0));
+
+-- Ensure a SubPlan's output Param isn't made a cache key, as it has no value
+-- outside the SubPlan.
+
+-- Ensure we get a Memoize plan without the SubPlan Param as a cache key
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1 t1 INNER JOIN tenk1 t2
+  ON t1.unique1 = CASE WHEN t2.twenty < ALL (SELECT 10000) THEN t2.twenty END;
+
+-- Ensure the above query returns the correct result
+SELECT count(*) FROM tenk1 t1 INNER JOIN tenk1 t2
+  ON t1.unique1 = CASE WHEN t2.twenty < ALL (SELECT 10000) THEN t2.twenty END;
+
 RESET enable_seqscan;
 RESET enable_mergejoin;
 RESET work_mem;
