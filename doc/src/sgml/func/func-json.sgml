@@ -1470,19 +1470,19 @@ ERROR:  value too long for type character(2)
         <indexterm>
          <primary>jsonb_set</primary>
         </indexterm>
-        <function>jsonb_set</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> </optional> )
+        <function>jsonb_set</function> ( <parameter>jsonb_in</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>replacement</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> </optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
-        Returns <parameter>target</parameter>
+        Returns <parameter>jsonb_in</parameter>
         with the item designated by <parameter>path</parameter>
-        replaced by <parameter>new_value</parameter>, or with
-        <parameter>new_value</parameter> added if
+        replaced by <parameter>replacement</parameter>, or with
+        <parameter>replacement</parameter> added if
         <parameter>create_if_missing</parameter> is true (which is the
         default) and the item designated by <parameter>path</parameter>
         does not exist.
         All earlier steps in the path must exist, or
-        the <parameter>target</parameter> is returned unchanged.
+        the <parameter>jsonb_in</parameter> is returned unchanged.
         As with the path oriented operators, negative integers that
         appear in the <parameter>path</parameter> count from the end
         of JSON arrays.
@@ -1506,11 +1506,11 @@ ERROR:  value too long for type character(2)
         <indexterm>
          <primary>jsonb_set_lax</primary>
         </indexterm>
-        <function>jsonb_set_lax</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> <optional>, <parameter>null_value_treatment</parameter> <type>text</type> </optional></optional> )
+        <function>jsonb_set_lax</function> ( <parameter>jsonb_in</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>replacement</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> <optional>, <parameter>null_value_treatment</parameter> <type>text</type> </optional></optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
-        If <parameter>new_value</parameter> is not <literal>NULL</literal>,
+        If <parameter>replacement</parameter> is not <literal>NULL</literal>,
         behaves identically to <literal>jsonb_set</literal>. Otherwise behaves
         according to the value
         of <parameter>null_value_treatment</parameter> which must be one
@@ -1534,22 +1534,22 @@ ERROR:  value too long for type character(2)
         <indexterm>
          <primary>jsonb_insert</primary>
         </indexterm>
-        <function>jsonb_insert</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>insert_after</parameter> <type>boolean</type> </optional> )
+        <function>jsonb_insert</function> ( <parameter>jsonb_in</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>replacement</parameter> <type>jsonb</type> <optional>, <parameter>insert_after</parameter> <type>boolean</type> </optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
-        Returns <parameter>target</parameter>
-        with <parameter>new_value</parameter> inserted.  If the item
+        Returns <parameter>jsonb_in</parameter>
+        with <parameter>replacement</parameter> inserted.  If the item
         designated by the <parameter>path</parameter> is an array
-        element, <parameter>new_value</parameter> will be inserted before
+        element, <parameter>replacement</parameter> will be inserted before
         that item if <parameter>insert_after</parameter> is false (which
         is the default), or after it
         if <parameter>insert_after</parameter> is true.  If the item
         designated by the <parameter>path</parameter> is an object
-        field, <parameter>new_value</parameter> will be inserted only if
+        field, <parameter>replacement</parameter> will be inserted only if
         the object does not already contain that key.
         All earlier steps in the path must exist, or
-        the <parameter>target</parameter> is returned unchanged.
+        the <parameter>jsonb_in</parameter> is returned unchanged.
         As with the path oriented operators, negative integers that
         appear in the <parameter>path</parameter> count from the end
         of JSON arrays.

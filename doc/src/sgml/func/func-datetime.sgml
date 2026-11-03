@@ -863,7 +863,7 @@
          </indexterm>
          <function>make_timestamp</function> ( <parameter>year</parameter> <type>int</type>,
          <parameter>month</parameter> <type>int</type>,
-         <parameter>day</parameter> <type>int</type>,
+         <parameter>mday</parameter> <type>int</type>,
          <parameter>hour</parameter> <type>int</type>,
          <parameter>min</parameter> <type>int</type>,
          <parameter>sec</parameter> <type>double precision</type> )
@@ -886,7 +886,7 @@
          </indexterm>
          <function>make_timestamptz</function> ( <parameter>year</parameter> <type>int</type>,
          <parameter>month</parameter> <type>int</type>,
-         <parameter>day</parameter> <type>int</type>,
+         <parameter>mday</parameter> <type>int</type>,
          <parameter>hour</parameter> <type>int</type>,
          <parameter>min</parameter> <type>int</type>,
          <parameter>sec</parameter> <type>double precision</type>
