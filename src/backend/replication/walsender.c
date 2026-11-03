@@ -4143,7 +4143,47 @@ WalSndWait(uint32 socket_events, long timeout, uint32 wait_event)
 	if (wait_event == WAIT_EVENT_WAIT_FOR_STANDBY_CONFIRMATION)
 		ConditionVariablePrepareToSleep(&WalSndCtl->wal_confirm_rcv_cv);
 	else if (MyWalSnd->kind == REPLICATION_KIND_PHYSICAL)
+	{
 		ConditionVariablePrepareToSleep(&WalSndCtl->wal_flush_cv);
+
+		/*
+		 * Recheck the conditions tested by XLogSendPhysical() now that we're
+		 * on the waitlist. Otherwise, we could miss a wakeup for a WAL flush,
+		 * promotion, or timeline switch that occurred before we joined it.
+		 */
+		if (wait_event == WAIT_EVENT_WAL_SENDER_MAIN &&
+			!sendTimeLineIsHistoric && !pq_is_send_pending())
+		{
+			XLogRecPtr	flushPtr;
+			bool		becameHistoric = false;
+
+			Assert(WalSndCaughtUp);
+			Assert(!streamingDoneSending);
+
+			if (am_cascading_walsender)
+			{
+				TimeLineID	flushTLI;
+
+				flushPtr = GetStandbyFlushRecPtr(&flushTLI);
+
+				/*
+				 * Promotion or a timeline switch need not advance the flush
+				 * pointer.  Let XLogSendPhysical() handle the now-historic
+				 * timeline.
+				 */
+				becameHistoric = !RecoveryInProgress() ||
+					sendTimeLine != flushTLI;
+			}
+			else
+				flushPtr = GetFlushRecPtr(NULL);
+
+			if (flushPtr > sentPtr || becameHistoric)
+			{
+				ConditionVariableCancelSleep();
+				return;
+			}
+		}
+	}
 	else if (MyWalSnd->kind == REPLICATION_KIND_LOGICAL)
 		ConditionVariablePrepareToSleep(&WalSndCtl->wal_replay_cv);
 
