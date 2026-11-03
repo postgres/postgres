@@ -940,13 +940,13 @@
          <primary>ts_parse</primary>
         </indexterm>
         <function>ts_parse</function> ( <parameter>parser_name</parameter> <type>text</type>,
-        <parameter>document</parameter> <type>text</type> )
+        <parameter>txt</parameter> <type>text</type> )
         <returnvalue>setof record</returnvalue>
         ( <parameter>tokid</parameter> <type>integer</type>,
         <parameter>token</parameter> <type>text</type> )
        </para>
        <para>
-        Extracts tokens from the <parameter>document</parameter> using the
+        Extracts tokens from the document <parameter>txt</parameter> using the
         named parser.
         See <xref linkend="textsearch-parser-testing"/> for details.
        </para>
@@ -959,13 +959,13 @@
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <function>ts_parse</function> ( <parameter>parser_oid</parameter> <type>oid</type>,
-        <parameter>document</parameter> <type>text</type> )
+        <parameter>txt</parameter> <type>text</type> )
         <returnvalue>setof record</returnvalue>
         ( <parameter>tokid</parameter> <type>integer</type>,
         <parameter>token</parameter> <type>text</type> )
        </para>
        <para>
-        Extracts tokens from the <parameter>document</parameter> using a
+        Extracts tokens from the document <parameter>txt</parameter> using a
         parser specified by OID.
         See <xref linkend="textsearch-parser-testing"/> for details.
        </para>
@@ -1021,7 +1021,7 @@
         <indexterm>
          <primary>ts_stat</primary>
         </indexterm>
-        <function>ts_stat</function> ( <parameter>sqlquery</parameter> <type>text</type>
+        <function>ts_stat</function> ( <parameter>query</parameter> <type>text</type>
         <optional>, <parameter>weights</parameter> <type>text</type> </optional> )
         <returnvalue>setof record</returnvalue>
         ( <parameter>word</parameter> <type>text</type>,
@@ -1029,7 +1029,7 @@
         <parameter>nentry</parameter> <type>integer</type> )
        </para>
        <para>
-        Executes the <parameter>sqlquery</parameter>, which must return a
+        Executes the <parameter>query</parameter>, which must return a
         single <type>tsvector</type> column, and returns statistics about each
         distinct lexeme contained in the data.
         See <xref linkend="textsearch-statistics"/> for details.

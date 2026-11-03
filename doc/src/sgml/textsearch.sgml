@@ -2010,13 +2010,13 @@ CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
    </para>
 
 <synopsis>
-ts_stat(<replaceable class="parameter">sqlquery</replaceable> <type>text</type>, <optional> <replaceable class="parameter">weights</replaceable> <type>text</type>, </optional>
+ts_stat(<replaceable class="parameter">query</replaceable> <type>text</type>, <optional> <replaceable class="parameter">weights</replaceable> <type>text</type>, </optional>
         OUT <replaceable class="parameter">word</replaceable> <type>text</type>, OUT <replaceable class="parameter">ndoc</replaceable> <type>integer</type>,
         OUT <replaceable class="parameter">nentry</replaceable> <type>integer</type>) returns <type>setof record</type>
 </synopsis>
 
    <para>
-    <replaceable>sqlquery</replaceable> is a text value containing an SQL
+    <replaceable>query</replaceable> is a text value containing an SQL
     query which must return a single <type>tsvector</type> column.
     <function>ts_stat</function> executes the query and returns statistics about
     each distinct lexeme (word) contained in the <type>tsvector</type>
@@ -3549,14 +3549,14 @@ FROM ts_debug('public.english', 'The Brightest supernovaes');
   </indexterm>
 
 <synopsis>
-ts_parse(<replaceable class="parameter">parser_name</replaceable> <type>text</type>, <replaceable class="parameter">document</replaceable> <type>text</type>,
+ts_parse(<replaceable class="parameter">parser_name</replaceable> <type>text</type>, <replaceable class="parameter">txt</replaceable> <type>text</type>,
          OUT <replaceable class="parameter">tokid</replaceable> <type>integer</type>, OUT <replaceable class="parameter">token</replaceable> <type>text</type>) returns <type>setof record</type>
-ts_parse(<replaceable class="parameter">parser_oid</replaceable> <type>oid</type>, <replaceable class="parameter">document</replaceable> <type>text</type>,
+ts_parse(<replaceable class="parameter">parser_oid</replaceable> <type>oid</type>, <replaceable class="parameter">txt</replaceable> <type>text</type>,
          OUT <replaceable class="parameter">tokid</replaceable> <type>integer</type>, OUT <replaceable class="parameter">token</replaceable> <type>text</type>) returns <type>setof record</type>
 </synopsis>
 
   <para>
-   <function>ts_parse</function> parses the given <replaceable>document</replaceable>
+   <function>ts_parse</function> parses the document <replaceable>txt</replaceable>
    and returns a series of records, one for each token produced by
    parsing. Each record includes a <varname>tokid</varname> showing the
    assigned token type and a <varname>token</varname> which is the text of the

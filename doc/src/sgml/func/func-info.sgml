@@ -2729,8 +2729,8 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
          <primary>pg_input_error_info</primary>
         </indexterm>
         <function>pg_input_error_info</function> (
-          <parameter>string</parameter> <type>text</type>,
-          <parameter>type</parameter> <type>text</type>
+          <parameter>value</parameter> <type>text</type>,
+          <parameter>type_name</parameter> <type>text</type>
         )
         <returnvalue>record</returnvalue>
         ( <parameter>message</parameter> <type>text</type>,
@@ -2739,7 +2739,7 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         <parameter>sql_error_code</parameter> <type>text</type> )
        </para>
        <para>
-        Tests whether the given <parameter>string</parameter> is valid
+        Tests whether the given <parameter>value</parameter> is valid
         input for the specified data type; if not, return the details of
         the error that would have been thrown.  If the input is valid, the
         results are NULL.  The inputs are the same as

@@ -830,13 +830,13 @@
         <indexterm>
          <primary>parse_ident</primary>
         </indexterm>
-        <function>parse_ident</function> ( <parameter>qualified_identifier</parameter> <type>text</type>
-        <optional>, <parameter>strict_mode</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>true</literal> </optional> )
+        <function>parse_ident</function> ( <parameter>str</parameter> <type>text</type>
+        <optional>, <parameter>strict</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>true</literal> </optional> )
         <returnvalue>text[]</returnvalue>
        </para>
        <para>
-        Splits <parameter>qualified_identifier</parameter> into an array of
-        identifiers, removing any quoting of individual identifiers.  By
+        Splits the qualified identifier <parameter>str</parameter> into an
+        array of identifiers, removing any quoting of individual identifiers.  By
         default, extra characters after the last identifier are considered an
         error; but if the second parameter is <literal>false</literal>, then such
         extra characters are ignored. (This behavior is useful for parsing

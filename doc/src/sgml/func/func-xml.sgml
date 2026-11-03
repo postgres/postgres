@@ -1023,7 +1023,7 @@ SELECT xmltable.*
     The following functions map the contents of relational tables to
     XML values.  They can be thought of as XML export functionality:
 <synopsis>
-<function>table_to_xml</function> ( <parameter>table</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
+<function>table_to_xml</function> ( <parameter>tbl</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
                <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
 <function>query_to_xml</function> ( <parameter>query</parameter> <type>text</type>, <parameter>nulls</parameter> <type>boolean</type>,
                <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
@@ -1034,7 +1034,7 @@ SELECT xmltable.*
 
    <para>
     <function>table_to_xml</function> maps the content of the named
-    table, passed as parameter <parameter>table</parameter>.  The
+    table, passed as parameter <parameter>tbl</parameter>.  The
     <type>regclass</type> type accepts strings identifying tables using the
     usual notation, including optional schema qualification and
     double quotes (see <xref linkend="datatype-oid"/> for details).
@@ -1125,7 +1125,7 @@ SELECT xmltable.*
     The following functions return XML Schema documents describing the
     mappings performed by the corresponding functions above:
 <synopsis>
-<function>table_to_xmlschema</function> ( <parameter>table</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
+<function>table_to_xmlschema</function> ( <parameter>tbl</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
                      <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
 <function>query_to_xmlschema</function> ( <parameter>query</parameter> <type>text</type>, <parameter>nulls</parameter> <type>boolean</type>,
                      <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
@@ -1142,7 +1142,7 @@ SELECT xmltable.*
     together.  They can be useful where self-contained and
     self-describing results are wanted:
 <synopsis>
-<function>table_to_xml_and_xmlschema</function> ( <parameter>table</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
+<function>table_to_xml_and_xmlschema</function> ( <parameter>tbl</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
                              <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
 <function>query_to_xml_and_xmlschema</function> ( <parameter>query</parameter> <type>text</type>, <parameter>nulls</parameter> <type>boolean</type>,
                              <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
