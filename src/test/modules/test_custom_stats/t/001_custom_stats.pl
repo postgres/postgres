@@ -172,6 +172,23 @@ foreach my $stats_kind (@var_stats_kinds)
 	is($result, "",
 		"variable-sized stats of entry2 lost after crash recovery for $kind_name"
 	);
+
+	# Test drop of all variable-sized stats.
+	$node->safe_psql(
+		'postgres',
+		q(create table if not exists test_drop_all (a int);
+		  insert into test_drop_all values (1);
+		  select test_custom_stats_var_create('entry5', 'Test entry 5')));
+	$node->safe_psql('postgres', q(select test_custom_stats_var_drop_all()));
+	$result = $node->safe_psql('postgres',
+		qq(select entry_count from pg_stat_kind_info where name = '$kind_name')
+	);
+	is($result, "0", "no entries after drop for $kind_name");
+	$result = $node->safe_psql(
+		'postgres',
+		q(select n_tup_ins from pg_stat_user_tables
+		  where relname = 'test_drop_all'));
+	is($result, "1", "relation stats remain after drop for $kind_name");
 }
 
 # fixed-sized stats are updated 3 times, so the report below should match.

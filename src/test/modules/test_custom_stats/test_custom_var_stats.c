@@ -656,6 +656,29 @@ test_custom_stats_var_drop(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Callback for pgstat_drop_matching_entries().
+ */
+static bool
+test_custom_stats_var_match_kind(PgStatShared_HashEntry *entry,
+								 Datum match_data)
+{
+	return entry->key.kind == PGSTAT_KIND_TEST_CUSTOM_VAR_STATS;
+}
+
+/*
+ * test_custom_stats_var_drop_all
+ *		Remove all custom statistic entries
+ */
+PG_FUNCTION_INFO_V1(test_custom_stats_var_drop_all);
+Datum
+test_custom_stats_var_drop_all(PG_FUNCTION_ARGS)
+{
+	pgstat_drop_matching_entries(test_custom_stats_var_match_kind, 0);
+
+	PG_RETURN_VOID();
+}
+
+/*
  * test_custom_stats_var_reset
  *		Reset all custom statistic entries
  */
