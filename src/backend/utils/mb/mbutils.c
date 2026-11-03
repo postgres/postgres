@@ -1222,7 +1222,7 @@ int
 pg_encoding_mbcliplen(int encoding, const char *mbstr,
 					  int len, int limit)
 {
-	mblen_converter mblen_fn;
+	mblen_function mblen_fn;
 	int			clen = 0;
 	int			l;
 
@@ -1452,15 +1452,15 @@ static bool
 pg_generic_charinc(unsigned char *charptr, int len)
 {
 	unsigned char *lastbyte = charptr + len - 1;
-	mbchar_verifier mbverify;
+	mbverifychar_function mbverifychar;
 
 	/* We can just invoke the character verifier directly. */
-	mbverify = pg_wchar_table[GetDatabaseEncoding()].mbverifychar;
+	mbverifychar = pg_wchar_table[GetDatabaseEncoding()].mbverifychar;
 
 	while (*lastbyte < (unsigned char) 255)
 	{
 		(*lastbyte)++;
-		if ((*mbverify) (charptr, len) == len)
+		if ((*mbverifychar) (charptr, len) == len)
 			return true;
 	}
 
@@ -1723,7 +1723,7 @@ pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
 int
 pg_verify_mbstr_len(int encoding, const char *mbstr, int len, bool noError)
 {
-	mbchar_verifier mbverifychar;
+	mbverifychar_function mbverifychar;
 	int			mb_len;
 
 	Assert(PG_VALID_ENCODING(encoding));

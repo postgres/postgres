@@ -3952,12 +3952,9 @@ manifest_wal_range
 manifest_writer
 map_variable_attnos_context
 max_parallel_hazard_context
-mb2wchar_with_len_converter
-mbchar_verifier
 mbcharacter_incrementer
-mbdisplaylen_converter
-mblen_converter
-mbstr_verifier
+mblen_function
+mbverifychar_function
 memoize_hash
 memoize_iterator
 metastring
@@ -4441,7 +4438,6 @@ walrcv_receive_fn
 walrcv_send_fn
 walrcv_server_version_fn
 walrcv_startstreaming_fn
-wchar2mb_with_len_converter
 wchar_t
 win32_deadchild_waitinfo
 wint_t

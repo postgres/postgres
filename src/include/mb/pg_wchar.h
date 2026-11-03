@@ -208,35 +208,115 @@ extern PGDLLIMPORT const char *pg_enc2gettext_tbl[];
 /*
  * pg_wchar stuff
  */
-typedef int (*mb2wchar_with_len_converter) (const unsigned char *from,
-											pg_wchar *to,
-											int len);
 
-typedef int (*wchar2mb_with_len_converter) (const pg_wchar *from,
-											unsigned char *to,
-											int len);
+typedef int (*mblen_function) (const unsigned char *mbstr);
+typedef int (*mbverifychar_function) (const unsigned char *mbstr, int len);
 
-typedef int (*mblen_converter) (const unsigned char *mbstr);
-
-typedef int (*mbdisplaylen_converter) (const unsigned char *mbstr);
-
-typedef bool (*mbcharacter_incrementer) (unsigned char *mbstr, int len);
-
-typedef int (*mbchar_verifier) (const unsigned char *mbstr, int len);
-
-typedef int (*mbstr_verifier) (const unsigned char *mbstr, int len);
-
+/*
+ * Operations on multi-byte encodings are driven by a table of helper
+ * functions.
+ *
+ * All functions are required, except the conversion functions
+ * .mb2wchar_with_len and .wchar2mb_with_len, which are only required for
+ * server encodings.
+ *
+ * These functions generally assume that their input is validly formed, and
+ * unless specified otherwise have no special return value for errors.  The
+ * exceptions are the two "verify" functions, which must check their input and
+ * signal invalid input through their return value.  None of these functions
+ * report errors via ereport().
+ */
 typedef struct
 {
-	mb2wchar_with_len_converter mb2wchar_with_len;	/* convert a multibyte
-													 * string to a wchar */
-	wchar2mb_with_len_converter wchar2mb_with_len;	/* convert a wchar string
-													 * to a multibyte */
-	mblen_converter mblen;		/* get byte length of a char */
-	mbdisplaylen_converter dsplen;	/* get display width of a char */
-	mbchar_verifier mbverifychar;	/* verify multibyte character */
-	mbstr_verifier mbverifystr; /* verify multibyte string */
-	int			maxmblen;		/* max bytes for a char in this encoding */
+	/*
+	 * Convert a multibyte string to a pg_wchar string.
+	 *
+	 * "len" is the length of "from" in bytes (not characters).  The input
+	 * string need not be zero-terminated, but conversion will stop early on a
+	 * zero byte.  The output is written to "to".  "to" must be allocated to
+	 * accommodate at least len + 1 pg_wchar's.  A terminating 0 is always
+	 * written.  The return value is the number of pg_wchar's written, without
+	 * the terminator.
+	 *
+	 * If a multibyte sequence at the end is cut off by len, it is silently
+	 * dropped.
+	 */
+	int			(*mb2wchar_with_len) (const unsigned char *from, pg_wchar *to, int len);
+
+	/*
+	 * Convert a pg_wchar string to a multibyte string.
+	 *
+	 * "len" is the length of "from" in pg_wchar characters (not bytes).  The
+	 * input need not be terminated by a 0 pg_wchar, but conversion will stop
+	 * early on a 0 pg_wchar.  The output is written to "to".  "to" must be
+	 * allocated as at least len * maxmblen + 1 bytes.  A terminating 0 byte
+	 * is always written.  The return value is the number of bytes written,
+	 * without the terminator.
+	 */
+	int			(*wchar2mb_with_len) (const pg_wchar *from, unsigned char *to, int len);
+
+	/*
+	 * Get byte length of the first character of the input string.
+	 *
+	 * If the input is an empty string (*mbstr == '\0'), then 1 is returned.
+	 * The return value is always between 1 and maxmblen inclusive.
+	 *
+	 * We expect that mblen does not need to examine more than the first byte
+	 * of the character to discover the correct length.  GB18030 is an
+	 * exception; see pg_gb18030_mblen().
+	 */
+	mblen_function mblen;
+
+	/*
+	 * Get the display width of the first character of the input string.
+	 *
+	 * The possible results are -1, 0, 1 and 2.  Control characters return -1;
+	 * callers can handle that specially.  Unlike mblen, an empty string
+	 * returns 0.  (But the converse is not true: Zero-width characters also
+	 * return 0.)
+	 *
+	 * Note: for the display output of psql to work properly, the return
+	 * values of the dsplen functions must conform to the Unicode standard. In
+	 * particular the NUL character is zero width and control characters are
+	 * generally width -1. It is recommended that non-ASCII encodings refer
+	 * their ASCII subset to the ASCII routines to ensure consistency.
+	 */
+	int			(*dsplen) (const unsigned char *mbstr);
+
+	/*
+	 * Verify multibyte character.
+	 *
+	 * The verifychar functions accept "mbstr", a pointer to the first byte of
+	 * a string, and "len", the remaining length of the string.  If there is a
+	 * validly encoded character beginning at *mbstr, return its length in
+	 * bytes; else return -1.
+	 *
+	 * The verifychar functions can assume that len > 0 and that *mbstr !=
+	 * '\0', but they must test for and reject zeroes in any additional bytes
+	 * of a multibyte character.  Note that this definition allows the
+	 * function for a single-byte encoding to be just "return 1".
+	 */
+	mbverifychar_function mbverifychar;
+
+	/*
+	 * Verify multibyte string.
+	 *
+	 * The verifystr functions accept "mbstr", a pointer to a string and
+	 * "len", the length of the string.  They verify the whole string, and
+	 * return the number of input bytes (<= len) that are valid.  In other
+	 * words, if the whole string is valid, verifystr returns "len", otherwise
+	 * it returns the byte offset of the first invalid character.  The
+	 * verifystr functions must test for and reject zeroes in the input.
+	 */
+	int			(*mbverifystr) (const unsigned char *mbstr, int len);
+
+	/*
+	 * The maximum number of bytes a character in this encoding could occupy.
+	 *
+	 * This is used to size output buffers of conversion routines, so it must
+	 * not be too small.
+	 */
+	int			maxmblen;
 } pg_wchar_tbl;
 
 extern PGDLLIMPORT const pg_wchar_tbl pg_wchar_table[];
@@ -547,6 +627,7 @@ extern int	pg_encoding_mbcliplen(int encoding, const char *mbstr,
 								  int len, int limit);
 extern int	pg_mbcharcliplen(const char *mbstr, int len, int limit);
 extern int	pg_database_encoding_max_length(void);
+typedef bool (*mbcharacter_incrementer) (unsigned char *mbstr, int len);
 extern mbcharacter_incrementer pg_database_encoding_character_incrementer(void);
 
 extern int	PrepareClientEncoding(int encoding);

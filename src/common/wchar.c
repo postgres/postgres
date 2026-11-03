@@ -37,32 +37,6 @@
 #define NONUTF8_INVALID_BYTE1 (' ')
 
 
-/*
- * Operations on multi-byte encodings are driven by a table of helper
- * functions.
- *
- * To add an encoding support, define mblen(), dsplen(), verifychar() and
- * verifystr() for the encoding.  For server-encodings, also define mb2wchar()
- * and wchar2mb() conversion functions.
- *
- * These functions generally assume that their input is validly formed.
- * The "verifier" functions, further down in the file, have to be more
- * paranoid.
- *
- * We expect that mblen() does not need to examine more than the first byte
- * of the character to discover the correct length.  GB18030 is an exception
- * to that rule, though, as it also looks at second byte.  But even that
- * behaves in a predictable way, if you only pass the first byte: it will
- * treat 4-byte encoded characters as two 2-byte encoded characters, which is
- * good enough for all current uses.
- *
- * Note: for the display output of psql to work properly, the return values
- * of the dsplen functions must conform to the Unicode standard. In particular
- * the NUL character is zero width and control characters are generally
- * width -1. It is recommended that non-ASCII encodings refer their ASCII
- * subset to the ASCII routines to ensure consistency.
- */
-
 /* No error-reporting facility.  Ignore incomplete trailing byte sequence. */
 #define MB2CHAR_NEED_AT_LEAST(len, need) if ((len) < (need)) break
 
@@ -390,9 +364,6 @@ pg_euctw_dsplen(const unsigned char *s)
 
 /*
  * Convert pg_wchar to EUC_* encoding.
- * caller must allocate enough space for "to", including a trailing zero!
- * len: length of from.
- * "from" not necessarily null terminated.
  */
 static int
 pg_wchar2euc_with_len(const pg_wchar *from, unsigned char *to, int len)
@@ -454,9 +425,6 @@ pg_johab_dsplen(const unsigned char *s)
 
 /*
  * convert UTF8 string to pg_wchar (UCS-4)
- * caller must allocate enough space for "to", including a trailing zero!
- * len: length of from.
- * "from" not necessarily null terminated.
  */
 static int
 pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
@@ -517,9 +485,6 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 
 /*
  * Trivial conversion from pg_wchar to UTF-8.
- * caller should allocate enough space for "to"
- * len: length of from.
- * "from" not necessarily null terminated.
  */
 static int
 pg_wchar2utf_with_len(const pg_wchar *from, unsigned char *to, int len)
@@ -704,9 +669,6 @@ pg_latin12wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 /*
  * Trivial conversion from pg_wchar to single byte encoding. Just ignores
  * high bits.
- * caller should allocate enough space for "to"
- * len: length of from.
- * "from" not necessarily null terminated.
  */
 static int
 pg_wchar2single_with_len(const pg_wchar *from, unsigned char *to, int len)
@@ -891,25 +853,9 @@ pg_gb18030_dsplen(const unsigned char *s)
 /*
  *-------------------------------------------------------------------
  * multibyte sequence validators
- *
- * The verifychar functions accept "s", a pointer to the first byte of a
- * string, and "len", the remaining length of the string.  If there is a
- * validly encoded character beginning at *s, return its length in bytes;
- * else return -1.
- *
- * The verifystr functions also accept "s", a pointer to a string and "len",
- * the length of the string.  They verify the whole string, and return the
- * number of input bytes (<= len) that are valid.  In other words, if the
- * whole string is valid, verifystr returns "len", otherwise it returns the
- * byte offset of the first invalid character.  The verifystr functions must
- * test for and reject zeroes in the input.
- *
- * The verifychar functions can assume that len > 0 and that *s != '\0', but
- * they must test for and reject zeroes in any additional bytes of a
- * multibyte character.  Note that this definition allows the function for a
- * single-byte encoding to be just "return 1".
  *-------------------------------------------------------------------
  */
+
 static int
 pg_ascii_verifychar(const unsigned char *s, int len)
 {
@@ -1982,8 +1928,9 @@ pg_encoding_dsplen(int encoding, const char *mbstr)
 
 /*
  * Verify the first multibyte character of the given string.
- * Return its byte length if good, -1 if bad.  (See comments above for
- * full details of the mbverifychar API.)
+ *
+ * Return its byte length if good, -1 if bad.  (See comments at pg_wchar_tbl
+ * for full details of the mbverifychar API.)
  */
 int
 pg_encoding_verifymbchar(int encoding, const char *mbstr, int len)
@@ -1995,8 +1942,9 @@ pg_encoding_verifymbchar(int encoding, const char *mbstr, int len)
 
 /*
  * Verify that a string is valid for the given encoding.
- * Returns the number of input bytes (<= len) that form a valid string.
- * (See comments above for full details of the mbverifystr API.)
+ *
+ * Returns the number of input bytes (<= len) that form a valid string.  (See
+ * comments at pg_wchar_tbl for full details of the mbverifystr API.)
  */
 int
 pg_encoding_verifymbstr(int encoding, const char *mbstr, int len)
