@@ -613,6 +613,8 @@ pgpa_relids(Plan *plan)
 		return ((Result *) plan)->relids;
 	else if (IsA(plan, ForeignScan))
 		return ((ForeignScan *) plan)->fs_relids;
+	else if (IsA(plan, CustomScan))
+		return ((CustomScan *) plan)->custom_relids;
 	else if (IsA(plan, Append))
 		return ((Append *) plan)->apprelids;
 	else if (IsA(plan, MergeAppend))
