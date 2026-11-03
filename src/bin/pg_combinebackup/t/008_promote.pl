@@ -2,6 +2,8 @@
 #
 # Test whether WAL summaries are complete such that incremental backup
 # can be performed after promoting a standby at an arbitrary LSN.
+# Also check that an incremental backup is rejected if the prior backup
+# requires WAL past the timeline switch point.
 
 use strict;
 use warnings FATAL => 'all';
@@ -64,6 +66,20 @@ $node2->safe_psql('postgres', <<EOM);
 INSERT INTO mytable VALUES (2, 'blackberry');
 EOM
 
+# Take another full backup on the old primary that requires WAL past the
+# switch point, making it unsuitable as a prior backup on node2.
+# Take it after promotion to prevent its checkpoint from advancing the
+# standby's WAL summarization beyond the recovery target.
+my $divergedpath = $node1->backup_dir . '/diverged';
+$node1->command_ok(
+	[
+		'pg_basebackup',
+		'--pgdata' => $divergedpath,
+		'--no-sync',
+		'--checkpoint' => 'fast',
+	],
+	"full backup on the old primary after the timeline switch");
+
 # Now take an incremental backup. If WAL summarization didn't follow the
 # timeline cange correctly, something should break at this point.
 my $backup2path = $node1->backup_dir . '/backup2';
@@ -71,6 +87,19 @@ $node2->command_ok(
 	[ 'pg_basebackup', '-D', $backup2path, '--no-sync', '-cfast',
 	  '--incremental', $backup1path . '/backup_manifest' ],
 	"incremental backup from node2");
+
+# An incremental backup using the old primary's post-switch backup must fail.
+$node2->command_fails_like(
+	[
+		'pg_basebackup',
+		'--pgdata' => $node1->backup_dir . '/incr_bad',
+		'--no-sync',
+		'--checkpoint' => 'fast',
+		'--incremental' => $divergedpath . '/backup_manifest',
+	],
+	qr/manifest requires WAL from final timeline 1 ending at .*, but this server switched timelines at/,
+	"reject incremental backup using a prior backup from beyond the switch point"
+);
 
 # Restore the incremental backup and use it to create a new node.
 my $node3 = PostgreSQL::Test::Cluster->new('node3');

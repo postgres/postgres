@@ -430,6 +430,19 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 
 		if (range->tli == latest_wal_range_tli)
 		{
+			/*
+			 * If the prior backup's final timeline is now historic, its WAL
+			 * range must not extend past the switch point. Otherwise, the
+			 * backup may contain changes outside this server's history.
+			 */
+			if (XLogRecPtrIsValid(tlep[i]->end) && range->end_lsn > tlep[i]->end)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("manifest requires WAL from final timeline %u ending at %X/%08X, but this server switched timelines at %X/%08X",
+								range->tli,
+								LSN_FORMAT_ARGS(range->end_lsn),
+								LSN_FORMAT_ARGS(tlep[i]->end))));
+
 			if (range->end_lsn > backup_state->startpoint)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
