@@ -5265,7 +5265,7 @@ ORDER BY c.ordinal_position;
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>schema_catalog</structfield> <type>sql_identifier</type>
+       <structfield>sequence_catalog</structfield> <type>sql_identifier</type>
       </para>
       <para>
        Name of the database that contains the sequence that is used by the
