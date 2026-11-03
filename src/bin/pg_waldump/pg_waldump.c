@@ -1521,7 +1521,7 @@ main(int argc, char **argv)
 
 	if (errormsg)
 		pg_fatal("error in WAL record at %X/%08X: %s",
-				 LSN_FORMAT_ARGS(xlogreader_state->ReadRecPtr),
+				 LSN_FORMAT_ARGS(xlogreader_state->EndRecPtr),
 				 errormsg);
 
 	/*
