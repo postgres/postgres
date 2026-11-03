@@ -10221,10 +10221,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
 
        <para>
-        This parameter can only be set in the
-        <filename>postgresql.conf</filename> file or on the server command
-        line; but the setting can be overridden for individual tables by
-        changing the
+        The setting can be overridden for individual tables by changing the
         <link linkend="reloption-vacuum-max-eager-freeze-failure-rate">
         corresponding table storage parameter</link>.
         For more information on tuning vacuum's freezing behavior,
