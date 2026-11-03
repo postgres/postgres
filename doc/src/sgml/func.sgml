@@ -3186,13 +3186,13 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
         <indexterm>
          <primary>parse_ident</primary>
         </indexterm>
-        <function>parse_ident</function> ( <parameter>qualified_identifier</parameter> <type>text</type>
-        [, <parameter>strict_mode</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>true</literal> ] )
+        <function>parse_ident</function> ( <parameter>str</parameter> <type>text</type>
+        [, <parameter>strict</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>true</literal> ] )
         <returnvalue>text[]</returnvalue>
        </para>
        <para>
-        Splits <parameter>qualified_identifier</parameter> into an array of
-        identifiers, removing any quoting of individual identifiers.  By
+        Splits the qualified identifier <parameter>str</parameter> into an
+        array of identifiers, removing any quoting of individual identifiers.  By
         default, extra characters after the last identifier are considered an
         error; but if the second parameter is <literal>false</literal>, then such
         extra characters are ignored. (This behavior is useful for parsing
@@ -9818,7 +9818,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
          </indexterm>
          <function>make_timestamp</function> ( <parameter>year</parameter> <type>int</type>,
          <parameter>month</parameter> <type>int</type>,
-         <parameter>day</parameter> <type>int</type>,
+         <parameter>mday</parameter> <type>int</type>,
          <parameter>hour</parameter> <type>int</type>,
          <parameter>min</parameter> <type>int</type>,
          <parameter>sec</parameter> <type>double precision</type> )
@@ -9841,7 +9841,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
          </indexterm>
          <function>make_timestamptz</function> ( <parameter>year</parameter> <type>int</type>,
          <parameter>month</parameter> <type>int</type>,
-         <parameter>day</parameter> <type>int</type>,
+         <parameter>mday</parameter> <type>int</type>,
          <parameter>hour</parameter> <type>int</type>,
          <parameter>min</parameter> <type>int</type>,
          <parameter>sec</parameter> <type>double precision</type>
@@ -14060,13 +14060,13 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>ts_parse</primary>
         </indexterm>
         <function>ts_parse</function> ( <parameter>parser_name</parameter> <type>text</type>,
-        <parameter>document</parameter> <type>text</type> )
+        <parameter>txt</parameter> <type>text</type> )
         <returnvalue>setof record</returnvalue>
         ( <parameter>tokid</parameter> <type>integer</type>,
         <parameter>token</parameter> <type>text</type> )
        </para>
        <para>
-        Extracts tokens from the <parameter>document</parameter> using the
+        Extracts tokens from the document <parameter>txt</parameter> using the
         named parser.
         See <xref linkend="textsearch-parser-testing"/> for details.
        </para>
@@ -14079,13 +14079,13 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <function>ts_parse</function> ( <parameter>parser_oid</parameter> <type>oid</type>,
-        <parameter>document</parameter> <type>text</type> )
+        <parameter>txt</parameter> <type>text</type> )
         <returnvalue>setof record</returnvalue>
         ( <parameter>tokid</parameter> <type>integer</type>,
         <parameter>token</parameter> <type>text</type> )
        </para>
        <para>
-        Extracts tokens from the <parameter>document</parameter> using a
+        Extracts tokens from the document <parameter>txt</parameter> using a
         parser specified by OID.
         See <xref linkend="textsearch-parser-testing"/> for details.
        </para>
@@ -14141,7 +14141,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <indexterm>
          <primary>ts_stat</primary>
         </indexterm>
-        <function>ts_stat</function> ( <parameter>sqlquery</parameter> <type>text</type>
+        <function>ts_stat</function> ( <parameter>query</parameter> <type>text</type>
         <optional>, <parameter>weights</parameter> <type>text</type> </optional> )
         <returnvalue>setof record</returnvalue>
         ( <parameter>word</parameter> <type>text</type>,
@@ -14149,7 +14149,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <parameter>nentry</parameter> <type>integer</type> )
        </para>
        <para>
-        Executes the <parameter>sqlquery</parameter>, which must return a
+        Executes the <parameter>query</parameter>, which must return a
         single <type>tsvector</type> column, and returns statistics about each
         distinct lexeme contained in the data.
         See <xref linkend="textsearch-statistics"/> for details.
@@ -15253,7 +15253,7 @@ SELECT xmltable.*
     The following functions map the contents of relational tables to
     XML values.  They can be thought of as XML export functionality:
 <synopsis>
-<function>table_to_xml</function> ( <parameter>table</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
+<function>table_to_xml</function> ( <parameter>tbl</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
                <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
 <function>query_to_xml</function> ( <parameter>query</parameter> <type>text</type>, <parameter>nulls</parameter> <type>boolean</type>,
                <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
@@ -15264,7 +15264,7 @@ SELECT xmltable.*
 
    <para>
     <function>table_to_xml</function> maps the content of the named
-    table, passed as parameter <parameter>table</parameter>.  The
+    table, passed as parameter <parameter>tbl</parameter>.  The
     <type>regclass</type> type accepts strings identifying tables using the
     usual notation, including optional schema qualification and
     double quotes (see <xref linkend="datatype-oid"/> for details).
@@ -15355,7 +15355,7 @@ SELECT xmltable.*
     The following functions return XML Schema documents describing the
     mappings performed by the corresponding functions above:
 <synopsis>
-<function>table_to_xmlschema</function> ( <parameter>table</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
+<function>table_to_xmlschema</function> ( <parameter>tbl</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
                      <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
 <function>query_to_xmlschema</function> ( <parameter>query</parameter> <type>text</type>, <parameter>nulls</parameter> <type>boolean</type>,
                      <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
@@ -15372,7 +15372,7 @@ SELECT xmltable.*
     together.  They can be useful where self-contained and
     self-describing results are wanted:
 <synopsis>
-<function>table_to_xml_and_xmlschema</function> ( <parameter>table</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
+<function>table_to_xml_and_xmlschema</function> ( <parameter>tbl</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
                              <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
 <function>query_to_xml_and_xmlschema</function> ( <parameter>query</parameter> <type>text</type>, <parameter>nulls</parameter> <type>boolean</type>,
                              <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
@@ -16983,19 +16983,19 @@ ERROR:  value too long for type character(2)
         <indexterm>
          <primary>jsonb_set</primary>
         </indexterm>
-        <function>jsonb_set</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> </optional> )
+        <function>jsonb_set</function> ( <parameter>jsonb_in</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>replacement</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> </optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
-        Returns <parameter>target</parameter>
+        Returns <parameter>jsonb_in</parameter>
         with the item designated by <parameter>path</parameter>
-        replaced by <parameter>new_value</parameter>, or with
-        <parameter>new_value</parameter> added if
+        replaced by <parameter>replacement</parameter>, or with
+        <parameter>replacement</parameter> added if
         <parameter>create_if_missing</parameter> is true (which is the
         default) and the item designated by <parameter>path</parameter>
         does not exist.
         All earlier steps in the path must exist, or
-        the <parameter>target</parameter> is returned unchanged.
+        the <parameter>jsonb_in</parameter> is returned unchanged.
         As with the path oriented operators, negative integers that
         appear in the <parameter>path</parameter> count from the end
         of JSON arrays.
@@ -17019,11 +17019,11 @@ ERROR:  value too long for type character(2)
         <indexterm>
          <primary>jsonb_set_lax</primary>
         </indexterm>
-        <function>jsonb_set_lax</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> <optional>, <parameter>null_value_treatment</parameter> <type>text</type> </optional></optional> )
+        <function>jsonb_set_lax</function> ( <parameter>jsonb_in</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>replacement</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> <optional>, <parameter>null_value_treatment</parameter> <type>text</type> </optional></optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
-        If <parameter>new_value</parameter> is not <literal>NULL</literal>,
+        If <parameter>replacement</parameter> is not <literal>NULL</literal>,
         behaves identically to <literal>jsonb_set</literal>. Otherwise behaves
         according to the value
         of <parameter>null_value_treatment</parameter> which must be one
@@ -17047,22 +17047,22 @@ ERROR:  value too long for type character(2)
         <indexterm>
          <primary>jsonb_insert</primary>
         </indexterm>
-        <function>jsonb_insert</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>insert_after</parameter> <type>boolean</type> </optional> )
+        <function>jsonb_insert</function> ( <parameter>jsonb_in</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>replacement</parameter> <type>jsonb</type> <optional>, <parameter>insert_after</parameter> <type>boolean</type> </optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
-        Returns <parameter>target</parameter>
-        with <parameter>new_value</parameter> inserted.  If the item
+        Returns <parameter>jsonb_in</parameter>
+        with <parameter>replacement</parameter> inserted.  If the item
         designated by the <parameter>path</parameter> is an array
-        element, <parameter>new_value</parameter> will be inserted before
+        element, <parameter>replacement</parameter> will be inserted before
         that item if <parameter>insert_after</parameter> is false (which
         is the default), or after it
         if <parameter>insert_after</parameter> is true.  If the item
         designated by the <parameter>path</parameter> is an object
-        field, <parameter>new_value</parameter> will be inserted only if
+        field, <parameter>replacement</parameter> will be inserted only if
         the object does not already contain that key.
         All earlier steps in the path must exist, or
-        the <parameter>target</parameter> is returned unchanged.
+        the <parameter>jsonb_in</parameter> is returned unchanged.
         As with the path oriented operators, negative integers that
         appear in the <parameter>path</parameter> count from the end
         of JSON arrays.
@@ -26977,8 +26977,8 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
          <primary>pg_input_error_info</primary>
         </indexterm>
         <function>pg_input_error_info</function> (
-          <parameter>string</parameter> <type>text</type>,
-          <parameter>type</parameter> <type>text</type>
+          <parameter>value</parameter> <type>text</type>,
+          <parameter>type_name</parameter> <type>text</type>
         )
         <returnvalue>record</returnvalue>
         ( <parameter>message</parameter> <type>text</type>,
@@ -26987,7 +26987,7 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
         <parameter>sql_error_code</parameter> <type>text</type> )
        </para>
        <para>
-        Tests whether the given <parameter>string</parameter> is valid
+        Tests whether the given <parameter>value</parameter> is valid
         input for the specified data type; if not, return the details of
         the error that would have been thrown.  If the input is valid, the
         results are NULL.  The inputs are the same as
@@ -29466,11 +29466,11 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         <indexterm>
          <primary>pg_logical_emit_message</primary>
         </indexterm>
-        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>text</type> [, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal>] )
+        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>message</parameter> <type>text</type> [, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal>] )
         <returnvalue>pg_lsn</returnvalue>
        </para>
        <para role="func_signature">
-        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>bytea</type> [, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal>] )
+        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>message</parameter> <type>bytea</type> [, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal>] )
         <returnvalue>pg_lsn</returnvalue>
        </para>
        <para>
@@ -29482,7 +29482,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         reads the record. The <parameter>prefix</parameter> parameter is a
         textual prefix that can be used by logical decoding plugins to easily
         recognize messages that are interesting for them.
-        The <parameter>content</parameter> parameter is the content of the
+        The <parameter>message</parameter> parameter is the content of the
         message, given either in text or binary form.
         The <parameter>flush</parameter> parameter (default set to
         <literal>false</literal>) controls if the message is immediately
