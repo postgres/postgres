@@ -74,6 +74,10 @@ insert into inserttest (f2[1], f2[2]) values (1,2);
 insert into inserttest (f2[1], f2[2]) values (3,4), (5,6);
 insert into inserttest (f2[1], f2[2]) select 7,8;
 insert into inserttest (f2[1], f2[2]) values (1,default);  -- not supported
+-- subscripts are transformed again for each VALUES row
+begin;
+insert into inserttest (f2[(select 1)], f2[(1 IS NOT NULL)::int + 1]) values (9,10), (11,12) RETURNING f2;
+rollback;
 
 insert into inserttest (f3.if1, f3.if2) values (1,array['foo']);
 insert into inserttest (f3.if1, f3.if2) values (1,'{foo}'), (2,'{bar}');
