@@ -576,7 +576,7 @@ gtrgm_union(PG_FUNCTION_ARGS)
 	{
 		if (unionkey(base, GETENTRY(entryvec, i), siglen))
 		{
-			result->flag = ALLISTRUE;
+			result->flag |= ALLISTRUE;
 			SET_VARSIZE(result, CALCGTSIZE(ALLISTRUE, siglen));
 			break;
 		}
