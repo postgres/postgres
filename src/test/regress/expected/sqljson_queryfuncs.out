@@ -337,6 +337,16 @@ SELECT JSON_VALUE('"purple"'::jsonb, 'lax $[*]' RETURNING rgb);
 
 SELECT JSON_VALUE('"purple"'::jsonb, 'lax $[*]' RETURNING rgb ERROR ON ERROR);
 ERROR:  value for domain rgb violates check constraint "rgb_check"
+SELECT x IS NULL AS is_null,
+       json_value(x, 'strict $.a' RETURNING sqljsonb_int_not_null DEFAULT 1 ON ERROR) AS jv
+FROM (VALUES ('1'::jsonb), (NULL), ('1'::jsonb)) v(x);
+ is_null | jv 
+---------+----
+ f       |  1
+ t       |  1
+ f       |  1
+(3 rows)
+
 SELECT JSON_VALUE(jsonb '[]', '$');
  json_value 
 ------------
@@ -473,6 +483,69 @@ FROM
  0 | -2
  1 |  2
  2 | -1
+(3 rows)
+
+-- Check that a NULL context item or path doesn't return a previous row's
+-- ON EMPTY / ON ERROR result (bug #19621).
+SELECT x IS NULL AS is_null,
+       json_value(x, '$.a' RETURNING int DEFAULT 42 ON EMPTY) AS jv
+FROM (VALUES ('{}'), (NULL), ('{}')) v(x);
+ is_null | jv 
+---------+----
+ f       | 42
+ t       |   
+ f       | 42
+(3 rows)
+
+SELECT x IS NULL AS is_null,
+       json_value(x, 'strict $.a' RETURNING int DEFAULT 42 ON ERROR) AS jv
+FROM (VALUES ('1'), (NULL), ('1')) v(x);
+ is_null | jv 
+---------+----
+ f       | 42
+ t       |   
+ f       | 42
+(3 rows)
+
+SELECT p IS NULL AS is_null,
+       json_value('{}', p RETURNING int DEFAULT 42 ON EMPTY) AS jv
+FROM (VALUES ('$.a'::jsonpath), (NULL), ('$.a'::jsonpath)) v(p);
+ is_null | jv 
+---------+----
+ f       | 42
+ t       |   
+ f       | 42
+(3 rows)
+
+SELECT x IS NULL AS is_null,
+       json_query(x, '$.a' DEFAULT '"empty"' ON EMPTY) AS jq
+FROM (VALUES ('{}'::jsonb), (NULL), ('{}'::jsonb)) v(x);
+ is_null |   jq    
+---------+---------
+ f       | "empty"
+ t       | 
+ f       | "empty"
+(3 rows)
+
+SELECT x IS NULL AS is_null,
+       json_exists(x, 'strict $.a' TRUE ON ERROR) AS je
+FROM (VALUES ('1'::jsonb), (NULL), ('1'::jsonb)) v(x);
+ is_null | je 
+---------+----
+ f       | t
+ t       | 
+ f       | t
+(3 rows)
+
+-- the default FALSE ON ERROR is affected too
+SELECT x IS NULL AS is_null,
+       json_exists(x, 'strict $.a') AS je
+FROM (VALUES ('1'::jsonb), (NULL), ('1'::jsonb)) v(x);
+ is_null | je 
+---------+----
+ f       | f
+ t       | 
+ f       | f
 (3 rows)
 
 SELECT JSON_VALUE(jsonb 'null', '$a' PASSING point ' (1, 2 )' AS a);
