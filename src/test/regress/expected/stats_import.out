@@ -3724,6 +3724,20 @@ WARNING:  could not import element in expression -1: invalid key name
  f
 (1 row)
 
+-- bad: exprs with invalid keys and nested values
+SELECT pg_catalog.pg_restore_extended_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test',
+  'statistics_schemaname', 'stats_import',
+  'statistics_name', 'test_stat_mcelem',
+  'inherited', false,
+  'exprs', '[{ "unknown": [] }]'::jsonb);
+WARNING:  could not import element in expression -1: invalid key name
+ pg_restore_extended_stats 
+---------------------------
+ f
+(1 row)
+
 -- ok: tsvector exceptions, test just the collation exceptions
 CREATE STATISTICS stats_import.test_stat_tsvec ON (length(name)), (to_tsvector(name)) FROM stats_import.test;
 SELECT pg_catalog.pg_restore_extended_stats(

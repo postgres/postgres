@@ -945,8 +945,8 @@ check_all_expr_argnames_valid(JsonbContainer *cont, AttrNumber exprnum)
 		Assert(jitok == WJB_KEY);
 		Assert(jkey.type == jbvString);
 
-		/* A value must follow the key */
-		jitok = JsonbIteratorNext(&jbit, &jval, false);
+		/* A value must follow the key.  Skip nested containers. */
+		jitok = JsonbIteratorNext(&jbit, &jval, true);
 		Assert(jitok == WJB_VALUE);
 
 		/*
@@ -960,14 +960,10 @@ check_all_expr_argnames_valid(JsonbContainer *cont, AttrNumber exprnum)
 
 		if (!key_in_expr_argnames(&jkey))
 		{
-			char	   *bad_element_name = jbv_string_get_cstr(&jkey);
-
 			ereport(WARNING,
 					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					errmsg("could not import element in expression %d: invalid key name",
 						   exprnum));
-
-			pfree(bad_element_name);
 			all_keys_valid = false;
 		}
 	}
