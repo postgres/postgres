@@ -232,6 +232,26 @@ static dclist_head ri_constraint_cache_valid_list;
 static FastPathMeta *ri_fpmeta_dead_list = NULL;
 
 /*
+ * Stack of the plans being executed by ri_PerformCheck() calls currently
+ * running, i.e. RI queries whose SPI_execute_snapshot() has not returned.
+ * Innermost of those appears last in the array.  A plan that
+ * ri_FetchPreparedPlan() finds invalid cannot be freed while it is on this
+ * stack.  It instead goes on ri_plan_dead_list and is freed by
+ * ri_FreeDeadPlans() once it is no longer on the stack, which is checked
+ * whenever a check finishes normally, or by AtEOXact_RI() at the latest.
+ * Both live in TopMemoryContext.
+ *
+ * ri_PerformCheck() pops its plan whether the query returns or an error
+ * is thrown, by restoring the depth it saw at push time, so the stack is
+ * exact at all times.  A plan on the stack is never freed until the stack
+ * is cut back past it, so no entry can dangle.
+ */
+static SPIPlanPtr *ri_executing_plans = NULL;
+static int	ri_executing_depth = 0;
+static int	ri_executing_maxdepth = 0;
+static List *ri_plan_dead_list = NIL;
+
+/*
  * Local function prototypes
  */
 static bool ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
@@ -262,6 +282,9 @@ static void InvalidateConstraintCacheCallBack(Datum arg, SysCacheIdentifier cach
 											  uint32 hashvalue);
 static SPIPlanPtr ri_FetchPreparedPlan(RI_QueryKey *key);
 static void ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan);
+static int	ri_PushExecutingPlan(SPIPlanPtr plan);
+static bool ri_PlanIsExecuting(SPIPlanPtr plan);
+static void ri_FreeDeadPlans(void);
 static RI_CompareHashEntry *ri_HashCompareOp(Oid eq_opr, Oid typeid);
 
 static void ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname,
@@ -2628,6 +2651,7 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 	Snapshot	crosscheck_snapshot;
 	int			limit;
 	int			spi_result;
+	int			exec_depth;
 	Oid			save_userid;
 	int			save_sec_context;
 	Datum		vals[RI_MAX_NUMKEYS * 2];
@@ -2719,14 +2743,41 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 	 * Set fire_triggers to false to ensure that AFTER triggers are queued in
 	 * the outer query's after-trigger context and fire after all RI updates
 	 * on the same row are complete, rather than immediately.
+	 *
+	 * The plan is on the stack of executing plans while the query runs, so
+	 * that a nested check finding it invalid does not free it; see
+	 * ri_FetchPreparedPlan().  Pop it even if the query throws an error, so
+	 * that, whatever catches the error, the stack holds only the plans still
+	 * executing.  We don't free anything in the finally block, so if the
+	 * query throws an error, whatever was queued while it ran stays queued.
+	 * The next check that finishes normally frees it, once no check is
+	 * executing it, or at the latest AtEOXact_RI() does.
 	 */
-	spi_result = SPI_execute_snapshot(qplan,
-									  vals, nulls,
-									  test_snapshot, crosscheck_snapshot,
-									  false, false, limit);
+	exec_depth = ri_PushExecutingPlan(qplan);
+	PG_TRY();
+	{
+		spi_result = SPI_execute_snapshot(qplan,
+										  vals, nulls,
+										  test_snapshot, crosscheck_snapshot,
+										  false, false, limit);
+	}
+	PG_FINALLY();
+	{
+		/* Pop qplan, whether the query returned normally or threw an error. */
+		ri_executing_depth = exec_depth;
+	}
+	PG_END_TRY();
 
 	/* Restore UID and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
+
+	/*
+	 * Free the queued plans that no check is executing any more, which may
+	 * include qplan itself now that it is popped.  Checks further up the
+	 * stack may still be executing others, which stay queued.
+	 */
+	if (ri_plan_dead_list != NIL)
+		ri_FreeDeadPlans();
 
 	/* Check result */
 	if (spi_result < 0)
@@ -3689,12 +3740,32 @@ ri_FetchPreparedPlan(RI_QueryKey *key)
 		return plan;
 
 	/*
-	 * Otherwise we might as well flush the cached plan now, to free a little
-	 * memory space before we make a new one.
+	 * Otherwise, detach the stale plan from the entry so that the caller's
+	 * replacement can be hashed under the same key, and free it if we can.
+	 *
+	 * We can't if an RI check further up the stack is executing this very
+	 * plan.  The check's query can run user-defined code (a cast function
+	 * applied to the FK values, or a trigger fired by a cascaded update or
+	 * delete, say) whose DML fires another RI check for the same constraint,
+	 * and hence the same query key, before the outer SPI_execute_snapshot()
+	 * returns.  If the plan has been invalidated in between, freeing it here
+	 * would pull the SPIPlan out from under the outer _SPI_execute_plan(). So
+	 * in that case queue it on ri_plan_dead_list, to be freed once no check
+	 * is executing it any more.
 	 */
 	entry->plan = NULL;
 	if (plan)
-		SPI_freeplan(plan);
+	{
+		if (!ri_PlanIsExecuting(plan))
+			SPI_freeplan(plan);
+		else
+		{
+			MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+
+			ri_plan_dead_list = lappend(ri_plan_dead_list, plan);
+			MemoryContextSwitchTo(oldcxt);
+		}
+	}
 
 	return NULL;
 }
@@ -3726,6 +3797,91 @@ ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan)
 											  HASH_ENTER, &found);
 	Assert(!found || entry->plan == NULL);
 	entry->plan = plan;
+}
+
+
+/*
+ * ri_PushExecutingPlan -
+ *
+ * Record that ri_PerformCheck() is about to execute plan.  Returns the depth
+ * of the stack before the push; the caller pops by setting
+ * ri_executing_depth back to it when SPI_execute_snapshot() returns or
+ * throws an error.
+ */
+static int
+ri_PushExecutingPlan(SPIPlanPtr plan)
+{
+	int			depth = ri_executing_depth;
+
+	if (ri_executing_depth >= ri_executing_maxdepth)
+	{
+		int			newmax = Max(8, ri_executing_maxdepth * 2);
+
+		if (ri_executing_plans == NULL)
+			ri_executing_plans = (SPIPlanPtr *)
+				MemoryContextAlloc(TopMemoryContext,
+								   newmax * sizeof(SPIPlanPtr));
+		else
+			ri_executing_plans = (SPIPlanPtr *)
+				repalloc(ri_executing_plans, newmax * sizeof(SPIPlanPtr));
+		ri_executing_maxdepth = newmax;
+	}
+	ri_executing_plans[ri_executing_depth++] = plan;
+
+	return depth;
+}
+
+/*
+ * ri_PlanIsExecuting -
+ *
+ * Is plan being executed by an ri_PerformCheck() call in progress?  The
+ * stack is as deep as RI checks nest, so a linear scan is fine.
+ */
+static bool
+ri_PlanIsExecuting(SPIPlanPtr plan)
+{
+	for (int i = 0; i < ri_executing_depth; i++)
+	{
+		if (ri_executing_plans[i] == plan)
+			return true;
+	}
+	return false;
+}
+
+/*
+ * ri_FreeDeadPlans -
+ *
+ * Free the plans queued on ri_plan_dead_list that no RI check is executing
+ * any more, keeping the others queued.  With the stack empty, that is all of
+ * them.
+ */
+static void
+ri_FreeDeadPlans(void)
+{
+	List	   *plans = ri_plan_dead_list;
+	ListCell   *lc;
+
+	/*
+	 * Detach the list from the static before freeing, so that an error while
+	 * freeing a plan does not leave a dangling pointer to a half-freed plan
+	 * in it.  Not expected, but we may be called from the abort path, where
+	 * no further cleanup pass would come to fix that up.
+	 */
+	ri_plan_dead_list = NIL;
+
+	foreach(lc, plans)
+	{
+		SPIPlanPtr	plan = (SPIPlanPtr) lfirst(lc);
+
+		if (ri_PlanIsExecuting(plan))
+			continue;
+		SPI_freeplan(plan);
+		plans = foreach_delete_current(plans, lc);
+	}
+
+	/* Put back whatever is still executing, if any. */
+	Assert(plans == NIL || ri_executing_depth > 0);
+	ri_plan_dead_list = plans;
 }
 
 
@@ -3996,20 +4152,28 @@ RI_FKey_trigger_type(Oid tgfoid)
  * AtEOXact_RI
  *		End-of-transaction cleanup for referential integrity.
  *
- * Currently this only releases fast-path metadata detached during the
- * transaction.  InvalidateConstraintCacheCallBack() cannot free a
- * FastPathMeta when it detaches one, because an RI check further up the
- * stack may still hold a pointer into it.  It queues them on
- * ri_fpmeta_dead_list instead, and we release them here, where no such
- * reference can exist.  isCommit is accepted for consistency with the
- * other AtEOXact_* routines but is not used: the release is the same on
- * the commit and the abort path.
+ * This releases objects that were detached from the RI caches during the
+ * transaction but could not be freed on the spot, because an RI check
+ * further up the stack might still have been using them:
+ *
+ * - fast-path metadata detached by InvalidateConstraintCacheCallBack(),
+ *   queued on ri_fpmeta_dead_list;
+ *
+ * - SPI plans found invalid by ri_FetchPreparedPlan() while a check was
+ *   executing them, queued on ri_plan_dead_list.  These are normally freed
+ *   as soon as the check executing them finishes; we only see them here if
+ *   an error interrupted that check and no later check finished normally in
+ *   the transaction.
+ *
+ * Here no RI check can be in progress, so both can be released.  The
+ * release is the same on the commit and the abort path; isCommit only
+ * decides whether we can assert that the stack of executing plans is empty.
  *
  * There is no AtEOSubXact_RI() counterpart.  Nothing here is scoped to a
- * subtransaction: a detached FastPathMeta stays reachable from the dead
- * list whichever subtransaction detached it, and a check holding a pointer
- * into one may be running at an outer level, so releasing at subtransaction
- * end would be unsafe as well as unnecessary.
+ * subtransaction: a detached object stays reachable from its dead list
+ * whichever subtransaction detached it, and a check using one may be
+ * running at an outer level, so releasing at subtransaction end would be
+ * unsafe as well as unnecessary.
  */
 void
 AtEOXact_RI(bool isCommit)
@@ -4021,4 +4185,15 @@ AtEOXact_RI(bool isCommit)
 		ri_fpmeta_dead_list = dead->next_dead;
 		pfree(dead);
 	}
+
+	/*
+	 * No RI check can be in progress here, so clear the stack.  On commit it
+	 * must be empty already, since ri_PerformCheck() pops its plan whether
+	 * the query returns or throws.  On abort it may not be, because a FATAL
+	 * error skips those pops.
+	 */
+	Assert(ri_executing_depth == 0 || !isCommit);
+	ri_executing_depth = 0;
+	if (ri_plan_dead_list != NIL)
+		ri_FreeDeadPlans();
 }
