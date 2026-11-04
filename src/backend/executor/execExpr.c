@@ -4323,17 +4323,12 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 		jsestate->args = lappend(jsestate->args, var);
 	}
 
-	/* Step for jsonpath evaluation; see ExecEvalJsonExprPath(). */
-	scratch->opcode = EEOP_JSONEXPR_PATH;
-	scratch->resvalue = resv;
-	scratch->resnull = resnull;
-	scratch->d.jsonexpr.jsestate = jsestate;
-	ExprEvalPushStep(state, scratch);
-
 	/*
-	 * Step to return NULL after jumping to skip the EEOP_JSONEXPR_PATH step
-	 * when either formatted_expr or pathspec is NULL.  Adjust jump target
-	 * addresses of JUMPs that we added above.
+	 * Adjust jump target addresses of JUMPs that we added above to point to
+	 * the EEOP_JSONEXPR_PATH step.  That step itself handles the case where
+	 * either formatted_expr or pathspec is NULL by returning NULL, which
+	 * ensures that JsonExprState's empty/error flags are reset for every row
+	 * before the ON EMPTY / ON ERROR steps below look at them.
 	 */
 	foreach(lc, jumps_return_null)
 	{
@@ -4341,11 +4336,12 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 
 		as->d.jump.jumpdone = state->steps_len;
 	}
-	scratch->opcode = EEOP_CONST;
+
+	/* Step for jsonpath evaluation; see ExecEvalJsonExprPath(). */
+	scratch->opcode = EEOP_JSONEXPR_PATH;
 	scratch->resvalue = resv;
 	scratch->resnull = resnull;
-	scratch->d.constval.value = (Datum) 0;
-	scratch->d.constval.isnull = true;
+	scratch->d.jsonexpr.jsestate = jsestate;
 	ExprEvalPushStep(state, scratch);
 
 	escontext = jsexpr->on_error->btype != JSON_BEHAVIOR_ERROR ?
@@ -4360,7 +4356,7 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 
 	/*
 	 * Steps to coerce the result value computed by EEOP_JSONEXPR_PATH or the
-	 * NULL returned on NULL input as described above.
+	 * NULL that it returns on NULL input.
 	 */
 	jsestate->jump_eval_coercion = -1;
 	if (jsexpr->use_json_coercion)

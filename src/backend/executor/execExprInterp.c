@@ -4332,8 +4332,15 @@ ExecEvalJsonIsPredicate(ExprState *state, ExprEvalStep *op)
 }
 
 /*
- * Evaluate a jsonpath against a document, both of which must have been
- * evaluated and their values saved in op->d.jsonexpr.jsestate.
+ * Evaluate a jsonpath against a document, whose values (if not NULL) have been
+ * saved in op->d.jsonexpr.jsestate.
+ *
+ * This step is reached even if the document or the jsonpath is NULL, so that
+ * JsonExprState.error and JsonExprState.empty are reset for every row before
+ * the ON ERROR / ON EMPTY steps look at them.  In that case, the result is
+ * NULL and jsonpath evaluation is skipped, as are the ON ERROR / ON EMPTY
+ * steps; the NULL is still passed through the coercion steps, if any, so that
+ * the constraints of a RETURNING domain type are checked.
  *
  * If an error occurs during JsonPath* evaluation or when coercing its result
  * to the RETURNING type, JsonExprState.error is set to true, provided the
@@ -4360,9 +4367,6 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 	int			jump_eval_coercion = jsestate->jump_eval_coercion;
 	char	   *val_string = NULL;
 
-	item = jsestate->formatted_expr.value;
-	path = DatumGetJsonPathP(jsestate->pathspec.value);
-
 	/* Set error/empty to false. */
 	memset(&jsestate->error, 0, sizeof(NullableDatum));
 	memset(&jsestate->empty, 0, sizeof(NullableDatum));
@@ -4374,6 +4378,26 @@ ExecEvalJsonExprPath(ExprState *state, ExprEvalStep *op,
 		jsestate->escontext.details_wanted = false;
 	}
 	jsestate->escontext.error_occurred = false;
+
+	/*
+	 * Return NULL if formatted_expr or pathspec is NULL, skipping the ON
+	 * ERROR and ON EMPTY steps.  If the RETURNING type is a domain with
+	 * constraints, the NULL must still be coerced to it so that the
+	 * constraints are checked.
+	 */
+	if (jsestate->formatted_expr.isnull || jsestate->pathspec.isnull)
+	{
+		*op->resvalue = (Datum) 0;
+		*op->resnull = true;
+
+		if (jump_eval_coercion >= 0)
+			return jump_eval_coercion;
+		else
+			return jsestate->jump_end;
+	}
+
+	item = jsestate->formatted_expr.value;
+	path = DatumGetJsonPathP(jsestate->pathspec.value);
 
 	switch (jsexpr->op)
 	{
