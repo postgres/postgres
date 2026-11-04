@@ -1152,7 +1152,7 @@ ExecAppendAsyncReset(AppendState *node)
 
 		CHECK_FOR_INTERRUPTS();
 
-		/* Wait or poll for async events. */
+		/* Wait for async events. */
 		ExecAppendAsyncEventWait(node);
 	}
 
