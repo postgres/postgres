@@ -1478,7 +1478,8 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 
 /*
  * sublink_testexpr_is_not_nullable: verify that testexpr of an ANY_SUBLINK
- * guarantees a non-null result, assuming the inner side is also non-null.
+ * guarantees a non-null result, assuming the sub-select's outputs are also
+ * non-null.
  *
  * To ensure the expression never returns NULL, we require both that the outer
  * expressions are provably non-nullable and that the operator itself is safe.
@@ -1494,6 +1495,9 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
  * multi-column ordering checks.  In all cases, we validate the operators and
  * the outer expressions.
  *
+ * We also require each inner operand to be a bare (or relabeled) sublink
+ * Param, since a cast function on it could return NULL for a non-null input.
+ *
  * It is acceptable for this check not to be exhaustive.  We can err on the
  * side of conservatism: if we're not sure, it's okay to return FALSE.
  */
@@ -1502,6 +1506,7 @@ sublink_testexpr_is_not_nullable(PlannerInfo *root, SubLink *sublink)
 {
 	Node	   *testexpr = sublink->testexpr;
 	List	   *outer_exprs = NIL;
+	List	   *inner_exprs = NIL;
 
 	/* Punt if sublink is not in the expected format */
 	if (sublink->subLinkType != ANY_SUBLINK || testexpr == NULL)
@@ -1525,6 +1530,7 @@ sublink_testexpr_is_not_nullable(PlannerInfo *root, SubLink *sublink)
 			return false;
 
 		outer_exprs = lappend(outer_exprs, linitial(opexpr->args));
+		inner_exprs = lappend(inner_exprs, lsecond(opexpr->args));
 	}
 	else if (is_andclause(testexpr) || is_orclause(testexpr))
 	{
@@ -1545,6 +1551,7 @@ sublink_testexpr_is_not_nullable(PlannerInfo *root, SubLink *sublink)
 				return false;
 
 			outer_exprs = lappend(outer_exprs, linitial(opexpr->args));
+			inner_exprs = lappend(inner_exprs, lsecond(opexpr->args));
 		}
 	}
 	else if (IsA(testexpr, RowCompareExpr))
@@ -1560,11 +1567,23 @@ sublink_testexpr_is_not_nullable(PlannerInfo *root, SubLink *sublink)
 		}
 
 		outer_exprs = list_concat(outer_exprs, rcexpr->largs);
+		inner_exprs = list_concat(inner_exprs, rcexpr->rargs);
 	}
 	else
 	{
 		/* Punt if other node types */
 		return false;
+	}
+
+	/* Check that every inner operand is a possibly-relabeled sublink Param */
+	foreach_ptr(Expr, expr, inner_exprs)
+	{
+		while (IsA(expr, RelabelType))
+			expr = ((RelabelType *) expr)->arg;
+
+		if (!IsA(expr, Param) ||
+			((Param *) expr)->paramkind != PARAM_SUBLINK)
+			return false;
 	}
 
 	/*

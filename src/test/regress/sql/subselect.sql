@@ -1802,4 +1802,16 @@ SELECT * FROM null_tab t1
 WHERE COALESCE(t1.id, -1) NOT IN
     (SELECT t1.val FROM not_null_tab t2 WHERE t2.val IS NOT NULL);
 
+-- No ANTI JOIN: the inner operand is coerced by a cast function that can
+-- return NULL for a non-null input
+CREATE FUNCTION int4_to_text_nullable(int4) RETURNS text
+    AS 'SELECT CASE WHEN $1 <> 0 THEN $1::varchar END'
+    LANGUAGE sql IMMUTABLE STRICT;
+CREATE CAST (int4 AS text) WITH FUNCTION int4_to_text_nullable(int4) AS IMPLICIT;
+CREATE TEMP TABLE not_null_text_tab (t text NOT NULL);
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM not_null_text_tab
+WHERE t NOT IN (SELECT id FROM not_null_tab);
+
 ROLLBACK;
