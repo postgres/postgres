@@ -6904,20 +6904,20 @@ add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	merge_fdw_options(fpinfo, ifpinfo, NULL);
 
 	/*
-	 * If the input_rel is a base or join relation, we would already have
-	 * considered pushing down the final sort to the remote server when
-	 * creating pre-sorted foreign paths for that relation, because the
-	 * query_pathkeys is set to the root->sort_pathkeys in that case (see
-	 * standard_qp_callback()).
+	 * If the input_rel is a base or join relation,
+	 * add_paths_with_pathkeys_for_rel() already considered the creation of
+	 * paths to suit query_pathkeys.  sort_pathkeys can be NIL here despite
+	 * the query having an ORDER BY clause, and query_pathkeys can be set to
+	 * setop_pathkeys (see standard_qp_callback()).
 	 */
 	if (input_rel->reloptkind == RELOPT_BASEREL ||
 		input_rel->reloptkind == RELOPT_JOINREL)
 	{
-		Assert(root->query_pathkeys == root->sort_pathkeys);
+		Assert(root->query_pathkeys == root->sort_pathkeys ||
+			   root->sort_pathkeys == NIL);
 
-		/* Safe to push down if the query_pathkeys is safe to push down */
+		/* Safe to push down if the query_pathkeys are safe to push down */
 		fpinfo->pushdown_safe = ifpinfo->qp_is_pushdown_safe;
-
 		return;
 	}
 
