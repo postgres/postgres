@@ -1290,6 +1290,32 @@ SELECT * FROM (
          Remote SQL: SELECT "C 1" FROM "S 1"."T 1"
 (8 rows)
 
+-- Ensure the code works correctly when sort_pathkeys is empty due to
+-- a redundant pathkey.
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM (
+    (SELECT c1, c2 FROM ft1 WHERE c1 = 0 ORDER BY c1 LIMIT 1)
+    UNION
+    (SELECT c1, c2 FROM ft1 WHERE c1 = 0 ORDER BY c1)
+) a;
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
+ Unique
+   Output: ft1.c1, ft1.c2
+   ->  Sort
+         Output: ft1.c1, ft1.c2
+         Sort Key: ft1.c1, ft1.c2
+         ->  Append
+               ->  Limit
+                     Output: ft1.c1, ft1.c2
+                     ->  Foreign Scan on public.ft1
+                           Output: ft1.c1, ft1.c2
+                           Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (("C 1" = 0))
+               ->  Foreign Scan on public.ft1 ft1_1
+                     Output: ft1_1.c1, ft1_1.c2
+                     Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (("C 1" = 0))
+(14 rows)
+
 -- ===================================================================
 -- JOIN queries
 -- ===================================================================
