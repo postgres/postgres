@@ -542,6 +542,15 @@ SELECT * FROM (
     SELECT 2 AS type,c1 FROM ft2
 ) a ORDER BY type;
 
+-- Ensure the code works correctly when sort_pathkeys is empty due to
+-- a redundant pathkey.
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM (
+    (SELECT c1, c2 FROM ft1 WHERE c1 = 0 ORDER BY c1 LIMIT 1)
+    UNION
+    (SELECT c1, c2 FROM ft1 WHERE c1 = 0 ORDER BY c1)
+) a;
+
 -- ===================================================================
 -- JOIN queries
 -- ===================================================================
