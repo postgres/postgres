@@ -1986,3 +1986,128 @@ SET client_min_messages TO warning;
 DROP SCHEMA fkpart12 CASCADE;
 RESET client_min_messages;
 RESET search_path;
+
+-- Re-entrant ON DELETE CASCADE whose trigger invalidates the cached RI plan.
+-- The cascade for id = 2 runs a BEFORE DELETE trigger that does GRANT/REVOKE
+-- on the table, invalidating the cached plan the cascade is executing, and
+-- then deletes more rows, whose own cascade fetches that plan again.  The
+-- inner fetch must not free the plan out from under the outer cascade.
+-- This reproduces the crash without cache clobbering.
+CREATE TABLE fk_self_ref (
+    id int PRIMARY KEY,
+    parent_id int REFERENCES fk_self_ref (id) ON DELETE CASCADE
+);
+CREATE FUNCTION fk_self_ref_before_del() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF OLD.id = 2 THEN
+        GRANT SELECT ON fk_self_ref TO PUBLIC;
+        REVOKE SELECT ON fk_self_ref FROM PUBLIC;
+        DELETE FROM fk_self_ref WHERE parent_id = OLD.id;
+    ELSIF OLD.id = 4 AND current_setting('fk_self_ref.fail', true) = 'on' THEN
+        RAISE EXCEPTION 'fk_self_ref: deleting %', OLD.id;
+    END IF;
+    RETURN OLD;
+END$$;
+CREATE TRIGGER fk_self_ref_before_del BEFORE DELETE ON fk_self_ref
+    FOR EACH ROW EXECUTE PROCEDURE fk_self_ref_before_del();
+INSERT INTO fk_self_ref VALUES
+    (1, NULL), (2, 1), (3, 2), (4, 3), (5, 4), (10, NULL), (11, 10);
+DELETE FROM fk_self_ref WHERE id = 1;
+SELECT * FROM fk_self_ref ORDER BY id;
+-- The same with the nested cascade raising an error while the plans are in
+-- use, repeatedly, then a normal delete after another invalidation.
+INSERT INTO fk_self_ref VALUES (1, NULL), (2, 1), (3, 2), (4, 3), (5, 4);
+SET fk_self_ref.fail = on;
+DO $$
+DECLARE
+    failures int := 0;
+BEGIN
+    FOR i IN 1..10 LOOP
+        BEGIN
+            DELETE FROM fk_self_ref WHERE id = 1;
+        EXCEPTION WHEN raise_exception THEN
+            failures := failures + 1;
+        END;
+    END LOOP;
+    RAISE NOTICE 'failures: %', failures;
+END$$;
+SELECT * FROM fk_self_ref ORDER BY id;
+RESET fk_self_ref.fail;
+GRANT SELECT ON fk_self_ref TO PUBLIC;
+REVOKE SELECT ON fk_self_ref FROM PUBLIC;
+DELETE FROM fk_self_ref WHERE id = 1;
+SELECT * FROM fk_self_ref ORDER BY id;
+DROP TABLE fk_self_ref;
+DROP FUNCTION fk_self_ref_before_del();
+
+-- Errors raised from inside an RI check's query, as opposed to by the check
+-- itself afterwards, must leave the stack of executing RI plans exact (an
+-- assertion at end of transaction checks that), and a subtransaction abort
+-- in the middle of all that must not disturb the plans queued to be freed.
+-- The cast raises for v = 97, so a check on row(97) errors out while its
+-- plan is being executed.  For v = 1 it first invalidates the plan of the
+-- check calling it, so that the nested check on row(97) finds that plan
+-- invalid while it is executing and queues it, and then errors out, which
+-- the cast catches: a subtransaction abort inside the outer check, with the
+-- outer check's plan queued.  The same error is then caught above every
+-- check, by a PL/pgSQL exception block and by ROLLBACK TO SAVEPOINT; more
+-- checks and a commit follow each.
+CREATE ROLE regress_fk_err_role;
+CREATE TABLE fk_err_pk (id int PRIMARY KEY);
+INSERT INTO fk_err_pk VALUES (1), (2);
+CREATE TYPE fk_err_vch AS (v int);
+CREATE FUNCTION fk_err_vcast(fk_err_vch) RETURNS int LANGUAGE plpgsql AS $$
+BEGIN
+    IF $1.v = 97 THEN
+        RAISE EXCEPTION 'fk_err_vcast: %', $1.v;
+    END IF;
+    IF $1.v = 1 THEN
+        IF current_setting('fk_err.flip', true) = 'on' THEN
+            GRANT SELECT ON fk_err_pk TO regress_fk_err_role;
+            PERFORM set_config('fk_err.flip', 'off', true);
+        ELSE
+            REVOKE SELECT ON fk_err_pk FROM regress_fk_err_role;
+            PERFORM set_config('fk_err.flip', 'on', true);
+        END IF;
+        BEGIN
+            INSERT INTO fk_err_fk VALUES (row(97)::fk_err_vch);
+        EXCEPTION WHEN raise_exception THEN NULL;
+        END;
+    END IF;
+    RETURN $1.v;
+END$$;
+CREATE CAST (fk_err_vch AS int) WITH FUNCTION fk_err_vcast(fk_err_vch) AS IMPLICIT;
+CREATE TABLE fk_err_fk (a fk_err_vch REFERENCES fk_err_pk (id));
+-- caught inside the outer check
+INSERT INTO fk_err_fk SELECT row(1)::fk_err_vch FROM generate_series(1, 3);
+-- caught above every check, then more checks in the same transaction
+BEGIN;
+DO $$
+BEGIN
+    FOR i IN 1..3 LOOP
+        BEGIN
+            INSERT INTO fk_err_fk VALUES (row(97)::fk_err_vch);
+        EXCEPTION WHEN raise_exception THEN NULL;
+        END;
+    END LOOP;
+END$$;
+INSERT INTO fk_err_fk SELECT row(2)::fk_err_vch FROM generate_series(1, 3);
+COMMIT;
+-- the same with savepoints, including one rolled back after the check whose
+-- cast caught the error had already succeeded
+BEGIN;
+SAVEPOINT s1;
+INSERT INTO fk_err_fk VALUES (row(97)::fk_err_vch);
+ROLLBACK TO SAVEPOINT s1;
+INSERT INTO fk_err_fk SELECT row(2)::fk_err_vch FROM generate_series(1, 3);
+SAVEPOINT s2;
+INSERT INTO fk_err_fk SELECT row(1)::fk_err_vch FROM generate_series(1, 3);
+ROLLBACK TO SAVEPOINT s2;
+INSERT INTO fk_err_fk SELECT row(1)::fk_err_vch FROM generate_series(1, 3);
+COMMIT;
+SELECT a, count(*) FROM fk_err_fk GROUP BY a ORDER BY a;
+DROP TABLE fk_err_fk, fk_err_pk;
+DROP CAST (fk_err_vch AS int);
+DROP FUNCTION fk_err_vcast(fk_err_vch);
+DROP TYPE fk_err_vch;
+DROP ROLE regress_fk_err_role;
