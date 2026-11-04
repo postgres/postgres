@@ -1144,11 +1144,17 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 		ResTarget  *col = lfirst_node(ResTarget, icols);
 		int			attno = lfirst_int(attnos);
 
+		/*
+		 * Pass a copy of the raw indirection, since transforming it may
+		 * modify it in place (a SubLink in a subscript, for instance), and
+		 * for a multi-row VALUES list we are called with the same target
+		 * columns for each row and then once more.
+		 */
 		expr = transformAssignedExpr(pstate, expr,
 									 EXPR_KIND_INSERT_TARGET,
 									 col->name,
 									 attno,
-									 col->indirection,
+									 copyObject(col->indirection),
 									 col->location);
 
 		if (strip_indirection)

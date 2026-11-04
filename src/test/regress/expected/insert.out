@@ -117,6 +117,16 @@ insert into inserttest (f2[1], f2[2]) values (1,default);  -- not supported
 ERROR:  cannot set an array element to DEFAULT
 LINE 1: insert into inserttest (f2[1], f2[2]) values (1,default);
                                        ^
+-- subscripts are transformed again for each VALUES row
+begin;
+insert into inserttest (f2[(select 1)], f2[(1 IS NOT NULL)::int + 1]) values (9,10), (11,12) RETURNING f2;
+   f2    
+---------
+ {9,10}
+ {11,12}
+(2 rows)
+
+rollback;
 insert into inserttest (f3.if1, f3.if2) values (1,array['foo']);
 insert into inserttest (f3.if1, f3.if2) values (1,'{foo}'), (2,'{bar}');
 insert into inserttest (f3.if1, f3.if2) select 3, '{baz,quux}';
