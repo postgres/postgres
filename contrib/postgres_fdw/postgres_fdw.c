@@ -8277,11 +8277,17 @@ add_foreign_ordered_paths(PlannerInfo *root, RelOptInfo *input_rel,
 	if (input_rel->reloptkind == RELOPT_BASEREL ||
 		input_rel->reloptkind == RELOPT_JOINREL)
 	{
-		Assert(root->query_pathkeys == root->sort_pathkeys ||
-			   root->sort_pathkeys == NIL);
+		/* mark pushdown as safe when no sort is required for the ORDER BY */
+		if (root->sort_pathkeys == NIL)
+			fpinfo->pushdown_safe = true;
+		else
+		{
+			Assert(root->query_pathkeys == root->sort_pathkeys);
 
-		/* Safe to push down if the query_pathkeys are safe to push down */
-		fpinfo->pushdown_safe = ifpinfo->qp_is_pushdown_safe;
+			/* Safe to push down if the query_pathkeys are safe to push down */
+			fpinfo->pushdown_safe = ifpinfo->qp_is_pushdown_safe;
+		}
+
 		return;
 	}
 

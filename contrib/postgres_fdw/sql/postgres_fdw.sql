@@ -551,6 +551,10 @@ SELECT * FROM (
     (SELECT c1, c2 FROM ft1 WHERE c1 = 0 ORDER BY c1)
 ) a;
 
+-- Ensure the LIMIT clause is pushed to the foreign server
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT c1, c2 FROM ft7 WHERE c1 = 0 ORDER BY c1 LIMIT 1;
+
 -- ===================================================================
 -- JOIN queries
 -- ===================================================================
