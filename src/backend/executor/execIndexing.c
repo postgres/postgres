@@ -920,8 +920,14 @@ retry:
 				 * read.  Read the tuple again with the query snapshot to
 				 * record it. The result is of no interest here, the caller
 				 * checks visibility itself.
+				 *
+				 * Some callers, such as the logical replication apply worker,
+				 * may have not set es_snapshot.  Since such callers are not
+				 * executing INSERT ... ON CONFLICT, there is nothing to
+				 * record for SSI; skip the read in that case.
 				 */
-				if (IsolationIsSerializable())
+				if (IsolationIsSerializable() &&
+					estate->es_snapshot != InvalidSnapshot)
 				{
 					INJECTION_POINT("check-exclusion-or-unique-constraint-conflict", NULL);
 					(void) table_tuple_fetch_row_version(heap, conflictTid,
