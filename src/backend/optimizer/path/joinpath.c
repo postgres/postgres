@@ -514,6 +514,17 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 				return false;
 			}
 
+			/*
+			 * Ensure we use the clause's input collation so that cache
+			 * lookups are performed using that collation rather than the
+			 * expr's collation.  This is not required for binary mode, which
+			 * compares keys bit-by-bit, but we don't yet know which mode
+			 * we'll end up in.
+			 */
+			expr = (Node *) canonicalize_ec_expression((Expr *) expr,
+													   exprType(expr),
+													   opexpr->inputcollid);
+
 			*operators = lappend_oid(*operators, hasheqoperator);
 			*param_exprs = lappend(*param_exprs, expr);
 
