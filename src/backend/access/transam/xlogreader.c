@@ -165,6 +165,9 @@ XLogReaderFree(XLogReaderState *state)
 	if (state->seg.ws_file != -1)
 		state->routine.segment_close(state);
 
+	/* Release queued records before freeing the decode buffer */
+	ResetDecoder(state);
+
 	if (state->decode_buffer && state->free_decode_buffer)
 		pfree(state->decode_buffer);
 
@@ -1629,8 +1632,7 @@ WALRead(XLogReaderState *state,
  */
 
 /*
- * Private function to reset the state, forgetting all decoded records, if we
- * are asked to move to a new read position.
+ * Forget all decoded records, freeing any oversized ones.
  */
 static void
 ResetDecoder(XLogReaderState *state)
