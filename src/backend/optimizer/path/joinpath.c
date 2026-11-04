@@ -539,6 +539,17 @@ paraminfo_get_equal_hashops(PlannerInfo *root, ParamPathInfo *param_info,
 			}
 
 			/*
+			 * Ensure we use the clause's input collation so that cache
+			 * lookups are performed using that collation rather than the
+			 * expr's collation.  This is not required for binary mode, which
+			 * compares keys bit-by-bit, but we don't yet know which mode
+			 * we'll end up in.
+			 */
+			expr = (Node *) canonicalize_ec_expression((Expr *) expr,
+													   exprType(expr),
+													   opexpr->inputcollid);
+
+			/*
 			 * 'expr' may already exist as a parameter from a previous item in
 			 * ppi_clauses.  No need to include it again, however we'd better
 			 * ensure we do switch into binary mode if required.  See below.
