@@ -320,6 +320,25 @@ extern "C++"
 #endif
 
 /*
+ * pg_attribute_strict_flex_array(N) overrides -fstrict-flex-arrays=N for a
+ * particular struct field.  It can be used for example to annotate genuine
+ * trailing one-element array fields, which would under -fstrict-flex-arrays=1
+ * otherwise be considered flexible array members and be excluded from bounds
+ * checking.  Use pg_attribute_strict_flex_array(3) for such a case.
+ *
+ * Note that it is possible that the command-line option is supported but not
+ * the attribute.  To stay on the safe side, the attribute should not set a
+ * lower level than the global setting given by the command-line option.
+ *
+ * https://gcc.gnu.org/onlinedocs/gcc/Common-Attributes.html#index-strict_005fflex_005farray
+ */
+#if __has_attribute (strict_flex_array)
+#define pg_attribute_strict_flex_array(N) __attribute__((strict_flex_array(N)))
+#else
+#define pg_attribute_strict_flex_array(N)
+#endif
+
+/*
  * pg_attribute_target allows specifying different target options that the
  * function should be compiled with (e.g., for using special CPU instructions).
  * Note that there still needs to be a configure-time check to verify that a

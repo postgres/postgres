@@ -174,7 +174,21 @@ typedef struct JsonValueList
 	int			maxitems;		/* allocated length of items[] */
 	struct JsonValueList *next; /* => next chunk, if any */
 	struct JsonValueList *last; /* => last chunk (only valid in base chunk) */
-	JsonbValue	items[BASE_JVL_ITEMS];
+	union
+	{
+		/*
+		 * To satisfy -fstrict-flex-arrays=1, we need one union member that
+		 * makes space for the base chunk and one member that is effectively
+		 * declared as a flexible-array member, otherwise you'd get
+		 * -fsanitize=undefined errors.  Note that we can't declare items as
+		 * [FLEXIBLE_ARRAY_MEMBER], because JsonValueList is used in a
+		 * non-last field of JsonTablePlanState, and that's not allowed with
+		 * flexible-array members.  But using [1] works as long as we don't go
+		 * higher than -fstrict-flex-arrays=1.
+		 */
+		JsonbValue	base_items[BASE_JVL_ITEMS];
+		JsonbValue	items[1];
+	};
 } JsonValueList;
 
 /* State data for iterating through a JsonValueList */

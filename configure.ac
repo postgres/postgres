@@ -610,6 +610,9 @@ if test "$GCC" = yes -a "$ICC" = no; then
   # Disable FP optimizations that cause various errors on gcc 4.5+ or maybe 4.6+
   PGAC_PROG_CC_CFLAGS_OPT([-fexcess-precision=standard])
   PGAC_PROG_CXX_CFLAGS_OPT([-fexcess-precision=standard])
+  # Treat only arrays with [], [0], or [1] as flexible array members.
+  PGAC_PROG_CC_CFLAGS_OPT([-fstrict-flex-arrays=1])
+  PGAC_PROG_CXX_CFLAGS_OPT([-fstrict-flex-arrays=1])
   # Optimization flags for specific files that benefit from loop unrolling
   PGAC_PROG_CC_VAR_OPT(CFLAGS_UNROLL_LOOPS, [-funroll-loops])
   # Optimization flags for specific files that benefit from vectorization

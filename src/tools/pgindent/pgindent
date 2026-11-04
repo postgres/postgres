@@ -253,6 +253,7 @@ sub write_source
 my @declaration_attributes = qw(
   alignas
   pg_attribute_counted_by
+  pg_attribute_strict_flex_array
 );
 
 # Text of each declaration attribute, stashed by pre_indent() and restored

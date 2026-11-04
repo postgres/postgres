@@ -2185,6 +2185,8 @@ common_functional_flags = [
   # Disable optimizations that assume no overflow; needed for gcc 4.3+
   '-fwrapv',
   '-fexcess-precision=standard',
+  # Treat only arrays with [], [0], or [1] as flexible array members.
+  '-fstrict-flex-arrays=1',
   # Without -fpch-deps gcc emits dependencies that are insufficient for ccache
   # to trigger a rebuild when the precompiled header changes. We could make
   # this depend on using gcc and precompiled headers being enabled, but that's

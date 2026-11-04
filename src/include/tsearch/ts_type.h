@@ -76,7 +76,7 @@ typedef struct
 typedef struct
 {
 	uint16		npos;
-	WordEntryPos pos[1];
+	pg_attribute_strict_flex_array(3) WordEntryPos pos[1];
 } WordEntryPosVector1;
 
 #define MAXNUMPOS	(256)		/* semi-arbitrary limit on npos */
