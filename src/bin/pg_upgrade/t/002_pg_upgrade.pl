@@ -551,7 +551,7 @@ SKIP:
 		'run of pg_upgrade --check with old instance running');
 }
 
-# Create an invalid database, will be deleted below
+# Create an invalid database
 $oldnode->safe_psql(
 	'postgres', qq(
   CREATE DATABASE regression_invalid;
@@ -559,44 +559,6 @@ $oldnode->safe_psql(
 ));
 
 # Upgrade the instance.
-$oldnode->stop;
-
-# Check that pg_upgrade aborts when encountering an invalid database
-# (However, versions that were out of support by commit c66a7d75e652 don't
-# know how to do this, so skip this test there.)
-SKIP:
-{
-	skip "database invalidation not implemented", 4
-	  if $oldnode->pg_version < 11;
-
-	command_checks_all(
-		[
-			'pg_upgrade', '--no-sync',
-			'--old-datadir' => $oldnode->data_dir,
-			'--new-datadir' => $newnode->data_dir,
-			'--old-bindir' => $oldbindir,
-			'--new-bindir' => $newbindir,
-			'--socketdir' => $newnode->host,
-			'--old-port' => $oldnode->port,
-			'--new-port' => $newnode->port,
-			$mode, '--check',
-		],
-		1,
-		[qr/datconnlimit/],
-		[qr/^$/],
-		'invalid database causes failure');
-
-	# Check that the failure creates the logging directory pg_upgrade_output.d
-	# and leaves it around
-	ok(-d $newnode->data_dir . "/pg_upgrade_output.d",
-		"pg_upgrade_output.d/ not removed after pg_upgrade failure");
-
-	rmtree($newnode->data_dir . "/pg_upgrade_output.d");
-}
-
-# And drop it, so we can continue
-$oldnode->start;
-$oldnode->safe_psql('postgres', 'DROP DATABASE regression_invalid');
 $oldnode->stop;
 
 # --check command works here, cleans up pg_upgrade_output.d.
@@ -679,6 +641,11 @@ $result = $newnode->safe_psql(
 is( $result,
 	"$original_encoding|$original_provider|$original_datcollate|$original_datctype|$original_datlocale",
 	"check that locales in new cluster match original cluster");
+
+# Test that the invalid database was not upgraded.
+$result = $newnode->safe_psql('postgres',
+	"SELECT count(*) FROM pg_database WHERE datname='regression_invalid'");
+is($result, "0", "check that the invalid database is not upgraded");
 
 # Second dump from the upgraded instance.
 @dump_command = (

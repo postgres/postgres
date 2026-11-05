@@ -1117,7 +1117,6 @@ check_for_connection_status(ClusterInfo *cluster)
 	int			ntups;
 	int			i_datname;
 	int			i_datallowconn;
-	int			i_datconnlimit;
 	FILE	   *script = NULL;
 	char		output_path[MAXPGPATH];
 
@@ -1131,19 +1130,18 @@ check_for_connection_status(ClusterInfo *cluster)
 
 	/* get database names */
 	dbres = executeQueryOrDie(conn_template1,
-							  "SELECT	datname, datallowconn, datconnlimit "
-							  "FROM	pg_catalog.pg_database");
+							  "SELECT datname, datallowconn "
+							  "FROM	pg_catalog.pg_database "
+							  "WHERE datconnlimit <> -2");
 
 	i_datname = PQfnumber(dbres, "datname");
 	i_datallowconn = PQfnumber(dbres, "datallowconn");
-	i_datconnlimit = PQfnumber(dbres, "datconnlimit");
 
 	ntups = PQntuples(dbres);
 	for (dbnum = 0; dbnum < ntups; dbnum++)
 	{
 		char	   *datname = PQgetvalue(dbres, dbnum, i_datname);
 		char	   *datallowconn = PQgetvalue(dbres, dbnum, i_datallowconn);
-		char	   *datconnlimit = PQgetvalue(dbres, dbnum, i_datconnlimit);
 
 		if (strcmp(datname, "template0") == 0)
 		{
@@ -1152,20 +1150,16 @@ check_for_connection_status(ClusterInfo *cluster)
 				pg_fatal("template0 must not allow connections, "
 						 "i.e. its pg_database.datallowconn must be false");
 		}
-		else
+		else if (strcmp(datallowconn, "f") == 0)
 		{
 			/*
-			 * Avoid datallowconn == false databases from being skipped on
-			 * restore, and ensure that no databases are marked invalid with
-			 * datconnlimit == -2.
+			 * avoid datallowconn == false databases from being skipped on
+			 * restore
 			 */
-			if ((strcmp(datallowconn, "f") == 0) || strcmp(datconnlimit, "-2") == 0)
-			{
-				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_fatal("could not open file \"%s\": %m", output_path);
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+				pg_fatal("could not open file \"%s\": %m", output_path);
 
-				fprintf(script, "%s\n", datname);
-			}
+			fprintf(script, "%s\n", datname);
 		}
 	}
 
@@ -1178,11 +1172,11 @@ check_for_connection_status(ClusterInfo *cluster)
 		fclose(script);
 		pg_log(PG_REPORT, "fatal");
 		pg_fatal("All non-template0 databases must allow connections, i.e. their\n"
-				 "pg_database.datallowconn must be true and pg_database.datconnlimit\n"
-				 "must not be -2.  Your installation contains non-template0 databases\n"
-				 "which cannot be connected to.  Consider allowing connection for all\n"
-				 "non-template0 databases or drop the databases which do not allow\n"
-				 "connections.  A list of databases with the problem is in the file:\n"
+				 "pg_database.datallowconn must be true.  Your installation contains\n"
+				 "non-template0 databases with their pg_database.datallowconn set to\n"
+				 "false.  Consider allowing connection for all non-template0 databases\n"
+				 "or drop the databases which do not allow connections.  A list of\n"
+				 "databases with the problem is in the file:\n"
 				 "    %s", output_path);
 	}
 	else
@@ -1214,7 +1208,8 @@ check_for_unsupported_encodings(ClusterInfo *cluster)
 
 	res = executeQueryOrDie(conn,
 							"SELECT datname, encoding "
-							"FROM pg_catalog.pg_database");
+							"FROM pg_catalog.pg_database "
+							"WHERE datconnlimit <> -2");
 	ntups = PQntuples(res);
 	i_datname = PQfnumber(res, "datname");
 	i_encoding = PQfnumber(res, "encoding");
@@ -2570,7 +2565,8 @@ check_old_cluster_global_names(ClusterInfo *cluster)
 	 */
 	res = executeQueryOrDie(conn_template1,
 							"SELECT datname AS objname, 'database' AS objtype "
-							"FROM pg_catalog.pg_database UNION ALL "
+							"FROM pg_catalog.pg_database "
+							"WHERE datconnlimit <> -2 UNION ALL "
 							"SELECT rolname AS objname, 'role' AS objtype "
 							"FROM pg_catalog.pg_roles UNION ALL "
 							"SELECT spcname AS objname, 'tablespace' AS objtype "
@@ -2645,7 +2641,8 @@ check_for_oldestxid_consistency(ClusterInfo *cluster)
 
 	dbres = executeQueryOrDie(conn_template1,
 							  "SELECT datname, datfrozenxid, datminmxid "
-							  "FROM	pg_catalog.pg_database");
+							  "FROM	pg_catalog.pg_database "
+							  "WHERE datconnlimit <> -2");
 
 	i_datname = PQfnumber(dbres, "datname");
 	i_datfrozenxid = PQfnumber(dbres, "datfrozenxid");

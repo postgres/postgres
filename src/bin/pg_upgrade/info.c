@@ -412,8 +412,9 @@ get_db_infos(ClusterInfo *cluster)
 			 "FROM pg_catalog.pg_database d "
 			 " LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 " ON d.dattablespace = t.oid "
-			 "WHERE d.datallowconn = true "
-			 "ORDER BY 1");
+			 "WHERE d.datallowconn = true %s"
+			 "ORDER BY 1",
+			 cluster == &old_cluster ? "AND d.datconnlimit <> -2 " : "");
 
 	res = executeQueryOrDie(conn, "%s", query);
 
