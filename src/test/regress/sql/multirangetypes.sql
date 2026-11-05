@@ -923,3 +923,12 @@ create function mr_inoutparam_fail(inout i anyelement, out r anymultirange)
 --should fail
 create function mr_table_fail(i anyelement) returns table(i anyelement, r anymultirange)
   as $$ select $1, '[1,10]' $$ language sql;
+
+--
+-- Check that numeric overflow during analyze does not make it fail
+--
+
+create table multirange_analyze_test (r nummultirange);
+insert into multirange_analyze_test values ('{[1e1000, 2e1000], [-9e131071, 9e131071]}'::nummultirange);
+analyze multirange_analyze_test;
+drop table multirange_analyze_test;
