@@ -431,8 +431,8 @@ is($result, qq(2), 'replicated data in subscriber table');
 $node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub");
 
 ###############################
-# Alter the subscription to set two_phase to false.
-# Verify that the altered subscription reflects the new two_phase option.
+# Verify that setting two_phase to true when it is already enabled does not
+# overwrite subtwophasestate to 'p' (pending).
 ###############################
 
 # Confirm that the two-phase slot option is enabled before altering
@@ -441,12 +441,22 @@ $result = $node_publisher->safe_psql('postgres',
 );
 is($result, qq(t), 'two-phase is enabled');
 
-# Alter subscription two_phase to false
 $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub_copy DISABLE;");
 $node_subscriber->poll_query_until('postgres',
 	"SELECT count(*) = 0 FROM pg_stat_activity WHERE backend_type = 'logical replication apply worker'"
 );
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION tap_sub_copy SET (two_phase = true);");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT subtwophasestate FROM pg_subscription WHERE subname = 'tap_sub_copy';"
+);
+is($result, qq(e), 'two-phase subscription option remains enabled');
+
+###############################
+# Alter the subscription to set two_phase to false.
+# Verify that the altered subscription reflects the new two_phase option.
+###############################
 $node_subscriber->safe_psql(
 	'postgres', "
     ALTER SUBSCRIPTION tap_sub_copy SET (two_phase = false);
