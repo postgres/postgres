@@ -234,9 +234,6 @@ struct HTAB
 	char	   *tabname;		/* table name (for error messages) */
 	bool		isshared;		/* true if table is in shared memory */
 
-	/* freezing a shared table isn't allowed, so we can keep state here */
-	bool		frozen;			/* true = no more inserts allowed */
-
 	/* We keep local copies of these fixed values to reduce contention */
 	Size		keysize;		/* hash key length in bytes */
 
@@ -533,8 +530,6 @@ hash_create(const char *tabname, int64 nelem, const HASHCTL *info, int flags)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
-
-	hashp->frozen = false;
 
 	hdefault(hashp);
 
@@ -928,11 +923,11 @@ hash_search_with_hash_value(HTAB *hashp,
 	if (action == HASH_ENTER || action == HASH_ENTER_NULL)
 	{
 		/*
-		 * Can't split if running in partitioned mode, nor if frozen, nor if
-		 * table is the subject of any active hash_seq_search scans.
+		 * Can't split if running in partitioned mode, nor if table is the
+		 * subject of any active hash_seq_search scans.
 		 */
 		if (hctl->freeList[0].nentries > (int64) hctl->max_bucket &&
-			!hctl->isfixed && !IS_PARTITIONED(hctl) && !hashp->frozen &&
+			!hctl->isfixed && !IS_PARTITIONED(hctl) &&
 			!has_seq_scans(hashp))
 			(void) expand_table(hashp);
 	}
@@ -1009,11 +1004,6 @@ hash_search_with_hash_value(HTAB *hashp,
 			/* Return existing element if found, else create one */
 			if (currBucket != NULL)
 				return ELEMENTKEY(currBucket);
-
-			/* disallow inserts if frozen */
-			if (hashp->frozen)
-				elog(ERROR, "cannot insert into frozen hashtable \"%s\"",
-					 hashp->tabname);
 
 			currBucket = get_hash_entry(hashp, freelist_idx);
 			if (currBucket == NULL)
@@ -1095,11 +1085,6 @@ hash_update_hash_key(HTAB *hashp,
 
 	hctl->accesses++;
 #endif
-
-	/* disallow updates if frozen */
-	if (hashp->frozen)
-		elog(ERROR, "cannot update in frozen hashtable \"%s\"",
-			 hashp->tabname);
 
 	/*
 	 * Lookup the existing element using its saved hash value.  We need to do
@@ -1306,10 +1291,6 @@ hash_get_num_entries(HTAB *hashp)
  * if elements are added to the table while the scan is in progress, it is
  * unspecified whether they will be visited by the scan or not.
  *
- * NOTE: it is possible to use hash_seq_init/hash_seq_search without any
- * worry about hash_seq_term cleanup, if the hashtable is first locked against
- * further insertions by calling hash_freeze.
- *
  * NOTE: to use this with a partitioned hashtable, caller had better hold
  * at least shared lock on all partitions of the table throughout the scan!
  * We can cope with insertions or deletions by our own backend, but *not*
@@ -1322,8 +1303,7 @@ hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp)
 	status->curBucket = 0;
 	status->curEntry = NULL;
 	status->hasHashvalue = false;
-	if (!hashp->frozen)
-		register_seq_scan(hashp);
+	register_seq_scan(hashp);
 }
 
 /*
@@ -1445,32 +1425,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 void
 hash_seq_term(HASH_SEQ_STATUS *status)
 {
-	if (!status->hashp->frozen)
-		deregister_seq_scan(status->hashp);
-}
-
-/*
- * hash_freeze
- *			Freeze a hashtable against future insertions (deletions are
- *			still allowed)
- *
- * The reason for doing this is that by preventing any more bucket splits,
- * we no longer need to worry about registering hash_seq_search scans,
- * and thus caller need not be careful about ensuring hash_seq_term gets
- * called at the right times.
- *
- * Multiple calls to hash_freeze() are allowed, but you can't freeze a table
- * with active scans (since hash_seq_term would then do the wrong thing).
- */
-void
-hash_freeze(HTAB *hashp)
-{
-	if (hashp->isshared)
-		elog(ERROR, "cannot freeze shared hashtable \"%s\"", hashp->tabname);
-	if (!hashp->frozen && has_seq_scans(hashp))
-		elog(ERROR, "cannot freeze hashtable \"%s\" because it has active scans",
-			 hashp->tabname);
-	hashp->frozen = true;
+	deregister_seq_scan(status->hashp);
 }
 
 

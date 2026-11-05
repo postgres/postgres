@@ -143,7 +143,6 @@ extern void hash_seq_init_with_hash_value(HASH_SEQ_STATUS *status,
 										  uint32 hashvalue);
 extern void *hash_seq_search(HASH_SEQ_STATUS *status);
 extern void hash_seq_term(HASH_SEQ_STATUS *status);
-extern void hash_freeze(HTAB *hashp);
 extern Size hash_estimate_size(int64 num_entries, Size entrysize);
 extern void AtEOXact_HashTables(bool isCommit);
 extern void AtEOSubXact_HashTables(bool isCommit, int nestDepth);
