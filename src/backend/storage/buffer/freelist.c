@@ -696,9 +696,6 @@ GetBufferFromRing(BufferAccessStrategy strategy, uint64 *buf_state)
 
 /*
  * AddBufferToRing -- add a buffer to the buffer ring
- *
- * Caller must hold the buffer header spinlock on the buffer.  Since this
- * is called with the spinlock held, it had better be quite cheap.
  */
 static void
 AddBufferToRing(BufferAccessStrategy strategy, BufferDesc *buf)
