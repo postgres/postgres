@@ -1963,12 +1963,19 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 								 errmsg("cannot disable \"two_phase\" when prepared transactions exist"),
 								 errhint("Resolve these transactions and try again.")));
 
-					/* Change system catalog accordingly */
-					values[Anum_pg_subscription_subtwophasestate - 1] =
-						CharGetDatum(opts.twophase ?
-									 LOGICALREP_TWOPHASE_STATE_PENDING :
-									 LOGICALREP_TWOPHASE_STATE_DISABLED);
-					replaces[Anum_pg_subscription_subtwophasestate - 1] = true;
+					/*
+					 * Change system catalog accordingly, but do not reset the
+					 * state to PENDING if two_phase is already enabled.
+					 */
+					if (!(opts.twophase &&
+						  sub->twophasestate == LOGICALREP_TWOPHASE_STATE_ENABLED))
+					{
+						values[Anum_pg_subscription_subtwophasestate - 1] =
+							CharGetDatum(opts.twophase ?
+										 LOGICALREP_TWOPHASE_STATE_PENDING :
+										 LOGICALREP_TWOPHASE_STATE_DISABLED);
+						replaces[Anum_pg_subscription_subtwophasestate - 1] = true;
+					}
 				}
 
 				if (IsSet(opts.specified_opts, SUBOPT_FAILOVER))
