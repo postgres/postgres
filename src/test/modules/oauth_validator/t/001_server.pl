@@ -105,6 +105,22 @@ $log_start = $node->wait_for_log(
 	$log_start);
 $bgconn->query_safe('SELECT 1');
 
+# The failed reload leaves the old HBA lines in place, but their validator is
+# no longer allowed.
+SKIP:
+{
+	skip "EXEC_BACKEND builds do not use already loaded configuration", 1
+	  if ($PostgreSQL::Test::Utils::windows_os);
+	$node->connect_fails(
+		"user=test dbname=postgres oauth_issuer=$issuer oauth_client_id=f02c6361-0635",
+		"validator removed from oauth_validator_libraries is not used",
+		expected_stderr =>
+		  qr/OAuth bearer authentication failed for user "test"/,
+		log_like => [
+			qr/oauth_validator_libraries must be set for authentication method oauth/
+		]);
+}
+
 $node->append_conf('postgresql.conf',
 	"oauth_validator_libraries = 'validator'");
 $node->reload;
