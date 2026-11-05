@@ -581,3 +581,13 @@ SELECT JSON_VALUE(jsonb '1234', '$' RETURNING bit(3)  DEFAULT 1 ON ERROR);
 SELECT JSON_VALUE(jsonb '1234', '$' RETURNING bit(3)  DEFAULT 1::bit(3) ON ERROR);
 SELECT JSON_VALUE(jsonb '"111"', '$.a'  RETURNING bit(3) DEFAULT '1111' ON EMPTY);
 DROP DOMAIN queryfuncs_d_varbit3;
+
+-- Check that a NULL result from a previous evaluation of JSON_VALUE()
+-- RETURNING json or jsonb doesn't leak into the next one (bug #19695).
+SELECT JSON_VALUE('null', '$' RETURNING jsonb), JSON_VALUE('123', '$' RETURNING jsonb);
+SELECT JSON_VALUE(x, '$' RETURNING jsonb) FROM (VALUES ('1'::jsonb), ('null'), ('2')) v(x);
+SELECT JSON_VALUE(x, '$' RETURNING json) FROM (VALUES ('1'::json), ('null'), ('2')) v(x);
+-- same, with the NULL coming from ON EMPTY, ON ERROR, and a NULL input
+SELECT JSON_VALUE(x, '$.a' RETURNING jsonb) FROM (VALUES ('{"a": 1}'::jsonb), ('{}'), ('{"a": 2}')) v(x);
+SELECT JSON_VALUE(x, 'strict $.a' RETURNING jsonb) FROM (VALUES ('{"a": 1}'::jsonb), ('[]'), ('{"a": 2}')) v(x);
+SELECT JSON_VALUE(x, '$' RETURNING jsonb) FROM (VALUES ('1'::jsonb), (NULL), ('2')) v(x);
