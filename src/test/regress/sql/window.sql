@@ -2271,6 +2271,26 @@ SELECT x,
 FROM generate_series(1,5) g(x)
 WINDOW w AS (ORDER BY x ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING);
 
+-- EXCLUDE GROUP/TIES without ORDER BY: every row is a peer of the current
+-- row, so the IGNORE NULLS scan must stop at the end of the partition
+SELECT x,
+       first_value(x) IGNORE NULLS OVER w,
+       nth_value(x, 2) IGNORE NULLS OVER w
+FROM (VALUES (1), (NULL), (3)) v(x)
+WINDOW w AS (ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING EXCLUDE GROUP)
+ORDER BY x;
+SELECT x,
+       first_value(x) IGNORE NULLS OVER w,
+       nth_value(x, 2) IGNORE NULLS OVER w
+FROM (VALUES (1), (NULL), (3)) v(x)
+WINDOW w AS (RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING EXCLUDE TIES)
+ORDER BY x;
+SELECT p, x,
+       first_value(x) IGNORE NULLS OVER w
+FROM (VALUES (1, 1), (1, NULL), (2, NULL)) v(p, x)
+WINDOW w AS (PARTITION BY p ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING EXCLUDE TIES)
+ORDER BY p, x;
+
 -- volatile arguments cannot use the IGNORE NULLS nullness cache
 CREATE TEMPORARY SEQUENCE null_treatment_seq;
 CREATE FUNCTION pg_temp.volatile_null(i int) RETURNS int
