@@ -41,6 +41,7 @@ tests += {
       't/011_ib_truncation.pl',
       't/012_vm_consistency.pl',
       't/013_summary_order.pl',
+      't/014_vm_truncation.pl',
     ],
   }
 }
