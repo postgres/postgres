@@ -57,6 +57,7 @@
 
 #include <limits.h>
 
+#include "common/int.h"
 #include "utils/builtins.h"
 #include "utils/fmgrprotos.h"
 #include "utils/skipsupport.h"
@@ -194,12 +195,7 @@ btint4cmp(PG_FUNCTION_ARGS)
 	int32		a = PG_GETARG_INT32(0);
 	int32		b = PG_GETARG_INT32(1);
 
-	if (a > b)
-		PG_RETURN_INT32(A_GREATER_THAN_B);
-	else if (a == b)
-		PG_RETURN_INT32(0);
-	else
-		PG_RETURN_INT32(A_LESS_THAN_B);
+	PG_RETURN_INT32(pg_cmp_s32(a, b));
 }
 
 Datum
@@ -262,12 +258,7 @@ btint8cmp(PG_FUNCTION_ARGS)
 	int64		a = PG_GETARG_INT64(0);
 	int64		b = PG_GETARG_INT64(1);
 
-	if (a > b)
-		PG_RETURN_INT32(A_GREATER_THAN_B);
-	else if (a == b)
-		PG_RETURN_INT32(0);
-	else
-		PG_RETURN_INT32(A_LESS_THAN_B);
+	PG_RETURN_INT32(pg_cmp_s64(a, b));
 }
 
 Datum
