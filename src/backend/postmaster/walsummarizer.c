@@ -1452,9 +1452,24 @@ SummarizeSmgrRecord(XLogReaderState *xlogreader, BlockRefTable *brtab)
 			BlockRefTableSetLimitBlock(brtab, &xlrec->rlocator,
 									   MAIN_FORKNUM, xlrec->blkno);
 		if ((xlrec->flags & SMGR_TRUNCATE_VM) != 0)
+		{
+			BlockNumber vmlimit = visibilitymap_truncation_length(xlrec->blkno);
+
 			BlockRefTableSetLimitBlock(brtab, &xlrec->rlocator,
-									   VISIBILITYMAP_FORKNUM,
-									   visibilitymap_truncation_length(xlrec->blkno));
+									   VISIBILITYMAP_FORKNUM, vmlimit);
+
+			/*
+			 * visibilitymap_prepare_truncate() may clear trailing bits in the
+			 * last remaining VM page without WAL-logging the page.  Mark it
+			 * as modified so that incremental backups include its current
+			 * contents. Do this even at a VM page boundary, where no bits
+			 * need clearing.
+			 */
+			if (vmlimit > 0)
+				BlockRefTableMarkBlockModified(brtab, &xlrec->rlocator,
+											   VISIBILITYMAP_FORKNUM,
+											   vmlimit - 1);
+		}
 	}
 }
 
