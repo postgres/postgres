@@ -636,6 +636,24 @@ test_custom_stats_var_update(PG_FUNCTION_ARGS)
 }
 
 /*
+ * test_custom_stats_var_match_entry
+ *		Match custom variable stats entries by objid
+ *
+ * Callback for pgstat_drop_matching_entries().  Verifies that it filters
+ * entries by kind before invoking the callback.
+ */
+static bool
+test_custom_stats_var_match_entry(PgStatShared_HashEntry *p, Datum match_data)
+{
+	if (p->key.kind != PGSTAT_KIND_TEST_CUSTOM_VAR_STATS)
+		elog(ERROR,
+			 "unexpected stats kind for custom stats match callback: %u",
+			 p->key.kind);
+
+	return p->key.objid == DatumGetUInt64(match_data);
+}
+
+/*
  * test_custom_stats_var_drop
  *		Remove custom statistic entry
  *
@@ -656,6 +674,29 @@ test_custom_stats_var_drop(PG_FUNCTION_ARGS)
 }
 
 /*
+ * test_custom_stats_var_drop_matching
+ *		Remove custom statistic entry by matching objid
+ *
+ * Drops the named statistic using pgstat_drop_matching_entries().
+ */
+PG_FUNCTION_INFO_V1(test_custom_stats_var_drop_matching);
+Datum
+test_custom_stats_var_drop_matching(PG_FUNCTION_ARGS)
+{
+	char	   *stat_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	uint64		stat_idx = PGSTAT_CUSTOM_VAR_STATS_IDX(stat_name);
+
+	pgstat_drop_matching_entries(PGSTAT_KIND_TEST_CUSTOM_VAR_STATS,
+								 test_custom_stats_var_match_entry,
+								 UInt64GetDatum(stat_idx));
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * test_custom_stats_var_match_kind
+ *		Match custom variable stats entries by kind
+ *
  * Callback for pgstat_drop_matching_entries().
  */
 static bool
@@ -673,7 +714,9 @@ PG_FUNCTION_INFO_V1(test_custom_stats_var_drop_all);
 Datum
 test_custom_stats_var_drop_all(PG_FUNCTION_ARGS)
 {
-	pgstat_drop_matching_entries(test_custom_stats_var_match_kind, 0);
+	pgstat_drop_matching_entries(PGSTAT_KIND_INVALID,
+								 test_custom_stats_var_match_kind,
+								 0);
 
 	PG_RETURN_VOID();
 }
