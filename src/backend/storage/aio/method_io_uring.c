@@ -37,6 +37,7 @@
 #include "miscadmin.h"
 #include "storage/aio_internal.h"
 #include "storage/fd.h"
+#include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/shmem.h"
 #include "storage/lwlock.h"
@@ -275,6 +276,25 @@ pgaio_uring_shmem_size(void)
 	return sz;
 }
 
+/*
+ * on_shmem_exit() callback that releases the io_uring instances created by
+ * pgaio_uring_shmem_init().  Besides process exit, this is called when the
+ * postmaster reinitializes shared memory after a backend crash.
+ */
+static void
+pgaio_uring_cleanup(int code, Datum arg)
+{
+	int			TotalProcs = pgaio_uring_procs();
+
+	Assert(!IsUnderPostmaster);
+	Assert(pgaio_uring_contexts != NULL);
+
+	for (int i = 0; i < TotalProcs; i++)
+		io_uring_queue_exit(&pgaio_uring_contexts[i].io_uring_ring);
+
+	pgaio_uring_contexts = NULL;
+}
+
 static void
 pgaio_uring_shmem_init(bool first_time)
 {
@@ -391,6 +411,8 @@ pgaio_uring_shmem_init(bool first_time)
 
 		LWLockInitialize(&context->completion_lock, LWTRANCHE_AIO_URING_COMPLETION);
 	}
+
+	on_shmem_exit(pgaio_uring_cleanup, 0);
 }
 
 static void
