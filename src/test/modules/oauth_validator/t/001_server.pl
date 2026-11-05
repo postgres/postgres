@@ -161,6 +161,13 @@ SKIP:
 		]);
 }
 
+# Test that a quoted empty name is rejected
+$node->append_conf('postgresql.conf', "oauth_validator_libraries = 'validator,\"\"'");
+$node->reload;
+$log_start = $node->wait_for_log(
+	qr/invalid list syntax in parameter "oauth_validator_libraries"/,
+	$log_start);
+
 $node->append_conf('postgresql.conf',
 	"oauth_validator_libraries = 'validator'");
 $node->reload;
