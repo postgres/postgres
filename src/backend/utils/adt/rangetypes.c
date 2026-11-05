@@ -37,8 +37,10 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
+#include "utils/float.h"
 #include "utils/int8.h"
 #include "utils/lsyscache.h"
+#include "utils/numeric.h"
 #include "utils/rangetypes.h"
 #include "utils/timestamp.h"
 
@@ -1545,7 +1547,6 @@ daterange_canonical(PG_FUNCTION_ARGS)
  *
  * Note that subtype_diff does return the difference, not the absolute value
  * of the difference, and it must take care to avoid overflow.
- * (numrange_subdiff is at some risk there ...)
  *----------------------------------------------------------
  */
 
@@ -1570,15 +1571,37 @@ int8range_subdiff(PG_FUNCTION_ARGS)
 Datum
 numrange_subdiff(PG_FUNCTION_ARGS)
 {
-	Datum		v1 = PG_GETARG_DATUM(0);
-	Datum		v2 = PG_GETARG_DATUM(1);
-	Datum		numresult;
+	Numeric		v1 = PG_GETARG_NUMERIC(0);
+	Numeric		v2 = PG_GETARG_NUMERIC(1);
+	Numeric		numresult;
 	float8		floatresult;
+	bool		have_error = false;
 
-	numresult = DirectFunctionCall2(numeric_sub, v1, v2);
+	/*
+	 * The difference can exceed numeric's range, or be unrepresentable in
+	 * float8.  None of the callers is prepared to handle an error, so
+	 * saturate to infinity (or round to zero) instead.
+	 */
+	numresult = numeric_sub_opt_error(v1, v2, &have_error);
+	if (have_error)
+	{
+		/* The values v1 and v2 may be in arbitrary order. */
+		if (DatumGetBool(DirectFunctionCall2(numeric_lt, NumericGetDatum(v1),
+											 NumericGetDatum(v2))))
+			floatresult = -get_float8_infinity();
+		else
+			floatresult = get_float8_infinity();
+	}
+	else
+	{
+		floatresult
+			= DatumGetFloat8(DirectFunctionCall1(numeric_float8_no_overflow,
+												 NumericGetDatum(numresult)));
+		pfree(numresult);
+	}
 
-	floatresult = DatumGetFloat8(DirectFunctionCall1(numeric_float8,
-													 numresult));
+	PG_FREE_IF_COPY(v1, 0);
+	PG_FREE_IF_COPY(v2, 1);
 
 	PG_RETURN_FLOAT8(floatresult);
 }
