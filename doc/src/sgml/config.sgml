@@ -4874,6 +4874,8 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
          restriction. The default is <literal>'pgoutput, test_decoding'</literal>,
          which are the two logical output plugins included in the standard
          <productname>PostgreSQL</productname> distribution.
+         (<xref linkend="guc-output-plugin-libraries-builtins"/> documents the
+         behavior of the system if they are removed from this list.)
         </para>
         <para>
          The format is a comma-separated list of library names, where each name
@@ -4912,6 +4914,45 @@ HINT:  If it is safe for all REPLICATION users to use this library as an output 
 </programlisting>
          </para>
         </note>
+
+        <table id="guc-output-plugin-libraries-builtins">
+         <title>Plugins Allowed by Default</title>
+         <tgroup cols="2">
+          <colspec colname="col1" colwidth="1*"/>
+          <colspec colname="col2" colwidth="2*"/>
+          <thead>
+           <row>
+            <entry>Plugin</entry>
+            <entry>Description</entry>
+           </row>
+          </thead>
+
+          <tbody>
+           <row>
+            <entry><xref linkend="logicaldecoding-pgoutput"/></entry>
+            <entry>
+             Core plugin for logical replication. Removing <literal>pgoutput</literal>
+             from <literal>output_plugin_libraries</literal> will cause future
+             subscription connections, and maintenance of the replication slots
+             for subscriptions, to fail with an error. (Beware that existing
+             replication tools may not degrade gracefully if the server is
+             configured in this way.)
+            </entry>
+           </row>
+           <row>
+            <entry><xref linkend="test-decoding"/></entry>
+            <entry>
+             Decodes the WAL stream into a human-readable text representation.
+             <xref linkend="app-pgrecvlogical"/> uses this plugin by default, so
+             removing it from <literal>output_plugin_libraries</literal> will
+             prevent the use of that utility unless a replacement plugin is
+             installed and explicitly selected with
+             <link linkend="app-pgrecvlogical-option-plugin"><literal>--plugin</literal></link>.
+            </entry>
+           </row>
+          </tbody>
+         </tgroup>
+        </table>
        </listitem>
       </varlistentry>
 
