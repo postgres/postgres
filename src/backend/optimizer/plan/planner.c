@@ -819,6 +819,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 	root->append_rel_list = NIL;
 	root->row_identity_vars = NIL;
 	root->rowMarks = NIL;
+	root->join_alias_phvs = NIL;
 	memset(root->upper_rels, 0, sizeof(root->upper_rels));
 	memset(root->upper_targets, 0, sizeof(root->upper_targets));
 	root->processed_groupClause = NIL;

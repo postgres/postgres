@@ -1238,6 +1238,10 @@ mark_nullable_by_grouping(PlannerInfo *root, Node *newnode, Var *oldvar)
 /*
  * Add oldvar's varnullingrels, if any, to a flattened join alias expression.
  * The newnode has been copied, so we can modify it freely.
+ *
+ * If we need a PlaceHolderVar, we reuse any PHV already made for the same
+ * expression with this root, so that all expansions of the same alias get
+ * the same phid, much as pullup_replace_vars_callback does with its rv_cache.
  */
 static Node *
 add_nullingrels_if_needed(PlannerInfo *root, Node *newnode, Var *oldvar)
@@ -1257,7 +1261,7 @@ add_nullingrels_if_needed(PlannerInfo *root, Node *newnode, Var *oldvar)
 		 * join; but if that leaves nothing, fall back to evaluating it at the
 		 * join that the oldvar is an alias Var for.
 		 */
-		PlaceHolderVar *newphv;
+		PlaceHolderVar *newphv = NULL;
 		Index		levelsup = oldvar->varlevelsup;
 		Relids		joinrelids;
 		Relids		phrels;
@@ -1271,9 +1275,29 @@ add_nullingrels_if_needed(PlannerInfo *root, Node *newnode, Var *oldvar)
 			/* Keep the join's own OJ relid: this set spans both its sides */
 			phrels = joinrelids;
 		}
-		newphv = make_placeholder_expr(root, (Expr *) newnode, phrels);
+
+		/* Look for an existing PHV, comparing at level zero */
+		if (levelsup != 0)
+			IncrementVarSublevelsUp(newnode, -((int) levelsup), 0);
+		foreach_node(PlaceHolderVar, phv, root->join_alias_phvs)
+		{
+			if (bms_equal(phv->phrels, phrels) &&
+				equal(phv->phexpr, newnode))
+			{
+				newphv = copyObject(phv);
+				break;
+			}
+		}
+		if (newphv == NULL)
+		{
+			newphv = make_placeholder_expr(root, (Expr *) newnode, phrels);
+			root->join_alias_phvs = lappend(root->join_alias_phvs,
+											copyObject(newphv));
+		}
+
 		/* newphv has zero phlevelsup and NULL phnullingrels; fix it */
-		newphv->phlevelsup = levelsup;
+		if (levelsup != 0)
+			IncrementVarSublevelsUp((Node *) newphv, levelsup, 0);
 		newphv->phnullingrels = bms_copy(oldvar->varnullingrels);
 		newnode = (Node *) newphv;
 	}
