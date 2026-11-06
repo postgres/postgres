@@ -626,7 +626,7 @@ LZ4Stream_gets(char *ptr, int size, CompressFileHandle *CFH)
 	 * LZ4Stream_read_internal returning 0 or -1 means that it was either an
 	 * EOF or an error, but gets_func is defined to return NULL in either case
 	 * so we can treat both the same here. LZ4Stream_read_internal is expected
-	 * to have performed relevent error logging already.
+	 * to have performed relevant error logging already.
 	 */
 	if (ret <= 0)
 		return NULL;

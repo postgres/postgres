@@ -48,7 +48,7 @@ EXPLAIN (COSTS OFF, PLAN_ADVICE)
 SELECT * FROM sj_narrow
 	WHERE (id, val1) IN (VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5));
 
--- Here, we expect advising a unique semijoin to swith to the same plan that
+-- Here, we expect advising a unique semijoin to switch to the same plan that
 -- we got with sj_wide, and advising a non-unique semijoin should not change
 -- the plan.
 BEGIN;

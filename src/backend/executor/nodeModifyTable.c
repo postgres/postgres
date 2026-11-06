@@ -3568,7 +3568,7 @@ lmerge_matched:
 				 * handle it using any NOT MATCHED [BY TARGET] actions.
 				 * Otherwise, for a NOT MATCHED BY SOURCE action, neither the
 				 * source row nor the target row now exists, so there is no
-				 * futher action to execute.
+				 * further action to execute.
 				 */
 				if (relaction->mas_action->matchKind == MERGE_WHEN_MATCHED)
 					*matched = false;
@@ -3731,7 +3731,7 @@ lmerge_matched:
 							 * using any NOT MATCHED [BY TARGET] actions.
 							 * Otherwise, for a NOT MATCHED BY SOURCE action,
 							 * neither the source row nor the target row now
-							 * exists, so there is no futher action to
+							 * exists, so there is no further action to
 							 * execute.
 							 */
 							if (was_matched)

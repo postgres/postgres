@@ -6266,7 +6266,7 @@ StartupXLOG(void)
 	 * checkpoint the same way a restartpoint horizon can.
 	 *
 	 * Never adopt over a state over the watermark or a node-local
-	 * pg_checksums change, it generats no WAL so nothing in the replayed WAL
+	 * pg_checksums change, it generates no WAL so nothing in the replayed WAL
 	 * could restore it once overwritten.  Otherwise, even a watermark above
 	 * the redo point must not prevent adoption.  A primary backup copies
 	 * pg_control after the relation files, which may still contain pages
