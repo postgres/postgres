@@ -386,21 +386,21 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
 <listitem>
 <para>
-Change <link linkend="textsearch">full text search</link> and <xref
-linkend="pgtrgm"/> to use the database's locale provider for character
+Change <link linkend="textsearch">full text search</link> and <application><xref
+linkend="pgtrgm"/></application> to use the database's locale provider for character
 classification when parsing text (Jeff Davis)
 <ulink url="&commit_baseurl;e113f9c102b">&sect;</ulink>
 </para>
 
 <para>
 Previously, characters were classified using libc, regardless of the locale
-provider.  In databases with a locale provider other than libc (that is, ICU
-or builtin) and where the locale configured through that locale provider
-behaves differently from the LC_CTYPE setting configured for the database
-(particularly if LC_CTYPE is the C locale), this could cause changes in
-behavior of some functions related to full text search as well as the pg_trgm
-extension.  When upgrading such databases using pg_upgrade, it is recommended
-to reindex all indexes related to full text search and pg_trgm after the
+provider.  In databases with a locale provider other than libc (e.g., <literal>ICU</literal>,
+<literal>builtin</literal>) and where the locale configured through that locale provider
+behaves differently from the <literal>LC_CTYPE</literal> setting configured for the database,
+particularly a LC_CTYPE of <literal>C</literal>, the
+output of some full text search and <application>pg_trgm</application> functions could change.
+When upgrading such databases using <link linkend="pgupgrade"><application>pg_upgrade</application></link>, it is recommended
+to reindex all indexes which use full text search and <application>pg_trgm</application> after the
 upgrade, and to recompute any stored <type>tsvector</type> values.
 </para>
 </listitem>
