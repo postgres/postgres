@@ -293,6 +293,11 @@ CREATE FOREIGN TABLE copy_default (
 ) SERVER file_server
 OPTIONS (format 'csv', filename :'filename', default '\D');
 SELECT id, text_value, ts_value FROM copy_default;
+ANALYZE copy_default;
+SELECT most_common_vals
+FROM pg_stats
+WHERE schemaname = 'public' AND tablename = 'copy_default'
+  AND attname = 'text_value';
 DROP FOREIGN TABLE copy_default;
 
 -- privilege tests
