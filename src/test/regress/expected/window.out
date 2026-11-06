@@ -2143,6 +2143,28 @@ from generate_series(-9223372036854775806, -9223372036854775804) x;
  -9223372036854775806 | -9223372036854775806
 (3 rows)
 
+SELECT x,
+       lead(x, -2147483648) over w as respect_nulls,
+       lead(x, -2147483648) ignore nulls over w as ignore_nulls
+from (values (1), (2)) as t(x)
+window w as (order by x);
+ x | respect_nulls | ignore_nulls 
+---+---------------+--------------
+ 1 |               |             
+ 2 |               |             
+(2 rows)
+
+SELECT x,
+       lag(x, -2147483648) over w as respect_nulls,
+       lag(x, -2147483648) ignore nulls over w as ignore_nulls
+from (values (1), (2)) as t(x)
+window w as (order by x);
+ x | respect_nulls | ignore_nulls 
+---+---------------+--------------
+ 1 |               |             
+ 2 |               |             
+(2 rows)
+
 -- Test in_range for other numeric datatypes
 create temp table numerics(
     id int,
