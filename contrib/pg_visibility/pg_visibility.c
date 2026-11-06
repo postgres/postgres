@@ -13,6 +13,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/visibilitymap.h"
+#include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "catalog/pg_type.h"
 #include "catalog/storage_xlog.h"
@@ -71,7 +72,7 @@ static corrupt_items *collect_corrupt_items(Oid relid, bool all_visible,
 static void record_corrupt_item(corrupt_items *items, ItemPointer tid);
 static bool tuple_all_visible(HeapTuple tup, TransactionId OldestXmin,
 							  Buffer buffer);
-static void check_relation_relkind(Relation rel);
+static void check_relation_supported(Relation rel);
 
 /*
  * Visibility map information for a single block of a relation.
@@ -95,7 +96,7 @@ pg_visibility_map(PG_FUNCTION_ARGS)
 	rel = relation_open(relid, AccessShareLock);
 
 	/* Only some relkinds have a visibility map */
-	check_relation_relkind(rel);
+	check_relation_supported(rel);
 
 	if (blkno < 0 || blkno > MaxBlockNumber)
 		ereport(ERROR,
@@ -136,7 +137,7 @@ pg_visibility(PG_FUNCTION_ARGS)
 	rel = relation_open(relid, AccessShareLock);
 
 	/* Only some relkinds have a visibility map */
-	check_relation_relkind(rel);
+	check_relation_supported(rel);
 
 	if (blkno < 0 || blkno > MaxBlockNumber)
 		ereport(ERROR,
@@ -279,7 +280,7 @@ pg_visibility_map_summary(PG_FUNCTION_ARGS)
 	rel = relation_open(relid, AccessShareLock);
 
 	/* Only some relkinds have a visibility map */
-	check_relation_relkind(rel);
+	check_relation_supported(rel);
 
 	visibilitymap_count(rel, &all_visible, &all_frozen);
 
@@ -378,7 +379,7 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 	rel = relation_open(relid, AccessExclusiveLock);
 
 	/* Only some relkinds have a visibility map */
-	check_relation_relkind(rel);
+	check_relation_supported(rel);
 
 	/* Forcibly reset cached file size */
 	RelationGetSmgr(rel)->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = InvalidBlockNumber;
@@ -495,7 +496,7 @@ collect_visibility_data(Oid relid, bool include_pd)
 	rel = relation_open(relid, AccessShareLock);
 
 	/* Only some relkinds have a visibility map */
-	check_relation_relkind(rel);
+	check_relation_supported(rel);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
 	info = palloc0(offsetof(vbits, bits) + nblocks);
@@ -709,7 +710,7 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 	rel = relation_open(relid, AccessShareLock);
 
 	/* Only some relkinds have a visibility map */
-	check_relation_relkind(rel);
+	check_relation_supported(rel);
 
 	if (all_visible)
 		OldestXmin = GetStrictOldestNonRemovableTransactionId(rel);
@@ -917,11 +918,11 @@ tuple_all_visible(HeapTuple tup, TransactionId OldestXmin, Buffer buffer)
 }
 
 /*
- * check_relation_relkind - convenience routine to check that relation
- * is of the relkind supported by the callers
+ * check_relation_supported - convenience routine to check that relation
+ * is supported by the callers.
  */
 static void
-check_relation_relkind(Relation rel)
+check_relation_supported(Relation rel)
 {
 	if (!RELKIND_HAS_TABLE_AM(rel->rd_rel->relkind))
 		ereport(ERROR,
@@ -929,4 +930,14 @@ check_relation_relkind(Relation rel)
 				 errmsg("relation \"%s\" is of wrong relation kind",
 						RelationGetRelationName(rel)),
 				 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
+
+	if (RELATION_IS_OTHER_TEMP(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary tables of other sessions")));
+
+	if (!RelationIsPermanent(rel) && RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary or unlogged relations during recovery")));
 }
