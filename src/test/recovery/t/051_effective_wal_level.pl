@@ -32,6 +32,19 @@ sub wait_for_logical_decoding_disabled
 		qq[select current_setting('effective_wal_level') = 'replica';]);
 }
 
+# Close a background psql session and wait for its server backend to finish
+# exit processing so that its local injection point names can be safely reused.
+sub quit_and_wait
+{
+	my ($node, $background_psql, $backend_pid) = @_;
+
+	die "invalid backend PID: $backend_pid" unless $backend_pid =~ /^\d+$/;
+	$background_psql->quit;
+	$node->poll_query_until('postgres',
+		qq[select count(*) = 0 from pg_stat_activity where pid = $backend_pid]
+	) or die "timed out waiting for backend $backend_pid to exit";
+}
+
 # Initialize the primary server with wal_level = 'replica'.
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
@@ -416,6 +429,8 @@ if (   $ENV{enable_injection_points} eq 'yes'
 
 	# Start a psql session and stop it in the middle of the activation process.
 	my $psql_create_slot = $primary->background_psql('postgres');
+	my $psql_create_slot_pid =
+	  $psql_create_slot->query_safe('select pg_backend_pid()');
 	$psql_create_slot->query_until(
 		qr/create_slot_1/,
 		q(\echo create_slot_1
@@ -443,7 +458,7 @@ select pg_create_logical_replication_slot('slot_1', 'test_decoding');
 		qq[select injection_points_wakeup('logical-decoding-activation')]);
 
 	# Let the released backend finish creating its slot.
-	$psql_create_slot->quit;
+	quit_and_wait($primary, $psql_create_slot, $psql_create_slot_pid);
 
 	# Decode from slot_2, whose start point precedes where a redundant
 	# status-change record would have been written; this fails in xlog_decode()
@@ -470,6 +485,8 @@ select pg_drop_replication_slot('slot_2');
 	# interrupted.
 	$psql_create_slot =
 	  $primary->background_psql('postgres', on_error_stop => 0);
+	$psql_create_slot_pid =
+	  $psql_create_slot->query_safe('select pg_backend_pid()');
 
 	# Start the logical decoding activation process upon creating the logical
 	# slot, but it will wait due to the injection point.
@@ -497,11 +514,13 @@ select pg_cancel_backend(pid) from pg_stat_activity where query ~ 'slot_canceled
 	wait_for_logical_decoding_disabled($primary);
 	pass("the activation process aborted");
 
-	$psql_create_slot->quit;
+	quit_and_wait($primary, $psql_create_slot, $psql_create_slot_pid);
 
 	# Test concurrent activation processes run and one is interrupted.
 	$psql_create_slot =
 	  $primary->background_psql('postgres', on_error_stop => 0);
+	$psql_create_slot_pid =
+	  $psql_create_slot->query_safe('select pg_backend_pid()');
 
 	# Start a psql session and stops in the middle of the activation
 	# process.
@@ -540,7 +559,7 @@ select pg_cancel_backend(pid) from pg_stat_activity where query ~ 'slot_canceled
 		"effective_wal_level remains 'logical' even after the concurrent activation is interrupted"
 	);
 
-	$psql_create_slot->quit;
+	quit_and_wait($primary, $psql_create_slot, $psql_create_slot_pid);
 
 	# Test races between the deactivation of logical decoding and slot
 	# creation during recovery. Logical decoding can be deactivated while a
@@ -596,6 +615,8 @@ hot_standby_feedback = on
 	# information but before creating the local slot.  Note that this point
 	# waits when reaching the creation of slot "sync_slot".
 	my $psql_sync_slot = $standby5->background_psql('postgres');
+	my $psql_sync_slot_pid =
+	  $psql_sync_slot->query_safe('select pg_backend_pid()');
 	$psql_sync_slot->query_until(
 		qr/sync_slots/,
 		q(\echo sync_slots
@@ -622,7 +643,7 @@ select pg_sync_replication_slots();
 		qq[select injection_points_wakeup('replication-slot-create-begin')]);
 	$standby5->wait_for_log(
 		qr/could not synchronize replication slot "sync_slot"/, $log_offset);
-	$psql_sync_slot->quit;
+	quit_and_wait($standby5, $psql_sync_slot, $psql_sync_slot_pid);
 	is( $standby5->safe_psql(
 			'postgres', qq[select count(*) from pg_replication_slots]),
 		'0',
@@ -643,6 +664,8 @@ select pg_sync_replication_slots();
 	);
 
 	$psql_sync_slot = $standby5->background_psql('postgres');
+	$psql_sync_slot_pid =
+	  $psql_sync_slot->query_safe('select pg_backend_pid()');
 	$psql_sync_slot->query_until(
 		qr/sync_slots/,
 		q(\echo sync_slots
@@ -696,7 +719,7 @@ select pg_create_logical_replication_slot('test_slot4', 'test_decoding');
 select pg_drop_replication_slot('sync_slot');
 ]);
 	$primary->wait_for_replay_catchup($standby5);
-	$psql_sync_slot->quit;
+	quit_and_wait($standby5, $psql_sync_slot, $psql_sync_slot_pid);
 
 	# The slot created on retry may or may not have been persisted by the
 	# time the remote slot was dropped. One more synchronization cycle
@@ -734,6 +757,8 @@ select pg_drop_replication_slot('sync_slot');
 	# Start creating a logical slot, stopping it before creating the slot.
 	$psql_create_slot =
 	  $standby5->background_psql('postgres', on_error_stop => 0);
+	$psql_create_slot_pid =
+	  $psql_create_slot->query_safe('select pg_backend_pid()');
 	# Note that this point waits when reaching the creation of slot
 	# "standby5_slot".
 	$psql_create_slot->query_until(
@@ -761,7 +786,7 @@ select pg_create_logical_replication_slot('standby5_slot', 'test_decoding');
 	$standby5->wait_for_log(
 		qr/ERROR: .* logical decoding on standby requires "effective_wal_level" >= "logical" on the primary/,
 		$log_offset);
-	$psql_create_slot->quit;
+	quit_and_wait($standby5, $psql_create_slot, $psql_create_slot_pid);
 	is( $standby5->safe_psql(
 			'postgres', qq[select count(*) from pg_replication_slots]),
 		'0',
