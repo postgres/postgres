@@ -12,6 +12,9 @@ SHOW vacuum_cost_delay;
 SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
 
+-- Check syntax validation of output_plugin_libraries
+SELECT set_config('output_plugin_libraries', 'pgoutput,', true);
+
 -- SET LOCAL has no effect outside of a transaction
 SET LOCAL vacuum_cost_delay TO 50;
 SHOW vacuum_cost_delay;
