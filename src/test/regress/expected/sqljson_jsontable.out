@@ -2019,3 +2019,33 @@ CREATE OR REPLACE VIEW public.json_table_view_on_empty AS
             ) ERROR ON ERROR
         )
 DROP VIEW json_table_view_on_empty;
+-- Collations must be assigned to expressions in the context item and in
+-- the PASSING arguments (bug #19768)
+SELECT * FROM JSON_TABLE(jsonb_build_object('k', ROW(1, 2) < ROW(3, 4)), '$'
+	COLUMNS (a bool PATH '$.k'));
+ a 
+---
+ t
+(1 row)
+
+SELECT * FROM JSON_TABLE(jsonb_build_object('k', 'a' < 'b' COLLATE "C"), '$'
+	COLUMNS (a bool PATH '$.k'));
+ a 
+---
+ t
+(1 row)
+
+SELECT * FROM JSON_TABLE(jsonb '{}', '$' PASSING 'a' < 'b' COLLATE "C" AS x
+	COLUMNS (a bool PATH '$x'));
+ a 
+---
+ t
+(1 row)
+
+SELECT * FROM JSON_TABLE(jsonb '{}', '$' PASSING ROW(1, 2) < ROW(3, 4) AS x
+	COLUMNS (a bool PATH '$x'));
+ a 
+---
+ t
+(1 row)
+
