@@ -610,6 +610,12 @@ COPY check_ign_err FROM STDIN WITH (on_error ignore);
 1	{1}
 \.
 
+-- test extra data after a skipped row: should fail, reporting the line
+COPY check_ign_err FROM STDIN WITH (on_error ignore);
+1	{1}	a
+2	{2}	2	extra
+\.
+
 -- test extra data: should fail
 COPY check_ign_err FROM STDIN WITH (on_error ignore);
 1	{1}	3	abc
