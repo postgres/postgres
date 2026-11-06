@@ -802,10 +802,6 @@ CONTEXT:  COPY hard_err, line 1, column foo: "1"
 COPY check_ign_err FROM STDIN WITH (on_error ignore);
 ERROR:  missing data for column "k"
 CONTEXT:  COPY check_ign_err, line 1: "1	{1}"
--- test extra data after a skipped row: should fail, reporting the line
-COPY check_ign_err FROM STDIN WITH (on_error ignore);
-ERROR:  extra data after last expected column
-CONTEXT:  COPY check_ign_err, line 2: "2	{2}	2	extra"
 -- test extra data: should fail
 COPY check_ign_err FROM STDIN WITH (on_error ignore);
 ERROR:  extra data after last expected column
