@@ -873,6 +873,10 @@ NextCopyFrom(CopyFromState cstate, ExprContext *econtext,
 	MemSet(nulls, true, num_phys_attrs * sizeof(bool));
 	MemSet(cstate->defaults, false, num_phys_attrs * sizeof(bool));
 
+	/* Clear the current attribute for error messages. */
+	cstate->cur_attname = NULL;
+	cstate->cur_attval = NULL;
+
 	if (!cstate->opts.binary)
 	{
 		char	  **field_strings;
