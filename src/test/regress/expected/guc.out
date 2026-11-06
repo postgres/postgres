@@ -27,6 +27,10 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
  2006-08-13 12:34:56-07
 (1 row)
 
+-- Check syntax validation of output_plugin_libraries
+SELECT set_config('output_plugin_libraries', 'pgoutput,', true);
+ERROR:  invalid value for parameter "output_plugin_libraries": "pgoutput,"
+DETAIL:  List syntax is invalid.
 -- SET LOCAL has no effect outside of a transaction
 SET LOCAL vacuum_cost_delay TO 50;
 WARNING:  SET LOCAL can only be used in transaction blocks

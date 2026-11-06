@@ -43,6 +43,7 @@
 #include "storage/procarray.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/guc_hooks.h"
 #include "utils/injection_point.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
@@ -107,6 +108,39 @@ static void update_progress_txn_cb_wrapper(ReorderBuffer *cache,
 										   XLogRecPtr lsn);
 
 static void LoadOutputPlugin(OutputPluginCallbacks *callbacks, const char *plugin);
+
+/* check_hook: validate new output_plugin_libraries value */
+bool
+check_output_plugin_libraries(char **newval, void **extra, GucSource source)
+{
+	char	   *copy;
+	List	   *components;
+	bool		ok = true;
+
+	copy = guc_strdup(LOG, *newval);
+	if (!copy)
+		return false;
+
+	/*
+	 * XXX SplitGUCList won't respect guc_malloc requirements, but this is
+	 * consistent with other check_hook implementations...
+	 */
+	if (!SplitGUCList(copy, ',', &components))
+	{
+		GUC_check_errdetail("List syntax is invalid.");
+		ok = false;
+	}
+
+	/*
+	 * Like with related GUC_LIST_QUOTE variables, we check only syntax here
+	 * and not the existence of the plugins themselves.
+	 */
+
+	list_free(components);
+	guc_free(copy);
+
+	return ok;
+}
 
 /*
  * Make sure the current settings & environment are capable of doing logical
@@ -203,17 +237,9 @@ StartupDecodingContext(List *output_plugin_options,
 			/* Need a modifiable copy */
 			rawstring = pstrdup(output_plugin_libraries_string);
 
+			/* The check_hook should have already handled syntax errors. */
 			if (!SplitGUCList(rawstring, ',', &elemlist))
-			{
-				/* syntax error in list */
-				ereport(LOG,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("invalid list syntax in parameter \"%s\"",
-								"output_plugin_libraries")));
-
-				list_free(elemlist);
-				elemlist = NIL;
-			}
+				elog(ERROR, "internal error: invalid output_plugin_libraries syntax after check_hook");
 
 			foreach_ptr(char, allowed, elemlist)
 			{
