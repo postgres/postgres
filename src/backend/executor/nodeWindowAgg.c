@@ -3482,8 +3482,8 @@ ignorenulls_getfuncarginframe(WindowObject winobj, int argno,
 		 * expects its caller to have checked.  It cannot always detect that
 		 * itself: for a frame ending at UNBOUNDED FOLLOWING with EXCLUDE
 		 * GROUP or EXCLUDE TIES and no ORDER BY, it reports every row other
-		 * than the current one as excluded, wherever it is, so we would
-		 * never reach the end of the loop.
+		 * than the current one as excluded, wherever it is, so we would never
+		 * reach the end of the loop.
 		 */
 		spool_tuples(winstate, abs_pos);
 		if (abs_pos >= winstate->spooled_rows)
