@@ -974,7 +974,7 @@ Branch: REL_14_STABLE [9a1fa1f36] 2026-08-26 15:38:04 -0400
 -->
      <para>
       Fix snapshot export and import to work properly on a snapshot taken
-      during recovery (Peter Geoghegan)
+      during recovery (Peter Geoghegan, Bertrand Drouvot)
       <ulink url="&commit_baseurl;74c9832ca">&sect;</ulink>
      </para>
 
@@ -984,6 +984,13 @@ Branch: REL_14_STABLE [9a1fa1f36] 2026-08-26 15:38:04 -0400
       behaved incorrectly.  This led not only to wrong answers within the
       importing transaction, but possibly to persistent data corruption
       due to it setting hint bits incorrectly.
+     </para>
+
+     <para>
+      This bug is known to be triggered by
+      parallel <application>pg_dump</application>, when run on a
+      standby server.  In that context it could corrupt both the dump
+      output and the standby server's data.
      </para>
     </listitem>
 
@@ -2565,7 +2572,7 @@ Branch: REL_18_STABLE [864ef0fb1] 2026-08-12 19:15:48 +0200
      <para>
       Reject <literal>REPLICA IDENTITY USING INDEX</literal> if a key
       column has an unvalidated <literal>NOT NULL</literal> constraint
-      (Ante Krešić)
+      (Ante Kresic)
       <ulink url="&commit_baseurl;864ef0fb1">&sect;</ulink>
      </para>
 
