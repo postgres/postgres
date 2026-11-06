@@ -652,7 +652,9 @@ include_dir         <replaceable>directory</replaceable>
         <listitem>
          <para>
           Authorize and optionally authenticate using a third-party OAuth 2.0
-          identity provider. See <xref linkend="auth-oauth"/> for details.
+          identity provider.  Since the bearer token is sent in clear text over
+          the network, this should not be used on untrusted networks.  See
+          <xref linkend="auth-oauth"/> for details.
          </para>
         </listitem>
        </varlistentry>
@@ -2341,7 +2343,9 @@ host ... ldap ldapbasedn="dc=example,dc=net"
     <ulink url="https://datatracker.ietf.org/doc/html/rfc6750">RFC 6750</ulink>,
     which are a type of access token used with OAuth 2.0 where the token is an
     opaque string.  The format of the access token is implementation specific
-    and is chosen by each authorization server.
+    and is chosen by each authorization server.  The bearer token is sent
+    in clear-text, and is vulnerable to network sniffing.  For this reason
+    OAuth should only be used over SSL connections.
    </para>
 
    <para>
