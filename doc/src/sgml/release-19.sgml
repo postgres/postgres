@@ -388,8 +388,8 @@ Author: Jeff Davis <jdavis@postgresql.org>
 <para>
 Change <link linkend="textsearch">full text search</link> and <xref
 linkend="pgtrgm"/> to use the database's locale provider for character
-classification when parsing text (Jeff Davis) <ulink
-url="&commit_baseurl;e113f9c102b">&sect;</ulink>
+classification when parsing text (Jeff Davis)
+<ulink url="&commit_baseurl;e113f9c102b">&sect;</ulink>
 </para>
 
 <para>
@@ -1019,6 +1019,7 @@ Author: Álvaro Herrera <alvherre@kurilemu.de>
 <listitem>
 <para>
 Add system view <link linkend="pg-stat-progress-repack-view"><structname>pg_stat_progress_repack</structname></link> to report the progress of <command>REPACK</command>, <command>CLUSTER</command>, and <command>VACUUM FULL</command> (Álvaro Herrera)
+<ulink url="&commit_baseurl;ac58465e0">&sect;</ulink>
 </para>
 </listitem>
 
