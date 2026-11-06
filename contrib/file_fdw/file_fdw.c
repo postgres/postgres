@@ -1200,7 +1200,8 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	CopyFromState cstate;
 	ErrorContextCallback errcallback;
 	MemoryContext oldcontext = CurrentMemoryContext;
-	MemoryContext tupcontext;
+	EState	   *estate;
+	ExprContext *econtext;
 
 	Assert(onerel);
 	Assert(targrows > 0);
@@ -1219,12 +1220,11 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 						   options);
 
 	/*
-	 * Use per-tuple memory context to prevent leak of memory used to read
-	 * rows from the file with Copy routines.
+	 * Create an expression context to evaluate DEFAULT expressions.  Use its
+	 * per-tuple memory context for reading rows with the Copy routines, too.
 	 */
-	tupcontext = AllocSetContextCreate(CurrentMemoryContext,
-									   "file_fdw temporary context",
-									   ALLOCSET_DEFAULT_SIZES);
+	estate = CreateExecutorState();
+	econtext = GetPerTupleExprContext(estate);
 
 	/* Prepare for sampling rows */
 	reservoir_init_selection_state(&rstate, targrows);
@@ -1242,11 +1242,13 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 		/* Check for user-requested abort or sleep */
 		vacuum_delay_point(true);
 
-		/* Fetch next row */
-		MemoryContextReset(tupcontext);
-		MemoryContextSwitchTo(tupcontext);
+		/* Clean up the previous row's expression evaluation state */
+		ResetPerTupleExprContext(estate);
 
-		found = NextCopyFrom(cstate, NULL, values, nulls);
+		/* Fetch next row in the per-tuple memory context */
+		MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+
+		found = NextCopyFrom(cstate, econtext, values, nulls);
 
 		MemoryContextSwitchTo(oldcontext);
 
@@ -1311,7 +1313,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	error_context_stack = errcallback.previous;
 
 	/* Clean up. */
-	MemoryContextDelete(tupcontext);
+	FreeExecutorState(estate);
 
 	if (cstate->opts.on_error == COPY_ON_ERROR_IGNORE &&
 		cstate->num_errors > 0 &&
