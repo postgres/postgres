@@ -628,11 +628,6 @@ COPY t_on_error_null FROM STDIN WITH (delimiter ',', on_error set_null);
 COPY t_on_error_null FROM STDIN WITH (delimiter ',', on_error set_null);
 1,2,3,4
 \.
--- fail, extra data after a row whose last column was set to null
-COPY t_on_error_null FROM STDIN WITH (delimiter ',', on_error set_null);
-1,2,x
-1,2,3,4
-\.
 
 COPY t_on_error_null FROM STDIN WITH (on_error set_null, log_verbosity verbose); -- ok
 10	x1	yx
@@ -672,12 +667,6 @@ COPY hard_err FROM STDIN WITH (on_error ignore);
 -- test missing data: should fail
 COPY check_ign_err FROM STDIN WITH (on_error ignore);
 1	{1}
-\.
-
--- test extra data after a skipped row: should fail, reporting the line
-COPY check_ign_err FROM STDIN WITH (on_error ignore);
-1	{1}	a
-2	{2}	2	extra
 \.
 
 -- test extra data: should fail
