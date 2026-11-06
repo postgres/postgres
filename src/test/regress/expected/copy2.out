@@ -830,6 +830,10 @@ CONTEXT:  COPY t_on_error_null, line 1: "1,1"
 COPY t_on_error_null FROM STDIN WITH (delimiter ',', on_error set_null);
 ERROR:  extra data after last expected column
 CONTEXT:  COPY t_on_error_null, line 1: "1,2,3,4"
+-- fail, extra data after a row whose last column was set to null
+COPY t_on_error_null FROM STDIN WITH (delimiter ',', on_error set_null);
+ERROR:  extra data after last expected column
+CONTEXT:  COPY t_on_error_null, line 2: "1,2,3,4"
 COPY t_on_error_null FROM STDIN WITH (on_error set_null, log_verbosity verbose); -- ok
 NOTICE:  setting to null due to data type incompatibility at line 1 for column "b": "x1"
 CONTEXT:  COPY t_on_error_null
@@ -883,6 +887,10 @@ CONTEXT:  COPY hard_err, line 1, column foo: "1"
 COPY check_ign_err FROM STDIN WITH (on_error ignore);
 ERROR:  missing data for column "k"
 CONTEXT:  COPY check_ign_err, line 1: "1	{1}"
+-- test extra data after a skipped row: should fail, reporting the line
+COPY check_ign_err FROM STDIN WITH (on_error ignore);
+ERROR:  extra data after last expected column
+CONTEXT:  COPY check_ign_err, line 2: "2	{2}	2	extra"
 -- test extra data: should fail
 COPY check_ign_err FROM STDIN WITH (on_error ignore);
 ERROR:  extra data after last expected column
