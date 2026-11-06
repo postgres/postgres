@@ -108,9 +108,12 @@ env:
 
   # Debian Trixie containers used by all Linux jobs. Built by
   # 'https://github.com/anarazel/pg-vm-images/'.
+  #
+  # The containers are named
+  # ghcr.io/anarazel/pg-vm-images/<branch>/linux_debian_ci/<debian version>/<ci-job>:<CONTAINER_TAG>
   CONTAINER_REPO: ghcr.io/anarazel/pg-vm-images/main
-  CONTAINER_LINUX_CI: linux_debian_trixie_ci:latest
-  CONTAINER_LINUX_CI_DOCS: linux_debian_trixie_ci_docs:latest
+  CONTAINER_LINUX_CI_NAME: linux_debian_ci/trixie
+  CONTAINER_TAG: latest
 
   # The full set of OS / job selectors recognized by the `ci-os-only:`
   # commit-message directive parsed in the `setup` job below.
@@ -199,7 +202,7 @@ jobs:
       #
       # To allow over-riding what runners jobs use, we allow setting
       # repository / org level variables influencing that choice on a
-      # per-host-operating-system basis.
+      # per-host-operating-system basis.  See also src/tools/ci/README
       #
       # This also makes it easier to change the version of linux / windows
       # used centrally. We don't just want to use ubuntu-latest, as it's not
@@ -214,8 +217,10 @@ jobs:
       # Re-export workflow-level env vars that other jobs need to reference
       # from contexts (e.g. `jobs.<id>.container.image`) where the `env`
       # context is not available.
-      container_linux_ci: ${{ env.CONTAINER_REPO }}/${{ env.CONTAINER_LINUX_CI }}
-      container_linux_ci_docs: ${{ env.CONTAINER_REPO }}/${{ env.CONTAINER_LINUX_CI_DOCS }}
+      #
+      # For brevity, container_image is a format() template, {0} is the task
+      # specific image name.
+      container_image: ${{ env.CONTAINER_REPO }}/${{ env.CONTAINER_LINUX_CI_NAME }}/{0}:${{ env.CONTAINER_TAG }}
 
     steps:
       # Anchor reused by other jobs further down. GitHub Actions supports YAML
@@ -277,8 +282,8 @@ jobs:
       needs.setup.outputs.sanitycheck == 'true'
     runs-on: ${{ needs.setup.outputs.runs_on_linux }}
     timeout-minutes: 15
-    container: &linux_ci_container
-      image: ${{ needs.setup.outputs.container_linux_ci }}
+    container:
+      image: ${{ format(needs.setup.outputs.container_image, 'sanity-check') }}
 
       # Options passed to all linux containers. Not all of the jobs need
       # all of them, but it's easier to just define them centrally.
@@ -464,7 +469,9 @@ jobs:
       needs.setup.outputs.linux == 'true' &&
       needs.sanity-check.result != 'failure'
     runs-on: ${{ needs.setup.outputs.runs_on_linux }}
-    container: *linux_ci_container
+    container:
+      image: ${{ format(needs.setup.outputs.container_image, 'linux-autoconf') }}
+      options: *linux_container_options
     timeout-minutes: 60
 
     env: &linux_env
@@ -558,7 +565,9 @@ jobs:
     needs: [setup, sanity-check]
     if: *linux_job_if
     runs-on: ${{ needs.setup.outputs.runs_on_linux }}
-    container: *linux_ci_container
+    container:
+      image: ${{ format(needs.setup.outputs.container_image, 'linux-meson-32') }}
+      options: *linux_container_options
     timeout-minutes: 60
     env: *linux_env
 
@@ -650,7 +659,9 @@ jobs:
     needs: [setup, sanity-check]
     if: *linux_job_if
     runs-on: ${{ needs.setup.outputs.runs_on_linux }}
-    container: *linux_ci_container
+    container:
+      image: ${{ format(needs.setup.outputs.container_image, 'linux-meson-64') }}
+      options: *linux_container_options
     timeout-minutes: 60
     env: *linux_env
 
@@ -1186,7 +1197,7 @@ jobs:
     runs-on: ${{ needs.setup.outputs.runs_on_linux }}
     timeout-minutes: 60
     container:
-      image: ${{ needs.setup.outputs.container_linux_ci_docs }}
+      image: ${{ format(needs.setup.outputs.container_image, 'compiler-warnings') }}
     env:
       # Use larger ccache cache as this job compiles with multiple
       # compilers / flag combinations.
