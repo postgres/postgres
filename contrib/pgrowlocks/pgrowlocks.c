@@ -29,6 +29,7 @@
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "access/xact.h"
+#include "access/xlog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am_d.h"
 #include "catalog/pg_authid.h"
@@ -113,6 +114,11 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind),
 					   RelationGetRelationName(rel));
+
+	if (!RelationIsPermanent(rel) && RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary or unlogged relations during recovery")));
 
 	/* Scan the relation */
 	scan = table_beginscan(rel, GetActiveSnapshot(), 0, NULL, SO_NONE);
