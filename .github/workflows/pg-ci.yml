@@ -106,12 +106,6 @@ env:
     --with-uuid=ossp
     --with-zstd
 
-  # Centrally define the version of linux runners, to make it easier to
-  # update. We don't just want to use ubuntu-latest, as it's not implausible
-  # there will be breakage when that switches to the next ubuntu version.
-  _LINUX_RUNS_ON: &linux_runs_on |
-    ubuntu-24.04
-
   # Debian Trixie containers used by all Linux jobs. Built by
   # 'https://github.com/anarazel/pg-vm-images/'.
   CONTAINER_REPO: ghcr.io/anarazel/pg-vm-images/main
@@ -154,7 +148,13 @@ jobs:
   warn-if-not-opted-in:
     name: Report if not opted into CI
     if: ${{vars.PG_CI_ENABLED != '1'}}
-    runs-on: ubuntu-slim
+
+    # Can't use the output from the setup task here, so this has to be done
+    # differently. To avoid having the same logic it in the setup job (which
+    # also can't use its own outputs), have it use a yaml reference.
+    runs-on: &setup_runs_on |
+      ${{ vars.PG_CI_RUNS_ON_SETUP || 'ubuntu-slim' }}
+
     steps:
       - name: Warn
         env:
@@ -184,15 +184,33 @@ jobs:
     # Only run CI if repo owner opted in. If this task is skipped due to the
     # if, none of it's depending tasks (i.e. the actual CI tasks) run either.
     if: ${{vars.PG_CI_ENABLED == '1'}}
-    runs-on: *linux_runs_on
+    runs-on: *setup_runs_on
     timeout-minutes: 1
     outputs:
+      # Are certain tasks enabled?
       linux: ${{ steps.os.outputs.linux }}
       macos: ${{ steps.os.outputs.macos }}
       windows: ${{ steps.os.outputs.windows }}
       mingw: ${{ steps.os.outputs.mingw }}
       compilerwarnings: ${{ steps.os.outputs.compilerwarnings }}
       sanitycheck: ${{ steps.os.outputs.sanitycheck }}
+
+      # What runners to run on:
+      #
+      # To allow over-riding what runners jobs use, we allow setting
+      # repository / org level variables influencing that choice on a
+      # per-host-operating-system basis.
+      #
+      # This also makes it easier to change the version of linux / windows
+      # used centrally. We don't just want to use ubuntu-latest, as it's not
+      # implausible there will be breakage when that switches to the next
+      # ubuntu version.
+      runs_on_linux: ${{ vars.PG_CI_RUNS_ON_LINUX || 'ubuntu-24.04' }}
+      runs_on_windows: ${{ vars.PG_CI_RUNS_ON_WINDOWS || 'windows-2022' }}
+      runs_on_macos: ${{ vars.PG_CI_RUNS_ON_MACOS || 'macos-15' }}
+
+      # Exports:
+      #
       # Re-export workflow-level env vars that other jobs need to reference
       # from contexts (e.g. `jobs.<id>.container.image`) where the `env`
       # context is not available.
@@ -257,7 +275,7 @@ jobs:
     if: |
       !cancelled() &&
       needs.setup.outputs.sanitycheck == 'true'
-    runs-on: *linux_runs_on
+    runs-on: ${{ needs.setup.outputs.runs_on_linux }}
     timeout-minutes: 15
     container: &linux_ci_container
       image: ${{ needs.setup.outputs.container_linux_ci }}
@@ -445,7 +463,7 @@ jobs:
       !cancelled() &&
       needs.setup.outputs.linux == 'true' &&
       needs.sanity-check.result != 'failure'
-    runs-on: *linux_runs_on
+    runs-on: ${{ needs.setup.outputs.runs_on_linux }}
     container: *linux_ci_container
     timeout-minutes: 60
 
@@ -539,7 +557,7 @@ jobs:
     name: Linux - Meson (32-bit)
     needs: [setup, sanity-check]
     if: *linux_job_if
-    runs-on: *linux_runs_on
+    runs-on: ${{ needs.setup.outputs.runs_on_linux }}
     container: *linux_ci_container
     timeout-minutes: 60
     env: *linux_env
@@ -631,7 +649,7 @@ jobs:
     name: Linux - Meson (64-bit)
     needs: [setup, sanity-check]
     if: *linux_job_if
-    runs-on: *linux_runs_on
+    runs-on: ${{ needs.setup.outputs.runs_on_linux }}
     container: *linux_ci_container
     timeout-minutes: 60
     env: *linux_env
@@ -687,7 +705,7 @@ jobs:
       !cancelled() &&
       needs.setup.outputs.macos == 'true' &&
       needs.sanity-check.result != 'failure'
-    runs-on: macos-15
+    runs-on: ${{ needs.setup.outputs.runs_on_macos }}
     timeout-minutes: 60
     env:
       MACPORTS_CACHE: ${{ github.workspace }}/macports-cache
@@ -745,10 +763,10 @@ jobs:
           macos_major=$(sw_vers -productVersion | sed 's/\..*//')
           pkglist_hash=$(printf '%s' "$MACOS_PACKAGE_LIST" | md5 -q)
           script_hash=$(md5 -q src/tools/ci/ci_macports_packages.sh)
-          echo "key=macports-${macos_major}-${pkglist_hash}-${script_hash}" >> "$GITHUB_OUTPUT"
+          echo "key=macports-${macos_major}-${{runner.arch}}-${pkglist_hash}-${script_hash}" >> "$GITHUB_OUTPUT"
           # It's faster to start with a partial cache for the same macos
-          # version than from scratch
-          echo "restore-key=macports-${macos_major}-" >> "$GITHUB_OUTPUT"
+          # version and architecture than from scratch
+          echo "restore-key=macports-${macos_major}-${{runner.arch}}-" >> "$GITHUB_OUTPUT"
 
       - name: "MacPorts: Restore cache"
         id: mp-restore
@@ -844,7 +862,7 @@ jobs:
       !cancelled() &&
       needs.setup.outputs.windows == 'true' &&
       needs.sanity-check.result != 'failure'
-    runs-on: windows-2022
+    runs-on: ${{ needs.setup.outputs.runs_on_windows }}
     timeout-minutes: 60
 
     # As described at the top of the task, split the tests across two runners
@@ -860,7 +878,6 @@ jobs:
     env:
       # Avoid port conflicts between concurrent tap tests
       PG_TEST_USE_UNIX_SOCKETS: 1
-      PG_REGRESS_SOCK_DIR: 'd:\pgsock'
       TAR: "c:/windows/system32/tar.exe"
 
       MESON_FEATURES: >-
@@ -965,7 +982,8 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: |
-          # meson is not preinstalled on windows-2022. Install via pip
+          # meson is not preinstalled, at least on windows-2022. Install via
+          # pip
           echo ::group::pip
           python -m pip install --upgrade meson
           if (!$?) { throw 'cmdfail' }
@@ -995,9 +1013,12 @@ jobs:
           Add-Content c:\Windows\System32\Drivers\etc\hosts "127.0.0.2 pg-loadbalancetest"
           Add-Content c:\Windows\System32\Drivers\etc\hosts "127.0.0.3 pg-loadbalancetest"
 
-      - name: Setup socket directory
+      - &windows_setup_socket_dir_step
+        name: Setup socket directory
         shell: cmd
-        run: mkdir ${{env.PG_REGRESS_SOCK_DIR}}
+        run: |
+          mkdir "%RUNNER_TEMP%\pgsock"
+          echo PG_REGRESS_SOCK_DIR=%RUNNER_TEMP%\pgsock>>"%GITHUB_ENV%"
 
       - &windows_setup_debugger_step
         name: Setup Windows debugger
@@ -1044,12 +1065,11 @@ jobs:
       !cancelled() &&
       needs.setup.outputs.mingw == 'true' &&
       needs.sanity-check.result != 'failure'
-    runs-on: windows-2022
+    runs-on: ${{ needs.setup.outputs.runs_on_windows }}
     timeout-minutes: 60
     env:
       # Avoid port conflicts between concurrent tap tests
       PG_TEST_USE_UNIX_SOCKETS: 1
-      PG_REGRESS_SOCK_DIR: 'd:\pgsock'
       TAR: "c:/windows/system32/tar.exe"
 
       MSYS: winjitdebug
@@ -1121,9 +1141,7 @@ jobs:
           perl -mIPC::Run -e 1
           echo ::endgroup::
 
-      - name: Setup socket directory
-        shell: cmd
-        run: mkdir ${{env.PG_REGRESS_SOCK_DIR}}
+      - *windows_setup_socket_dir_step
 
       - *windows_setup_debugger_step
 
@@ -1165,7 +1183,7 @@ jobs:
       !cancelled() &&
       needs.setup.outputs.compilerwarnings == 'true' &&
       needs.sanity-check.result != 'failure'
-    runs-on: *linux_runs_on
+    runs-on: ${{ needs.setup.outputs.runs_on_linux }}
     timeout-minutes: 60
     container:
       image: ${{ needs.setup.outputs.container_linux_ci_docs }}
