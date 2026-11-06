@@ -64,6 +64,11 @@ step s2_noop
 {
 }
 
+teardown
+{
+	SELECT injection_points_detach('repack-concurrently-before-lock');
+}
+
 session s3
 step s3_updates
 {
