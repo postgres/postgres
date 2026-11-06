@@ -2156,6 +2156,34 @@ select aggfns(distinct a,b,c order by a,c using ~<~,b)
  {"(0,,)","(1,3,foo)","(2,2,bar)","(3,1,baz)"}
 (1 row)
 
+-- single input sorted on two keys; 0 and -0 differ only for *<
+select array_agg(distinct r order by r using <, r using *<)
+  from (values (row(-0.0::float8)), (row(0.0::float8))) v(r),
+       generate_series(1,2) i;
+ array_agg  
+------------
+ {(0),(-0)}
+(1 row)
+
+-- check again for the non-presorted aggregate code
+set enable_presorted_aggregate to off;
+select array_agg(distinct r order by r using <, r using *<)
+  from (values (row(-0.0::float8)), (row(0.0::float8))) v(r),
+       generate_series(1,2) i;
+ array_agg  
+------------
+ {(0),(-0)}
+(1 row)
+
+-- likewise, but without DISTINCT; the second sort key must not be ignored
+select array_agg(r order by r using <, r using *<)
+  from (values (row(-0.0::float8)), (row(0.0::float8))) v(r);
+ array_agg  
+------------
+ {(0),(-0)}
+(1 row)
+
+reset enable_presorted_aggregate;
 -- test a more complex permutation that has previous caused issues
 select
     string_agg(distinct 'a', ','),

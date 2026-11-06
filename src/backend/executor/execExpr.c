@@ -3865,11 +3865,11 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 			}
 			Assert(pertrans->numTransInputs == argno);
 		}
-		else if (pertrans->numInputs == 1)
+		else if (pertrans->numInputs == 1 && pertrans->numSortCols == 1)
 		{
 			/*
 			 * Non-presorted DISTINCT and/or ORDER BY case, with a single
-			 * column sorted on.
+			 * input column sorted on a single key.
 			 */
 			TargetEntry *source_tle =
 				(TargetEntry *) linitial(pertrans->aggref->args);
@@ -3888,7 +3888,7 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 		{
 			/*
 			 * Non-presorted DISTINCT and/or ORDER BY case, with multiple
-			 * columns sorted on.
+			 * input columns or sort keys.
 			 */
 			Datum	   *values = pertrans->sortslot->tts_values;
 			bool	   *nulls = pertrans->sortslot->tts_isnull;
@@ -4114,7 +4114,7 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 				scratch->opcode = EEOP_AGG_PLAIN_TRANS_BYREF;
 		}
 	}
-	else if (pertrans->numInputs == 1)
+	else if (pertrans->numInputs == 1 && pertrans->numSortCols == 1)
 		scratch->opcode = EEOP_AGG_ORDERED_TRANS_DATUM;
 	else
 		scratch->opcode = EEOP_AGG_ORDERED_TRANS_TUPLE;
