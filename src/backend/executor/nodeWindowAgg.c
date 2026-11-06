@@ -3415,8 +3415,8 @@ ignorenulls_getfuncarginframe(WindowObject winobj, int argno,
 	Datum		datum;
 	int64		abs_pos;
 	int64		mark_pos;
-	int			notnull_offset;
-	int			notnull_relpos;
+	int64		notnull_offset;
+	int64		notnull_relpos;
 	int			forward;
 
 	Assert(WindowObjectIsValid(winobj));
@@ -3425,7 +3425,7 @@ ignorenulls_getfuncarginframe(WindowObject winobj, int argno,
 	slot = winstate->temp_slot_1;
 	datum = (Datum) 0;
 	notnull_offset = 0;
-	notnull_relpos = abs(relpos);
+	notnull_relpos = pg_abs_s32(relpos);
 
 	switch (seektype)
 	{
@@ -3874,8 +3874,8 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 	int64		mark_pos;
 	Datum		datum;
 	bool		null_treatment;
-	int			notnull_offset;
-	int			notnull_relpos;
+	int64		notnull_offset;
+	int64		notnull_relpos;
 	int			forward;
 	bool		myisout;
 	bool		got_datum;
@@ -3924,7 +3924,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 
 	/* Prepare for loop */
 	notnull_offset = 0;
-	notnull_relpos = abs(relpos);
+	notnull_relpos = pg_abs_s32(relpos);
 	forward = relpos > 0 ? 1 : -1;
 	myisout = false;
 	got_datum = false;
