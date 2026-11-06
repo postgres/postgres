@@ -198,17 +198,9 @@ StartupDecodingContext(List *output_plugin_options,
 			/* Need a modifiable copy */
 			rawstring = pstrdup(output_plugin_libraries_string);
 
+			/* The check_hook should have already handled syntax errors. */
 			if (!SplitGUCList(rawstring, ',', &elemlist))
-			{
-				/* syntax error in list */
-				ereport(LOG,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("invalid list syntax in parameter \"%s\"",
-								"output_plugin_libraries")));
-
-				list_free(elemlist);
-				elemlist = NIL;
-			}
+				elog(ERROR, "internal error: invalid output_plugin_libraries syntax after check_hook");
 
 			foreach(lc, elemlist)
 			{

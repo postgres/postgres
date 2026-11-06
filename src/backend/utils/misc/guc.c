@@ -236,6 +236,7 @@ static bool check_recovery_target_lsn(char **newval, void **extra, GucSource sou
 static void assign_recovery_target_lsn(const char *newval, void *extra);
 static bool check_primary_slot_name(char **newval, void **extra, GucSource source);
 static bool check_default_with_oids(bool *newval, void **extra, GucSource source);
+static bool check_output_plugin_libraries(char **newval, void **extra, GucSource source);
 
 /* Private functions in guc-file.l that need to be called from guc.c */
 static ConfigVariable *ProcessConfigFileInternal(GucContext context,
@@ -4622,7 +4623,7 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&output_plugin_libraries_string,
 		"pgoutput, test_decoding",
-		NULL, NULL, NULL
+		check_output_plugin_libraries, NULL, NULL
 	},
 
 	/* End-of-list marker */
@@ -12630,6 +12631,38 @@ check_default_with_oids(bool *newval, void **extra, GucSource source)
 	}
 
 	return true;
+}
+
+static bool
+check_output_plugin_libraries(char **newval, void **extra, GucSource source)
+{
+	char	   *copy;
+	List	   *components;
+	bool		ok = true;
+
+	copy = guc_strdup(LOG, *newval);
+	if (!copy)
+		return false;
+
+	/*
+	 * XXX SplitGUCList won't respect guc_malloc requirements, but this is
+	 * consistent with other check_hook implementations...
+	 */
+	if (!SplitGUCList(copy, ',', &components))
+	{
+		GUC_check_errdetail("List syntax is invalid.");
+		ok = false;
+	}
+
+	/*
+	 * Like with related GUC_LIST_QUOTE variables, we check only syntax here
+	 * and not the existence of the plugins themselves.
+	 */
+
+	list_free(components);
+	free(copy);
+
+	return ok;
 }
 
 #include "guc-file.c"
