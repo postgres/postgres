@@ -53,6 +53,10 @@ LINE 1: SET search_path = null, null;
 SET enable_seqscan = null;  -- error
 ERROR:  NULL is an invalid value for enable_seqscan
 RESET search_path;
+-- Check syntax validation of output_plugin_libraries
+SELECT set_config('output_plugin_libraries', 'pgoutput,', true);
+ERROR:  invalid value for parameter "output_plugin_libraries": "pgoutput,"
+DETAIL:  List syntax is invalid.
 -- SET LOCAL has no effect outside of a transaction
 SET LOCAL vacuum_cost_delay TO 50;
 WARNING:  SET LOCAL can only be used in transaction blocks

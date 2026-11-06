@@ -2326,6 +2326,7 @@
   flags => 'GUC_LIST_INPUT | GUC_LIST_QUOTE | GUC_SUPERUSER_ONLY',
   variable => 'output_plugin_libraries_string',
   boot_val => '"pgoutput, test_decoding"',
+  check_hook => 'check_output_plugin_libraries',
 },
 
 { name => 'parallel_leader_participation', type => 'bool', context => 'PGC_USERSET', group => 'RESOURCES_WORKER_PROCESSES',
