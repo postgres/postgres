@@ -1462,6 +1462,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->append_rel_list = NIL;
 	subroot->row_identity_vars = NIL;
 	subroot->rowMarks = NIL;
+	subroot->join_alias_phvs = NIL;
 	memset(subroot->upper_rels, 0, sizeof(subroot->upper_rels));
 	memset(subroot->upper_targets, 0, sizeof(subroot->upper_targets));
 	subroot->processed_groupClause = NIL;
@@ -1570,12 +1571,13 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 
 	/*
 	 * Adjust level-0 varnos in subquery so that we can append its rangetable
-	 * to upper query's.  We have to fix the subquery's append_rel_list as
-	 * well.
+	 * to upper query's.  We have to fix the subquery's append_rel_list and
+	 * join_alias_phvs as well.
 	 */
 	rtoffset = list_length(parse->rtable);
 	OffsetVarNodes((Node *) subquery, rtoffset, 0);
 	OffsetVarNodes((Node *) subroot->append_rel_list, rtoffset, 0);
+	OffsetVarNodes((Node *) subroot->join_alias_phvs, rtoffset, 0);
 
 	/*
 	 * Upper-level vars in subquery are now one level closer to their parent
@@ -1583,6 +1585,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 */
 	IncrementVarSublevelsUp((Node *) subquery, -1, 1);
 	IncrementVarSublevelsUp((Node *) subroot->append_rel_list, -1, 1);
+	IncrementVarSublevelsUp((Node *) subroot->join_alias_phvs, -1, 1);
 
 	/*
 	 * The subquery's targetlist items are now in the appropriate form to
@@ -1711,6 +1714,14 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 */
 	root->append_rel_list = list_concat(root->append_rel_list,
 										subroot->append_rel_list);
+
+	/*
+	 * Also add the PHVs made while flattening the subquery's join alias Vars,
+	 * so that the parent's flattening of the rest of the subquery reuses them
+	 * rather than making new PHVs with different phids.
+	 */
+	root->join_alias_phvs = list_concat(root->join_alias_phvs,
+										subroot->join_alias_phvs);
 
 	/*
 	 * We don't have to do the equivalent bookkeeping for outer-join info,

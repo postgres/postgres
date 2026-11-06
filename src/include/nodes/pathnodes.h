@@ -495,6 +495,9 @@ struct PlannerInfo
 	/* list of PlaceHolderInfos */
 	List	   *placeholder_list;
 
+	/* PHVs made by flatten_join_alias_vars, with phlevelsup = 0 */
+	List	   *join_alias_phvs;
+
 	/* list of AggClauseInfos */
 	List	   *agg_clause_list;
 
