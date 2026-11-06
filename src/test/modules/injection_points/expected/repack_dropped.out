@@ -49,3 +49,8 @@ id|fits_in_one_block
  3|t                
 (3 rows)
 
+injection_points_detach
+-----------------------
+                       
+(1 row)
+
