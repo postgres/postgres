@@ -270,7 +270,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-P <replaceable>plugin</replaceable></option></term>
+      <term id="app-pgrecvlogical-option-plugin"><option>-P <replaceable>plugin</replaceable></option></term>
       <term><option>--plugin=<replaceable>plugin</replaceable></option></term>
       <listitem>
        <para>
