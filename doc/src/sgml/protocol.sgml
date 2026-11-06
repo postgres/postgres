@@ -2084,6 +2084,16 @@ SELCT 1/0;<!-- this typo is intentional -->
     server.
    </para>
 
+   <note>
+    <para>
+     The bearer token is sent across the connection, as part of the client
+     initial response, and grants access to the database like a clear-text
+     password. On an unencrypted connection it can be captured by network
+     sniffing. For this reason <literal>OAUTHBEARER</literal> should only be
+     used over SSL connections.
+    </para>
+   </note>
+
    <para>
     <literal>OAUTHBEARER</literal> does not support channel binding, and there
     is no "OAUTHBEARER-PLUS" mechanism. This mechanism does not make use of
