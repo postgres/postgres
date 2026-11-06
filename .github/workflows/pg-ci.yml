@@ -40,14 +40,6 @@ env:
   # concurrent jobs and retrying older runs have a chance of working.
   CLONE_DEPTH: 500
 
-  # At the moment all jobs use 4vcore runners, and none seems to benefit from
-  # increasing concurrency further.
-  BUILD_JOBS: 4
-
-  # It's possible that some jobs benefit from an increased test concurrency,
-  # but a default of 4 is a safe bet. Individual jobs can override.
-  TEST_JOBS: 4
-
   CCACHE_MAXSIZE: "250M"
   CCACHE_DIR: ${{ github.workspace }}/ccache_dir
 
@@ -215,10 +207,18 @@ jobs:
       - &nix_sysinfo_step
         name: sysinfo
         run: |
-          id
-          uname -a
+          echo "Number of cores: " $(nproc || sysctl hw.physicalcpu hw.logicalcpu)
+
+          echo "id: $(id)"
+          echo "uname: $(uname -a)"
+
+          echo ::group::ulimit
           ulimit -a -H && ulimit -a -S
+          echo ::endgroup::
+
+          echo ::group::env
           env
+          echo ::endgroup::
 
       - name: Parse ci-os-only
         id: os
@@ -352,7 +352,7 @@ jobs:
       - name: Build
         shell: *su_postgres_shell
         run: &ninja_build_cmd |
-          ninja -C build -j${{env.BUILD_JOBS}} ${{env.MBUILD_TARGET}}
+          ninja -C build ${{env.MBUILD_TARGET}}
           ninja -C build -t missingdeps
 
       # Decide if it's worth uploading a new version of the ccache cache. If
@@ -405,7 +405,7 @@ jobs:
           meson test ${{env.MTEST_ARGS}} --suite setup --logbase setup || exit 1
           echo ::endgroup::
 
-          meson test ${{env.MTEST_ARGS}} --num-processes ${{env.TEST_JOBS}} --no-suite setup ${{env.MTEST_TARGET}}
+          meson test ${{env.MTEST_ARGS}} --no-suite setup ${{env.MTEST_TARGET}}
 
       - &linux_collect_cores_step
         name: Core backtraces
@@ -511,7 +511,7 @@ jobs:
       - name: Build
         shell: *su_postgres_shell
         run: |
-          make -s -j${BUILD_JOBS} world-bin
+          make -s -j$(nproc) world-bin
 
       - *ccache_decide_save_step
       - *ccache_save_step
@@ -519,7 +519,7 @@ jobs:
       - name: Test world
         shell: *su_postgres_shell
         run: |
-          make -s ${CHECK} ${CHECKFLAGS} -j${TEST_JOBS}
+          make -s ${CHECK} ${CHECKFLAGS} -j$(nproc)
 
       - *linux_collect_cores_step
       - *upload_logs_step
@@ -611,7 +611,7 @@ jobs:
           build/tmp_install/usr/local/pgsql/bin/pg_ctl -c -o '-c fsync=off' -D build/runningcheck -l build/testrun/runningcheck.log start
 
           # Run the tests supporting running against an already running
-          meson test ${{env.MTEST_ARGS}} --num-processes ${{env.TEST_JOBS}} --setup running
+          meson test ${{env.MTEST_ARGS}} --setup running
 
           build/tmp_install/usr/local/pgsql/bin/pg_ctl -D build/runningcheck stop
 
@@ -893,9 +893,18 @@ jobs:
 
       - name: Sysinfo
         run: |
+          echo Number of logical processors: %NUMBER_OF_PROCESSORS%
+
+          echo codepage:
           chcp
+
+          echo ::group::systeminfo
           systeminfo
+          echo ::endgroup::
+
+          echo ::group::env
           set
+          echo ::endgroup::
 
       # The TAP tests build an initdb template under build/tmp_install and
       # then `robocopy` it into per-test data directories. Robocopy with the
@@ -1203,7 +1212,7 @@ jobs:
             build
           echo "::endgroup::"
 
-          ninja -C build --quiet -j${{env.BUILD_JOBS}} ${{env.MBUILD_TARGET}}
+          ninja -C build --quiet ${{env.MBUILD_TARGET}}
 
       # gcc, cassert on, dtrace off
       - name: gcc warnings + (cassert)
@@ -1281,7 +1290,7 @@ jobs:
             build
           echo "::endgroup::"
 
-          ninja -C build --quiet -j${{env.BUILD_JOBS}} -k 0 \
+          ninja -C build --quiet -k 0 \
             headerscheck cpluspluscheck
 
       - *ccache_decide_save_step
