@@ -624,3 +624,14 @@ CREATE VIEW json_table_view9 AS SELECT * from JSON_TABLE('"a"', '$' COLUMNS (a t
 \sv json_table_view9;
 
 DROP VIEW json_table_view8, json_table_view9;
+
+-- Collations must be assigned to expressions in the context item and in
+-- the PASSING arguments (bug #19768)
+SELECT * FROM JSON_TABLE(jsonb_build_object('k', ROW(1, 2) < ROW(3, 4)), '$'
+	COLUMNS (a bool PATH '$.k'));
+SELECT * FROM JSON_TABLE(jsonb_build_object('k', 'a' < 'b' COLLATE "C"), '$'
+	COLUMNS (a bool PATH '$.k'));
+SELECT * FROM JSON_TABLE(jsonb '{}', '$' PASSING 'a' < 'b' COLLATE "C" AS x
+	COLUMNS (a bool PATH '$x'));
+SELECT * FROM JSON_TABLE(jsonb '{}', '$' PASSING ROW(1, 2) < ROW(3, 4) AS x
+	COLUMNS (a bool PATH '$x'));
