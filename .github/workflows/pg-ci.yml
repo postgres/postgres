@@ -1053,8 +1053,6 @@ jobs:
       TAR: "c:/windows/system32/tar.exe"
 
       MSYS: winjitdebug
-      CHERE_INVOKING: 1
-      MSYSTEM: UCRT64
 
       # Keep -Dnls explicitly disabled, as the number of files it creates
       # causes a noticeable slowdown.
@@ -1065,55 +1063,51 @@ jobs:
       CCACHE_SLOPPINESS: pch_defines,time_macros
       CCACHE_DEPEND: 1
 
-      # We don't want using an msys bash to "hide" all the other already
-      # installed tools, that would require us to install tools into msys that
-      # are already available otherwise.
-      MSYS2_PATH_TYPE: inherit
-
     defaults:
       run:
-        shell: 'D:\msys64\usr\bin\bash.exe --login -eo pipefail "{0}"'
+        shell: msys2 {0}
 
     steps:
       - *windows_disable_defender_step
       - *window_setup_hosts_step
       - *checkout_step
 
-      # Relocate the preinstalled MSYS2 tree from C:\ (slow system disk) to
-      # D:\ (faster ephemeral data disk). Every subsequent MSYS2 step uses
-      # D:\msys64\usr\bin\bash.exe via the job's `defaults.run.shell`.
+      # The pre-existing msys install is on C:\, often a rather slow system
+      # disk, whereas the workspace is often on a faster, ephemeral disk.
+      # Using the pre-existing msys would often increase the total runtime of
+      # this task by ~15 minutes.
       #
-      # This reduces the total runtime of this task by ~15 minutes.
-      #
-      # robocopy returns 0-7 on success (with various "files copied" bits
-      # set) and 8+ on real failure, so we have to translate its exit code.
-      - name: Relocate MSYS2 to D
-        shell: pwsh
-        run: |
-          robocopy C:\msys64 D:\msys64 /E /NJS /NJH /NFL /NDL /NP
-          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE }
-          exit 0
-
-      - name: Setup MSYS2
-        run: |
-          # ${MINGW_PACKAGE_PREFIX} is an environment variable used in the
-          # MSYS2. It dynamically expands to the correct prefix for the active
-          # shell environment.
-          pacman -S --noconfirm --needed  --asdeps \
-            bison flex \
-            ${MINGW_PACKAGE_PREFIX}-ccache \
-            ${MINGW_PACKAGE_PREFIX}-gcc \
-            ${MINGW_PACKAGE_PREFIX}-icu \
-            ${MINGW_PACKAGE_PREFIX}-libxml2 \
-            ${MINGW_PACKAGE_PREFIX}-libxslt \
-            ${MINGW_PACKAGE_PREFIX}-lz4 \
-            ${MINGW_PACKAGE_PREFIX}-make \
-            ${MINGW_PACKAGE_PREFIX}-meson \
-            ${MINGW_PACKAGE_PREFIX}-perl \
-            ${MINGW_PACKAGE_PREFIX}-pkgconf \
-            ${MINGW_PACKAGE_PREFIX}-readline \
-            ${MINGW_PACKAGE_PREFIX}-zlib \
-            ${MINGW_PACKAGE_PREFIX}-zstd
+      # Instead we use msys2/setup-msys2 to set up our own install. That's
+      # faster than moving the install from C:\, and also works when the
+      # workspace is not on a separate disk. setup-msys2 automatically chooses
+      # a path relative to the temp dir, which is not on C:\ for GitHub hosted
+      # runners.
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
+        with:
+          msystem: UCRT64
+          # We don't want using an msys bash to "hide" all the other already
+          # installed tools, that would require us to install tools into msys
+          # that are already available otherwise.
+          path-type: inherit
+          update: true
+          install: >-
+            bison flex
+          # name:p means MINGW_PACKAGE_PREFIX-only
+          pacboy: >-
+            ccache:p
+            gcc:p
+            icu:p
+            libxml2:p
+            libxslt:p
+            lz4:p
+            make:p
+            meson:p
+            perl:p
+            pkgconf:p
+            readline:p
+            zlib:p
+            zstd:p
 
       - *nix_sysinfo_step
 
