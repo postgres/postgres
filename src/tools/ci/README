@@ -75,3 +75,24 @@ messages. Currently the following controls are available:
 
   Only runs CI on operating systems specified. This can be useful when
   addressing portability issues affecting only a subset of platforms.
+
+
+Controlling which runners CI uses
+=================================
+
+By default each job runs on a GitHub-hosted runner appropriate for its
+operating system. This can be overridden on a per-operating-system basis by
+creating repository or organization variables, at
+https://github.com/<username>/<reponame>/settings/variables/actions
+
+This is useful to run on faster GitHub-hosted runners, or on self-hosted
+runners.
+
+The following variables are recognized. If a variable is unset or empty, a
+default runner suitable for that operating system is used:
+
+- PG_CI_RUNS_ON_LINUX:   Linux jobs, including SanityCheck and CompilerWarnings
+- PG_CI_RUNS_ON_WINDOWS: the Windows (VS) and MinGW jobs
+- PG_CI_RUNS_ON_MACOS:   the macOS job
+- PG_CI_RUNS_ON_SETUP:   the lightweight bookkeeping jobs (opt-in warning and
+                         job setup)
