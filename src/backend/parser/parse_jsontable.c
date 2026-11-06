@@ -137,6 +137,14 @@ transformJsonTable(ParseState *pstate, JsonTable *jt)
 	tf->docexpr = transformExpr(pstate, (Node *) jfe, EXPR_KIND_FROM_FUNCTION);
 
 	/*
+	 * Assign collations now, because assign_query_collations() doesn't look
+	 * into the range table.  This must happen before the PASSING arguments
+	 * are copied into tf->passingvalexprs below, so that the copies carry the
+	 * collations too.
+	 */
+	assign_expr_collations(pstate, tf->docexpr);
+
+	/*
 	 * Create a JsonTablePlan that will generate row pattern that becomes
 	 * source data for JSON path expressions in jt->columns.  This also adds
 	 * the columns' transformed JsonExpr nodes into tf->colvalexprs.
