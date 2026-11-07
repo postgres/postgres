@@ -304,6 +304,23 @@ large analytical queries to manually enable <acronym>JIT</acronym>.
 </listitem>
 
 <!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2026-11-02 [8628df889] Make parallel vacuum processes share the cost limit.
+-->
+
+<listitem>
+<para>
+Change <link linkend="parallel-vacuum">parallel vacuum</link> leaders and workers to share the cost-based vacuum delay limit (Bharath Rupireddy)
+<ulink url="&commit_baseurl;8628df889">&sect;</ulink>
+</para>
+
+<para>
+Previously each worker process slept based only on the cost it incurred itself, so a parallel vacuum could consume several times the budget set by <link linkend="guc-vacuum-cost-limit"><varname>vacuum_cost_limit</varname></link>.
+With this change, <link linkend="sql-vacuum"><command>VACUUM</command></link> with parallel workers and cost-based delay enabled might run slower than in previous releases.
+</para>
+</listitem>
+
+<!--
 Author: Amit Kapila <akapila@postgresql.org>
 2025-11-18 [3edaf29fa] Rename two columns in pg_stat_subscription_stats.
 -->
