@@ -44,7 +44,15 @@
  * List of types needed for JITing. These have to be non-static, otherwise
  * clang/LLVM will omit them.  As this file will never be linked into
  * anything, that's harmless.
+ *
+ * They are also excluded from AddressSanitizer instrumentation, so that they
+ * keep the types they are declared with (clang adds a wrapper struct with a
+ * redzone when using address sanitizer).  This file is only ever compiled by
+ * clang, so a clang pragma is fine here.
  */
+#pragma clang attribute push (pg_attribute_no_sanitize_address(), \
+							  apply_to = variable(is_global))
+
 PGFunction	TypePGFunction;
 size_t		TypeSizeT;
 Datum		TypeDatum;
@@ -70,6 +78,8 @@ MinimalTupleTableSlot StructMinimalTupleTableSlot;
 TupleDescData StructTupleDescData;
 PlanState	StructPlanState;
 MinimalTupleData StructMinimalTupleData;
+
+#pragma clang attribute pop
 
 
 /*
