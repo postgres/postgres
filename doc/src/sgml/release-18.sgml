@@ -425,7 +425,7 @@ Branch: REL_14_STABLE [1fcd7dd80] 2026-10-21 18:06:00 +0900
      </para>
 
      <para>
-      Depending on the plan shape selected, such cases could could produce
+      Depending on the plan shape selected, such cases could produce
       wrong results, or could fail with <quote>variable not found in
       subplan target lists</quote>.
      </para>
@@ -1247,7 +1247,7 @@ Branch: REL_15_STABLE [0496d85f9] 2026-10-30 12:31:39 +0700
 Branch: REL_14_STABLE [9e3077ff4] 2026-10-30 12:31:39 +0700
 -->
      <para>
-      Fix edge-case error in SP-GiST quad tree <literal>&lt;@</literal>
+      Fix edge-case error in SP-GiST quad-tree <literal>&lt;@</literal>
       searches (John Naylor)
       <ulink url="&commit_baseurl;03ba8e591">&sect;</ulink>
      </para>
@@ -1317,7 +1317,7 @@ Branch: REL_14_STABLE [05556bdf9] 2026-08-17 18:09:07 -0400
 -->
      <para>
       Disallow zero-length lexemes and out-of-range phrase distance values
-      during binary input of <type>tsquery</type> values (Tom Lane)
+      in binary input of <type>tsquery</type> values (Tom Lane)
       <ulink url="&commit_baseurl;69915dac4">&sect;</ulink>
      </para>
 
@@ -1638,7 +1638,8 @@ Branch: REL_14_STABLE [a44a4f1b6] 2026-10-27 17:24:02 -0400
       constructs in a view's <literal>FROM</literal> clause; these need
       to be wrapped in a no-op <literal>CAST</literal>.
       These errors could prevent dump restoration due to a syntax error in
-      a view, or even cause views to be parsed as something unintended.
+      a view, or cause reloaded views to be parsed as something different
+      from before.
      </para>
     </listitem>
 
@@ -1704,9 +1705,25 @@ Branch: REL_18_STABLE [35f60e5ce] 2026-10-27 19:47:09 +1300
 
      <para>
       This was already rejected by plain <command>CREATE TABLE</command>,
-      but cases such as <command>CREATE TABLE LIKE</command> missed making
-      the check, potentially allowing a partition to contain null values
-      when it should not.
+      but cases such as <command>CREATE TABLE LIKE</command> missed
+      checking copied constraints, potentially allowing a partition to
+      contain null values when it should not.
+     </para>
+
+     <para>
+      If you suspect this might have happened in your database, issue this
+      command to find broken constraints:
+<programlisting>
+SELECT conrelid::regclass, conname
+FROM pg_constraint
+WHERE contype = 'n' AND connoinherit
+      AND conrelid IN (SELECT oid FROM pg_class WHERE relkind = 'p');
+</programlisting>
+      Unwanted constraints can be removed with <literal>ALTER TABLE
+      ... DROP CONSTRAINT ...</literal>, while ones that are wanted should
+      be repaired with <literal>ALTER TABLE ... ALTER CONSTRAINT
+      ... INHERIT</literal>.  The latter command will fail if any null
+      values are present in the table's partitions.
      </para>
     </listitem>
 
@@ -2038,9 +2055,10 @@ Branch: REL_18_STABLE [dcf112bd4] 2026-11-06 00:49:07 +0100
      <para>
       This addition ensures that changes
       to <varname>oauth_validator_libraries</varname> are enforced
-      immediately.  Previously, if such a change made an existing oauth
-      line in <filename>pg_hba.conf</filename> invalid, the new setting
-      was not enforced until that situation was fixed.
+      immediately.  Previously, if such a change made an
+      existing <literal>oauth</literal> line
+      in <filename>pg_hba.conf</filename> invalid, the new setting was not
+      enforced until that situation was fixed.
      </para>
     </listitem>
 
@@ -2519,6 +2537,26 @@ Branch: REL_17_STABLE [ec756e591] 2026-11-02 00:19:44 +0900
 
     <listitem>
 <!--
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: master [cedd2cec7] 2026-10-14 19:55:24 +0900
+Branch: REL_19_STABLE [97fa9bdc5] 2026-10-14 19:56:13 +0900
+Branch: REL_18_STABLE [f47c63d7a] 2026-10-14 19:56:40 +0900
+Branch: REL_17_STABLE [4c674b952] 2026-10-14 19:56:45 +0900
+-->
+     <para>
+      Fix incorrect size estimates for incremental backups
+      (Daria Lepikhova)
+      <ulink url="&commit_baseurl;f47c63d7a">&sect;</ulink>
+     </para>
+
+     <para>
+      This problem affected progress reporting
+      in <application>pg_basebackup</application> and other places.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Amit Kapila <akapila@postgresql.org>
 Branch: master [fc1900915] 2026-11-05 09:49:17 +0530
 Branch: REL_19_STABLE [1e1a4821a] 2026-11-05 09:42:16 +0530
@@ -2933,6 +2971,7 @@ Branch: REL_16_STABLE [ec8aaf845] 2026-08-26 12:04:03 -0700
 Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [4f89416c9] 2026-10-30 17:29:32 +0900
 Branch: REL_19_STABLE [4b93eec05] 2026-10-30 17:29:35 +0900
+Branch: REL_18_STABLE [4bcd0d31c] 2026-11-09 06:05:31 +0900
 Branch: REL_17_STABLE [8b517a30c] 2026-10-30 17:29:43 +0900
 Branch: REL_16_STABLE [0cea8f85e] 2026-10-30 17:29:50 +0900
 Branch: REL_15_STABLE [b2ca62b1c] 2026-10-30 17:29:54 +0900
@@ -2941,6 +2980,7 @@ Branch: REL_14_STABLE [6ffd2f91b] 2026-10-30 17:29:58 +0900
      <para>
       Fix possible null-pointer dereference when building extended
       statistics on expressions (Shihao Zhong, Michael Paquier)
+      <ulink url="&commit_baseurl;4bcd0d31c">&sect;</ulink>
      </para>
 
      <para>
@@ -3243,7 +3283,7 @@ Branch: REL_14_STABLE [f1204c1a7] 2026-08-14 12:14:24 -0400
      </para>
 
      <para>
-      Since the fix for CVE-2026-6464, <application>psql</application>
+      After the fix for CVE-2026-6464, <application>psql</application>
       would reject multiple <command>COPY FROM STDIN</command> commands
       appearing in a single string, because it was not expecting more than
       one <command>COPY</command> operation to occur.
@@ -3311,21 +3351,6 @@ Branch: REL_14_STABLE [e8bc40d29] 2026-08-19 12:39:30 +0900
 
     <listitem>
 <!--
-Author: Fujii Masao <fujii@postgresql.org>
-Branch: master [cedd2cec7] 2026-10-14 19:55:24 +0900
-Branch: REL_19_STABLE [97fa9bdc5] 2026-10-14 19:56:13 +0900
-Branch: REL_18_STABLE [f47c63d7a] 2026-10-14 19:56:40 +0900
-Branch: REL_17_STABLE [4c674b952] 2026-10-14 19:56:45 +0900
--->
-     <para>
-      Fix <application>pg_basebackup</application>'s incorrect progress
-      reporting for incremental backups (Daria Lepikhova)
-      <ulink url="&commit_baseurl;f47c63d7a">&sect;</ulink>
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 Branch: master [fcfd24560] 2026-10-26 10:55:13 +0100
 Branch: REL_19_STABLE [48a1c38e8] 2026-10-26 10:56:05 +0100
@@ -3365,8 +3390,7 @@ Branch: REL_14_STABLE [a96a9e170] 2026-10-02 17:02:50 +0900
       Formerly <application>pg_dump</application> would
       emit <literal>ALTER INDEX ... SET STATISTICS</literal> commands when
       needed for plain indexes, but not for indexes created
-      via <literal>UNIQUE</literal> or <literal>PRIMARY KEY</literal>
-      syntax.
+      via <literal>EXCLUDE</literal> constraints on expressions.
      </para>
     </listitem>
 
@@ -3499,26 +3523,6 @@ Branch: REL_14_STABLE [b1c44848c] 2026-10-15 12:06:00 +0300
 
     <listitem>
 <!--
-Author: Nathan Bossart <nathan@postgresql.org>
-Branch: REL_17_STABLE [e10dc5b85] 2026-10-06 14:32:42 -0500
-Branch: REL_16_STABLE [d45816c24] 2026-10-06 14:32:42 -0500
-Branch: REL_15_STABLE [a8e7b27e3] 2026-10-06 14:32:42 -0500
--->
-     <para>
-      Use a non-locking initial test in TAS_SPIN on AArch64
-      (Nathan Bossart)
-     </para>
-
-     <para>
-      This code change has been shown to improve performance on many-core
-      AArch64 machines while not hurting performance on smaller ones;
-      moreover, it avoids a performance regression with newer Linux
-      kernels.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [a36e2f7cd] 2026-09-30 17:28:14 -0400
 Branch: REL_19_STABLE [9e73b2095] 2026-09-30 17:28:14 -0400
@@ -3551,11 +3555,11 @@ Branch: REL_14_STABLE [d92c551e8] 2026-10-21 11:52:51 -0400
      </para>
 
      <para>
-      Canada's Northwest Territories will be on year-round UTC-06
+      Canada's Northwest Territories are on year-round UTC-06
       (effectively, permanent DST) beginning in November 2026.  This
       affects only America/Inuvik as the rest of the territory is covered
       by America/Edmonton, for which the equivalent change was released
-      in 2026c.  Similarly, Manitoba (America/Winnipeg) will move to
+      in 2026c.  Similarly, Manitoba (America/Winnipeg) moves to
       year-round UTC-05.  For now assume their TZ abbreviations will be
       CST and EST respectively.
      </para>
