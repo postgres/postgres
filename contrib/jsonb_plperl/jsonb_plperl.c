@@ -186,6 +186,7 @@ SV_to_JsonbValue(SV *in, JsonbInState *jsonb_state, bool is_elem)
 	check_stack_depth();
 
 	/* Dereference references recursively. */
+	plperl_materialize_sv(in);
 	while (in && SvROK(in))
 	{
 		/*
@@ -195,6 +196,7 @@ SV_to_JsonbValue(SV *in, JsonbInState *jsonb_state, bool is_elem)
 		 */
 		CHECK_FOR_INTERRUPTS();
 		in = SvRV(in);
+		plperl_materialize_sv(in);
 	}
 
 	if (!in)
