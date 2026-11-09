@@ -848,122 +848,52 @@ show_config_by_name_missing_ok(PG_FUNCTION_ARGS)
 Datum
 show_all_settings(PG_FUNCTION_ARGS)
 {
-	FuncCallContext *funcctx;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	struct config_generic **guc_vars;
 	int			num_vars;
-	TupleDesc	tupdesc;
-	int			call_cntr;
-	int			max_calls;
 	AttInMetadata *attinmeta;
-	MemoryContext oldcontext;
 
-	/* stuff done only on the first call of the function */
-	if (SRF_IS_FIRSTCALL())
+	/*
+	 * get_guc_variables() returns an array of pointers to the live GUC
+	 * entries, including placeholder entries.  Loading a module while the
+	 * scan is in progress can replace and free the placeholder entries of
+	 * that module's prefix, so a value-per-call SRF holding this array across
+	 * calls would read freed memory. So we use the materialize mode to build
+	 * the whole result in one call.
+	 */
+	InitMaterializedSRF(fcinfo, 0);
+
+	/* metadata needed to produce tuples from raw C strings */
+	attinmeta = TupleDescGetAttInMetadata(rsinfo->setDesc);
+
+	/* collect the variables, in sorted order */
+	guc_vars = get_guc_variables(&num_vars);
+
+	/*
+	 * The memory used to build each row is not freed until this SRF's context
+	 * is torn down. That is bounded by the number of GUCs, so resetting a
+	 * context per row is not worth the complication.
+	 */
+	for (int i = 0; i < num_vars; i++)
 	{
-		/* create a function context for cross-call persistence */
-		funcctx = SRF_FIRSTCALL_INIT();
-
-		/*
-		 * switch to memory context appropriate for multiple function calls
-		 */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
-		/*
-		 * need a tuple descriptor representing NUM_PG_SETTINGS_ATTS columns
-		 * of the appropriate types
-		 */
-		tupdesc = CreateTemplateTupleDesc(NUM_PG_SETTINGS_ATTS);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "unit",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "category",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "short_desc",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "extra_desc",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "context",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "vartype",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "source",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "min_val",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "max_val",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "enumvals",
-						   TEXTARRAYOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 13, "boot_val",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 14, "reset_val",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 15, "sourcefile",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 16, "sourceline",
-						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 17, "pending_restart",
-						   BOOLOID, -1, 0);
-
-		/*
-		 * Generate attribute metadata needed later to produce tuples from raw
-		 * C strings
-		 */
-		attinmeta = TupleDescGetAttInMetadata(tupdesc);
-		funcctx->attinmeta = attinmeta;
-
-		/* collect the variables, in sorted order */
-		guc_vars = get_guc_variables(&num_vars);
-
-		/* use user_fctx to remember the array location */
-		funcctx->user_fctx = guc_vars;
-
-		/* total number of tuples to be returned */
-		funcctx->max_calls = num_vars;
-
-		MemoryContextSwitchTo(oldcontext);
-	}
-
-	/* stuff done on every call of the function */
-	funcctx = SRF_PERCALL_SETUP();
-
-	guc_vars = (struct config_generic **) funcctx->user_fctx;
-	call_cntr = funcctx->call_cntr;
-	max_calls = funcctx->max_calls;
-	attinmeta = funcctx->attinmeta;
-
-	while (call_cntr < max_calls)	/* do when there is more left to send */
-	{
-		struct config_generic *conf = guc_vars[call_cntr];
+		struct config_generic *conf = guc_vars[i];
 		char	   *values[NUM_PG_SETTINGS_ATTS];
 		HeapTuple	tuple;
-		Datum		result;
 
 		/* skip if marked NO_SHOW_ALL or if not visible to current user */
 		if ((conf->flags & GUC_NO_SHOW_ALL) ||
 			!ConfigOptionIsVisible(conf))
-		{
-			call_cntr = ++funcctx->call_cntr;
 			continue;
-		}
 
 		/* extract values for the current variable */
 		GetConfigOptionValues(conf, (const char **) values);
 
-		/* build a tuple */
+		/* build a tuple and store it */
 		tuple = BuildTupleFromCStrings(attinmeta, values);
-
-		/* make the tuple into a datum */
-		result = HeapTupleGetDatum(tuple);
-
-		SRF_RETURN_NEXT(funcctx, result);
+		tuplestore_puttuple(rsinfo->setResult, tuple);
 	}
 
-	/* do when there is no more left */
-	SRF_RETURN_DONE(funcctx);
+	return (Datum) 0;
 }
 
 /*
