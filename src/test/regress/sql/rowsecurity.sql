@@ -826,6 +826,21 @@ INSERT INTO document VALUES (3, (SELECT cid from category WHERE cname = 'novel')
     ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle
     WHERE document.dlevel = 99 RETURNING did, dtitle;
 
+-- The USING policy clauses are checked before the WHERE quals of a view,
+-- as they are before the ON CONFLICT WHERE clause, so f_leak must not emit
+-- a NOTICE for an existing row that fails them
+CREATE VIEW leaky_document_view AS SELECT * FROM document WHERE f_leak(dtitle);
+INSERT INTO leaky_document_view VALUES (3, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = excluded.dtitle RETURNING did, dtitle;
+
+-- The view's quals are evaluated against an existing row that passes the
+-- USING policy clauses, so f_leak does emit a NOTICE here, even though the
+-- ON CONFLICT WHERE clause then rejects the update
+INSERT INTO leaky_document_view VALUES (1, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = excluded.dtitle WHERE leaky_document_view.dlevel = 99 RETURNING did, dtitle;
+
+DROP VIEW leaky_document_view;
+
 --
 -- MERGE
 --
