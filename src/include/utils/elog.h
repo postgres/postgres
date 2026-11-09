@@ -308,6 +308,9 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
  * pedantry; we have seen bugs from compilers improperly optimizing code
  * away when such a variable was not marked.  Beware that gcc's -Wclobbered
  * warnings are just about entirely useless for catching such oversights.
+ *
+ * If you modify these macros, check whether similar modifications are
+ * needed in plperl's PG_PERL_TRY and friends.
  *----------
  */
 #define PG_TRY()  \
@@ -409,6 +412,7 @@ extern void ThrowErrorData(ErrorData *edata);
 extern void pg_re_throw(void) pg_attribute_noreturn();
 
 extern char *GetErrorContextStack(void);
+extern bool HaveCompleteError(void);
 
 /* Hook for intercepting messages before they are sent to the server log */
 typedef void (*emit_log_hook_type) (ErrorData *edata);
