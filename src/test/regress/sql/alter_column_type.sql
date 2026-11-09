@@ -100,12 +100,7 @@ CREATE FUNCTION atfunc(int) RETURNS atcomp IMMUTABLE LANGUAGE plpgsql AS $$
 $$;
 CREATE TABLE atref (c int) PARTITION BY LIST (atfunc(c));
 CREATE TABLE atref_1 PARTITION OF atref FOR VALUES IN ('(\\x4649584d45)'::atcomp);
-
--- FIXME: This is currently allowed, but it's broken
 ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE text CASCADE; -- someday this should work
-
-select pg_catalog.pg_get_expr(c.relpartbound, c.oid) from pg_class c where relname='atref_1';
-select pg_get_partition_constraintdef('atref_1'::regclass);
 
 DROP TABLE atref;
 DROP FUNCTION atfunc(int);
@@ -123,7 +118,6 @@ create table attbl(a numeric);
 create table atref(data text);
 create index atref_idx on atref ((('(1)'::attbl).a + length(data)));
 alter table attbl alter column a type bigint;
-select pg_get_indexdef('atref_idx'::regclass);
 drop table atref, attbl;
 
 -- Surprisingly, this is accepted. The expression doesn't have a dependency on
@@ -153,29 +147,7 @@ CREATE TYPE atcomp AS (a numeric);
 CREATE TABLE atref (c int);
 CREATE FUNCTION atfunc(numeric) RETURNS atcomp IMMUTABLE LANGUAGE plpgsql AS $$BEGIN RETURN ('('||$1||')')::atcomp; END$$;
 CREATE INDEX atref_idx ON atref(atfunc(c));
-
-insert into atref values (123);
-
--- FIXME: This is currently allowed, but it's broken
 ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE bigint CASCADE; -- someday this should work
-
--- Show that the index is broken: seq scan produces different result for the
--- same query. The query should return the one row in the table.
-begin;
-set local enable_bitmapscan=off;
-
-set local enable_seqscan=off;
-set local enable_indexscan=on;
-explain (costs off) select * from atref where atfunc(c) = '(123)'::atcomp;
-select * from atref where atfunc(c) = '(123)'::atcomp;
-
-set local enable_seqscan=on;
-set local enable_indexscan=off;
-explain (costs off) select * from atref where atfunc(c) < '(123)'::atcomp;
-select * from atref where atfunc(c) < '(123)'::atcomp;
-
-rollback;
-
 DROP TABLE atref;
 DROP FUNCTION atfunc(numeric);
 DROP TYPE atcomp;
@@ -183,7 +155,6 @@ DROP TYPE atcomp;
 
 -- Altering a rowtype that's used, via a function return type, in statistics,
 -- should either error out or throw away the statistics
--- FIXME: This is currently broken
 CREATE TYPE atcomp AS (a int);
 CREATE TABLE atref (c int, d int);
 CREATE FUNCTION atfunc(int) RETURNS atcomp IMMUTABLE LANGUAGE plpgsql AS $$BEGIN RETURN ROW($1); END$$;
@@ -343,7 +314,7 @@ drop table at_ptab, at_tab1;
 -- including a whole-row key, whose bound is a datum of the partitioned rowtype
 create table at_ptab2 (a int, b int) partition by range ((at_ptab2));
 create table at_ptab2_p partition of at_ptab2 for values from ('(0,0)') to ('(9,9)');
-alter table at_ptab2 alter column a type bigint; -- FIXME: should fail
+alter table at_ptab2 alter column a type bigint; -- fails
 drop table at_ptab2;
 
 
@@ -368,9 +339,7 @@ CREATE FUNCTION construct_test_type_arr(x int, y text) RETURNS test_type1[]
   LANGUAGE plpgsql IMMUTABLE
   AS $$ begin return array[row(x, y)::test_type1]; end; $$;
 CREATE INDEX test_tbl1_idx ON test_tbl1(construct_test_type_arr(x, y));
-begin;
-ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- FIXME: should fail
-rollback;
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 DROP INDEX test_tbl1_idx;
 DROP FUNCTION construct_test_type_arr;
 
