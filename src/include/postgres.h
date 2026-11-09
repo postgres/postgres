@@ -76,8 +76,9 @@ typedef struct varatt_external
 }			varatt_external;
 
 /*
- * These macros define the "saved size" portion of va_extinfo.  Its remaining
- * two high-order bits identify the compression method.
+ * These macros define the "saved size" portion of va_extinfo.  This value has
+ * been chosen to avoid integer wraparound; see detoast_external_attr().  The
+ * remaining two high-order bits identify the compression method.
  */
 #define VARLENA_EXTSIZE_BITS	30
 #define VARLENA_EXTSIZE_MASK	((1U << VARLENA_EXTSIZE_BITS) - 1)
