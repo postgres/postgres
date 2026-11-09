@@ -105,6 +105,28 @@ ERROR:  cannot specify statistics kinds when building univariate statistics
 CREATE STATISTICS tst (ndistinct) ON x, w from ext_stats_test;
 ERROR:  cannot create multivariate statistics on column "w"
 DETAIL:  The type xid has no default btree operator class.
+-- expressions of a pseudo-type (e.g. an anonymous record) not supported, as
+-- such values cannot be interpreted in another session
+CREATE STATISTICS tst ON (row(x, y)) FROM ext_stats_test;
+ERROR:  expression has pseudo-type record
+CREATE STATISTICS tst ON (array[row(x, y)]) FROM ext_stats_test;
+ERROR:  expression has pseudo-type record[]
+-- nor are types containing a pseudo-type
+CREATE STATISTICS tst ON (array[NULL::pg_statistic]) FROM ext_stats_test;
+ERROR:  column "stavalues1" has pseudo-type anyarray
+CREATE STATISTICS tst ON (array[x::cstring]) FROM ext_stats_test;
+ERROR:  expression has pseudo-type cstring
+-- expressions without a derivable collation not supported
+CREATE TABLE ext_stats_coll (a text COLLATE "C", b text COLLATE "POSIX");
+CREATE STATISTICS tst ON ((a || b)) FROM ext_stats_coll;
+ERROR:  no collation was derived for expression with collatable type text
+HINT:  Use the COLLATE clause to set the collation explicitly.
+DROP TABLE ext_stats_coll;
+-- but an expression of a named composite type is fine
+CREATE TYPE ext_stats_rowtype AS (x text, y int);
+CREATE STATISTICS tst ON (row(x, y)::ext_stats_rowtype) FROM ext_stats_test;
+DROP STATISTICS tst;
+DROP TYPE ext_stats_rowtype;
 DROP TABLE ext_stats_test;
 -- Ensure stats are dropped sanely, and test IF NOT EXISTS while at it
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
