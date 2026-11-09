@@ -221,6 +221,11 @@ ALTER USER MAPPING FOR public SERVER testserver1
 ALTER USER MAPPING FOR public SERVER testserver1
 	OPTIONS (ADD oauth_client_id 'myID');
 
+-- Nor is sslkeylogfile
+ALTER SERVER testserver1 OPTIONS (ADD sslkeylogfile './noexist/log');
+ALTER USER MAPPING FOR public SERVER testserver1
+	OPTIONS (ADD sslkeylogfile './noexist/log');
+
 ALTER FOREIGN TABLE ft1 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft2 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 OPTIONS (column_name 'C 1');

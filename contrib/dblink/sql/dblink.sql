@@ -133,6 +133,15 @@ SELECT *
 FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
+-- Some options are prohibited outright
+SELECT *
+FROM dblink(connection_parameters() || ' sslkeylogfile=./noexist/log', 'SELECT * FROM foo')
+	AS t(a int, b text, c text[]);
+SELECT dblink_exec(connection_parameters() || ' sslkeylogfile=./noexist/log', 'CREATE TABLE foo2(a int)');
+
+SELECT dblink_connect(connection_parameters() || ' sslkeylogfile=./noexist/log');
+SELECT dblink_connect(connection_parameters() || ' oauth_client_id=abcd');
+
 -- The first-level connection's backend will crash on exit given OpenLDAP
 -- [2.4.24, 2.4.31].  We won't see evidence of any crash until the victim
 -- process terminates and the postmaster responds.  If process termination
@@ -555,15 +564,23 @@ ALTER USER MAPPING FOR public SERVER fdtest
 ALTER USER MAPPING FOR public SERVER fdtest
 	OPTIONS (ADD oauth_client_id 'myID');
 
+-- Nor is sslkeylogfile
+ALTER SERVER fdtest OPTIONS (ADD sslkeylogfile './noexist/log');
+ALTER USER MAPPING FOR public SERVER fdtest
+	OPTIONS (ADD sslkeylogfile './noexist/log');
+
 GRANT USAGE ON FOREIGN SERVER fdtest TO regress_dblink_user;
 GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO regress_dblink_user;
 
 SET SESSION AUTHORIZATION regress_dblink_user;
--- should fail
+-- should fail (needs a password)
 SELECT dblink_connect('myconn', 'fdtest');
 -- should succeed
 SELECT dblink_connect_u('myconn', 'fdtest');
 SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[]);
+
+-- but dblink_connect_u still may not bypass general parameter restrictions
+SELECT dblink_connect_u('failconn', connection_parameters() || ' sslkeylogfile=./noexist/log');
 
 \c - -
 REVOKE USAGE ON FOREIGN SERVER fdtest FROM regress_dblink_user;

@@ -85,6 +85,30 @@ CREATE SUBSCRIPTION regress_testsub5 CONNECTION 'i_dont_exist=param' PUBLICATION
 -- connecting, so this is reliable and safe)
 CREATE SUBSCRIPTION regress_testsub5 CONNECTION 'port=-1' PUBLICATION testpub;
 
+-- Unsafe options are permitted (but connections will fail).
+CREATE SUBSCRIPTION regress_unsafesub CONNECTION 'dbname=regress_doesnotexist sslkeylogfile=./noexist/log' PUBLICATION foo WITH (connect = false);
+ALTER SUBSCRIPTION regress_unsafesub CONNECTION 'dbname=regress_doesnotexist sslkeylogfile=./noexist/log';
+
+-- DROP performs a connection too, which should be prevented until we fix it.
+DROP SUBSCRIPTION regress_unsafesub;
+ALTER SUBSCRIPTION regress_unsafesub SET (slot_name = NONE);
+DROP SUBSCRIPTION regress_unsafesub;
+
+-- fail, can't put unsafe options in the connection string when connecting
+CREATE SUBSCRIPTION regress_unsafesub CONNECTION 'password=foo sslkeylogfile=./noexist/log' PUBLICATION foo WITH (create_slot = false);
+CREATE SUBSCRIPTION regress_unsafesub CONNECTION 'password=foo oauth_client_id=abcd' PUBLICATION foo WITH (create_slot = false);
+
+GRANT CREATE ON DATABASE REGRESSION TO regress_subscription_user3;
+SET SESSION AUTHORIZATION regress_subscription_user3;
+
+-- ensure unsafe rules/restrictions apply to unprivileged users as well
+CREATE SUBSCRIPTION regress_unsafesub CONNECTION 'password=foo sslkeylogfile=./noexist/log' PUBLICATION foo WITH (create_slot = false);
+CREATE SUBSCRIPTION regress_unsafesub CONNECTION 'password=foo sslkeylogfile=./noexist/log' PUBLICATION foo WITH (connect = false, slot_name = NONE); -- works
+DROP SUBSCRIPTION regress_unsafesub;
+
+SET SESSION AUTHORIZATION regress_subscription_user;
+REVOKE CREATE ON DATABASE REGRESSION FROM regress_subscription_user3;
+
 -- fail - invalid connection string during ALTER
 ALTER SUBSCRIPTION regress_testsub CONNECTION 'foobar';
 
@@ -343,3 +367,7 @@ DROP ROLE regress_subscription_user;
 DROP ROLE regress_subscription_user2;
 DROP ROLE regress_subscription_user3;
 DROP ROLE regress_subscription_user_dummy;
+
+-- Any subscriptions left behind will make it difficult to drop the regression
+-- database, and not every buildfarm animal will catch that.
+\dRs

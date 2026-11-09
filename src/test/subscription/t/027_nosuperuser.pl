@@ -328,6 +328,27 @@ $node_subscriber->wait_for_log(
 	qr/LOG: ( [A-Z0-9]+:)? logical replication worker for subscription \"regression_sub\" will restart because the subscription owner's superuser privileges have been revoked/,
 	$offset);
 
+# Unsafe options are not permitted (at the moment, this is applied to superuser
+# as well).
+grant_superuser("regress_admin");
+
+$offset = -s $node_subscriber->logfile;
+$node_subscriber->safe_psql(
+	'postgres', qq(
+	SET SESSION AUTHORIZATION regress_admin;
+	ALTER SUBSCRIPTION admin_sub CONNECTION '$publisher_connstr sslkeylogfile=/does/not/exist';
+));
+
+# After the worker restarts, connection attempts should fail.
+$offset = $node_subscriber->wait_for_log(
+	qr/ERROR: ( [A-Z0-9]+:)? permission denied to set connection option "sslkeylogfile"/msi,
+	$offset);
+
+$node_subscriber->safe_psql(
+	'postgres', qq(
+	ALTER SUBSCRIPTION admin_sub DISABLE;
+));
+
 # If the subscription connection requires a password ('password_required'
 # is true) then a non-superuser must specify that password in the connection
 # string.
