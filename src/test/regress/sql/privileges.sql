@@ -1221,6 +1221,24 @@ REFRESH MATERIALIZED VIEW sro_mv;
 REFRESH MATERIALIZED VIEW sro_mv;
 BEGIN; SET CONSTRAINTS ALL IMMEDIATE; REFRESH MATERIALIZED VIEW sro_mv; COMMIT;
 
+SET SESSION AUTHORIZATION regress_sro_user;
+-- REFRESH may not leave a type behind in the caller's pg_temp, either
+CREATE OR REPLACE FUNCTION mv_action() RETURNS bool LANGUAGE sql AS
+	'CREATE DOMAIN pg_temp.sro_domain AS pg_catalog.int4; SELECT true';
+REFRESH MATERIALIZED VIEW sro_mv; -- fail
+CREATE OR REPLACE FUNCTION mv_action() RETURNS bool LANGUAGE sql AS
+	'CREATE TYPE pg_temp.sro_enum AS ENUM (''x''); SELECT true';
+REFRESH MATERIALIZED VIEW sro_mv; -- fail
+CREATE OR REPLACE FUNCTION mv_action() RETURNS bool LANGUAGE sql AS
+	'CREATE TYPE pg_temp.sro_range AS RANGE (SUBTYPE = pg_catalog.int4); SELECT true';
+REFRESH MATERIALIZED VIEW sro_mv; -- fail
+-- including a multirange named apart from its range
+CREATE OR REPLACE FUNCTION mv_action() RETURNS bool LANGUAGE sql AS
+	'CREATE TYPE public.sro_range AS RANGE (SUBTYPE = pg_catalog.int4,
+	  MULTIRANGE_TYPE_NAME = pg_temp.sro_multirange); SELECT true';
+\c -
+REFRESH MATERIALIZED VIEW sro_mv; -- fail
+
 -- REFRESH MATERIALIZED VIEW CONCURRENTLY use of eval_const_expressions()
 SET SESSION AUTHORIZATION regress_sro_user;
 CREATE FUNCTION unwanted_grant_nofail(int) RETURNS int
