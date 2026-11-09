@@ -74,6 +74,7 @@ static bool pull_varattnos_walker(Node *node, pull_varattnos_context *context);
 static bool pull_vars_walker(Node *node, pull_vars_context *context);
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
+static bool contain_var_or_representative_walker(Node *node, void *context);
 static bool locate_var_of_level_walker(Node *node,
 									   locate_var_of_level_context *context);
 static bool pull_var_clause_walker(Node *node,
@@ -477,6 +478,69 @@ contain_vars_of_level_walker(Node *node, int *sublevels_up)
 	return expression_tree_walker(node,
 								  contain_vars_of_level_walker,
 								  (void *) sublevels_up);
+}
+
+
+/*
+ * contain_var_or_representative
+ *	  Recursively scan a clause to discover whether it contains any Var nodes
+ *	  (of the current query level), or CaseTestExpr or Param nodes.
+ *
+ *	  Returns true if any such node found.
+ *
+ * This is like contain_var_clause, but additionally returns true if we find
+ * a node that might represent the value of a Var from elsewhere in the query.
+ * We don't inquire into whether it actually does represent one; this is used
+ * for leakproofness checks in which it's better to report false positives
+ * than false negatives.
+ *
+ * You might think this needs to return true for upper-level Vars too,
+ * but at least in current usage it's better to match contain_var_clause.
+ * The caller is considering whether to push the clause below an RLS qual, so
+ * we need only restrict access to Vars of the relation with the RLS policy.
+ *
+ * Does not examine subqueries, therefore must only be used after reduction
+ * of sublinks to subplans!
+ */
+bool
+contain_var_or_representative(Node *node)
+{
+	return contain_var_or_representative_walker(node, NULL);
+}
+
+static bool
+contain_var_or_representative_walker(Node *node, void *context)
+{
+	/* This part must match contain_var_clause ... */
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		if (((Var *) node)->varlevelsup == 0)
+			return true;		/* abort the tree traversal and return true */
+		return false;
+	}
+	if (IsA(node, CurrentOfExpr))
+		return true;
+	if (IsA(node, PlaceHolderVar))
+	{
+		if (((PlaceHolderVar *) node)->phlevelsup == 0)
+			return true;		/* abort the tree traversal and return true */
+		/* else fall through to check the contained expr */
+	}
+	/* ... and here's the additional part */
+	if (IsA(node, CaseTestExpr))
+		return true;
+	if (IsA(node, Param))
+	{
+		/* We don't consider PARAM_EXTERN Params dangerous for this purpose */
+		if (((Param *) node)->paramkind == PARAM_EXTERN)
+			return false;
+		else
+			return true;
+	}
+	return expression_tree_walker(node, contain_var_or_representative_walker,
+								  context);
 }
 
 
