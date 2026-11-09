@@ -216,37 +216,22 @@ DROP TYPE atcomp;
 -- rewrite the DEFAULT expression.
 CREATE TYPE atcomp AS (a bytea);
 CREATE DOMAIN atdomain AS atcomp DEFAULT '(\\x4649584d45)'::atcomp;
--- FIXME: This is currently allowed, but it's broken
-ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE text CASCADE;
-select pg_catalog.pg_get_expr(t.typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) AS typdefaultbin from pg_type t where oid='atdomain'::regtype;
+ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE text CASCADE; -- fails
 DROP DOMAIN atdomain;
-DROP TYPE atcomp;
 
 -- Same, but the domain is on the rowtype's array type
-CREATE TYPE atcomp AS (a bytea);
 CREATE DOMAIN atdomainarr AS atcomp[] DEFAULT '{(\\x4649584d45)}'::atcomp[];
--- FIXME: This is currently allowed, but it's broken
-ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE text CASCADE;
-select pg_catalog.pg_get_expr(t.typdefaultbin, 'pg_catalog.pg_type'::pg_catalog.regclass) AS typdefaultbin from pg_type t where oid='atdomainarr'::regtype;
-
+ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE text CASCADE; -- fails
 DROP DOMAIN atdomainarr;
 DROP TYPE atcomp;
 
--- Document that after the upcoming changes, we disallow changing a composite
--- type even if the dependency is via an expression that does not actually store
--- a composite type in the parse-analyzed form. That is currently allowed, but
--- it's bogus because the ROW() expression no longer works.
+-- We disallow changing a composite type even if the dependency is via an
+-- expression that does not actually store a composite type in the
+-- parse-analyzed form.
 CREATE TYPE atcomp AS (a int);
 CREATE DOMAIN atdomain AS atcomp DEFAULT ROW(333)::atcomp;
 SELECT pg_get_expr(typdefaultbin, 0) FROM pg_type WHERE oid = 'atdomain'::regtype;
-ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE text; -- should fail
-
--- FIXME: demonstrate that it's currently broken
-begin;
-create table atab (a atdomain);
-insert into atab values (default);
-rollback;
-
+ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE text; -- fails
 DROP DOMAIN atdomain;
 DROP TYPE atcomp;
 
