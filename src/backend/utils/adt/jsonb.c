@@ -13,11 +13,13 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/json.h"
@@ -637,6 +639,7 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 	bool		numeric_to_string;
 	JsonbValue	jb;
 	bool		scalar_jsonb = false;
+	AclResult	aclresult;
 
 	check_stack_depth();
 
@@ -771,6 +774,12 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 				break;
 			case JSONTYPE_CAST:
 				/* cast to JSON, and then process as JSON */
+				aclresult = object_aclcheck(ProcedureRelationId, outfuncoid,
+											GetUserId(), ACL_EXECUTE);
+				if (aclresult != ACLCHECK_OK)
+					aclcheck_error(aclresult, OBJECT_FUNCTION,
+								   get_func_name(outfuncoid));
+				InvokeFunctionExecuteHook(outfuncoid);
 				val = OidFunctionCall1(outfuncoid, val);
 				pg_fallthrough;
 			case JSONTYPE_JSON:
