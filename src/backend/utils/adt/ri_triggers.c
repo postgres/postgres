@@ -28,6 +28,7 @@
 #include "access/table.h"
 #include "access/tableam.h"
 #include "access/xact.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"
@@ -2957,6 +2958,15 @@ ri_AttributesEqual(Oid eq_opr, Oid typeid,
 	/* Do we need to cast the values? */
 	if (OidIsValid(entry->cast_func_finfo.fn_oid))
 	{
+		Oid			castfunc = entry->cast_func_finfo.fn_oid;
+		AclResult	aclresult;
+
+		aclresult = pg_proc_aclcheck(castfunc, GetUserId(), ACL_EXECUTE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, OBJECT_FUNCTION,
+						   get_func_name(castfunc));
+		InvokeFunctionExecuteHook(castfunc);
+
 		oldvalue = FunctionCall3(&entry->cast_func_finfo,
 								 oldvalue,
 								 Int32GetDatum(-1), /* typmod */
