@@ -191,6 +191,10 @@ SPI_finish(void)
 	/* Restore memory context as it was before procedure call */
 	MemoryContextSwitchTo(_SPI_current->savedcxt);
 
+	/* queryEnv will become invalid; drop portals that need it */
+	if (_SPI_current->queryEnv != NULL)
+		DropQueryEnvPortals(_SPI_current->queryEnv);
+
 	/* Release memory used in procedure call (including tuptables) */
 	MemoryContextDelete(_SPI_current->execCxt);
 	_SPI_current->execCxt = NULL;
@@ -3293,6 +3297,11 @@ _SPI_find_ENR_by_name(const char *name)
 /*
  * Register an ephemeral named relation for use by the planner and executor on
  * subsequent calls using this SPI connection.
+ *
+ * NB: The query environment for the ENR will not last after the SPI
+ * connection; if SPI_register_relation() is called, all portals created on
+ * this SPI connection must be closed.  Remaining portals (e.g. returned using
+ * a refcursor) will be closed at SPI_finish time.
  */
 int
 SPI_register_relation(EphemeralNamedRelation enr)
@@ -3360,6 +3369,11 @@ SPI_unregister_relation(const char *name)
  * This should be called by PL implementations' trigger handlers after
  * connecting, in order to make transition tables visible to any queries run
  * in this connection.
+ *
+ * NB: The query environment for the ENR will not last after the SPI
+ * connection; if SPI_register_trigger_data() is called, all portals created
+ * on this SPI connection must be closed.  Remaining portals (e.g. returned
+ * using a refcursor) will be closed at SPI_finish time.
  */
 int
 SPI_register_trigger_data(TriggerData *tdata)
