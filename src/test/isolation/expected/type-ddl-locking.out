@@ -34,6 +34,18 @@ ERROR:  cannot drop type testdom because other objects depend on it
 step s1_drop_testview: DROP VIEW testview;
 step s1_drop_domain: DROP DOMAIN testdom;
 
+starting permutation: s1_create_rowtype_comp s1_create_function s1_begin s1_alter_function_with_default s2_alter_rowtype_comp_to_text s1_commit s1_drop_function s1_drop_rowtype_comp
+step s1_create_rowtype_comp: CREATE TYPE rowtype AS(a int8, b text);
+step s1_create_function: CREATE FUNCTION testfunc(rowtype) RETURNS rowtype AS $$ SELECT $1 $$ LANGUAGE SQL;
+step s1_begin: BEGIN;
+step s1_alter_function_with_default: CREATE OR REPLACE FUNCTION testfunc(rowtype DEFAULT '(1,b)'::rowtype) RETURNS rowtype AS $$ SELECT $1 $$ LANGUAGE SQL;
+step s2_alter_rowtype_comp_to_text: ALTER TYPE rowtype ALTER ATTRIBUTE a TYPE text; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_rowtype_comp_to_text: <... completed>
+ERROR:  cannot alter type "rowtype" because function testfunc(rowtype) uses it
+step s1_drop_function: DROP FUNCTION testfunc;
+step s1_drop_rowtype_comp: DROP TYPE rowtype;
+
 starting permutation: s1_create_rowtype_tbl s1_begin s1_create_testtab_with_rowtype s2_drop_rowtype_tbl s1_commit s1_drop_testtab s1_drop_rowtype_tbl
 step s1_create_rowtype_tbl: CREATE TABLE rowtype(a int8, b text);
 step s1_begin: BEGIN;
