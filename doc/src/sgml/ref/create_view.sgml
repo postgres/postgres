@@ -423,15 +423,20 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     condition, the condition restricts which rows of the base relation are
     available to be modified by <command>UPDATE</command>,
     <command>DELETE</command>, and <command>MERGE</command>
-    statements on the view.  However, an <command>UPDATE</command> or
-    <command>MERGE</command> is allowed to
+    statements on the view.  Likewise, an <command>INSERT</command> with an
+    <literal>ON CONFLICT DO SELECT</literal> or <literal>ON CONFLICT DO
+    UPDATE</literal> clause may only act on a conflicting base-relation row
+    that is visible through the view: if the row does not satisfy the
+    <literal>WHERE</literal> condition, or that of any view that the view is
+    defined on, an error is raised.  However, an <command>UPDATE</command>,
+    <command>MERGE</command>, or <command>INSERT</command> with an
+    <literal>ON CONFLICT DO UPDATE</literal> clause is allowed to
     change a row so that it no longer satisfies the <literal>WHERE</literal>
     condition, and thus is no longer visible through the view.  Similarly,
     an <command>INSERT</command> or <command>MERGE</command> command can
     potentially insert base-relation rows
     that do not satisfy the <literal>WHERE</literal> condition and thus are not
-    visible through the view (<literal>ON CONFLICT DO SELECT/UPDATE</literal> may
-    similarly affect an existing row not visible through the view).
+    visible through the view.
     The <literal>CHECK OPTION</literal> may be used to prevent
     <command>INSERT</command>, <command>UPDATE</command>, and
     <command>MERGE</command> commands from creating such rows that are not
