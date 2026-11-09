@@ -711,6 +711,46 @@ expanded_record_field_text(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text(OidOutputFunctionCall(outfunc, val)));
 }
 
+/*
+ * Return a copy of a composite datum with its version removed, i.e. as a
+ * cluster predating the composite tuple versioning would have stored it.
+ *
+ * Such datums cannot be produced through SQL, but they have to stay readable
+ * after a minor version upgrade or across pg_upgrade, so tests need a way to
+ * generate one.
+ */
+PG_FUNCTION_INFO_V1(make_tuple_unversioned);
+Datum
+make_tuple_unversioned(PG_FUNCTION_ARGS)
+{
+	HeapTupleHeader rec;
+
+	if (!type_is_rowtype(get_fn_expr_argtype(fcinfo->flinfo, 0)))
+		elog(ERROR, "argument must be of a composite type");
+
+	/* modified below, so a copy is needed */
+	rec = PG_GETARG_HEAPTUPLEHEADER_COPY(0);
+
+	if (!HeapTupleHeaderIsVersionedDatum(rec))
+		elog(ERROR, "composite datum is not versioned");
+
+	/*
+	 * The version occupies the fields an unversioned datum uses for its
+	 * typmod and item pointer, so restore what forming one would have left
+	 * there: datums of a named composite type carry a typmod of -1, and
+	 * heap_form_tuple() clears t_ctid.
+	 */
+	HeapTupleHeaderSetTypMod(rec, -1);
+	ItemPointerSetInvalid(&rec->t_ctid);
+	HeapTupleHeaderClearDatum(rec);
+
+	/*
+	 * Use PG_RETURN_POINTER() instead of PG_RETURN_HEAPTUPLEHEADER(), to
+	 * prevent HeapTupleHeaderGetDatum() from failing assertions.
+	 */
+	PG_RETURN_POINTER(rec);
+}
+
 PG_FUNCTION_INFO_V1(get_environ);
 
 Datum

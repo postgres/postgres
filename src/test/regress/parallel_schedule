@@ -136,7 +136,7 @@ test: rowtypes_alter
 # The stats test resets stats, so nothing else needing stats access can be in
 # this group.
 # ----------
-test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain memoize stats
+test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain memoize stats attribute_version
 
 # ----------
 # Another group of parallel tests (compression)
