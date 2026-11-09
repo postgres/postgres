@@ -47,11 +47,82 @@
 #include "utils/wait_event.h"
 
 
+extern bool libpqsrv_is_valid_proxy_option(const char *keyword);
+
 static inline void libpqsrv_connect_prepare(void);
 static inline void libpqsrv_connect_internal(PGconn *conn, uint32 wait_event_info);
 static inline PGresult *libpqsrv_get_result_last(PGconn *conn, uint32 wait_event_info);
 static inline PGresult *libpqsrv_get_result(PGconn *conn, uint32 wait_event_info);
 
+/*
+ * Ensures that the provided conninfo options are considered safe for use by
+ * server-side proxies (FDWs, subscriptions, et al).
+ *
+ * Server extensions should call this function, which will ereport(ERROR) if an
+ * unblessed libpq parameter has been passed, before calling libpqsrv_connect or
+ * its variants. This keeps new options from later libpq versions from breaking
+ * security assumptions for existing releases during a platform library update.
+ *
+ * Note that the list of blessed options is subject to change during minor
+ * version updates within a major release line.
+ */
+static inline void
+libpqsrv_check_proxy_conninfo_opts(const PQconninfoOption *opts)
+{
+	const PQconninfoOption *opt;
+
+	for (opt = opts; opt->keyword != NULL; opt++)
+	{
+		if (opt->val != NULL && !libpqsrv_is_valid_proxy_option(opt->keyword))
+			ereport(ERROR,
+					errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("permission denied to set connection option \"%s\"",
+						   opt->keyword));
+	}
+}
+
+/*
+ * Like libpqsrv_check_proxy_conninfo_opts() above, but additionally parses the
+ * conninfo string for the caller.
+ */
+static inline void
+libpqsrv_check_proxy_conninfo(const char *conninfo)
+{
+	PQconninfoOption *options;
+	char	   *error;
+
+	options = PQconninfoParse(conninfo, &error);
+
+	PG_TRY();
+	{
+		if (!options)
+		{
+			/*
+			 * Most likely an invalid connection string, but it could also be
+			 * memory problems. The message and detail here are chosen to
+			 * mimic the historical behavior of dblink.
+			 */
+			ereport(ERROR,
+					error
+					? errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION)
+					: errcode(ERRCODE_OUT_OF_MEMORY),
+					errmsg("could not establish connection"),
+					error
+					? errdetail_internal("%s", pchomp(error))
+					: errdetail("out of memory"));
+		}
+
+		libpqsrv_check_proxy_conninfo_opts(options);
+	}
+	PG_FINALLY();
+	{
+		if (error)
+			PQfreemem(error);
+		if (options)
+			PQconninfoFree(options);
+	}
+	PG_END_TRY();
+}
 
 /*
  * PQconnectdb() wrapper that reserves a file descriptor and processes

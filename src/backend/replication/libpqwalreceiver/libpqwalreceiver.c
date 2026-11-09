@@ -24,6 +24,7 @@
 #include "common/connect.h"
 #include "funcapi.h"
 #include "libpq-fe.h"
+#include "libpq/libpq-be-fe-helpers.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -119,7 +120,12 @@ _PG_init(void)
 /*
  * Establish the connection to the primary server for XLOG streaming
  *
- * Returns NULL on error and fills the err with palloc'ed error message.
+ * If an error occurs, this function will normally return NULL and set *err
+ * to a palloc'ed error message. However, if the connection string contains
+ * disallowed options, this function will ereport(ERROR). We do this because in
+ * that case the error includes a detail and a hint for consistency with other
+ * parts of the system, and it's not worth adding the machinery to pass all of
+ * those back to the caller just to cover this one case.
  */
 static WalReceiverConn *
 libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
@@ -130,6 +136,25 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	const char *keys[5];
 	const char *vals[5];
 	int			i = 0;
+	bool		allow_unsafe_opts = false;
+
+	/*
+	 * CVE-2026-14661: Generally speaking, we want to protect any callers
+	 * of walrcv_connect() from connection options that could allow
+	 * elevation of privileges. But we also want to avoid restricting
+	 * primary_conninfo, which the DBA should have broad control over.
+	 *
+	 * For back branches, we detect that case in two ways: either the
+	 * conninfo pointer we were given is literally the primary_conninfo
+	 * GUC variable, or the WAL receiver is starting physical replication.
+	 */
+	if (conninfo == PrimaryConnInfo ||
+		(AmWalReceiverProcess() && !logical))
+		allow_unsafe_opts = true;
+
+	/* Final security check on the proxied connection options. */
+	if (!allow_unsafe_opts)
+		libpqsrv_check_proxy_conninfo(conninfo);
 
 	/*
 	 * We use the expand_dbname parameter to process the connection string (or
@@ -241,6 +266,10 @@ bad_connection:
 
 /*
  * Validate connection info string (just try to parse it)
+ *
+ * CVE-2026-14661: We don't check for unsafe options here; instead we defer to
+ * libpqrcv_connect() to keep dump/restore from failing. That's not the
+ * greatest UX, and it'd be good to improve this after the initial fix lands.
  */
 static void
 libpqrcv_check_conninfo(const char *conninfo)
