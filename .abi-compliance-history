@@ -18,6 +18,16 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+cfdd09589b9f19fbc78c244e7868f1af46c460b8
+#
+# Introduce attribute versioning to prevent unsafe deforming
+# 2026-11-09 06:20:44 -0800
+#
+# This commit adds a new GUC, which is fine, and a new pg_proc entry,
+# which is less fine but the alternatives are worse.  Fortunately the
+# new function is only needed in pg_upgrade's target installation,
+# which should have it if it's freshly initdb'd.
+
 5b730e81fbdfd36ed45473770676ab3f88c776db
 #
 # Fix reuse of stale hash tables by duplicated hashed SubPlans
