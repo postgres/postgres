@@ -2301,6 +2301,31 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 	 */
 	ExecCheckTupleVisible(estate, relation, existing);
 
+	if (resultRelInfo->ri_WithCheckOptions != NIL)
+	{
+		/*
+		 * Check target's existing tuple against the security quals that
+		 * determine whether the user is allowed to see and update it.  This
+		 * must happen before the ON CONFLICT WHERE clause is evaluated below,
+		 * since that clause is supplied by the user and could otherwise be
+		 * used to read a row that the user has no right to see.
+		 *
+		 * The rewriter creates UPDATE RLS checks/WCOs for UPDATE security
+		 * quals, and stores them as WCOs of "kind" WCO_RLS_CONFLICT_CHECK,
+		 * but that's almost the extent of its special handling for ON
+		 * CONFLICT DO UPDATE.
+		 *
+		 * The rewriter will also have associated UPDATE applicable straight
+		 * RLS checks/WCOs for the benefit of the ExecUpdate() call that
+		 * follows.  INSERTs and UPDATEs naturally have mutually exclusive WCO
+		 * kinds, so there is no danger of spurious over-enforcement in the
+		 * INSERT or UPDATE path.
+		 */
+		ExecWithCheckOptions(WCO_RLS_CONFLICT_CHECK, resultRelInfo,
+							 existing,
+							 mtstate->ps.state);
+	}
+
 	/*
 	 * Make tuple and any needed join variables available to ExecQual and
 	 * ExecProject.  The EXCLUDED tuple is installed in ecxt_innertuple, while
@@ -2317,28 +2342,6 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
 		ExecClearTuple(existing);	/* see return below */
 		InstrCountFiltered1(&mtstate->ps, 1);
 		return true;			/* done with the tuple */
-	}
-
-	if (resultRelInfo->ri_WithCheckOptions != NIL)
-	{
-		/*
-		 * Check target's existing tuple against UPDATE-applicable USING
-		 * security barrier quals (if any), enforced here as RLS checks/WCOs.
-		 *
-		 * The rewriter creates UPDATE RLS checks/WCOs for UPDATE security
-		 * quals, and stores them as WCOs of "kind" WCO_RLS_CONFLICT_CHECK,
-		 * but that's almost the extent of its special handling for ON
-		 * CONFLICT DO UPDATE.
-		 *
-		 * The rewriter will also have associated UPDATE applicable straight
-		 * RLS checks/WCOs for the benefit of the ExecUpdate() call that
-		 * follows.  INSERTs and UPDATEs naturally have mutually exclusive WCO
-		 * kinds, so there is no danger of spurious over-enforcement in the
-		 * INSERT or UPDATE path.
-		 */
-		ExecWithCheckOptions(WCO_RLS_CONFLICT_CHECK, resultRelInfo,
-							 existing,
-							 mtstate->ps.state);
 	}
 
 	/* Project the new tuple version */
