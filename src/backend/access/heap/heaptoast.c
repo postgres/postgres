@@ -182,7 +182,8 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	 * external.
 	 */
 	while (heap_compute_data_size(tupleDesc,
-								  toast_values, toast_isnull) > maxDataLen)
+								  toast_values, toast_isnull,
+								  true) > maxDataLen)
 	{
 		int			biggest_attno;
 
@@ -223,7 +224,8 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	 * toast table to push them to.
 	 */
 	while (heap_compute_data_size(tupleDesc,
-								  toast_values, toast_isnull) > maxDataLen &&
+								  toast_values, toast_isnull,
+								  true) > maxDataLen &&
 		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno;
@@ -239,7 +241,8 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	 * compression
 	 */
 	while (heap_compute_data_size(tupleDesc,
-								  toast_values, toast_isnull) > maxDataLen)
+								  toast_values, toast_isnull,
+								  true) > maxDataLen)
 	{
 		int			biggest_attno;
 
@@ -258,7 +261,8 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	maxDataLen = TOAST_TUPLE_TARGET_MAIN - hoff;
 
 	while (heap_compute_data_size(tupleDesc,
-								  toast_values, toast_isnull) > maxDataLen &&
+								  toast_values, toast_isnull,
+								  true) > maxDataLen &&
 		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno;
@@ -297,7 +301,8 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			new_header_len += BITMAPLEN(numAttrs);
 		new_header_len = MAXALIGN(new_header_len);
 		new_data_len = heap_compute_data_size(tupleDesc,
-											  toast_values, toast_isnull);
+											  toast_values, toast_isnull,
+											  false);
 		new_tuple_len = new_header_len + new_data_len;
 
 		/*
@@ -509,7 +514,8 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 		new_header_len += BITMAPLEN(numAttrs);
 	new_header_len = MAXALIGN(new_header_len);
 	new_data_len = heap_compute_data_size(tupleDesc,
-										  toast_values, toast_isnull);
+										  toast_values, toast_isnull,
+										  false);
 	new_tuple_len = new_header_len + new_data_len;
 
 	new_data = (HeapTupleHeader) palloc0(new_tuple_len);

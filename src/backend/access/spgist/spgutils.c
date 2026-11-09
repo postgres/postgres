@@ -844,7 +844,7 @@ SpGistGetLeafTupleSize(TupleDesc tupleDescriptor,
 	/*
 	 * Calculate size of the data part; same as for heap tuples.
 	 */
-	data_size = heap_compute_data_size(tupleDescriptor, datums, isnulls);
+	data_size = heap_compute_data_size(tupleDescriptor, datums, isnulls, false);
 
 	/*
 	 * Compute total size.
@@ -902,7 +902,7 @@ spgFormLeafTuple(SpGistState *state, const ItemPointerData *heapPtr,
 	/*
 	 * Calculate size of the data part; same as for heap tuples.
 	 */
-	data_size = heap_compute_data_size(tupleDescriptor, datums, isnulls);
+	data_size = heap_compute_data_size(tupleDescriptor, datums, isnulls, false);
 
 	/*
 	 * Compute total size.

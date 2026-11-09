@@ -744,7 +744,8 @@ ER_get_flat_size(ExpandedObjectHeader *eohptr)
 
 	hoff = len = MAXALIGN(len); /* align user data safely */
 
-	data_len = heap_compute_data_size(tupdesc, erh->dvalues, erh->dnulls);
+	data_len = heap_compute_data_size(tupdesc, erh->dvalues, erh->dnulls,
+									  false);
 
 	len += data_len;
 

@@ -282,7 +282,7 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 	len = hoff = MAXALIGN(len);
 
 	data_len = heap_compute_data_size(brtuple_disk_tupdesc(brdesc),
-									  values, nulls);
+									  values, nulls, false);
 	len += data_len;
 
 	len = MAXALIGN(len);
