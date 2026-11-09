@@ -62,7 +62,7 @@ static int	pg_utf8_string_len(const char *source);
 /*
  * C.1.2 Non-ASCII space characters
  *
- * These are all mapped to the ASCII space character (U+00A0).
+ * These are all mapped to the ASCII space character (U+0020).
  */
 static const char32_t non_ascii_space_ranges[] =
 {
