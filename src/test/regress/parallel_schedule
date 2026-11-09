@@ -125,6 +125,11 @@ test: json jsonb json_encoding jsonpath jsonpath_encoding jsonb_jsonpath
 # ----------
 test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion truncate alter_table sequence polymorphism rowtypes returning largeobject with xml
 
+# rowtypes_alter relies on cached plans surviving across statements, which
+# concurrent DDL can prevent, and on parallel workers being available, so run
+# it by itself
+test: rowtypes_alter
+
 # ----------
 # Another group of parallel tests
 #
