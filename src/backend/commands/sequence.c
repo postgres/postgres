@@ -371,17 +371,29 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 	/*
+	 * For heap_insert() that'd be done by heap_prepare_insert(), we don't use
+	 * that here, so have to do it manually (this is necessary, as the
+	 * heap_form_tuple() in callers will have marked the tuple as a datum
+	 * tuple, which needs to be unset before inserting).
+	 */
+	tuple->t_data->t_infomask &= ~(HEAP_XACT_MASK);
+	tuple->t_data->t_infomask2 &= ~(HEAP2_XACT_MASK);
+	tuple->t_data->t_infomask |= HEAP_XMAX_INVALID;
+
+	/*
 	 * Since VACUUM does not process sequences, we have to force the tuple to
 	 * have xmin = FrozenTransactionId now.  Otherwise it would become
 	 * invisible to SELECTs after 2G transactions.  It is okay to do this
 	 * because if the current transaction aborts, no other xact will ever
 	 * examine the sequence tuple anyway.
+	 *
+	 * Don't need to unset HEAP_IS_DATUM, it's part of HEAP_XACT_MASK, cleared
+	 * above.
 	 */
 	HeapTupleHeaderSetXmin(tuple->t_data, FrozenTransactionId);
 	HeapTupleHeaderSetXminFrozen(tuple->t_data);
 	HeapTupleHeaderSetCmin(tuple->t_data, FirstCommandId);
 	HeapTupleHeaderSetXmax(tuple->t_data, InvalidTransactionId);
-	tuple->t_data->t_infomask |= HEAP_XMAX_INVALID;
 	ItemPointerSet(&tuple->t_data->t_ctid, 0, FirstOffsetNumber);
 
 	/* check the comment above nextval_internal()'s equivalent call. */

@@ -569,8 +569,7 @@ index_truncate_tuple(TupleDesc sourceDescriptor, IndexTuple source,
 		return CopyIndexTuple(source);
 
 	/* Create temporary descriptor to scribble on */
-	truncdesc = palloc(TupleDescSize(sourceDescriptor));
-	TupleDescCopy(truncdesc, sourceDescriptor);
+	truncdesc = CreateTupleDescCopy(sourceDescriptor);
 	truncdesc->natts = leavenatts;
 
 	/* Deform, form copy of tuple with fewer attributes */
@@ -580,8 +579,8 @@ index_truncate_tuple(TupleDesc sourceDescriptor, IndexTuple source,
 	Assert(IndexTupleSize(truncated) <= IndexTupleSize(source));
 
 	/*
-	 * Cannot leak memory here, TupleDescCopy() doesn't allocate any inner
-	 * structure, so, plain pfree() should clean all allocated memory
+	 * Cannot leak memory here, CreateTupleDescCopy() doesn't allocate any
+	 * inner structure, so, plain pfree() should clean all allocated memory
 	 */
 	pfree(truncdesc);
 

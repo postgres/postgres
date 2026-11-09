@@ -2728,12 +2728,13 @@ enum_oid_cmp(const void *left, const void *right)
 static dsa_pointer
 share_tupledesc(dsa_area *area, TupleDesc tupdesc, uint32 typmod)
 {
+	Size		size = TupleDescCopySize(tupdesc);
 	dsa_pointer shared_dp;
 	TupleDesc	shared;
 
-	shared_dp = dsa_allocate(area, TupleDescSize(tupdesc));
+	shared_dp = dsa_allocate(area, size);
 	shared = (TupleDesc) dsa_get_address(area, shared_dp);
-	TupleDescCopy(shared, tupdesc);
+	TupleDescCopySized(shared, size, tupdesc);
 	shared->tdtypmod = typmod;
 
 	return shared_dp;

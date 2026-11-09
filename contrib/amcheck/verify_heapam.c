@@ -700,6 +700,13 @@ check_tuple_header(HeapCheckContext *ctx)
 		 */
 	}
 
+	if (HeapTupleHeaderIsDatum(ctx->tuphdr))
+	{
+		report_corruption(ctx,
+						  pstrdup("tuple marked as datum tuple in table"));
+		/* Here again, we can still perform further checks. */
+	}
+
 	if (infomask & HEAP_HASNULL)
 		expected_hoff = MAXALIGN(SizeofHeapTupleHeader + BITMAPLEN(ctx->natts));
 	else

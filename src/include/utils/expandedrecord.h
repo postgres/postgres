@@ -121,6 +121,7 @@ typedef struct ExpandedRecordHeader
 	 * fstartptr/fendptr point to the start and end+1 of its data area; this
 	 * is so that we can tell which Datum pointers point into the flat
 	 * representation rather than being pointers to separately palloc'd data.
+	 * fvalue has to match er_tupdesc, see expanded_record_set_tuple().
 	 */
 	HeapTuple	fvalue;			/* might or might not be private storage */
 	char	   *fstartptr;		/* start of its data area */

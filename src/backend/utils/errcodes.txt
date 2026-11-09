@@ -201,6 +201,7 @@ Section: Class 22 - Data Exception
 22P03    E    ERRCODE_INVALID_BINARY_REPRESENTATION                          invalid_binary_representation
 22P04    E    ERRCODE_BAD_COPY_FILE_FORMAT                                   bad_copy_file_format
 22P05    E    ERRCODE_UNTRANSLATABLE_CHARACTER                               untranslatable_character
+22P07    E    ERRCODE_DATUM_VERSION_MISMATCH                                 datum_version_mismatch
 2200L    E    ERRCODE_NOT_AN_XML_DOCUMENT                                    not_an_xml_document
 2200M    E    ERRCODE_INVALID_XML_DOCUMENT                                   invalid_xml_document
 2200N    E    ERRCODE_INVALID_XML_CONTENT                                    invalid_xml_content

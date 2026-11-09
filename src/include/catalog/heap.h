@@ -99,6 +99,14 @@ extern void InsertPgAttributeTuples(Relation pg_attribute_rel,
 									Datum *attoptions,
 									CatalogIndexState indstate);
 
+extern XLogRecPtr GetNextAttributeVersion(void);
+extern HeapTuple SetAttributeVersionInTuple(Relation attrelation,
+											HeapTuple tuple,
+											XLogRecPtr version);
+extern void SetAttributeVersions(Relation rel, AttrNumber fromAttnum,
+								 XLogRecPtr version);
+extern bool CheckAttributeVersions(TupleDesc td, const char *relname, int elevel);
+
 extern void InsertPgClassTuple(Relation pg_class_desc,
 							   Relation new_rel_desc,
 							   Oid new_rel_oid,
