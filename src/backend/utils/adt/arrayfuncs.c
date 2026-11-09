@@ -2249,6 +2249,8 @@ array_set_element(Datum arraydatum,
 		 * fixed-length arrays -- these are assumed to be 1-d, 0-based. We
 		 * cannot extend them, either.
 		 */
+		bool		isname;
+		int			numelems;
 		char	   *resultarray;
 
 		if (nSubscripts != 1)
@@ -2256,7 +2258,22 @@ array_set_element(Datum arraydatum,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 					 errmsg("wrong number of array subscripts")));
 
-		if (indx[0] < 0 || indx[0] >= arraytyplen / elmlen)
+		/*
+		 * Normally, any element of the array can be assigned to.  But for
+		 * type "name" we should not allow assignment to the last element,
+		 * since it's supposed to stay '\0'.  Unfortunately we can't directly
+		 * test whether the array is of type "name" without changing this
+		 * function's API.  But given the tiny usage of fixed-length-array
+		 * types, it should be good enough to check for elmlen = 1 and
+		 * arraytyplen = NAMEDATALEN.
+		 */
+		isname = (elmlen == 1 && arraytyplen == NAMEDATALEN);
+		if (isname)
+			numelems = NAMEDATALEN - 1;
+		else
+			numelems = arraytyplen / elmlen;
+
+		if (indx[0] < 0 || indx[0] >= numelems)
 			ereport(ERROR,
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 					 errmsg("array subscript out of range")));
@@ -2270,6 +2287,14 @@ array_set_element(Datum arraydatum,
 		memcpy(resultarray, DatumGetPointer(arraydatum), arraytyplen);
 		elt_ptr = (char *) resultarray + indx[0] * elmlen;
 		ArrayCastAndSet(dataValue, elmlen, elmbyval, elmalign, elt_ptr);
+
+		/*
+		 * Another problem with allowing element assignment for type "name" is
+		 * that it can produce an invalidly-encoded string.  Reject that.
+		 */
+		if (isname)
+			pg_verifymbstr(resultarray, strlen(resultarray), false);
+
 		return PointerGetDatum(resultarray);
 	}
 
@@ -2861,6 +2886,9 @@ array_set_slice(Datum arraydatum,
 	{
 		/*
 		 * fixed-length arrays -- not got round to doing this...
+		 *
+		 * If we ever do implement this, note the special handling of type
+		 * "name" in array_set_element().
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
