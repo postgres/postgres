@@ -429,3 +429,11 @@ DROP TYPE container_type;
 
 DROP TABLE test_tbl1;
 DROP TYPE test_type1;
+
+-- A composite type can depend on another type via multiple avenues.
+-- Here, container_type depends on test_type1 directly because it has a
+-- column with that type, but also indirectly via its array type.
+CREATE TYPE test_type1 AS (a int, b text);
+CREATE TYPE container_type AS (tab test_type1, arr test_type1[]);
+ALTER TYPE test_type1 ALTER ATTRIBUTE a TYPE int;
+DROP TYPE test_type1, container_type;
