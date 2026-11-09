@@ -44,6 +44,7 @@ tests += {
       't/002_pg_upgrade.pl',
       't/003_logical_slots.pl',
       't/004_subscription.pl',
+      't/009_composite_types.pl',
     ],
     'test_kwargs': {'priority': 40}, # pg_upgrade tests are slow
   },
