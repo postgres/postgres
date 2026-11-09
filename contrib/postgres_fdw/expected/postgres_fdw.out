@@ -10593,6 +10593,16 @@ select * from rem2;
 delete from rem2;
 alter server loopback options (drop batch_size);
 -- ===================================================================
+-- test COPY TO
+-- ===================================================================
+-- test that COPY ... TO ... (FORMAT json) works
+-- once with a projection (due to dropped cols)
+COPY (SELECT * FROM ft1 ORDER BY c1 LIMIT 1) TO STDOUT (FORMAT json);
+{"c1":1,"c2":2,"c3":"00001_trig_update","c4":"1970-01-02T00:00:00-08:00","c5":"1970-01-02T00:00:00","c6":"1","c7":"1         ","c8":"foo"}
+-- and once without
+COPY (SELECT * FROM ft4 ORDER BY c1 LIMIT 1) TO STDOUT (FORMAT json);
+{"c1":2,"c2":3,"c3":"AAA002"}
+-- ===================================================================
 -- test for TRUNCATE
 -- ===================================================================
 CREATE TABLE tru_rtable0 (id int primary key);
