@@ -1986,6 +1986,17 @@ SELECT * FROM
  776 |  
 (1 row)
 
+-- anonymous record type with variable rowtype
+SELECT i,
+  json_populate_recordset(r, '[{"f1":"10000","f2":"20000","f3":"30000"}]')
+FROM (VALUES (1, row(0,0)), (2, row(0,0,0)), (3, row(0,0))) v(i, r);
+ i | json_populate_recordset 
+---+-------------------------
+ 1 | (10000,20000)
+ 2 | (10000,20000,30000)
+ 3 | (10000,20000)
+(3 rows)
+
 -- empty array is a corner case
 SELECT json_populate_recordset(null::record, '[]');
 ERROR:  could not determine row type for result of json_populate_recordset
