@@ -61,6 +61,7 @@ select ts_lexize('intdict', '+40865854');
 ALTER TEXT SEARCH DICTIONARY intdict (ABSVAL = true);
 select ts_lexize('intdict', '-40865854');
 select ts_lexize('intdict', '+40865854');
+select ts_lexize('intdict', '');
 ALTER TEXT SEARCH DICTIONARY intdict (REJECTLONG = 1);
 select ts_lexize('intdict', '-40865854');
 select ts_lexize('intdict', '-4086585');
