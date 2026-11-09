@@ -25,8 +25,7 @@ DECLARE
 BEGIN
    SELECT typrelid INTO STRICT p_rc FROM pg_type WHERE typtype = 'c' AND oid = p_rt;
 
-   -- assume that there are no column options here, simplifies the code
-   UPDATE pg_catalog.pg_attribute SET attoptions = NULL WHERE attrelid = p_rc;
+   UPDATE pg_catalog.pg_attribute SET attversion = '0/0' WHERE attrelid = p_rc;
 END;
 $$;
 CREATE FUNCTION type_versions(p_rt regtype, OUT rc regclass, OUT rt regtype, OUT attnum int2, OUT attname name, OUT attversion int)
@@ -37,23 +36,20 @@ CREATE FUNCTION type_versions(p_rt regtype, OUT rc regclass, OUT rt regtype, OUT
 DECLARE
    p_rc regclass;
    p_r record;
-   p_lastver numeric = 0;
+   p_lastver pg_lsn = '0/0';
    p_lastnum int = 0;
    p_ver int;
-   p_attversion numeric;
 BEGIN
    SELECT typrelid INTO STRICT p_rc FROM pg_type WHERE typtype = 'c' AND oid = p_rt;
 
    FOR p_r IN SELECT * FROM pg_attribute pa WHERE attrelid = p_rc ORDER BY pa.attnum LOOP
-     p_attversion = COALESCE((SELECT pg_catalog.substr(o, length('pg_attver') + 2)::numeric FROM pg_catalog.unnest(p_r.attoptions) o WHERE pg_catalog.starts_with(o, 'pg_attver=')), 0);
-
-     IF p_attversion = 0 THEN
+     IF p_r.attversion = '0/0' THEN
        p_ver = 0;
-     ELSIF p_attversion = p_lastver THEN
+     ELSIF p_r.attversion = p_lastver THEN
        p_ver = p_lastnum;
      ELSE
        p_lastnum = p_lastnum + 1;
-       p_lastver = p_attversion;
+       p_lastver = p_r.attversion;
        p_ver = p_lastnum;
      END IF;
 

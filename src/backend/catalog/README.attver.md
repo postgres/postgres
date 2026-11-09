@@ -196,34 +196,22 @@ Version storage has three aspects, described in the following sections:
 
 ## Version storage in the catalog
 
-To allow for backpatching, the version has to be stored without altering the
-catalog shape. This is achieved by storing the attribute version in
-`pg_attribute.attoptions`, using a reserved name (`pg_attver`).
+Starting in PG 20, each attribute's version is stored in
+`pg_attribute.attversion`.
 
-This key is only used internally and cannot be set by the user. However, rather
-than erroring out if done via ALTER, we drop a spuriously supplied value: Dumps
-produced by older pg_dump versions or other external tooling, which doesn't yet
-know to strip the key, would otherwise fail to restore.
-
-On master the version is moved into a proper pg_attribute column.
+Before that the version was stored in `pg_attribute.attoptions`, using a
+reserved name (`pg_attver`). That key was only used internally and could not be
+set by the user. Even though not used anymore, we still ignore that key when
+set via ALTER: Dumps produced by older pg_dump versions or other external
+tooling, which doesn't yet know to strip the key, would otherwise fail to
+restore.
 
 
 ## Version storage in tuple descriptors
 
-To avoid an API & ABI break, the version has to be stored in the tuple
-descriptor without adding fields to the struct directly. That turns out to be
-harder than the persistent version storage.  This is achieved by allocating
-additional space in `CreateTemplateTupleDesc()` and storing the additional data
-after the "normal" data of the tuple descriptor.
-
-Unfortunately, as `TupleDescSize()` is just a macro (and thus an extension
-might use an old definition), and as `TupleDescCopy()` does not accept a size,
-using `TupleDescCopy()` with a tupledesc for a named composite had to be
-turned into an error. Luckily it does not seem like there's any code for which
-that is an issue (if there is, `TupleDescCopySize()`/`TupleDescCopySized()`
-now provide a safe alternative).
-
-On master the tuple descriptor data is moved into proper struct fields.
+Starting in PG 20, each attribute's version is stored in its `attversion`
+field; `tdversion` caches the last attribute's version for fast access.  Before
+that we had to resort to uglier measures to retain ABI compatibility.
 
 
 ## Version storage in composite datums

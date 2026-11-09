@@ -9301,18 +9301,23 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	 * versions, without using functions missing in old versions (like
 	 * starts_with()).
 	 */
-	appendPQExpBuffer(q,
-					  "array_to_string(ARRAY(\n"
-					  "  SELECT o FROM unnest(a.attoptions) o\n"
-					  "  WHERE substr(o, 1, %2$zu) <> '%1$s='\n"
-					  "), ', ') AS attoptions,\n"
-					  "(\n"
-					  "  SELECT substr(o, %2$zu + 1)\n"
-					  "  FROM unnest(a.attoptions) o\n"
-					  "  WHERE substr(o, 1, %2$zu) = '%1$s='\n"
-					  ") AS attversion,\n",
-					  ATTRIBUTE_VERSION_ATTOPTION,
-					  strlen(ATTRIBUTE_VERSION_ATTOPTION) + 1);
+	if (fout->remoteVersion >= 200000)
+		appendPQExpBufferStr(q,
+							 "array_to_string(a.attoptions, ', ') AS attoptions,\n"
+							 "a.attversion - '0/0' AS attversion,\n");
+	else
+		appendPQExpBuffer(q,
+						  "array_to_string(ARRAY(\n"
+						  "  SELECT o FROM unnest(a.attoptions) o\n"
+						  "  WHERE substr(o, 1, %2$zu) <> '%1$s='\n"
+						  "), ', ') AS attoptions,\n"
+						  "(\n"
+						  "  SELECT substr(o, %2$zu + 1)\n"
+						  "  FROM unnest(a.attoptions) o\n"
+						  "  WHERE substr(o, 1, %2$zu) = '%1$s='\n"
+						  ") AS attversion,\n",
+						  ATTRIBUTE_VERSION_ATTOPTION,
+						  strlen(ATTRIBUTE_VERSION_ATTOPTION) + 1);
 
 	appendPQExpBufferStr(q,
 						 "CASE WHEN a.attcollation <> t.typcollation "
@@ -12994,13 +12999,17 @@ dumpCompositeType(Archive *fout, const TypeInfo *tyinfo)
 		 * getTableAttrs() worthwhile. But ISTM the proper way for that is to
 		 * deduplicate all of getTableAttrs() and dumpCompositeType().
 		 */
-		appendPQExpBuffer(query,
-						  "(\n"
-						  " SELECT substr(o, %2$zu + 1)\n"
-						  " FROM unnest(a.attoptions) o\n"
-						  " WHERE substr(o, 1, %2$zu) = '%1$s=') AS attversion\n",
-						  ATTRIBUTE_VERSION_ATTOPTION,
-						  strlen(ATTRIBUTE_VERSION_ATTOPTION) + 1);
+		if (fout->remoteVersion >= 200000)
+			appendPQExpBufferStr(query,
+								 "a.attversion - '0/0' AS attversion ");
+		else
+			appendPQExpBuffer(query,
+							  "(\n"
+							  " SELECT substr(o, %2$zu + 1)\n"
+							  " FROM unnest(a.attoptions) o\n"
+							  " WHERE substr(o, 1, %2$zu) = '%1$s=') AS attversion\n",
+							  ATTRIBUTE_VERSION_ATTOPTION,
+							  strlen(ATTRIBUTE_VERSION_ATTOPTION) + 1);
 
 		appendPQExpBufferStr(query,
 							 "FROM pg_catalog.pg_type ct "

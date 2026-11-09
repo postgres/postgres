@@ -33,6 +33,10 @@ $new->init();
 
 $old->start;
 
+# Before version 20, attribute versions use attoptions rather than a
+# dedicated catalog column.  Compare major versions to include devel builds.
+my $old_has_attversion = $old->pg_version->major >= 20;
+
 # Older releases may or may not have the attribute-versioning
 # backpatch. Identify those by checking if they have the
 # binary_upgrade_set_next_attribute_versions() function - a sufficient test,
@@ -43,7 +47,8 @@ my $has_versioning = $old->safe_psql(
 	               WHERE pronamespace = 'pg_catalog'::regnamespace
 	                 AND proname = 'binary_upgrade_set_next_attribute_versions')
 }) eq 't';
-my $clear_version = 'attoptions = NULL';
+my $clear_version =
+  $old_has_attversion ? "attversion = '0/0'" : 'attoptions = NULL';
 
 # An unpatched $old forms unversioned datums naturally.  A versioned $old
 # needs the helper from the regress library of its own build.  For an older
@@ -219,16 +224,22 @@ if ($test_unversioned)
 # Remember the attribute versions of all relations with a row type, to verify
 # they are preserved exactly.
 my $new_version_expr = q{
-    COALESCE((SELECT substr(o, length('pg_attver=') + 1)::numeric
-	  FROM unnest(a.attoptions) o
-	  WHERE starts_with(o, 'pg_attver=')), 0)
+	a.attversion - '0/0'
 };
 
 # Without versioning, all versions are zero.
 my $old_version_expr = '0';
-if ($has_versioning)
+if ($old_has_attversion)
 {
 	$old_version_expr = $new_version_expr;
+}
+elsif ($has_versioning)
+{
+	$old_version_expr = q{
+		COALESCE((SELECT substr(o, length('pg_attver=') + 1)::numeric
+		  FROM unnest(a.attoptions) o
+		  WHERE starts_with(o, 'pg_attver=')), 0)
+	};
 }
 
 my $old_versions =

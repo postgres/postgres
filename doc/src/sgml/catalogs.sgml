@@ -1204,6 +1204,23 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>attversion</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       An attribute's version is set when the column is added and updated to a
+       larger value whenever the attribute's, or a preceding attribute's,
+       definition changes in a possibly incompatible way. It is used to detect
+       accesses to composite datums that are incompatible with the current
+       definition. The value is zero for attributes that are not versioned,
+       such as those of system catalogs and of relations without a row type,
+       or attributes of relations created in an earlier version that have been
+       migrated via <application>pg_upgrade</application> from a version that
+       did not maintain attribute versions.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>attndims</structfield> <type>int2</type>
       </para>
       <para>
@@ -1393,8 +1410,7 @@
       <para>
        Attribute-level options, as <quote>keyword=value</quote> strings. Can
        also contain some internal options prefixed with
-       <literal>pg_</literal>, which cannot be set via DDL. Currently the only
-       internal option is <literal>pg_attver</literal>.
+       <literal>pg_</literal>, which cannot be set via DDL.
       </para></entry>
      </row>
 

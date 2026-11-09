@@ -2578,6 +2578,15 @@ HeapTupleHeaderGetDatum(HeapTupleHeader tuple)
 	Datum		result;
 	TupleDesc	tupDesc;
 
+	/*
+	 * We really never should get here with an !RECORDOID && unversioned
+	 * tuple. The header comment says that it should be freshly made tuples,
+	 * which create datum tuples marked as versioned.
+	 */
+	Assert(HeapTupleHeaderIsDatum(tuple) &&
+		   (HeapTupleHeaderIsVersionedDatum(tuple) ||
+			HeapTupleHeaderGetTypeId(tuple) == RECORDOID));
+
 	/* No work if there are no external TOAST pointers in the tuple */
 	if (!HeapTupleHeaderHasExternal(tuple))
 		return PointerGetDatum(tuple);

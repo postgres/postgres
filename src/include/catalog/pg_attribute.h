@@ -22,6 +22,7 @@
 #ifndef PG_ATTRIBUTE_H
 #define PG_ATTRIBUTE_H
 
+#include "access/xlogdefs.h"
 #include "catalog/genbki.h"
 #include "catalog/pg_attribute_d.h" /* IWYU pragma: export */
 
@@ -82,6 +83,11 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	 * value will generally be -1 for types that do not need typmod.
 	 */
 	int32		atttypmod BKI_DEFAULT(-1);
+
+	/*
+	 * Attribute version. See src/backend/catalog/README.attver.md.
+	 */
+	XLogRecPtr	attversion BKI_DEFAULT('0/0');
 
 	/*
 	 * attndims is the declared number of dimensions, if an array type,
@@ -234,9 +240,9 @@ MAKE_SYSCACHE(ATTNUM, pg_attribute_relid_attnum_index, 128);
 #define		  ATTRIBUTE_GENERATED_VIRTUAL	'v'
 
 /*
- * Reserved attoptions key used, in the back branches, to store the attribute
- * version.  See attoptions_get_version() and
- * src/backend/catalog/README.attver.md.
+ * Reserved attoptions key used, in the back branches, to store the
+ * per-attribute version.  This sticks around in newer branches to handle the
+ * special key being set via DDL.
  *
  * This is defined here to make it visible to pg_dump.c.
  */

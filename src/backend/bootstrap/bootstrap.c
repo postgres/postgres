@@ -119,6 +119,8 @@ static const struct typinfo TypInfo[] = {
 	F_JSONB_IN, F_JSONB_OUT},
 	{"oid", OIDOID, 0, 4, true, TYPALIGN_INT, TYPSTORAGE_PLAIN, InvalidOid,
 	F_OIDIN, F_OIDOUT},
+	{"pg_lsn", PG_LSNOID, 0, 8, true, TYPALIGN_DOUBLE, TYPSTORAGE_PLAIN, InvalidOid,
+	F_PG_LSN_IN, F_PG_LSN_OUT},
 	{"aclitem", ACLITEMOID, 0, 16, false, TYPALIGN_DOUBLE, TYPSTORAGE_PLAIN, InvalidOid,
 	F_ACLITEMIN, F_ACLITEMOUT},
 	{"pg_node_tree", PG_NODE_TREEOID, 0, -1, false, TYPALIGN_INT, TYPSTORAGE_EXTENDED, DEFAULT_COLLATION_OID,

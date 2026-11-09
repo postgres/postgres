@@ -596,20 +596,6 @@ RelationBuildTupleDesc(Relation relation)
 
 		populate_compact_attribute(relation->rd_att, attnum - 1);
 
-		/* determine the per-attribute version */
-		if (hasVersionedAttrs)
-		{
-			bool		optnull;
-			Datum		attopts;
-			XLogRecPtr	attVersion;
-
-			attopts = heap_getattr(pg_attribute_tuple, Anum_pg_attribute_attoptions,
-								   pg_attribute_desc->rd_att, &optnull);
-
-			attVersion = attoptions_get_version(attopts, optnull);
-			TupleDescSetAttrVersion(relation->rd_att, attnum, attVersion);
-		}
-
 		/* Update constraint/default info */
 		if (attp->attnotnull)
 			constr->has_not_null = true;

@@ -1074,6 +1074,17 @@ sub morph_row_for_schemapg
 			$row->{$attname} = 'false' if $row->{$attname} eq 'f';
 		}
 
+		# pg_lsn values use the "X/Y" text format in the bootstrap data, but
+		# the C struct field is a plain integer; convert it.
+		elsif ($atttype eq 'pg_lsn')
+		{
+			if ($row->{$attname} =~ m{^([0-9A-Fa-f]+)/([0-9A-Fa-f]+)$})
+			{
+				$row->{$attname} =
+				  sprintf("UINT64CONST(0x%X)", (hex($1) << 32) | hex($2));
+			}
+		}
+
 		# We don't emit initializers for the variable length fields at all.
 		# Only the fixed-size portions of the descriptors are ever used.
 		delete $row->{$attname} if $column->{is_varlen};

@@ -7879,8 +7879,6 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	AlterTableCmd *childcmd;
 	ObjectAddress address;
 	TupleDesc	tupdesc;
-	FormExtraData_pg_attribute attextra;
-	FormExtraData_pg_attribute *attextrap = NULL;
 
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
@@ -8048,14 +8046,10 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		if (attversion <= TupleDescGetVersion(rel->rd_att))
 			elog(ERROR, "version of attribute is not increasing");
 
-		attextra.attstattarget.isnull = true;
-		attextra.attoptions.value = attoptions_set_version((Datum) 0, true,
-														   attversion);
-		attextra.attoptions.isnull = false;
-		attextrap = &attextra;
+		attribute->attversion = attversion;
 	}
 
-	InsertPgAttributeTuples(attrdesc, tupdesc, myrelid, attextrap, NULL);
+	InsertPgAttributeTuples(attrdesc, tupdesc, myrelid, NULL, NULL);
 
 	table_close(attrdesc, RowExclusiveLock);
 

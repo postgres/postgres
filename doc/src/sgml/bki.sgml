@@ -836,6 +836,7 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
       <type>float4</type>, <type>float8</type>,
       <type>name</type>, <type>regproc</type>, <type>text</type>,
       <type>jsonb</type>, <type>oid</type>, <type>pg_node_tree</type>,
+      <type>pg_lsn</type>,
       <type>int2vector</type>, <type>oidvector</type>,
       <type>_int4</type> (array), <type>_text</type> (array),
       <type>_oid</type> (array), <type>_char</type> (array),

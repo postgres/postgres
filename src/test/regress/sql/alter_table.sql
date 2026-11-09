@@ -314,11 +314,11 @@ ALTER TABLE attdrop_test ALTER COLUMN key SET (n_distinct = 100);
 ALTER TABLE attdrop_test ALTER COLUMN toadd SET (n_distinct = 99);
 
 
--- The reserved attribute option that stores the attribute's version is
--- maintained internally.  A spuriously supplied value (e.g. emitted by an
--- older pg_dump that predates the reserved key) is ignored (with a debug
--- message) rather than rejected, so such dumps still restore; other options
--- are still applied.
+-- In the back-branches we used a reserved attribute option to store the
+-- attribute's version. We still handle it during DDL.  A spuriously supplied
+-- value (e.g. emitted by an older pg_dump that predates the reserved key) is
+-- ignored (with a debug message) rather than rejected, so such dumps still
+-- restore; other options are still applied.
 CREATE TABLE attresv (a int);
 ALTER TABLE attresv ALTER COLUMN a SET (pg_attver = '0/1');
 ALTER TABLE attresv ALTER COLUMN a
