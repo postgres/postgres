@@ -1441,7 +1441,7 @@ SELECT expanded_record_field_text(
   FROM (SELECT '(aaa,\\x4649584d45)'::rta_type AS x OFFSET 0) s;
  expanded_record_field_text 
 ----------------------------
- FIXME
+ \x4649584d45
 (1 row)
 
 DROP TYPE rta_type;
