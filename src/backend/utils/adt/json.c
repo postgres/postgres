@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
@@ -21,6 +22,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "port/simd.h"
+#include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
@@ -182,6 +184,7 @@ datum_to_json_internal(Datum val, bool is_null, StringInfo result,
 {
 	char	   *outputstr;
 	text	   *jsontext;
+	AclResult	aclresult;
 
 	check_stack_depth();
 
@@ -281,6 +284,12 @@ datum_to_json_internal(Datum val, bool is_null, StringInfo result,
 			break;
 		case JSONTYPE_CAST:
 			/* outfuncoid refers to a cast function, not an output function */
+			aclresult = object_aclcheck(ProcedureRelationId, outfuncoid,
+										GetUserId(), ACL_EXECUTE);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, OBJECT_FUNCTION,
+							   get_func_name(outfuncoid));
+			InvokeFunctionExecuteHook(outfuncoid);
 			jsontext = DatumGetTextPP(OidFunctionCall1(outfuncoid, val));
 			appendBinaryStringInfo(result, VARDATA_ANY(jsontext),
 								   VARSIZE_ANY_EXHDR(jsontext));
