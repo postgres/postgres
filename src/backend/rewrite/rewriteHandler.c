@@ -3670,12 +3670,19 @@ rewriteTargetView(Query *parsetree, Relation view)
 	/*
 	 * For INSERT/UPDATE, if the view has the WITH CHECK OPTION, or any parent
 	 * view specified WITH CASCADED CHECK OPTION, add the quals from the view
-	 * to the query's withCheckOptions list.
+	 * to the query's withCheckOptions list.  For INSERT ... ON CONFLICT DO
+	 * UPDATE, add them to the list as a check on the existing row as well,
+	 * whether or not the view has a check option.  (Using a WithCheckOption
+	 * for a view that has none is a bit unorthodox, but it's a good fit for
+	 * ON CONFLICT.  Unlike with a plain UPDATE, we need to throw an error
+	 * when there's a conflicting row that doesn't belong in the target view.)
 	 */
 	if (parsetree->commandType != CMD_DELETE)
 	{
 		bool		has_wco = RelationHasCheckOption(view);
 		bool		cascaded = RelationHasCascadedCheckOption(view);
+		bool		do_conflict_check = parsetree->onConflict &&
+			parsetree->onConflict->action == ONCONFLICT_UPDATE;
 
 		/*
 		 * If the parent view has a cascaded check option, treat this view as
@@ -3698,32 +3705,23 @@ rewriteTargetView(Query *parsetree, Relation view)
 		}
 
 		/*
-		 * Add the new WithCheckOption to the start of the list, so that
+		 * New WithCheckOptions are added to the start of the list, so that
 		 * checks on inner views are run before checks on outer views, as
-		 * required by the SQL standard.
+		 * required by the SQL standard.  When there is an ON CONFLICT check,
+		 * it is prepended first, so that any real check option ends up at the
+		 * head of the list, where the parent-cascade check above expects it.
 		 *
-		 * If the new check is CASCADED, we need to add it even if this view
-		 * has no quals, since there may be quals on child views.  A LOCAL
-		 * check can be omitted if this view has no quals.
+		 * Nothing is added when this view has no quals, except for a CASCADED
+		 * check option, which is needed even then, since there may be quals
+		 * on child views.
 		 */
-		if (has_wco && (cascaded || viewquery->jointree->quals != NULL))
+		if ((has_wco || do_conflict_check) &&
+			(cascaded || viewquery->jointree->quals != NULL))
 		{
-			WithCheckOption *wco;
-
-			wco = makeNode(WithCheckOption);
-			wco->kind = WCO_VIEW_CHECK;
-			wco->relname = pstrdup(RelationGetRelationName(view));
-			wco->polname = NULL;
-			wco->qual = NULL;
-			wco->cascaded = cascaded;
-
-			parsetree->withCheckOptions = lcons(wco,
-												parsetree->withCheckOptions);
-
 			if (viewquery->jointree->quals != NULL)
 			{
-				wco->qual = (Node *) viewquery->jointree->quals;
-				ChangeVarNodes(wco->qual, base_rt_index, new_rt_index, 0);
+				ChangeVarNodes(viewquery->jointree->quals,
+							   base_rt_index, new_rt_index, 0);
 
 				/*
 				 * Make sure that the query is marked correctly if the added
@@ -3734,7 +3732,41 @@ rewriteTargetView(Query *parsetree, Relation view)
 				 */
 				if (!parsetree->hasSubLinks &&
 					parsetree->commandType != CMD_UPDATE)
-					parsetree->hasSubLinks = checkExprHasSubLink(wco->qual);
+					parsetree->hasSubLinks =
+						checkExprHasSubLink(viewquery->jointree->quals);
+			}
+
+			/*
+			 * For INSERT ... ON CONFLICT DO UPDATE, the conflict action acts
+			 * on an existing row, which must be visible through the view
+			 */
+			if (do_conflict_check && viewquery->jointree->quals != NULL)
+			{
+				WithCheckOption *wco = makeNode(WithCheckOption);
+
+				wco->kind = WCO_VIEW_CONFLICT_CHECK;
+				wco->relname = pstrdup(RelationGetRelationName(view));
+				wco->polname = NULL;
+				/* Copy; WCO_VIEW_CHECK entry below owns the original quals */
+				wco->qual = copyObject(viewquery->jointree->quals);
+				wco->cascaded = false;
+
+				parsetree->withCheckOptions = lcons(wco,
+													parsetree->withCheckOptions);
+			}
+
+			if (has_wco)
+			{
+				WithCheckOption *wco = makeNode(WithCheckOption);
+
+				wco->kind = WCO_VIEW_CHECK;
+				wco->relname = pstrdup(RelationGetRelationName(view));
+				wco->polname = NULL;
+				wco->qual = viewquery->jointree->quals;
+				wco->cascaded = cascaded;
+
+				parsetree->withCheckOptions = lcons(wco,
+													parsetree->withCheckOptions);
 			}
 		}
 	}
