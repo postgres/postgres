@@ -113,12 +113,12 @@ DROP TYPE atcomp;
 
 -- in an index expression, on an index of a different table.
 --
--- Surprisingly, this is accepted and works. ALTER TABLE command will rebuild
--- the index since it refers to the altered column, even though the index is on
--- a different table. It's rather accidental though: if the expression didn't
--- contain the FieldSelect, it would not have a dependency on the column, would
--- not get rebuilt, and the Const stored in the index definition would be
--- broken.
+-- This is forbidden, because the index expression depends on the type.
+-- However, we could allow this: because the expression also has a dependency on
+-- the column that's being altered via the FieldSelect, it will be rebuilt,
+-- which also rewrites the expression stored in the catalog.  (We used to allow
+-- this, but it was accidental, as we just failed to check for dependent
+-- expressions in general.)
 create table attbl(a numeric);
 create table atref(data text);
 create index atref_idx on atref ((('(1)'::attbl).a + length(data)));
@@ -126,8 +126,8 @@ alter table attbl alter column a type bigint;
 select pg_get_indexdef('atref_idx'::regclass);
 drop table atref, attbl;
 
--- Similarly, this is accepted. The expression doesn't have a dependency on the
--- rowtype, only on the function and on the column. ALTER TABLE command will
+-- Surprisingly, this is accepted. The expression doesn't have a dependency on
+-- the rowtype, only on the function and on the column. ALTER TABLE command will
 -- rebuild the index since it refers to the altered column, even though the
 -- index is on a different table.
 create table attbl(a numeric);
@@ -144,12 +144,8 @@ drop table atref, attbl cascade;
 -- the row type, rather than an individual column
 create table attbl(a bytea);
 create table atref(data text);
-insert into atref(data) values ('\x4649584d45');
 create index atref_idx on atref (('(\\x4649584d45)'::attbl = '(\\x4649584d45)'::attbl));
--- FIXME: This is currently allowed, but it's broken
 alter table attbl alter column a type text; -- someday this should work
-select pg_get_indexdef('atref_idx'::regclass);
-insert into atref(data) VALUES ('\x4649584d45');
 drop table atref, attbl;
 
 -- in an index expression, with a function returning the composite type
@@ -333,7 +329,7 @@ drop table at_pt;
 -- A partition key producing the row type has bound constants of it
 create table at_tab1 (a int, b int);
 create table at_ptab (x int, y int) partition by list ((row(x,y)::at_tab1));
-alter table at_tab1 alter column b type text; -- FIXME: should fail
+alter table at_tab1 alter column b type text; -- fails
 drop table at_ptab, at_tab1;
 
 -- including a whole-row key, whose bound is a datum of the partitioned rowtype
