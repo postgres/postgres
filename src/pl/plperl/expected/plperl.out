@@ -688,6 +688,40 @@ SELECT * from perl_spi_prepared_row('(1, 2)');
  1 | 2
 (1 row)
 
+--
+-- Test that spi_freeplan() rejects a query that is currently executing.
+-- The plan, and everything living in the query descriptor's context is
+-- still in use at that point.
+--
+CREATE FUNCTION perl_spi_freeplan_running() RETURNS int AS $$
+   spi_freeplan($_SHARED{running_plan});
+   return 1;
+$$ LANGUAGE plperl;
+DO $$
+   $_SHARED{running_plan} = spi_prepare('SELECT perl_spi_freeplan_running()');
+   eval { spi_exec_prepared($_SHARED{running_plan}) };
+   elog(NOTICE, 'rejected during execution') if $@;
+   spi_freeplan($_SHARED{running_plan});
+   delete $_SHARED{running_plan};
+$$ LANGUAGE plperl;
+NOTICE:  rejected during execution
+DROP FUNCTION perl_spi_freeplan_running();
+--
+-- A failing spi_freeplan() in a nested call must report the error to Perl,
+-- not longjmp out of the interpreter frame it was called from.
+--
+CREATE FUNCTION perl_spi_freeplan_bogus() RETURNS int AS $$
+   spi_freeplan('no_such_plan');
+   return 1;
+$$ LANGUAGE plperl;
+DO $$
+   my $plan = spi_prepare('SELECT perl_spi_freeplan_bogus()');
+   eval { spi_exec_prepared($plan) };
+   elog(NOTICE, 'nested spi_freeplan() error reported') if $@;
+   spi_freeplan($plan);
+$$ LANGUAGE plperl;
+NOTICE:  nested spi_freeplan() error reported
+DROP FUNCTION perl_spi_freeplan_bogus();
 -- simple test of a DO block
 DO $$
   $a = 'This is a test';
