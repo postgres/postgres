@@ -1,0 +1,67 @@
+Parsed test spec with 2 sessions
+
+starting permutation: begin1 update1 commit1 read2
+step begin1: BEGIN;
+step update1: UPDATE epq_rj_lock SET n = n + 1 WHERE id = 1;
+step commit1: COMMIT;
+step read2: 
+  SELECT l.id, l.n
+  FROM epq_rj_lock l JOIN epq_rj_view v ON v.id = l.id
+  FOR UPDATE OF l;
+
+id|n
+--+-
+ 1|1
+(1 row)
+
+
+starting permutation: explain2 begin1 update1 read2 commit1
+step explain2: 
+  EXPLAIN (COSTS OFF)
+  SELECT l.id, l.n
+  FROM epq_rj_lock l JOIN epq_rj_view v ON v.id = l.id
+  FOR UPDATE OF l;
+
+QUERY PLAN                                     
+-----------------------------------------------
+LockRows                                       
+  ->  Hash Join                                
+        Hash Cond: (v.id = l.id)               
+        ->  Subquery Scan on v                 
+              ->  Sort                         
+                    Sort Key: epq_rj_data.t    
+                    ->  Seq Scan on epq_rj_data
+        ->  Hash                               
+              ->  Seq Scan on epq_rj_lock l    
+(9 rows)
+
+step begin1: BEGIN;
+step update1: UPDATE epq_rj_lock SET n = n + 1 WHERE id = 1;
+step read2: 
+  SELECT l.id, l.n
+  FROM epq_rj_lock l JOIN epq_rj_view v ON v.id = l.id
+  FOR UPDATE OF l;
+ <waiting ...>
+step commit1: COMMIT;
+step read2: <... completed>
+id|n
+--+-
+ 1|1
+(1 row)
+
+
+starting permutation: begin1 update1 modify2 commit1
+step begin1: BEGIN;
+step update1: UPDATE epq_rj_lock SET n = n + 1 WHERE id = 1;
+step modify2: 
+  UPDATE epq_rj_lock l SET n = n + 10
+  FROM epq_rj_view v WHERE v.id = l.id
+  RETURNING l.id, l.n;
+ <waiting ...>
+step commit1: COMMIT;
+step modify2: <... completed>
+id| n
+--+--
+ 1|11
+(1 row)
+

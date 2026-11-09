@@ -1,0 +1,49 @@
+Parsed test spec with 2 sessions
+
+starting permutation: begin1 update1 commit1 read2
+step begin1: BEGIN;
+step update1: UPDATE epq_lock SET n = n + 1 WHERE id = 1;
+step commit1: COMMIT;
+step read2: 
+  SELECT t.id, s.v
+  FROM epq_lock t JOIN epq_function() s ON s.id = t.id
+  FOR UPDATE OF t;
+
+id| v
+--+--
+ 1|42
+(1 row)
+
+
+starting permutation: explain2 begin1 update1 read2 commit1
+step explain2: 
+  EXPLAIN (COSTS OFF)
+  SELECT t.id, s.v
+  FROM epq_lock t JOIN epq_function() s ON s.id = t.id
+  FOR UPDATE OF t;
+
+QUERY PLAN                                              
+--------------------------------------------------------
+LockRows                                                
+  ->  Nested Loop                                       
+        ->  Subquery Scan on s                          
+              ->  Subquery Scan on unnamed_subquery     
+                    ->  Result                          
+        ->  Index Scan using epq_lock_pkey on epq_lock t
+              Index Cond: (id = s.id)                   
+(7 rows)
+
+step begin1: BEGIN;
+step update1: UPDATE epq_lock SET n = n + 1 WHERE id = 1;
+step read2: 
+  SELECT t.id, s.v
+  FROM epq_lock t JOIN epq_function() s ON s.id = t.id
+  FOR UPDATE OF t;
+ <waiting ...>
+step commit1: COMMIT;
+step read2: <... completed>
+id| v
+--+--
+ 1|42
+(1 row)
+
