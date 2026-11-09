@@ -6588,6 +6588,15 @@ find_composite_type_dependencies_recurse(Oid typeOid, Relation origRelation,
 		return;
 
 	/*
+	 * We already hold a lock on the relation being ALTERed, but also lock its
+	 * rowtype (on first call), and its array type, domains, composite types
+	 * etc. that depend on the ALTERed type (as we recurse).  This ensures
+	 * that if a concurrent command is adding a new dependency to any of those
+	 * types, we will see it.
+	 */
+	LockDatabaseObject(TypeRelationId, typeOid, 0, AccessExclusiveLock);
+
+	/*
 	 * We scan pg_depend to find those things that depend on the given type.
 	 * (We assume we can ignore refobjsubid for a type.)
 	 */
