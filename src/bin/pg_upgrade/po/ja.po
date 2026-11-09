@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL 18)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-10-10 15:48+0900\n"
-"PO-Revision-Date: 2025-10-10 16:07+0900\n"
+"POT-Creation-Date: 2026-08-17 10:58+0900\n"
+"PO-Revision-Date: 2026-08-17 15:07+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -20,16 +20,26 @@ msgstr ""
 "X-Generator: Poedit 1.8.13\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "メモリ不足\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "nullポインタは複製できません(内部エラー)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu + %zu が不正です\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "メモリ割り当て要求サイズ %zu * %zu が不正です\n"
 
 #: ../../common/restricted_token.c:168
 #, c-format
@@ -58,7 +68,7 @@ msgstr "シェルコマンドの引数に改行(LF)または復帰(CR)が含ま�
 #: ../../fe_utils/string_utils.c:760
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
-msgstr "データベース名に改行(LF)または復帰(CR)が含まれています: \"%s\"\n"
+msgstr "データベース名に改行文字(LF)または復帰文字(CR)が含まれています: \"%s\"\n"
 
 #: check.c:112
 msgid "Checking for system-defined composite types in user tables"
@@ -236,8 +246,8 @@ msgstr "問題の列の一覧は以下のファイルにあります:"
 
 #: check.c:431 check.c:1038 check.c:1189 check.c:1272 check.c:1361 check.c:1452
 #: check.c:1584 check.c:1656 check.c:1757 check.c:1804 check.c:1884
-#: check.c:2194 check.c:2213 check.c:2259 check.c:2312 file.c:378 file.c:415
-#: function.c:208 option.c:519 version.c:79 version.c:162
+#: check.c:2160 check.c:2273 check.c:2292 check.c:2338 check.c:2391 file.c:378
+#: file.c:415 function.c:208 option.c:519 version.c:97 version.c:180
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
@@ -444,8 +454,8 @@ msgid "template0 must not allow connections, i.e. its pg_database.datallowconn m
 msgstr "template0 には接続を許可してはなりません。すなわち、pg_database.datallowconn は false である必要があります"
 
 #: check.c:1203 check.c:1324 check.c:1420 check.c:1548 check.c:1624
-#: check.c:1710 check.c:1770 check.c:1853 check.c:2226 check.c:2368
-#: function.c:229
+#: check.c:1710 check.c:1770 check.c:1853 check.c:2172 check.c:2305
+#: check.c:2447 function.c:229
 #, c-format
 msgid "fatal"
 msgstr "致命的"
@@ -645,7 +655,7 @@ msgstr ""
 msgid "Checking for objects affected by Unicode update"
 msgstr "Unicodeの更新によって影響を受けるオブジェクトを確認しています"
 
-#: check.c:2038 version.c:121
+#: check.c:2038 version.c:139
 #, c-format
 msgid "warning"
 msgstr "警告"
@@ -661,52 +671,74 @@ msgstr ""
 "影響を受ける可能性があるリレーションの一覧は以下のファイルにあります:\n"
 "    %s"
 
-#: check.c:2075
+#: check.c:2076
 #, c-format
 msgid "Checking for new cluster logical replication slots"
 msgstr "新しいクラスタの論理レプリケーションスロットを確認しています"
 
-#: check.c:2083
+#: check.c:2084
 #, c-format
 msgid "could not count the number of logical replication slots"
 msgstr "論理レプリケーションスロットの数を数えられませんでした"
 
-#: check.c:2088
+#: check.c:2089
 #, c-format
 msgid "expected 0 logical replication slots but found %d"
 msgstr "論理レプリケーションスロット数は0であることを期待していましたが、%d個ありました"
 
-#: check.c:2098 check.c:2149
+#: check.c:2099 check.c:2228
 #, c-format
 msgid "could not determine parameter settings on new cluster"
 msgstr "新クラスタ上のパラメータ設定を決定できませんでした"
 
-#: check.c:2103
+#: check.c:2104
 #, c-format
 msgid "\"wal_level\" must be \"logical\" but is set to \"%s\""
 msgstr "\"wal_level\"は\"logical\"でなければなりませんが\"%s\"に設定されています"
 
-#: check.c:2109
+#: check.c:2126
+#, c-format
+msgid "could not parse \"output_plugin_libraries\" setting '%s'"
+msgstr "\"output_plugin_libraries\"の設定'%s'をパースできませんでした"
+
+#: check.c:2173
+#, c-format
+msgid ""
+"Your installation contains logical replication slots with plugins\n"
+"that are not allowed by the new cluster's output_plugin_libraries\n"
+"setting. You can add trusted plugins to output_plugin_libraries\n"
+"and/or remove affected slots, and then restart the upgrade.\n"
+"A list of the problematic slots is in the file:\n"
+"    %s"
+msgstr ""
+"このクラスタには、新クラスタのoutput_plugin_librariesの設定では、\n"
+"使用できないプラグインを使用している論理レプリケーションスロットがあります。\n"
+"信頼するプラグインのoutput_plugin_librariesへの追加と、問題のスロットの削除の\n"
+"一方または両方を行った後に、アップグレードを再実行してください。\n"
+"問題のあるスロットの一覧は、以下のファイルにあります:\n"
+"    %s"
+
+#: check.c:2188
 #, c-format
 msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
 msgstr "\"max_replication_slots\" (%d) は旧クラスタにおける論理レプリケーションスロットの数(%d)以上でなければなりません"
 
-#: check.c:2141
+#: check.c:2220
 #, c-format
 msgid "Checking for new cluster configuration for subscriptions"
 msgstr "新しいクラスタの構成のサブスクリプションを確認しています"
 
-#: check.c:2153
+#: check.c:2232
 #, c-format
 msgid "\"max_active_replication_origins\" (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
 msgstr "\"max_active_replication_origins\" (%d) は旧クラスタにおけるサブスクリプションの数(%d)以上でなければなりません"
 
-#: check.c:2175
+#: check.c:2254
 #, c-format
 msgid "Checking for valid logical replication slots"
 msgstr "有効な論理レプリケーションスロットを確認しています"
 
-#: check.c:2227
+#: check.c:2306
 #, c-format
 msgid ""
 "Your installation contains logical replication slots that cannot be upgraded.\n"
@@ -721,12 +753,12 @@ msgstr ""
 "問題のある列の一覧は、以下のファイルにあります: \n"
 "    %s"
 
-#: check.c:2287
+#: check.c:2366
 #, c-format
 msgid "Checking for subscription state"
 msgstr "サブスクリプション状態を確認しています"
 
-#: check.c:2369
+#: check.c:2448
 #, c-format
 msgid ""
 "Your installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state.\n"
@@ -785,7 +817,7 @@ msgstr "移行元クラスタにクラスタ状態情報がありません:"
 msgid "The target cluster lacks cluster state information:"
 msgstr "移行先クラスタにクラスタ状態情報がありません:"
 
-#: controldata.c:217 dump.c:50 exec.c:118 pg_upgrade.c:606 pg_upgrade.c:646
+#: controldata.c:217 dump.c:54 exec.c:118 pg_upgrade.c:606 pg_upgrade.c:646
 #: pg_upgrade.c:995 relfilenumber.c:610 server.c:34 util.c:337
 #, c-format
 msgid "%s"
@@ -1038,7 +1070,7 @@ msgstr "識別できない転送モード"
 msgid "Creating dump of global objects"
 msgstr "グローバルオブジェクトのダンプを作成しています"
 
-#: dump.c:32
+#: dump.c:33
 #, c-format
 msgid "Creating dump of database schemas"
 msgstr "データベーススキーマのダンプを作成しています。"
@@ -1729,7 +1761,7 @@ msgstr "ワーカープロセスを作成できませんでした: %m"
 msgid "could not create worker thread: %m"
 msgstr "ワーカースレッドを作成できませんでした: %m"
 
-#: parallel.c:294 task.c:404
+#: parallel.c:294 task.c:406
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() が失敗しました: %m"
@@ -2001,17 +2033,17 @@ msgstr "\"%s\"から\"%s\"へリンクを作成しています"
 msgid "should never happen"
 msgstr "想定外のコードパス"
 
-#: server.c:39 server.c:143 util.c:248 util.c:278
+#: server.c:39 server.c:145 util.c:248 util.c:278
 #, c-format
 msgid "Failure, exiting\n"
 msgstr "失敗しました、終了しています\n"
 
-#: server.c:133
+#: server.c:135
 #, c-format
 msgid "executing: %s"
 msgstr "実行中: %s"
 
-#: server.c:139
+#: server.c:141
 #, c-format
 msgid ""
 "SQL command failed\n"
@@ -2022,17 +2054,17 @@ msgstr ""
 "%s\n"
 "%s"
 
-#: server.c:169
+#: server.c:171
 #, c-format
 msgid "could not open version file \"%s\": %m"
 msgstr "バージョンファイル\"%s\"をオープンできませんでした: %m"
 
-#: server.c:173
+#: server.c:175
 #, c-format
 msgid "could not parse version file \"%s\""
 msgstr "バージョンファイル\"%s\"をパースできませんでした"
 
-#: server.c:299
+#: server.c:301
 #, c-format
 msgid ""
 "\n"
@@ -2041,7 +2073,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: server.c:303
+#: server.c:305
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -2050,7 +2082,7 @@ msgstr ""
 "以下のコマンドで起動した移行元postmasterに接続できませんでした:\n"
 "%s"
 
-#: server.c:307
+#: server.c:309
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -2059,22 +2091,22 @@ msgstr ""
 "以下のコマンドで起動した移行先postmasterに接続できませんでした:\n"
 "%s"
 
-#: server.c:321
+#: server.c:323
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed"
 msgstr "pg_ctl が移行元サーバーの起動に失敗した、あるいは接続に失敗しました"
 
-#: server.c:323
+#: server.c:325
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed"
 msgstr "pg_ctl が移行先サーバーの起動に失敗した、あるいは接続に失敗しました"
 
-#: server.c:368 task.c:195
+#: server.c:370 task.c:197
 #, c-format
 msgid "out of memory"
 msgstr "メモリ不足です"
 
-#: server.c:381
+#: server.c:383
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s"
 msgstr "libpq の環境変数 %s で、ローカルでないサーバー値が設定されています: %s"
@@ -2103,12 +2135,12 @@ msgstr "テーブル空間のディレクトリ\"%s\"をstatできませんで�
 msgid "tablespace path \"%s\" is not a directory"
 msgstr "テーブル空間のパス\"%s\"がディレクトリではありません"
 
-#: task.c:216 task.c:267 task.c:282 task.c:293
+#: task.c:218 task.c:269 task.c:284 task.c:295
 #, c-format
 msgid "connection failure: %s"
 msgstr "接続失敗: %s"
 
-#: task.c:395
+#: task.c:397
 #, c-format
 msgid "invalid socket"
 msgstr "不正なソケットです"
@@ -2128,12 +2160,12 @@ msgstr "ディレクトリ\"%s\"にアクセスできませんでした: %m"
 msgid "ok"
 msgstr "ok"
 
-#: version.c:44
+#: version.c:62
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "ハッシュインデックスをチェックしています"
 
-#: version.c:123
+#: version.c:141
 #, c-format
 msgid ""
 "\n"
@@ -2147,7 +2179,7 @@ msgstr ""
 "内部フォーマットが異なるため、REINDEX コマンドを使って再構築する必要があります。\n"
 "アップグレードが終わったら、REINDEX を使った操作方法が指示されます。"
 
-#: version.c:129
+#: version.c:147
 #, c-format
 msgid ""
 "\n"
@@ -2167,17 +2199,17 @@ msgstr ""
 "インデックスを再構築できます。\n"
 "それまでは、これらのインデックスは使用されません。"
 
-#: version.c:187
+#: version.c:205
 #, c-format
 msgid "Checking for extension updates"
 msgstr "機能拡張のアップデートを確認しています"
 
-#: version.c:201
+#: version.c:219
 #, c-format
 msgid "notice"
 msgstr "注意"
 
-#: version.c:202
+#: version.c:220
 #, c-format
 msgid ""
 "\n"

@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_verifybackup
 # Copyright (C) 2020 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_verifybackup (PostgreSQL) package.
-# Dennis Björklund <db@zigo.dhs.org>, 2020, 2021, 2022, 2023, 2024, 2025.
+# Dennis Björklund <db@zigo.dhs.org>, 2020, 2021, 2022, 2023, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-05-16 16:18+0000\n"
-"PO-Revision-Date: 2025-05-16 20:33+0200\n"
+"POT-Creation-Date: 2026-08-27 17:40+0000\n"
+"PO-Revision-Date: 2026-08-27 22:24+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -93,7 +93,7 @@ msgid "could not fsync file \"%s\": %m"
 msgstr "kunde inte fsync:a fil \"%s\": %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/jsonapi.c:2410 ../../common/parse_manifest.c:157
+#: ../../common/jsonapi.c:2459 ../../common/parse_manifest.c:157
 #: ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
@@ -112,114 +112,124 @@ msgstr "destinationsbuffer för liten"
 msgid "OpenSSL failure"
 msgstr "OpenSSL-fel"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
 
-#: ../../common/jsonapi.c:2435
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ogiltig storlek %zu + %zu för minnesallokering\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ogiltig storlek %zu * %zu för minnesallokering\n"
+
+#: ../../common/jsonapi.c:2484
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr "Recursive-descent-parser kan inte använda inkrementell lexer."
 
-#: ../../common/jsonapi.c:2437
+#: ../../common/jsonapi.c:2486
 msgid "Incremental parser requires incremental lexer."
 msgstr "Inkrementell parser kräver en inkrementell lexer."
 
-#: ../../common/jsonapi.c:2439
+#: ../../common/jsonapi.c:2488
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr "JSON nästlad för djupt, maximal tillåtet djup är 6400."
 
-#: ../../common/jsonapi.c:2441
+#: ../../common/jsonapi.c:2490
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "Escape-sekvens \"\\%.*s\" är ogiltig."
 
-#: ../../common/jsonapi.c:2445
+#: ../../common/jsonapi.c:2494
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Tecken med värde 0x%02x måste escape:as."
 
-#: ../../common/jsonapi.c:2449
+#: ../../common/jsonapi.c:2498
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "Förväntade slut på indata, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2452
+#: ../../common/jsonapi.c:2501
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "Färväntade array-element eller \"]\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2455
+#: ../../common/jsonapi.c:2504
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "Förväntade \",\" eller \"]\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2458
+#: ../../common/jsonapi.c:2507
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "Förväntade sig \":\" men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2461
+#: ../../common/jsonapi.c:2510
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "Förväntade JSON-värde, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2464
+#: ../../common/jsonapi.c:2513
 msgid "The input string ended unexpectedly."
 msgstr "Indatasträngen avslutades oväntat."
 
-#: ../../common/jsonapi.c:2466
+#: ../../common/jsonapi.c:2515
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "Färväntade sträng eller \"}\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2469
+#: ../../common/jsonapi.c:2518
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "Förväntade sig \",\" eller \"}\" men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2472
+#: ../../common/jsonapi.c:2521
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "Förväntade sträng, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2475
+#: ../../common/jsonapi.c:2524
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "Token \"%.*s\" är ogiltig."
 
-#: ../../common/jsonapi.c:2481
+#: ../../common/jsonapi.c:2530
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 kan inte konverteras till text."
 
-#: ../../common/jsonapi.c:2483
+#: ../../common/jsonapi.c:2532
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "\"\\u\" måste följas av fyra hexdecimala siffror."
 
-#: ../../common/jsonapi.c:2486
+#: ../../common/jsonapi.c:2535
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Escape-värden för unicode kan inte användas för kodpunkter med värde över 007F när kodningen inte är UTF8."
 
-#: ../../common/jsonapi.c:2495
+#: ../../common/jsonapi.c:2544
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Escape-värde för unicode kan inte översättas till serverns kodning %s."
 
-#: ../../common/jsonapi.c:2502
+#: ../../common/jsonapi.c:2551
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicodes övre surrogathalva får inte komma efter en övre surrogathalva."
 
-#: ../../common/jsonapi.c:2504
+#: ../../common/jsonapi.c:2553
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicodes lägre surrogathalva måste följa en övre surrogathalva."
 
-#: ../../common/jsonapi.c:2526
+#: ../../common/jsonapi.c:2575
 msgid "out of memory while constructing error description"
 msgstr "slut på minne vid skapande av felbeskrivning"
 
@@ -402,7 +412,7 @@ msgstr "kunde inte sätta komprimeringsnivå %d: %s"
 
 #: ../../fe_utils/astreamer_gzip.c:140 ../../fe_utils/astreamer_gzip.c:273
 #: ../../fe_utils/astreamer_lz4.c:102 ../../fe_utils/astreamer_lz4.c:300
-#: ../../fe_utils/astreamer_zstd.c:133 ../../fe_utils/astreamer_zstd.c:288
+#: ../../fe_utils/astreamer_zstd.c:130 ../../fe_utils/astreamer_zstd.c:285
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "detta bygge stöder inte komprimering med %s"
@@ -423,7 +433,7 @@ msgid "could not initialize compression library"
 msgstr "kunde inte initierar komprimeringsbibliotek"
 
 #: ../../fe_utils/astreamer_gzip.c:320 ../../fe_utils/astreamer_lz4.c:356
-#: ../../fe_utils/astreamer_zstd.c:333
+#: ../../fe_utils/astreamer_zstd.c:330
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "kunde inte dekomprimera data: %s"
@@ -438,8 +448,8 @@ msgstr "kunde inte skapa kontext för lz4-komprimering: %s"
 msgid "could not write lz4 header: %s"
 msgstr "kunde inte skriva lz4-header: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:185
-#: ../../fe_utils/astreamer_zstd.c:227
+#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:182
+#: ../../fe_utils/astreamer_zstd.c:224
 #, c-format
 msgid "could not compress data: %s"
 msgstr "kunde inte komprimera data: %s"
@@ -454,22 +464,32 @@ msgstr "kunde inte avsluta lz4-komprimering: %s"
 msgid "could not initialize compression library: %s"
 msgstr "kunde inte initiera komprimeringsbibliotek: %s"
 
-#: ../../fe_utils/astreamer_tar.c:244
-#, c-format
-msgid "tar file trailer exceeds 2 blocks"
-msgstr "tarfilens slutdel överskred 2 block"
-
-#: ../../fe_utils/astreamer_tar.c:249 astreamer_verify.c:130
+#: ../../fe_utils/astreamer_tar.c:254 astreamer_verify.c:130
 #, c-format
 msgid "unexpected state while parsing tar archive"
 msgstr "oväntat tillstånd vid parsning av tar-arkiv"
 
-#: ../../fe_utils/astreamer_tar.c:292
+#: ../../fe_utils/astreamer_tar.c:300
+#, c-format
+msgid "input file does not appear to be a valid tar archive"
+msgstr "indatafilen verkar inte vara ett korrekt tar-arkiv"
+
+#: ../../fe_utils/astreamer_tar.c:307
 #, c-format
 msgid "tar member has empty name"
 msgstr "tar-medlem har tomt namn"
 
-#: ../../fe_utils/astreamer_tar.c:326
+#: ../../fe_utils/astreamer_tar.c:309
+#, c-format
+msgid "tar member has unsafe path name: \"%s\""
+msgstr "tar-medlem har osäkert sökvägsnamn: \"%s\""
+
+#: ../../fe_utils/astreamer_tar.c:332
+#, c-format
+msgid "pax extensions to tar format are not supported"
+msgstr "pax-utökning av tar-formatet stöds inte"
+
+#: ../../fe_utils/astreamer_tar.c:361
 #, c-format
 msgid "COPY stream ended before last file was finished"
 msgstr "COPY-ström avslutade innan sista filen var klar"
@@ -489,12 +509,12 @@ msgstr "kunde inte sätta zstd-komprimeringsnivå till %d: %s"
 msgid "could not set compression worker count to %d: %s"
 msgstr "kunde inte sätta komprimeringens arbetarantal till %d: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:120
+#: ../../fe_utils/astreamer_zstd.c:119
 #, c-format
 msgid "could not enable long-distance mode: %s"
 msgstr "kunde inte aktivera långdistansläge: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:279
+#: ../../fe_utils/astreamer_zstd.c:276
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "kunde inte skapa kontext för zstd-dekomprimering"

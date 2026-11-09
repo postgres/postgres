@@ -1,6 +1,6 @@
 # Swedish message translation file for pg_controldata
 # This file is put in the public domain.
-# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025.
+# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
 # Use these quotes: "%s"
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-05-16 16:23+0000\n"
-"PO-Revision-Date: 2025-05-16 20:12+0200\n"
+"POT-Creation-Date: 2026-08-13 16:17+0000\n"
+"PO-Revision-Date: 2026-08-13 19:55+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -71,16 +71,26 @@ msgstr "kunde inte skriva fil \"%s\": %m"
 msgid "could not fsync file \"%s\": %m"
 msgstr "kunde inte fsync:a fil \"%s\": %m"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ogiltig storlek %zu + %zu för minnesallokering\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ogiltig storlek %zu * %zu för minnesallokering\n"
 
 #: pg_controldata.c:35
 #, c-format

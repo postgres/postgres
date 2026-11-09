@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2026-08-08 08:46+0300\n"
-"PO-Revision-Date: 2026-08-05 07:50+0300\n"
+"PO-Revision-Date: 2026-10-10 21:14+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -346,7 +346,8 @@ msgid ""
 "File \"%s\" contains \"%s\", which is not compatible with this program's "
 "version \"%s\"."
 msgstr ""
-"Файл \"%s\" содержит строку \"%s\", а ожидается версия программы \"%s\"."
+"Файл \"%s\" содержит версию \"%s\", которая несовместима с версией программы "
+"\"%s\"."
 
 #: pg_resetwal.c:603
 #, c-format

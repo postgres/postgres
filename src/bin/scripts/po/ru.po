@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-08-08 08:46+0300\n"
-"PO-Revision-Date: 2026-08-05 07:51+0300\n"
+"POT-Creation-Date: 2026-11-07 09:43+0200\n"
+"PO-Revision-Date: 2026-11-07 13:22+0200\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -281,18 +281,18 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:274 createdb.c:300 createuser.c:417 dropdb.c:171 dropuser.c:171
-#: pg_isready.c:226 reindexdb.c:898 vacuumdb.c:1337
+#: pg_isready.c:226 reindexdb.c:901 vacuumdb.c:1337
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: clusterdb.c:275 reindexdb.c:899 vacuumdb.c:1338
+#: clusterdb.c:275 reindexdb.c:902 vacuumdb.c:1338
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД]\n"
 
 #: clusterdb.c:276 createdb.c:302 createuser.c:419 dropdb.c:173 dropuser.c:173
-#: pg_isready.c:229 reindexdb.c:900 vacuumdb.c:1339
+#: pg_isready.c:229 reindexdb.c:903 vacuumdb.c:1339
 #, c-format
 msgid ""
 "\n"
@@ -315,7 +315,7 @@ msgstr "  -d, --dbname=ИМЯ_БД       имя базы данных для к�
 #, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
-msgstr "  -e, --echo                отображать команды, отправляемые серверу\n"
+msgstr "  -e, --echo                отображать команды, передаваемые серверу\n"
 
 #: clusterdb.c:280
 #, c-format
@@ -344,7 +344,7 @@ msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                показать эту справку и выйти\n"
 
 #: clusterdb.c:285 createdb.c:319 createuser.c:450 dropdb.c:180 dropuser.c:180
-#: pg_isready.c:235 reindexdb.c:915 vacuumdb.c:1369
+#: pg_isready.c:235 reindexdb.c:918 vacuumdb.c:1369
 #, c-format
 msgid ""
 "\n"
@@ -396,7 +396,7 @@ msgstr ""
 "Подробнее о кластеризации вы можете узнать в описании SQL-команды CLUSTER.\n"
 
 #: clusterdb.c:293 createdb.c:327 createuser.c:456 dropdb.c:187 dropuser.c:186
-#: pg_isready.c:240 reindexdb.c:923 vacuumdb.c:1377
+#: pg_isready.c:240 reindexdb.c:926 vacuumdb.c:1377
 #, c-format
 msgid ""
 "\n"
@@ -406,7 +406,7 @@ msgstr ""
 "Об ошибках сообщайте по адресу <%s>.\n"
 
 #: clusterdb.c:294 createdb.c:328 createuser.c:457 dropdb.c:188 dropuser.c:187
-#: pg_isready.c:241 reindexdb.c:924 vacuumdb.c:1378
+#: pg_isready.c:241 reindexdb.c:927 vacuumdb.c:1378
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашняя страница %s: <%s>\n"
@@ -478,12 +478,12 @@ msgstr ""
 "  -D, --tablespace=ТАБЛ_ПРОСТР табличное пространство по умолчанию для базы "
 "данных\n"
 
-#: createdb.c:304 reindexdb.c:904
+#: createdb.c:304 reindexdb.c:907
 #, c-format
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
 msgstr ""
-"  -e, --echo                   отображать команды, отправляемые серверу\n"
+"  -e, --echo                   отображать команды, передаваемые серверу\n"
 
 #: createdb.c:305
 #, c-format
@@ -554,17 +554,17 @@ msgstr ""
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=ШАБЛОН        исходная база данных для копирования\n"
 
-#: createdb.c:317 reindexdb.c:913
+#: createdb.c:317 reindexdb.c:916
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                показать версию и выйти\n"
 
-#: createdb.c:318 reindexdb.c:914
+#: createdb.c:318 reindexdb.c:917
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   показать эту справку и выйти\n"
 
-#: createdb.c:320 reindexdb.c:916
+#: createdb.c:320 reindexdb.c:919
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME          database server host or socket directory\n"
@@ -572,28 +572,28 @@ msgstr ""
 "  -h, --host=ИМЯ               компьютер с сервером баз данных или каталог "
 "сокетов\n"
 
-#: createdb.c:321 reindexdb.c:917
+#: createdb.c:321 reindexdb.c:920
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=ПОРТ              порт сервера баз данных\n"
 
-#: createdb.c:322 reindexdb.c:918
+#: createdb.c:322 reindexdb.c:921
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr ""
 "  -U, --username=ИМЯ           имя пользователя для подключения к серверу\n"
 
-#: createdb.c:323 reindexdb.c:919
+#: createdb.c:323 reindexdb.c:922
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            не запрашивать пароль\n"
 
-#: createdb.c:324 reindexdb.c:920
+#: createdb.c:324 reindexdb.c:923
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               запросить пароль\n"
 
-#: createdb.c:325 reindexdb.c:921
+#: createdb.c:325 reindexdb.c:924
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr "  --maintenance-db=ИМЯ_БД      сменить опорную базу данных\n"
@@ -1021,13 +1021,20 @@ msgstr ""
 "нельзя задействовать несколько заданий для переиндексирования системных "
 "каталогов"
 
-#: reindexdb.c:222
+#: reindexdb.c:220
+#, c-format
+msgid "cannot use multiple jobs to reindex indexes concurrently"
+msgstr ""
+"нельзя задействовать несколько заданий для неблокирующего перестроения "
+"индексов"
+
+#: reindexdb.c:225
 #, c-format
 msgid "cannot reindex all databases and a specific one at the same time"
 msgstr ""
 "нельзя переиндексировать все базы данных и одну конкретную одновременно"
 
-#: reindexdb.c:302 reindexdb.c:309 vacuumdb.c:559 vacuumdb.c:566 vacuumdb.c:573
+#: reindexdb.c:305 reindexdb.c:312 vacuumdb.c:559 vacuumdb.c:566 vacuumdb.c:573
 #: vacuumdb.c:580 vacuumdb.c:587 vacuumdb.c:594 vacuumdb.c:601 vacuumdb.c:608
 #: vacuumdb.c:615 vacuumdb.c:622 vacuumdb.c:629 vacuumdb.c:636
 #, c-format
@@ -1036,37 +1043,37 @@ msgid ""
 msgstr ""
 "параметр \"%s\" нельзя использовать с серверами PostgreSQL версии старее %s"
 
-#: reindexdb.c:597
+#: reindexdb.c:600
 #, c-format
 msgid "reindexing of database \"%s\" failed: %s"
 msgstr "переиндексировать базу данных \"%s\" не удалось: %s"
 
-#: reindexdb.c:601
+#: reindexdb.c:604
 #, c-format
 msgid "reindexing of index \"%s\" in database \"%s\" failed: %s"
 msgstr "перестроить индекс \"%s\" в базе \"%s\" не удалось: %s"
 
-#: reindexdb.c:605
+#: reindexdb.c:608
 #, c-format
 msgid "reindexing of schema \"%s\" in database \"%s\" failed: %s"
 msgstr "переиндексировать схему \"%s\" в базе \"%s\" не удалось: %s"
 
-#: reindexdb.c:609
+#: reindexdb.c:612
 #, c-format
 msgid "reindexing of system catalogs in database \"%s\" failed: %s"
 msgstr "переиндексировать системные каталоги в базе \"%s\" не удалось: %s"
 
-#: reindexdb.c:613
+#: reindexdb.c:616
 #, c-format
 msgid "reindexing of table \"%s\" in database \"%s\" failed: %s"
 msgstr "переиндексировать таблицу \"%s\" в базе \"%s\" не удалось: %s"
 
-#: reindexdb.c:854
+#: reindexdb.c:857
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: переиндексация базы данных \"%s\"\n"
 
-#: reindexdb.c:897
+#: reindexdb.c:900
 #, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
@@ -1075,29 +1082,29 @@ msgstr ""
 "%s переиндексирует базу данных PostgreSQL.\n"
 "\n"
 
-#: reindexdb.c:901
+#: reindexdb.c:904
 #, c-format
 msgid "  -a, --all                    reindex all databases\n"
 msgstr "  -a, --all                    переиндексировать все базы данных\n"
 
-#: reindexdb.c:902
+#: reindexdb.c:905
 #, c-format
 msgid "      --concurrently           reindex concurrently\n"
 msgstr ""
 "      --concurrently           переиндексировать в неблокирующем режиме\n"
 
-#: reindexdb.c:903
+#: reindexdb.c:906
 #, c-format
 msgid "  -d, --dbname=DBNAME          database to reindex\n"
 msgstr "  -d, --dbname=БД              имя базы для переиндексации\n"
 
-#: reindexdb.c:905
+#: reindexdb.c:908
 #, c-format
 msgid "  -i, --index=INDEX            recreate specific index(es) only\n"
 msgstr ""
 "  -i, --index=ИНДЕКС           пересоздать только указанный индекс(ы)\n"
 
-#: reindexdb.c:906
+#: reindexdb.c:909
 #, c-format
 msgid ""
 "  -j, --jobs=NUM               use this many concurrent connections to "
@@ -1106,24 +1113,24 @@ msgstr ""
 "  -j, --jobs=ЧИСЛО             запускать для переиндексации заданное число\n"
 "                               заданий\n"
 
-#: reindexdb.c:907
+#: reindexdb.c:910
 #, c-format
 msgid "  -q, --quiet                  don't write any messages\n"
 msgstr "  -q, --quiet                  не выводить сообщения\n"
 
-#: reindexdb.c:908
+#: reindexdb.c:911
 #, c-format
 msgid "  -s, --system                 reindex system catalogs only\n"
 msgstr ""
 "  -s, --system                 переиндексировать только системные каталоги\n"
 
-#: reindexdb.c:909
+#: reindexdb.c:912
 #, c-format
 msgid "  -S, --schema=SCHEMA          reindex specific schema(s) only\n"
 msgstr ""
 "  -S, --schema=СХЕМА           переиндексировать только указанную схему(ы)\n"
 
-#: reindexdb.c:910
+#: reindexdb.c:913
 #, c-format
 msgid "  -t, --table=TABLE            reindex specific table(s) only\n"
 msgstr ""
@@ -1131,19 +1138,19 @@ msgstr ""
 "таблицу(ы)\n"
 
 # well-spelled: ПРОСТР
-#: reindexdb.c:911
+#: reindexdb.c:914
 #, c-format
 msgid "      --tablespace=TABLESPACE  tablespace where indexes are rebuilt\n"
 msgstr ""
 "      --tablespace=ТАБЛ_ПРОСТР табличное пространство, в котором будут\n"
 "                               перестраиваться индексы\n"
 
-#: reindexdb.c:912
+#: reindexdb.c:915
 #, c-format
 msgid "  -v, --verbose                write a lot of output\n"
 msgstr "  -v, --verbose                выводить исчерпывающие сообщения\n"
 
-#: reindexdb.c:922
+#: reindexdb.c:925
 #, c-format
 msgid ""
 "\n"
@@ -1275,7 +1282,7 @@ msgid ""
 "  -e, --echo                      show the commands being sent to the "
 "server\n"
 msgstr ""
-"  -e, --echo                      отображать команды, отправляемые серверу\n"
+"  -e, --echo                      отображать команды, передаваемые серверу\n"
 
 #: vacuumdb.c:1345
 #, c-format
@@ -1507,10 +1514,6 @@ msgstr ""
 #~ msgstr ""
 #~ "нельзя переиндексировать указанный индекс(ы) и системные каталоги "
 #~ "одновременно"
-
-#, c-format
-#~ msgid "cannot use multiple jobs to reindex indexes"
-#~ msgstr "нельзя задействовать несколько заданий для перестроения индексов"
 
 #, c-format
 #~ msgid "cannot vacuum specific table(s) in all databases"
