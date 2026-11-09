@@ -101,17 +101,10 @@ select atref_func();
 drop function atref_func;
 drop table attbl;
 -- in column default
--- FIXME: This is currently allowed, but it's broken
 create table attbl(a bytea);
 create table atref(b text default '(\\x4649584d45)'::attbl);
 alter table attbl alter column a type text;  -- someday this should work
-insert into atref (b) values (default);
-select * from atref;
-    b    
----------
- (FIXME)
-(1 row)
-
+ERROR:  cannot alter table "attbl" because default value for column b of table atref uses its row type
 drop table atref;
 drop table attbl;
 -- in PARTITION BY clause
@@ -411,14 +404,8 @@ drop table at_tab1;
 create table attbl(a bytea);
 create view atrefview as
   select '1' as a, (('(\\x4649584d45)'::attbl = '(\\x4649584d45)'::attbl)) as b;
-alter table attbl alter column a type text; -- FIXME: should fail
-select pg_get_viewdef('atrefview'::regclass);
-                 pg_get_viewdef                  
--------------------------------------------------
-  SELECT '1'::text AS a,                        +
-     ('(FIXME)'::attbl = '(FIXME)'::attbl) AS b;
-(1 row)
-
+alter table attbl alter column a type text; -- fails
+ERROR:  cannot alter table "attbl" because rule _RETURN on view atrefview uses its row type
 drop view atrefview;
 drop table attbl;
 -- Adding a domain constraint changes nothing on disk, so a stored Const of a
@@ -434,14 +421,17 @@ drop type at_ct1;
 -- stored in the table, but it is materialized in a stored Const of the rowtype
 create table at_gt (a int, x int generated always as (a) virtual);
 create view at_gtv as select '(1,2)'::at_gt as r;
-alter table at_gt alter column x type bigint; -- FIXME: should fail
+alter table at_gt alter column x type bigint; -- fails
+ERROR:  cannot alter table "at_gt" because rule _RETURN on view at_gtv uses its row type
 drop view at_gtv;
 drop table at_gt;
 -- A partitioned table follows the same rewrite decision as a plain table
 create table at_pt (x int, y varchar(10)) partition by range (x);
 create view at_ptv as select '(1,hi)'::at_pt;
-alter table at_pt alter column y type varchar(20); -- FIXME: should fail
-alter table at_pt alter column y type bytea using y::bytea; -- FIXME: should fail
+alter table at_pt alter column y type varchar(20); -- fails
+ERROR:  cannot alter table "at_pt" because rule _RETURN on view at_ptv uses its row type
+alter table at_pt alter column y type bytea using y::bytea; -- fails
+ERROR:  cannot alter table "at_pt" because rule _RETURN on view at_ptv uses its row type
 drop view at_ptv;
 drop table at_pt;
 -- A partition key producing the row type has bound constants of it
@@ -484,26 +474,22 @@ DROP FUNCTION construct_test_type_arr;
 -- expression. The statistics entry stores datums of the type on disk,
 -- which would also need to be rewritten.
 CREATE STATISTICS test_tbl1_st (mcv) ON (row(x,y)::test_type1), x FROM test_tbl1;
-begin;
-ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- FIXME: should fail
-rollback;
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
+ERROR:  cannot alter type "test_type1" because statistics object test_tbl1_st uses it
 DROP STATISTICS test_tbl1_st;
 -- same wrapped in a container type
 CREATE TYPE container_type AS (a int, b test_type1);
 CREATE STATISTICS test_tbl1_st (mcv) ON (row(x, row(x,y)::test_type1)::container_type), x FROM test_tbl1;
-begin;
-ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- FIXME: should fail
-rollback;
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
+ERROR:  cannot alter type "test_type1" because statistics object test_tbl1_st uses it
 DROP STATISTICS test_tbl1_st;
 CREATE STATISTICS test_tbl1_st (mcv) ON (coalesce(row(x, row(x,y)::test_type1)::container_type, NULL)), x FROM test_tbl1;
-begin;
-ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- FIXME: should fail
-rollback;
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
+ERROR:  cannot alter type "test_type1" because statistics object test_tbl1_st uses it
 DROP STATISTICS test_tbl1_st;
 CREATE STATISTICS test_tbl1_st (mcv) ON (array[row(x, row(x,y)::test_type1)::container_type]), x FROM test_tbl1;
-begin;
-ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- FIXME: should fail
-rollback;
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
+ERROR:  cannot alter type "test_type1" because statistics object test_tbl1_st uses it
 DROP STATISTICS test_tbl1_st;
 DROP TYPE container_type;
 DROP TABLE test_tbl1;
