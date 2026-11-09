@@ -311,6 +311,13 @@ sigjmp_buf	sigint_interrupt_jmp;
 static void
 psql_cancel_callback(void)
 {
+	/*
+	 * Set this before the longjmp below, so that a non-interactive script
+	 * also stops when Ctrl+C is pressed while psql is waiting for COPY data
+	 * or \prompt input, just like it does when a query is running.
+	 */
+	cancel_pressed = true;
+
 #ifndef WIN32
 	/* if we are waiting for input, longjmp out of it */
 	if (sigint_interrupt_enabled)
@@ -319,9 +326,6 @@ psql_cancel_callback(void)
 		siglongjmp(sigint_interrupt_jmp, 1);
 	}
 #endif
-
-	/* else, set cancel flag to stop any long-running loops */
-	cancel_pressed = true;
 }
 
 void
