@@ -1616,6 +1616,13 @@ shdepReassignOwned(List *roleids, Oid newrole)
 					break;
 
 					/* Generic alter owner cases */
+				case DatabaseRelationId:
+					/* mirror AlterDatabaseOwner() privilege check */
+					if (roleid != newrole && !have_createdb_privilege())
+						ereport(ERROR,
+								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+								 errmsg("permission denied to change owner of database")));
+					/* fall through */
 				case CollationRelationId:
 				case ConversionRelationId:
 				case OperatorRelationId:
@@ -1627,7 +1634,6 @@ shdepReassignOwned(List *roleids, Oid newrole)
 				case ExtensionRelationId:
 				case StatisticExtRelationId:
 				case TableSpaceRelationId:
-				case DatabaseRelationId:
 				case TSConfigRelationId:
 				case TSDictionaryRelationId:
 					{

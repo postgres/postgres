@@ -15,6 +15,25 @@ ROLLBACK;
 CREATE ROLE regress_datdba_before;
 CREATE ROLE regress_datdba_after;
 ALTER DATABASE regression_utf8 OWNER TO regress_datdba_before;
+-- fail, giving away a database needs CREATEDB
+GRANT regress_datdba_after TO regress_datdba_before;
+SET ROLE regress_datdba_before;
+ALTER DATABASE regression_utf8 OWNER TO regress_datdba_after;
+ERROR:  permission denied to change owner of database
+REASSIGN OWNED BY regress_datdba_before TO regress_datdba_after;
+ERROR:  permission denied to change owner of database
+RESET ROLE;
+ALTER ROLE regress_datdba_before CREATEDB;
+SET ROLE regress_datdba_before;
+REASSIGN OWNED BY regress_datdba_before TO regress_datdba_after;
+RESET ROLE;
+SELECT datdba::regrole FROM pg_database WHERE datname = 'regression_utf8';
+        datdba        
+----------------------
+ regress_datdba_after
+(1 row)
+
+ALTER DATABASE regression_utf8 OWNER TO regress_datdba_before;
 REASSIGN OWNED BY regress_datdba_before TO regress_datdba_after;
 DROP DATABASE regression_utf8;
 DROP ROLE regress_datdba_before;
