@@ -445,6 +445,7 @@ static void report_type_used_in_column(const char *relname, const char *attname,
 static void report_type_used_in_expr(const ObjectAddress *obj, Relation origRelation,
 									 const char *origTypeName);
 static Node *get_node_tree_attr(enum SysCacheIdentifier cacheId, HeapTuple tup, AttrNumber attnum);
+static void find_missing_composite_type_dependencies(HTAB *types, Relation origRelation, const char *origTypeName);
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 							bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode,
 							AlterTableUtilityContext *context);
@@ -6552,6 +6553,13 @@ find_composite_type_dependencies(Oid typeOid, Relation origRelation,
 
 	find_composite_type_dependencies_recurse(typeOid, origRelation, origTypeName,
 											 visited);
+
+	/*
+	 * XXX: We don't record pg_depend entries in some cases where we really
+	 * should.  Scan the catalog tables for those, too.
+	 */
+	find_missing_composite_type_dependencies(visited, origRelation, origTypeName);
+
 	hash_destroy(visited);
 }
 
@@ -6785,6 +6793,9 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 				 * that the target type is embedded in some container type
 				 * that is stored in an index column, but the previous
 				 * recursion should catch such cases.)
+				 *
+				 * Any cases of missing dependencies not caught here are
+				 * handled by find_missing_composite_type_dependencies().
 				 */
 				att = NULL;
 				for (int attno = 1; attno <= tupleDesc->natts; attno++)
@@ -6887,6 +6898,9 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 						 * we'll catch it here.  And in many cases the
 						 * expression references the rowtype in a way that
 						 * records a dependency, so we often get here anyway.
+						 * Any missing dependencies not caught here are
+						 * handled by
+						 * find_missing_composite_type_dependencies().
 						 */
 						if (exprType(partexpr) == typeOid)
 							report_type_used_in_expr(depobj, origRelation, origTypeName);
@@ -7071,6 +7085,136 @@ get_node_tree_attr(enum SysCacheIdentifier cacheId, HeapTuple tup, AttrNumber at
 		return NULL;
 
 	return stringToNode(TextDatumGetCString(val));
+}
+
+/*
+ * find_missing_composite_type_dependencies
+ *
+ * Currently, we don't record pg_depend entries for a few cases that
+ * clearly form a dependency and should prevent you from ALTERing a rowtype.
+ * This function scans the catalogs for the missing dependencies.
+ * Unfortunately, these need to resort to sequential scans, which is slow.
+ */
+static void
+find_missing_composite_type_dependencies(HTAB *types, Relation origRelation,
+										 const char *origTypeName)
+{
+	Relation	catalog_rel;
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	/*
+	 * A partition bound is stored as a Const of the PARTITION BY expression's
+	 * result type.  However, we don't record a pg_depend entry for that.
+	 * Often an expression depends on its result type for other reasons, for
+	 * example a Const does record a dependency on its type, but as a
+	 * counter-example, a function call records a dependency only on the
+	 * function, not on its return type.  The pg_depend scan in
+	 * find_composite_type_dependencies() therefore doesn't find it.
+	 *
+	 * To find such missing dependencies, scan pg_partitioned_table directly
+	 * for a key expression that produces typeOid.
+	 *
+	 * The expression might return the target type directly, or wrapped in a
+	 * container such as an array or a range.  We only check for the direct
+	 * case here, containers are handled by the recursion from
+	 * find_composite_type_dependencies()
+	 */
+	catalog_rel = table_open(PartitionedRelationId, AccessShareLock);
+	scan = systable_beginscan(catalog_rel, InvalidOid, false, NULL, 0, NULL);
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		List	   *exprs;
+		ListCell   *lc;
+
+		/* Is the *result* of the PARTITION BY expression a problem? */
+		exprs = (List *) get_node_tree_attr(PARTRELID, tup,
+											Anum_pg_partitioned_table_partexprs);
+		foreach(lc, exprs)
+		{
+			Node	   *expr = (Node *) lfirst(lc);
+			Oid			resultType = exprType(expr);
+
+			if (hash_search(types, &resultType, HASH_FIND, NULL))
+			{
+				Form_pg_partitioned_table form =
+					(Form_pg_partitioned_table) GETSTRUCT(tup);
+				ObjectAddress obj;
+
+				ObjectAddressSet(obj, RelationRelationId, form->partrelid);
+				report_type_used_in_expr(&obj, origRelation, origTypeName);
+			}
+		}
+	}
+	systable_endscan(scan);
+	table_close(catalog_rel, AccessShareLock);
+
+	/*
+	 * Similarly, an expression index whose expression returns the target type
+	 * stores datums of that type in the index, but we don't record a
+	 * pg_depend entry for that.  Scan pg_index for those.
+	 *
+	 * The predicate of a partial index always returns a boolean, so we don't
+	 * need to worry about that here.
+	 */
+	catalog_rel = table_open(IndexRelationId, AccessShareLock);
+	scan = systable_beginscan(catalog_rel, InvalidOid, false, NULL, 0, NULL);
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		List	   *exprs;
+		ListCell   *lc;
+
+		exprs = (List *) get_node_tree_attr(INDEXRELID, tup, Anum_pg_index_indexprs);
+		foreach(lc, exprs)
+		{
+			Node	   *expr = (Node *) lfirst(lc);
+			Oid			resultType = exprType(expr);
+
+			if (hash_search(types, &resultType, HASH_FIND, NULL))
+			{
+				Form_pg_index index = (Form_pg_index) GETSTRUCT(tup);
+				ObjectAddress obj;
+
+				ObjectAddressSet(obj, RelationRelationId, index->indexrelid);
+				report_type_used_in_expr(&obj, origRelation, origTypeName);
+			}
+		}
+	}
+	systable_endscan(scan);
+	table_close(catalog_rel, AccessShareLock);
+
+	/*
+	 * Similarly, extended statistics on an expression that returns the target
+	 * type stores a datum of the type into pg_statistic_ext_data at ANALYZE
+	 * time, and we don't record a pg_depend entry for that either.  Scan
+	 * pg_statistic_ext for those.
+	 */
+	catalog_rel = table_open(StatisticExtRelationId, AccessShareLock);
+	scan = systable_beginscan(catalog_rel, InvalidOid, false, NULL, 0, NULL);
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		List	   *exprs;
+		ListCell   *lc;
+
+		exprs = (List *) get_node_tree_attr(STATEXTOID, tup,
+											Anum_pg_statistic_ext_stxexprs);
+		foreach(lc, exprs)
+		{
+			Node	   *expr = (Node *) lfirst(lc);
+			Oid			resultType = exprType(expr);
+
+			if (hash_search(types, &resultType, HASH_FIND, NULL))
+			{
+				Form_pg_statistic_ext form = (Form_pg_statistic_ext) GETSTRUCT(tup);
+				ObjectAddress obj;
+
+				ObjectAddressSet(obj, StatisticExtRelationId, form->oid);
+				report_type_used_in_expr(&obj, origRelation, origTypeName);
+			}
+		}
+	}
+	systable_endscan(scan);
+	table_close(catalog_rel, AccessShareLock);
 }
 
 /*
