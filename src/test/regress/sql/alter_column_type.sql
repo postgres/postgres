@@ -82,12 +82,9 @@ drop function atref_func;
 drop table attbl;
 
 -- in column default
--- FIXME: This is currently allowed, but it's broken
 create table attbl(a bytea);
 create table atref(b text default '(\\x4649584d45)'::attbl);
 alter table attbl alter column a type text;  -- someday this should work
-insert into atref (b) values (default);
-select * from atref;
 drop table atref;
 drop table attbl;
 
@@ -336,8 +333,7 @@ drop table at_tab1;
 create table attbl(a bytea);
 create view atrefview as
   select '1' as a, (('(\\x4649584d45)'::attbl = '(\\x4649584d45)'::attbl)) as b;
-alter table attbl alter column a type text; -- FIXME: should fail
-select pg_get_viewdef('atrefview'::regclass);
+alter table attbl alter column a type text; -- fails
 drop view atrefview;
 drop table attbl;
 
@@ -354,8 +350,8 @@ drop type at_ct1;
 -- A partitioned table follows the same rewrite decision as a plain table
 create table at_pt (x int, y varchar(10)) partition by range (x);
 create view at_ptv as select '(1,hi)'::at_pt;
-alter table at_pt alter column y type varchar(20); -- FIXME: should fail
-alter table at_pt alter column y type bytea using y::bytea; -- FIXME: should fail
+alter table at_pt alter column y type varchar(20); -- fails
+alter table at_pt alter column y type bytea using y::bytea; -- fails
 drop view at_ptv;
 drop table at_pt;
 
@@ -403,27 +399,19 @@ DROP FUNCTION construct_test_type_arr;
 -- expression. The statistics entry stores datums of the type on disk,
 -- which would also need to be rewritten.
 CREATE STATISTICS test_tbl1_st (mcv) ON (row(x,y)::test_type1), x FROM test_tbl1;
-begin;
-ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- FIXME: should fail
-rollback;
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 DROP STATISTICS test_tbl1_st;
 
 -- same wrapped in a container type
 CREATE TYPE container_type AS (a int, b test_type1);
 CREATE STATISTICS test_tbl1_st (mcv) ON (row(x, row(x,y)::test_type1)::container_type), x FROM test_tbl1;
-begin;
-ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- FIXME: should fail
-rollback;
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 DROP STATISTICS test_tbl1_st;
 CREATE STATISTICS test_tbl1_st (mcv) ON (coalesce(row(x, row(x,y)::test_type1)::container_type, NULL)), x FROM test_tbl1;
-begin;
-ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- FIXME: should fail
-rollback;
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 DROP STATISTICS test_tbl1_st;
 CREATE STATISTICS test_tbl1_st (mcv) ON (array[row(x, row(x,y)::test_type1)::container_type]), x FROM test_tbl1;
-begin;
-ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- FIXME: should fail
-rollback;
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 DROP STATISTICS test_tbl1_st;
 DROP TYPE container_type;
 
