@@ -794,9 +794,9 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 
 				relid = RangeVarGetRelid(rv, AccessShareLock, false);
 
-				/* Check for supported relkind. */
-				CheckSubscriptionRelkind(get_rel_relkind(relid),
-										 rv->schemaname, rv->relname);
+				/* Check that the relation can be replicated into. */
+				CheckSubscriptionTargetRel(relid, rv->schemaname,
+										   rv->relname);
 
 				AddSubscriptionRelState(subid, relid, table_state,
 										InvalidXLogRecPtr);
@@ -958,9 +958,8 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 
 			relid = RangeVarGetRelid(rv, AccessShareLock, false);
 
-			/* Check for supported relkind. */
-			CheckSubscriptionRelkind(get_rel_relkind(relid),
-									 rv->schemaname, rv->relname);
+			/* Check that the relation can be replicated into. */
+			CheckSubscriptionTargetRel(relid, rv->schemaname, rv->relname);
 
 			pubrel_local_oids[off++] = relid;
 
