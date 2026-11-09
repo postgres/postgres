@@ -1100,6 +1100,13 @@ SPI_returntuple(HeapTuple tuple, TupleDesc tupdesc)
 
 	oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 
+	/*
+	 * NB: This could "launder" an "outdated" input tuple, stamping it with
+	 * the current version of the tupledesc used here. But we can't really do
+	 * a good job protecting against that here, because we don't have the
+	 * "original" tupledesc to check against. Existing callers all seem fine.
+	 */
+
 	dtup = DatumGetHeapTupleHeader(heap_copy_tuple_as_datum(tuple, tupdesc));
 
 	MemoryContextSwitchTo(oldcxt);
@@ -1155,10 +1162,18 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 		mtuple = heap_form_tuple(rel->rd_att, v, n);
 
 		/*
-		 * copy the identification info of the old tuple: t_ctid, t_self, and
-		 * OID (if any)
+		 * Copy the identification info of the old tuple: t_self, and OID (if
+		 * any). If the source is not a versioned tuple and has a valid
+		 * t_ctid, also copy t_ctid, which makes mtuple an unversioned datum.
+		 *
+		 * This is not optimal behavior, but this function is effectively
+		 * unused (there seem to be no out-of-core extensions using it when
+		 * building against a recent PG and there's no in-core user), so it
+		 * doesn't seem worth doing more.
 		 */
-		mtuple->t_data->t_ctid = tuple->t_data->t_ctid;
+		if (!HeapTupleHeaderIsVersionedDatum(tuple->t_data) &&
+			ItemPointerIsValid(&tuple->t_data->t_ctid))
+			mtuple->t_data->t_ctid = tuple->t_data->t_ctid;
 		mtuple->t_self = tuple->t_self;
 		mtuple->t_tableOid = tuple->t_tableOid;
 	}

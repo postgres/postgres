@@ -352,6 +352,8 @@ typedef struct _tableInfo
 	char	   *attalign;		/* attribute align, used by binary_upgrade */
 	bool	   *attislocal;		/* true if attr has local definition */
 	char	  **attoptions;		/* per-attribute options */
+	uint64	   *attversion;		/* per-attribute row-type version (or 0);
+								 * restored only in binary-upgrade mode */
 	Oid		   *attcollation;	/* per-attribute collation selection */
 	char	   *attcompression; /* per-attribute compression method */
 	char	  **attfdwoptions;	/* per-attribute fdw options */

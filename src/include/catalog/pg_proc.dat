@@ -11131,6 +11131,11 @@
   proname => 'binary_upgrade_set_next_pg_tablespace_oid', provolatile => 'v',
   proparallel => 'u', prorettype => 'void', proargtypes => 'oid',
   prosrc => 'binary_upgrade_set_next_pg_tablespace_oid' },
+{ oid => '4551',
+  descr => 'for use by pg_upgrade (per-attribute versions)',
+  proname => 'binary_upgrade_set_next_attribute_versions', provolatile => 'v',
+  proparallel => 'u', prorettype => 'void', proargtypes => '_pg_lsn',
+  prosrc => 'binary_upgrade_set_next_attribute_versions' },
 
 # conversion functions
 { oid => '4302',
