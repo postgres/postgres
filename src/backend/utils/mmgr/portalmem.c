@@ -646,6 +646,40 @@ PortalHashTableDeleteAll(void)
 }
 
 /*
+ * Drop portals dependent on the given queryEnv.
+ */
+void
+DropQueryEnvPortals(QueryEnvironment *queryEnv)
+{
+	HASH_SEQ_STATUS status;
+	PortalHashEnt *hentry;
+
+	if (PortalHashTable == NULL)
+		return;
+
+	hash_seq_init(&status, PortalHashTable);
+	while ((hentry = hash_seq_search(&status)) != NULL)
+	{
+		Portal		portal = hentry->portal;
+
+		if (portal->queryEnv != queryEnv)
+			continue;
+
+		/*
+		 * It's safe to unpin and close, because any reference preserved past
+		 * SPI_finish() must be by name, not a raw pointer.
+		 */
+		portal->portalPinned = false;
+
+		PortalDrop(portal, false);
+
+		/* Restart the iteration in case that led to other drops */
+		hash_seq_term(&status);
+		hash_seq_init(&status, PortalHashTable);
+	}
+}
+
+/*
  * "Hold" a portal.  Prepare it for access by later transactions.
  */
 static void
