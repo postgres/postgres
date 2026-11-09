@@ -1,14 +1,14 @@
 # Swedish message translation file for plpython
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-07 20:39+0000\n"
-"PO-Revision-Date: 2023-08-02 12:03+0200\n"
+"POT-Creation-Date: 2026-08-27 16:39+0000\n"
+"PO-Revision-Date: 2026-08-27 22:31+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -22,49 +22,55 @@ msgstr ""
 msgid "plpy.cursor expected a query or a plan"
 msgstr "plpy.cursor förväntade sig en fråga eller en plan"
 
-#: plpy_cursorobject.c:155
+#: plpy_cursorobject.c:154
 #, c-format
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.cursor tar en sekvens som sitt andra argument"
 
-#: plpy_cursorobject.c:171 plpy_spi.c:207
+#: plpy_cursorobject.c:170 plpy_spi.c:211
 #, c-format
 msgid "could not execute plan"
 msgstr "kunde inte exekvera plan"
 
-#: plpy_cursorobject.c:174 plpy_spi.c:210
+#: plpy_cursorobject.c:173 plpy_spi.c:214
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
 msgstr[0] "Förväntade sekvens med %d argument, fick %d: %s"
 msgstr[1] "Förväntade sekvens med %d argument, fick %d: %s"
 
-#: plpy_cursorobject.c:321
+#: plpy_cursorobject.c:237 plpy_spi.c:96 plpy_spi.c:265 plpy_typeio.c:1219
+#: plpy_typeio.c:1470
+#, c-format
+msgid "could not get element %d from sequence"
+msgstr "kunde inte hämta element %d från sekvens"
+
+#: plpy_cursorobject.c:322
 #, c-format
 msgid "iterating a closed cursor"
 msgstr "itererar med en stängd markör"
 
-#: plpy_cursorobject.c:329 plpy_cursorobject.c:395
+#: plpy_cursorobject.c:330 plpy_cursorobject.c:396
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "itererar med en markör i en avbruten subtransaktion"
 
-#: plpy_cursorobject.c:387
+#: plpy_cursorobject.c:388
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "hämta från en stängd markör"
 
-#: plpy_cursorobject.c:430 plpy_spi.c:403
+#: plpy_cursorobject.c:431 plpy_spi.c:405
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
 msgstr "frågeresultet har för många rader för att få plats i en Python-lista"
 
-#: plpy_cursorobject.c:482
+#: plpy_cursorobject.c:483
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "stänger en markör i en avbruten subtransaktion"
 
-#: plpy_elog.c:125 plpy_elog.c:126 plpy_plpymodule.c:546
+#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:546
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -104,82 +110,82 @@ msgstr "PL/Python-procedur returnerade inte None"
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "PL/Python-funktion med returtyp \"void\" returnerade inte None"
 
-#: plpy_exec.c:371 plpy_exec.c:397
-#, c-format
-msgid "unexpected return value from trigger procedure"
-msgstr "oväntat returvärde från triggerprocedur"
-
-#: plpy_exec.c:372
-#, c-format
-msgid "Expected None or a string."
-msgstr "Förväntade None eller en sträng."
-
-#: plpy_exec.c:387
-#, c-format
-msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
-msgstr "PL/Python-triggerfunktion returnerade \"MODIFY\" i en DELETE-trigger -- ignorerad"
-
-#: plpy_exec.c:398
-#, c-format
-msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
-msgstr "Förväntade None, \"OK\", \"SKIP\" eller \"MODIFY\"."
-
-#: plpy_exec.c:448
-#, c-format
-msgid "PyList_SetItem() failed, while setting up arguments"
-msgstr "PyList_SetItem() misslyckades vid uppsättning av argument"
-
-#: plpy_exec.c:452
-#, c-format
-msgid "PyDict_SetItemString() failed, while setting up arguments"
-msgstr "PyDict_SetItemString() misslyckades vid uppsättning av argument"
-
-#: plpy_exec.c:464
+#: plpy_exec.c:246
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "en funktion med post som värde anropades i sammanhang där poster inte kan godtagas."
 
-#: plpy_exec.c:681
+#: plpy_exec.c:394 plpy_exec.c:420
+#, c-format
+msgid "unexpected return value from trigger procedure"
+msgstr "oväntat returvärde från triggerprocedur"
+
+#: plpy_exec.c:395
+#, c-format
+msgid "Expected None or a string."
+msgstr "Förväntade None eller en sträng."
+
+#: plpy_exec.c:410
+#, c-format
+msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr "PL/Python-triggerfunktion returnerade \"MODIFY\" i en DELETE-trigger -- ignorerad"
+
+#: plpy_exec.c:421
+#, c-format
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "Förväntade None, \"OK\", \"SKIP\" eller \"MODIFY\"."
+
+#: plpy_exec.c:472
+#, c-format
+msgid "PyList_SetItem() failed, while setting up arguments"
+msgstr "PyList_SetItem() misslyckades vid uppsättning av argument"
+
+#: plpy_exec.c:476
+#, c-format
+msgid "PyDict_SetItemString() failed, while setting up arguments"
+msgstr "PyDict_SetItemString() misslyckades vid uppsättning av argument"
+
+#: plpy_exec.c:705
 #, c-format
 msgid "while creating return value"
 msgstr "vid skapande av returvärde"
 
-#: plpy_exec.c:928
+#: plpy_exec.c:956
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] raderad, kan inte modifiera rad"
 
-#: plpy_exec.c:933
+#: plpy_exec.c:961
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] är inte en dictionary"
 
-#: plpy_exec.c:960
+#: plpy_exec.c:988
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "TD[\"new\"] dictionary-nyckel vid numerisk position %d är inte en sträng"
 
-#: plpy_exec.c:967
+#: plpy_exec.c:995
 #, c-format
 msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
 msgstr "nyckel \"%s\" hittad i TD[\"new\"] finns inte som en kolumn i den triggande raden"
 
-#: plpy_exec.c:972
+#: plpy_exec.c:1000
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "kan inte sätta systemattribut \"%s\""
 
-#: plpy_exec.c:977
+#: plpy_exec.c:1005
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "kan inte sätta genererad kolumn \"%s\""
 
-#: plpy_exec.c:1035
+#: plpy_exec.c:1063
 #, c-format
 msgid "while modifying trigger row"
 msgstr "vid modifiering av triggerrad"
 
-#: plpy_exec.c:1093
+#: plpy_exec.c:1121
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "tvingar avbrytande av subtransaktion som inte har avslutats"
@@ -268,27 +274,27 @@ msgstr "'%s' är ett ogiltigt nyckelordsargument för denna funktion"
 msgid "invalid SQLSTATE code"
 msgstr "ogiltig SQLSTATE-kod"
 
-#: plpy_procedure.c:225
+#: plpy_procedure.c:226
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "Triggningsfunktioner kan bara anropas vid triggning."
 
-#: plpy_procedure.c:229
+#: plpy_procedure.c:230
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "PL/Python-funktioner kan inte returnera typ %s"
 
-#: plpy_procedure.c:307
+#: plpy_procedure.c:308
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "PL/Python-funktioner kan inte ta emot typ %s"
 
-#: plpy_procedure.c:397
+#: plpy_procedure.c:398
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "kunde inte kompilera PL/Python-funktion \"%s\""
 
-#: plpy_procedure.c:400
+#: plpy_procedure.c:401
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "kunde inte kompilera anonymt PL/Python-kodblock"
@@ -303,27 +309,27 @@ msgstr "kommandot producerade inte en resultatmängd"
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "andra argumentet till plpy.prepare måste vara en sekvens"
 
-#: plpy_spi.c:100
+#: plpy_spi.c:105
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: typnamn vid numerisk position %d är inte en sträng"
 
-#: plpy_spi.c:172
+#: plpy_spi.c:177
 #, c-format
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute förväntade en fråga eller en plan"
 
-#: plpy_spi.c:191
+#: plpy_spi.c:195
 #, c-format
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute tar en sekvens som sitt andra argument"
 
-#: plpy_spi.c:299
+#: plpy_spi.c:301
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "SPI_execute_plan misslyckades: %s"
 
-#: plpy_spi.c:341
+#: plpy_spi.c:343
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute misslyckades: %s"
@@ -388,52 +394,52 @@ msgstr "returvärde för funktion med array-returtyp är inte en Python-sekvens"
 msgid "could not determine sequence length for function return value"
 msgstr "kunde inte bestämma sekvenslängd för funktionens returvärde"
 
-#: plpy_typeio.c:1230 plpy_typeio.c:1245 plpy_typeio.c:1261
+#: plpy_typeio.c:1234 plpy_typeio.c:1249 plpy_typeio.c:1265
 #, c-format
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr "flerdimensionella vektorer måste ha array-uttryck av passande dimensioner"
 
-#: plpy_typeio.c:1235
+#: plpy_typeio.c:1239
 #, c-format
 msgid "number of array dimensions exceeds the maximum allowed (%d)"
 msgstr "antal array-dimensioner överskriver maximalt tillåtna (%d)"
 
-#: plpy_typeio.c:1337
+#: plpy_typeio.c:1341
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "felaktig postliteral: \"%s\""
 
-#: plpy_typeio.c:1338
+#: plpy_typeio.c:1342
 #, c-format
 msgid "Missing left parenthesis."
 msgstr "Saknar vänster parentes"
 
-#: plpy_typeio.c:1339 plpy_typeio.c:1540
+#: plpy_typeio.c:1343 plpy_typeio.c:1547
 #, c-format
 msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
 msgstr "För att returnera en composite-typ i en array, returnera composite-typen som en Python-tupel, t.ex. \"[('foo',)]\"."
 
-#: plpy_typeio.c:1386
+#: plpy_typeio.c:1390
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "nyckeln \"%s\" hittades inte i mapping"
 
-#: plpy_typeio.c:1387
+#: plpy_typeio.c:1391
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "För att returnera null i en kolumn så lägg till värdet None till mappningen med nyckelnamn taget från kolumnen."
 
-#: plpy_typeio.c:1440
+#: plpy_typeio.c:1444
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "längden på den returnerade sekvensen matchade inte antal kolumner i raden"
 
-#: plpy_typeio.c:1538
+#: plpy_typeio.c:1545
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "attributet \"%s\" finns inte i Python-objektet"
 
-#: plpy_typeio.c:1541
+#: plpy_typeio.c:1548
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "För att returnera null i en kolumn så låt det returnerade objektet ha ett attribut med namn efter kolumnen och med värdet None."

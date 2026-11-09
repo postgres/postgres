@@ -1,21 +1,23 @@
-# LANGUAGE message translation file for pg_test_fsync
-# Copyright (C) 2019 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_test_fsync (PostgreSQL) package.
-# FIRST AUTHOR <zhangjie2@fujitsu.com>, 2019.
+# Simplified Chinese message translation file for pg_test_fsync
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Jie Zhang <zhangjie2@fujitsu.com>, 2019.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_fsync (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 05:49+0000\n"
-"PO-Revision-Date: 2021-08-15 18:00+0800\n"
-"Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
-"Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
+"POT-Creation-Date: 2026-10-07 03:16+0000\n"
+"PO-Revision-Date: 2026-10-08 16:06+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #. translator: maintain alignment with NA_FORMAT
 #: pg_test_fsync.c:31
@@ -31,23 +33,23 @@ msgstr "用法: %s [-f 文件名] [-s 每次测试的秒数]\n"
 #: pg_test_fsync.c:186 pg_test_fsync.c:200 pg_test_fsync.c:211
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+msgstr "运行 \"%s --help\" 获取更多信息。\n"
 
 #: pg_test_fsync.c:216
+#, c-format
 msgid "%u second per test\n"
 msgid_plural "%u seconds per test\n"
-msgstr[0] "%u 每次测试的秒数\n"
-msgstr[1] "%u 每次测试的秒数\n"
+msgstr[0] "每次测试 %u 秒\n"
 
 #: pg_test_fsync.c:221
 #, c-format
 msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
-msgstr "在此平台上，O_DIRECT支持open_datasync和open_sync.\n"
+msgstr "此平台支持为 open_datasync 和 open_sync 使用 O_DIRECT。\n"
 
 #: pg_test_fsync.c:223
 #, c-format
 msgid "Direct I/O is not supported on this platform.\n"
-msgstr "此平台不支持直接I/O.\n"
+msgstr "此平台不支持直接 I/O。\n"
 
 #: pg_test_fsync.c:248 pg_test_fsync.c:314 pg_test_fsync.c:339
 #: pg_test_fsync.c:363 pg_test_fsync.c:507 pg_test_fsync.c:519
@@ -65,7 +67,7 @@ msgstr "写入失败"
 #: pg_test_fsync.c:256 pg_test_fsync.c:350 pg_test_fsync.c:374
 #: pg_test_fsync.c:511 pg_test_fsync.c:543
 msgid "fsync failed"
-msgstr "fsync失败"
+msgstr "fsync 失败"
 
 #: pg_test_fsync.c:270
 #, c-format
@@ -74,7 +76,7 @@ msgid ""
 "Compare file sync methods using one %dkB write:\n"
 msgstr ""
 "\n"
-"使用一个%dkB写操作比较文件同步方法:\n"
+"通过一次 %d kB 的写入比较文件同步方法:\n"
 
 #: pg_test_fsync.c:272
 #, c-format
@@ -83,12 +85,13 @@ msgid ""
 "Compare file sync methods using two %dkB writes:\n"
 msgstr ""
 "\n"
-"使用两个%dkB写操作比较文件同步方法:\n"
+"通过两次 %d kB 的写入比较文件同步方法:\n"
 
 #: pg_test_fsync.c:273
 #, c-format
-msgid "(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
-msgstr "(按照wal_sync_method首选顺序，fdatasync是Linux的默认值除外)\n"
+msgid ""
+"(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
+msgstr "（按 wal_sync_method 的优先顺序排列，但 Linux 默认使用 fdatasync）\n"
 
 #: pg_test_fsync.c:284 pg_test_fsync.c:391 pg_test_fsync.c:458
 msgid "n/a*"
@@ -105,8 +108,7 @@ msgid ""
 "* This file system and its mount options do not support direct\n"
 "  I/O, e.g. ext4 in journaled mode.\n"
 msgstr ""
-"* 此文件系统及其安装选项不支持直接I/O\n"
-"  例如. ext4 在 journaled 模式.\n"
+"* 此文件系统及其挂载选项不支持直接 I/O，例如，使用 journaled 模式的 ext4。\n"
 
 #: pg_test_fsync.c:430
 #, c-format
@@ -115,34 +117,36 @@ msgid ""
 "Compare open_sync with different write sizes:\n"
 msgstr ""
 "\n"
-"在不同的写入大小的情况下比较open_sync:\n"
+"比较不同写入大小情况下的 open_sync:\n"
 
 #: pg_test_fsync.c:431
 #, c-format
 msgid ""
 "(This is designed to compare the cost of writing 16kB in different write\n"
 "open_sync sizes.)\n"
-msgstr "这是为了比较在写入不同的open_sync大小的情况下写入16kB的时间花费\n"
+msgstr ""
+"（此测试用于比较采用不同单次写入大小时，以 open_sync 写入 16 kB 数据的开"
+"销。）\n"
 
 #: pg_test_fsync.c:434
 msgid " 1 * 16kB open_sync write"
-msgstr " 1 * 16kB open_sync写入"
+msgstr " 1 * 16kB open_sync 写入"
 
 #: pg_test_fsync.c:435
 msgid " 2 *  8kB open_sync writes"
-msgstr " 2 *  8kB open_sync写入"
+msgstr " 2 *  8kB open_sync 写入"
 
 #: pg_test_fsync.c:436
 msgid " 4 *  4kB open_sync writes"
-msgstr " 4 *  4kB open_sync写入"
+msgstr " 4 *  4kB open_sync 写入"
 
 #: pg_test_fsync.c:437
 msgid " 8 *  2kB open_sync writes"
-msgstr " 8 *  2kB open_sync写入"
+msgstr " 8 *  2kB open_sync 写入"
 
 #: pg_test_fsync.c:438
 msgid "16 *  1kB open_sync writes"
-msgstr "16 *  1kB open_sync写入"
+msgstr "16 *  1kB open_sync 写入"
 
 #: pg_test_fsync.c:492
 #, c-format
@@ -151,14 +155,15 @@ msgid ""
 "Test if fsync on non-write file descriptor is honored:\n"
 msgstr ""
 "\n"
-"测试是否支持非写文件描述符上的fsync:\n"
+"测试未用于写入的文件描述符上的 fsync 是否生效:\n"
 
 #: pg_test_fsync.c:493
 #, c-format
 msgid ""
 "(If the times are similar, fsync() can sync data written on a different\n"
 "descriptor.)\n"
-msgstr "(如果时间相似，fsync()可以同步写在不同描述符上的数据.)\n"
+msgstr ""
+"（如果耗时相近，说明 fsync() 可以同步通过其他文件描述符写入的数据。）\n"
 
 #: pg_test_fsync.c:558
 #, c-format
@@ -167,5 +172,4 @@ msgid ""
 "Non-sync'ed %dkB writes:\n"
 msgstr ""
 "\n"
-"不同步的写入 %dkB :\n"
-
+"不执行同步的 %d kB 写入:\n"

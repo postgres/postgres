@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-08-10 11:56+0300\n"
-"PO-Revision-Date: 2024-09-05 08:23+0300\n"
+"PO-Revision-Date: 2026-10-15 21:29+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -492,7 +492,7 @@ msgid ""
 "  -e, --echo                      show the commands being sent to the "
 "server\n"
 msgstr ""
-"  -e, --echo                      отображать команды, отправляемые серверу\n"
+"  -e, --echo                      отображать команды, передаваемые серверу\n"
 
 #: pg_amcheck.c:1203
 #, c-format

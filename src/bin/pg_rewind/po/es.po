@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-06 21:34+0000\n"
+"POT-Creation-Date: 2026-11-08 22:54+0000\n"
 "PO-Revision-Date: 2026-02-07 09:09+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -36,16 +36,26 @@ msgstr "error: "
 msgid "warning: "
 msgstr "precaución: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:168
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:160
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
+
+#: ../../common/fe_memutils.c:210
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "tamaño de petición de memoria no válido %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:229
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "tamaño de petición de memoria no válido %zu * %zu\n"
 
 #: ../../common/restricted_token.c:64
 #, c-format
@@ -102,7 +112,7 @@ msgstr "el archivo «%s» tiene tamaño inesperado: %lld en lugar de %lld"
 msgid "could not open file \"%s\" restored from archive: %m"
 msgstr "no se pudo abrir el archivo «%s» restaurado del archivo: %m"
 
-#: ../../fe_utils/archive.c:97 file_ops.c:417
+#: ../../fe_utils/archive.c:97 file_ops.c:353 file_ops.c:440
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
@@ -140,118 +150,147 @@ msgstr "no se pudo escribir a archivo «%s»: %m"
 msgid "could not create file \"%s\": %m"
 msgstr "no se pudo crear archivo «%s»: %m"
 
-#: file_ops.c:67
+#: file_ops.c:52
+#, c-format
+msgid "target file path is unsafe for open: \"%s\""
+msgstr "la ruta del archivo de destino es insegura de abrir: «%s»"
+
+#: file_ops.c:70
 #, c-format
 msgid "could not open target file \"%s\": %m"
 msgstr "no se pudo abrir el archivo de destino «%s»: %m"
 
-#: file_ops.c:81
+#: file_ops.c:84
 #, c-format
 msgid "could not close target file \"%s\": %m"
 msgstr "no se pudo cerrar el archivo de destino «%s»: %m"
 
-#: file_ops.c:101
+#: file_ops.c:104
 #, c-format
 msgid "could not seek in target file \"%s\": %m"
 msgstr "no se pudo posicionar en archivo de destino «%s»: %m"
 
-#: file_ops.c:117
+#: file_ops.c:120
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "no se pudo escribir el archivo «%s»: %m"
 
-#: file_ops.c:150 file_ops.c:177
+#: file_ops.c:153 file_ops.c:180
 #, c-format
 msgid "undefined file type for \"%s\""
 msgstr "tipo de archivo no definido para «%s»"
 
-#: file_ops.c:173
+#: file_ops.c:176
 #, c-format
 msgid "invalid action (CREATE) for regular file"
 msgstr "acción no válida (CREATE) para archivo regular"
 
-#: file_ops.c:200
+#: file_ops.c:195
+#, c-format
+msgid "target file path is unsafe for removal: \"%s\""
+msgstr "la ruta del archivo de destino es insegura de eliminar: «%s»"
+
+#: file_ops.c:206
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "no se pudo eliminar el archivo «%s»: %m"
 
 #: file_ops.c:218
 #, c-format
+msgid "target file path is unsafe for truncation: \"%s\""
+msgstr "la ruta del archivo de destino es insegura de truncar: «%s»"
+
+#: file_ops.c:227
+#, c-format
 msgid "could not open file \"%s\" for truncation: %m"
 msgstr "no se pudo abrir el archivo «%s» para truncarlo: %m"
 
-#: file_ops.c:222
+#: file_ops.c:231
 #, c-format
 msgid "could not truncate file \"%s\" to %u: %m"
 msgstr "no se pudo truncar el archivo «%s» a %u: %m"
 
-#: file_ops.c:238
+#: file_ops.c:243
+#, c-format
+msgid "target directory path is unsafe for directory creation: \"%s\""
+msgstr "la ruta del directorio de destino es insegura de crear: «%s»"
+
+#: file_ops.c:251
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "no se pudo crear el directorio «%s»: %m"
 
-#: file_ops.c:252
+#: file_ops.c:261
+#, c-format
+msgid "target directory path is unsafe for directory removal: \"%s\""
+msgstr "la ruta del directorio de destino es insegura de eliminar: «%s»"
+
+#: file_ops.c:269
 #, c-format
 msgid "could not remove directory \"%s\": %m"
 msgstr "no se pudo eliminar el directorio «%s»: %m"
 
-#: file_ops.c:266
+#: file_ops.c:279
+#, c-format
+msgid "target symlink path is unsafe for creation: \"%s\""
+msgstr "la ruta del link simbólico de destino es inseguro de crear: «%s»"
+
+#: file_ops.c:286
 #, c-format
 msgid "could not create symbolic link at \"%s\": %m"
 msgstr "no se pudo crear el link simbólico en «%s»: %m"
 
-#: file_ops.c:280
+#: file_ops.c:296
+#, c-format
+msgid "target symlink path is unsafe for removal: \"%s\""
+msgstr "la ruta del link simbólico es insegura de eliminar: «%s»"
+
+#: file_ops.c:303
 #, c-format
 msgid "could not remove symbolic link \"%s\": %m"
 msgstr "no se pudo eliminar el enlace simbólico «%s»: %m"
 
-#: file_ops.c:326
+#: file_ops.c:349
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "no se pudo abrir archivo «%s» para lectura: %m"
 
-#: file_ops.c:330
-#, c-format
-#| msgid "could not open file \"%s\" for reading: %m"
-msgid "could not stat file \"%s\" for reading: %m"
-msgstr "no se pudo efectuar «stat» al archivo «%s» para lectura: %m"
-
-#: file_ops.c:341 local_source.c:107 parsexlog.c:369
+#: file_ops.c:364 local_source.c:107 parsexlog.c:369
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
 
-#: file_ops.c:344 parsexlog.c:371
+#: file_ops.c:367 parsexlog.c:371
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
 
-#: file_ops.c:388
+#: file_ops.c:411
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: file_ops.c:442
+#: file_ops.c:465
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "no se pudo leer el enlace simbólico «%s»: %m"
 
-#: file_ops.c:445
+#: file_ops.c:468
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
 msgstr "la ruta «%s» del enlace simbólico es demasiado larga"
 
-#: file_ops.c:460
+#: file_ops.c:483
 #, c-format
 msgid "\"%s\" is a symbolic link, but symbolic links are not supported on this platform"
 msgstr "«%s» es un link simbólico, pero los links simbólicos no están soportados en esta plataforma"
 
-#: file_ops.c:467
+#: file_ops.c:490
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "no se pudo leer el directorio «%s»: %m"
 
-#: file_ops.c:471
+#: file_ops.c:494
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
@@ -966,3 +1005,8 @@ msgstr "registro con largo no válido en %X/%X"
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "imagen comprimida no válida en %X/%X, bloque %d"
+
+#, c-format
+#~| msgid "could not open file \"%s\" for reading: %m"
+#~ msgid "could not stat file \"%s\" for reading: %m"
+#~ msgstr "no se pudo efectuar «stat» al archivo «%s» para lectura: %m"

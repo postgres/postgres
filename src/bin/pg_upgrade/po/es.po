@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-06 21:32+0000\n"
+"POT-Creation-Date: 2026-11-08 22:52+0000\n"
 "PO-Revision-Date: 2024-08-02 19:36-0400\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -195,7 +195,7 @@ msgstr "Creando un script para borrar el clúster antiguo"
 
 #: check.c:609 check.c:873 check.c:971 check.c:1101 check.c:1179 check.c:1258
 #: check.c:1553 file.c:338 function.c:240 option.c:497 version.c:54
-#: version.c:204 version.c:376 version.c:511
+#: version.c:204 version.c:407 version.c:542
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "no se pudo abrir el archivo «%s»: %s\n"
@@ -262,7 +262,7 @@ msgstr "Verificando contrib/isn con discordancia en mecanismo de paso de bigint"
 
 #: check.c:895 check.c:996 check.c:1121 check.c:1201 check.c:1278 check.c:1336
 #: check.c:1395 check.c:1429 check.c:1458 check.c:1576 function.c:262
-#: version.c:278 version.c:316 version.c:460
+#: version.c:278 version.c:316 version.c:491
 #, c-format
 msgid "fatal\n"
 msgstr "fatal\n"
@@ -573,7 +573,7 @@ msgstr "Al clúster de origen le falta información de estado:\n"
 msgid "The target cluster lacks cluster state information:\n"
 msgstr "Al cluster de destino le falta información de estado:\n"
 
-#: controldata.c:209 dump.c:49 pg_upgrade.c:335 pg_upgrade.c:371
+#: controldata.c:209 dump.c:53 pg_upgrade.c:335 pg_upgrade.c:371
 #: relfilenode.c:243 server.c:33 util.c:79
 #, c-format
 msgid "%s"
@@ -806,7 +806,7 @@ msgstr ""
 msgid "Creating dump of global objects"
 msgstr "Creando el volcado de objetos globales"
 
-#: dump.c:31
+#: dump.c:32
 #, c-format
 msgid "Creating dump of database schemas\n"
 msgstr "Creando el volcado de esquemas de bases de datos\n"
@@ -1672,17 +1672,17 @@ msgstr "copiando «%s» a «%s»\n"
 msgid "linking \"%s\" to \"%s\"\n"
 msgstr "enlazando «%s» a «%s»\n"
 
-#: server.c:38 server.c:142 util.c:135 util.c:165
+#: server.c:38 server.c:144 util.c:135 util.c:165
 #, c-format
 msgid "Failure, exiting\n"
 msgstr "Falló, saliendo\n"
 
-#: server.c:132
+#: server.c:134
 #, c-format
 msgid "executing: %s\n"
 msgstr "ejecutando: %s\n"
 
-#: server.c:138
+#: server.c:140
 #, c-format
 msgid ""
 "SQL command failed\n"
@@ -1693,17 +1693,17 @@ msgstr ""
 "%s\n"
 "%s"
 
-#: server.c:168
+#: server.c:170
 #, c-format
 msgid "could not open version file \"%s\": %m\n"
 msgstr "no se pudo abrir el archivo de versión «%s»: %m\n"
 
-#: server.c:172
+#: server.c:174
 #, c-format
 msgid "could not parse version file \"%s\"\n"
 msgstr "no se pudo interpretar el archivo de versión «%s»\n"
 
-#: server.c:298
+#: server.c:300
 #, c-format
 msgid ""
 "\n"
@@ -1712,7 +1712,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: server.c:302
+#: server.c:304
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -1721,7 +1721,7 @@ msgstr ""
 "no se pudo conectar al postmaster de origen iniciado con la orden:\n"
 "%s\n"
 
-#: server.c:306
+#: server.c:308
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -1730,22 +1730,22 @@ msgstr ""
 "no se pudo conectar al postmaster de destino iniciado con la orden:\n"
 "%s\n"
 
-#: server.c:320
+#: server.c:322
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed\n"
 msgstr "pg_ctl no pudo iniciar el servidor de origen, o la conexión falló\n"
 
-#: server.c:322
+#: server.c:324
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed\n"
 msgstr "pg_ctl no pudo iniciar el servidor de destino, o la conexión falló\n"
 
-#: server.c:367
+#: server.c:369
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: server.c:380
+#: server.c:382
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s\n"
 msgstr "la variable de ambiente libpq %s tiene un valor de servidor no-local: %s\n"
@@ -1794,7 +1794,7 @@ msgstr "éxito"
 msgid "Checking for large objects"
 msgstr "Buscando objetos grandes"
 
-#: version.c:77 version.c:419
+#: version.c:77 version.c:450
 #, c-format
 msgid "warning"
 msgstr "atención"
@@ -1885,12 +1885,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:341
+#: version.c:372
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "Verificando índices hash"
 
-#: version.c:421
+#: version.c:452
 #, c-format
 msgid ""
 "\n"
@@ -1907,7 +1907,7 @@ msgstr ""
 "instrucciones de REINDEX.\n"
 "\n"
 
-#: version.c:427
+#: version.c:458
 #, c-format
 msgid ""
 "\n"
@@ -1928,12 +1928,12 @@ msgstr ""
 "los índices no válidos; hasta entonces, ninguno de esos índices será usado.\n"
 "\n"
 
-#: version.c:453
+#: version.c:484
 #, c-format
 msgid "Checking for invalid \"sql_identifier\" user columns"
 msgstr "Verificando columnas de usuario del tipo «sql_identifier»"
 
-#: version.c:461
+#: version.c:492
 #, c-format
 msgid ""
 "Your installation contains the \"sql_identifier\" data type in user tables.\n"
@@ -1952,17 +1952,17 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:485
+#: version.c:516
 #, c-format
 msgid "Checking for extension updates"
 msgstr "Verificando actualizaciones para extensiones"
 
-#: version.c:537
+#: version.c:568
 #, c-format
 msgid "notice"
 msgstr "aviso"
 
-#: version.c:538
+#: version.c:569
 #, c-format
 msgid ""
 "\n"

@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-06 21:25+0000\n"
+"POT-Creation-Date: 2026-11-08 22:45+0000\n"
 "PO-Revision-Date: 2021-10-13 23:43-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -390,7 +390,7 @@ msgstr "el nombre de tipo «string» está reservado en modo Informix"
 msgid "type \"%s\" is already defined"
 msgstr "el tipo «%s» ya está definido"
 
-#: preproc.y:577 preproc.y:18306 preproc.y:18631 variable.c:619
+#: preproc.y:577 preproc.y:18298 preproc.y:18623 variable.c:619
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "los arrays multidimensionales para tipos de datos simples no están soportados"
@@ -556,23 +556,23 @@ msgstr "demasiados niveles en la definición anidada de estructura/unión"
 msgid "pointers to varchar are not implemented"
 msgstr "los punteros a varchar no están implementados"
 
-#: preproc.y:18272
+#: preproc.y:18264
 #, c-format
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "inicializador no permitido en la orden EXEC SQL VAR"
 
-#: preproc.y:18589
+#: preproc.y:18581
 #, c-format
 msgid "arrays of indicators are not allowed on input"
 msgstr "no se permiten los arrays de indicadores en la entrada"
 
-#: preproc.y:18776
+#: preproc.y:18768
 #, c-format
 msgid "operator not allowed in variable definition"
 msgstr "operador no permitido en definición de variable"
 
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:18817
+#: preproc.y:18809
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s en o cerca de «%s»"

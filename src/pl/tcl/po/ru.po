@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-08 07:45+0200\n"
+"POT-Creation-Date: 2026-09-25 22:48+0300\n"
 "PO-Revision-Date: 2024-08-01 13:03+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -64,7 +64,7 @@ msgstr "разобрать возвращаемое функцией значе�
 msgid "could not parse trigger return value: %s"
 msgstr "разобрать возвращаемое триггером значение не удалось: %s"
 
-#: pltcl.c:1382 pltcl.c:1812
+#: pltcl.c:1382 pltcl.c:1816
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -78,12 +78,12 @@ msgstr ""
 "%s\n"
 "в функции PL/Tcl \"%s\""
 
-#: pltcl.c:1547
+#: pltcl.c:1548
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: pltcl.c:1551
+#: pltcl.c:1552
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "функции PL/Tcl не могут возвращать тип %s"
@@ -93,28 +93,28 @@ msgstr "функции PL/Tcl не могут возвращать тип %s"
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "функции PL/Tcl не могут принимать тип %s"
 
-#: pltcl.c:1704
+#: pltcl.c:1706
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "не удалось создать внутреннюю процедуру \"%s\": %s"
 
-#: pltcl.c:3206
+#: pltcl.c:3210
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "в списке имён/значений столбцов должно быть чётное число элементов"
 
-#: pltcl.c:3224
+#: pltcl.c:3228
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr ""
 "список имён/значений столбцов содержит имя несуществующего столбца \"%s\""
 
-#: pltcl.c:3231
+#: pltcl.c:3235
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "присвоить значение системному атрибуту \"%s\" нельзя"
 
-#: pltcl.c:3237
+#: pltcl.c:3241
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "присвоить значение генерируемому столбцу \"%s\" нельзя"
