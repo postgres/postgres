@@ -145,6 +145,9 @@ static void write_eventlog(int level, const char *line, int len);
 
 static ErrorData errordata[ERRORDATA_STACK_SIZE];
 
+/* These flags should migrate into ErrorData, but for now keep them here */
+static bool errordata_complete[ERRORDATA_STACK_SIZE];
+
 static int	errordata_stack_depth = -1; /* index of topmost active frame */
 
 static int	recursion_depth = 0;	/* to detect actual recursion */
@@ -509,6 +512,9 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 econtext = econtext->previous)
 		econtext->callback(econtext->arg);
 
+	/* The data about this error is now fully collected */
+	errordata_complete[errordata_stack_depth] = true;
+
 	/*
 	 * If ERROR (not more nor less) we pass it off to the current handler.
 	 * Printing it and popping the stack is the responsibility of the handler.
@@ -765,6 +771,7 @@ get_error_stack_entry(void)
 	/* Initialize error frame to all zeroes/NULLs */
 	edata = &errordata[errordata_stack_depth];
 	memset(edata, 0, sizeof(ErrorData));
+	errordata_complete[errordata_stack_depth] = false;
 
 	/* Save errno immediately to ensure error parameter eval can't change it */
 	edata->saved_errno = errno;
@@ -1998,6 +2005,9 @@ ReThrowError(ErrorData *edata)
 	/* Reset the assoc_context to be ErrorContext */
 	newedata->assoc_context = ErrorContext;
 
+	/* Mark the entry finished, assuming that it was so before throwing */
+	errordata_complete[errordata_stack_depth] = true;
+
 	recursion_depth--;
 	PG_RE_THROW();
 }
@@ -2106,6 +2116,18 @@ GetErrorContextStack(void)
 	 * been allocated in their context.
 	 */
 	return edata->context;
+}
+
+
+/*
+ * HaveCompleteError --- do we have a complete error that's being reported?
+ */
+bool
+HaveCompleteError(void)
+{
+	if (errordata_stack_depth >= 0)
+		return errordata_complete[errordata_stack_depth];
+	return false;
 }
 
 
