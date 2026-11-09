@@ -262,6 +262,22 @@ CREATE FUNCTION get_columns_length(oid[])
     AS :'regresslib'
     LANGUAGE C STRICT STABLE PARALLEL SAFE;
 
+-- For testing make_expanded_record_from_datum()
+CREATE FUNCTION expanded_record_identity(anyelement)
+    RETURNS anyelement
+    AS :'regresslib', 'expanded_record_identity'
+    LANGUAGE C STRICT;
+
+CREATE FUNCTION expanded_record_info(anyelement)
+    RETURNS text
+    AS :'regresslib', 'expanded_record_info'
+    LANGUAGE C STRICT;
+
+CREATE FUNCTION expanded_record_field_text(anyelement, int)
+    RETURNS text
+    AS :'regresslib', 'expanded_record_field_text'
+    LANGUAGE C STRICT;
+
 -- Use hand-rolled hash functions and operator classes to get predictable
 -- result on different machines.  The hash function for int4 simply returns
 -- the sum of the values passed to it and the one for text returns the length
