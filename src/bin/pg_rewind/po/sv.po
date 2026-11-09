@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-06 21:21+0000\n"
-"PO-Revision-Date: 2026-02-07 09:31+0100\n"
+"POT-Creation-Date: 2026-08-26 22:35+0000\n"
+"PO-Revision-Date: 2026-08-09 22:38+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -37,16 +37,26 @@ msgstr "detalj: "
 msgid "hint: "
 msgstr "tips: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:168
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:160
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
+
+#: ../../common/fe_memutils.c:210
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ogiltig storlek %zu + %zu för minnesallokering\n"
+
+#: ../../common/fe_memutils.c:229
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ogiltig storlek %zu * %zu för minnesallokering\n"
 
 #: ../../common/restricted_token.c:64
 #, c-format
@@ -103,7 +113,7 @@ msgstr "oväntad filstorlek på \"%s\": %lld istället för %lld"
 msgid "could not open file \"%s\" restored from archive: %m"
 msgstr "kunde inte öppna fil \"%s\" återställd från arkiv: %m"
 
-#: ../../fe_utils/archive.c:87 file_ops.c:417
+#: ../../fe_utils/archive.c:87 file_ops.c:353 file_ops.c:440
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
@@ -140,117 +150,147 @@ msgstr "kunde inte skriva till fil \"%s\": %m"
 msgid "could not create file \"%s\": %m"
 msgstr "kunde inte skapa fil \"%s\": %m"
 
-#: file_ops.c:67
+#: file_ops.c:52
+#, c-format
+msgid "target file path is unsafe for open: \"%s\""
+msgstr "sökvägen till fil är inte säker att öppna: \"%s\""
+
+#: file_ops.c:70
 #, c-format
 msgid "could not open target file \"%s\": %m"
 msgstr "kunde inte öppna målfil \"%s\": %m"
 
-#: file_ops.c:81
+#: file_ops.c:84
 #, c-format
 msgid "could not close target file \"%s\": %m"
 msgstr "kunde inte stänga målfil \"%s\": %m"
 
-#: file_ops.c:101
+#: file_ops.c:104
 #, c-format
 msgid "could not seek in target file \"%s\": %m"
 msgstr "kunde inte söka i målfil \"%s\": %m"
 
-#: file_ops.c:117
+#: file_ops.c:120
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "kunde inte skriva fil \"%s\": %m"
 
-#: file_ops.c:150 file_ops.c:177
+#: file_ops.c:153 file_ops.c:180
 #, c-format
 msgid "undefined file type for \"%s\""
 msgstr "odefinierad filtyp på \"%s\""
 
-#: file_ops.c:173
+#: file_ops.c:176
 #, c-format
 msgid "invalid action (CREATE) for regular file"
 msgstr "ogiltig aktion (CREATE) för vanlig fil"
 
-#: file_ops.c:200
+#: file_ops.c:195
+#, c-format
+msgid "target file path is unsafe for removal: \"%s\""
+msgstr "sökvägen till fil är inte säker för borttagning: \"%s\""
+
+#: file_ops.c:206
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "kunde inte ta bort fil \"%s\": %m"
 
 #: file_ops.c:218
 #, c-format
+msgid "target file path is unsafe for truncation: \"%s\""
+msgstr "sökvägen till fil är inte säker för trunkering: \"%s\""
+
+#: file_ops.c:227
+#, c-format
 msgid "could not open file \"%s\" for truncation: %m"
 msgstr "kunde inte öppna fil \"%s\" för trunkering: %m"
 
-#: file_ops.c:222
+#: file_ops.c:231
 #, c-format
 msgid "could not truncate file \"%s\" to %u: %m"
 msgstr "kunde inte trunkera fil \"%s\" till %u: %m"
 
-#: file_ops.c:238
+#: file_ops.c:243
+#, c-format
+msgid "target directory path is unsafe for directory creation: \"%s\""
+msgstr "sökvägen till katalog är inte säker att skapa: \"%s\""
+
+#: file_ops.c:251
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "kunde inte skapa katalog \"%s\": %m"
 
-#: file_ops.c:252
+#: file_ops.c:261
+#, c-format
+msgid "target directory path is unsafe for directory removal: \"%s\""
+msgstr "sökvägen till katalog är inte säker att ta bort: \"%s\""
+
+#: file_ops.c:269
 #, c-format
 msgid "could not remove directory \"%s\": %m"
 msgstr "kunde inte ta bort katalog \"%s\": %m"
 
-#: file_ops.c:266
+#: file_ops.c:279
+#, c-format
+msgid "target symlink path is unsafe for creation: \"%s\""
+msgstr "sökvägen till symlänk är inte säker att skapa: \"%s\""
+
+#: file_ops.c:286
 #, c-format
 msgid "could not create symbolic link at \"%s\": %m"
 msgstr "kunde inte skapa en symnbolisk länk vid \"%s\": %m"
 
-#: file_ops.c:280
+#: file_ops.c:296
+#, c-format
+msgid "target symlink path is unsafe for removal: \"%s\""
+msgstr "sökvägen till symlänk är inte säker att ta bort: \"%s\""
+
+#: file_ops.c:303
 #, c-format
 msgid "could not remove symbolic link \"%s\": %m"
 msgstr "kan inte ta bort symbolisk länk \"%s\": %m"
 
-#: file_ops.c:326
+#: file_ops.c:349
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "kunde inte öppna filen \"%s\" för läsning: %m"
 
-#: file_ops.c:330
-#, c-format
-msgid "could not stat file \"%s\" for reading: %m"
-msgstr "kunde inte göra stat() på filen \"%s\" för läsning: %m"
-
-#: file_ops.c:341 local_source.c:104 local_source.c:163 parsexlog.c:371
+#: file_ops.c:364 local_source.c:104 local_source.c:163 parsexlog.c:371
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
 
-#: file_ops.c:344 parsexlog.c:373
+#: file_ops.c:367 parsexlog.c:373
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
 
-#: file_ops.c:388
+#: file_ops.c:411
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "kunde inte öppna katalog \"%s\": %m"
 
-#: file_ops.c:442
+#: file_ops.c:465
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "kan inte läsa symbolisk länk \"%s\": %m"
 
-#: file_ops.c:445
+#: file_ops.c:468
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
 msgstr "mål för symbolisk länk \"%s\" är för lång"
 
-#: file_ops.c:460
+#: file_ops.c:483
 #, c-format
 msgid "\"%s\" is a symbolic link, but symbolic links are not supported on this platform"
 msgstr "\"%s\" är en symbolisk länk men symboliska länkar stöds inte på denna plattform"
 
-#: file_ops.c:467
+#: file_ops.c:490
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "kunde inte läsa katalog \"%s\": %m"
 
-#: file_ops.c:471
+#: file_ops.c:494
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "kunde inte stänga katalog \"%s\": %m"

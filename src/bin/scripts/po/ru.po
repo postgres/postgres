@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2026-08-05 06:38+0300\n"
-"PO-Revision-Date: 2026-08-05 07:51+0300\n"
+"PO-Revision-Date: 2026-10-13 19:38+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -249,7 +249,7 @@ msgstr "  -d, --dbname=ИМЯ_БД       имя базы данных для к�
 #, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
-msgstr "  -e, --echo                отображать команды, отправляемые серверу\n"
+msgstr "  -e, --echo                отображать команды, передаваемые серверу\n"
 
 #: clusterdb.c:271
 #, c-format
@@ -417,7 +417,7 @@ msgstr ""
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
 msgstr ""
-"  -e, --echo                   отображать команды, отправляемые серверу\n"
+"  -e, --echo                   отображать команды, передаваемые серверу\n"
 
 #: createdb.c:288
 #, c-format
@@ -1165,7 +1165,7 @@ msgid ""
 "  -e, --echo                      show the commands being sent to the "
 "server\n"
 msgstr ""
-"  -e, --echo                      отображать команды, отправляемые серверу\n"
+"  -e, --echo                      отображать команды, передаваемые серверу\n"
 
 #: vacuumdb.c:988
 #, c-format

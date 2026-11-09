@@ -1,6 +1,6 @@
 # src/bin/pg_basebackup/nls.mk
 CATALOG_NAME     = pg_basebackup
-AVAIL_LANGUAGES  = de el es fr it ja ka ko ru sv uk
+AVAIL_LANGUAGES  = de el es fr it ja ka ko ru sv uk zh_CN zh_TW
 GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    bbstreamer_file.c \
                    bbstreamer_gzip.c \

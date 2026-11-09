@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_test_timing
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 14\n"
+"Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-06 17:16+0000\n"
-"PO-Revision-Date: 2021-11-06 21:59+0100\n"
+"POT-Creation-Date: 2026-08-26 22:33+0000\n"
+"PO-Revision-Date: 2026-08-27 07:35+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -56,8 +56,8 @@ msgstr "Upptäckte att klockan gått bakåt i tiden.\n"
 
 #: pg_test_timing.c:152
 #, c-format
-msgid "Time warp: %d ms\n"
-msgstr "Tidsförskjutning: %d ms\n"
+msgid "Time warp: %d us\n"
+msgstr "Tidsförskjutning: %d us\n"
 
 #: pg_test_timing.c:175
 #, c-format

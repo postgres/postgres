@@ -1,0 +1,564 @@
+# Traditional Chinese message translation file for pg_verifybackup
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_verifybackup (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2026-10-07 02:58+0000\n"
+"PO-Revision-Date: 2026-10-08 16:06+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "錯誤: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "警告: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "詳情: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "提示: "
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:168
+#, c-format
+msgid "out of memory\n"
+msgstr "記憶體不足\n"
+
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:160
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能複製空指標(內部錯誤)\n"
+
+#: ../../common/fe_memutils.c:210
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:229
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu * %zu\n"
+
+#: ../../common/jsonapi.c:1096
+#, c-format
+msgid "Escape sequence \"\\%s\" is invalid."
+msgstr "逸出序列 \"\\%s\" 無效。"
+
+#: ../../common/jsonapi.c:1099
+#, c-format
+msgid "Character with value 0x%02x must be escaped."
+msgstr "必須對值為 0x%02x 的字元進行逸出處理。"
+
+#: ../../common/jsonapi.c:1102
+#, c-format
+msgid "Expected end of input, but found \"%s\"."
+msgstr "預期為輸入結束，實際為 \"%s\"。"
+
+#: ../../common/jsonapi.c:1105
+#, c-format
+msgid "Expected array element or \"]\", but found \"%s\"."
+msgstr "預期為陣列元素或 \"]\"，實際為 \"%s\"。"
+
+#: ../../common/jsonapi.c:1108
+#, c-format
+msgid "Expected \",\" or \"]\", but found \"%s\"."
+msgstr "預期為 \",\" 或 \"]\"，實際為 \"%s\"。"
+
+#: ../../common/jsonapi.c:1111
+#, c-format
+msgid "Expected \":\", but found \"%s\"."
+msgstr "預期為 \":\"，實際為 \"%s\"。"
+
+#: ../../common/jsonapi.c:1114
+#, c-format
+msgid "Expected JSON value, but found \"%s\"."
+msgstr "預期為 JSON 值，實際為 \"%s\"。"
+
+#: ../../common/jsonapi.c:1117
+msgid "The input string ended unexpectedly."
+msgstr "輸入字串非預期地結束。"
+
+#: ../../common/jsonapi.c:1119
+#, c-format
+msgid "Expected string or \"}\", but found \"%s\"."
+msgstr "預期為字串或 \"}\"，實際為 \"%s\"。"
+
+#: ../../common/jsonapi.c:1122
+#, c-format
+msgid "Expected \",\" or \"}\", but found \"%s\"."
+msgstr "預期為 \",\" 或 \"}\"，實際為 \"%s\"。"
+
+#: ../../common/jsonapi.c:1125
+#, c-format
+msgid "Expected string, but found \"%s\"."
+msgstr "預期為字串，實際為 \"%s\"。"
+
+#: ../../common/jsonapi.c:1128
+#, c-format
+msgid "Token \"%s\" is invalid."
+msgstr "符記 \"%s\" 無效。"
+
+#: ../../common/jsonapi.c:1131
+msgid "\\u0000 cannot be converted to text."
+msgstr "\\u0000 不能轉成文字。"
+
+#: ../../common/jsonapi.c:1133
+msgid "\"\\u\" must be followed by four hexadecimal digits."
+msgstr "\"\\u\" 必須後接四個十六進位數字。"
+
+#: ../../common/jsonapi.c:1136
+msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
+msgstr "當編碼不是 UTF8 時，不能使用 Unicode 逸出值來表示大於 007F 的編碼位置。"
+
+#: ../../common/jsonapi.c:1138
+msgid "Unicode high surrogate must not follow a high surrogate."
+msgstr "Unicode 高位代理不能跟著高位代理。"
+
+#: ../../common/jsonapi.c:1140
+msgid "Unicode low surrogate must follow a high surrogate."
+msgstr "Unicode 低位代理必須跟著高位代理。"
+
+#: parse_manifest.c:150
+msgid "parsing failed"
+msgstr "解析失敗"
+
+#: parse_manifest.c:152
+msgid "manifest ended unexpectedly"
+msgstr "清單非預期地結束"
+
+#: parse_manifest.c:191
+msgid "unexpected object start"
+msgstr "非預期的物件開始"
+
+#: parse_manifest.c:224
+msgid "unexpected object end"
+msgstr "非預期的物件結束"
+
+#: parse_manifest.c:251
+msgid "unexpected array start"
+msgstr "非預期的陣列開始"
+
+#: parse_manifest.c:274
+msgid "unexpected array end"
+msgstr "非預期的陣列結束"
+
+#: parse_manifest.c:299
+msgid "expected version indicator"
+msgstr "預期為版本標示"
+
+#: parse_manifest.c:328
+msgid "unrecognized top-level field"
+msgstr "無法識別的頂層欄位"
+
+#: parse_manifest.c:347
+msgid "unexpected file field"
+msgstr "非預期的檔案欄位"
+
+#: parse_manifest.c:361
+msgid "unexpected WAL range field"
+msgstr "非預期的 WAL 範圍欄位"
+
+#: parse_manifest.c:367
+msgid "unexpected object field"
+msgstr "非預期的物件欄位"
+
+#: parse_manifest.c:397
+msgid "unexpected manifest version"
+msgstr "非預期的清單版本"
+
+#: parse_manifest.c:448
+msgid "unexpected scalar"
+msgstr "非預期的純量值"
+
+#: parse_manifest.c:472
+msgid "missing path name"
+msgstr "缺少路徑名稱"
+
+#: parse_manifest.c:475
+msgid "both path name and encoded path name"
+msgstr "同時存在路徑名稱和編碼路徑名稱"
+
+#: parse_manifest.c:477
+msgid "missing size"
+msgstr "缺少大小"
+
+#: parse_manifest.c:480
+msgid "checksum without algorithm"
+msgstr "檢查碼沒有演算法"
+
+#: parse_manifest.c:494
+msgid "could not decode file name"
+msgstr "無法解碼檔案名稱"
+
+#: parse_manifest.c:504
+msgid "file size is not an integer"
+msgstr "檔案大小不是整數"
+
+#: parse_manifest.c:510
+#, c-format
+msgid "unrecognized checksum algorithm: \"%s\""
+msgstr "無法識別的檢查碼演算法: \"%s\""
+
+#: parse_manifest.c:529
+#, c-format
+msgid "invalid checksum for file \"%s\": \"%s\""
+msgstr "檔案 \"%s\" 的檢查碼無效: \"%s\""
+
+#: parse_manifest.c:572
+msgid "missing timeline"
+msgstr "缺少時間線"
+
+#: parse_manifest.c:574
+msgid "missing start LSN"
+msgstr "缺少起始 LSN"
+
+#: parse_manifest.c:576
+msgid "missing end LSN"
+msgstr "缺少結束 LSN"
+
+#: parse_manifest.c:582
+msgid "timeline is not an integer"
+msgstr "時間線不是整數"
+
+#: parse_manifest.c:585
+msgid "could not parse start LSN"
+msgstr "無法解析起始 LSN"
+
+#: parse_manifest.c:588
+msgid "could not parse end LSN"
+msgstr "無法解析結束 LSN"
+
+#: parse_manifest.c:649
+msgid "expected at least 2 lines"
+msgstr "預期至少有 2 行"
+
+#: parse_manifest.c:652
+msgid "last line not newline-terminated"
+msgstr "最後一行未以換行字元結束"
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: parse_manifest.c:657
+#, c-format
+msgid "out of memory"
+msgstr "記憶體不足"
+
+#: parse_manifest.c:659
+#, c-format
+msgid "could not initialize checksum of manifest"
+msgstr "無法初始化清單的檢查碼"
+
+#: parse_manifest.c:661
+#, c-format
+msgid "could not update checksum of manifest"
+msgstr "無法更新清單的檢查碼"
+
+#: parse_manifest.c:664
+#, c-format
+msgid "could not finalize checksum of manifest"
+msgstr "無法完成清單的檢查碼計算"
+
+#: parse_manifest.c:668
+#, c-format
+msgid "manifest has no checksum"
+msgstr "清單沒有檢查碼"
+
+#: parse_manifest.c:672
+#, c-format
+msgid "invalid manifest checksum: \"%s\""
+msgstr "無效的清單檢查碼: \"%s\""
+
+#: parse_manifest.c:676
+#, c-format
+msgid "manifest checksum mismatch"
+msgstr "清單檢查碼不一致"
+
+#: parse_manifest.c:691
+#, c-format
+msgid "could not parse backup manifest: %s"
+msgstr "無法解析備份清單: %s"
+
+# tcop/postgres.c:2636 tcop/postgres.c:2652
+#: pg_verifybackup.c:256 pg_verifybackup.c:265 pg_verifybackup.c:276
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "用 \"%s --help\" 取得更多資訊。"
+
+#: pg_verifybackup.c:264
+#, c-format
+msgid "no backup directory specified"
+msgstr "未指定備份目錄"
+
+#: pg_verifybackup.c:274
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "命令列參數過多(第一個多餘參數是 \"%s\")"
+
+#: pg_verifybackup.c:297
+#, c-format
+msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
+msgstr "%2$s 需要程式 \"%1$s\"，但在與 \"%3$s\" 相同的目錄中找不到該程式"
+
+#: pg_verifybackup.c:300
+#, c-format
+msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
+msgstr "程式 \"%s\" 被 \"%s\" 找到，但版本不同於 %s"
+
+#: pg_verifybackup.c:356
+#, c-format
+msgid "backup successfully verified\n"
+msgstr "備份檢查成功\n"
+
+# access/transam/slru.c:638 access/transam/xlog.c:1631
+# access/transam/xlog.c:2742 access/transam/xlog.c:2832
+# access/transam/xlog.c:2930 libpq/hba.c:911 libpq/hba.c:935
+# utils/error/elog.c:1118 utils/init/miscinit.c:783 utils/init/miscinit.c:889
+# utils/misc/database.c:68
+#: pg_verifybackup.c:382 pg_verifybackup.c:718
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "無法開啟檔案 \"%s\": %m"
+
+# access/transam/xlog.c:1936 access/transam/xlog.c:2038
+# access/transam/xlog.c:5291
+#: pg_verifybackup.c:386
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "無法取得檔案 \"%s\" 的狀態: %m"
+
+# access/transam/xlog.c:1659 access/transam/xlog.c:2942
+# access/transam/xlog.c:5397 access/transam/xlog.c:5448
+# access/transam/xlog.c:5520 access/transam/xlog.c:5545
+# access/transam/xlog.c:5583
+#: pg_verifybackup.c:406 pg_verifybackup.c:745
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "無法讀取檔案 \"%s\": %m"
+
+#: pg_verifybackup.c:409
+#, c-format
+msgid "could not read file \"%s\": read %d of %lld"
+msgstr "無法讀取檔案 \"%1$s\": 應讀取 %3$lld，實際讀取 %2$d"
+
+#: pg_verifybackup.c:469
+#, c-format
+msgid "duplicate path name in backup manifest: \"%s\""
+msgstr "備份清單中有重複的路徑名稱: \"%s\""
+
+# access/transam/slru.c:930 commands/tablespace.c:529
+# commands/tablespace.c:694 utils/adt/misc.c:174
+#: pg_verifybackup.c:532 pg_verifybackup.c:539
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "無法開啟目錄 \"%s\": %m"
+
+#: pg_verifybackup.c:571
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "無法關閉目錄 \"%s\": %m"
+
+# access/transam/slru.c:967 commands/tablespace.c:577
+# commands/tablespace.c:721
+#: pg_verifybackup.c:591
+#, c-format
+msgid "could not stat file or directory \"%s\": %m"
+msgstr "無法取得檔案或目錄 \"%s\" 的狀態: %m"
+
+#: pg_verifybackup.c:614
+#, c-format
+msgid "\"%s\" is not a file or directory"
+msgstr "\"%s\" 既不是檔案也不是目錄"
+
+#: pg_verifybackup.c:624
+#, c-format
+msgid "\"%s\" is present on disk but not in the manifest"
+msgstr "磁碟有 \"%s\" 但不在清單上"
+
+#: pg_verifybackup.c:636
+#, c-format
+msgid "\"%s\" has size %lld on disk but size %zu in the manifest"
+msgstr "\"%s\" 在磁碟上的大小為 %lld，但在清單中的大小為 %zu"
+
+#: pg_verifybackup.c:663
+#, c-format
+msgid "\"%s\" is present in the manifest but not on disk"
+msgstr "清單有 \"%s\" 但不在磁碟上"
+
+#: pg_verifybackup.c:726
+#, c-format
+msgid "could not initialize checksum of file \"%s\""
+msgstr "無法初始化檔案 \"%s\" 的檢查碼"
+
+#: pg_verifybackup.c:738
+#, c-format
+msgid "could not update checksum of file \"%s\""
+msgstr "無法更新檔案 \"%s\" 的檢查碼"
+
+# access/transam/slru.c:680 access/transam/xlog.c:1567
+# access/transam/xlog.c:1691 access/transam/xlog.c:3013
+#: pg_verifybackup.c:751
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "無法關閉檔案 \"%s\": %m"
+
+#: pg_verifybackup.c:770
+#, c-format
+msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
+msgstr "檔案 \"%s\" 應該包含 %zu 位元組，但實際讀取 %zu 位元組"
+
+#: pg_verifybackup.c:780
+#, c-format
+msgid "could not finalize checksum of file \"%s\""
+msgstr "無法完成檔案 \"%s\" 的檢查碼計算"
+
+#: pg_verifybackup.c:788
+#, c-format
+msgid "file \"%s\" has checksum of length %d, but expected %d"
+msgstr "檔案 \"%s\" 的檢查碼長度為 %d，但預期為 %d"
+
+#: pg_verifybackup.c:792
+#, c-format
+msgid "checksum mismatch for file \"%s\""
+msgstr "檔案 \"%s\" 的檢查碼不一致"
+
+#: pg_verifybackup.c:816
+#, c-format
+msgid "WAL parsing failed for timeline %u"
+msgstr "WAL 解析失敗, 時間線 %u"
+
+#: pg_verifybackup.c:902
+#, c-format
+msgid ""
+"%s verifies a backup against the backup manifest.\n"
+"\n"
+msgstr "%s 驗證備份和備份清單是否一致。\n\n"
+
+#: pg_verifybackup.c:903
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... BACKUPDIR\n"
+"\n"
+msgstr "用法:\n  %s [選項]... 備份目錄\n\n"
+
+# postmaster/postmaster.c:1017 tcop/postgres.c:2115
+#: pg_verifybackup.c:904
+#, c-format
+msgid "Options:\n"
+msgstr "選項:\n"
+
+#: pg_verifybackup.c:905
+#, c-format
+msgid "  -e, --exit-on-error         exit immediately on error\n"
+msgstr "  -e, --exit-on-error         發生錯誤立即結束\n"
+
+#: pg_verifybackup.c:906
+#, c-format
+msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
+msgstr "  -i, --ignore=RELATIVE_PATH  忽略指定的路徑\n"
+
+#: pg_verifybackup.c:907
+#, c-format
+msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
+msgstr "  -m, --manifest-path=PATH    指定清單的路徑\n"
+
+#: pg_verifybackup.c:908
+#, c-format
+msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
+msgstr "  -n, --no-parse-wal          不嘗試解析 WAL 檔\n"
+
+#: pg_verifybackup.c:909
+#, c-format
+msgid "  -q, --quiet                 do not print any output, except for errors\n"
+msgstr "  -q, --quiet                 不顯示任何輸出，除了錯誤訊息\n"
+
+#: pg_verifybackup.c:910
+#, c-format
+msgid "  -s, --skip-checksums        skip checksum verification\n"
+msgstr "  -s, --skip-checksums        跳過檢查碼驗證\n"
+
+#: pg_verifybackup.c:911
+#, c-format
+msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
+msgstr "  -w, --wal-directory=PATH    使用指定路徑尋找 WAL 檔\n"
+
+#: pg_verifybackup.c:912
+#, c-format
+msgid "  -V, --version               output version information, then exit\n"
+msgstr "  -V, --version               顯示版本，然後結束\n"
+
+#: pg_verifybackup.c:913
+#, c-format
+msgid "  -?, --help                  show this help, then exit\n"
+msgstr "  -?, --help                  顯示說明，然後結束\n"
+
+#: pg_verifybackup.c:914
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr "\n回報錯誤至 <%s>。\n"
+
+#: pg_verifybackup.c:915
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 首頁: <%s>\n"
+

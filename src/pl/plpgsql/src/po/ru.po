@@ -1,13 +1,13 @@
 # Russian message translation file for plpgsql
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2024.
+# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2024, 2026 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-21 05:20+0200\n"
-"PO-Revision-Date: 2022-09-05 13:38+0300\n"
+"POT-Creation-Date: 2026-11-07 09:44+0200\n"
+"PO-Revision-Date: 2026-10-10 19:56+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -22,29 +22,29 @@ msgstr ""
 msgid "PL/pgSQL functions cannot accept type %s"
 msgstr "функции PL/pgSQL не могут принимать тип %s"
 
-#: pl_comp.c:530
+#: pl_comp.c:531
 #, c-format
 msgid "could not determine actual return type for polymorphic function \"%s\""
 msgstr ""
 "не удалось определить фактический тип результата для полиморфной функции "
 "\"%s\""
 
-#: pl_comp.c:560
+#: pl_comp.c:561
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: pl_comp.c:564 pl_handler.c:480
+#: pl_comp.c:565 pl_handler.c:480
 #, c-format
 msgid "PL/pgSQL functions cannot return type %s"
 msgstr "функции PL/pgSQL не могут возвращать тип %s"
 
-#: pl_comp.c:604
+#: pl_comp.c:605
 #, c-format
 msgid "trigger functions cannot have declared arguments"
 msgstr "у триггерных функций не может быть объявленных аргументов"
 
-#: pl_comp.c:605
+#: pl_comp.c:606
 #, c-format
 msgid ""
 "The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV "
@@ -53,68 +53,76 @@ msgstr ""
 "При необходимости к аргументам триггера можно обращаться через переменные "
 "TG_NARGS и TG_ARGV."
 
-#: pl_comp.c:738
+#: pl_comp.c:739
 #, c-format
 msgid "event trigger functions cannot have declared arguments"
 msgstr "у функций событийных триггеров не может быть объявленных аргументов"
 
-#: pl_comp.c:1002
+#: pl_comp.c:1003
 #, c-format
 msgid "compilation of PL/pgSQL function \"%s\" near line %d"
 msgstr "компиляция функции PL/pgSQL \"%s\" в районе строки %d"
 
-#: pl_comp.c:1025
+#: pl_comp.c:1026
 #, c-format
 msgid "parameter name \"%s\" used more than once"
 msgstr "имя параметра \"%s\" указано неоднократно"
 
-#: pl_comp.c:1139
+#: pl_comp.c:1140
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
 msgstr "неоднозначная ссылка на столбец \"%s\""
 
-#: pl_comp.c:1141
+#: pl_comp.c:1142
 #, c-format
 msgid "It could refer to either a PL/pgSQL variable or a table column."
 msgstr "Подразумевается ссылка на переменную PL/pgSQL или столбец таблицы."
 
-#: pl_comp.c:1324 pl_exec.c:5238 pl_exec.c:5411 pl_exec.c:5498 pl_exec.c:5589
+#: pl_comp.c:1325 pl_exec.c:5238 pl_exec.c:5411 pl_exec.c:5498 pl_exec.c:5589
 #: pl_exec.c:6621
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "в записи \"%s\" нет поля \"%s\""
 
-#: pl_comp.c:1818
+#: pl_comp.c:1819
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "отношение \"%s\" не существует"
 
-#: pl_comp.c:1825 pl_comp.c:1867
+#: pl_comp.c:1826 pl_comp.c:1868
 #, c-format
 msgid "relation \"%s\" does not have a composite type"
 msgstr "отношение \"%s\" не имеет составного типа"
 
-#: pl_comp.c:1933
+#: pl_comp.c:1934
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
 msgstr "переменная \"%s\" имеет псевдотип %s"
 
-#: pl_comp.c:2122
+#: pl_comp.c:2123
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "тип \"%s\" является пустышкой"
 
-#: pl_comp.c:2204 pl_exec.c:6922
+#: pl_comp.c:2205 pl_exec.c:6922
 #, c-format
 msgid "type %s is not composite"
 msgstr "тип %s не является составным"
 
-#: pl_comp.c:2252 pl_comp.c:2305
+#: pl_comp.c:2253 pl_comp.c:2306
 #, c-format
 msgid "unrecognized exception condition \"%s\""
 msgstr "нераспознанное условие исключения \"%s\""
 
-#: pl_comp.c:2534
+#: pl_comp.c:2501
+#, c-format
+msgid "cannot pass more than %d argument to a function"
+msgid_plural "cannot pass more than %d arguments to a function"
+msgstr[0] "функции нельзя передать больше %d аргумента"
+msgstr[1] "функции нельзя передать больше %d аргументов"
+msgstr[2] "функции нельзя передать больше %d аргументов"
+
+#: pl_comp.c:2549
 #, c-format
 msgid ""
 "could not determine actual argument type for polymorphic function \"%s\""
@@ -354,7 +362,7 @@ msgstr ""
 msgid "structure of query does not match function result type"
 msgstr "структура запроса не соответствует типу результата функции"
 
-#: pl_exec.c:3612 pl_exec.c:4448 pl_exec.c:8746
+#: pl_exec.c:3612 pl_exec.c:4448 pl_exec.c:8754
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "в качестве текста запроса в EXECUTE передан NULL"
@@ -545,7 +553,12 @@ msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr ""
 "Для записи, которой не присвоено значение, структура кортежа не определена."
 
-#: pl_exec.c:8344 pl_gram.y:3497
+#: pl_exec.c:7893
+#, c-format
+msgid "cannot cast type %s to %s"
+msgstr "привести тип %s к %s нельзя"
+
+#: pl_exec.c:8352 pl_gram.y:3497
 #, c-format
 msgid "variable \"%s\" is declared CONSTANT"
 msgstr "переменная \"%s\" объявлена как CONSTANT"

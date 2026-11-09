@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-05-12 14:35+0900\n"
-"PO-Revision-Date: 2026-05-15 12:13+0900\n"
+"POT-Creation-Date: 2026-07-10 09:50+0900\n"
+"PO-Revision-Date: 2026-07-10 11:43+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -78,8 +78,8 @@ msgstr "nonce を生成できませんでした\n"
 #: fe-exec.c:4230 fe-exec.c:4424 fe-gssapi-common.c:111 fe-lobj.c:884
 #: fe-protocol3.c:970 fe-protocol3.c:985 fe-protocol3.c:1018
 #: fe-protocol3.c:1739 fe-protocol3.c:2154 fe-secure-common.c:112
-#: fe-secure-gssapi.c:512 fe-secure-gssapi.c:687 fe-secure-openssl.c:455
-#: fe-secure-openssl.c:1252
+#: fe-secure-gssapi.c:519 fe-secure-gssapi.c:694 fe-secure-openssl.c:488
+#: fe-secure-openssl.c:1286
 msgid "out of memory\n"
 msgstr "メモリ不足\n"
 
@@ -845,22 +845,22 @@ msgstr "ファイル\"%s\"に書き込めませんでした: %s\n"
 msgid "query to initialize large object functions did not return data\n"
 msgstr "ラージオブジェクト機能を初期化する問い合わせがデータを返しませんでした\n"
 
-#: fe-misc.c:242
+#: fe-misc.c:244
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "サイズ%luの整数はpqGetIntでサポートされていません"
 
-#: fe-misc.c:275
+#: fe-misc.c:277
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "サイズ%luの整数はpqPutIntでサポートされていません"
 
-#: fe-misc.c:602 fe-misc.c:848
+#: fe-misc.c:610 fe-misc.c:994
 msgid "connection not open\n"
 msgstr "接続はオープンされていません\n"
 
-#: fe-misc.c:781 fe-secure-openssl.c:213 fe-secure-openssl.c:326
-#: fe-secure.c:262 fe-secure.c:430
+#: fe-misc.c:823 fe-secure-openssl.c:214 fe-secure-openssl.c:359
+#: fe-secure.c:262 fe-secure.c:454
 #, c-format
 msgid ""
 "server closed the connection unexpectedly\n"
@@ -871,15 +871,20 @@ msgstr ""
 "        おそらく要求の処理前または処理中にサーバーが異常終了\n"
 "        したことを意味しています。\n"
 
-#: fe-misc.c:1034
+#: fe-misc.c:932
+#, c-format
+msgid "drained only %zd of %zd pending bytes in transport buffer\n"
+msgstr "トランスポートバッファ内の保留中の%2$zdバイトのうち%1$zdバイトしか排出できませんでした\n"
+
+#: fe-misc.c:1180
 msgid "timeout expired\n"
 msgstr "タイムアウト期間が過ぎました\n"
 
-#: fe-misc.c:1079
+#: fe-misc.c:1225
 msgid "invalid socket\n"
 msgstr "不正なソケットです\n"
 
-#: fe-misc.c:1102
+#: fe-misc.c:1246
 #, c-format
 msgid "%s() failed: %s\n"
 msgstr "%s() が失敗しました: %s\n"
@@ -1054,12 +1059,12 @@ msgstr "GSSAPI名ラップエラー"
 msgid "outgoing GSSAPI message would not use confidentiality\n"
 msgstr "送出されるGSSAPIメッセージは機密性を使用しません\n"
 
-#: fe-secure-gssapi.c:217 fe-secure-gssapi.c:715
+#: fe-secure-gssapi.c:217 fe-secure-gssapi.c:722
 #, c-format
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)\n"
 msgstr "クライアントは過大なGSSAPIパケットを送信しようとしました: (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:357 fe-secure-gssapi.c:607
+#: fe-secure-gssapi.c:357 fe-secure-gssapi.c:614
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)\n"
 msgstr "過大なGSSAPIパケットがサーバーから送出されました: (%zu > %zu)\n"
@@ -1072,89 +1077,89 @@ msgstr "GSSAPIアンラップエラー"
 msgid "incoming GSSAPI message did not use confidentiality\n"
 msgstr "受信したGSSAPIパケットは機密性を使用していませんでした\n"
 
-#: fe-secure-gssapi.c:653
+#: fe-secure-gssapi.c:660
 msgid "could not initiate GSSAPI security context"
 msgstr "GSSAPIセキュリティコンテキストを開始できませんでした"
 
-#: fe-secure-gssapi.c:703
+#: fe-secure-gssapi.c:710
 msgid "GSSAPI size check error"
 msgstr "GSSAPIサイズチェックエラー"
 
-#: fe-secure-openssl.c:218 fe-secure-openssl.c:331 fe-secure-openssl.c:1492
+#: fe-secure-openssl.c:219 fe-secure-openssl.c:364 fe-secure-openssl.c:1526
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL SYSCALLエラー: %s\n"
 
-#: fe-secure-openssl.c:225 fe-secure-openssl.c:338 fe-secure-openssl.c:1496
+#: fe-secure-openssl.c:226 fe-secure-openssl.c:371 fe-secure-openssl.c:1530
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL SYSCALLエラー: EOFを検知\n"
 
-#: fe-secure-openssl.c:236 fe-secure-openssl.c:349 fe-secure-openssl.c:1505
+#: fe-secure-openssl.c:237 fe-secure-openssl.c:382 fe-secure-openssl.c:1539
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSLエラー: %s\n"
 
-#: fe-secure-openssl.c:251 fe-secure-openssl.c:364
+#: fe-secure-openssl.c:252 fe-secure-openssl.c:397
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "SSL接続が意図せずにクローズされました\n"
 
-#: fe-secure-openssl.c:257 fe-secure-openssl.c:370 fe-secure-openssl.c:1555
+#: fe-secure-openssl.c:258 fe-secure-openssl.c:403 fe-secure-openssl.c:1589
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "不明のSSLエラーコード: %d\n"
 
-#: fe-secure-openssl.c:415
+#: fe-secure-openssl.c:448
 msgid "could not determine server certificate signature algorithm\n"
 msgstr "サーバー証明書の署名アルゴリズムを決定できませんでした\n"
 
-#: fe-secure-openssl.c:436
+#: fe-secure-openssl.c:469
 #, c-format
 msgid "could not find digest for NID %s\n"
 msgstr "NID %sのダイジェストが見つかりませんでした\n"
 
-#: fe-secure-openssl.c:446
+#: fe-secure-openssl.c:479
 msgid "could not generate peer certificate hash\n"
 msgstr "ピアの証明書ハッシュの生成に失敗しました\n"
 
-#: fe-secure-openssl.c:503
+#: fe-secure-openssl.c:537
 msgid "SSL certificate's name entry is missing\n"
 msgstr "SSL証明書に名前の項目がありません\n"
 
-#: fe-secure-openssl.c:538
+#: fe-secure-openssl.c:572
 msgid "SSL certificate's address entry is missing\n"
 msgstr "SSL証明書のアドレスのエントリがありません\n"
 
-#: fe-secure-openssl.c:940
+#: fe-secure-openssl.c:974
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "SSLコンテキストを作成できませんでした: %s\n"
 
-#: fe-secure-openssl.c:979
+#: fe-secure-openssl.c:1013
 #, c-format
 msgid "invalid value \"%s\" for minimum SSL protocol version\n"
 msgstr "不正なSSLプロトコル最小バージョンの値\"%s\"\n"
 
-#: fe-secure-openssl.c:990
+#: fe-secure-openssl.c:1024
 #, c-format
 msgid "could not set minimum SSL protocol version: %s\n"
 msgstr "SSLプロトコル最小バージョンを設定できませんでした: %s\n"
 
-#: fe-secure-openssl.c:1008
+#: fe-secure-openssl.c:1042
 #, c-format
 msgid "invalid value \"%s\" for maximum SSL protocol version\n"
 msgstr "不正なSSLプロトコル最大バージョンの値\"%s\"\n"
 
-#: fe-secure-openssl.c:1019
+#: fe-secure-openssl.c:1053
 #, c-format
 msgid "could not set maximum SSL protocol version: %s\n"
 msgstr "SSLプロトコル最大バージョンを設定できませんでした: %s\n"
 
-#: fe-secure-openssl.c:1055
+#: fe-secure-openssl.c:1089
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "ルート証明書\"%s\"を読み取れませんでした: %s\n"
 
-#: fe-secure-openssl.c:1108
+#: fe-secure-openssl.c:1142
 msgid ""
 "could not get home directory to locate root certificate file\n"
 "Either provide the file or change sslmode to disable server certificate verification.\n"
@@ -1162,7 +1167,7 @@ msgstr ""
 "ルート証明書ファイルを特定するためのホームディレクトリが取得できませんでした\n"
 "ファイルを用意するか、サーバー証明書の検証を無効にするように sslmode を変更してください\n"
 
-#: fe-secure-openssl.c:1112
+#: fe-secure-openssl.c:1146
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -1171,99 +1176,99 @@ msgstr ""
 "ルート証明書ファイル\"%s\"が存在しません。\n"
 "ファイルを用意するかサーバー証明書の検証を無効にするようにsslmodeを変更してください\n"
 
-#: fe-secure-openssl.c:1143
+#: fe-secure-openssl.c:1177
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "証明書ファイル\"%s\"をオープンできませんでした: %s\n"
 
-#: fe-secure-openssl.c:1162
+#: fe-secure-openssl.c:1196
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "証明書ファイル\"%s\"を読み込めませんでした: %s\n"
 
-#: fe-secure-openssl.c:1187
+#: fe-secure-openssl.c:1221
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "SSL接続を確立できませんでした: %s\n"
 
-#: fe-secure-openssl.c:1221
+#: fe-secure-openssl.c:1255
 #, c-format
 msgid "could not set SSL Server Name Indication (SNI): %s\n"
 msgstr ""
 "SSLサーバー名表示(SNI)を設定できませんでした: %s\n"
 "\n"
 
-#: fe-secure-openssl.c:1268
+#: fe-secure-openssl.c:1302
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "SSLエンジン\"%s\"を読み込みできませんでした: %s\n"
 
-#: fe-secure-openssl.c:1280
+#: fe-secure-openssl.c:1314
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "SSLエンジン\"%s\"を初期化できませんでした: %s\n"
 
-#: fe-secure-openssl.c:1296
+#: fe-secure-openssl.c:1330
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "SSL秘密鍵ファイル\"%s\"をエンジン\"%s\"から読み取れませんでした: %s\n"
 
-#: fe-secure-openssl.c:1310
+#: fe-secure-openssl.c:1344
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "SSL秘密鍵\"%s\"をエンジン\"%s\"から読み取れませんでした: %s\n"
 
-#: fe-secure-openssl.c:1348
+#: fe-secure-openssl.c:1382
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "証明書はありましたが、秘密鍵ファイル\"%s\"はありませんでした\n"
 
-#: fe-secure-openssl.c:1352
+#: fe-secure-openssl.c:1386
 #, c-format
 msgid "could not stat private key file \"%s\": %m\n"
 msgstr "秘密鍵ファイル\"%s\"をstatできませんでした: %m\n"
 
-#: fe-secure-openssl.c:1361
+#: fe-secure-openssl.c:1395
 #, c-format
 msgid "private key file \"%s\" is not a regular file\n"
 msgstr "秘密鍵ファイル\"%s\"は通常のファイルではありません\n"
 
-#: fe-secure-openssl.c:1394
+#: fe-secure-openssl.c:1428
 #, c-format
 msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root\n"
 msgstr "秘密鍵ファイル\"%s\"はグループに対して、もしくは無制限にアクセスを許可しています; ファイルのパーミッションは u=rw (0600) かそれよりも狭い必要があります、rootが所有している場合は  u=rw,g=r (0640) かそれよりも狭い必要があります\n"
 
-#: fe-secure-openssl.c:1419
+#: fe-secure-openssl.c:1453
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "秘密鍵ファイル\"%s\"をロードできませんでした: %s\n"
 
-#: fe-secure-openssl.c:1436
+#: fe-secure-openssl.c:1470
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "証明書と秘密鍵ファイル\"%s\"が一致しません: %s\n"
 
-#: fe-secure-openssl.c:1538
+#: fe-secure-openssl.c:1572
 #, c-format
 msgid "This may indicate that the server does not support any SSL protocol version between %s and %s.\n"
 msgstr "このことは、クライアントがSSLプロトコルのバージョン%sから%sの間のいずれもサポートしていないことを示唆しているかもしれません。\n"
 
-#: fe-secure-openssl.c:1574
+#: fe-secure-openssl.c:1608
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "証明書を入手できませんでした: %s\n"
 
-#: fe-secure-openssl.c:1681
+#: fe-secure-openssl.c:1715
 #, c-format
 msgid "no SSL error reported"
 msgstr "SSLエラーはありませんでした"
 
-#: fe-secure-openssl.c:1707
+#: fe-secure-openssl.c:1741
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSLエラーコード: %lu"
 
-#: fe-secure-openssl.c:1986
+#: fe-secure-openssl.c:2020
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "警告: sslpasswordが切り詰められました\n"
@@ -1273,7 +1278,7 @@ msgstr "警告: sslpasswordが切り詰められました\n"
 msgid "could not receive data from server: %s\n"
 msgstr "サーバーからデータを受信できませんでした: %s\n"
 
-#: fe-secure.c:443
+#: fe-secure.c:467
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "サーバーにデータを送信できませんでした: %s\n"
