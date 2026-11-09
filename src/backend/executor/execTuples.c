@@ -454,6 +454,14 @@ tts_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple, bool shouldFree)
 {
 	HeapTupleTableSlot *hslot = (HeapTupleTableSlot *) slot;
 
+	/*
+	 * The tuple later will likely get deformed and/or copied. Validate a
+	 * versioned datum once when it enters the slot, rather than having to
+	 * check on every copy and each incremental deformation.
+	 */
+	if (HeapTupleHeaderIsVersionedDatum(tuple->t_data))
+		heap_datum_check(tuple->t_data, slot->tts_tupleDescriptor);
+
 	tts_heap_clear(slot);
 
 	slot->tts_nvalid = 0;
@@ -786,10 +794,29 @@ tts_buffer_heap_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 	BufferHeapTupleTableSlot *bsrcslot = (BufferHeapTupleTableSlot *) srcslot;
 	BufferHeapTupleTableSlot *bdstslot = (BufferHeapTupleTableSlot *) dstslot;
 
-	/*
+	/* ---
 	 * If the source slot is of a different kind, or is a buffer slot that has
 	 * been materialized / is virtual, make a new copy of the tuple. Otherwise
 	 * make a new reference to the in-buffer tuple.
+	 *
+	 * There's no need to call heap_datum_check() here:
+	 *
+	 * - If the source is a buffer slot with a tuple in a buffer, the table
+	 *   locking protects (and the tuple is not marked as versioned)
+	 *
+	 * - If the source is a buffer slot with an allocated tuple or a heap slot,
+	 *   the tuple was checked when stored into the slot
+	 *
+	 * - If the source is a virtual slot, the heap tuple acquired below was
+	 *   just formed and thus will match the source slot's descriptor
+	 *
+	 * - Minimal slots do not carry composite tuples
+	 *
+	 * In all cases the planner / executor startup needs to have made sure the
+	 * slot's descriptors are compatible. It might make sense to verify that,
+	 * but that'd need to be done regardless of the tuple being a composite
+	 * tuple or a row tuple.
+	 * ---
 	 */
 	if (dstslot->tts_ops != srcslot->tts_ops ||
 		TTS_SHOULDFREE(srcslot) ||
@@ -866,6 +893,11 @@ tts_buffer_heap_store_tuple(TupleTableSlot *slot, HeapTuple tuple,
 							Buffer buffer, bool transfer_pin)
 {
 	BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
+
+	/*
+	 * NB: We don't check the tuple version here, as this is an on-disk tuple
+	 * that is protected otherwise (and will not be marked as versioned).
+	 */
 
 	if (TTS_SHOULDFREE(slot))
 	{
@@ -1485,6 +1517,15 @@ ExecForceStoreHeapTuple(HeapTuple tuple,
 		MemoryContext oldContext;
 		BufferHeapTupleTableSlot *bslot = (BufferHeapTupleTableSlot *) slot;
 
+		/*
+		 * Normally buffer slots don't need checking, because the data should
+		 * come from an on-disk relation, which always should be protected
+		 * against concurrent modifications. But in this path that's not
+		 * really guaranteed to be the case - so better be paranoid.
+		 */
+		if (HeapTupleHeaderIsVersionedDatum(tuple->t_data))
+			heap_datum_check(tuple->t_data, slot->tts_tupleDescriptor);
+
 		ExecClearTuple(slot);
 		slot->tts_flags &= ~TTS_FLAG_EMPTY;
 		oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
@@ -1615,14 +1656,31 @@ ExecStoreHeapTupleDatum(Datum data, TupleTableSlot *slot)
 {
 	HeapTupleData tuple = {0};
 	HeapTupleHeader td;
+	bool		was_datum;
 
-	td = DatumGetHeapTupleHeader(data);
+	td = DatumGetHeapTupleHeaderExt(data, &was_datum);
+
+	/*
+	 * No known path (be it core or pgxn extensions) gets here with
+	 * pre-upgrade tuples, so it seems better to be paranoid and assert that
+	 * we are passed a versioned tuple.
+	 */
+	Assert(was_datum &&
+		   (HeapTupleHeaderIsVersionedDatum(td) ||
+			HeapTupleHeaderGetTypeId(td) == RECORDOID));
 
 	tuple.t_len = HeapTupleHeaderGetDatumLength(td);
-	tuple.t_self = td->t_ctid;
 	tuple.t_data = td;
 
 	ExecClearTuple(slot);
+
+	/*
+	 * Datum tuples do not have valid ctids, so there's no point in copying
+	 * them. Historically there was some code that pretended to do so, but it
+	 * never actually did anything.  The only current user of this function is
+	 * ROW_MARK_COPY, which forms a wholerow attribute via
+	 * ExecEvalWholeRowVar(), which does not maintain ctid.
+	 */
 
 	heap_deform_tuple(&tuple, slot->tts_tupleDescriptor,
 					  slot->tts_values, slot->tts_isnull);

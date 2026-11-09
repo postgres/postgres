@@ -56,6 +56,9 @@ RelationPutHeapTuple(Relation relation,
 	Assert(!((tuple->t_data->t_infomask & HEAP_XMAX_COMMITTED) &&
 			 (tuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI)));
 
+	/* caller should have cleared the flag */
+	Assert(!HeapTupleHeaderIsDatum(tuple->t_data));
+
 	/* Add the tuple to the page */
 	pageHeader = BufferGetPage(buffer);
 

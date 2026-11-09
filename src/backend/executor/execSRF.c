@@ -317,6 +317,34 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 									 errmsg("rows returned by function are not all of the same row type")));
 					}
 
+					if (tupdesc->tdtypeid != RECORDOID)
+					{
+						/*
+						 * If it's not a record type, check that the datum and
+						 * the tupledesc are still compatible.
+						 *
+						 * We do that here because after tuplestore_puttuple()
+						 * we don't have the necessary information anymore.
+						 * Right now tuplestore_puttuple() doesn't have the
+						 * tupledesc and thus can't perform this check.
+						 *
+						 * Note that this would not protect against problems
+						 * if the tupledesc could change across rows (we'd
+						 * leave differently shaped tuples in the tuplestore,
+						 * causing problems on retrieval), but the descriptor
+						 * luckily can't change.
+						 *
+						 * Because of the version normalization in
+						 * DatumGetHeapTupleHeader(), the tuple has to be
+						 * marked as a datum, and because this is the !=
+						 * RECORDOID branch, it should be versioned. For now
+						 * just Assert() that that is the case.
+						 */
+						Assert(HeapTupleHeaderIsVersionedDatum(td));
+						if (HeapTupleHeaderIsVersionedDatum(td))
+							heap_datum_check(td, tupdesc);
+					}
+
 					/*
 					 * tuplestore_puttuple needs a HeapTuple not a bare
 					 * HeapTupleHeader, but it doesn't need all the fields.

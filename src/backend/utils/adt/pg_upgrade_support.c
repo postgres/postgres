@@ -19,6 +19,9 @@
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
+#include "utils/memutils.h"
+#include "utils/pg_lsn.h"
 
 
 #define CHECK_IS_BINARY_UPGRADE									\
@@ -146,6 +149,51 @@ binary_upgrade_set_next_toast_relfilenode(PG_FUNCTION_ARGS)
 
 	CHECK_IS_BINARY_UPGRADE;
 	binary_upgrade_next_toast_pg_class_relfilenumber = relfilenumber;
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * Supply the attribute versions, for the next relation to be created, from
+ * the old cluster. See SetBinaryUpgradeAttributeVersions().
+ */
+Datum
+binary_upgrade_set_next_attribute_versions(PG_FUNCTION_ARGS)
+{
+	ArrayType  *array = PG_GETARG_ARRAYTYPE_P(0);
+	int16		elmlen;
+	bool		elmbyval;
+	char		elmalign;
+	Datum	   *elems;
+	int			nelems;
+	BinaryUpgradeAttributeVersions *versions;
+
+	CHECK_IS_BINARY_UPGRADE;
+
+	if (array_contains_nulls(array))
+		elog(ERROR, "null attribute version value is not allowed");
+
+	get_typlenbyvalalign(LSNOID, &elmlen, &elmbyval, &elmalign);
+	deconstruct_array(array, LSNOID, elmlen, elmbyval, elmalign,
+					  &elems, NULL, &nelems);
+
+	/*
+	 * The array has to outlive this statement, as it is consumed by the next
+	 * one.  Should that statement fail, the versions stay pending and would
+	 * be applied to the next relation created instead.  That cannot happen in
+	 * practice: pg_upgrade restores with pg_restore --exit-on-error, so a
+	 * failed CREATE ends the restore.
+	 */
+	versions = MemoryContextAlloc(TopMemoryContext,
+								  offsetof(BinaryUpgradeAttributeVersions, versions) +
+								  nelems * sizeof(XLogRecPtr));
+	versions->natts = nelems;
+	for (int i = 0; i < nelems; i++)
+		versions->versions[i] = DatumGetLSN(elems[i]);
+
+	if (binary_upgrade_next_attribute_versions != NULL)
+		pfree(binary_upgrade_next_attribute_versions);
+	binary_upgrade_next_attribute_versions = versions;
 
 	PG_RETURN_VOID();
 }
