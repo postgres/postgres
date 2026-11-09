@@ -1,0 +1,109 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_create_domain s1_begin s1_create_testtab_with_domain s2_drop_domain s1_commit s1_drop_testtab s1_drop_domain
+step s1_create_domain: CREATE DOMAIN testdom AS integer;
+step s1_begin: BEGIN;
+step s1_create_testtab_with_domain: CREATE TABLE testtab (a int, b testdom);
+step s2_drop_domain: DROP DOMAIN testdom; <waiting ...>
+step s1_commit: COMMIT;
+step s2_drop_domain: <... completed>
+ERROR:  cannot drop type testdom because other objects depend on it
+step s1_drop_testtab: DROP TABLE testtab;
+step s1_drop_domain: DROP DOMAIN testdom;
+
+starting permutation: s1_create_domain s1_create_testtab s1_begin s1_add_domain_col s2_drop_domain s1_commit s1_drop_testtab s1_drop_domain
+step s1_create_domain: CREATE DOMAIN testdom AS integer;
+step s1_create_testtab: CREATE TABLE testtab (a int);
+step s1_begin: BEGIN;
+step s1_add_domain_col: ALTER TABLE testtab ADD COLUMN b testdom;
+step s2_drop_domain: DROP DOMAIN testdom; <waiting ...>
+step s1_commit: COMMIT;
+step s2_drop_domain: <... completed>
+ERROR:  cannot drop type testdom because other objects depend on it
+step s1_drop_testtab: DROP TABLE testtab;
+step s1_drop_domain: DROP DOMAIN testdom;
+
+starting permutation: s1_create_domain s1_begin s1_create_testview_with_domain s2_drop_domain s1_commit s1_drop_testview s1_drop_domain
+step s1_create_domain: CREATE DOMAIN testdom AS integer;
+step s1_begin: BEGIN;
+step s1_create_testview_with_domain: CREATE VIEW testview AS SELECT 123::testdom IS NULL;
+step s2_drop_domain: DROP DOMAIN testdom; <waiting ...>
+step s1_commit: COMMIT;
+step s2_drop_domain: <... completed>
+ERROR:  cannot drop type testdom because other objects depend on it
+step s1_drop_testview: DROP VIEW testview;
+step s1_drop_domain: DROP DOMAIN testdom;
+
+starting permutation: s1_create_rowtype_tbl s1_begin s1_create_testtab_with_rowtype s2_drop_rowtype_tbl s1_commit s1_drop_testtab s1_drop_rowtype_tbl
+step s1_create_rowtype_tbl: CREATE TABLE rowtype(a int8, b text);
+step s1_begin: BEGIN;
+step s1_create_testtab_with_rowtype: CREATE TABLE testtab (a int, b rowtype);
+step s2_drop_rowtype_tbl: DROP TABLE rowtype; <waiting ...>
+step s1_commit: COMMIT;
+step s2_drop_rowtype_tbl: <... completed>
+ERROR:  cannot drop table rowtype because other objects depend on it
+step s1_drop_testtab: DROP TABLE testtab;
+step s1_drop_rowtype_tbl: DROP TABLE rowtype;
+
+starting permutation: s1_create_rowtype_tbl s1_begin s1_create_testview_with_rowtype_top s2_drop_rowtype_tbl s1_commit s1_drop_testview s1_drop_rowtype_tbl
+step s1_create_rowtype_tbl: CREATE TABLE rowtype(a int8, b text);
+step s1_begin: BEGIN;
+step s1_create_testview_with_rowtype_top: CREATE VIEW testview AS SELECT '(1,b)'::rowtype;
+step s2_drop_rowtype_tbl: DROP TABLE rowtype; <waiting ...>
+step s1_commit: COMMIT;
+step s2_drop_rowtype_tbl: <... completed>
+ERROR:  cannot drop table rowtype because other objects depend on it
+step s1_drop_testview: DROP VIEW testview;
+step s1_drop_rowtype_tbl: DROP TABLE rowtype;
+
+starting permutation: s1_create_rowtype_tbl s1_begin s1_create_testview_with_rowtype_sub s2_drop_rowtype_tbl s1_commit s1_drop_testview s1_drop_rowtype_tbl
+step s1_create_rowtype_tbl: CREATE TABLE rowtype(a int8, b text);
+step s1_begin: BEGIN;
+step s1_create_testview_with_rowtype_sub: CREATE VIEW testview AS SELECT '(1,b)'::rowtype IS NULL;
+step s2_drop_rowtype_tbl: DROP TABLE rowtype; <waiting ...>
+step s1_commit: COMMIT;
+step s2_drop_rowtype_tbl: <... completed>
+ERROR:  cannot drop table rowtype because other objects depend on it
+step s1_drop_testview: DROP VIEW testview;
+step s1_drop_rowtype_tbl: DROP TABLE rowtype;
+
+starting permutation: s1_create_rowtype_comp s1_begin s1_create_testtab_with_rowtype s2_alter_rowtype_comp_to_text s1_commit s1_drop_testtab s1_drop_rowtype_comp
+step s1_create_rowtype_comp: CREATE TYPE rowtype AS(a int8, b text);
+step s1_begin: BEGIN;
+step s1_create_testtab_with_rowtype: CREATE TABLE testtab (a int, b rowtype);
+step s2_alter_rowtype_comp_to_text: ALTER TYPE rowtype ALTER ATTRIBUTE a TYPE text; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_rowtype_comp_to_text: <... completed>
+ERROR:  cannot alter type "rowtype" because column "testtab.b" uses it
+step s1_drop_testtab: DROP TABLE testtab;
+step s1_drop_rowtype_comp: DROP TYPE rowtype;
+
+starting permutation: s1_create_rowtype_tbl s1_begin s1_create_testtab_with_rowtype s2_alter_rowtype_tbl_to_text s1_commit s1_drop_testtab s1_drop_rowtype_tbl
+step s1_create_rowtype_tbl: CREATE TABLE rowtype(a int8, b text);
+step s1_begin: BEGIN;
+step s1_create_testtab_with_rowtype: CREATE TABLE testtab (a int, b rowtype);
+step s2_alter_rowtype_tbl_to_text: ALTER TABLE rowtype ALTER COLUMN a TYPE text; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_rowtype_tbl_to_text: <... completed>
+ERROR:  cannot alter table "rowtype" because column "testtab.b" uses its row type
+step s1_drop_testtab: DROP TABLE testtab;
+step s1_drop_rowtype_tbl: DROP TABLE rowtype;
+
+starting permutation: s1_create_rowtype_comp s1_begin s1_create_testview_with_rowtype_sub s2_alter_rowtype_comp_to_text s1_commit s1_drop_testview s1_drop_rowtype_comp
+step s1_create_rowtype_comp: CREATE TYPE rowtype AS(a int8, b text);
+step s1_begin: BEGIN;
+step s1_create_testview_with_rowtype_sub: CREATE VIEW testview AS SELECT '(1,b)'::rowtype IS NULL;
+step s2_alter_rowtype_comp_to_text: ALTER TYPE rowtype ALTER ATTRIBUTE a TYPE text;
+step s1_commit: COMMIT;
+step s1_drop_testview: DROP VIEW testview;
+step s1_drop_rowtype_comp: DROP TYPE rowtype;
+
+starting permutation: s1_create_rowtype_tbl s1_begin s1_create_testtab_with_rowtype s2_alter_rowtype_tbl_add_col s1_commit s1_drop_testtab s1_drop_rowtype_tbl
+step s1_create_rowtype_tbl: CREATE TABLE rowtype(a int8, b text);
+step s1_begin: BEGIN;
+step s1_create_testtab_with_rowtype: CREATE TABLE testtab (a int, b rowtype);
+step s2_alter_rowtype_tbl_add_col: ALTER TABLE rowtype ADD COLUMN c bigint; <waiting ...>
+step s1_commit: COMMIT;
+step s2_alter_rowtype_tbl_add_col: <... completed>
+step s1_drop_testtab: DROP TABLE testtab;
+step s1_drop_rowtype_tbl: DROP TABLE rowtype;
