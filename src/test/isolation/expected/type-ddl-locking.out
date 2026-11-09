@@ -93,8 +93,10 @@ starting permutation: s1_create_rowtype_comp s1_begin s1_create_testview_with_ro
 step s1_create_rowtype_comp: CREATE TYPE rowtype AS(a int8, b text);
 step s1_begin: BEGIN;
 step s1_create_testview_with_rowtype_sub: CREATE VIEW testview AS SELECT '(1,b)'::rowtype IS NULL;
-step s2_alter_rowtype_comp_to_text: ALTER TYPE rowtype ALTER ATTRIBUTE a TYPE text;
+step s2_alter_rowtype_comp_to_text: ALTER TYPE rowtype ALTER ATTRIBUTE a TYPE text; <waiting ...>
 step s1_commit: COMMIT;
+step s2_alter_rowtype_comp_to_text: <... completed>
+ERROR:  cannot alter type "rowtype" because rule _RETURN on view testview uses it
 step s1_drop_testview: DROP VIEW testview;
 step s1_drop_rowtype_comp: DROP TYPE rowtype;
 
