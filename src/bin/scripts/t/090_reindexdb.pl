@@ -286,6 +286,23 @@ $node->command_ok(
 		'postgres',
 	],
 	'parallel reindexdb for indices');
+$node->safe_psql(
+	'postgres', q|
+	CREATE SCHEMA "s'4";
+	CREATE TABLE "s'4"."t'4"(id integer);
+	CREATE INDEX "i'4" ON "s'4"."t'4"(id);
+|);
+# Names that require quoting must be handled safely by the catalog query
+# built for the parallel processing of indexes.
+$node->issues_sql_like(
+	[
+		'reindexdb',
+		'--jobs' => '2',
+		'--index' => q{"s'4"."i'4"},
+		'postgres',
+	],
+	qr/statement:\ REINDEX INDEX "s'4"."i'4";/,
+	'parallel reindexdb for index with quotes in name');
 # Note that the ordering of the commands is not stable, so the second
 # command for s2.t2 is not checked after.
 $node->issues_sql_like(
