@@ -667,11 +667,15 @@ select_perl_context(bool trusted)
 				  boot_PostgreSQL__InServer__SPI, __FILE__);
 
 			eval_pv("PostgreSQL::InServer::SPI::bootstrap()", FALSE);
-			if (SvTRUE(ERRSV))
+			if (errsv_is_true(ERRSV))
+			{
+				const char *errmessage = strip_trailing_ws(sv2cstr(ERRSV));
+
 				ereport(ERROR,
 						(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-						 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+						 errmsg_internal("%s", errmessage),
 						 errcontext("while executing PostgreSQL::InServer::SPI::bootstrap")));
+			}
 		}
 		PG_PERL_CATCH();
 		{
@@ -873,16 +877,24 @@ plperl_init_interp(void)
 
 		if (perl_parse(plperl, plperl_init_shared_libs,
 					   nargs, embedding, NULL) != 0)
+		{
+			const char *errmessage = strip_trailing_ws(sv2cstr(ERRSV));
+
 			ereport(ERROR,
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-					 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+					 errmsg_internal("%s", errmessage),
 					 errcontext("while parsing Perl initialization")));
+		}
 
 		if (perl_run(plperl) != 0)
+		{
+			const char *errmessage = strip_trailing_ws(sv2cstr(ERRSV));
+
 			ereport(ERROR,
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-					 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+					 errmsg_internal("%s", errmessage),
 					 errcontext("while running Perl initialization")));
+		}
 
 #ifdef PLPERL_RESTORE_LOCALE
 		PLPERL_RESTORE_LOCALE(LC_COLLATE, save_collate);
@@ -1008,11 +1020,15 @@ plperl_trusted_init(void)
 	PL_ppaddr[OP_DOFILE] = pp_require_orig;
 
 	eval_pv(PLC_TRUSTED, FALSE);
-	if (SvTRUE(ERRSV))
+	if (errsv_is_true(ERRSV))
+	{
+		const char *errmessage = strip_trailing_ws(sv2cstr(ERRSV));
+
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+				 errmsg_internal("%s", errmessage),
 				 errcontext("while executing PLC_TRUSTED")));
+	}
 
 	/*
 	 * Force loading of utf8 module now to prevent errors that can arise from
@@ -1020,11 +1036,15 @@ plperl_trusted_init(void)
 	 * http://rt.perl.org/rt3/Ticket/Display.html?id=47576
 	 */
 	eval_pv("my $a=chr(0x100); return $a =~ /\\xa9/i", FALSE);
-	if (SvTRUE(ERRSV))
+	if (errsv_is_true(ERRSV))
+	{
+		const char *errmessage = strip_trailing_ws(sv2cstr(ERRSV));
+
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+				 errmsg_internal("%s", errmessage),
 				 errcontext("while executing utf8fix")));
+	}
 
 	/*
 	 * Lock down the interpreter
@@ -1063,11 +1083,15 @@ plperl_trusted_init(void)
 	{
 		eval_pv(plperl_on_plperl_init, FALSE);
 		/* XXX need to find a way to determine a better errcode here */
-		if (SvTRUE(ERRSV))
+		if (errsv_is_true(ERRSV))
+		{
+			const char *errmessage = strip_trailing_ws(sv2cstr(ERRSV));
+
 			ereport(ERROR,
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-					 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+					 errmsg_internal("%s", errmessage),
 					 errcontext("while executing plperl.on_plperl_init")));
+		}
 	}
 }
 
@@ -1086,11 +1110,15 @@ plperl_untrusted_init(void)
 	if (plperl_on_plperlu_init && *plperl_on_plperlu_init)
 	{
 		eval_pv(plperl_on_plperlu_init, FALSE);
-		if (SvTRUE(ERRSV))
+		if (errsv_is_true(ERRSV))
+		{
+			const char *errmessage = strip_trailing_ws(sv2cstr(ERRSV));
+
 			ereport(ERROR,
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-					 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+					 errmsg_internal("%s", errmessage),
 					 errcontext("while executing plperl.on_plperlu_init")));
+		}
 	}
 }
 
@@ -2339,10 +2367,14 @@ plperl_create_sub(plperl_proc_desc *prodesc, const char *s, Oid fn_oid)
 	FREETMPS;
 	LEAVE;
 
-	if (SvTRUE(ERRSV))
+	if (errsv_is_true(ERRSV))
+	{
+		const char *errmessage = strip_trailing_ws(sv2cstr(ERRSV));
+
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
+				 errmsg_internal("%s", errmessage)));
+	}
 
 	if (!subref)
 		ereport(ERROR,
@@ -2441,16 +2473,19 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 				 errmsg("didn't get a return item from function")));
 	}
 
-	if (SvTRUE(ERRSV))
+	if (errsv_is_true(ERRSV))
 	{
+		const char *errmessage;
+
 		(void) POPs;
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
+		errmessage = strip_trailing_ws(sv2cstr(ERRSV));
 		/* XXX need to find a way to determine a better errcode here */
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
+				 errmsg_internal("%s", errmessage)));
 	}
 
 	retval = newSVsv(POPs);
@@ -2509,16 +2544,19 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 				 errmsg("didn't get a return item from trigger function")));
 	}
 
-	if (SvTRUE(ERRSV))
+	if (errsv_is_true(ERRSV))
 	{
+		const char *errmessage;
+
 		(void) POPs;
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
+		errmessage = strip_trailing_ws(sv2cstr(ERRSV));
 		/* XXX need to find a way to determine a better errcode here */
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
+				 errmsg_internal("%s", errmessage)));
 	}
 
 	retval = newSVsv(POPs);
@@ -2572,16 +2610,19 @@ plperl_call_perl_event_trigger_func(plperl_proc_desc *desc,
 				 errmsg("didn't get a return item from trigger function")));
 	}
 
-	if (SvTRUE(ERRSV))
+	if (errsv_is_true(ERRSV))
 	{
+		const char *errmessage;
+
 		(void) POPs;
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
+		errmessage = strip_trailing_ws(sv2cstr(ERRSV));
 		/* XXX need to find a way to determine a better errcode here */
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-				 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV)))));
+				 errmsg_internal("%s", errmessage)));
 	}
 
 	retval = newSVsv(POPs);
