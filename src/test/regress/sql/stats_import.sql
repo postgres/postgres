@@ -1218,4 +1218,77 @@ AND tablename = 'stats_temp'
 AND inherited = false
 AND attname = 'i';
 DROP TABLE stats_temp;
+
+-- A function invoked while importing attribute statistics (here through a
+-- domain's CHECK constraint) must not be able to alter the target relation
+-- underneath the import.  The relation is held open across the import, so a
+-- reentrant ALTER TABLE is rejected and no mismatched statistics are stored.
+CREATE TABLE stats_import.test_reentrant (id uuid);
+
+CREATE FUNCTION stats_import.alter_during_import(uuid) RETURNS boolean
+  LANGUAGE plpgsql AS $$
+BEGIN
+  ALTER TABLE stats_import.test_reentrant
+    ALTER COLUMN id TYPE int4range USING int4range(1, 2);
+  RETURN true;
+END;
+$$;
+
+CREATE DOMAIN stats_import.reentrant_dom AS uuid
+  CHECK (stats_import.alter_during_import(VALUE));
+
+ALTER TABLE stats_import.test_reentrant
+  ALTER COLUMN id TYPE stats_import.reentrant_dom;
+
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_reentrant',
+  'attname', 'id',
+  'inherited', false,
+  'most_common_vals', '{00000000-0000-0000-0000-000000000000}'::text,
+  'most_common_freqs', '{1}'::real[]);
+
+-- No statistics should have been stored for the column.
+SELECT count(*) FROM pg_statistic
+  WHERE starelid = 'stats_import.test_reentrant'::regclass;
+
+-- Holding the relation open does not stop such a function from dropping the
+-- target column itself.  Dropping the column's domain with CASCADE removes
+-- the column through a dependency, which does not go through
+-- CheckTableNotInUse().  The import must re-check that the column still
+-- exists before writing and error out if it doesn't, so that no pg_statistic
+-- row is left behind for a dropped column.
+CREATE TABLE stats_import.test_reentrant_attr2 (id uuid);
+
+CREATE FUNCTION stats_import.drop_during_import_attr(uuid) RETURNS boolean
+  LANGUAGE plpgsql AS $$
+BEGIN
+  DROP DOMAIN stats_import.reentrant_dom_attr2 CASCADE;
+  RETURN true;
+END;
+$$;
+
+CREATE DOMAIN stats_import.reentrant_dom_attr2 AS uuid
+  CHECK (stats_import.drop_during_import_attr(VALUE));
+
+ALTER TABLE stats_import.test_reentrant_attr2
+  ALTER COLUMN id TYPE stats_import.reentrant_dom_attr2;
+
+SELECT pg_catalog.pg_restore_attribute_stats(
+  'schemaname', 'stats_import',
+  'relname', 'test_reentrant_attr2',
+  'attname', 'id',
+  'inherited', false,
+  'null_frac', 0.5::real,
+  'most_common_vals', '{00000000-0000-0000-0000-000000000000}'::text,
+  'most_common_freqs', '{1}'::real[]);
+
+-- No pg_statistic row should remain for a dropped column.
+SELECT count(*) FROM pg_statistic s
+  WHERE s.starelid = 'stats_import.test_reentrant_attr2'::regclass
+    AND NOT EXISTS (SELECT FROM pg_attribute a
+                    WHERE a.attrelid = s.starelid
+                      AND a.attnum = s.staattnum
+                      AND NOT a.attisdropped);
+
 DROP SCHEMA stats_import CASCADE;
