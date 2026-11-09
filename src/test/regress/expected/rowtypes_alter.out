@@ -1002,7 +1002,9 @@ BEGIN
   RAISE NOTICE 'r2.b: %', r2.b;
 END;
 $$;
-NOTICE:  r2.b: FIXME
+ERROR:  assigned value is incompatible with the variable's type
+DETAIL:  A variable can retain the type definition established when it was first used.
+CONTEXT:  PL/pgSQL function inline_code_block line 9 at assignment
 DROP TABLE rta_src;
 DROP TYPE rta_type;
 -- Same, but stored rather than read
@@ -1027,11 +1029,11 @@ BEGIN
   END;
 END;
 $$;
+NOTICE:  insert or assign failed: assigned value is incompatible with the variable's type
 SELECT (c).b FROM rta_sink;
-   b   
--------
- FIXME
-(1 row)
+ b 
+---
+(0 rows)
 
 DROP TABLE rta_sink;
 DROP TABLE rta_src;
@@ -1052,7 +1054,9 @@ BEGIN
   RAISE NOTICE 'r2.b: %', r2.b;
 END;
 $$;
-NOTICE:  r2.b: FIXME
+ERROR:  assigned value is incompatible with the variable's type
+DETAIL:  A variable can retain the type definition established when it was first used.
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at assignment
 DROP TABLE rta_src;
 DROP DOMAIN rta_dom;
 DROP TYPE rta_type;
@@ -1073,8 +1077,9 @@ BEGIN
   RAISE NOTICE 'via SQL: %', t;
 END;
 $$;
-NOTICE:  r2.b: FIXME
-NOTICE:  via SQL: FIXME
+ERROR:  assigned value is incompatible with the variable's type
+DETAIL:  A variable can retain the type definition established when it was first used.
+CONTEXT:  PL/pgSQL function inline_code_block line 10 at assignment
 DROP TYPE rta_type;
 -- A target variable assigned before the ALTER, the source after it
 CREATE TYPE rta_type AS (b text);
@@ -1090,7 +1095,9 @@ BEGIN
   RAISE NOTICE 'r2.b: %', r2.b;
 END;
 $$;
-NOTICE:  r2.b: FIXME
+ERROR:  assigned value is incompatible with the variable's type
+DETAIL:  A variable can retain the type definition established when it was first used.
+CONTEXT:  PL/pgSQL function inline_code_block line 9 at assignment
 DROP TYPE rta_type;
 --
 -- Reuse of an attribute number, after the attribute's addition was rolled
