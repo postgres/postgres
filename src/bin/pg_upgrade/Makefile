@@ -28,6 +28,10 @@ OBJS = \
 override CPPFLAGS := -DDLSUFFIX=\"$(DLSUFFIX)\" -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 
+# required for t/009_composite_types.pl
+REGRESS_SHLIB=$(abs_top_builddir)/src/test/regress/regress$(DLSUFFIX)
+export REGRESS_SHLIB
+
 all: pg_upgrade
 
 pg_upgrade: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
@@ -60,6 +64,7 @@ NOTSUBMAKEMAKE=$(MAKE)
 
 check: test.sh all temp-install
 	MAKE=$(NOTSUBMAKEMAKE) $(with_temp_install) bindir=$(abs_top_builddir)/tmp_install/$(bindir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $<
+	$(prove_check)
 
 # installcheck is not supported because there's no meaningful way to test
 # pg_upgrade against a single already-running server

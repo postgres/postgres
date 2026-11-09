@@ -130,7 +130,7 @@ test: rowtypes_alter
 # ----------
 # Another group of parallel tests
 # ----------
-test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain memoize
+test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain memoize attribute_version
 
 # ----------
 # Another group of parallel tests (compression)

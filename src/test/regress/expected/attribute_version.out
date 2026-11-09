@@ -1,0 +1,431 @@
+--
+-- Tests related to attribute versioning
+--
+-- This simulates minor and major version upgrades leaving some composite data
+-- around, verifying that we don't falsely error out, nor miss erroring out
+-- when necessary.
+--
+-- Where an attribute is altered to a different type, it changes from bytea
+-- to text, for the reasons explained in rowtypes_alter.sql.
+--
+-- make_tuple_unversioned() is created in create_function_0
+CREATE FUNCTION make_type_unversioned(p_rt regtype)
+  RETURNS void
+  LANGUAGE plpgsql
+  STRICT
+  AS $$
+DECLARE
+   p_rc regclass;
+BEGIN
+   SELECT typrelid INTO STRICT p_rc FROM pg_type WHERE typtype = 'c' AND oid = p_rt;
+
+   -- assume that there are no column options here, simplifies the code
+   UPDATE pg_catalog.pg_attribute SET attoptions = NULL WHERE attrelid = p_rc;
+END;
+$$;
+CREATE FUNCTION type_versions(p_rt regtype, OUT rc regclass, OUT rt regtype, OUT attnum int2, OUT attname name, OUT attversion int)
+  RETURNS SETOF RECORD
+  LANGUAGE plpgsql
+  STRICT
+  AS $$
+DECLARE
+   p_rc regclass;
+   p_r record;
+   p_lastver numeric = 0;
+   p_lastnum int = 0;
+   p_ver int;
+   p_attversion numeric;
+BEGIN
+   SELECT typrelid INTO STRICT p_rc FROM pg_type WHERE typtype = 'c' AND oid = p_rt;
+
+   FOR p_r IN SELECT * FROM pg_attribute pa WHERE attrelid = p_rc ORDER BY pa.attnum LOOP
+     p_attversion = COALESCE((SELECT pg_catalog.substr(o, length('pg_attver') + 2)::numeric FROM pg_catalog.unnest(p_r.attoptions) o WHERE pg_catalog.starts_with(o, 'pg_attver=')), 0);
+
+     IF p_attversion = 0 THEN
+       p_ver = 0;
+     ELSIF p_attversion = p_lastver THEN
+       p_ver = p_lastnum;
+     ELSE
+       p_lastnum = p_lastnum + 1;
+       p_lastver = p_attversion;
+       p_ver = p_lastnum;
+     END IF;
+
+     rc = p_r.attrelid;
+     rt = p_rt;
+     attnum = p_r.attnum;
+     attname = p_r.attname;
+     attversion = p_ver;
+
+     RETURN NEXT;
+   END LOOP;
+END;
+$$;
+--
+-- Simulate a table with one unversioned attribute (i.e. created before an
+-- upgrade), with a column added after the upgrade.
+--
+CREATE TYPE rowold_comp AS (c1 int);
+CREATE TABLE rowold_tbl (key text, c rowold_comp);
+-- insert tuples with 1 column
+INSERT INTO rowold_tbl
+  VALUES
+    ('1-cols-unver', make_tuple_unversioned(ROW(1)::rowold_comp)),
+    ('1-cols-wrongver', ROW(1)::rowold_comp)
+;
+ALTER TYPE rowold_comp ADD ATTRIBUTE c2 bytea;
+-- insert tuples with 2 columns
+INSERT INTO rowold_tbl
+  VALUES
+    ('2-cols-unver', make_tuple_unversioned(ROW(2, '\x4649584d45')::rowold_comp)),
+    ('2-cols-wrongver', ROW(2, '\x4649584d45')::rowold_comp)
+;
+SELECT * FROM type_versions('rowold_comp');
+     rc      |     rt      | attnum | attname | attversion 
+-------------+-------------+--------+---------+------------
+ rowold_comp | rowold_comp |      1 | c1      |          1
+ rowold_comp | rowold_comp |      2 | c2      |          2
+(2 rows)
+
+SELECT make_type_unversioned('rowold_comp');
+ make_type_unversioned 
+-----------------------
+ 
+(1 row)
+
+SELECT * FROM type_versions('rowold_comp');
+     rc      |     rt      | attnum | attname | attversion 
+-------------+-------------+--------+---------+------------
+ rowold_comp | rowold_comp |      1 | c1      |          0
+ rowold_comp | rowold_comp |      2 | c2      |          0
+(2 rows)
+
+-- insert a 2 column tuple formed while the type is unversioned, i.e. after a
+-- minor version update but before any DDL; it is stamped with version 0
+INSERT INTO rowold_tbl
+  VALUES ('2-cols-ver0', ROW(2, '\x4649584d45')::rowold_comp);
+ALTER TYPE rowold_comp ADD ATTRIBUTE c3 int;
+SELECT * FROM type_versions('rowold_comp');
+     rc      |     rt      | attnum | attname | attversion 
+-------------+-------------+--------+---------+------------
+ rowold_comp | rowold_comp |      1 | c1      |          0
+ rowold_comp | rowold_comp |      2 | c2      |          0
+ rowold_comp | rowold_comp |      3 | c3      |          1
+(3 rows)
+
+-- insert tuples with 3 columns
+INSERT INTO rowold_tbl
+  VALUES
+    ('3-cols-unver', make_tuple_unversioned(ROW(3, '\x4649584d45', 333)::rowold_comp)),
+    ('3-cols-ver', ROW(3, '\x4649584d45', 333)::rowold_comp)
+;
+-- Should be able to deform unversioned 1 & 2 column tuples, they were created before
+-- the "upgrade"
+SELECT c FROM rowold_tbl WHERE key = '1-cols-unver';
+   c   
+-------
+ (1,,)
+(1 row)
+
+SELECT c FROM rowold_tbl WHERE key = '2-cols-unver';
+          c           
+----------------------
+ (2,"\\x4649584d45",)
+(1 row)
+
+-- The same holds for the 2 column tuple stamped with version 0
+SELECT c FROM rowold_tbl WHERE key = '2-cols-ver0';
+          c           
+----------------------
+ (2,"\\x4649584d45",)
+(1 row)
+
+-- But an unversioned 3 column tuple shouldn't be deformable, as it only could
+-- have been created after the upgrade.
+SELECT c FROM rowold_tbl WHERE key = '3-cols-unver';
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+-- Should not be able to access versioned 1 & 2 column tuples, they have the
+-- wrong versions (from before we reset the versions)
+SELECT c FROM rowold_tbl WHERE key = '1-cols-wrongver';
+ERROR:  using outdated tuple descriptor when deforming row type
+HINT:  See server log for additional details.
+SELECT c FROM rowold_tbl WHERE key = '2-cols-wrongver';
+ERROR:  using outdated tuple descriptor when deforming row type
+HINT:  See server log for additional details.
+-- But the versioned 3 column tuple is from after the versions were reset and
+-- thus should be deformable.
+SELECT c FROM rowold_tbl WHERE key = '3-cols-ver';
+            c            
+-------------------------
+ (3,"\\x4649584d45",333)
+(1 row)
+
+--
+-- Test that if we alter a column after an upgrade, we can't deform
+-- unversioned tuples that include that column.
+--
+-- via plpgsql
+DO $$
+DECLARE
+  r1 record;
+  r2 record;
+BEGIN
+  SELECT c INTO r1 FROM rowold_tbl WHERE key = '1-cols-unver';
+  SELECT c INTO r2 FROM rowold_tbl WHERE key = '2-cols-unver';
+
+  DROP TABLE rowold_tbl;
+  ALTER TYPE rowold_comp ALTER ATTRIBUTE c2 TYPE text;
+
+  -- should work
+  RAISE NOTICE 'r1: %', r1;
+
+  -- should fail
+  BEGIN
+    RAISE NOTICE 'r2: %', r2;
+  EXCEPTION WHEN others THEN
+    RAISE NOTICE 'r2 failed: %', sqlerrm;
+  END;
+
+  ROLLBACK;
+END;
+$$;
+NOTICE:  r1: ("(1,,)")
+NOTICE:  r2 failed: row type of datum tuple was altered after the datum's creation
+-- via cursors
+BEGIN;
+DECLARE c1_unver CURSOR WITH HOLD FOR
+  SELECT c FROM rowold_tbl WHERE key = '1-cols-unver';
+DECLARE c1_wrongver CURSOR WITH HOLD FOR
+  SELECT c FROM rowold_tbl WHERE key = '1-cols-wrongver';
+DECLARE c2_unver CURSOR WITH HOLD FOR
+  SELECT c FROM rowold_tbl WHERE key = '2-cols-unver';
+DECLARE c2_wrongver CURSOR WITH HOLD FOR
+  SELECT c FROM rowold_tbl WHERE key = '2-cols-wrongver';
+DECLARE c2_ver0 CURSOR WITH HOLD FOR
+  SELECT c FROM rowold_tbl WHERE key = '2-cols-ver0';
+DECLARE c3_ver CURSOR WITH HOLD FOR
+  SELECT c FROM rowold_tbl WHERE key = '3-cols-ver';
+COMMIT;
+BEGIN;
+-- Should succeed, is versioned and the version is [for now] correct.
+FETCH FIRST FROM c3_ver;
+            c            
+-------------------------
+ (3,"\\x4649584d45",333)
+(1 row)
+
+DROP TABLE rowold_tbl;
+ALTER TYPE rowold_comp ALTER ATTRIBUTE c2 TYPE text;
+SAVEPOINT after_ddl;
+-- Should succeed, c1 should still have version 0 after the ALTER of c2.
+FETCH FIRST FROM c1_unver;
+   c   
+-------
+ (1,,)
+(1 row)
+
+-- Should fail, from before version reset
+FETCH FIRST FROM c1_wrongver;
+ERROR:  using outdated tuple descriptor when deforming row type
+HINT:  See server log for additional details.
+ROLLBACK TO SAVEPOINT after_ddl;
+-- Should error out, was changed, unversioned is interpreted as version 0,
+-- which does not match anymore
+FETCH FIRST FROM c2_unver;
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+ROLLBACK TO SAVEPOINT after_ddl;
+-- Should fail, from before version reset
+FETCH FIRST FROM c2_wrongver;
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+ROLLBACK TO SAVEPOINT after_ddl;
+-- Should error out like c2_unver, version 0 does not match anymore
+FETCH FIRST FROM c2_ver0;
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+ROLLBACK TO SAVEPOINT after_ddl;
+-- Should error out, schema was changed, version is wrong
+FETCH FIRST FROM c3_ver;
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+ROLLBACK TO SAVEPOINT after_ddl;
+ROLLBACK;
+-- Now that the DDL is rolled back, we should be able to again look at cursors
+-- that failed due to the DDL
+FETCH FIRST FROM c2_unver;
+          c           
+----------------------
+ (2,"\\x4649584d45",)
+(1 row)
+
+FETCH FIRST FROM c3_ver;
+            c            
+-------------------------
+ (3,"\\x4649584d45",333)
+(1 row)
+
+FETCH FIRST FROM c2_ver0;
+          c           
+----------------------
+ (2,"\\x4649584d45",)
+(1 row)
+
+--
+-- A datum of a type without attributes stays readable after attributes are
+-- added.
+--
+CREATE TYPE rowzero_comp AS ();
+CREATE TABLE rowzero_tbl (c rowzero_comp);
+INSERT INTO rowzero_tbl VALUES (ROW()::rowzero_comp);
+ALTER TYPE rowzero_comp ADD ATTRIBUTE a int;
+SELECT c, (c).a FROM rowzero_tbl;
+ c  | a 
+----+---
+ () |  
+(1 row)
+
+--
+-- An unversioned datum that is neither toasted nor stored reaches
+-- DatumGetHeapTupleHeader() as-is, so it has to be copied before being
+-- marked as version 0.
+--
+CREATE TYPE rowdirect_comp AS (a int, b int);
+SELECT make_type_unversioned('rowdirect_comp');
+ make_type_unversioned 
+-----------------------
+ 
+(1 row)
+
+SELECT (make_tuple_unversioned(ROW(1, 2)::rowdirect_comp)).b;
+ b 
+---
+ 2
+(1 row)
+
+-- If the type's attributes are versioned, an unversioned datum is rejected,
+-- even though it was formed with the current definition.
+CREATE TYPE rowdirect_ver_comp AS (a int, b int);
+SELECT (make_tuple_unversioned(ROW(1, 2)::rowdirect_ver_comp)).b;
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+--
+-- Test the composite_type_mismatch GUC
+--
+CREATE TYPE rowignore_comp AS (a bytea, b bytea);
+BEGIN;
+DECLARE c_ignore SCROLL CURSOR WITH HOLD FOR
+  SELECT ROW('\x4649584d45', '\x464958544f4f')::rowignore_comp;
+COMMIT;
+ALTER TYPE rowignore_comp ALTER ATTRIBUTE a TYPE bytea;
+SHOW composite_type_mismatch;
+ composite_type_mismatch 
+-------------------------
+ error
+(1 row)
+
+SET composite_type_mismatch = warn;
+FETCH FIRST FROM c_ignore;
+WARNING:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+                 row                 
+-------------------------------------
+ ("\\x4649584d45","\\x464958544f4f")
+(1 row)
+
+SET composite_type_mismatch = disabled;
+FETCH FIRST FROM c_ignore;
+                 row                 
+-------------------------------------
+ ("\\x4649584d45","\\x464958544f4f")
+(1 row)
+
+RESET composite_type_mismatch;
+FETCH FIRST FROM c_ignore;
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CREATE ROLE regress_av_nosuper;
+SET ROLE regress_av_nosuper;
+SET composite_type_mismatch = disabled;
+ERROR:  permission denied to set parameter "composite_type_mismatch"
+RESET ROLE;
+--
+-- Constants of a relation's own row type, formed while the relation is
+-- being created
+--
+CREATE TABLE rowself_tbl (a int, b int, k int)
+  PARTITION BY LIST ((CASE WHEN k > 0 THEN '(1,2,0)'::rowself_tbl
+                                       ELSE '(3,4,0)'::rowself_tbl END));
+CREATE TABLE rowself_tbl_1 PARTITION OF rowself_tbl FOR VALUES IN ('(1,2,0)');
+CREATE TABLE rowself_tbl_2 PARTITION OF rowself_tbl FOR VALUES IN ('(3,4,0)');
+INSERT INTO rowself_tbl VALUES (7, 8, 1), (9, 10, -1);
+SELECT tableoid::regclass, * FROM rowself_tbl ORDER BY a;
+   tableoid    | a | b  | k  
+---------------+---+----+----
+ rowself_tbl_1 | 7 |  8 |  1
+ rowself_tbl_2 | 9 | 10 | -1
+(2 rows)
+
+CREATE TABLE rowself_def (a int, b int DEFAULT ('(5,6)'::rowself_def).a);
+INSERT INTO rowself_def (a) VALUES (1);
+SELECT * FROM rowself_def;
+ a | b 
+---+---
+ 1 | 5
+(1 row)
+
+--
+-- The cache of SQL functions is keyed on the result rowtype, compared with
+-- equalRowTypes().  Altering a column to the type it already has changes only
+-- the version, which still has to invalidate the cached result descriptor.
+--
+-- Note: In versions before 18 SQL functions don't perform caching.
+--
+CREATE TABLE rowfunc_tbl (a int, b int);
+CREATE FUNCTION rowfunc() RETURNS rowfunc_tbl
+  LANGUAGE sql AS $$SELECT 1, 2$$;
+SELECT (rowfunc()).b;
+ b 
+---
+ 2
+(1 row)
+
+ALTER TABLE rowfunc_tbl ALTER COLUMN b TYPE int;
+SELECT (rowfunc()).b;
+ b 
+---
+ 2
+(1 row)
+
+SELECT (rowfunc()).b;
+ b 
+---
+ 2
+(1 row)
+
+\c -
+SELECT (rowfunc()).b;
+ b 
+---
+ 2
+(1 row)
+
+----
+-- clean up
+----
+CLOSE ALL;
+DROP TABLE IF EXISTS rowold_tbl;
+DROP TYPE IF EXISTS rowold_comp;
+DROP TABLE IF EXISTS rowzero_tbl;
+DROP TYPE IF EXISTS rowzero_comp;
+DROP TYPE IF EXISTS rowdirect_comp;
+DROP TYPE IF EXISTS rowdirect_ver_comp;
+DROP TYPE IF EXISTS rowignore_comp;
+DROP FUNCTION IF EXISTS rowfunc();
+DROP TABLE IF EXISTS rowfunc_tbl;
+DROP TABLE IF EXISTS rowself_tbl, rowself_def;
+DROP FUNCTION IF EXISTS make_type_unversioned(p_rt regtype);
+DROP FUNCTION IF EXISTS type_versions(p_rt regtype);
+DROP FUNCTION make_tuple_unversioned(anyelement);
+DROP ROLE regress_av_nosuper;

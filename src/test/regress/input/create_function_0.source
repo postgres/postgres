@@ -89,6 +89,11 @@ CREATE FUNCTION expanded_record_field_text(anyelement, int)
     AS '@libdir@/regress@DLSUFFIX@', 'expanded_record_field_text'
     LANGUAGE C STRICT;
 
+CREATE FUNCTION make_tuple_unversioned(anyelement)
+    RETURNS anyelement
+    AS '@libdir@/regress@DLSUFFIX@', 'make_tuple_unversioned'
+    LANGUAGE C STRICT;
+
 
 -- Things that shouldn't work:
 
