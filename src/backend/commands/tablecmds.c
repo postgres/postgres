@@ -428,8 +428,11 @@ static void ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cm
 								  AlterTableUtilityContext *context);
 static List *find_typed_table_dependencies(Oid typeOid, const char *typeName,
 										   DropBehavior behavior);
+static void find_composite_type_dependencies_recurse(Oid typeOid, Relation origRelation,
+													 const char *origTypeName, HTAB *visited);
 static void check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
-											Relation origRelation, const char *origTypeName);
+											Relation origRelation, const char *origTypeName,
+											HTAB *visited);
 static void report_type_used_in_column(const char *relname, const char *attname,
 									   Relation origRelation, const char *origTypeName);
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
@@ -6525,15 +6528,47 @@ void
 find_composite_type_dependencies(Oid typeOid, Relation origRelation,
 								 const char *origTypeName)
 {
+	HASHCTL		hctl;
+	HTAB	   *visited;
+
+	memset(&hctl, 0, sizeof(HASHCTL));
+	hctl.keysize = sizeof(Oid);
+	hctl.entrysize = sizeof(Oid);
+	hctl.hcxt = CurrentMemoryContext;
+
+	visited = hash_create("visited types",
+						  32,	/* start small and extend */
+						  &hctl,
+						  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+
+	find_composite_type_dependencies_recurse(typeOid, origRelation, origTypeName,
+											 visited);
+	hash_destroy(visited);
+}
+
+/*
+ * Recursive part of find_composite_type_dependencies.  'visited' keeps track
+ * of types that have already been visited, to avoid duplicating work.
+ */
+static void
+find_composite_type_dependencies_recurse(Oid typeOid, Relation origRelation,
+										 const char *origTypeName, HTAB *visited)
+{
 	Relation	depRel;
 	ScanKeyData key[2];
 	SysScanDesc depScan;
 	HeapTuple	depTup;
+	bool		visited_already;
 
 	Assert(OidIsValid(typeOid));
 
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
+
+	/* skip if we visited this type already */
+	hash_search(visited, &typeOid, HASH_ENTER, &visited_already);
+	if (visited_already)
+		return;
 
 	/*
 	 * We scan pg_depend to find those things that depend on the given type.
@@ -6561,7 +6596,8 @@ find_composite_type_dependencies(Oid typeOid, Relation origRelation,
 		ObjectAddressSubSet(depobj, pg_depend->classid, pg_depend->objid,
 							pg_depend->objsubid);
 
-		check_composite_type_dependency(&depobj, typeOid, origRelation, origTypeName);
+		check_composite_type_dependency(&depobj, typeOid, origRelation, origTypeName,
+										visited);
 	}
 
 	systable_endscan(depScan);
@@ -6588,7 +6624,8 @@ find_composite_type_dependencies(Oid typeOid, Relation origRelation,
  */
 static void
 check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
-								Relation origRelation, const char *origTypeName)
+								Relation origRelation, const char *origTypeName,
+								HTAB *visited)
 {
 	Oid			classid = depobj->classId;
 	Oid			objid = depobj->objectId;
@@ -6607,8 +6644,9 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 			 * any error message will mention the original type not the
 			 * container; this is intentional.
 			 */
-			find_composite_type_dependencies(objid,
-											 origRelation, origTypeName);
+			find_composite_type_dependencies_recurse(objid,
+													 origRelation, origTypeName,
+													 visited);
 			break;
 
 		case RelationRelationId:
@@ -6674,8 +6712,9 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 				 * must recursively check for indirect dependencies via its
 				 * rowtype.
 				 */
-				find_composite_type_dependencies(rel->rd_rel->reltype,
-												 origRelation, origTypeName);
+				find_composite_type_dependencies_recurse(rel->rd_rel->reltype,
+														 origRelation, origTypeName,
+														 visited);
 			}
 
 			relation_close(rel, AccessShareLock);
