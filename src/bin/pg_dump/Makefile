@@ -17,6 +17,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 export GZIP_PROGRAM=$(GZIP)
+export TAR
 export with_icu
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
