@@ -13359,6 +13359,32 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </listitem>
      </varlistentry>
 
+    <varlistentry id="guc-composite-type-mismatch" xreflabel="composite_type_mismatch">
+      <term><varname>composite_type_mismatch</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>composite_type_mismatch</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Reading a composite value whose row type was altered in an
+        incompatible way after the value was created normally causes
+        <productname>PostgreSQL</productname> to report an error.
+        This parameter controls that behavior.  With the default,
+        <literal>error</literal>, an error is reported, aborting the current
+        transaction.  With <literal>warn</literal>, the system warns about
+        mismatches but allows execution to continue.  With
+        <literal>disabled</literal>, the check is not performed at all.
+       </para>
+       <para>
+        Settings other than <literal>error</literal> may <emphasis>cause
+        crashes, wrong results, or other serious problems</emphasis>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
     <varlistentry id="guc-zero-damaged-pages" xreflabel="zero_damaged_pages">
       <term><varname>zero_damaged_pages</varname> (<type>boolean</type>)
       <indexterm>

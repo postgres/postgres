@@ -793,6 +793,16 @@ tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup)
 	TuplesortClusterArg *arg = (TuplesortClusterArg *) base->arg;
 	Size		tuplen;
 
+	/*
+	 * NB: No need to call heap_datum_check() here: In contrast to
+	 * tuplesort_puttupleslot(), tuplesort_putheaptuple() is just used with
+	 * tuplesort_begin_cluster(), which preserves the full HeapTupleHeader,
+	 * including version information, even when spilling to disk. Attribute
+	 * access performs the necessary checks.
+	 *
+	 * Currently, callers are not expected to supply datum tuples anyway.
+	 */
+
 	/* copy the tuple into sort storage */
 	tup = heap_copytuple(tup);
 	stup.tuple = tup;

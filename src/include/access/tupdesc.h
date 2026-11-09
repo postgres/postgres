@@ -15,6 +15,7 @@
 #define TUPDESC_H
 
 #include "access/attnum.h"
+#include "access/xlogdefs.h"
 #include "catalog/pg_attribute.h"
 #include "nodes/pg_list.h"
 
@@ -221,6 +222,8 @@ extern TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
 	 (src)->natts * sizeof(FormData_pg_attribute))
 
 extern void TupleDescCopy(TupleDesc dst, TupleDesc src);
+extern Size TupleDescCopySize(TupleDesc src);
+extern void TupleDescCopySized(TupleDesc dst, Size dstsize, TupleDesc src);
 
 extern void TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 							   TupleDesc src, AttrNumber srcAttno);
@@ -230,6 +233,12 @@ extern void FreeTupleDesc(TupleDesc tupdesc);
 
 extern void IncrTupleDescRefCount(TupleDesc tupdesc);
 extern void DecrTupleDescRefCount(TupleDesc tupdesc);
+
+extern XLogRecPtr TupleDescGetVersion(TupleDesc tupdesc);
+extern void TupleDescSetVersion(TupleDesc tupdesc, XLogRecPtr version);
+extern XLogRecPtr TupleDescGetAttrVersion(TupleDesc tupdesc, AttrNumber attnum);
+extern void TupleDescSetAttrVersion(TupleDesc tupdesc, AttrNumber attnum,
+									XLogRecPtr version);
 
 #define PinTupleDesc(tupdesc) \
 	do { \

@@ -24,13 +24,8 @@ DECLARE rta_cur CURSOR FOR
   SELECT '(1,\\x4649584d45)'::rta_tab FROM generate_series(1, 3) g;
 ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 FETCH ALL FROM rta_cur;
-  rta_tab  
------------
- (1,FIXME)
- (1,FIXME)
- (1,FIXME)
-(3 rows)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 ROLLBACK;
 DROP TABLE rta_tab;
 -- Same for a partition's row type, altered via its parent
@@ -40,11 +35,8 @@ BEGIN;
 DECLARE rta_cur CURSOR FOR SELECT '(1,\\x4649584d45)'::rta_tab_1;
 ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 FETCH ALL FROM rta_cur;
- rta_tab_1 
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 ROLLBACK;
 DROP TABLE rta_tab;
 -- A holdable cursor's materialized rows outlive the table they were read
@@ -64,7 +56,9 @@ BEGIN
   RAISE NOTICE 'v.r.b: %', (v.r).b;
 END;
 $$;
-NOTICE:  v.r.b: FIXME
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at RAISE
 CLOSE rta_cur;
 DROP TABLE rta_ref;
 -- A CTE scanned before and after the ALTER
@@ -83,11 +77,8 @@ FETCH NEXT FROM rta_cur;
 
 ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 FETCH NEXT FROM rta_cur;
-     r     
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 ROLLBACK;
 -- Same for a composite type, with a row fetched before the ALTER
 BEGIN;
@@ -102,11 +93,8 @@ FETCH NEXT FROM rta_cur;
 
 ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text;
 FETCH NEXT FROM rta_cur;
- rta_type  
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 ROLLBACK;
 -- Holdable cursors are only materialized at commit, after the ALTER
 CREATE TABLE rta_tab (a int, b bytea);
@@ -118,17 +106,11 @@ DECLARE rta_cur_row CURSOR WITH HOLD FOR
 ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 COMMIT;
 FETCH NEXT FROM rta_cur_const;
-  rta_tab  
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 FETCH NEXT FROM rta_cur_row;
-    row    
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 CLOSE rta_cur_const;
 CLOSE rta_cur_row;
 DROP TABLE rta_tab;
@@ -139,11 +121,8 @@ DECLARE rta_cur CURSOR WITH HOLD FOR
   SELECT '(1,\\x4649584d45)'::rta_dom FROM generate_series(1, 3);
 ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 FETCH NEXT FROM rta_cur;
-  rta_dom  
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 CLOSE rta_cur;
 DROP DOMAIN rta_dom;
 DROP TABLE rta_tab;
@@ -155,11 +134,8 @@ DECLARE rta_cur CURSOR WITH HOLD FOR
   FROM generate_series(1, 3);
 ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 FETCH NEXT FROM rta_cur;
-           rta_range           
--------------------------------
- ["(aaa,FIXME)","(bbb,FIXME)")
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 CLOSE rta_cur;
 DROP TYPE rta_range;
 DROP TABLE rta_tab;
@@ -193,25 +169,15 @@ EXECUTE rta_field;
 
 ALTER TABLE rta_tab ALTER COLUMN b TYPE bytea;
 EXECUTE rta_const;
-       rta_tab       
----------------------
- (1,"\\x4649584d45")
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 EXECUTE rta_field;
-       b        
-----------------
- \x4649584d45
- \x464958544f4f
-(2 rows)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 EXECUTE rta_const;
-  rta_tab  
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 EXECUTE rta_field;
 ERROR:  attribute 2 has wrong type
 DETAIL:  Table has type text, but query expects bytea.
@@ -239,25 +205,15 @@ EXECUTE rta_field;
 
 ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE bytea;
 EXECUTE rta_const;
-      rta_type       
----------------------
- (1,"\\x4649584d45")
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 EXECUTE rta_field;
-       b        
-----------------
- \x4649584d45
- \x464958544f4f
-(2 rows)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text;
 EXECUTE rta_const;
- rta_type  
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 EXECUTE rta_field;
 ERROR:  attribute 2 has wrong type
 DETAIL:  Table has type text, but query expects bytea.
@@ -277,11 +233,8 @@ EXECUTE rta_const;
 
 ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 EXECUTE rta_const;
-           rta_range           
--------------------------------
- ["(aaa,FIXME)","(bbb,FIXME)")
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DEALLOCATE rta_const;
 DROP TYPE rta_range;
 DROP TABLE rta_tab;
@@ -301,11 +254,9 @@ EXECUTE rta_const;
 
 ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text;
 EXECUTE rta_const;
- rta_func  
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function rta_func(rta_type) while storing call arguments into local variables
 DEALLOCATE rta_const;
 DROP FUNCTION rta_func(rta_type);
 DROP TYPE rta_type;
@@ -331,7 +282,9 @@ BEGIN
 END;
 $$;
 NOTICE:  1: ()
-NOTICE:  2: ("(1,FIXME)")
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 16 at FETCH
 DROP TYPE rta_type;
 -- A constant in a PL/pgSQL statement's cached plan, reused after the ALTER
 CREATE TABLE rta_tab (a int, b bytea);
@@ -349,7 +302,9 @@ BEGIN
 END;
 $$;
 NOTICE:  1: (1,"\\x4649584d45")
-NOTICE:  2: (1,FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 6 at SQL statement
 DROP TABLE rta_tab;
 -- A constant in a SQL function's cached plan, reused after the ALTER.  The
 -- SET clause keeps the function from being inlined.
@@ -367,11 +322,9 @@ SELECT rta_func();
 
 ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text;
 SELECT rta_func();
- rta_func  
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  SQL function "rta_func" statement 1
 DROP FUNCTION rta_func();
 DROP TYPE rta_type;
 -- PL/pgSQL RETURN NEXT of a record variable
@@ -392,11 +345,9 @@ SELECT b FROM rta_func();
 
 ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text;
 SELECT b FROM rta_func();
-   b   
--------
- FIXME
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function rta_func() line 5 at assignment
 DROP FUNCTION rta_func();
 DROP TYPE rta_type;
 -- PL/pgSQL RETURN NEXT of an expression
@@ -414,11 +365,9 @@ SELECT b FROM rta_func();
 
 ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text;
 SELECT b FROM rta_func();
-   b   
--------
- FIXME
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function rta_func() line 3 at RETURN NEXT
 DROP FUNCTION rta_func();
 DROP TYPE rta_type;
 -- PL/pgSQL coercion of a function result to a different row type.  Altering
@@ -440,11 +389,9 @@ SELECT rta_func();
 ALTER TYPE rta_src ALTER ATTRIBUTE b TYPE text;
 ALTER TYPE rta_dst ALTER ATTRIBUTE b TYPE text;
 SELECT rta_func();
- rta_func  
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function rta_func() while casting return value to function's return type
 DROP FUNCTION rta_func();
 DROP TYPE rta_src, rta_dst;
 -- PL/pgSQL trigger returning a row expression
@@ -459,12 +406,14 @@ CREATE TRIGGER rta_trig BEFORE INSERT ON rta_tab
 INSERT INTO rta_tab VALUES (0, NULL);
 ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 INSERT INTO rta_tab VALUES (0, NULL);
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function rta_trig() during function exit
 SELECT * FROM rta_tab;
  a |      b       
 ---+--------------
  1 | \x4649584d45
- 1 | FIXME
-(2 rows)
+(1 row)
 
 DROP TABLE rta_tab;
 DROP FUNCTION rta_trig();
@@ -483,12 +432,14 @@ CREATE TRIGGER rta_trig BEFORE INSERT ON rta_tab
 INSERT INTO rta_tab VALUES (0, NULL);
 ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 INSERT INTO rta_tab VALUES (0, NULL);
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function rta_trig() line 5 at assignment
 SELECT * FROM rta_tab;
  a |      b       
 ---+--------------
  1 | \x4649584d45
- 1 | FIXME
-(2 rows)
+(1 row)
 
 DROP TABLE rta_tab;
 DROP FUNCTION rta_trig();
@@ -515,7 +466,9 @@ BEGIN
 END;
 $$;
 NOTICE:  r before rollback: ("\\x4649584d45","\\x464958544f4f")
-NOTICE:  r after rollback: (FIXME,FIXTOO)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 12 at RAISE
 DROP TABLE rta_tab;
 -- Assigning a new value to a variable holding a datum formed before the
 -- ALTER
@@ -534,7 +487,9 @@ BEGIN
 END;
 $$;
 NOTICE:  r before: (1,"\\x4649584d45")
-NOTICE:  r after: (1,"\\x4649584d45")
+ERROR:  using outdated tuple descriptor when deforming row type
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 9 at assignment
 DROP TABLE rta_tab;
 -- A variable assigned field-wise, returned after the ALTER
 CREATE TYPE rta_type AS (b bytea);
@@ -548,11 +503,8 @@ BEGIN
 END;
 $$;
 SELECT r, record_send(r) FROM (SELECT rta_func() AS r OFFSET 0) s;
-    r    |             record_send              
----------+--------------------------------------
- (FIXME) | \x0000000100000019000000054649584d45
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DROP FUNCTION rta_func();
 DROP TYPE rta_type;
 -- A variable returned from a trigger after its type was altered.  The
@@ -612,7 +564,9 @@ BEGIN
   RAISE NOTICE 'v: %', v;
 END;
 $$;
-NOTICE:  v: (1,FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE
 DROP TABLE rta_tab;
 -- A record variable containing datums of the row type
 CREATE TABLE rta_tab (a int, b bytea);
@@ -630,7 +584,9 @@ BEGIN
   RAISE NOTICE 'r: %', r;
 END;
 $$;
-NOTICE:  r: ("(1,FIXME)","(2,FIXTOO)")
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 12 at RAISE
 DROP TABLE rta_tab;
 -- A record variable containing an anonymous record containing a datum of the
 -- row type
@@ -648,7 +604,9 @@ BEGIN
 END;
 $$;
 NOTICE:  r.f2: foo
-NOTICE:  r: ("(""(""""(1,FIXME)"""")"")",foo)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 10 at RAISE
 DROP TABLE rta_tab;
 -- A variable of a composite type containing the altered type
 CREATE TYPE rta_inner AS (a int, b bytea);
@@ -665,7 +623,9 @@ BEGIN
 END;
 $$;
 NOTICE:  v: ("(1,""\\\\x4649584d45"")")
-NOTICE:  v: ("(1,FIXME)")
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 9 at RAISE
 DROP TYPE rta_outer;
 DROP TYPE rta_inner;
 -- A variable of an array over the row type
@@ -680,7 +640,9 @@ BEGIN
   RAISE NOTICE 'v: %', v;
 END;
 $$;
-NOTICE:  v: {"(1,FIXME)"}
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE
 DROP TABLE rta_tab;
 -- The same, with the elements returned by a function in FROM.  They are
 -- stored in a tuplestore and read back with the function scan's descriptor.
@@ -698,7 +660,9 @@ BEGIN
   END LOOP;
 END;
 $$;
-NOTICE:  r: (1,FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 9 at FOR over SELECT rows
 DROP TABLE rta_tab;
 -- A variable of a domain over the row type
 CREATE TABLE rta_tab (a int, b bytea);
@@ -713,7 +677,9 @@ BEGIN
   RAISE NOTICE 'v: %', v;
 END;
 $$;
-NOTICE:  v: (1,FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE
 DROP DOMAIN rta_dom;
 DROP TABLE rta_tab;
 -- A variable of a domain over an array of the row type
@@ -729,7 +695,9 @@ BEGIN
   RAISE NOTICE 'v: %', v;
 END;
 $$;
-NOTICE:  v: {"(1,FIXME)"}
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE
 DROP DOMAIN rta_adom;
 DROP TABLE rta_tab;
 -- A variable of a range over the row type
@@ -746,7 +714,9 @@ BEGIN
   RAISE NOTICE 'v: %', v;
 END;
 $$;
-NOTICE:  v: ["(aaa,FIXME)","(bbb,FIXME)")
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 9 at RAISE
 DROP TYPE rta_range;
 DROP TABLE rta_tab;
 -- A variable of a multirange over the row type
@@ -763,7 +733,9 @@ BEGIN
   RAISE NOTICE 'v: %', v;
 END;
 $$;
-NOTICE:  v: {["(aaa,FIXME)","(bbb,FIXME)")}
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 9 at RAISE
 DROP TYPE rta_range;
 DROP TABLE rta_tab;
 -- A variable of a range over an array of the row type
@@ -780,7 +752,9 @@ BEGIN
   RAISE NOTICE 'v: %', v;
 END;
 $$;
-NOTICE:  v: ["{""(aaa,FIXME)""}","{""(bbb,FIXME)""}")
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 9 at RAISE
 DROP TYPE rta_range;
 DROP TABLE rta_tab;
 -- Rows of a FOR loop query, made holdable by the COMMIT
@@ -802,8 +776,9 @@ BEGIN
 END;
 $$;
 NOTICE:  v: (1,"\\x4649584d45")
-NOTICE:  v: (1,FIXME)
-NOTICE:  v: (1,FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE
 DROP FUNCTION rta_rows();
 DROP TABLE rta_tab;
 -- Same, without the function
@@ -822,8 +797,9 @@ BEGIN
 END;
 $$;
 NOTICE:  v: (1,"\\x4649584d45")
-NOTICE:  v: (1,FIXME)
-NOTICE:  v: (1,FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE
 DROP TABLE rta_tab;
 -- Altering the first of two attributes
 CREATE TYPE rta_type AS (a bytea, b bytea);
@@ -838,7 +814,9 @@ BEGIN
 END;
 $$;
 NOTICE:  before alter: ("\\x4649584d45","\\x464958544f4f")
-NOTICE:  after alter: (FIXME,"\\x464958544f4f")
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE
 DROP TYPE rta_type;
 -- Altering an attribute followed by a dropped attribute
 CREATE TYPE rta_type AS (a bytea, b bytea);
@@ -854,7 +832,9 @@ BEGIN
 END;
 $$;
 NOTICE:  after drop: ("\\x4649584d45")
-NOTICE:  after alter: (FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 9 at RAISE
 DROP TYPE rta_type;
 -- A datum not containing the altered attribute is safe to deform
 CREATE TYPE rta_type AS (a bytea);
@@ -885,7 +865,9 @@ BEGIN
   RAISE NOTICE 'after alter: %', r;
 END;
 $$;
-NOTICE:  after alter: (FIXME,)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE
 DROP TYPE rta_type;
 -- json_populate_recordset() with a base record formed before the ALTER
 CREATE TYPE rta_type AS (a int, b bytea);
@@ -904,7 +886,10 @@ END;
 $$;
 CALL rta_proc();
 NOTICE:  before alter: (1,"\\x4649584d45")
-NOTICE:  after alter: (1,FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  SQL statement "SELECT *        FROM json_populate_recordset(v, '[{}]'::json)"
+PL/pgSQL function rta_proc() line 10 at SQL statement
 DROP PROCEDURE rta_proc();
 DROP TYPE rta_type;
 -- Conversion of a child's row type to the parent's that does not need to
@@ -920,7 +905,9 @@ BEGIN
   RAISE NOTICE 'r: %', (r::rta_parent)::text;
 END;
 $$;
-NOTICE:  r: (aaa,FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at RAISE
 DROP TABLE rta_parent, rta_child;
 -- Storing a datum formed before the ALTER, only reading the datum after the
 -- INSERT
@@ -938,11 +925,8 @@ BEGIN
 END;
 $$;
 SELECT c FROM rta_sink;
-    c    
----------
- (FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 -- remove the potentially stored outdated datum
 UPDATE rta_sink SET c = NULL;
 SELECT c IS NULL FROM rta_sink;
@@ -968,11 +952,8 @@ BEGIN
 END;
 $$;
 SELECT c FROM rta_sink;
-     c     
------------
- {(FIXME)}
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 UPDATE rta_sink SET c = NULL;
 SELECT c IS NULL FROM rta_sink;
  ?column? 
@@ -1119,8 +1100,9 @@ BEGIN
 END;
 $$;
 NOTICE:  b is bytea: (1,"\\x4649584d45")
-NOTICE:  b does not exist: (1)
-NOTICE:  b is text: (1,FIXME)
+ERROR:  using outdated tuple descriptor when deforming row type
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 9 at RAISE
 DROP TYPE rta_type;
 -- Same for a table's row type
 CREATE TABLE rta_tab (a int);
@@ -1137,7 +1119,9 @@ BEGIN
 END;
 $$;
 NOTICE:  b is bytea: (1,"\\x4649584d45")
-NOTICE:  b is text: (1,FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 10 at RAISE
 DROP TABLE rta_tab;
 -- Record variable
 CREATE TYPE rta_type AS (a int);
@@ -1154,7 +1138,9 @@ BEGIN
 END;
 $$;
 NOTICE:  b is bytea: (1,"\\x4649584d45")
-NOTICE:  b is text: (1,FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 10 at RAISE
 DROP TYPE rta_type;
 -- Record variable assigned by SELECT INTO, not used before the ALTER
 CREATE TYPE rta_type AS (a int);
@@ -1169,7 +1155,9 @@ BEGIN
   RAISE NOTICE 'b is text: %', r;
 END;
 $$;
-NOTICE:  b is text: ("(1,FIXME)")
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 9 at RAISE
 DROP TYPE rta_type;
 -- Array variable
 CREATE TYPE rta_type AS (a int);
@@ -1186,7 +1174,9 @@ BEGIN
 END;
 $$;
 NOTICE:  b is bytea: {"(1,\"\\\\x4649584d45\")"}
-NOTICE:  b is text: {"(1,FIXME)"}
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 10 at RAISE
 DROP TYPE rta_type;
 -- Rows of a FOR loop query started before the ROLLBACK
 CREATE TABLE rta_tab (a int);
@@ -1203,8 +1193,9 @@ BEGIN
 END;
 $$;
 NOTICE:  r: ("(1,""\\\\x4649584d45"")")
-NOTICE:  r: ("(1,FIXME)")
-NOTICE:  r: ("(1,FIXME)")
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at RAISE
 DROP TABLE rta_tab;
 -- Same, with EXECUTE
 CREATE TABLE rta_tab (a int);
@@ -1221,8 +1212,9 @@ BEGIN
 END;
 $$;
 NOTICE:  r: ("(1,""\\\\x4649584d45"")")
-NOTICE:  r: ("(1,FIXME)")
-NOTICE:  r: ("(1,FIXME)")
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at RAISE
 DROP TABLE rta_tab;
 -- Prepared statement, prepared in a rolled back transaction.  See earlier
 -- comment about debug_discard_caches.
@@ -1239,18 +1231,12 @@ EXECUTE rta_stmt;
 
 ROLLBACK;
 EXECUTE rta_stmt;
- rta_type 
-----------
- (1)
-(1 row)
-
+ERROR:  using outdated tuple descriptor when deforming row type
+HINT:  See server log for additional details.
 ALTER TYPE rta_type ADD ATTRIBUTE b text;
 EXECUTE rta_stmt;
- rta_type  
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DEALLOCATE rta_stmt;
 DROP TYPE rta_type;
 -- Same, with a rolled back subtransaction
@@ -1268,11 +1254,8 @@ EXECUTE rta_stmt;
 ROLLBACK TO SAVEPOINT s;
 ALTER TYPE rta_type ADD ATTRIBUTE b text;
 EXECUTE rta_stmt;
- rta_type  
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 COMMIT;
 DEALLOCATE rta_stmt;
 DROP TYPE rta_type;
@@ -1296,7 +1279,9 @@ END;
 $$;
 CALL rta_proc();
 NOTICE:  b is bytea: (1,"\\x4649584d45")
-NOTICE:  b is text: (1,FIXME)
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function rta_proc() line 12 at RAISE
 DROP PROCEDURE rta_proc();
 DROP TYPE rta_type;
 -- Same in a function
@@ -1318,12 +1303,9 @@ END;
 $$;
 SELECT rta_func();
 NOTICE:  b is bytea: (1,"\\x4649584d45")
-NOTICE:  b is text: (1,FIXME)
- rta_func 
-----------
- 
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function rta_func() line 12 at RAISE
 DROP FUNCTION rta_func();
 DROP TYPE rta_type;
 -- Same in a set returning function, with the datum nested in a table's row
@@ -1347,13 +1329,8 @@ BEGIN
 END;
 $$;
 SELECT * FROM rta_func();
- a |       c       
----+---------------
- 1 | ("(1,FIXME)")
- 1 | ("(1,FIXME)")
- 1 | ("(1,FIXME)")
-(3 rows)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DROP FUNCTION rta_func();
 DROP TABLE rta_tab;
 DROP TYPE rta_type;
@@ -1378,12 +1355,9 @@ END;
 $$;
 SELECT rta_func();
 NOTICE:  b is bytea: ("(1,""\\\\x4649584d45"")")
-NOTICE:  b is text: ("(1,FIXME)")
- rta_func 
-----------
- 
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function rta_func() line 12 at RAISE
 DROP FUNCTION rta_func();
 DROP TABLE rta_tab;
 DROP TYPE rta_type;
@@ -1395,11 +1369,8 @@ CREATE TABLE rta_tab (a int, b bytea);
 SELECT '(1,\\x4649584d45)'::rta_tab,
        rta_exec('ALTER TABLE rta_tab ALTER COLUMN b TYPE text'),
        '(2,\\x464958544f4f)'::rta_tab;
-  rta_tab  | rta_exec |  rta_tab   
------------+----------+------------
- (1,FIXME) |          | (2,FIXTOO)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DROP TABLE rta_tab;
 -- Same for a composite type, in a prepared statement
 CREATE TYPE rta_type AS (a int, b bytea);
@@ -1410,13 +1381,8 @@ PREPARE rta_stmt AS
   UNION ALL
   SELECT '(1,\\x4649584d45)'::rta_type::text, NULL;
 EXECUTE rta_stmt;
- ?column?  | ?column? 
------------+----------
-           | 
-           | 
- (1,FIXME) | 
-(3 rows)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DEALLOCATE rta_stmt;
 DROP TYPE rta_type;
 -- A datum formed before the ALTER, read via make_expanded_record_from_datum()
@@ -1425,11 +1391,8 @@ SELECT expanded_record_field_text(x, 2),
        rta_exec('ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text'),
        expanded_record_field_text(x, 2)
   FROM (SELECT '(aaa,\\x4649584d45)'::rta_type AS x OFFSET 0) s;
- expanded_record_field_text | rta_exec | expanded_record_field_text 
-----------------------------+----------+----------------------------
- \x4649584d45               |          | FIXME
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DROP TYPE rta_type;
 -- An expanded record built from a datum before the ALTER, with its field read
 -- after it.  expanded_record_identity() returns the expanded record itself,
@@ -1461,11 +1424,8 @@ BEGIN
 END;
 $$;
 SELECT (ROW(rta_func(), '\x4649584d45'::bytea)::rta_type)::text;
-    row    
------------
- (1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DROP FUNCTION rta_func();
 DROP TYPE rta_type;
 -- A volatile function as json_populate_record()'s argument, altering the
@@ -1481,12 +1441,8 @@ END;
 $$;
 SELECT n, json_populate_record(NULL::rta_type, rta_func(n))::text
   FROM generate_series(1, 2) g(n);
- n | json_populate_record 
----+----------------------
- 1 | ("\\x4649584d45")
- 2 | (FIXME)
-(2 rows)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DROP FUNCTION rta_func(int);
 DROP TYPE rta_type;
 -- A domain over the row type, whose CHECK constraint is evaluated when
@@ -1500,11 +1456,8 @@ END;
 $$;
 CREATE DOMAIN rta_dom AS rta_type CHECK (rta_func());
 SELECT ((ROW('\x4649584d45'::bytea)::rta_type)::rta_dom)::text;
-   row   
----------
- (FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DROP DOMAIN rta_dom;
 DROP FUNCTION rta_func();
 DROP TYPE rta_type;
@@ -1521,11 +1474,8 @@ CREATE TYPE rta_type AS (b bytea, gate rta_dom);
 -- The first cast to text is to avoid the RANDOMIZE_ALLOCATED_MEMORY logic in
 -- coerce_type(), which would otherwise trigger and make the test unstable.
 SELECT ('(\\x4649584d45,true)'::text::rta_type)::text;
-   text    
------------
- (FIXME,t)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DROP TYPE rta_type;
 DROP DOMAIN rta_dom;
 DROP FUNCTION rta_func();
@@ -1538,11 +1488,9 @@ SET plan_cache_mode = force_generic_plan AS $$
   SELECT x::text;
 $$;
 SELECT rta_func('(\\x4649584d45)'::rta_type);
- rta_func 
-----------
- (FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  SQL function "rta_func" statement 2
 DROP FUNCTION rta_func(anyelement);
 DROP TYPE rta_type;
 -- Same, but the datum is the function's polymorphic result
@@ -1553,11 +1501,8 @@ SET plan_cache_mode = force_generic_plan AS $$
   SELECT '\x4649584d45'::bytea AS b;
 $$;
 SELECT rta_func(NULL::rta_type)::text;
- rta_func 
-----------
- (FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DROP FUNCTION rta_func(anyelement);
 DROP TYPE rta_type;
 -- A prepared statement comparing an indexed column with a parameter of the
@@ -1589,11 +1534,8 @@ EXPLAIN (COSTS OFF) EXECUTE rta_stmt('(\\x4649584d45)', 1);
 (2 rows)
 
 EXECUTE rta_stmt('(\\x4649584d45)', 1);
- ?column? 
-----------
-        1
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DEALLOCATE rta_stmt;
 RESET enable_seqscan;
 RESET enable_bitmapscan;
@@ -1647,11 +1589,8 @@ SELECT split_part(r::text, ',', 2),
        rta_exec('ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text'),
        split_part(r::text, ',', 2)
   FROM (SELECT rta_toast_row() AS r OFFSET 0) s;
-   split_part    | rta_exec | split_part 
------------------+----------+------------
- "\\x4649584d45" |          | FIXME
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DROP FUNCTION rta_toast_row();
 DROP TYPE rta_type;
 -- A ROW() expression over such values, inlined by HeapTupleHeaderGetDatum()
@@ -1673,11 +1612,8 @@ SELECT (r).b, length((r).ext)
 
 SELECT split_part(r::text, ',', 2)
   FROM (SELECT ROW(rta_func(), b, ext)::rta_type AS r FROM rta_toast OFFSET 0) s;
- split_part 
-------------
- FIXME
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 DROP FUNCTION rta_func();
 DROP TYPE rta_type;
 -- An assignment from a query result in a non-atomic context inlines the
@@ -1738,11 +1674,7 @@ BEGIN
 END;
 $$;
 SELECT * FROM rta_func();
- rta_func 
-----------
- (FIXME)1
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
 RESET plan_cache_mode;
 DROP FUNCTION rta_func();
 DROP TYPE rta_type;

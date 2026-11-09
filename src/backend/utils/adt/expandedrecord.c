@@ -423,7 +423,11 @@ make_expanded_record_from_exprecord(ExpandedRecordHeader *olderh,
  *
  * It is caller's responsibility that the tuple matches the record's
  * previously-assigned rowtype.  (However domain constraints, if any,
- * will be checked here.)
+ * will be checked here.)  A versioned datum tuple is checked against the
+ * record's descriptor here, other tuples can't be.  The match matters beyond
+ * deforming: the tuple becomes the record's flat value, which
+ * ER_flatten_into() copies and stamps with the version of the record's
+ * descriptor, so a mismatched tuple would pass later version checks.
  *
  * The tuple is physically copied into the expanded record's local storage
  * if "copy" is true, otherwise it's caller's responsibility that the tuple
@@ -452,6 +456,14 @@ expanded_record_set_tuple(ExpandedRecordHeader *erh,
 
 	/* Shouldn't ever be trying to assign new data to a dummy header */
 	Assert(!(erh->flags & ER_FLAG_IS_DUMMY));
+
+	/*
+	 * XXX: This is needed right now because some sources of caller tuples
+	 * don't match the tupledesc.  But arguably we should have caught the
+	 * problem earlier.
+	 */
+	if (tuple && HeapTupleHeaderIsVersionedDatum(tuple->t_data))
+		heap_datum_check(tuple->t_data, erh->er_tupdesc);
 
 	/*
 	 * Before performing the assignment, see if result will satisfy domain.
@@ -726,7 +738,7 @@ ER_flatten_into(ExpandedObjectHeader *eohptr,
 {
 	ExpandedRecordHeader *erh = (ExpandedRecordHeader *) eohptr;
 	HeapTupleHeader tuphdr = (HeapTupleHeader) result;
-	TupleDesc	tupdesc;
+	TupleDesc	tupdesc = expanded_record_get_tupdesc(erh);
 
 	Assert(erh->er_magic == ER_MAGIC);
 
@@ -737,30 +749,20 @@ ER_flatten_into(ExpandedObjectHeader *eohptr,
 		Assert(allocated_size == erh->fvalue->t_len);
 		memcpy(tuphdr, erh->fvalue->t_data, allocated_size);
 		/* The original flattened value might not have datum header fields */
-		HeapTupleHeaderSetDatumLength(tuphdr, allocated_size);
-		HeapTupleHeaderSetTypeId(tuphdr, erh->er_typeid);
-		HeapTupleHeaderSetTypMod(tuphdr, erh->er_typmod);
+		heap_tuple_set_datum(tuphdr, tupdesc, allocated_size);
 		return;
 	}
 
 	/* Else allocation should match previous get_flat_size result */
 	Assert(allocated_size == erh->flat_size);
 
-	/* We'll need the tuple descriptor */
-	tupdesc = expanded_record_get_tupdesc(erh);
-
 	/* We must ensure that any pad space is zero-filled */
 	memset(tuphdr, 0, allocated_size);
 
 	/* Set up header fields of composite Datum */
-	HeapTupleHeaderSetDatumLength(tuphdr, allocated_size);
-	HeapTupleHeaderSetTypeId(tuphdr, erh->er_typeid);
-	HeapTupleHeaderSetTypMod(tuphdr, erh->er_typmod);
-	/* We also make sure that t_ctid is invalid unless explicitly set */
-	ItemPointerSetInvalid(&(tuphdr->t_ctid));
-
 	HeapTupleHeaderSetNatts(tuphdr, tupdesc->natts);
 	tuphdr->t_hoff = erh->hoff;
+	heap_tuple_set_datum(tuphdr, tupdesc, allocated_size);
 
 	/* And fill the data area from dvalues/dnulls */
 	heap_fill_tuple(tupdesc,

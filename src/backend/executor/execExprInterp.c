@@ -3373,6 +3373,13 @@ ExecEvalRowNullInt(ExprState *state, ExprEvalStep *op,
 	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
 	tmptup.t_data = tuple;
 
+	/*
+	 * NB: It's not necessary to call heap_datum_check() here: Even if the
+	 * tupledesc and tuple are mismatched, no invalid memory accesses or other
+	 * type unsafety occur. It seems useful to be able to test for which
+	 * attributes are actually set when encountering invalid datums.
+	 */
+
 	for (int att = 1; att <= tupDesc->natts; att++)
 	{
 		/* ignore dropped columns */
@@ -3982,17 +3989,30 @@ ExecEvalConvertRowtype(ExprState *state, ExprEvalStep *op, ExprContext *econtext
 	}
 	else
 	{
+		HeapTupleHeader resulthdr;
+
 		/*
 		 * The tuple is physically compatible as-is, but we need to insert the
 		 * destination rowtype OID in its composite-datum header field, so we
 		 * have to copy it anyway.  heap_copy_tuple_as_datum() is convenient
-		 * for this since it will both make the physical copy and insert the
-		 * correct composite header fields.  Note that we aren't expecting to
+		 * for making the physical copy.  Note that we aren't expecting to
 		 * have to flatten any toasted fields: the input was a composite
 		 * datum, so it shouldn't contain any.  So heap_copy_tuple_as_datum()
 		 * is overkill here, but its check for external fields is cheap.
+		 *
+		 * Copying with indesc verifies that the tuple could be deformed with
+		 * indesc, which is crucial, as otherwise we would not detect cases
+		 * where the input tuple and the input tupledesc have gotten out of
+		 * sync (when executing the attribute map, deforming the tuple does
+		 * that).  indesc is known to be compatible with outdesc (otherwise
+		 * we'd have a map), so heap_tuple_set_datum() can then relabel the
+		 * copy with outdesc's header fields without verifying it against
+		 * outdesc, which would be more expensive.
 		 */
-		*op->resvalue = heap_copy_tuple_as_datum(&tmptup, outdesc);
+		*op->resvalue = heap_copy_tuple_as_datum(&tmptup, indesc);
+		resulthdr = (HeapTupleHeader) DatumGetPointer(*op->resvalue);
+		heap_tuple_set_datum(resulthdr, outdesc,
+							 HeapTupleHeaderGetDatumLength(resulthdr));
 	}
 
 	DecrTupleDescRefCount(indesc);
@@ -5667,9 +5687,12 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	 *
 	 * (Note: we could skip doing this by passing op->d.wholerow.tupdesc to
 	 * the tuple build step; but that seems a tad risky so let's not.)
+	 *
+	 * XXX: What is the risk mentioned here? Not following... If the tuple
+	 * descriptors disagree, we're royally screwed, regardless of which
+	 * tupledesc is used for heap_tuple_set_datum()?
 	 */
-	HeapTupleHeaderSetTypeId(dtuple, op->d.wholerow.tupdesc->tdtypeid);
-	HeapTupleHeaderSetTypMod(dtuple, op->d.wholerow.tupdesc->tdtypmod);
+	heap_tuple_set_datum(dtuple, op->d.wholerow.tupdesc, tuple->t_len);
 
 	*op->resvalue = PointerGetDatum(dtuple);
 	*op->resnull = false;

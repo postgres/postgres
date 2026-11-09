@@ -502,6 +502,15 @@
   check_hook => 'check_commit_ts_buffers',
 },
 
+{ name => 'composite_type_mismatch', type => 'enum', context => 'PGC_SUSET', group => 'DEVELOPER_OPTIONS',
+  short_desc => 'Sets how version mismatches of composite values are handled.',
+  long_desc => 'Reading a composite value whose row type was altered incompatibly after the value was created normally causes PostgreSQL to report an error. This parameter controls that behavior. Anything other than "error", i.e. "warn" or "disabled", is not safe.',
+  flags => 'GUC_NOT_IN_SAMPLE',
+  variable => 'composite_type_mismatch',
+  boot_val => 'COMPOSITE_TYPE_MISMATCH_ERROR',
+  options => 'composite_type_mismatch_options',
+},
+
 { name => 'compute_query_id', type => 'enum', context => 'PGC_SUSET', group => 'STATS_MONITORING',
   short_desc => 'Enables in-core computation of query identifiers.',
   variable => 'compute_query_id',
