@@ -1278,6 +1278,67 @@ extension_search_path_element_check(const char *name)
 }
 
 /*
+ * Check that a name is safe to substitute into an extension script.
+ *
+ * We filter each substitution through quote_identifier(), but names
+ * containing quote characters, comment delimiters, or substitution tokens
+ * could still achieve SQL injection.  To avoid a security snare for
+ * extension authors, error on substitution for names containing these.
+ * extname is the extension whose schema name is being substituted, or NULL
+ * when substituting the owner name.
+ */
+static void
+check_substitution_name(const char *name, const char *extname)
+{
+	const char *quoting_relevant_chars = "\"$'\\";
+
+	if (strpbrk(name, quoting_relevant_chars) != NULL)
+	{
+		if (extname != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid character in extension \"%s\" schema: must not contain any of \"%s\"",
+							extname, quoting_relevant_chars)));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid character in extension owner: must not contain any of \"%s\"",
+							quoting_relevant_chars)));
+	}
+
+	if (strpbrk(name, "\n\r") != NULL ||
+		strstr(name, "--") != NULL ||
+		strstr(name, "/*") != NULL ||
+		strstr(name, "*/") != NULL)
+	{
+		if (extname != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid string in extension \"%s\" schema: must not contain newline, carriage return, \"--\", \"/*\", or \"*/\"",
+							extname)));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid string in extension owner: must not contain newline, carriage return, \"--\", \"/*\", or \"*/\"")));
+	}
+
+	if (strstr(name, "@extowner@") != NULL ||
+		strstr(name, "@extschema") != NULL ||
+		strstr(name, "MODULE_PATHNAME") != NULL)
+	{
+		if (extname != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid string in extension \"%s\" schema: must not contain \"@extowner@\", \"@extschema\", or \"MODULE_PATHNAME\"",
+							extname)));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid string in extension owner: must not contain \"@extowner@\", \"@extschema\", or \"MODULE_PATHNAME\"")));
+	}
+}
+
+/*
  * Execute the appropriate script file for installing or updating the extension
  *
  * If from_version isn't NULL, it's an update
@@ -1446,16 +1507,6 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 		char	   *c_sql = read_extension_script_file(control, filename);
 		Datum		t_sql;
 
-		/*
-		 * We filter each substitution through quote_identifier().  When the
-		 * arg contains one of the following characters, no one collection of
-		 * quoting can work inside $$dollar-quoted string literals$$,
-		 * 'single-quoted string literals', and outside of any literal.  To
-		 * avoid a security snare for extension authors, error on substitution
-		 * for arguments containing these.
-		 */
-		const char *quoting_relevant_chars = "\"$'\\";
-
 		/* We use various functions that want to operate on text datums */
 		t_sql = CStringGetTextDatum(c_sql);
 
@@ -1485,11 +1536,7 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 											t_sql,
 											CStringGetTextDatum("@extowner@"),
 											CStringGetTextDatum(qUserName));
-			if (strpbrk(userName, quoting_relevant_chars))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("invalid character in extension owner: must not contain any of \"%s\"",
-								quoting_relevant_chars)));
+			check_substitution_name(userName, NULL);
 		}
 
 		/*
@@ -1509,11 +1556,8 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 											t_sql,
 											CStringGetTextDatum("@extschema@"),
 											CStringGetTextDatum(qSchemaName));
-			if (t_sql != old && strpbrk(schemaName, quoting_relevant_chars))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("invalid character in extension \"%s\" schema: must not contain any of \"%s\"",
-								control->name, quoting_relevant_chars)));
+			if (t_sql != old)
+				check_substitution_name(schemaName, control->name);
 		}
 
 		/*
@@ -1536,11 +1580,8 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 											t_sql,
 											CStringGetTextDatum(repltoken),
 											CStringGetTextDatum(qSchemaName));
-			if (t_sql != old && strpbrk(schemaName, quoting_relevant_chars))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("invalid character in extension \"%s\" schema: must not contain any of \"%s\"",
-								reqextname, quoting_relevant_chars)));
+			if (t_sql != old)
+				check_substitution_name(schemaName, reqextname);
 		}
 
 		/*
