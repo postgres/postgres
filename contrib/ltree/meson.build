@@ -50,4 +50,9 @@ tests += {
       'ltree',
     ],
   },
+  'isolation': {
+    'specs': [
+      'schema-rename-attack',
+    ],
+  },
 }
