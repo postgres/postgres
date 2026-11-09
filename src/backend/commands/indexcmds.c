@@ -18,6 +18,7 @@
 #include "access/amapi.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/relation.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
 #include "access/tableam.h"
@@ -107,6 +108,8 @@ static Oid	ReindexTable(const ReindexStmt *stmt, const ReindexParams *params,
 static void ReindexMultipleTables(const ReindexStmt *stmt,
 								  const ReindexParams *params);
 static void reindex_error_callback(void *arg);
+static List *ReindexPinRelations(const List *relationLocks);
+static void ReindexUnpinRelations(List *relations);
 static void ReindexPartitions(const ReindexStmt *stmt, Oid relid,
 							  const ReindexParams *params, bool isTopLevel);
 static void ReindexMultipleInternal(const ReindexStmt *stmt, const List *relids,
@@ -3427,6 +3430,47 @@ ReindexMultipleInternal(const ReindexStmt *stmt, const List *relids, const Reind
 
 
 /*
+ * ReindexPinRelations
+ *
+ * Pin the relations listed in "relationLocks".  Session locks do not conflict
+ * with their own holder, hence this protects the relations reindexed from
+ * concurrent activity happening within the REINDEX itself.
+ */
+static List *
+ReindexPinRelations(const List *relationLocks)
+{
+	List	   *relations = NIL;
+	ListCell   *lc;
+
+	foreach(lc, relationLocks)
+	{
+		LockRelId  *lockrelid = (LockRelId *) lfirst(lc);
+
+		/* session lock already held on this relation, NoLock is fine */
+		relations = lappend(relations,
+							relation_open(lockrelid->relId, NoLock));
+	}
+
+	return relations;
+}
+
+/*
+ * ReindexUnpinRelations
+ *
+ * Close the relations opened by ReindexPinRelations().
+ */
+static void
+ReindexUnpinRelations(List *relations)
+{
+	ListCell   *lc;
+
+	foreach(lc, relations)
+		relation_close((Relation) lfirst(lc), NoLock);
+
+	list_free(relations);
+}
+
+/*
  * ReindexRelationConcurrently - process REINDEX CONCURRENTLY for given
  * relation OID
  *
@@ -3976,6 +4020,7 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 	foreach(lc, newIndexIds)
 	{
 		ReindexIndexInfo *newidx = lfirst(lc);
+		List	   *pinnedRels;
 
 		/* Start new transaction for this index's concurrent build */
 		StartTransactionCommand();
@@ -4005,8 +4050,16 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 		progress_vals[3] = newidx->amId;
 		pgstat_progress_update_multi_param(4, progress_index, progress_vals);
 
+		/*
+		 * Index expressions and predicates are evaluated below, so pin the
+		 * relations.
+		 */
+		pinnedRels = ReindexPinRelations(relationLocks);
+
 		/* Perform concurrent build of new index */
 		index_concurrently_build(newidx->tableId, newidx->indexId);
+
+		ReindexUnpinRelations(pinnedRels);
 
 		PopActiveSnapshot();
 		CommitTransactionCommand();
@@ -4039,6 +4092,7 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 		ReindexIndexInfo *newidx = lfirst(lc);
 		TransactionId limitXmin;
 		Snapshot	snapshot;
+		List	   *pinnedRels;
 
 		StartTransactionCommand();
 
@@ -4071,7 +4125,15 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 		progress_vals[3] = newidx->amId;
 		pgstat_progress_update_multi_param(4, progress_index, progress_vals);
 
+		/*
+		 * Index expressions and predicates are evaluated below, so pin the
+		 * relations.
+		 */
+		pinnedRels = ReindexPinRelations(relationLocks);
+
 		validate_index(newidx->tableId, newidx->indexId, snapshot);
+
+		ReindexUnpinRelations(pinnedRels);
 
 		/*
 		 * We can now do away with our active snapshot, we still need to save
