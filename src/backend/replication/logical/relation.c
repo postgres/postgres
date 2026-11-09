@@ -392,9 +392,9 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		entry->localrel = table_open(relid, NoLock);
 		entry->localreloid = relid;
 
-		/* Check for supported relkind. */
-		CheckSubscriptionRelkind(entry->localrel->rd_rel->relkind,
-								 remoterel->nspname, remoterel->relname);
+		/* Check that the relation can be replicated into. */
+		CheckSubscriptionTargetRel(entry->localreloid,
+								   remoterel->nspname, remoterel->relname);
 
 		/*
 		 * Build the mapping of local attribute numbers to remote attribute
