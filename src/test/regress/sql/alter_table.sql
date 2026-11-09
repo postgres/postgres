@@ -204,6 +204,181 @@ DROP VIEW attmpv;
 DROP TABLE attmp;
 
 --
+-- Test various ADD & DROP COLUMN patterns for composite types stored in a
+-- table, to ensures deforming etc correctly those patterns...
+--
+-- Leave these tables in place, so 002_pg_upgrade, 027_stream_regress (and
+-- through those pg_dump) have such a case to deal with.
+
+
+-- Store composite with various smaller natts and check they can be deformed.
+CREATE TABLE atcomp_inc (c1 int);
+CREATE TABLE atcomp_inc_ref (rownum text, r atcomp_inc);
+INSERT INTO atcomp_inc_ref VALUES ('1', '(1)');
+ALTER TABLE atcomp_inc ADD COLUMN c2 int;
+INSERT INTO atcomp_inc_ref VALUES ('2', '(2,20)');
+ALTER TABLE atcomp_inc ADD COLUMN c3 int;
+INSERT INTO atcomp_inc_ref VALUES ('3', '(3,30,300)');
+SELECT rownum, r, (r).c1 FROM atcomp_inc_ref ORDER BY rownum;
+
+
+-- Store composites with columns that are then subsequently removed
+CREATE TABLE attdrop_tail (t1 int, t2 text, t3 int8, t4 float8);
+CREATE TABLE attdrop_mid (m1 int, m2 text, m3 int8, m4 float8);
+CREATE TABLE attdrop_tozero (z1 int);
+CREATE TABLE attdrop_toadd (a1 int, a2 int);
+
+CREATE TABLE attdrop_test(key text, tail attdrop_tail, mid attdrop_mid, tozero attdrop_tozero, toadd attdrop_toadd);
+
+INSERT INTO attdrop_test(key, tail, mid, tozero, toadd) VALUES
+   ('r1-all-present', ROW(1, 1, 1, 1), ROW(1, 1, 1, 1), ROW(1), ROW(1, 1)),
+   ('r2-some-nulls', ROW(2, NULL, 2, NULL), ROW(NULL, 2, NULL, 2), ROW(NULL), ROW(2, 2)),
+   ('r3-other-nulls', ROW(NULL, 3, NULL, 3), ROW(3, NULL, 3, NULL), ROW(1), ROW(3, 3)),
+   ('r4-null-rows', NULL, NULL, NULL, NULL);
+
+-- plain executor, before drop
+SELECT key, tail, mid, tozero, toadd, (tail).*, (mid).*, (tozero).*, (toadd).* FROM attdrop_test ORDER BY key;
+
+-- while at it, make sure this works not just for top-level SQL, but also
+-- plpgsql, by doing the drop inside a DO block.
+DO $$
+DECLARE
+    r1 attdrop_test;
+    r2 record;
+    r3 attdrop_test;
+    r3_t attdrop_tail;
+    r3_m attdrop_mid;
+    r3_z attdrop_tozero;
+    r3_a attdrop_toadd;
+BEGIN
+    r1 = at FROM attdrop_test at WHERE key = 'r1-all-present';
+    SELECT * INTO r2 FROM attdrop_test t WHERE key = 'r2-some-nulls';
+
+    r3 = at FROM attdrop_test at WHERE key = 'r3-other-nulls';
+    r3_t = tail FROM attdrop_test at WHERE key = 'r3-other-nulls';
+    r3_m = r3.mid;
+    r3_z = r3.tozero;
+    r3_a = r3.toadd;
+
+    -- show plpgsql before drop
+    RAISE NOTICE 'r1 before drop: %', r1;
+    RAISE NOTICE 'r2 before drop: %', r2;
+    RAISE NOTICE 'r3 before drop: %', r3;
+    RAISE NOTICE 'r3_* before drop: t: %, m: %, z: %, a: %', r3_t, r3_m, r3_z, r3_a;
+
+    ALTER TABLE attdrop_tail DROP COLUMN t4;
+    ALTER TABLE attdrop_mid DROP COLUMN m3;
+    ALTER TABLE attdrop_tozero DROP COLUMN z1;
+    ALTER TABLE attdrop_toadd DROP COLUMN a2;
+
+    -- show plpgsql after drop
+    RAISE NOTICE 'r1 after drop: %', r1;
+    RAISE NOTICE 'r2 after drop: %', r2;
+    RAISE NOTICE 'r3 after drop: %', r3;
+    RAISE NOTICE 'r3_* after drop: t: %, m: %, z: %, a: %', r3_t, r3_m, r3_z, r3_a;
+END;
+$$;
+
+-- show plain executor after drop
+SELECT key, tail, mid, tozero, toadd, (tail).*, (mid).*, (tozero).*, (toadd).* FROM attdrop_test ORDER BY key;
+
+-- check that updating the datums works after the drop, and that a new rows look right too
+UPDATE attdrop_test SET tail.t1 = -(tail).t1, mid.m4 = -1, toadd.a1 = -(toadd).a1 WHERE key = 'r1-all-present';
+INSERT INTO attdrop_test(key, tail, mid, tozero, toadd) VALUES
+   ('r5-post-drop-1', ROW(5, 5, 5), ROW(5, 5, 5), ROW(), ROW(5)),
+   ('r6-post-drop-2', ROW(6, 6, 6), ROW(6, 6, 6), ROW(), ROW(6));
+SELECT key, tail, mid, tozero, toadd, (tail).*, (mid).*, (tozero).*, (toadd).* FROM attdrop_test ORDER BY key;
+
+-- add a new column, insert row, drop another set of columns
+ALTER TABLE attdrop_toadd ADD COLUMN a3 int;
+ALTER TABLE attdrop_tail DROP COLUMN t3;
+ALTER TABLE attdrop_mid DROP COLUMN m2;
+INSERT INTO attdrop_test(key, tail, mid, tozero, toadd) VALUES
+   ('r7-post-add', ROW(7, 7), ROW(7, 7), ROW(), ROW(7, 77));
+UPDATE attdrop_test SET tail.t2 = (tail).t2||'-u', mid.m4 = -2, toadd.a1 = -(toadd).a1, toadd.a3 = 23 WHERE key = 'r2-some-nulls';
+SELECT key, tail, mid, tozero, toadd, (tail).*, (mid).*, (tozero).*, (toadd).* FROM attdrop_test ORDER BY key;
+
+-- Adding a column to a view goes through ATExecAddColumn; make sure that
+-- composite tuples using that row type can be deformed correctly.
+
+CREATE VIEW attview AS SELECT 't' AS a;
+CREATE TYPE attview_wrap AS (v attview, x int);
+CREATE TABLE attview_ref (key text, av attview, avw attview_wrap);
+INSERT INTO attview_ref(key, av, avw) VALUES ('before', ROW('a1'), ROW(ROW('av11'), 111));
+CREATE OR REPLACE VIEW attview AS SELECT 'b' AS a, 3 AS b;
+
+INSERT INTO attview_ref(key, av, avw) VALUES ('after', ROW('b2', '22'), ROW(ROW('bv22', 222), 222));
+
+SELECT key, av, avw, (av).*, (avw).* FROM attview_ref ORDER BY key DESC;
+
+-- Set a few attribute options, otherwise that path turns out to not be
+-- really tested for pg_dump & pg_upgrade
+ALTER TABLE atcomp_inc ALTER COLUMN c2 SET (n_distinct_inherited = -0.5);
+ALTER TABLE attdrop_test ALTER COLUMN key SET (n_distinct = 100);
+ALTER TABLE attdrop_test ALTER COLUMN toadd SET (n_distinct = 99);
+
+
+-- A composite datum can be physically narrower than its tuple descriptor;
+-- most easily via a trigger's OLD/NEW row when the table has fast-default
+-- columns. Test that we can correctly deform such tuples even after more
+-- columns are added.
+CREATE TABLE attfd (id int, a int);
+INSERT INTO attfd VALUES (1, 10);
+ALTER TABLE attfd ADD COLUMN x int DEFAULT 4;   -- fast default: on-disk rows stay narrow
+CREATE TABLE attfd_store (r attfd);
+CREATE FUNCTION attfd_cap() RETURNS trigger LANGUAGE plpgsql AS
+  $$ BEGIN INSERT INTO attfd_store VALUES (OLD); RETURN NEW; END $$;
+CREATE TRIGGER attfd_tr BEFORE UPDATE ON attfd
+  FOR EACH ROW EXECUTE FUNCTION attfd_cap();
+UPDATE attfd SET a = 11;                         -- stores the narrow OLD row
+SELECT r FROM attfd_store;
+ALTER TABLE attfd ADD COLUMN y int;              -- increases natts
+SELECT r FROM attfd_store;                       -- must still deform
+DROP TABLE attfd_store;
+DROP TABLE attfd;
+DROP FUNCTION attfd_cap();
+
+-- An expanded-record composite (here a plpgsql composite variable with only
+-- one field assigned) is flattened to a physical tuple. Check that we can
+-- still deform it once the type gains another attribute.
+CREATE TYPE atexprec AS (a int, b int);
+CREATE FUNCTION atexprec_make() RETURNS atexprec LANGUAGE plpgsql AS
+  $$ DECLARE v atexprec; BEGIN v.a := 1; RETURN v; END $$;
+CREATE TABLE atexprec_store (r atexprec);
+INSERT INTO atexprec_store SELECT atexprec_make();
+SELECT r FROM atexprec_store;
+ALTER TYPE atexprec ADD ATTRIBUTE c int;
+SELECT r FROM atexprec_store;                    -- must still deform
+DROP TABLE atexprec_store;
+DROP FUNCTION atexprec_make();
+DROP TYPE atexprec;
+
+-- ADD COLUMN on a partitioned table recurses to the partitions. Datums of the
+-- parent's row type stored before the change are narrower than the new
+-- descriptor and must remain deformable.
+CREATE TABLE attpart (c1 int) PARTITION BY RANGE (c1);
+CREATE TABLE attpart_p1 PARTITION OF attpart FOR VALUES FROM (0) TO (100);
+CREATE TABLE attpart_ref (t text, r attpart);
+INSERT INTO attpart_ref VALUES ('one', '(1)');
+ALTER TABLE attpart ADD COLUMN c2 int;     -- cascades to partitions
+INSERT INTO attpart_ref VALUES ('two', '(2,20)');
+SELECT t, r FROM attpart_ref ORDER BY t;   -- old datum uses the per-column path
+DROP TABLE attpart_ref, attpart;
+
+-- Same, for legacy inheritance: ADD COLUMN on the parent recurses to the child
+CREATE TABLE attinh (c1 int);
+CREATE TABLE attinh_child (c2 int) INHERITS (attinh);
+CREATE TABLE attinh_ref (t text, r attinh);
+INSERT INTO attinh_ref VALUES ('one', '(1)');
+ALTER TABLE attinh ADD COLUMN c3 int;      -- recurses to the child
+INSERT INTO attinh_ref VALUES ('two', '(2,20)');
+SELECT t, r FROM attinh_ref ORDER BY t;
+DROP TABLE attinh_ref;
+DROP TABLE attinh_child;
+DROP TABLE attinh;
+
+
+--
 -- rename - check on both non-temp and temp tables
 --
 CREATE TABLE attmp (regtable int);
