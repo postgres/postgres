@@ -36,6 +36,8 @@ test: fk-partitioned-2
 test: fk-snapshot
 test: subxid-overflow
 test: eval-plan-qual
+test: eval-plan-qual-dropped-column
+test: eval-plan-qual-resjunk
 test: eval-plan-qual-trigger
 test: inplace-inval
 test: intra-grant-inplace
