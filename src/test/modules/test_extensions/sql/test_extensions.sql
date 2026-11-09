@@ -67,13 +67,13 @@ end';
 -- dropping it should still work
 drop extension test_ext8;
 
--- Test creation of extension in temporary schema with two-phase commit,
--- which should not work.  This function wrapper is useful for portability.
+-- Block creation of extension in temporary schema.  This function wrapper is
+-- useful for portability.
 
--- Avoid noise caused by CONTEXT and NOTICE messages including the temporary
+-- Avoid noise caused by CONTEXT and ERROR messages including the temporary
 -- schema name.
 \set SHOW_CONTEXT never
-SET client_min_messages TO 'warning';
+\set VERBOSITY sqlstate
 -- First enforce presence of temporary schema.
 CREATE TEMP TABLE test_ext4_tab ();
 CREATE OR REPLACE FUNCTION create_extension_with_temp_schema()
@@ -87,13 +87,11 @@ CREATE OR REPLACE FUNCTION create_extension_with_temp_schema()
     RAISE NOTICE 'query %', query;
     EXECUTE query;
   END; $$ LANGUAGE plpgsql;
-BEGIN;
 SELECT create_extension_with_temp_schema();
-PREPARE TRANSACTION 'twophase_extension';
 -- Clean up
 DROP TABLE test_ext4_tab;
 DROP FUNCTION create_extension_with_temp_schema();
-RESET client_min_messages;
+\set VERBOSITY default
 \unset SHOW_CONTEXT
 
 -- Test case of an event trigger run in an extension upgrade script.
@@ -153,6 +151,38 @@ SELECT 'x'::test_ext_type;
 SELECT point(0,0) <<@@ polygon(circle(point(0,0),1));
 
 \dx+ test_ext_cor
+
+--
+-- $user as schema designation
+--
+
+CREATE ROLE regress_extowner SUPERUSER;
+SET ROLE regress_extowner;
+
+BEGIN;
+CREATE SCHEMA "$user";
+CREATE EXTENSION test_ext_cine SCHEMA "$user";  -- blocked
+ROLLBACK;
+
+BEGIN;
+CREATE SCHEMA regress_extowner;
+-- search_path="$user" works in the natural way.
+SET search_path = "$user";
+CREATE EXTENSION test_ext_cine;
+SELECT relnamespace::regnamespace FROM pg_class
+	WHERE relname = 'ext_cine_seq';
+-- For now, it's possible to get extnamespace='$user'::regnamespace via ALTER
+-- SCHEMA RENAME.  This does make ALTER EXTENSION UPDATE fail, for the
+-- affected extension and (not tested here) any extension depending on it.
+ALTER SCHEMA regress_extowner RENAME TO "$user";
+SELECT relnamespace::regnamespace FROM pg_class
+	WHERE relname = 'ext_cine_seq';
+ALTER EXTENSION test_ext_cine UPDATE TO '1.1';
+ROLLBACK;
+
+RESET ROLE;
+DROP OWNED BY regress_extowner;
+DROP ROLE regress_extowner;
 
 --
 -- CREATE IF NOT EXISTS is an entirely unsound thing for an extension
