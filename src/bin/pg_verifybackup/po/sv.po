@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_verifybackup
 # Copyright (C) 2020 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_verifybackup (PostgreSQL) package.
-# Dennis Björklund <db@zigo.dhs.org>, 2020, 2021, 2022, 2023, 2024.
+# Dennis Björklund <db@zigo.dhs.org>, 2020, 2021, 2022, 2023, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-31 06:18+0000\n"
-"PO-Revision-Date: 2024-09-01 20:47+0200\n"
+"POT-Creation-Date: 2026-08-27 17:58+0000\n"
+"PO-Revision-Date: 2026-08-27 22:24+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -93,7 +93,7 @@ msgid "could not fsync file \"%s\": %m"
 msgstr "kunde inte fsync:a fil \"%s\": %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
 msgstr "slut på minne"
@@ -111,266 +111,276 @@ msgstr "destinationsbuffer för liten"
 msgid "OpenSSL failure"
 msgstr "OpenSSL-fel"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
 
-#: ../../common/jsonapi.c:2121
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ogiltig storlek %zu + %zu för minnesallokering\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ogiltig storlek %zu * %zu för minnesallokering\n"
+
+#: ../../common/jsonapi.c:2175
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr "Recursive-descent-parser kan inte använda inkrementell lexer."
 
-#: ../../common/jsonapi.c:2123
+#: ../../common/jsonapi.c:2177
 msgid "Incremental parser requires incremental lexer."
 msgstr "Inkrementell parser kräver en inkrementell lexer."
 
-#: ../../common/jsonapi.c:2125
+#: ../../common/jsonapi.c:2179
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr "JSON nästlad för djupt, maximal tillåtet djup är 6400."
 
-#: ../../common/jsonapi.c:2127
+#: ../../common/jsonapi.c:2181
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "Escape-sekvens \"\\%.*s\" är ogiltig."
 
-#: ../../common/jsonapi.c:2131
+#: ../../common/jsonapi.c:2185
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Tecken med värde 0x%02x måste escape:as."
 
-#: ../../common/jsonapi.c:2135
+#: ../../common/jsonapi.c:2189
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "Förväntade slut på indata, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2138
+#: ../../common/jsonapi.c:2192
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "Färväntade array-element eller \"]\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2141
+#: ../../common/jsonapi.c:2195
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "Förväntade \",\" eller \"]\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2144
+#: ../../common/jsonapi.c:2198
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "Förväntade sig \":\" men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2147
+#: ../../common/jsonapi.c:2201
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "Förväntade JSON-värde, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2150
+#: ../../common/jsonapi.c:2204
 msgid "The input string ended unexpectedly."
 msgstr "Indatasträngen avslutades oväntat."
 
-#: ../../common/jsonapi.c:2152
+#: ../../common/jsonapi.c:2206
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "Färväntade sträng eller \"}\", men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2155
+#: ../../common/jsonapi.c:2209
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "Förväntade sig \",\" eller \"}\" men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2158
+#: ../../common/jsonapi.c:2212
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "Förväntade sträng, men hittade \"%.*s\"."
 
-#: ../../common/jsonapi.c:2161
+#: ../../common/jsonapi.c:2215
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "Token \"%.*s\" är ogiltig."
 
-#: ../../common/jsonapi.c:2164
+#: ../../common/jsonapi.c:2218
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 kan inte konverteras till text."
 
-#: ../../common/jsonapi.c:2166
+#: ../../common/jsonapi.c:2220
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "\"\\u\" måste följas av fyra hexdecimala siffror."
 
-#: ../../common/jsonapi.c:2169
+#: ../../common/jsonapi.c:2223
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Escape-värden för unicode kan inte användas för kodpunkter med värde över 007F när kodningen inte är UTF8."
 
-#: ../../common/jsonapi.c:2178
+#: ../../common/jsonapi.c:2232
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Escape-värde för unicode kan inte översättas till serverns kodning %s."
 
-#: ../../common/jsonapi.c:2185
+#: ../../common/jsonapi.c:2239
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicodes övre surrogathalva får inte komma efter en övre surrogathalva."
 
-#: ../../common/jsonapi.c:2187
+#: ../../common/jsonapi.c:2241
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicodes lägre surrogathalva måste följa en övre surrogathalva."
 
-#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
 #, c-format
 msgid "could not initialize checksum of manifest"
 msgstr "kunde inte initiera kontrollsumma för backup-manifest"
 
-#: ../../common/parse_manifest.c:204 ../../common/parse_manifest.c:261
+#: ../../common/parse_manifest.c:203 ../../common/parse_manifest.c:260
 msgid "manifest ended unexpectedly"
 msgstr "manifestet avslutades oväntat"
 
-#: ../../common/parse_manifest.c:210 ../../common/parse_manifest.c:862
+#: ../../common/parse_manifest.c:209 ../../common/parse_manifest.c:861
 #, c-format
 msgid "could not update checksum of manifest"
 msgstr "kunde inte uppdatera kontrollsumma för backup-manifest"
 
-#: ../../common/parse_manifest.c:302
+#: ../../common/parse_manifest.c:301
 msgid "unexpected object start"
 msgstr "oväntad objektstart"
 
-#: ../../common/parse_manifest.c:337
+#: ../../common/parse_manifest.c:336
 msgid "unexpected object end"
 msgstr "oväntat objektslut"
 
-#: ../../common/parse_manifest.c:366
+#: ../../common/parse_manifest.c:365
 msgid "unexpected array start"
 msgstr "oväntad array-start"
 
-#: ../../common/parse_manifest.c:391
+#: ../../common/parse_manifest.c:390
 msgid "unexpected array end"
 msgstr "oväntat array-slut"
 
-#: ../../common/parse_manifest.c:418
+#: ../../common/parse_manifest.c:417
 msgid "expected version indicator"
 msgstr "förväntade en versionsindikator"
 
-#: ../../common/parse_manifest.c:454
+#: ../../common/parse_manifest.c:453
 msgid "unrecognized top-level field"
 msgstr "okänt toppnivåfält"
 
-#: ../../common/parse_manifest.c:473
+#: ../../common/parse_manifest.c:472
 msgid "unexpected file field"
 msgstr "oväntat filfält"
 
-#: ../../common/parse_manifest.c:487
+#: ../../common/parse_manifest.c:486
 msgid "unexpected WAL range field"
 msgstr "oväntat WAL-intervall-fält"
 
-#: ../../common/parse_manifest.c:493
+#: ../../common/parse_manifest.c:492
 msgid "unexpected object field"
 msgstr "oväntat objektfält"
 
-#: ../../common/parse_manifest.c:583
+#: ../../common/parse_manifest.c:582
 msgid "unexpected scalar"
 msgstr "oväntad skalar"
 
-#: ../../common/parse_manifest.c:609
+#: ../../common/parse_manifest.c:608
 msgid "manifest version not an integer"
 msgstr "manifestversion är inte ett heltal"
 
-#: ../../common/parse_manifest.c:613
+#: ../../common/parse_manifest.c:612
 msgid "unexpected manifest version"
 msgstr "oväntad manifestversion"
 
-#: ../../common/parse_manifest.c:637
+#: ../../common/parse_manifest.c:636
 msgid "system identifier in manifest not an integer"
 msgstr "manifestets systemidentifierare är inte ett heltal"
 
-#: ../../common/parse_manifest.c:662
+#: ../../common/parse_manifest.c:661
 msgid "missing path name"
 msgstr "saknas sökväg"
 
-#: ../../common/parse_manifest.c:665
+#: ../../common/parse_manifest.c:664
 msgid "both path name and encoded path name"
 msgstr "både sökväg och kodad sökväg"
 
-#: ../../common/parse_manifest.c:667
+#: ../../common/parse_manifest.c:666
 msgid "missing size"
 msgstr "saknar storlek"
 
-#: ../../common/parse_manifest.c:670
+#: ../../common/parse_manifest.c:669
 msgid "checksum without algorithm"
 msgstr "kontrollsumma utan algoritm"
 
-#: ../../common/parse_manifest.c:684
+#: ../../common/parse_manifest.c:683
 msgid "could not decode file name"
 msgstr "kunde inte avkoda filnamn"
 
-#: ../../common/parse_manifest.c:694
+#: ../../common/parse_manifest.c:693
 msgid "file size is not an integer"
 msgstr "filstorlek är inte ett haltal"
 
-#: ../../common/parse_manifest.c:700
+#: ../../common/parse_manifest.c:699
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "okänd algoritm för kontrollsumma: \"%s\""
 
-#: ../../common/parse_manifest.c:719
+#: ../../common/parse_manifest.c:718
 #, c-format
 msgid "invalid checksum for file \"%s\": \"%s\""
 msgstr "ogiltig kontrollsumma för fil \"%s\": \"%s\""
 
-#: ../../common/parse_manifest.c:762
+#: ../../common/parse_manifest.c:761
 msgid "missing timeline"
 msgstr "saknar tidslinje"
 
-#: ../../common/parse_manifest.c:764
+#: ../../common/parse_manifest.c:763
 msgid "missing start LSN"
 msgstr "saknar start-LSN"
 
-#: ../../common/parse_manifest.c:766
+#: ../../common/parse_manifest.c:765
 msgid "missing end LSN"
 msgstr "saknar slut-LSN"
 
-#: ../../common/parse_manifest.c:772
+#: ../../common/parse_manifest.c:771
 msgid "timeline is not an integer"
 msgstr "tidslinje är inte ett heltal"
 
-#: ../../common/parse_manifest.c:775
+#: ../../common/parse_manifest.c:774
 msgid "could not parse start LSN"
 msgstr "kunde inte parsa start-LSN"
 
-#: ../../common/parse_manifest.c:778
+#: ../../common/parse_manifest.c:777
 msgid "could not parse end LSN"
 msgstr "kunde inte parsa slut-LSN"
 
-#: ../../common/parse_manifest.c:843
+#: ../../common/parse_manifest.c:842
 msgid "expected at least 2 lines"
 msgstr "förväntade minst två rader"
 
-#: ../../common/parse_manifest.c:846
+#: ../../common/parse_manifest.c:845
 msgid "last line not newline-terminated"
 msgstr "sista raden är inte nyradsterminerad"
 
-#: ../../common/parse_manifest.c:865
+#: ../../common/parse_manifest.c:864
 #, c-format
 msgid "could not finalize checksum of manifest"
 msgstr "kunde inte göra klart kontrollsumma för backup-manifest"
 
-#: ../../common/parse_manifest.c:869
+#: ../../common/parse_manifest.c:868
 #, c-format
 msgid "manifest has no checksum"
 msgstr "manifestet har ingen kontrollsumma"
 
-#: ../../common/parse_manifest.c:873
+#: ../../common/parse_manifest.c:872
 #, c-format
 msgid "invalid manifest checksum: \"%s\""
 msgstr "ogiltig kontrollsumma för manifest: \"%s\""
 
-#: ../../common/parse_manifest.c:877
+#: ../../common/parse_manifest.c:876
 #, c-format
 msgid "manifest checksum mismatch"
 msgstr "kontrollsumma för manifest matchar inte"
 
-#: ../../common/parse_manifest.c:892
+#: ../../common/parse_manifest.c:891
 #, c-format
 msgid "could not parse backup manifest: %s"
 msgstr "kunde inte parsa backup-manifest: %s"

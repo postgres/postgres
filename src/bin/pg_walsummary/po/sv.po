@@ -1,13 +1,13 @@
 # Swedish message translation file for pg_walsummary
 # Copyright (C) 2024 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_walsummary (PostgreSQL) package.
-# Dennis Björklund <db@zigo.dhs.org>, 2024.
+# Dennis Björklund <db@zigo.dhs.org>, 2024, 2025, 2026.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-07-12 17:54+0000\n"
-"PO-Revision-Date: 2024-07-12 23:39+0200\n"
+"POT-Creation-Date: 2026-08-27 18:04+0000\n"
+"PO-Revision-Date: 2026-08-27 22:27+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -36,16 +36,26 @@ msgstr "detalj: "
 msgid "hint: "
 msgstr "tips: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ogiltig storlek %zu + %zu för minnesallokering\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ogiltig storlek %zu * %zu för minnesallokering\n"
 
 #: ../../common/file_utils.c:70 ../../common/file_utils.c:347
 #: ../../common/file_utils.c:406 ../../common/file_utils.c:480
@@ -125,7 +135,9 @@ msgstr "kunde inte läsa fil \"%s\": %m"
 msgid ""
 "%s prints the contents of a WAL summary file.\n"
 "\n"
-msgstr "%s skriver ut innehållet av WAL-summeringsfilen.\n\n"
+msgstr ""
+"%s skriver ut innehållet av WAL-summeringsfilen.\n"
+"\n"
 
 #: pg_walsummary.c:268
 #, c-format

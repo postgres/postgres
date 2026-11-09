@@ -1,22 +1,65 @@
 # Traditional Chinese message translation file for pg_test_timing
-# Copyright (C) 2023 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_test_timing (PostgreSQL) package.
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # Zhenbang Wei <znbang@gmail.com>, 2023.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_timing (PostgreSQL) 16\n"
+"Project-Id-Version: pg_test_timing (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-11 20:49+0000\n"
-"PO-Revision-Date: 2023-11-06 08:50+0800\n"
-"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
-"Language-Team: \n"
+"POT-Creation-Date: 2026-11-03 16:08+0000\n"
+"PO-Revision-Date: 2026-11-04 08:45+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.1\n"
+
+# commands/sequence.c:798 executor/execGrouping.c:328
+# executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
+# lib/dllist.c:88 libpq/auth.c:637 postmaster/pgstat.c:1006
+# postmaster/pgstat.c:1023 postmaster/pgstat.c:2452 postmaster/pgstat.c:2527
+# postmaster/pgstat.c:2572 postmaster/pgstat.c:2623
+# postmaster/postmaster.c:755 postmaster/postmaster.c:1625
+# postmaster/postmaster.c:2344 storage/buffer/localbuf.c:139
+# storage/file/fd.c:587 storage/file/fd.c:620 storage/file/fd.c:766
+# storage/ipc/sinval.c:789 storage/lmgr/lock.c:497 storage/smgr/md.c:138
+# storage/smgr/md.c:848 storage/smgr/smgr.c:213 utils/adt/cash.c:297
+# utils/adt/cash.c:312 utils/adt/oracle_compat.c:73
+# utils/adt/oracle_compat.c:124 utils/adt/regexp.c:191
+# utils/adt/ri_triggers.c:3471 utils/cache/relcache.c:164
+# utils/cache/relcache.c:178 utils/cache/relcache.c:1130
+# utils/cache/typcache.c:165 utils/cache/typcache.c:487
+# utils/fmgr/dfmgr.c:127 utils/fmgr/fmgr.c:521 utils/fmgr/fmgr.c:532
+# utils/init/miscinit.c:213 utils/init/miscinit.c:234
+# utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
+# utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
+# utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#, c-format
+msgid "out of memory\n"
+msgstr "記憶體不足\n"
+
+# common.c:78
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "不能複製空指標(內部錯誤)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu * %zu\n"
 
 #: pg_test_timing.c:59
 #, c-format
@@ -42,13 +85,13 @@ msgstr "%s: %s 必須在範圍 %u..%u 內\n"
 #: pg_test_timing.c:107
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: 命令列參數過多(第一個是 \"%s\")\n"
+msgstr "%s: 命令列參數過多(第一個多餘參數是 \"%s\")\n"
 
 #: pg_test_timing.c:115
 #, c-format
 msgid "Testing timing overhead for %u second.\n"
 msgid_plural "Testing timing overhead for %u seconds.\n"
-msgstr[0] "測試 %u 秒的計時額外負擔。\n"
+msgstr[0] "正在測試計時額外負擔，持續 %u 秒。\n"
 
 #: pg_test_timing.c:151
 #, c-format
@@ -57,13 +100,13 @@ msgstr "偵測到時鐘時間倒退。\n"
 
 #: pg_test_timing.c:152
 #, c-format
-msgid "Time warp: %d ms\n"
-msgstr "時間扭曲: %d 毫秒\n"
+msgid "Time warp: %d us\n"
+msgstr "時鐘回退: %d us\n"
 
 #: pg_test_timing.c:175
 #, c-format
 msgid "Per loop time including overhead: %0.2f ns\n"
-msgstr "每個循環時間，包括額外負擔: %0.2f ns\n"
+msgstr "每個迴圈時間，包括額外負擔: %0.2f ns\n"
 
 #: pg_test_timing.c:186
 msgid "< us"
@@ -81,4 +124,5 @@ msgstr "次數"
 #: pg_test_timing.c:197
 #, c-format
 msgid "Histogram of timing durations:\n"
-msgstr "計時期間的 histogram:\n"
+msgstr "計時持續時間的直方圖:\n"
+

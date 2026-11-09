@@ -1,5 +1,5 @@
 # Swedish message translation file for pg_ctl
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026.
 # Magnus Hagander <magnus@hagander.net>, 2010.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2013, 2014.
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-07-12 14:20+0000\n"
-"PO-Revision-Date: 2024-07-12 19:04+0200\n"
+"POT-Creation-Date: 2026-08-26 22:00+0000\n"
+"PO-Revision-Date: 2026-08-13 19:55+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -67,17 +67,27 @@ msgstr "%s() misslyckades: %m"
 msgid "out of memory"
 msgstr "slut på minne"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
-#: ../../port/path.c:753 ../../port/path.c:790 ../../port/path.c:807
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#: ../../port/path.c:847 ../../port/path.c:884 ../../port/path.c:901
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ogiltig storlek %zu + %zu för minnesallokering\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ogiltig storlek %zu * %zu för minnesallokering\n"
 
 #: ../../common/wait_error.c:55
 #, c-format
@@ -109,7 +119,7 @@ msgstr "barnprocess terminerades av signal %d: %s"
 msgid "child process exited with unrecognized status %d"
 msgstr "barnprocess avslutade med okänd statuskod %d"
 
-#: ../../port/path.c:775
+#: ../../port/path.c:869
 #, c-format
 msgid "could not get current working directory: %m\n"
 msgstr "kunde inte fastställa nuvarande arbetskatalog: %m\n"

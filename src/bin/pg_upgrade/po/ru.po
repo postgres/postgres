@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-08-05 06:37+0300\n"
-"PO-Revision-Date: 2026-08-05 07:50+0300\n"
+"POT-Creation-Date: 2026-09-25 22:47+0300\n"
+"PO-Revision-Date: 2026-10-11 13:16+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -275,9 +275,9 @@ msgid "A list of the problem columns is in the file:"
 msgstr "Список проблемных столбцов приведён в файле:"
 
 #: check.c:496 check.c:971 check.c:1144 check.c:1259 check.c:1353 check.c:1481
-#: check.c:1557 check.c:1634 check.c:1700 check.c:1773 check.c:1952
-#: check.c:1971 check.c:2040 check.c:2092 file.c:378 file.c:415 function.c:189
-#: option.c:493 version.c:110 version.c:208
+#: check.c:1557 check.c:1634 check.c:1700 check.c:1773 check.c:1918
+#: check.c:2031 check.c:2050 check.c:2119 check.c:2171 file.c:378 file.c:415
+#: function.c:189 option.c:493 version.c:110 version.c:208
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не удалось открыть файл \"%s\": %m"
@@ -492,8 +492,8 @@ msgstr ""
 "pg_database.datallowconn должно быть false"
 
 #: check.c:1158 check.c:1278 check.c:1375 check.c:1500 check.c:1576
-#: check.c:1654 check.c:1713 check.c:1793 check.c:1984 check.c:2109
-#: function.c:210
+#: check.c:1654 check.c:1713 check.c:1793 check.c:1930 check.c:2063
+#: check.c:2188 function.c:210
 #, c-format
 msgid "fatal"
 msgstr "сбой"
@@ -693,32 +693,54 @@ msgstr ""
 "Список пользовательских перекодировок приведён в файле:\n"
 "    %s"
 
-#: check.c:1833
+#: check.c:1834
 #, c-format
 msgid "Checking for new cluster logical replication slots"
 msgstr "Проверка слотов логической репликации в новом кластере"
 
-#: check.c:1841
+#: check.c:1842
 #, c-format
 msgid "could not count the number of logical replication slots"
 msgstr "не удалось получить количество слотов логической репликации"
 
-#: check.c:1846
+#: check.c:1847
 #, c-format
 msgid "expected 0 logical replication slots but found %d"
 msgstr "обнаружено слотов логической репликации: %d, тогда как ожидалось 0"
 
-#: check.c:1856 check.c:1907
+#: check.c:1857 check.c:1986
 #, c-format
 msgid "could not determine parameter settings on new cluster"
 msgstr "не удалось получить значения параметров в новом кластере"
 
-#: check.c:1861
+#: check.c:1862
 #, c-format
 msgid "\"wal_level\" must be \"logical\" but is set to \"%s\""
 msgstr "\"wal_level\" должен иметь значение \"logical\", а имеет \"%s\""
 
-#: check.c:1867
+#: check.c:1884
+#, c-format
+msgid "could not parse \"output_plugin_libraries\" setting '%s'"
+msgstr "не удалось разобрать параметр \"output_plugin_libraries\" '%s'"
+
+#: check.c:1931
+#, c-format
+msgid ""
+"Your installation contains logical replication slots with plugins\n"
+"that are not allowed by the new cluster's output_plugin_libraries\n"
+"setting. You can add trusted plugins to output_plugin_libraries\n"
+"and/or remove affected slots, and then restart the upgrade.\n"
+"A list of the problematic slots is in the file:\n"
+"    %s"
+msgstr ""
+"В вашей инсталляции есть слоты логической репликации с модулями,\n"
+"которые не разрешены параметром output_plugin_libraries в новом\n"
+"кластере. Вы можете добавить доверенные модули в output_plugin_libraries\n"
+"и/или удалить такие слоты, а затем перезапустить обновление.\n"
+"Список проблемных слотов приведён в файле:\n"
+"    %s"
+
+#: check.c:1946
 #, c-format
 msgid ""
 "\"max_replication_slots\" (%d) must be greater than or equal to the number "
@@ -727,12 +749,12 @@ msgstr ""
 "значение \"max_replication_slots\" (%d) должно быть больше или равно числу "
 "слотов логической репликации (%d) в старом кластере"
 
-#: check.c:1899
+#: check.c:1978
 #, c-format
 msgid "Checking for new cluster configuration for subscriptions"
 msgstr "Проверка конфигурации нового кластера для использования подписок"
 
-#: check.c:1911
+#: check.c:1990
 #, c-format
 msgid ""
 "\"max_replication_slots\" (%d) must be greater than or equal to the number "
@@ -741,12 +763,12 @@ msgstr ""
 "значение \"max_replication_slots\" (%d) должно быть больше или равно числу "
 "подписок (%d) в старом кластере"
 
-#: check.c:1933
+#: check.c:2012
 #, c-format
 msgid "Checking for valid logical replication slots"
 msgstr "Проверка корректности слотов логической репликации"
 
-#: check.c:1985
+#: check.c:2064
 #, c-format
 msgid ""
 "Your installation contains logical replication slots that cannot be "
@@ -764,12 +786,12 @@ msgstr ""
 "Список проблемных слотов приведён в файле:\n"
 "    %s"
 
-#: check.c:2009
+#: check.c:2088
 #, c-format
 msgid "Checking for subscription state"
 msgstr "Проверка состояния подписок"
 
-#: check.c:2110
+#: check.c:2189
 #, c-format
 msgid ""
 "Your installation contains subscriptions without origin or having relations "

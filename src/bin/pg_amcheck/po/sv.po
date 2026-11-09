@@ -1,14 +1,14 @@
 # SWEDISH message translation file for pg_amcheck
 # Copyright (C) 2021 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_amcheck (PostgreSQL) package.
-# Dennis Björklund <db@zigo.dhs.org>, 2021, 2022, 2023, 2024.
+# Dennis Björklund <db@zigo.dhs.org>, 2021, 2022, 2023, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-27 15:52+0000\n"
-"PO-Revision-Date: 2024-08-27 18:29+0200\n"
+"POT-Creation-Date: 2026-08-26 22:03+0000\n"
+"PO-Revision-Date: 2026-08-12 18:52+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -36,16 +36,26 @@ msgstr "detalj: "
 msgid "hint: "
 msgstr "tips: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ogiltig storlek %zu + %zu för minnesallokering\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ogiltig storlek %zu * %zu för minnesallokering\n"
 
 #: ../../common/file_utils.c:70 ../../common/file_utils.c:347
 #: ../../common/file_utils.c:406 ../../common/file_utils.c:480
@@ -168,12 +178,12 @@ msgstr "fråga misslyckades: %s"
 msgid "Query was: %s"
 msgstr "Frågan var: %s"
 
-#: ../../fe_utils/string_utils.c:434
+#: ../../fe_utils/string_utils.c:587
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
 msgstr "shell-kommandots argument innehåller nyrad eller vagnretur: \"%s\"\n"
 
-#: ../../fe_utils/string_utils.c:607
+#: ../../fe_utils/string_utils.c:760
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "databasnamnet innehåller nyrad eller vagnretur: \"%s\"\n"

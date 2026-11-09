@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-08-07 09:31+0000\n"
+"POT-Creation-Date: 2026-11-06 10:27+0000\n"
 "PO-Revision-Date: 2024-06-16 19:03+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -267,18 +267,18 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:275 createdb.c:300 createuser.c:417 dropdb.c:171 dropuser.c:171
-#: pg_isready.c:226 reindexdb.c:887 vacuumdb.c:1171
+#: pg_isready.c:226 reindexdb.c:890 vacuumdb.c:1171
 #, c-format
 msgid "Usage:\n"
 msgstr "Aufruf:\n"
 
-#: clusterdb.c:276 reindexdb.c:888 vacuumdb.c:1172
+#: clusterdb.c:276 reindexdb.c:891 vacuumdb.c:1172
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPTION]... [DBNAME]\n"
 
 #: clusterdb.c:277 createdb.c:302 createuser.c:419 dropdb.c:173 dropuser.c:173
-#: pg_isready.c:229 reindexdb.c:889 vacuumdb.c:1173
+#: pg_isready.c:229 reindexdb.c:892 vacuumdb.c:1173
 #, c-format
 msgid ""
 "\n"
@@ -330,7 +330,7 @@ msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                diese Hilfe anzeigen, dann beenden\n"
 
 #: clusterdb.c:286 createdb.c:319 createuser.c:450 dropdb.c:180 dropuser.c:180
-#: pg_isready.c:235 reindexdb.c:904 vacuumdb.c:1202
+#: pg_isready.c:235 reindexdb.c:907 vacuumdb.c:1202
 #, c-format
 msgid ""
 "\n"
@@ -380,7 +380,7 @@ msgstr ""
 "SQL-Befehls CLUSTER.\n"
 
 #: clusterdb.c:294 createdb.c:327 createuser.c:456 dropdb.c:187 dropuser.c:186
-#: pg_isready.c:240 reindexdb.c:912 vacuumdb.c:1210
+#: pg_isready.c:240 reindexdb.c:915 vacuumdb.c:1210
 #, c-format
 msgid ""
 "\n"
@@ -390,7 +390,7 @@ msgstr ""
 "Berichten Sie Fehler an <%s>.\n"
 
 #: clusterdb.c:295 createdb.c:328 createuser.c:457 dropdb.c:188 dropuser.c:187
-#: pg_isready.c:241 reindexdb.c:913 vacuumdb.c:1211
+#: pg_isready.c:241 reindexdb.c:916 vacuumdb.c:1211
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s Homepage: <%s>\n"
@@ -458,7 +458,7 @@ msgstr "  %s [OPTION]... [DBNAME] [BESCHREIBUNG]\n"
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=TABLESPACE  Standard-Tablespace der Datenbank\n"
 
-#: createdb.c:304 reindexdb.c:893
+#: createdb.c:304 reindexdb.c:896
 #, c-format
 msgid "  -e, --echo                   show the commands being sent to the server\n"
 msgstr ""
@@ -526,42 +526,42 @@ msgstr "  -S, --strategy=STRATEGIE     Datenbankerzeugungsstrategie wal_log oder
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=TEMPLATE      zu kopierende Template-Datenbank\n"
 
-#: createdb.c:317 reindexdb.c:902
+#: createdb.c:317 reindexdb.c:905
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                Versionsinformationen anzeigen, dann beenden\n"
 
-#: createdb.c:318 reindexdb.c:903
+#: createdb.c:318 reindexdb.c:906
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   diese Hilfe anzeigen, dann beenden\n"
 
-#: createdb.c:320 reindexdb.c:905
+#: createdb.c:320 reindexdb.c:908
 #, c-format
 msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME          Name des Datenbankservers oder Socket-Verzeichnis\n"
 
-#: createdb.c:321 reindexdb.c:906
+#: createdb.c:321 reindexdb.c:909
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              Port des Datenbankservers\n"
 
-#: createdb.c:322 reindexdb.c:907
+#: createdb.c:322 reindexdb.c:910
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=NAME          Datenbankbenutzername\n"
 
-#: createdb.c:323 reindexdb.c:908
+#: createdb.c:323 reindexdb.c:911
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            niemals nach Passwort fragen\n"
 
-#: createdb.c:324 reindexdb.c:909
+#: createdb.c:324 reindexdb.c:912
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               Passwortfrage erzwingen\n"
 
-#: createdb.c:325 reindexdb.c:910
+#: createdb.c:325 reindexdb.c:913
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAME      alternative Wartungsdatenbank\n"
@@ -956,49 +956,54 @@ msgstr "  -U, --username=NAME      Datenbankbenutzername\n"
 msgid "cannot use multiple jobs to reindex system catalogs"
 msgstr "kann nicht mehrere Jobs verwenden, um Systemkataloge zu reindizieren"
 
-#: reindexdb.c:218
+#: reindexdb.c:216
+#, c-format
+msgid "cannot use multiple jobs to reindex indexes concurrently"
+msgstr "kann nicht mehrere Jobs verwenden, um Indexe nebenläufig zu reindizieren"
+
+#: reindexdb.c:221
 #, c-format
 msgid "cannot reindex all databases and a specific one at the same time"
 msgstr "kann nicht alle Datenbanken und eine bestimmte gleichzeitig reindizieren"
 
-#: reindexdb.c:298 reindexdb.c:305 vacuumdb.c:514 vacuumdb.c:521 vacuumdb.c:528
+#: reindexdb.c:301 reindexdb.c:308 vacuumdb.c:514 vacuumdb.c:521 vacuumdb.c:528
 #: vacuumdb.c:535 vacuumdb.c:542 vacuumdb.c:549 vacuumdb.c:556 vacuumdb.c:563
 #: vacuumdb.c:570 vacuumdb.c:577 vacuumdb.c:584
 #, c-format
 msgid "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
 msgstr "Option »%s« kann nicht mit Serverversionen älter als PostgreSQL %s verwendet werden"
 
-#: reindexdb.c:604
+#: reindexdb.c:607
 #, c-format
 msgid "reindexing of database \"%s\" failed: %s"
 msgstr "Reindizieren der Datenbank »%s« fehlgeschlagen: %s"
 
-#: reindexdb.c:608
+#: reindexdb.c:611
 #, c-format
 msgid "reindexing of index \"%s\" in database \"%s\" failed: %s"
 msgstr "Reindizieren des Index »%s« in Datenbank »%s« fehlgeschlagen: %s"
 
-#: reindexdb.c:612
+#: reindexdb.c:615
 #, c-format
 msgid "reindexing of schema \"%s\" in database \"%s\" failed: %s"
 msgstr "Reindizieren des Schemas »%s« in Datenbank »%s« fehlgeschlagen: %s"
 
-#: reindexdb.c:616
+#: reindexdb.c:619
 #, c-format
 msgid "reindexing of system catalogs in database \"%s\" failed: %s"
 msgstr "Reindizieren der Systemkataloge in Datenbank »%s« fehlgeschlagen: %s"
 
-#: reindexdb.c:620
+#: reindexdb.c:623
 #, c-format
 msgid "reindexing of table \"%s\" in database \"%s\" failed: %s"
 msgstr "Reindizieren der Tabelle »%s« in Datenbank »%s« fehlgeschlagen: %s"
 
-#: reindexdb.c:843
+#: reindexdb.c:846
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: reindiziere Datenbank »%s«\n"
 
-#: reindexdb.c:886
+#: reindexdb.c:889
 #, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
@@ -1007,64 +1012,64 @@ msgstr ""
 "%s reindiziert eine PostgreSQL-Datenbank.\n"
 "\n"
 
-#: reindexdb.c:890
+#: reindexdb.c:893
 #, c-format
 msgid "  -a, --all                    reindex all databases\n"
 msgstr "  -a, --all                    alle Datenbanken reindizieren\n"
 
-#: reindexdb.c:891
+#: reindexdb.c:894
 #, c-format
 msgid "      --concurrently           reindex concurrently\n"
 msgstr "      --concurrently           nebenläufig reindizieren\n"
 
-#: reindexdb.c:892
+#: reindexdb.c:895
 #, c-format
 msgid "  -d, --dbname=DBNAME          database to reindex\n"
 msgstr "  -d, --dbname=DBNAME          zu reindizierende Datenbank\n"
 
-#: reindexdb.c:894
+#: reindexdb.c:897
 #, c-format
 msgid "  -i, --index=INDEX            recreate specific index(es) only\n"
 msgstr "  -i, --index=INDEX            nur bestimmte(n) Index(e) erneuern\n"
 
-#: reindexdb.c:895
+#: reindexdb.c:898
 #, c-format
 msgid "  -j, --jobs=NUM               use this many concurrent connections to reindex\n"
 msgstr ""
 "  -j, --jobs=NUM               so viele parallele Verbindungen zum Reindizieren\n"
 "                               verwenden\n"
 
-#: reindexdb.c:896
+#: reindexdb.c:899
 #, c-format
 msgid "  -q, --quiet                  don't write any messages\n"
 msgstr "  -q, --quiet                  unterdrücke alle Mitteilungen\n"
 
-#: reindexdb.c:897
+#: reindexdb.c:900
 #, c-format
 msgid "  -s, --system                 reindex system catalogs only\n"
 msgstr "  -s, --system                 nur Systemkataloge reindizieren\n"
 
-#: reindexdb.c:898
+#: reindexdb.c:901
 #, c-format
 msgid "  -S, --schema=SCHEMA          reindex specific schema(s) only\n"
 msgstr "  -S, --schema=SCHEMA          nur bestimmte(s) Schema(s) reindizieren\n"
 
-#: reindexdb.c:899
+#: reindexdb.c:902
 #, c-format
 msgid "  -t, --table=TABLE            reindex specific table(s) only\n"
 msgstr "  -t, --table=TABELLE          nur bestimmte Tabelle(n) reindizieren\n"
 
-#: reindexdb.c:900
+#: reindexdb.c:903
 #, c-format
 msgid "      --tablespace=TABLESPACE  tablespace where indexes are rebuilt\n"
 msgstr "      --tablespace=TABLESPACE  Tablespace wo Indexe neu gebaut werden\n"
 
-#: reindexdb.c:901
+#: reindexdb.c:904
 #, c-format
 msgid "  -v, --verbose                write a lot of output\n"
 msgstr "  -v, --verbose                erzeuge viele Meldungen\n"
 
-#: reindexdb.c:911
+#: reindexdb.c:914
 #, c-format
 msgid ""
 "\n"

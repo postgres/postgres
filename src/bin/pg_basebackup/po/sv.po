@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-03 03:07+0000\n"
-"PO-Revision-Date: 2026-02-04 07:12+0100\n"
+"POT-Creation-Date: 2026-08-26 22:00+0000\n"
+"PO-Revision-Date: 2026-08-13 19:45+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -39,8 +39,8 @@ msgstr "tips: "
 
 #: ../../common/compression.c:132 ../../common/compression.c:141
 #: ../../common/compression.c:150 bbstreamer_gzip.c:116 bbstreamer_gzip.c:249
-#: bbstreamer_lz4.c:100 bbstreamer_lz4.c:298 bbstreamer_zstd.c:129
-#: bbstreamer_zstd.c:284
+#: bbstreamer_lz4.c:100 bbstreamer_lz4.c:298 bbstreamer_zstd.c:126
+#: bbstreamer_zstd.c:281
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "detta bygge stöder inte komprimering med %s"
@@ -106,7 +106,7 @@ msgid "could not read file \"%s\": read %d of %zu"
 msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
-#: bbstreamer_file.c:138 pg_recvlogical.c:650
+#: bbstreamer_file.c:138 bbstreamer_file.c:279 pg_recvlogical.c:654
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "kunde inte stänga fil \"%s\": %m"
@@ -147,16 +147,26 @@ msgstr "kunde inte skriva fil \"%s\": %m"
 msgid "could not fsync file \"%s\": %m"
 msgstr "kunde inte fsync:a fil \"%s\": %m"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "ogiltig storlek %zu + %zu för minnesallokering\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "ogiltig storlek %zu * %zu för minnesallokering\n"
 
 #: ../../common/file_utils.c:76
 #, c-format
@@ -164,7 +174,7 @@ msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "kan inte synkronisera filsystemet för fil \"%s\": %m"
 
 #: ../../common/file_utils.c:120 ../../common/file_utils.c:566
-#: pg_receivewal.c:319 pg_recvlogical.c:352
+#: pg_receivewal.c:319 pg_recvlogical.c:356
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
@@ -245,12 +255,12 @@ msgid "out of memory"
 msgstr "slut på minne"
 
 #: ../../fe_utils/recovery_gen.c:143 bbstreamer_file.c:121
-#: bbstreamer_file.c:258 pg_basebackup.c:1433 pg_basebackup.c:1727
+#: bbstreamer_file.c:270 pg_basebackup.c:1433 pg_basebackup.c:1727
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "kunde inte skriva till fil \"%s\": %m"
 
-#: ../../fe_utils/recovery_gen.c:152 bbstreamer_file.c:93 bbstreamer_file.c:361
+#: ../../fe_utils/recovery_gen.c:152 bbstreamer_file.c:93 bbstreamer_file.c:375
 #: pg_basebackup.c:1497 pg_basebackup.c:1706
 #, c-format
 msgid "could not create file \"%s\": %m"
@@ -266,28 +276,38 @@ msgstr "shell-kommandots argument innehåller nyrad eller vagnretur: \"%s\"\n"
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "databasnamnet innehåller nyrad eller vagnretur: \"%s\"\n"
 
-#: bbstreamer_file.c:275
+#: bbstreamer_file.c:219 bbstreamer_tar.c:295
+#, c-format
+msgid "tar member has unsafe path name: \"%s\""
+msgstr "tar-medlem har osäkert sökvägsnamn: \"%s\""
+
+#: bbstreamer_file.c:244
+#, c-format
+msgid "link target has unsafe path name: \"%s\""
+msgstr "länkmål har osäkert sökvägsnamn: \"%s\""
+
+#: bbstreamer_file.c:289
 #, c-format
 msgid "unexpected state while extracting archive"
 msgstr "oväntat tillstånd vid uppackning av arkiv"
 
-#: bbstreamer_file.c:321 pg_basebackup.c:698 pg_basebackup.c:712
+#: bbstreamer_file.c:335 pg_basebackup.c:698 pg_basebackup.c:712
 #: pg_basebackup.c:757
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "kunde inte skapa katalog \"%s\": %m"
 
-#: bbstreamer_file.c:326
+#: bbstreamer_file.c:340
 #, c-format
 msgid "could not set permissions on directory \"%s\": %m"
 msgstr "kunde inte sätta rättigheter på katalogen \"%s\": %m"
 
-#: bbstreamer_file.c:345
+#: bbstreamer_file.c:359
 #, c-format
 msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
 msgstr "kunde inte skapa symbolisk länk från \"%s\" till \"%s\": %m"
 
-#: bbstreamer_file.c:365
+#: bbstreamer_file.c:379
 #, c-format
 msgid "could not set permissions on file \"%s\": %m"
 msgstr "kunde inte sätta rättigheter på filen \"%s\": %m"
@@ -327,7 +347,7 @@ msgstr "kunde inte stänga komprimerad fil \"%s\": %m"
 msgid "could not initialize compression library"
 msgstr "kunde inte initierar komprimeringsbibliotek"
 
-#: bbstreamer_gzip.c:296 bbstreamer_lz4.c:354 bbstreamer_zstd.c:329
+#: bbstreamer_gzip.c:296 bbstreamer_lz4.c:354 bbstreamer_zstd.c:326
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "kunde inte dekomprimera data: %s"
@@ -347,7 +367,7 @@ msgstr "kunde inte skapa kontext för lz4-komprimering: %s"
 msgid "could not write lz4 header: %s"
 msgstr "kunde inte skriva lz4-header: %s"
 
-#: bbstreamer_lz4.c:189 bbstreamer_zstd.c:181 bbstreamer_zstd.c:223
+#: bbstreamer_lz4.c:189 bbstreamer_zstd.c:178 bbstreamer_zstd.c:220
 #, c-format
 msgid "could not compress data: %s"
 msgstr "kunde inte komprimera data: %s"
@@ -362,22 +382,22 @@ msgstr "kunde inte avsluta lz4-komprimering: %s"
 msgid "could not initialize compression library: %s"
 msgstr "kunde inte initiera komprimeringsbibliotek: %s"
 
-#: bbstreamer_tar.c:244
+#: bbstreamer_tar.c:245
 #, c-format
 msgid "tar file trailer exceeds 2 blocks"
 msgstr "tarfilens slutdel överskred 2 block"
 
-#: bbstreamer_tar.c:249
+#: bbstreamer_tar.c:250
 #, c-format
 msgid "unexpected state while parsing tar archive"
 msgstr "oväntat tillstånd vid parsning av tar-arkiv"
 
-#: bbstreamer_tar.c:292
+#: bbstreamer_tar.c:293
 #, c-format
 msgid "tar member has empty name"
 msgstr "tar-medlem har tomt namn"
 
-#: bbstreamer_tar.c:326
+#: bbstreamer_tar.c:330
 #, c-format
 msgid "COPY stream ended before last file was finished"
 msgstr "COPY-ström avslutade innan sista filen var klar"
@@ -397,12 +417,12 @@ msgstr "kunde inte sätta zstd-komprimeringsnivå till %d: %s"
 msgid "could not set compression worker count to %d: %s"
 msgstr "kunde inte sätta komprimeringsarbetarantalet till %d: %s"
 
-#: bbstreamer_zstd.c:116
+#: bbstreamer_zstd.c:115
 #, c-format
 msgid "could not enable long-distance mode: %s"
 msgstr "kunde inte aktivera långdistansläge: %s"
 
-#: bbstreamer_zstd.c:275
+#: bbstreamer_zstd.c:272
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "kunde inte skapa kontext för zstd-dekomprimering"
@@ -890,8 +910,8 @@ msgstr "överföringshastighet \"%s\" är utanför sitt intervall"
 msgid "could not get COPY data stream: %s"
 msgstr "kunde inte hämta COPY-data-ström: %s"
 
-#: pg_basebackup.c:1039 pg_recvlogical.c:449 pg_recvlogical.c:625
-#: receivelog.c:973
+#: pg_basebackup.c:1039 pg_recvlogical.c:453 pg_recvlogical.c:629
+#: receivelog.c:979
 #, c-format
 msgid "could not read COPY data: %s"
 msgstr "kunde inte läsa COPY-data: %s"
@@ -976,9 +996,9 @@ msgstr "Använd -X none eller -X fetch för att stänga av logg-strömning"
 msgid "server does not support incremental backup"
 msgstr "servern stöder inte inkrementella backup:er"
 
-#: pg_basebackup.c:1850 pg_basebackup.c:2008 pg_recvlogical.c:272
-#: receivelog.c:543 receivelog.c:582 streamutil.c:367 streamutil.c:441
-#: streamutil.c:493 streamutil.c:581 streamutil.c:733 streamutil.c:778
+#: pg_basebackup.c:1850 pg_basebackup.c:2008 pg_recvlogical.c:276
+#: receivelog.c:542 receivelog.c:588 streamutil.c:367 streamutil.c:441
+#: streamutil.c:493 streamutil.c:582 streamutil.c:738 streamutil.c:783
 #, c-format
 msgid "could not send replication command \"%s\": %s"
 msgstr "kunde inte skicka replikeringskommando \"%s\": %s"
@@ -1174,20 +1194,20 @@ msgstr "ogiltig wal-metod-flagga \"%s\", måste vara \"fetch\", \"stream\" eller
 #: pg_basebackup.c:2712 pg_basebackup.c:2724 pg_basebackup.c:2736
 #: pg_basebackup.c:2744 pg_basebackup.c:2757 pg_basebackup.c:2763
 #: pg_basebackup.c:2772 pg_basebackup.c:2784 pg_basebackup.c:2795
-#: pg_basebackup.c:2803 pg_createsubscriber.c:2047 pg_createsubscriber.c:2057
-#: pg_createsubscriber.c:2065 pg_createsubscriber.c:2093
-#: pg_createsubscriber.c:2125 pg_receivewal.c:748 pg_receivewal.c:760
+#: pg_basebackup.c:2803 pg_createsubscriber.c:2050 pg_createsubscriber.c:2060
+#: pg_createsubscriber.c:2068 pg_createsubscriber.c:2096
+#: pg_createsubscriber.c:2128 pg_receivewal.c:748 pg_receivewal.c:760
 #: pg_receivewal.c:767 pg_receivewal.c:776 pg_receivewal.c:783
-#: pg_receivewal.c:793 pg_recvlogical.c:853 pg_recvlogical.c:865
-#: pg_recvlogical.c:875 pg_recvlogical.c:882 pg_recvlogical.c:889
-#: pg_recvlogical.c:896 pg_recvlogical.c:903 pg_recvlogical.c:910
-#: pg_recvlogical.c:917 pg_recvlogical.c:924
+#: pg_receivewal.c:793 pg_recvlogical.c:857 pg_recvlogical.c:869
+#: pg_recvlogical.c:879 pg_recvlogical.c:886 pg_recvlogical.c:893
+#: pg_recvlogical.c:900 pg_recvlogical.c:907 pg_recvlogical.c:914
+#: pg_recvlogical.c:921 pg_recvlogical.c:928
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Försök med \"%s --help\" för mer information."
 
-#: pg_basebackup.c:2584 pg_createsubscriber.c:2055 pg_receivewal.c:758
-#: pg_recvlogical.c:863
+#: pg_basebackup.c:2584 pg_createsubscriber.c:2058 pg_receivewal.c:758
+#: pg_recvlogical.c:867
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "för många kommandoradsargument (första är \"%s\")"
@@ -1304,7 +1324,7 @@ msgstr "Släng denna publiceringen innan du försöker igen."
 msgid "replication slot \"%s\" created in database \"%s\" on primary was left behind"
 msgstr "replikeringsslotten \"%s\" som skapades i databasen \"%s\" på primären har lämnats kvar"
 
-#: pg_createsubscriber.c:206 pg_createsubscriber.c:1270
+#: pg_createsubscriber.c:206 pg_createsubscriber.c:1275
 #, c-format
 msgid "Drop this replication slot soon to avoid retention of WAL files."
 msgstr "Släng denna replikeringsslot inom kort för att undvika att WAL-filer köas upp."
@@ -1333,7 +1353,7 @@ msgstr "  -d, --database=DBNAME           databas att skapa prenumeration i\n"
 #: pg_createsubscriber.c:225
 #, c-format
 msgid "  -D, --pgdata=DATADIR            location for the subscriber data directory\n"
-msgstr "  -D, --pgdata=DATADIR            plats för prenumerantens datakatalog\n"
+msgstr "  -D, --pgdata=DATADIR            sökväg till prenumerantens datakatalog\n"
 
 #: pg_createsubscriber.c:226
 #, c-format
@@ -1601,334 +1621,334 @@ msgstr "prenumerant kräver %d logiska replikeringsprocesser men bara %d återst
 msgid "subscriber requires %d worker processes, but only %d remain"
 msgstr "prenumerant kräver %d arbetsprocesser men bara %d återstår"
 
-#: pg_createsubscriber.c:1079
+#: pg_createsubscriber.c:1084
 #, c-format
 msgid "dropping subscription \"%s\" in database \"%s\""
 msgstr "slänger prenumeration \"%s\" i databasen \"%s\""
 
-#: pg_createsubscriber.c:1088
+#: pg_createsubscriber.c:1093
 #, c-format
 msgid "could not drop subscription \"%s\": %s"
 msgstr "kunde inte slänga prenumeration \"%s\": %s"
 
-#: pg_createsubscriber.c:1123
+#: pg_createsubscriber.c:1128
 #, c-format
 msgid "could not obtain pre-existing subscriptions: %s"
 msgstr "kunde inte hämta redan existerande prenumerationer: %s"
 
-#: pg_createsubscriber.c:1268
+#: pg_createsubscriber.c:1273
 #, c-format
 msgid "could not drop replication slot \"%s\" on primary"
 msgstr "kunde inte slänga replikeringsslotten \"%s\" på primären"
 
-#: pg_createsubscriber.c:1302
+#: pg_createsubscriber.c:1307
 #, c-format
 msgid "could not obtain failover replication slot information: %s"
 msgstr "kunde inte hämta replikeringsslottens information för failover: %s"
 
-#: pg_createsubscriber.c:1304 pg_createsubscriber.c:1313
+#: pg_createsubscriber.c:1309 pg_createsubscriber.c:1318
 #, c-format
 msgid "Drop the failover replication slots on subscriber soon to avoid retention of WAL files."
 msgstr "Släng replikeringsslottar för failover på prenumeranten inom kort för att undvika att köa upp WAL-filer."
 
-#: pg_createsubscriber.c:1312
+#: pg_createsubscriber.c:1317
 #, c-format
 msgid "could not drop failover replication slot"
 msgstr "kunde inte slänga replikeringsslot för failover"
 
-#: pg_createsubscriber.c:1334
+#: pg_createsubscriber.c:1339
 #, c-format
 msgid "creating the replication slot \"%s\" in database \"%s\""
 msgstr "skapar replikeringsslot \"%s\" i databasen \"%s\""
 
-#: pg_createsubscriber.c:1352
+#: pg_createsubscriber.c:1357
 #, c-format
 msgid "could not create replication slot \"%s\" in database \"%s\": %s"
 msgstr "kunde inte skapa replikeringsslot \"%s\" i databasen \"%s\": %s"
 
-#: pg_createsubscriber.c:1382
+#: pg_createsubscriber.c:1387
 #, c-format
 msgid "dropping the replication slot \"%s\" in database \"%s\""
 msgstr "slänger replikeringsslot \"%s\" i databasen \"%s\""
 
-#: pg_createsubscriber.c:1398
+#: pg_createsubscriber.c:1403
 #, c-format
 msgid "could not drop replication slot \"%s\" in database \"%s\": %s"
 msgstr "kunde inte slänga replikeringsslot \"%s\" i databasen \"%s\": %s"
 
-#: pg_createsubscriber.c:1419
+#: pg_createsubscriber.c:1423
 #, c-format
 msgid "pg_ctl failed with exit code %d"
 msgstr "pg_ctl avslutade med felkod %d"
 
-#: pg_createsubscriber.c:1424
+#: pg_createsubscriber.c:1428
 #, c-format
 msgid "pg_ctl was terminated by exception 0x%X"
 msgstr "pg_ctl avslutades med avbrott 0x%X"
 
-#: pg_createsubscriber.c:1426
+#: pg_createsubscriber.c:1430
 #, c-format
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr "Se C-include-fil \"ntstatus.h\" för en beskrivning av det hexdecimala värdet."
 
-#: pg_createsubscriber.c:1428
+#: pg_createsubscriber.c:1432
 #, c-format
 msgid "pg_ctl was terminated by signal %d: %s"
 msgstr "pg_ctl terminerades av signal %d: %s"
 
-#: pg_createsubscriber.c:1434
+#: pg_createsubscriber.c:1438
 #, c-format
 msgid "pg_ctl exited with unrecognized status %d"
 msgstr "pg_ctl avslutade med okänd statuskod %d"
 
-#: pg_createsubscriber.c:1437
+#: pg_createsubscriber.c:1441
 #, c-format
 msgid "The failed command was: %s"
 msgstr "Det misslyckade kommandot var: %s"
 
-#: pg_createsubscriber.c:1483
+#: pg_createsubscriber.c:1487
 #, c-format
 msgid "server was started"
 msgstr "servern startad"
 
-#: pg_createsubscriber.c:1498
+#: pg_createsubscriber.c:1502
 #, c-format
 msgid "server was stopped"
 msgstr "servern är stoppad"
 
-#: pg_createsubscriber.c:1517
+#: pg_createsubscriber.c:1521
 #, c-format
 msgid "waiting for the target server to reach the consistent state"
 msgstr "väntar på att målservern skall komma till ett konsistent läge"
 
-#: pg_createsubscriber.c:1540
+#: pg_createsubscriber.c:1544
 #, c-format
 msgid "recovery timed out"
 msgstr "timeout vid återställning"
 
-#: pg_createsubscriber.c:1553
+#: pg_createsubscriber.c:1557
 #, c-format
 msgid "server did not end recovery"
 msgstr "servern avslutade inte återställning"
 
-#: pg_createsubscriber.c:1555
+#: pg_createsubscriber.c:1559
 #, c-format
 msgid "target server reached the consistent state"
 msgstr "målservern har nått ett konsistent läge"
 
-#: pg_createsubscriber.c:1556
+#: pg_createsubscriber.c:1560
 #, c-format
 msgid "If pg_createsubscriber fails after this point, you must recreate the physical replica before continuing."
 msgstr ""
 "Om pg_createsubscriber misslyckas efter denna punkt så måste du\n"
 "återskapa den fysiska replikan innan du fortsätter."
 
-#: pg_createsubscriber.c:1583
+#: pg_createsubscriber.c:1587
 #, c-format
 msgid "could not obtain publication information: %s"
 msgstr "kunde inte hämta publiceringsinformation: %s"
 
-#: pg_createsubscriber.c:1597
+#: pg_createsubscriber.c:1601
 #, c-format
 msgid "publication \"%s\" already exists"
 msgstr "publicering \"%s\" finns redan"
 
-#: pg_createsubscriber.c:1598
+#: pg_createsubscriber.c:1602
 #, c-format
 msgid "Consider renaming this publication before continuing."
 msgstr "Överväg att byta namn på denna publicering innan fortsättning."
 
-#: pg_createsubscriber.c:1605
+#: pg_createsubscriber.c:1609
 #, c-format
 msgid "creating publication \"%s\" in database \"%s\""
-msgstr "skapar puiblicering \"%s\" i databasen \"%s\""
+msgstr "skapar publicering \"%s\" i databasen \"%s\""
 
-#: pg_createsubscriber.c:1618
+#: pg_createsubscriber.c:1622
 #, c-format
 msgid "could not create publication \"%s\" in database \"%s\": %s"
 msgstr "kunde inte skapa publicering \"%s\" i databasen \"%s\": %s"
 
-#: pg_createsubscriber.c:1647
+#: pg_createsubscriber.c:1651
 #, c-format
 msgid "dropping publication \"%s\" in database \"%s\""
 msgstr "slänger publiceringen \"%s\" i databasen \"%s\""
 
-#: pg_createsubscriber.c:1661
+#: pg_createsubscriber.c:1665
 #, c-format
 msgid "could not drop publication \"%s\" in database \"%s\": %s"
 msgstr "kunde inte slänga publiceringen \"%s\" i databasen \"%s\": %s"
 
-#: pg_createsubscriber.c:1707
+#: pg_createsubscriber.c:1710
 #, c-format
 msgid "creating subscription \"%s\" in database \"%s\""
 msgstr "skapar prenumeration \"%s\" i databasen \"%s\""
 
-#: pg_createsubscriber.c:1728
+#: pg_createsubscriber.c:1731
 #, c-format
 msgid "could not create subscription \"%s\" in database \"%s\": %s"
 msgstr "kunde inte skapa prenumeration \"%s\" i databasen \"%s\": %s"
 
-#: pg_createsubscriber.c:1773
+#: pg_createsubscriber.c:1776
 #, c-format
 msgid "could not obtain subscription OID: %s"
 msgstr "kunde inte hämta prenumerations-OID: %s"
 
-#: pg_createsubscriber.c:1780
+#: pg_createsubscriber.c:1783
 #, c-format
 msgid "could not obtain subscription OID: got %d rows, expected %d row"
 msgstr "kunde inte hämta prenumerations-OID: fick %d rader, förväntade %d rad"
 
-#: pg_createsubscriber.c:1804
+#: pg_createsubscriber.c:1807
 #, c-format
 msgid "setting the replication progress (node name \"%s\", LSN %s) in database \"%s\""
 msgstr "sätter progress för replikering (nod-namn \"%s\", LSN %s) i databasen \"%s\""
 
-#: pg_createsubscriber.c:1819
+#: pg_createsubscriber.c:1822
 #, c-format
 msgid "could not set replication progress for subscription \"%s\": %s"
 msgstr "kunde inte sätta progress för replikering till prenumeration \"%s\": %s"
 
-#: pg_createsubscriber.c:1850
+#: pg_createsubscriber.c:1853
 #, c-format
 msgid "enabling subscription \"%s\" in database \"%s\""
 msgstr "aktiverar prenumeration \"%s\" i databasen \"%s\""
 
-#: pg_createsubscriber.c:1862
+#: pg_createsubscriber.c:1865
 #, c-format
 msgid "could not enable subscription \"%s\": %s"
 msgstr "kunde inte aktivera prenumerationen \"%s\": %s"
 
-#: pg_createsubscriber.c:1954
+#: pg_createsubscriber.c:1957
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "kan inte köras av \"root\""
 
-#: pg_createsubscriber.c:1955
+#: pg_createsubscriber.c:1958
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
 msgstr "Du måste köra %s som PostgreSQL:s superuser."
 
-#: pg_createsubscriber.c:1976
+#: pg_createsubscriber.c:1979
 #, c-format
 msgid "database \"%s\" specified more than once"
 msgstr "database \"%s\" angiven mer än en gång"
 
-#: pg_createsubscriber.c:2017
+#: pg_createsubscriber.c:2020
 #, c-format
 msgid "publication \"%s\" specified more than once"
 msgstr "publicering \"%s\" angiven mer än en gång"
 
-#: pg_createsubscriber.c:2029
+#: pg_createsubscriber.c:2032
 #, c-format
 msgid "replication slot \"%s\" specified more than once"
 msgstr "replikeringsslott \"%s\" angiven mer än en gång"
 
-#: pg_createsubscriber.c:2041
+#: pg_createsubscriber.c:2044
 #, c-format
 msgid "subscription \"%s\" specified more than once"
 msgstr "prenumeration \"%s\" angiven mer än en gång"
 
-#: pg_createsubscriber.c:2064
+#: pg_createsubscriber.c:2067
 #, c-format
 msgid "no subscriber data directory specified"
 msgstr "ingen datakatalog för prenumeration angiven"
 
-#: pg_createsubscriber.c:2075
+#: pg_createsubscriber.c:2078
 #, c-format
 msgid "could not determine current directory"
 msgstr "kunde inte bestämma aktuell katalog"
 
-#: pg_createsubscriber.c:2092
+#: pg_createsubscriber.c:2095
 #, c-format
 msgid "no publisher connection string specified"
 msgstr "ingen anslutningssträng angiven för publicerare"
 
-#: pg_createsubscriber.c:2096
+#: pg_createsubscriber.c:2099
 #, c-format
 msgid "validating publisher connection string"
 msgstr "validerar publicerares anslutningssträng"
 
-#: pg_createsubscriber.c:2102
+#: pg_createsubscriber.c:2105
 #, c-format
 msgid "validating subscriber connection string"
 msgstr "validerar prenumerants anslutningssträng"
 
-#: pg_createsubscriber.c:2107
+#: pg_createsubscriber.c:2110
 #, c-format
 msgid "no database was specified"
 msgstr "ingen databas angavs"
 
-#: pg_createsubscriber.c:2119
+#: pg_createsubscriber.c:2122
 #, c-format
 msgid "database name \"%s\" was extracted from the publisher connection string"
 msgstr "databasnamn \"%s\" extraherades från publicistens anslutningssträng"
 
-#: pg_createsubscriber.c:2124
+#: pg_createsubscriber.c:2127
 #, c-format
 msgid "no database name specified"
 msgstr "inget databasnamn angavs"
 
-#: pg_createsubscriber.c:2134
+#: pg_createsubscriber.c:2137
 #, c-format
 msgid "wrong number of publication names specified"
 msgstr "fel antal namn på publicister angavs"
 
-#: pg_createsubscriber.c:2135
+#: pg_createsubscriber.c:2138
 #, c-format
 msgid "The number of specified publication names (%d) must match the number of specified database names (%d)."
 msgstr "Antalet angivna namn på publicister (%d) måste matcha antalet angivna namn på databaser (%d)."
 
-#: pg_createsubscriber.c:2141
+#: pg_createsubscriber.c:2144
 #, c-format
 msgid "wrong number of subscription names specified"
 msgstr "fel antal namn på prenumeranter angivna"
 
-#: pg_createsubscriber.c:2142
+#: pg_createsubscriber.c:2145
 #, c-format
 msgid "The number of specified subscription names (%d) must match the number of specified database names (%d)."
 msgstr "Antalet angivna namn på prenumeranter (%d) måste matcha antalet angivna namn på databaser (%d)."
 
-#: pg_createsubscriber.c:2148
+#: pg_createsubscriber.c:2151
 #, c-format
 msgid "wrong number of replication slot names specified"
 msgstr "fel antal namn på replikeringsslottar angivet"
 
-#: pg_createsubscriber.c:2149
+#: pg_createsubscriber.c:2152
 #, c-format
 msgid "The number of specified replication slot names (%d) must match the number of specified database names (%d)."
 msgstr "Antalet angivna namn på replikeringsslottar (%d) måste matcha antalet angivna namn på databaser (%d)."
 
-#: pg_createsubscriber.c:2178
+#: pg_createsubscriber.c:2181
 #, c-format
 msgid "subscriber data directory is not a copy of the source database cluster"
 msgstr "prenumerantens datakatalog är inte en kopia på källdatabasens kluster"
 
-#: pg_createsubscriber.c:2191
+#: pg_createsubscriber.c:2194
 #, c-format
 msgid "standby server is running"
 msgstr "standby-servern kör"
 
-#: pg_createsubscriber.c:2192
+#: pg_createsubscriber.c:2195
 #, c-format
 msgid "Stop the standby server and try again."
 msgstr "Stoppa standby-servern och försök igen."
 
-#: pg_createsubscriber.c:2201
+#: pg_createsubscriber.c:2204
 #, c-format
 msgid "starting the standby server with command-line options"
 msgstr "startar standby-server med kommandoradsflaggor"
 
-#: pg_createsubscriber.c:2217 pg_createsubscriber.c:2252
+#: pg_createsubscriber.c:2220 pg_createsubscriber.c:2255
 #, c-format
 msgid "stopping the subscriber"
 msgstr "stoppar prenumeranten"
 
-#: pg_createsubscriber.c:2231
+#: pg_createsubscriber.c:2234
 #, c-format
 msgid "starting the subscriber"
 msgstr "startar prenumeranten"
 
-#: pg_createsubscriber.c:2260
+#: pg_createsubscriber.c:2263
 #, c-format
 msgid "Done!"
 msgstr "Klar!"
@@ -2024,7 +2044,7 @@ msgstr "stoppade logg-strömning vid %X/%X (tidslinje %u)"
 msgid "switched to timeline %u at %X/%X"
 msgstr "bytte till tidslinje %u vid %X/%X"
 
-#: pg_receivewal.c:224 pg_recvlogical.c:1053
+#: pg_receivewal.c:224 pg_recvlogical.c:1057
 #, c-format
 msgid "received interrupt signal, exiting"
 msgstr "mottog avbrottsignal, avslutar"
@@ -2094,7 +2114,7 @@ msgstr "kan inte kontrollera filen \"%s\": komprimering med %s stöds inte av de
 msgid "starting log streaming at %X/%X (timeline %u)"
 msgstr "startar logg-strömning vid %X/%X (tidslinje %u)"
 
-#: pg_receivewal.c:693 pg_recvlogical.c:801
+#: pg_receivewal.c:693 pg_recvlogical.c:805
 #, c-format
 msgid "could not parse end position \"%s\""
 msgstr "kunde inte parsa slutposition \"%s\""
@@ -2124,23 +2144,23 @@ msgstr "komprimering med %s stöds inte än"
 msgid "replication connection using slot \"%s\" is unexpectedly database specific"
 msgstr "replikeringsanslutning som använder slot \"%s\" är oväntat databasspecifik"
 
-#: pg_receivewal.c:878 pg_recvlogical.c:972
+#: pg_receivewal.c:878 pg_recvlogical.c:976
 #, c-format
 msgid "dropping replication slot \"%s\""
 msgstr "slänger replikeringsslot \"%s\""
 
-#: pg_receivewal.c:889 pg_recvlogical.c:982
+#: pg_receivewal.c:889 pg_recvlogical.c:986
 #, c-format
 msgid "creating replication slot \"%s\""
 msgstr "skapar replikeringsslot \"%s\""
 
-#: pg_receivewal.c:918 pg_recvlogical.c:1006
+#: pg_receivewal.c:918 pg_recvlogical.c:1010
 #, c-format
 msgid "disconnected"
 msgstr "nerkopplad"
 
 #. translator: check source for value for %d
-#: pg_receivewal.c:922 pg_recvlogical.c:1010
+#: pg_receivewal.c:922 pg_recvlogical.c:1014
 #, c-format
 msgid "disconnected; waiting %d seconds to try again"
 msgstr "nerkopplad; väntar %d sekunder för att försöka igen"
@@ -2233,108 +2253,108 @@ msgstr "kunde inte skicka feedback-paket: %s"
 msgid "starting log streaming at %X/%X (slot %s)"
 msgstr "startar logg-strömning vid %X/%X (slot %s)"
 
-#: pg_recvlogical.c:281
+#: pg_recvlogical.c:285
 #, c-format
 msgid "streaming initiated"
 msgstr "strömning initierad"
 
-#: pg_recvlogical.c:346
+#: pg_recvlogical.c:350
 #, c-format
 msgid "could not open log file \"%s\": %m"
 msgstr "kunde inte öppna loggfil \"%s\": %m"
 
-#: pg_recvlogical.c:375 receivelog.c:882
+#: pg_recvlogical.c:379 receivelog.c:888
 #, c-format
 msgid "invalid socket: %s"
 msgstr "ogiltigt uttag: %s"
 
-#: pg_recvlogical.c:428 receivelog.c:910
+#: pg_recvlogical.c:432 receivelog.c:916
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() misslyckades: %m"
 
-#: pg_recvlogical.c:435 receivelog.c:959
+#: pg_recvlogical.c:439 receivelog.c:965
 #, c-format
 msgid "could not receive data from WAL stream: %s"
 msgstr "kunde inte ta emot data från WAL-ström: %s"
 
-#: pg_recvlogical.c:477 pg_recvlogical.c:528 receivelog.c:1003
-#: receivelog.c:1066
+#: pg_recvlogical.c:481 pg_recvlogical.c:532 receivelog.c:1009
+#: receivelog.c:1072
 #, c-format
 msgid "streaming header too small: %d"
 msgstr "strömningsheader för liten: %d"
 
-#: pg_recvlogical.c:512 receivelog.c:843
+#: pg_recvlogical.c:516 receivelog.c:849
 #, c-format
 msgid "unrecognized streaming header: \"%c\""
 msgstr "okänd strömningsheader: \"%c\""
 
-#: pg_recvlogical.c:566 pg_recvlogical.c:578
+#: pg_recvlogical.c:570 pg_recvlogical.c:582
 #, c-format
 msgid "could not write %d bytes to log file \"%s\": %m"
 msgstr "kunde inte skriva %d byte till loggfil \"%s\": %m"
 
-#: pg_recvlogical.c:636 receivelog.c:642 receivelog.c:679
+#: pg_recvlogical.c:640 receivelog.c:648 receivelog.c:685
 #, c-format
 msgid "unexpected termination of replication stream: %s"
 msgstr "oväntad terminering av replikeringsström: %s"
 
-#: pg_recvlogical.c:796
+#: pg_recvlogical.c:800
 #, c-format
 msgid "could not parse start position \"%s\""
 msgstr "kunde inte parsa startposition \"%s\""
 
-#: pg_recvlogical.c:874
+#: pg_recvlogical.c:878
 #, c-format
 msgid "no slot specified"
 msgstr "ingen slot angiven"
 
-#: pg_recvlogical.c:881
+#: pg_recvlogical.c:885
 #, c-format
 msgid "no target file specified"
 msgstr "ingen målfil angiven"
 
-#: pg_recvlogical.c:888
+#: pg_recvlogical.c:892
 #, c-format
 msgid "no database specified"
 msgstr "ingen databas angiven"
 
-#: pg_recvlogical.c:895
+#: pg_recvlogical.c:899
 #, c-format
 msgid "at least one action needs to be specified"
 msgstr "minst en handling måste anges"
 
-#: pg_recvlogical.c:902
+#: pg_recvlogical.c:906
 #, c-format
 msgid "cannot use --create-slot or --start together with --drop-slot"
 msgstr "kan inte använda --create-slot eller --start tillsammans med --drop-slot"
 
-#: pg_recvlogical.c:909
+#: pg_recvlogical.c:913
 #, c-format
 msgid "cannot use --create-slot or --drop-slot together with --startpos"
 msgstr "kan inte använda --create-slot eller --drop-slot tillsammans med --startpos"
 
-#: pg_recvlogical.c:916
+#: pg_recvlogical.c:920
 #, c-format
 msgid "--endpos may only be specified with --start"
 msgstr "--endpos får bara anges tillsammans med --start"
 
-#: pg_recvlogical.c:923
+#: pg_recvlogical.c:927
 #, c-format
 msgid "--two-phase may only be specified with --create-slot"
 msgstr "--two-phase får bara anges tillsammans med --create-slot"
 
-#: pg_recvlogical.c:956
+#: pg_recvlogical.c:960
 #, c-format
 msgid "could not establish database-specific replication connection"
 msgstr "kunde inte upprätta databasspecifik replikeringsanslutning"
 
-#: pg_recvlogical.c:1056
+#: pg_recvlogical.c:1060
 #, c-format
 msgid "end position %X/%X reached by keepalive"
 msgstr "slutposition %X/%X nådd av keepalive"
 
-#: pg_recvlogical.c:1061
+#: pg_recvlogical.c:1065
 #, c-format
 msgid "end position %X/%X reached by WAL record at %X/%X"
 msgstr "slutposition %X/%X nådd av WAL-post vid %X/%X"
@@ -2381,7 +2401,7 @@ msgstr "kunde inte öppna write-ahead-logg-fil \"%s\": %s"
 msgid "not renaming \"%s\", segment is not complete"
 msgstr "byter inte namn på \"%s\", segmentet är inte komplett"
 
-#: receivelog.c:227 receivelog.c:317 receivelog.c:688
+#: receivelog.c:227 receivelog.c:317 receivelog.c:694
 #, c-format
 msgid "could not close file \"%s\": %s"
 msgstr "kunde inte stänga fil \"%s\": %s"
@@ -2411,67 +2431,67 @@ msgstr "inkompatibel serverversion %s; klienten stöder inte stömning från ser
 msgid "incompatible server version %s; client does not support streaming from server versions newer than %s"
 msgstr "inkompatibel serverversion %s; klienten stöder inte stömning från serverversioner nyare än %s"
 
-#: receivelog.c:508
+#: receivelog.c:505
 #, c-format
 msgid "system identifier does not match between base backup and streaming connection"
 msgstr "systemidentifieraren matchar inte mellan basbackup och strömningsanslutning"
 
-#: receivelog.c:516
+#: receivelog.c:513
 #, c-format
 msgid "starting timeline %u is not present in the server"
 msgstr "starttidslinje %u finns inte tillgänglig i servern"
 
-#: receivelog.c:555
+#: receivelog.c:554
 #, c-format
 msgid "unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "oväntat svar på TIMELINE_HISTORY-kommando: fick %d rader och %d fält, förväntade %d rader och %d fält"
 
-#: receivelog.c:626
+#: receivelog.c:632
 #, c-format
 msgid "server reported unexpected next timeline %u, following timeline %u"
 msgstr "servern rapporterade oväntad nästa tidslinje %u, följer på tidslinje %u"
 
-#: receivelog.c:632
+#: receivelog.c:638
 #, c-format
 msgid "server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X"
 msgstr "servern stoppade strömning av tidslinje %u vid %X/%X men rapporterade nästa tidslinje %u skulle börja vid %X/%X"
 
-#: receivelog.c:672
+#: receivelog.c:678
 #, c-format
 msgid "replication stream was terminated before stop point"
 msgstr "replikeringsström avslutades innan stoppunkt"
 
-#: receivelog.c:718
+#: receivelog.c:724
 #, c-format
 msgid "unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "oväntad resultatmängd efter slut-på-tidslinje: fick %d rader och %d fält, förväntade %d rader och %d fält"
 
-#: receivelog.c:727
+#: receivelog.c:733
 #, c-format
 msgid "could not parse next timeline's starting point \"%s\""
 msgstr "kunde inte parsa nästa tidslinjens startpunkt \"%s\""
 
-#: receivelog.c:775 receivelog.c:1022 walmethods.c:1206
+#: receivelog.c:781 receivelog.c:1028 walmethods.c:1206
 #, c-format
 msgid "could not fsync file \"%s\": %s"
 msgstr "kunde inte fsync:a fil \"%s\": %s"
 
-#: receivelog.c:1083
+#: receivelog.c:1089
 #, c-format
 msgid "received write-ahead log record for offset %u with no file open"
 msgstr "tog emot write-ahead-logg-post för offset %u utan att ha någon öppen fil"
 
-#: receivelog.c:1093
+#: receivelog.c:1099
 #, c-format
 msgid "got WAL data offset %08x, expected %08x"
 msgstr "fick WAL-data-offset %08x, förväntade %08x"
 
-#: receivelog.c:1128
+#: receivelog.c:1134
 #, c-format
 msgid "could not write %d bytes to WAL file \"%s\": %s"
 msgstr "kunde inte skriva %d byte till WAL-fil \"%s\": %s"
 
-#: receivelog.c:1153 receivelog.c:1193 receivelog.c:1222
+#: receivelog.c:1159 receivelog.c:1199 receivelog.c:1228
 #, c-format
 msgid "could not send copy-end packet: %s"
 msgstr "kunde inte skicka \"copy-end\"-paket: %s"
@@ -2537,32 +2557,32 @@ msgstr "gruppaccessflagga kunde inte parsas: %s"
 msgid "could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "kunde inte identifiera system: fick %d rader och %d fält, förväntade %d rader och %d eller fler fält"
 
-#: streamutil.c:590
+#: streamutil.c:591
 #, c-format
 msgid "could not read replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "kunde inte läsa replikeringsslot \"%s\": fick %d rader och %d fält, förväntade %d rader och %d fält"
 
-#: streamutil.c:602
+#: streamutil.c:603
 #, c-format
 msgid "replication slot \"%s\" does not exist"
 msgstr "replikeringsslot \"%s\" existerar inte"
 
-#: streamutil.c:613
+#: streamutil.c:614
 #, c-format
 msgid "expected a physical replication slot, got type \"%s\" instead"
 msgstr "förväntade en fysisk replikeringsslot men fick av typen \"%s\" istället"
 
-#: streamutil.c:627
+#: streamutil.c:628
 #, c-format
 msgid "could not parse restart_lsn \"%s\" for replication slot \"%s\""
 msgstr "kunde inte parsa restart_lsn \"%s\" för replikeringsslot \"%s\""
 
-#: streamutil.c:744
+#: streamutil.c:749
 #, c-format
 msgid "could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "kunde inte skapa replikeringsslot \"%s\": fick %d rader och %d fält, förväntade %d rader och %d fält"
 
-#: streamutil.c:788
+#: streamutil.c:793
 #, c-format
 msgid "could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "kunde inte slänga replikeringsslot \"%s\": fick %d rader och %d fält, förväntade %d rader och %d fält"

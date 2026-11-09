@@ -1,42 +1,46 @@
-# SOME DESCRIPTIVE TITLE.
-# This file is put in the public domain.
-# Dianjin Wang <wangdianjin@gmail.com>, 2024
+# Simplified Chinese message translation file for pg_config
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Bao Wei <weibao@imsi.cn>, 2004.
+# Dianjin Wang <wangdianjin@gmail.com>, 2024.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-09-13 22:51+0000\n"
-"PO-Revision-Date: 2024-09-14 12:07+0800\n"
-"Last-Translator: Dianjin Wang <wangdianjin@gmail.com>\n"
-"Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
+"POT-Creation-Date: 2026-11-03 16:06+0000\n"
+"PO-Revision-Date: 2026-11-04 08:45+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.4\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: ../../common/config_info.c:134 ../../common/config_info.c:142
 #: ../../common/config_info.c:150 ../../common/config_info.c:158
 #: ../../common/config_info.c:166 ../../common/config_info.c:174
 #: ../../common/config_info.c:182 ../../common/config_info.c:190
 msgid "not recorded"
-msgstr "没有被记录"
+msgstr "未记录"
 
 #: ../../common/exec.c:174
 #, c-format
 msgid "invalid binary \"%s\": %m"
-msgstr "无效的二进制 \"%s\": %m"
+msgstr "无效的可执行文件 \"%s\": %m"
 
 #: ../../common/exec.c:217
 #, c-format
 msgid "could not read binary \"%s\": %m"
-msgstr "无法读取二进制 \"%s\": %m"
+msgstr "无法读取可执行文件 \"%s\": %m"
 
 #: ../../common/exec.c:225
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "未能找到一个 \"%s\" 予以执行"
+msgstr "无法找到可执行的 \"%s\""
 
 #: ../../common/exec.c:252
 #, c-format
@@ -51,7 +55,7 @@ msgstr "无法执行命令 \"%s\": %m"
 #: ../../common/exec.c:394
 #, c-format
 msgid "could not read from command \"%s\": %m"
-msgstr "无法读取命令 \"%s\": %m"
+msgstr "无法读取命令 \"%s\" 的输出: %m"
 
 #: ../../common/exec.c:397
 #, c-format
@@ -67,16 +71,26 @@ msgstr "%s() 失败: %m"
 msgid "out of memory"
 msgstr "内存不足"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "内存不足\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "无法复制空指针 (内部错误)\n"
+msgstr "不能复制空指针（内部错误）\n"
+
+#: ../../common/fe_memutils.c:209
+#, c-format
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "无效的内存分配请求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "无效的内存分配请求大小 %zu * %zu\n"
 
 #: pg_config.c:74
 #, c-format
@@ -86,13 +100,13 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"%s 提供所安装 PostgreSQL 版本的信息.\n"
+"%s 提供所安装 PostgreSQL 版本的信息。\n"
 "\n"
 
 #: pg_config.c:75
 #, c-format
 msgid "Usage:\n"
-msgstr "使用方法:\n"
+msgstr "用法:\n"
 
 #: pg_config.c:76
 #, c-format
@@ -111,7 +125,7 @@ msgstr "选项:\n"
 #: pg_config.c:78
 #, c-format
 msgid "  --bindir              show location of user executables\n"
-msgstr "  --bindir              显示用户执行文件所在位置\n"
+msgstr "  --bindir              显示用户可执行文件所在位置\n"
 
 #: pg_config.c:79
 #, c-format
@@ -128,9 +142,7 @@ msgstr "  --htmldir             显示 HTML 文档文件所在位置\n"
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
-msgstr ""
-"  --includedir          显示客户端接口 C 语言头文件所在\n"
-"                        位置\n"
+msgstr "  --includedir          显示客户端接口 C 语言头文件所在位置\n"
 
 #: pg_config.c:83
 #, c-format
@@ -139,7 +151,8 @@ msgstr "  --pkgincludedir       显示其它 C 语言头文件所在位置\n"
 
 #: pg_config.c:84
 #, c-format
-msgid "  --includedir-server   show location of C header files for the server\n"
+msgid ""
+"  --includedir-server   show location of C header files for the server\n"
 msgstr "  --includedir-server   显示服务器端 C 语言头文件所在位置\n"
 
 #: pg_config.c:85
@@ -150,12 +163,12 @@ msgstr "  --libdir              显示目标代码库文件所在位置\n"
 #: pg_config.c:86
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  --pkglibdir           显示动态加载库所在位置\n"
+msgstr "  --pkglibdir           显示可动态加载模块所在位置\n"
 
 #: pg_config.c:87
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
-msgstr "  --localedir           显示语言环境支持文件所在位置\n"
+msgstr "  --localedir           显示区域设置支持文件所在位置\n"
 
 #: pg_config.c:88
 #, c-format
@@ -164,12 +177,15 @@ msgstr "  --mandir              显示参考手册所在位置\n"
 
 #: pg_config.c:89
 #, c-format
-msgid "  --sharedir            show location of architecture-independent support files\n"
-msgstr "  --sharedir            显示独立架构支持文件所在位置\n"
+msgid ""
+"  --sharedir            show location of architecture-independent support "
+"files\n"
+msgstr "  --sharedir            显示与体系结构无关的支持文件所在位置\n"
 
 #: pg_config.c:90
 #, c-format
-msgid "  --sysconfdir          show location of system-wide configuration files\n"
+msgid ""
+"  --sysconfdir          show location of system-wide configuration files\n"
 msgstr "  --sysconfdir          显示系统范围的配置文件所在位置\n"
 
 #: pg_config.c:91
@@ -183,8 +199,7 @@ msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           显示在编译 PostgreSQL 时 \"configure\" 脚本\n"
-"                        的所用选项\n"
+"  --configure           显示在编译 PostgreSQL 时 \"configure\" 脚本所用选项\n"
 
 #: pg_config.c:94
 #, c-format
@@ -193,37 +208,49 @@ msgstr "  --cc                  显示在编译 PostgreSQL 时所使用的 CC �
 
 #: pg_config.c:95
 #, c-format
-msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgid ""
+"  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
 msgstr "  --cppflags            显示在编译 PostgreSQL 时所使用的 CPPFLAGS 值\n"
 
 #: pg_config.c:96
 #, c-format
-msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgid ""
+"  --cflags              show CFLAGS value used when PostgreSQL was built\n"
 msgstr "  --cflags              显示在编译 PostgreSQL 时所使用的 CFLAGS 值\n"
 
 #: pg_config.c:97
 #, c-format
-msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
-msgstr "  --cflags_sl           显示在编译 PostgreSQL 时所使用的 CFLAGS_SL 值\n"
+msgid ""
+"  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr ""
+"  --cflags_sl           显示在编译 PostgreSQL 时所使用的 CFLAGS_SL 值\n"
 
 #: pg_config.c:98
 #, c-format
-msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgid ""
+"  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
 msgstr "  --ldflags             显示在编译 PostgreSQL 时所使用的 LDFLAGS 值\n"
 
 #: pg_config.c:99
 #, c-format
-msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
-msgstr "  --ldflags_ex          显示在编译 PostgreSQL 时所使用的 LDFLAGS_EX 值\n"
+msgid ""
+"  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was "
+"built\n"
+msgstr ""
+"  --ldflags_ex          显示在编译 PostgreSQL 时所使用的 LDFLAGS_EX 值\n"
 
 #: pg_config.c:100
 #, c-format
-msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
-msgstr "  --ldflags_sl          显示在编译 PostgreSQL 时所使用的 LDFLAGS_SL 值\n"
+msgid ""
+"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
+"built\n"
+msgstr ""
+"  --ldflags_sl          显示在编译 PostgreSQL 时所使用的 LDFLAGS_SL 值\n"
 
 #: pg_config.c:101
 #, c-format
-msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
+msgid ""
+"  --libs                show LIBS value used when PostgreSQL was built\n"
 msgstr "  --libs                显示在编译 PostgreSQL 时所使用的 LIBS 值\n"
 
 #: pg_config.c:102
@@ -234,7 +261,7 @@ msgstr "  --version             显示 PostgreSQL 的版本信息\n"
 #: pg_config.c:103
 #, c-format
 msgid "  -?, --help            show this help, then exit\n"
-msgstr "  -?, --help            显示帮助, 然后退出\n"
+msgstr "  -?, --help            显示此帮助，然后退出\n"
 
 #: pg_config.c:104
 #, c-format
@@ -244,13 +271,13 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"没有参数, 将显示所有已知条目.\n"
+"未指定参数时，显示所有已知项。\n"
 "\n"
 
 #: pg_config.c:105
 #, c-format
 msgid "Report bugs to <%s>.\n"
-msgstr "报告缺陷: <%s>.\n"
+msgstr "请向 <%s> 报告缺陷。\n"
 
 #: pg_config.c:106
 #, c-format
@@ -260,12 +287,12 @@ msgstr "%s 主页: <%s>\n"
 #: pg_config.c:112
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+msgstr "运行 \"%s --help\" 获取更多信息。\n"
 
 #: pg_config.c:154
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: 无法找到所属执行程序\n"
+msgstr "%s: 无法找到程序自身的可执行文件\n"
 
 #: pg_config.c:181
 #, c-format
