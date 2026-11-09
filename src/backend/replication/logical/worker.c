@@ -2179,9 +2179,9 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 	 * unsupported relkinds; and the set of partitions can change, so checking
 	 * at CREATE/ALTER SUBSCRIPTION would be insufficient.
 	 */
-	CheckSubscriptionRelkind(partrel->rd_rel->relkind,
-							 get_namespace_name(RelationGetNamespace(partrel)),
-							 RelationGetRelationName(partrel));
+	CheckSubscriptionTargetRel(RelationGetRelid(partrel),
+							   get_namespace_name(RelationGetNamespace(partrel)),
+							   RelationGetRelationName(partrel));
 
 	/*
 	 * To perform any of the operations below, the tuple must match the
@@ -2332,9 +2332,9 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 					partrel_new = partrelinfo_new->ri_RelationDesc;
 
 					/* Check that new partition also has supported relkind. */
-					CheckSubscriptionRelkind(partrel_new->rd_rel->relkind,
-											 get_namespace_name(RelationGetNamespace(partrel_new)),
-											 RelationGetRelationName(partrel_new));
+					CheckSubscriptionTargetRel(RelationGetRelid(partrel_new),
+											   get_namespace_name(RelationGetNamespace(partrel_new)),
+											   RelationGetRelationName(partrel_new));
 
 					/* DELETE old tuple found in the old partition. */
 					apply_handle_delete_internal(edata, partrelinfo,
