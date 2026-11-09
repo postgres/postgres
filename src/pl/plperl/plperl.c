@@ -179,7 +179,6 @@ typedef struct plperl_call_data
 	TupleDesc	ret_tdesc;
 	Oid			cdomain_oid;	/* 0 unless returning domain-over-composite */
 	void	   *cdomain_info;
-	MemoryContext tmp_cxt;
 } plperl_call_data;
 
 /**********************************************************************
@@ -3456,6 +3455,7 @@ plperl_return_next_internal(SV *sv)
 	plperl_proc_desc *prodesc;
 	FunctionCallInfo fcinfo;
 	ReturnSetInfo *rsi;
+	MemoryContext tmp_cxt;
 	MemoryContext old_cxt;
 
 	if (!sv)
@@ -3524,16 +3524,18 @@ plperl_return_next_internal(SV *sv)
 	 * palloc() allocations that are not cleaned up. Since this function can
 	 * be called many times before the current memory context is reset, we
 	 * need to do those allocations in a temporary context.
+	 *
+	 * Originally we tried to re-use this temp context across successive
+	 * return_next calls, but that's unsafe because re-entrant calls are
+	 * possible.  Instead just allocate and delete the temp context each time.
+	 * The context recycling logic in aset.c will make that nearly as cheap as
+	 * explicit re-use.
 	 */
-	if (!current_call_data->tmp_cxt)
-	{
-		current_call_data->tmp_cxt =
-			AllocSetContextCreate(CurrentMemoryContext,
-								  "PL/Perl return_next temporary cxt",
-								  ALLOCSET_DEFAULT_SIZES);
-	}
+	tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
+									"PL/Perl return_next temporary cxt",
+									ALLOCSET_DEFAULT_SIZES);
 
-	old_cxt = MemoryContextSwitchTo(current_call_data->tmp_cxt);
+	old_cxt = MemoryContextSwitchTo(tmp_cxt);
 
 	if (prodesc->fn_retistuple)
 	{
@@ -3577,7 +3579,7 @@ plperl_return_next_internal(SV *sv)
 	}
 
 	MemoryContextSwitchTo(old_cxt);
-	MemoryContextReset(current_call_data->tmp_cxt);
+	MemoryContextDelete(tmp_cxt);
 }
 
 
