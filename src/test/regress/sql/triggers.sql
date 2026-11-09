@@ -2974,3 +2974,40 @@ alter trigger parenttrig on parent rename to anothertrig;
 
 drop table parent, child;
 drop function f();
+
+--
+-- Test a trigger on a partition table where a columns NOT NULLness differs
+-- between parent and child. In a WIP patch, this mismatch caused a spurious
+-- error that was not detected by any existing tests. Therefore a test seems
+-- appropriate.
+--
+
+CREATE TABLE trignulldiff_parent (key int, childnotnull int, parentnotnull int NOT NULL)
+  PARTITION BY LIST (key);
+CREATE TABLE trignulldiff_child PARTITION OF trignulldiff_parent
+  FOR VALUES IN (1, 2);
+ALTER TABLE trignulldiff_child ALTER COLUMN childnotnull SET NOT NULL;
+CREATE FUNCTION trignulldiff_return_parent() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  -- Returns a row of the parent type (which is not NOT NULL), even when
+  -- invoked on the child table. This verifies we handle that difference
+  -- correctly.
+  RETURN ROW(NEW.key, NEW.childnotnull, NEW.parentnotnull)::trignulldiff_parent;
+END $$;
+CREATE TRIGGER trignulldiff_return_parent BEFORE INSERT ON trignulldiff_parent
+  FOR EACH ROW EXECUTE FUNCTION trignulldiff_return_parent();
+
+-- test not inserting NULLs
+INSERT INTO trignulldiff_parent VALUES (1,11, 111) RETURNING *;
+INSERT INTO trignulldiff_child VALUES (1,22, 222) RETURNING *;
+INSERT INTO trignulldiff_parent VALUES (1,33, 333) RETURNING *;
+INSERT INTO trignulldiff_child VALUES (1,44, 444) RETURNING *;
+
+-- test inserting NULLs
+INSERT INTO trignulldiff_parent VALUES (2, NULL, 111) RETURNING *;
+INSERT INTO trignulldiff_child VALUES (2, NULL, 222) RETURNING *;
+INSERT INTO trignulldiff_parent VALUES (2, 33, NULL) RETURNING *;
+INSERT INTO trignulldiff_child VALUES (2, 444, NULL) RETURNING *;
+
+DROP TABLE IF EXISTS trignulldiff_parent CASCADE;
+DROP FUNCTION IF EXISTS trignulldiff_return_parent();
