@@ -49,6 +49,30 @@ void		plperl_util_elog(int level, SV *msg);
 	do { if (sv) SvGETMAGIC(sv); } while(0)
 
 /*
+ * Test whether ERRSV indicates that Perl threw an error.
+ *
+ * The traditional way to write this is SvTRUE(ERRSV), but that is unsafe.
+ * If the error is an object whose class overloads "bool", SvTRUE invokes
+ * that user-defined Perl code, which is free to throw an error of its own.
+ * Since we typically ask this question while unwinding from an error, such
+ * a nested throw tends to land right back where we started, giving an
+ * infinite loop.  Avoid the problem by not asking Perl at all in the case
+ * that matters: any reference is true, whatever its class may claim.  Only
+ * non-references need the full test, and overloading cannot apply to those.
+ */
+static inline bool
+errsv_is_true(SV *errsv)
+{
+	dTHX;
+
+	if (!errsv)
+		return false;
+	if (SvROK(errsv))
+		return true;
+	return SvTRUE(errsv);
+}
+
+/*
  * These macros provide a version of the PG_TRY facility that can catch
  * Perl's longjmps as well as our own.  Use these, not plain PG_TRY, in any
  * code that can invoke Perl functions, to ensure that the two jmp_buf stacks
@@ -98,6 +122,7 @@ void		plperl_util_elog(int level, SV *msg);
 		dJMPENV; \
 		OP	   *_pp_save_op = PL_op; \
 		volatile bool _pp_leavetry_needed = true; \
+		volatile bool _pp_reporting = false; \
 		int		_pp_ret_; \
 		sigjmp_buf *_save_exception_stack##__VA_ARGS__ = PG_exception_stack; \
 		ErrorContextCallback *_save_context_stack##__VA_ARGS__ = error_context_stack; \
@@ -190,6 +215,7 @@ void		plperl_util_elog(int level, SV *msg);
 		dJMPENV; \
 		OP	   *_pp_save_op = PL_op; \
 		volatile bool _pp_leavetry_needed = true; \
+		volatile bool _pp_reporting = false; \
 		PG_TRY(__VA_ARGS__); \
 		{ \
 			int		_pp_ret_; \
@@ -248,24 +274,43 @@ void		plperl_util_elog(int level, SV *msg);
 /*
  * This helper macro is split out just to reduce code duplication.
  * It converts an error thrown by Perl into a Postgres ereport.
- *
- * Since we're still within the scope of PG_PERL_TRY's JMPENV_PUSH,
- * any error thrown by the Perl functions used herein will most likely
- * result in an infinite loop.  You'd have to work at it to break Perl
- * that badly, so we don't try to prevent this; but just in case,
- * provide a way to break out of the loop.
  */
 #define PG_PERL_REPORT_LONGJMP(_pp_ret_)	\
 	do { \
 		SV		   *errsv; \
+		const char *errmessage; \
+		/* \
+		 * Since we're still within the scope of PG_PERL_TRY's JMPENV_PUSH, \
+		 * any error thrown by the Perl functions used herein will jump right \
+		 * back here, risking an infinite loop.  While we try to prevent \
+		 * that, provide a way to break out of such a loop, just in case. \
+		 */ \
 		CHECK_FOR_INTERRUPTS(); \
-		errsv = ERRSV; \
-		if (SvTRUE(errsv)) \
+		/* \
+		 * If we already failed while converting Perl's error to a string, \
+		 * don't try again.  The conversion runs user-supplied Perl code \
+		 * if the error is an object with an overloaded "" operator, and if \
+		 * that throws we'll come right back here. \
+		 */ \
+		if (_pp_reporting) \
 			ereport(ERROR, \
 					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION), \
-					 errmsg_internal("%s", strip_trailing_ws(sv2cstr(errsv))))); \
-		else \
+					 errmsg("Perl error could not be converted to a string"))); \
+		_pp_reporting = true; \
+		/* \
+		 * Convert the error to a string before starting the ereport, not \
+		 * within it.  A throw from an overloaded "" operator would otherwise \
+		 * leave an incomplete error stacked, leaking an errordata slot. \
+		 */ \
+		errsv = ERRSV; \
+		if (!errsv_is_true(errsv)) \
 			elog(ERROR, "unexpected Perl longjmp, code %d", _pp_ret_); \
+		errmessage = strip_trailing_ws(sv2cstr(errsv)); \
+		_pp_reporting = false; \
+		/* This'll longjmp back here, but now with a Postgres error ready */ \
+		ereport(ERROR, \
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION), \
+				 errmsg_internal("%s", errmessage))); \
 	} while (0)
 
 /*
