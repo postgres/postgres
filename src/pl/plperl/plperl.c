@@ -1126,6 +1126,16 @@ plperl_build_tuple_result(HV *perlhash, TupleDesc td)
 	nulls = palloc_array(bool, td->natts);
 	memset(nulls, true, sizeof(bool) * td->natts);
 
+	/*
+	 * Hold a reference on the hash while we scan it.  Converting a value can
+	 * run arbitrary Perl code (via tied-variable methods, or a datatype input
+	 * function that re-enters PL/Perl), which might remove other refcounts.
+	 * Like array_to_datum_internal, use a mortal RV to hold the refcount.
+	 */
+	ENTER;
+	SAVETMPS;
+	sv_2mortal(newRV((SV *) perlhash));
+
 	hv_iterinit(perlhash);
 	while ((he = hv_iternext(perlhash)))
 	{
@@ -1156,6 +1166,10 @@ plperl_build_tuple_result(HV *perlhash, TupleDesc td)
 		pfree(key);
 	}
 	hv_iterinit(perlhash);
+
+	/* release our reference on the hash */
+	FREETMPS;
+	LEAVE;
 
 	tup = heap_form_tuple(td, values, nulls);
 	pfree(values);
@@ -1203,10 +1217,16 @@ get_perl_array_ref(SV *sv)
 
 			if (sav && *sav)
 			{
-				plperl_materialize_sv(*sav);
-				if (SvOK(*sav) && SvROK(*sav) &&
-					SvTYPE(SvRV(*sav)) == SVt_PVAV)
-					return *sav;
+				SV		   *asv = *sav;
+
+				/*
+				 * Don't touch *sav again after this: if the FETCH method
+				 * deletes the hash entry, sav is a dangling pointer.  (asv
+				 * itself is kept alive by the magic machinery.)
+				 */
+				plperl_materialize_sv(asv);
+				if (SvROK(asv) && SvTYPE(SvRV(asv)) == SVt_PVAV)
+					return asv;
 			}
 
 			elog(ERROR, "could not get array reference from PostgreSQL::InServer::ARRAY object");
@@ -1226,6 +1246,13 @@ get_perl_array_ref(SV *sv)
  * Caller is required to have set dims[cur_depth - 1] to the length of the
  * input array, i.e., av_count_limit(av).  We make this requirement so as to
  * avoid reading av_count() twice, which is hazardous for tied arrays.
+ *
+ * Caller is also required to hold a reference on av, so that it can't be
+ * freed while we're scanning it.  Fetching or converting an element can
+ * run arbitrary Perl code (via tied-variable methods, or a datatype input
+ * function that re-enters PL/Perl), which might remove other refcounts.
+ * We use a mortal RV to hold the refcount, so that it won't get leaked
+ * in event of an error.
  */
 static void
 array_to_datum_internal(AV *av, ArrayBuildState **astatep,
@@ -1252,6 +1279,11 @@ array_to_datum_internal(AV *av, ArrayBuildState **astatep,
 		if (sav)
 		{
 			AV		   *nav = (AV *) SvRV(sav);
+
+			/* hold a reference on the sub-array, per comments above */
+			ENTER;
+			SAVETMPS;
+			sv_2mortal(newRV((SV *) nav));
 
 			/* set size when at first element in this level, else compare */
 			if (i == 0 && *ndims == cur_depth)
@@ -1282,6 +1314,10 @@ array_to_datum_internal(AV *av, ArrayBuildState **astatep,
 									ndims, dims, cur_depth + 1,
 									elemtypid, typmod,
 									finfo, typioparam);
+
+			/* release our reference on the sub-array */
+			FREETMPS;
+			LEAVE;
 		}
 		else
 		{
@@ -1359,6 +1395,11 @@ plperl_array_to_datum(SV *src, Oid typid, int32 typmod)
 
 	_sv_to_datum_finfo(elemtypid, &finfo, &typioparam);
 
+	/* hold a reference on the array, per array_to_datum_internal */
+	ENTER;
+	SAVETMPS;
+	sv_2mortal(newRV((SV *) nav));
+
 	memset(dims, 0, sizeof(dims));
 	dims[0] = av_count_limit(nav);
 
@@ -1366,6 +1407,10 @@ plperl_array_to_datum(SV *src, Oid typid, int32 typmod)
 							&ndims, dims, 1,
 							elemtypid, typmod,
 							&finfo, typioparam);
+
+	/* release our reference on the array */
+	FREETMPS;
+	LEAVE;
 
 	/* ensure we get zero-D array for no inputs, as per PG convention */
 	if (astate == NULL)
@@ -1849,6 +1894,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 {
 	dTHX;
 	SV		  **svp;
+	SV		   *svNew;
 	HV		   *hvNew;
 	HE		   *he;
 	HeapTuple	rtup;
@@ -1863,12 +1909,19 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("$_TD->{new} does not exist")));
-	plperl_materialize_sv(*svp);
-	if (!SvOK(*svp) || !SvROK(*svp) || SvTYPE(SvRV(*svp)) != SVt_PVHV)
+	/* don't touch *svp after running get magic; see get_perl_array_ref */
+	svNew = *svp;
+	plperl_materialize_sv(svNew);
+	if (!svNew || !SvROK(svNew) || SvTYPE(SvRV(svNew)) != SVt_PVHV)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("$_TD->{new} is not a hash reference")));
-	hvNew = (HV *) SvRV(*svp);
+	hvNew = (HV *) SvRV(svNew);
+
+	/* hold a reference on the hash, like plperl_build_tuple_result */
+	ENTER;
+	SAVETMPS;
+	sv_2mortal(newRV((SV *) hvNew));
 
 	tupdesc = tdata->tg_relation->rd_att;
 	natts = tupdesc->natts;
@@ -1913,6 +1966,10 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 		pfree(key);
 	}
 	hv_iterinit(hvNew);
+
+	/* release our reference on the hash */
+	FREETMPS;
+	LEAVE;
 
 	rtup = heap_modify_tuple(otup, tupdesc, modvalues, modnulls, modrepls);
 
@@ -2594,7 +2651,14 @@ plperl_func_handler(plperl_proc_desc *prodesc, PG_FUNCTION_ARGS)
 		if (sav)
 		{
 			AV		   *rav = (AV *) SvRV(sav);
-			Size_t		alen = av_count(rav);
+			Size_t		alen;
+
+			/* hold a reference on the array, like array_to_datum_internal */
+			ENTER;
+			SAVETMPS;
+			sv_2mortal(newRV((SV *) rav));
+
+			alen = av_count(rav);
 
 			for (Size_t i = 0; i < alen; i++)
 			{
@@ -2603,6 +2667,10 @@ plperl_func_handler(plperl_proc_desc *prodesc, PG_FUNCTION_ARGS)
 				if (svp)
 					plperl_return_next_internal(*svp);
 			}
+
+			/* release our reference on the array */
+			FREETMPS;
+			LEAVE;
 		}
 		else if (SvOK(perlret))
 		{
