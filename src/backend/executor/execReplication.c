@@ -19,6 +19,7 @@
 #include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_am_d.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
@@ -581,8 +582,8 @@ ExecSimpleRelationUpdate(ResultRelInfo *resultRelInfo,
 	ItemPointer tid = &(searchslot->tts_tid);
 
 	/*
-	 * We support only non-system tables, with
-	 * check_publication_add_relation() accountable.
+	 * Relations that must not be a logical replication target are rejected
+	 * before we get here; see CheckSubscriptionTargetRel().
 	 */
 	Assert(rel->rd_rel->relkind == RELKIND_RELATION);
 	Assert(!IsCatalogRelation(rel));
@@ -770,4 +771,41 @@ CheckSubscriptionRelkind(char relkind, const char *nspname,
 				 errmsg("cannot use relation \"%s.%s\" as logical replication target",
 						nspname, relname),
 				 errdetail_relkind_not_supported(relkind)));
+}
+
+/*
+ * Check that the local relation can be used as a logical replication target.
+ *
+ * Some relations must never be written by an apply worker.  System catalogs
+ * hold data that the server maintains for itself, and a temporary relation
+ * belongs to the session that created it.  A PostgreSQL publisher refuses to
+ * publish any of them, but the target relation is named by the publisher,
+ * which doesn't have to be a PostgreSQL server, so we can't rely on that.
+ *
+ * The nspname and relname are only needed for error reporting.
+ */
+void
+CheckSubscriptionTargetRel(Oid relid, const char *nspname,
+						   const char *relname)
+{
+	CheckSubscriptionRelkind(get_rel_relkind(relid), nspname, relname);
+
+	if (IsCatalogRelationOid(relid))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot use relation \"%s.%s\" as logical replication target",
+						nspname, relname),
+				 errdetail("This operation is not supported for system tables.")));
+
+	/*
+	 * Reject temporary relations.  Accessing a temporary relation of another
+	 * session is rejected when its buffers are read, but that is much later
+	 * than here, after we have already looked at its metadata.
+	 */
+	if (get_rel_persistence(relid) == RELPERSISTENCE_TEMP)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot use relation \"%s.%s\" as logical replication target",
+						nspname, relname),
+				 errdetail("This operation is not supported for temporary tables.")));
 }
