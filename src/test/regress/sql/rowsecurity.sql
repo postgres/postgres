@@ -813,6 +813,18 @@ INSERT INTO document VALUES (4, (SELECT cid from category WHERE cname = 'novel')
 -- Fails, since ALL WCO are enforced:
 INSERT INTO document VALUES (1, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'my first novel')
     ON CONFLICT (did) DO UPDATE SET dauthor = 'regress_rls_carol';
+-- The ON CONFLICT WHERE clause must not be evaluated against an existing row
+-- that fails the USING policy clauses, so f_leak must not emit a NOTICE here
+INSERT INTO document VALUES (3, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle
+    WHERE f_leak(document.dtitle) RETURNING did, dtitle;
+-- Nor may the outcome depend on the WHERE clause's result
+INSERT INTO document VALUES (3, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle
+    WHERE document.dlevel = 2 RETURNING did, dtitle;
+INSERT INTO document VALUES (3, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = EXCLUDED.dtitle
+    WHERE document.dlevel = 99 RETURNING did, dtitle;
 
 --
 -- MERGE
