@@ -20,6 +20,7 @@
 #include "commands/vacuum.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "pgstattuple.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/procarray.h"
@@ -322,15 +323,7 @@ pgstattuple_approx_internal(Oid relid, FunctionCallInfo fcinfo)
 
 	rel = relation_open(relid, AccessShareLock);
 
-	/*
-	 * Reject attempts to read non-local temporary relations; we would be
-	 * likely to get wrong data since we have no visibility into the owning
-	 * session's local buffers.
-	 */
-	if (RELATION_IS_OTHER_TEMP(rel))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot access temporary tables of other sessions")));
+	check_relation_supported(rel);
 
 	/*
 	 * We support only relation kinds with a visibility map and a free space
