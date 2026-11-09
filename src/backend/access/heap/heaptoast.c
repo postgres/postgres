@@ -181,8 +181,9 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	 * large attributes with attstorage EXTENDED or EXTERNAL, and store them
 	 * external.
 	 */
-	while (heap_compute_data_size(tupleDesc,
-								  toast_values, toast_isnull) > maxDataLen)
+	while (heap_compute_data_size_ext(tupleDesc,
+									  toast_values, toast_isnull,
+									  true) > maxDataLen)
 	{
 		int			biggest_attno;
 
@@ -222,8 +223,9 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	 * are still inline, and make them external.  But skip this if there's no
 	 * toast table to push them to.
 	 */
-	while (heap_compute_data_size(tupleDesc,
-								  toast_values, toast_isnull) > maxDataLen &&
+	while (heap_compute_data_size_ext(tupleDesc,
+									  toast_values, toast_isnull,
+									  true) > maxDataLen &&
 		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno;
@@ -238,8 +240,9 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	 * Round 3 - this time we take attributes with storage MAIN into
 	 * compression
 	 */
-	while (heap_compute_data_size(tupleDesc,
-								  toast_values, toast_isnull) > maxDataLen)
+	while (heap_compute_data_size_ext(tupleDesc,
+									  toast_values, toast_isnull,
+									  true) > maxDataLen)
 	{
 		int			biggest_attno;
 
@@ -257,8 +260,9 @@ heap_toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	 */
 	maxDataLen = TOAST_TUPLE_TARGET_MAIN - hoff;
 
-	while (heap_compute_data_size(tupleDesc,
-								  toast_values, toast_isnull) > maxDataLen &&
+	while (heap_compute_data_size_ext(tupleDesc,
+									  toast_values, toast_isnull,
+									  true) > maxDataLen &&
 		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno;

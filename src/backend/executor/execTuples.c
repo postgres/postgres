@@ -210,6 +210,11 @@ tts_virtual_materialize(TupleTableSlot *slot)
 			sz = att_align_nominal(sz, att->attalign);
 			sz = att_addlength_datum(sz, att->attlen, val);
 		}
+
+		if (!AllocSizeIsValid(sz))
+			ereport(ERROR,
+					errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("tuple is too big"));
 	}
 
 	/* all data is byval */
