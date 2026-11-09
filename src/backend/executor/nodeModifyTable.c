@@ -174,7 +174,8 @@ static TupleTableSlot *ExecPrepareTupleRouting(ModifyTableState *mtstate,
 											   PartitionTupleRouting *proute,
 											   ResultRelInfo *targetRelInfo,
 											   TupleTableSlot *slot,
-											   ResultRelInfo **partRelInfo);
+											   ResultRelInfo **partRelInfo,
+											   TupleTableSlot **tcs_original_insert_tuple);
 
 static TupleTableSlot *ExecMerge(ModifyTableContext *context,
 								 ResultRelInfo *resultRelInfo,
@@ -854,10 +855,6 @@ ExecGetUpdateNewTuple(ResultRelInfo *relinfo,
  *		*inserted_tuple is the tuple that's effectively inserted;
  *		*insert_destrel is the relation where it was inserted.
  *		These are only set on success.
- *
- *		This may change the currently active tuple conversion map in
- *		mtstate->mt_transition_capture, so the callers must take care to
- *		save the previous value to avoid losing track of it.
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
@@ -875,6 +872,7 @@ ExecInsert(ModifyTableContext *context,
 	TupleTableSlot *planSlot = context->planSlot;
 	TupleTableSlot *result = NULL;
 	TransitionCaptureState *ar_insert_trig_tcs;
+	TupleTableSlot *tcs_original_insert_tuple = NULL;
 	ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
 	OnConflictAction onconflict = node->onConflictAction;
 	PartitionTupleRouting *proute = mtstate->mt_partition_tuple_routing;
@@ -890,7 +888,8 @@ ExecInsert(ModifyTableContext *context,
 
 		slot = ExecPrepareTupleRouting(mtstate, estate, proute,
 									   resultRelInfo, slot,
-									   &partRelInfo);
+									   &partRelInfo,
+									   &tcs_original_insert_tuple);
 		resultRelInfo = partRelInfo;
 	}
 
@@ -1294,6 +1293,7 @@ ExecInsert(ModifyTableContext *context,
 							 NULL,
 							 slot,
 							 NULL,
+							 NULL,
 							 mtstate->mt_transition_capture,
 							 false);
 
@@ -1305,9 +1305,8 @@ ExecInsert(ModifyTableContext *context,
 	}
 
 	/* AFTER ROW INSERT Triggers */
-	ExecARInsertTriggers(estate, resultRelInfo, slot, recheckIndexes,
-						 ar_insert_trig_tcs);
-
+	ExecARInsertTriggers(estate, resultRelInfo, slot, NULL,
+						 recheckIndexes, ar_insert_trig_tcs);
 	list_free(recheckIndexes);
 
 	/*
@@ -1428,7 +1427,7 @@ ExecBatchInsert(ModifyTableState *mtstate,
 		slot->tts_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
 
 		/* AFTER ROW INSERT Triggers */
-		ExecARInsertTriggers(estate, resultRelInfo, slot, NIL,
+		ExecARInsertTriggers(estate, resultRelInfo, slot, NULL, NIL,
 							 mtstate->mt_transition_capture);
 
 		/*
@@ -1566,7 +1565,7 @@ ExecDeleteEpilogue(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 		ExecARUpdateTriggers(estate, resultRelInfo,
 							 NULL, NULL,
 							 tupleid, oldtuple,
-							 NULL, NULL, mtstate->mt_transition_capture,
+							 NULL, NULL, NIL, mtstate->mt_transition_capture,
 							 false);
 
 		/*
@@ -2105,13 +2104,6 @@ ExecCrossPartitionUpdate(ModifyTableContext *context,
 		ExecInsert(context, mtstate->rootResultRelInfo, slot, canSetTag,
 				   inserted_tuple, insert_destrel);
 
-	/*
-	 * Reset the transition state that may possibly have been written by
-	 * INSERT.
-	 */
-	if (mtstate->mt_transition_capture)
-		mtstate->mt_transition_capture->tcs_original_insert_tuple = NULL;
-
 	/* We're done moving. */
 	return true;
 }
@@ -2376,7 +2368,7 @@ ExecUpdateEpilogue(ModifyTableContext *context, UpdateContext *updateCxt,
 	/* AFTER ROW UPDATE Triggers */
 	ExecARUpdateTriggers(context->estate, resultRelInfo,
 						 NULL, NULL,
-						 tupleid, oldtuple, slot,
+						 tupleid, oldtuple, slot, NULL,
 						 recheckIndexes,
 						 mtstate->operation == CMD_INSERT ?
 						 mtstate->mt_oc_transition_capture :
@@ -2465,7 +2457,7 @@ ExecCrossPartitionUpdateForeignKey(ModifyTableContext *context,
 	/* Perform the root table's triggers. */
 	ExecARUpdateTriggers(context->estate,
 						 rootRelInfo, sourcePartInfo, destPartInfo,
-						 tupleid, NULL, newslot, NIL, NULL, true);
+						 tupleid, NULL, newslot, NULL, NIL, NULL, true);
 }
 
 /* ----------------------------------------------------------------
@@ -4334,7 +4326,8 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 						PartitionTupleRouting *proute,
 						ResultRelInfo *targetRelInfo,
 						TupleTableSlot *slot,
-						ResultRelInfo **partRelInfo)
+						ResultRelInfo **partRelInfo,
+						TupleTableSlot **tcs_original_insert_tuple)
 {
 	ResultRelInfo *partrel;
 	TupleConversionMap *map;
@@ -4362,7 +4355,7 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 		has_before_insert_row_trig = (partrel->ri_TrigDesc &&
 									  partrel->ri_TrigDesc->trig_insert_before_row);
 
-		mtstate->mt_transition_capture->tcs_original_insert_tuple =
+		*tcs_original_insert_tuple =
 			!has_before_insert_row_trig ? slot : NULL;
 	}
 

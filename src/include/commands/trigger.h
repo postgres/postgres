@@ -67,15 +67,6 @@ typedef struct TransitionCaptureState
 	bool		tcs_insert_new_table;
 
 	/*
-	 * For INSERT and COPY, it would be wasteful to convert tuples from child
-	 * format to parent format after they have already been converted in the
-	 * opposite direction during routing.  In that case we bypass conversion
-	 * and allow the inserting code (copyfrom.c and nodeModifyTable.c) to
-	 * provide a slot containing the original tuple directly.
-	 */
-	TupleTableSlot *tcs_original_insert_tuple;
-
-	/*
 	 * Private data including the tuplestore(s) into which to insert tuples.
 	 */
 	struct AfterTriggersTableData *tcs_insert_private;
@@ -198,6 +189,7 @@ extern bool ExecBRInsertTriggers(EState *estate,
 extern void ExecARInsertTriggers(EState *estate,
 								 ResultRelInfo *relinfo,
 								 TupleTableSlot *slot,
+								 TupleTableSlot *original_insert_tuple,
 								 List *recheckIndexes,
 								 TransitionCaptureState *transition_capture);
 extern bool ExecIRInsertTriggers(EState *estate,
@@ -247,6 +239,7 @@ extern void ExecARUpdateTriggers(EState *estate,
 								 ItemPointer tupleid,
 								 HeapTuple fdw_trigtuple,
 								 TupleTableSlot *newslot,
+								 TupleTableSlot *original_new_tuple,
 								 List *recheckIndexes,
 								 TransitionCaptureState *transition_capture,
 								 bool is_crosspart_update);

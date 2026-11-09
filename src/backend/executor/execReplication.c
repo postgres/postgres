@@ -962,7 +962,7 @@ ExecSimpleRelationInsert(ResultRelInfo *resultRelInfo,
 								   recheckIndexes, NULL, slot);
 
 		/* AFTER ROW INSERT Triggers */
-		ExecARInsertTriggers(estate, resultRelInfo, slot,
+		ExecARInsertTriggers(estate, resultRelInfo, slot, NULL,
 							 recheckIndexes, NULL);
 
 		/*
@@ -1058,7 +1058,7 @@ ExecSimpleRelationUpdate(ResultRelInfo *resultRelInfo,
 		/* AFTER ROW UPDATE Triggers */
 		ExecARUpdateTriggers(estate, resultRelInfo,
 							 NULL, NULL,
-							 tid, NULL, slot,
+							 tid, NULL, slot, NULL,
 							 recheckIndexes, NULL, false);
 
 		list_free(recheckIndexes);

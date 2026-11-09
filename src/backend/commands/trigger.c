@@ -99,6 +99,7 @@ static void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 								  ResultRelInfo *dst_partinfo,
 								  int event, bool row_trigger,
 								  TupleTableSlot *oldslot, TupleTableSlot *newslot,
+								  TupleTableSlot *original_insert_tuple,
 								  List *recheckIndexes, Bitmapset *modifiedCols,
 								  TransitionCaptureState *transition_capture,
 								  bool is_crosspart_update);
@@ -2498,7 +2499,8 @@ ExecASInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (trigdesc && trigdesc->trig_insert_after_statement)
 		AfterTriggerSaveEvent(estate, relinfo, NULL, NULL,
 							  TRIGGER_EVENT_INSERT,
-							  false, NULL, NULL, NIL, NULL, transition_capture,
+							  false, NULL, NULL, NULL,
+							  NIL, NULL, transition_capture,
 							  false);
 }
 
@@ -2582,7 +2584,8 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 
 void
 ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
-					 TupleTableSlot *slot, List *recheckIndexes,
+					 TupleTableSlot *slot, TupleTableSlot *original_insert_tuple,
+					 List *recheckIndexes,
 					 TransitionCaptureState *transition_capture)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
@@ -2600,7 +2603,8 @@ ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 		(transition_capture && transition_capture->tcs_insert_new_table))
 		AfterTriggerSaveEvent(estate, relinfo, NULL, NULL,
 							  TRIGGER_EVENT_INSERT,
-							  true, NULL, slot,
+							  true, NULL,
+							  slot, original_insert_tuple,
 							  recheckIndexes, NULL,
 							  transition_capture,
 							  false);
@@ -2727,7 +2731,8 @@ ExecASDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (trigdesc && trigdesc->trig_delete_after_statement)
 		AfterTriggerSaveEvent(estate, relinfo, NULL, NULL,
 							  TRIGGER_EVENT_DELETE,
-							  false, NULL, NULL, NIL, NULL, transition_capture,
+							  false, NULL, NULL, NULL,
+							  NIL, NULL, transition_capture,
 							  false);
 }
 
@@ -2879,7 +2884,7 @@ ExecARDeleteTriggers(EState *estate,
 
 		AfterTriggerSaveEvent(estate, relinfo, NULL, NULL,
 							  TRIGGER_EVENT_DELETE,
-							  true, slot, NULL, NIL, NULL,
+							  true, slot, NULL, NULL, NIL, NULL,
 							  transition_capture,
 							  is_crosspart_update);
 	}
@@ -3002,7 +3007,7 @@ ExecASUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (trigdesc && trigdesc->trig_update_after_statement)
 		AfterTriggerSaveEvent(estate, relinfo, NULL, NULL,
 							  TRIGGER_EVENT_UPDATE,
-							  false, NULL, NULL, NIL,
+							  false, NULL, NULL, NULL, NIL,
 							  ExecGetAllUpdatedCols(relinfo, estate),
 							  transition_capture,
 							  false);
@@ -3188,6 +3193,7 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
 					 HeapTuple fdw_trigtuple,
 					 TupleTableSlot *newslot,
+					 TupleTableSlot *original_new_tuple,
 					 List *recheckIndexes,
 					 TransitionCaptureState *transition_capture,
 					 bool is_crosspart_update)
@@ -3244,7 +3250,8 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 							  src_partinfo, dst_partinfo,
 							  TRIGGER_EVENT_UPDATE,
 							  true,
-							  oldslot, newslot, recheckIndexes,
+							  oldslot, newslot, original_new_tuple,
+							  recheckIndexes,
 							  ExecGetAllUpdatedCols(relinfo, estate),
 							  transition_capture,
 							  is_crosspart_update);
@@ -3373,7 +3380,8 @@ ExecASTruncateTriggers(EState *estate, ResultRelInfo *relinfo)
 		AfterTriggerSaveEvent(estate, relinfo,
 							  NULL, NULL,
 							  TRIGGER_EVENT_TRUNCATE,
-							  false, NULL, NULL, NIL, NULL, NULL,
+							  false, NULL, NULL, NULL,
+							  NIL, NULL, NULL,
 							  false);
 }
 
@@ -6201,6 +6209,12 @@ AfterTriggerPendingOnRel(Oid relid)
  *	is_crosspart_update is true either when a DELETE event is fired on the
  *	source partition (which is to be ignored) or an UPDATE event is fired on
  *	the root partitioned table.
+ *
+ *	For INSERT and COPY, it would be wasteful to convert tuples from child
+ *	format to parent format after they have already been converted in the
+ *	opposite direction during routing.  If you have the original tuple
+ *	in the parent format available, you can provide it in 'original_insert_tuple'
+ *	to skip the conversion.
  * ----------
  */
 static void
@@ -6209,6 +6223,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 					  ResultRelInfo *dst_partinfo,
 					  int event, bool row_trigger,
 					  TupleTableSlot *oldslot, TupleTableSlot *newslot,
+					  TupleTableSlot *original_insert_tuple,
 					  List *recheckIndexes, Bitmapset *modifiedCols,
 					  TransitionCaptureState *transition_capture,
 					  bool is_crosspart_update)
@@ -6241,8 +6256,6 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 	 */
 	if (row_trigger && transition_capture != NULL)
 	{
-		TupleTableSlot *original_insert_tuple = transition_capture->tcs_original_insert_tuple;
-
 		/*
 		 * Capture the old tuple in the appropriate transition table based on
 		 * the event.
