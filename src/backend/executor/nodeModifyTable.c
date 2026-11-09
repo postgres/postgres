@@ -2935,29 +2935,14 @@ ExecOnConflictUpdate(ModifyTableContext *context,
 	 */
 	ExecCheckTupleVisible(context->estate, relation, existing);
 
-	/*
-	 * Make tuple and any needed join variables available to ExecQual and
-	 * ExecProject.  The EXCLUDED tuple is installed in ecxt_innertuple, while
-	 * the target's existing tuple is installed in the scantuple.  EXCLUDED
-	 * has been made to reference INNER_VAR in setrefs.c, but there is no
-	 * other redirection.
-	 */
-	econtext->ecxt_scantuple = existing;
-	econtext->ecxt_innertuple = excludedSlot;
-	econtext->ecxt_outertuple = NULL;
-
-	if (!ExecQual(onConflictSetWhere, econtext))
-	{
-		ExecClearTuple(existing);	/* see return below */
-		InstrCountFiltered1(&mtstate->ps, 1);
-		return true;			/* done with the tuple */
-	}
-
 	if (resultRelInfo->ri_WithCheckOptions != NIL)
 	{
 		/*
-		 * Check target's existing tuple against UPDATE-applicable USING
-		 * security barrier quals (if any), enforced here as RLS checks/WCOs.
+		 * Check target's existing tuple against the security quals that
+		 * determine whether the user is allowed to see and update it.  This
+		 * must happen before the ON CONFLICT WHERE clause is evaluated below,
+		 * since that clause is supplied by the user and could otherwise be
+		 * used to read a row that the user has no right to see.
 		 *
 		 * The rewriter creates UPDATE RLS checks/WCOs for UPDATE security
 		 * quals, and stores them as WCOs of "kind" WCO_RLS_CONFLICT_CHECK.
@@ -2975,6 +2960,24 @@ ExecOnConflictUpdate(ModifyTableContext *context,
 		ExecWithCheckOptions(WCO_RLS_CONFLICT_CHECK, resultRelInfo,
 							 existing,
 							 mtstate->ps.state);
+	}
+
+	/*
+	 * Make tuple and any needed join variables available to ExecQual and
+	 * ExecProject.  The EXCLUDED tuple is installed in ecxt_innertuple, while
+	 * the target's existing tuple is installed in the scantuple.  EXCLUDED
+	 * has been made to reference INNER_VAR in setrefs.c, but there is no
+	 * other redirection.
+	 */
+	econtext->ecxt_scantuple = existing;
+	econtext->ecxt_innertuple = excludedSlot;
+	econtext->ecxt_outertuple = NULL;
+
+	if (!ExecQual(onConflictSetWhere, econtext))
+	{
+		ExecClearTuple(existing);	/* see return below */
+		InstrCountFiltered1(&mtstate->ps, 1);
+		return true;			/* done with the tuple */
 	}
 
 	/* Project the new tuple version */
@@ -3086,6 +3089,26 @@ ExecOnConflictSelect(ModifyTableContext *context,
 	 */
 	ExecCheckTupleVisible(context->estate, relation, existing);
 
+	if (resultRelInfo->ri_WithCheckOptions != NIL)
+	{
+		/*
+		 * Check target's existing tuple against the security quals that
+		 * determine whether the user is allowed to see it.  This must happen
+		 * before the ON CONFLICT WHERE clause is evaluated below; see
+		 * comments in ExecOnConflictUpdate().
+		 *
+		 * The rewriter creates WCOs from the USING quals of SELECT policies,
+		 * and stores them as WCOs of "kind" WCO_RLS_CONFLICT_CHECK.  If FOR
+		 * UPDATE/SHARE was specified, UPDATE permissions are required on the
+		 * target table, and the rewriter also adds WCOs built from the USING
+		 * quals of UPDATE policies, using WCOs of the same kind, and this
+		 * check enforces them too.
+		 */
+		ExecWithCheckOptions(WCO_RLS_CONFLICT_CHECK, resultRelInfo,
+							 existing,
+							 mtstate->ps.state);
+	}
+
 	/*
 	 * Make tuple and any needed join variables available to ExecQual.  The
 	 * EXCLUDED tuple is installed in ecxt_innertuple, while the target's
@@ -3101,24 +3124,6 @@ ExecOnConflictSelect(ModifyTableContext *context,
 		ExecClearTuple(existing);	/* see return below */
 		InstrCountFiltered1(&mtstate->ps, 1);
 		return true;			/* done with the tuple */
-	}
-
-	if (resultRelInfo->ri_WithCheckOptions != NIL)
-	{
-		/*
-		 * Check target's existing tuple against SELECT-applicable USING
-		 * security barrier quals (if any), enforced here as RLS checks/WCOs.
-		 *
-		 * The rewriter creates WCOs from the USING quals of SELECT policies,
-		 * and stores them as WCOs of "kind" WCO_RLS_CONFLICT_CHECK.  If FOR
-		 * UPDATE/SHARE was specified, UPDATE permissions are required on the
-		 * target table, and the rewriter also adds WCOs built from the USING
-		 * quals of UPDATE policies, using WCOs of the same kind, and this
-		 * check enforces them too.
-		 */
-		ExecWithCheckOptions(WCO_RLS_CONFLICT_CHECK, resultRelInfo,
-							 existing,
-							 mtstate->ps.state);
 	}
 
 	/* RETURNING is required for DO SELECT */
