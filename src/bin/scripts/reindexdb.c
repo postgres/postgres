@@ -753,10 +753,12 @@ get_parallel_tabidx_list(PGconn *conn,
 	PGresult   *res;
 	SimpleStringListCell *cell;
 	int			ntups;
+	PQExpBufferData relbuf;
 
 	Assert(index_list != NULL);
 
 	initPQExpBuffer(&catalog_query);
+	initPQExpBuffer(&relbuf);
 
 	/*
 	 * The queries here are using a safe search_path, so there's no need to
@@ -775,22 +777,33 @@ get_parallel_tabidx_list(PGconn *conn,
 						 "FROM pg_catalog.pg_index x\n"
 						 "JOIN pg_catalog.pg_class i ON i.oid = x.indexrelid\n"
 						 "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = i.relnamespace\n"
-						 "WHERE x.indexrelid = ANY(ARRAY['");
+						 "WHERE x.indexrelid = ANY(ARRAY[");
 
 	for (cell = index_list->head; cell; cell = cell->next)
 	{
-		if (cell != index_list->head)
-			appendPQExpBufferStr(&catalog_query, "', '");
 
-		appendQualifiedRelation(&catalog_query, cell->val, conn, echo);
+		if (cell != index_list->head)
+			appendPQExpBufferStr(&catalog_query, ", ");
+
+		/*
+		 * appendQualifiedRelation() yields a quoted identifier, which is not
+		 * safe to embed in a string literal as-is (single quotes in the name
+		 * would not be escaped).  Resolve the name into a separate buffer and
+		 * then append it as a properly-escaped literal.
+		 */
+		resetPQExpBuffer(&relbuf);
+		appendQualifiedRelation(&relbuf, cell->val, conn, echo);
+		appendStringLiteralConn(&catalog_query, relbuf.data, conn);
 	}
+
+	termPQExpBuffer(&relbuf);
 
 	/*
 	 * We want all indexes of the same table together.  Order tables by the
 	 * size of its greatest index.  Within each table, order indexes by size.
 	 */
 	appendPQExpBufferStr(&catalog_query,
-						 "']::pg_catalog.regclass[])\n"
+						 "]::pg_catalog.regclass[])\n"
 						 "ORDER BY max(i.relpages) OVER \n"
 						 "    (PARTITION BY x.indrelid),\n"
 						 "  x.indrelid, i.relpages;\n");
