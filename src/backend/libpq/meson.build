@@ -4,6 +4,7 @@ backend_sources += files(
   'auth-sasl.c',
   'auth-scram.c',
   'auth.c',
+  'be-fe-helpers.c',
   'be-fsstubs.c',
   'be-secure-common.c',
   'be-secure.c',

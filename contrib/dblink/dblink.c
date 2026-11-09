@@ -250,6 +250,13 @@ dblink_get_conn(char *conname_or_str,
 			connstr = conname_or_str;
 		dblink_connstr_check(connstr);
 
+		/*
+		 * Final security check on the proxied connection options. Like
+		 * dblink_connect, this happens whether the current user is a
+		 * superuser or not.
+		 */
+		libpqsrv_check_proxy_conninfo(connstr);
+
 		/* OK to make connection */
 		conn = libpqsrv_connect(connstr, PG_WAIT_EXTENSION);
 
@@ -352,6 +359,17 @@ dblink_connect(PG_FUNCTION_ARGS)
 	 */
 	if (!connname && pconn->conn)
 		dblink_check_conn_not_in_use(pconn, NULL);
+
+	/*
+	 * Final security check on the proxied connection options.
+	 *
+	 * NB: Validation happens regardless of whether the current user is a
+	 * superuser, because dblink_connect_u is implemented as a SECURITY
+	 * DEFINER function, and it's only documented to grant an exception for
+	 * the dblink_security_check. We don't really want to expand that set of
+	 * privileges arbitrarily.
+	 */
+	libpqsrv_check_proxy_conninfo(connstr);
 
 	/* OK to make connection */
 	conn = libpqsrv_connect(connstr, PG_WAIT_EXTENSION);
