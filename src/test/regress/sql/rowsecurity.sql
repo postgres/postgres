@@ -1008,6 +1008,20 @@ INSERT INTO document VALUES (1, (SELECT cid from category WHERE cname = 'novel')
 INSERT INTO document VALUES (2, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
     ON CONFLICT (did) DO SELECT FOR UPDATE RETURNING did, dauthor, dtitle;
 
+-- The ON CONFLICT WHERE clause must not be evaluated against an existing row
+-- that fails the USING policy clauses, so f_leak must not emit a NOTICE here
+INSERT INTO document VALUES (3, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO SELECT WHERE f_leak(document.dtitle) RETURNING did, dtitle;
+INSERT INTO document VALUES (3, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO UPDATE SET dtitle = excluded.dtitle
+    WHERE f_leak(document.dtitle) RETURNING did, dtitle;
+
+-- Nor may the outcome depend on the WHERE clause's result
+INSERT INTO document VALUES (3, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO SELECT WHERE document.dlevel = 2 RETURNING did, dtitle;
+INSERT INTO document VALUES (3, (SELECT cid from category WHERE cname = 'novel'), 1, 'regress_rls_bob', 'another novel')
+    ON CONFLICT (did) DO SELECT WHERE document.dlevel = 99 RETURNING did, dtitle;
+
 SET SESSION AUTHORIZATION regress_rls_alice;
 DROP POLICY p1_select_novels ON document;
 DROP POLICY p2_insert_own ON document;
