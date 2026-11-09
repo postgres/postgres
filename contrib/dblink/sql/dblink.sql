@@ -408,6 +408,84 @@ SELECT dblink_disconnect('myconn');
 -- should get 'connection "myconn" not available' error
 SELECT dblink_disconnect('myconn');
 
+-- Check that a connection that a dblink call is still reading results from
+-- can't be closed or used by another dblink call.  The declared column
+-- type's input function runs while dblink converts result rows, and for a
+-- domain that includes its CHECK constraints, so user-defined code can
+-- re-enter dblink from there.
+
+-- inuse_action() runs as inuse_domain's CHECK constraint.  Its argument is
+-- the value the remote query returned, which names the action to take.
+CREATE FUNCTION inuse_action(text) RETURNS boolean LANGUAGE plpgsql AS $$
+BEGIN
+  CASE $1
+    WHEN 'close' THEN
+      PERFORM dblink_disconnect('myconn');
+    WHEN 'close_other' THEN
+      PERFORM dblink_disconnect('myconn2');
+    WHEN 'close_unnamed' THEN
+      PERFORM dblink_disconnect();
+    WHEN 'replace_unnamed' THEN
+      PERFORM dblink_connect(connection_parameters());
+    WHEN 'nested_query' THEN
+      PERFORM * FROM dblink('myconn','SELECT 1') AS q(z text);
+    WHEN 'nested_get_result' THEN
+      PERFORM * FROM dblink_get_result('myconn') AS q(z text);
+    WHEN 'nested_is_busy' THEN
+      PERFORM dblink_is_busy('myconn');
+    WHEN 'nested' THEN
+      -- a refused nested call must not clear the outer call's mark
+      BEGIN
+        PERFORM * FROM dblink('myconn','SELECT 1') AS q(z text);
+      EXCEPTION WHEN OTHERS THEN
+        NULL;
+      END;
+      PERFORM dblink_disconnect('myconn');
+    WHEN 'raise' THEN
+      BEGIN
+        PERFORM dblink_disconnect('myconn');
+      EXCEPTION WHEN OTHERS THEN
+        NULL;
+      END;
+      RAISE EXCEPTION 'error during row conversion';
+  END CASE;
+  RETURN true;
+END $$;
+CREATE DOMAIN inuse_domain AS text CHECK (inuse_action(VALUE));
+SELECT dblink_connect('myconn',connection_parameters());
+SELECT dblink_connect('myconn2',connection_parameters());
+SELECT dblink_connect(connection_parameters());
+-- should fail, and leave the connection usable
+SELECT * FROM dblink('myconn',$$SELECT 'close'$$) AS t(x inuse_domain);
+SELECT * FROM dblink('myconn','SELECT 1') AS t(x int);
+-- an error raised after the refused close must not upset the cleanup path,
+-- which reads the remaining results through the same connection
+SELECT * FROM dblink('myconn',$$SELECT 'raise'$$) AS t(x inuse_domain);
+SELECT * FROM dblink('myconn','SELECT 1') AS t(x int);
+-- any other dblink call on the same connection is refused, whether it would
+-- have sent a query, read a result, or just reported status
+SELECT * FROM dblink('myconn',$$SELECT 'nested_query'$$) AS t(x inuse_domain);
+SELECT * FROM dblink('myconn',$$SELECT 'nested_get_result'$$) AS t(x inuse_domain);
+SELECT * FROM dblink('myconn',$$SELECT 'nested_is_busy'$$) AS t(x inuse_domain);
+SELECT * FROM dblink('myconn','SELECT 1') AS t(x int);
+-- a refused nested call must not clear the outer call's mark
+SELECT * FROM dblink('myconn',$$SELECT 'nested'$$) AS t(x inuse_domain);
+SELECT * FROM dblink('myconn','SELECT 1') AS t(x int);
+-- dblink_fetch() converts rows the same way, so it is protected too
+SELECT dblink_open('myconn','inuse_cursor',$$SELECT 'close'$$);
+SELECT * FROM dblink_fetch('myconn','inuse_cursor',1) AS t(x inuse_domain);
+SELECT dblink_close('myconn','inuse_cursor');
+-- the unnamed connection is protected from the function that closes it and
+-- from the one that replaces it
+SELECT * FROM dblink($$SELECT 'close_unnamed'$$) AS t(x inuse_domain);
+SELECT * FROM dblink($$SELECT 'replace_unnamed'$$) AS t(x inuse_domain);
+-- closing some other connection from the same place is still allowed
+SELECT * FROM dblink('myconn',$$SELECT 'close_other'$$) AS t(x inuse_domain);
+SELECT dblink_disconnect('myconn');
+SELECT dblink_disconnect();
+DROP DOMAIN inuse_domain;
+DROP FUNCTION inuse_action(text);
+
 -- test asynchronous queries
 SELECT dblink_connect('dtest1', connection_parameters());
 SELECT * from
