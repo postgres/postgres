@@ -1362,6 +1362,13 @@ CREATE TABLE gtest31_2 (x int, y gtest31_1);
 ALTER TABLE gtest31_1 ALTER COLUMN b TYPE varchar;  -- fails
 ERROR:  cannot alter table "gtest31_1" because column "gtest31_2.y" uses its row type
 DROP TABLE gtest31_1, gtest31_2;
+-- Check if the rowtype is used in PARTITION BY expression of another table.
+CREATE TABLE gtest31_1 (a int GENERATED ALWAYS AS (123) VIRTUAL);
+CREATE TABLE gtest31_2 (b text) PARTITION BY RANGE ((('(1)'::gtest31_1).a + length(b)));
+ALTER TABLE gtest31_1 ALTER COLUMN a TYPE bigint;
+ERROR:  cannot alter table "gtest31_1" because table gtest31_2 uses its row type
+ALTER TABLE gtest31_1 ALTER COLUMN a SET EXPRESSION AS (124);
+DROP TABLE gtest31_1, gtest31_2;
 -- triggers
 CREATE TABLE gtest26 (
     a int PRIMARY KEY,
