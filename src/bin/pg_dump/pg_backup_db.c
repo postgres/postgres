@@ -592,7 +592,13 @@ IssueACLPerBlob(ArchiveHandle *AH, TocEntry *te)
 		{
 			/* Terminate the first-half string */
 			en += 13;
-			Assert(isdigit((unsigned char) *en));
+
+			/*
+			 * An OID must follow.  Otherwise, we would step over the string's
+			 * terminating zero byte and scan off the end of the buffer.
+			 */
+			if (!isdigit((unsigned char) *en))
+				pg_fatal("missing large object OID in ACL entry -- perhaps a corrupt TOC");
 			*en++ = '\0';
 			/* Skip the rest of the blob OID */
 			while (isdigit((unsigned char) *en))
