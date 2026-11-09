@@ -485,16 +485,24 @@ tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 	/*
 	 * Here we overestimate tsout size, since we don't know how much space is
 	 * used by the deleted lexeme(s).  We will set exact size below.
+	 *
+	 * Counterintuitively, the output could be larger than the input: we emit
+	 * lexeme data in an order possibly different from what is in the input,
+	 * and hence it could require different/more padding before position data.
+	 * As in tsvector_concat(), allow for one pad byte per output entry.
+	 *
+	 * Since the MAXSTRPOS limit constrains the input to be considerably less
+	 * than MaxAllocSize, we don't need to worry about integer overflow here,
+	 * nor in the data-copying steps below.  We do need to enforce that the
+	 * result meets the MAXSTRPOS limit, but we check that once at the end.
 	 */
-	tsout = (TSVector) palloc0(VARSIZE(tsv));
+	tsout = (TSVector) palloc0(VARSIZE(tsv) + tsv->size - indices_count);
 
 	/* This count must be correct because STRPTR(tsout) relies on it. */
 	tsout->size = tsv->size - indices_count;
 
 	/*
 	 * Copy tsv to tsout, skipping lexemes listed in indices_to_delete.
-	 *
-	 * Output can't be bigger than input, so no need for overflow checks.
 	 */
 	arrout = ARRPTR(tsout);
 	dataout = STRPTR(tsout);
@@ -539,6 +547,16 @@ tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 	 * estimation of tsout's size is wrong.
 	 */
 	Assert(k == indices_count);
+
+	/*
+	 * Instead of checking each offset individually, we check for overflow of
+	 * pos fields once at the end.
+	 */
+	if (curoff > MAXSTRPOS)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("string is too long for tsvector (%zu bytes, max %zu bytes)",
+						(size_t) curoff, (size_t) MAXSTRPOS)));
 
 	SET_VARSIZE(tsout, CALCDATASIZE(tsout->size, curoff));
 	return tsout;
