@@ -7102,6 +7102,7 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 	Relation	rel;
 	TupleDesc	tupleDesc;
 	Form_pg_attribute att;
+	Form_pg_constraint cform;
 
 	/*
 	 * By default, a dependency on a type prevents ALTERing it.  But we make
@@ -7159,7 +7160,36 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 			break;
 
 		case ConstraintRelationId:
-			/* TODO: Accept for now, but next commits will tighten this */
+
+			/*
+			 * Constraints referencing the type usually forbid ALTERing it,
+			 * but there's one exception: a CHECK constraint on a domain
+			 * referencing the type itself is ignored, if the expression
+			 * doesn't refer to the type.  In other words, if the dependency
+			 * exists just because it's a CHECK constraint on the domain, that
+			 * doesn't prevent altering the underlying type.
+			 */
+			catalog_tup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(objid));
+			if (!HeapTupleIsValid(catalog_tup))
+				elog(ERROR, "cache lookup failed for constraint %u", objid);
+			cform = (Form_pg_constraint) GETSTRUCT(catalog_tup);
+			if (cform->contypid == typeOid)
+			{
+				/*
+				 * This is a CHECK constraint on the domain.  Look closer if
+				 * the expression actually refers to the target type.
+				 */
+				expr = get_node_tree_attr(CONSTROID, catalog_tup,
+										  Anum_pg_constraint_conbin);
+				if (expr && CheckTypeDependencyInExpr(expr, NIL, typeOid))
+					report_type_used_in_expr(depobj, origRelation, origTypeName);
+			}
+			else
+			{
+				/* This is some other constraint using the type */
+				report_type_used_in_expr(depobj, origRelation, origTypeName);
+			}
+			ReleaseSysCache(catalog_tup);
 			break;
 
 		case TypeRelationId:
