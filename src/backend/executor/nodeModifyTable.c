@@ -1392,6 +1392,15 @@ ExecBatchInsert(ModifyTableState *mtstate,
 																  planSlots,
 																  &numInserted);
 
+	/*
+	 * XXX An FDW may report more rows than we gave it, which would lead to
+	 * buffer overruns in the loop below.  We clamp the count so that
+	 * statements that happen to work today keep working, at the cost of
+	 * misreporting the number of rows.  This is a stopgap; a proper fix means
+	 * reworking the batch insert API.
+	 */
+	numInserted = Min(numInserted, numSlots);
+
 	for (i = 0; i < numInserted; i++)
 	{
 		slot = rslots[i];

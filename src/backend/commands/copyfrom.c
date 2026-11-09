@@ -486,6 +486,9 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 																	 NULL,
 																	 &inserted);
 
+			/* XXX See the comment in ExecBatchInsert() */
+			inserted = Min(inserted, size);
+
 			sent += size;
 
 			/* No need to do anything if there are no inserted rows */
