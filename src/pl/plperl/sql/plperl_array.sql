@@ -213,3 +213,11 @@ CREATE OR REPLACE FUNCTION perl_forged_array() RETURNS integer[] AS $$
 $$ LANGUAGE plperl;
 
 SELECT perl_forged_array();
+
+-- Test a forged PostgreSQL::InServer::ARRAY object that isn't a hash at all
+CREATE OR REPLACE FUNCTION perl_forged_array() RETURNS integer[] AS $$
+	my $x = "hi";
+	return bless \$x, "PostgreSQL::InServer::ARRAY";
+$$ LANGUAGE plperl;
+
+SELECT perl_forged_array();

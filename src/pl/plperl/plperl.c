@@ -1099,7 +1099,13 @@ get_perl_array_ref(SV *sv)
 	{
 		if (SvTYPE(SvRV(sv)) == SVt_PVAV)
 			return sv;
-		else if (sv_isa(sv, "PostgreSQL::InServer::ARRAY"))
+
+		/*
+		 * sv_isa() only reports the package the reference was blessed into,
+		 * so check the referent's type before casting it to HV.
+		 */
+		else if (SvTYPE(SvRV(sv)) == SVt_PVHV &&
+				 sv_isa(sv, "PostgreSQL::InServer::ARRAY"))
 		{
 			HV		   *hv = (HV *) SvRV(sv);
 			SV		  **sav = hv_fetch_string(hv, "array");
