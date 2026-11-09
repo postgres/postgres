@@ -555,3 +555,134 @@ SELECT (NULL::compositetable).a;
 SELECT (NULL::compositetable).oid;
 
 DROP TABLE compositetable;
+
+--
+-- Test for mutating the composite type while it's used in a FieldStore
+--
+
+-- Table, which we'll mutate concurrently with a updating an existing value
+-- of that type. We'll add BIGINT columns, which are unlikely to crash but
+-- could leak some data, and then TEXT columns, which are more likely to
+-- cause crashes.
+CREATE TABLE compositetable_type (a int);
+CREATE TABLE compositetable_holder (id int, c compositetable_type);
+INSERT INTO compositetable_holder VALUES (1, ROW(1)::compositetable_type);
+
+CREATE FUNCTION compositetable_grow() RETURNS int VOLATILE LANGUAGE plpgsql AS $$
+BEGIN
+  FOR i IN 1..100 LOOP
+    EXECUTE format('ALTER TABLE compositetable_type ADD COLUMN x%s bigint', i);
+  END LOOP;
+  RETURN 7;
+END $$;
+
+UPDATE compositetable_holder SET c.a = abs(compositetable_grow());
+
+SELECT c::text FROM compositetable_holder;
+
+CREATE OR REPLACE FUNCTION compositetable_grow() RETURNS int VOLATILE LANGUAGE plpgsql AS $$
+BEGIN
+  FOR i IN 1..100 LOOP
+    EXECUTE format('ALTER TABLE compositetable_type ADD COLUMN y%s text', i);
+  END LOOP;
+  RETURN 7;
+END $$;
+
+UPDATE compositetable_holder SET c.a = abs(compositetable_grow());
+
+SELECT c::text FROM compositetable_holder;
+
+DROP FUNCTION compositetable_grow();
+DROP TABLE compositetable_holder;
+DROP TABLE compositetable_type;
+
+-- Similar pattern, but we'll have an array of the composite type, so that
+-- we reach the code through SubscriptingRef.
+CREATE TABLE compositetable_type (a int);
+CREATE TABLE compositetable_holder (id int, c compositetable_type[]);
+INSERT INTO compositetable_holder VALUES (1, ARRAY[ROW(1)]::compositetable_type[]);
+
+CREATE FUNCTION compositetable_grow() RETURNS int VOLATILE LANGUAGE plpgsql AS $$
+BEGIN
+  FOR i IN 1..100 LOOP
+    EXECUTE format('ALTER TABLE compositetable_type ADD COLUMN y%s text', i);
+  END LOOP;
+  RETURN 7;
+END $$;
+
+UPDATE compositetable_holder SET c[1].a = abs(compositetable_grow());
+
+SELECT c::text FROM compositetable_holder;
+
+DROP FUNCTION compositetable_grow();
+DROP TABLE compositetable_holder;
+DROP TABLE compositetable_type;
+
+-- This time we start with a NULL value, and call the function from a WHERE
+-- condition, to trigger the NULL case in ExecEvalFieldStoreDeForm.
+CREATE TABLE compositetable_type (a int);
+CREATE TABLE compositetable_holder (id int, c compositetable_type);
+INSERT INTO compositetable_holder VALUES (1, NULL);
+
+CREATE FUNCTION compositetable_grow() RETURNS int VOLATILE LANGUAGE plpgsql AS $$
+BEGIN
+  FOR i IN 1..100 LOOP
+    EXECUTE format('ALTER TABLE compositetable_type ADD COLUMN y%s text', i);
+  END LOOP;
+  RETURN 7;
+END $$;
+
+-- This time we start with a NULL value to trigger the NULL case in
+-- ExecEvalFieldStoreDeForm. Mutate the type from the WHERE clause,
+-- because the new value won't be evaluated when starting from a NULL.
+UPDATE compositetable_holder SET c.a = 1 WHERE abs(compositetable_grow()) > 5;
+
+SELECT c::text FROM compositetable_holder;
+
+DROP FUNCTION compositetable_grow();
+DROP TABLE compositetable_holder;
+DROP TABLE compositetable_type;
+
+-- Two nested composite types.
+CREATE TABLE compositetable_type_1 (a int);
+CREATE TABLE compositetable_type_2 (id int, b compositetable_type_1);
+CREATE TABLE compositetable_holder (id int, c compositetable_type_2);
+INSERT INTO compositetable_holder VALUES (1, ROW(1, ROW(1)::compositetable_type_1)::compositetable_type_2);
+
+CREATE FUNCTION compositetable_grow() RETURNS int VOLATILE LANGUAGE plpgsql AS $$
+BEGIN
+  FOR i IN 1..100 LOOP
+    EXECUTE format('ALTER TABLE compositetable_type_1 ADD COLUMN y%s text', i);
+  END LOOP;
+  RETURN 7;
+END $$;
+
+UPDATE compositetable_holder SET c.b.a = abs(compositetable_grow());
+
+SELECT c::text FROM compositetable_holder;
+
+DROP FUNCTION compositetable_grow();
+DROP TABLE compositetable_holder;
+DROP TABLE compositetable_type_2;
+DROP TABLE compositetable_type_1;
+
+-- removing an attribute from a composite type
+CREATE TABLE compositetable_type_1 (a int, b int);
+CREATE TABLE compositetable_holder (v compositetable_type_1);
+INSERT INTO compositetable_holder VALUES (ROW(1, 2)::compositetable_type_1);
+
+CREATE FUNCTION compositetable_drop() RETURNS int LANGUAGE plpgsql AS $$
+BEGIN
+  EXECUTE 'ALTER TABLE compositetable_type_1 DROP COLUMN b';
+  RETURN 12345;
+END $$;
+
+-- assign to v.b while b is dropped - the value disappears
+UPDATE compositetable_holder SET v.b = compositetable_drop();
+
+-- 12345 is nowhere to be found
+SELECT v::text AS stored_value FROM compositetable_holder;
+
+DROP FUNCTION compositetable_drop();
+DROP TABLE compositetable_holder;
+DROP TABLE compositetable_type_1;
