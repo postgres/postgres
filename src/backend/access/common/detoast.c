@@ -21,6 +21,7 @@
 #include "common/int.h"
 #include "common/pg_lzcompress.h"
 #include "utils/expandeddatum.h"
+#include "utils/memutils.h"
 #include "utils/rel.h"
 
 static varlena *toast_fetch_datum(varlena *attr);
@@ -46,6 +47,14 @@ varlena *
 detoast_external_attr(varlena *attr)
 {
 	varlena    *result;
+
+	/*
+	 * It's critical that the stored varlena mask does not allow for toast
+	 * objects bigger than what can be allocated with palloc; otherwise,
+	 * buffer overflows can be caused by adversarial toast objects.
+	 */
+	StaticAssertExpr(VARLENA_EXTSIZE_MASK <= MaxAllocSize,
+					 "VARLENA_EXTSIZE_MASK is too big");
 
 	if (VARATT_IS_EXTERNAL_ONDISK(attr))
 	{

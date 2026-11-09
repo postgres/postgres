@@ -2009,6 +2009,12 @@ table_relation_fetch_toast_slice(Relation toastrel, Oid8 valueid,
 								 int32 attrsize, int32 sliceoffset,
 								 int32 slicelength, varlena *result)
 {
+	if (attrsize < 0 || sliceoffset < 0 || slicelength < 0)
+		elog(ERROR, "invalid toast slice: offset %d, length %d, value size %d",
+			 sliceoffset, slicelength, attrsize);
+	if (slicelength > attrsize - sliceoffset)
+		elog(ERROR, "slice length is too big");
+
 	toastrel->rd_tableam->relation_fetch_toast_slice(toastrel, valueid,
 													 attrsize,
 													 sliceoffset, slicelength,
