@@ -1,15 +1,16 @@
 # Traditional Chinese message translation file for pg_dump
+# Copyright (C) 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# 2004-12-13 Zhenbang Wei <znbang@gmail.com>
-# Ruohang Feng <rh@vonng.com>, 2026.
+# Zhenbang Wei <znbang@gmail.com>, 2004-12-13.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-18 04:24+0000\n"
-"PO-Revision-Date: 2026-09-20 12:27+0800\n"
+"POT-Creation-Date: 2026-11-03 15:52+0000\n"
+"PO-Revision-Date: 2026-11-04 08:45+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
@@ -40,8 +41,8 @@ msgid "hint: "
 msgstr "提示: "
 
 #: ../../common/compression.c:176 ../../common/compression.c:185
-#: ../../common/compression.c:194 compress_gzip.c:453 compress_gzip.c:460
-#: compress_io.c:108 compress_lz4.c:795 compress_lz4.c:802 compress_zstd.c:26
+#: ../../common/compression.c:194 compress_gzip.c:455 compress_gzip.c:462
+#: compress_io.c:108 compress_lz4.c:823 compress_lz4.c:830 compress_zstd.c:26
 #: compress_zstd.c:32
 #, c-format
 msgid "this build does not support compression with %s"
@@ -561,122 +562,129 @@ msgstr "無法初始化壓縮程式庫: %s"
 msgid "could not close compression stream: %s"
 msgstr "無法關閉壓縮串流: %s"
 
-#: compress_gzip.c:122 compress_lz4.c:235 compress_zstd.c:109
+#: compress_gzip.c:122 compress_lz4.c:246 compress_zstd.c:110
 #, c-format
 msgid "could not compress data: %s"
 msgstr "無法壓縮資料: %s"
 
-#: compress_gzip.c:208 compress_gzip.c:223
+#: compress_gzip.c:208 compress_gzip.c:224
 #, c-format
 msgid "could not uncompress data: %s"
 msgstr "無法解壓縮資料: %s"
 
-#: compress_gzip.c:230
+#: compress_gzip.c:232
 #, c-format
 msgid "could not close compression library: %s"
 msgstr "無法關閉壓縮程式庫: %s"
 
 # input.c:210
-#: compress_gzip.c:290 compress_lz4.c:495 compress_lz4.c:567 compress_lz4.c:584
+#: compress_gzip.c:292 compress_lz4.c:490 compress_lz4.c:516 compress_lz4.c:589
+#: compress_lz4.c:606
 #, c-format
 msgid "could not read from input file: %s"
 msgstr "無法從輸入檔讀取: %s"
 
 # postmaster/syslogger.c:703
-#: compress_gzip.c:307 compress_zstd.c:377
+#: compress_gzip.c:309 compress_zstd.c:432
 #, c-format
 msgid "could not write to file: %s"
 msgstr "無法寫入檔案: %s"
 
 # input.c:210
-#: compress_gzip.c:323 compress_lz4.c:470 compress_none.c:154
-#: compress_none.c:195 compress_zstd.c:313 pg_backup_custom.c:657
+#: compress_gzip.c:325 compress_lz4.c:481 compress_none.c:154
+#: compress_none.c:195 compress_zstd.c:342 pg_backup_custom.c:657
 #, c-format
 msgid "could not read from input file: %m"
 msgstr "無法從輸入檔讀取: %m"
 
 # input.c:210
-#: compress_gzip.c:325 compress_lz4.c:586 compress_none.c:197
-#: compress_zstd.c:400 pg_backup_custom.c:655 pg_backup_directory.c:515
+#: compress_gzip.c:327 compress_lz4.c:608 compress_none.c:197
+#: compress_zstd.c:455 pg_backup_custom.c:655 pg_backup_directory.c:515
 #: pg_backup_tar.c:740 pg_backup_tar.c:763
 #, c-format
 msgid "could not read from input file: end of file"
 msgstr "無法從輸入檔讀取: 檔案結束"
 
 # libpq/be-secure.c:649
-#: compress_lz4.c:166
+#: compress_lz4.c:173
 #, c-format
 msgid "could not create LZ4 decompression context: %s"
 msgstr "無法建立 LZ4 解壓縮上下文: %s"
 
-#: compress_lz4.c:188
+#: compress_lz4.c:195
 #, c-format
 msgid "could not decompress: %s"
 msgstr "無法解壓縮: %s"
 
-#: compress_lz4.c:201
+#: compress_lz4.c:205 compress_zstd.c:230
+#, c-format
+msgid "could not decompress data: compressed stream is incomplete"
+msgstr "無法解壓縮資料：壓縮串流不完整"
+
+#: compress_lz4.c:212
 #, c-format
 msgid "could not free LZ4 decompression context: %s"
 msgstr "無法釋放 LZ4 解壓縮上下文: %s"
 
-#: compress_lz4.c:269 compress_lz4.c:278 compress_lz4.c:659 compress_lz4.c:677
+#: compress_lz4.c:280 compress_lz4.c:289 compress_lz4.c:682 compress_lz4.c:700
 #, c-format
 msgid "could not end compression: %s"
 msgstr "無法結束壓縮: %s"
 
-#: compress_lz4.c:313
+#: compress_lz4.c:324
 #, c-format
 msgid "could not initialize LZ4 compression: %s"
 msgstr "無法初始化 LZ4 壓縮: %s"
 
-#: compress_lz4.c:418 compress_lz4.c:519
+#: compress_lz4.c:429 compress_lz4.c:541
 #, c-format
 msgid "unable to initialize LZ4 library: %s"
 msgstr "無法初始化 LZ4 程式庫: %s"
 
-#: compress_lz4.c:539
+#: compress_lz4.c:561
 #, c-format
 msgid "error during writing: %m"
 msgstr "寫入過程中發生錯誤: %m"
 
-#: compress_lz4.c:549
+#: compress_lz4.c:571
 #, c-format
 msgid "error during writing: %s"
 msgstr "寫入過程中發生錯誤: %s"
 
-#: compress_lz4.c:647 compress_lz4.c:670
+#: compress_lz4.c:670 compress_lz4.c:693
 #, c-format
 msgid "could not write to output file: %m"
 msgstr "無法寫入輸出檔: %m"
 
-#: compress_lz4.c:687
+#: compress_lz4.c:715
 #, c-format
 msgid "could not end decompression: %s"
 msgstr "無法結束解壓縮: %s"
 
-#: compress_lz4.c:704 compress_none.c:216
+#: compress_lz4.c:732 compress_none.c:216
 #, c-format
 msgid "could not close file: %m"
 msgstr "無法關閉檔案: %m"
 
 # commands/copy.c:312
-#: compress_none.c:169 compress_zstd.c:387
+#: compress_none.c:169 compress_zstd.c:442
 #, c-format
 msgid "could not write to file: %m"
 msgstr "無法寫入檔案: %m"
 
-#: compress_zstd.c:67
+#: compress_zstd.c:68
 #, c-format
 msgid "could not set compression parameter \"%s\": %s"
 msgstr "無法設定壓縮參數 \"%s\": %s"
 
-#: compress_zstd.c:79 compress_zstd.c:232 compress_zstd.c:281
-#: compress_zstd.c:369
+#: compress_zstd.c:80 compress_zstd.c:261 compress_zstd.c:310
+#: compress_zstd.c:424
 #, c-format
 msgid "could not initialize compression library"
 msgstr "無法初始化壓縮程式庫"
 
-#: compress_zstd.c:195 compress_zstd.c:334
+#: compress_zstd.c:197 compress_zstd.c:225 compress_zstd.c:361
+#: compress_zstd.c:370 compress_zstd.c:387
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "無法解壓縮資料: %s"
@@ -1187,12 +1195,12 @@ msgstr "無法開啟 stdout 以追加內容: %m"
 msgid "unrecognized file format \"%d\""
 msgstr "無法辨識的檔案格式 \"%d\""
 
-#: pg_backup_archiver.c:2568 pg_backup_archiver.c:4846
+#: pg_backup_archiver.c:2568 pg_backup_archiver.c:4848
 #, c-format
 msgid "finished item %d %s %s"
 msgstr "已完成項目 %d %s %s"
 
-#: pg_backup_archiver.c:2572 pg_backup_archiver.c:4859
+#: pg_backup_archiver.c:2572 pg_backup_archiver.c:4861
 #, c-format
 msgid "worker process failed: exit code %d"
 msgstr "工作行程失敗: 結束碼 %d"
@@ -1270,104 +1278,104 @@ msgstr "找不到觸發器 \"%s\""
 msgid "could not set session user to \"%s\": %s"
 msgstr "無法將工作階段使用者設為 \"%s\": %s"
 
-#: pg_backup_archiver.c:3661
+#: pg_backup_archiver.c:3663
 #, c-format
 msgid "could not set \"search_path\" to \"%s\": %s"
 msgstr "無法將 \"search_path\" 設為 \"%s\": %s"
 
 # access/transam/slru.c:930 commands/tablespace.c:529
 # commands/tablespace.c:694 utils/adt/misc.c:174
-#: pg_backup_archiver.c:3722
+#: pg_backup_archiver.c:3724
 #, c-format
 msgid "could not set \"default_tablespace\" to %s: %s"
 msgstr "無法將 \"default_tablespace\" 設為 %s: %s"
 
-#: pg_backup_archiver.c:3771
+#: pg_backup_archiver.c:3773
 #, c-format
 msgid "could not set \"default_table_access_method\": %s"
 msgstr "無法設定 \"default_table_access_method\": %s"
 
-#: pg_backup_archiver.c:3820
+#: pg_backup_archiver.c:3822
 #, c-format
 msgid "could not alter table access method: %s"
 msgstr "無法修改資料表存取方法: %s"
 
-#: pg_backup_archiver.c:3921
+#: pg_backup_archiver.c:3923
 #, c-format
 msgid "don't know how to set owner for object type \"%s\""
 msgstr "不知道如何設定物件型別 \"%s\" 的擁有者"
 
-#: pg_backup_archiver.c:4056
+#: pg_backup_archiver.c:4058
 #, c-format
 msgid "unexpected TOC entry in _printTocEntry(): %d %s %s"
 msgstr "_printTocEntry() 中出現非預期的 TOC 項目: %d %s %s"
 
-#: pg_backup_archiver.c:4204
+#: pg_backup_archiver.c:4206
 #, c-format
 msgid "did not find magic string in file header"
 msgstr "檔案標頭中找不到魔術字串"
 
-#: pg_backup_archiver.c:4218
+#: pg_backup_archiver.c:4220
 #, c-format
 msgid "unsupported version (%d.%d) in file header"
 msgstr "檔案標頭中的版本不受支援(%d.%d)"
 
-#: pg_backup_archiver.c:4223
+#: pg_backup_archiver.c:4225
 #, c-format
 msgid "sanity check on integer size (%zu) failed"
 msgstr "整數大小(%zu)的完整性檢查失敗"
 
-#: pg_backup_archiver.c:4226
+#: pg_backup_archiver.c:4228
 #, c-format
 msgid "archive was made on a machine with larger integers, some operations might fail"
 msgstr "封存檔是在支援較大整數的電腦上建立的，某些操作可能會失敗"
 
-#: pg_backup_archiver.c:4236
+#: pg_backup_archiver.c:4238
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)"
 msgstr "預期的格式(%d)與檔案中找到的格式(%d)不同"
 
-#: pg_backup_archiver.c:4258
+#: pg_backup_archiver.c:4260
 #, c-format
 msgid "archive is compressed, but this installation does not support compression (%s) -- no data will be available"
 msgstr "封存檔已壓縮，但此安裝不支援壓縮(%s) -- 將沒有可用資料"
 
-#: pg_backup_archiver.c:4294
+#: pg_backup_archiver.c:4296
 #, c-format
 msgid "invalid creation date in header"
 msgstr "標頭中的建立日期無效"
 
-#: pg_backup_archiver.c:4428
+#: pg_backup_archiver.c:4430
 #, c-format
 msgid "processing item %d %s %s"
 msgstr "處理項目 %d %s %s"
 
-#: pg_backup_archiver.c:4513
+#: pg_backup_archiver.c:4515
 #, c-format
 msgid "entering main parallel loop"
 msgstr "進入主要並行迴圈"
 
-#: pg_backup_archiver.c:4524
+#: pg_backup_archiver.c:4526
 #, c-format
 msgid "skipping item %d %s %s"
 msgstr "跳過項目 %d %s %s"
 
-#: pg_backup_archiver.c:4533
+#: pg_backup_archiver.c:4535
 #, c-format
 msgid "launching item %d %s %s"
 msgstr "啟動項目 %d %s %s"
 
-#: pg_backup_archiver.c:4587
+#: pg_backup_archiver.c:4589
 #, c-format
 msgid "finished main parallel loop"
 msgstr "完成主要並行迴圈"
 
-#: pg_backup_archiver.c:4623
+#: pg_backup_archiver.c:4625
 #, c-format
 msgid "processing missed item %d %s %s"
 msgstr "處理遺漏的項目 %d %s %s"
 
-#: pg_backup_archiver.c:5165
+#: pg_backup_archiver.c:5167
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data"
 msgstr "無法建立資料表 \"%s\"，將不會還原其資料"
@@ -2358,8 +2366,8 @@ msgstr "讀取列層級安全政策"
 msgid "unexpected policy command type: %c"
 msgstr "非預期的政策命令型別: %c"
 
-#: pg_dump.c:4981 pg_dump.c:5597 pg_dump.c:8228 pg_dump.c:13781 pg_dump.c:20294
-#: pg_dump.c:20296 pg_dump.c:20926
+#: pg_dump.c:4981 pg_dump.c:5597 pg_dump.c:8228 pg_dump.c:13781 pg_dump.c:20302
+#: pg_dump.c:20304 pg_dump.c:20934
 #, c-format
 msgid "could not parse %s array"
 msgstr "無法解析 %s 陣列"
@@ -2399,7 +2407,7 @@ msgstr "OID 為 %u 的 schema 不存在"
 msgid "cannot dump statistics for relation kind \"%c\""
 msgstr "不能備份關聯種類 \"%c\" 的統計資訊"
 
-#: pg_dump.c:7763 pg_dump.c:19621
+#: pg_dump.c:7763 pg_dump.c:19629
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "完整性檢查失敗，找不到 OID 為 %u 的父資料表(序列 OID 為 %u)"
@@ -2633,18 +2641,18 @@ msgid "invalid column number %d for table \"%s\""
 msgstr "資料表 \"%2$s\" 的欄位編號 %1$d 無效"
 
 # postmaster/pgstat.c:1908
-#: pg_dump.c:18496
+#: pg_dump.c:18441
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "無法解析索引統計欄位"
 
 # postmaster/pgstat.c:2234
-#: pg_dump.c:18498
+#: pg_dump.c:18443
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "無法解析索引統計值"
 
-#: pg_dump.c:18500
+#: pg_dump.c:18445
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "索引統計欄位和值的數量不一致"
@@ -2667,17 +2675,17 @@ msgstr "索引統計欄位和值的數量不一致"
 # utils/adt/timestamp.c:3595 utils/adt/timestamp.c:3862
 # utils/adt/timestamp.c:3869 utils/adt/timestamp.c:3897
 # utils/adt/timestamp.c:3901
-#: pg_dump.c:18912
+#: pg_dump.c:18917
 #, c-format
 msgid "inherited cannot be NULL"
 msgstr "inherited 不能是 NULL"
 
-#: pg_dump.c:19009
+#: pg_dump.c:19014
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "缺少條件約束 \"%s\" 的索引"
 
-#: pg_dump.c:19278
+#: pg_dump.c:19286
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "無法識別的條件約束型別: %c"
@@ -2685,12 +2693,12 @@ msgstr "無法識別的條件約束型別: %c"
 # utils/adt/acl.c:1261 utils/adt/acl.c:1486 utils/adt/acl.c:1698
 # utils/adt/acl.c:1902 utils/adt/acl.c:2106 utils/adt/acl.c:2315
 # utils/adt/acl.c:2516
-#: pg_dump.c:19331
+#: pg_dump.c:19339
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "無法識別的序列型別: %s"
 
-#: pg_dump.c:19464 pg_dump.c:19702
+#: pg_dump.c:19472 pg_dump.c:19710
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
@@ -2699,43 +2707,43 @@ msgstr[0] "取得序列 \"%s\" 資料的查詢傳回 %d 筆資料(預期 1 筆)"
 # utils/adt/acl.c:1261 utils/adt/acl.c:1486 utils/adt/acl.c:1698
 # utils/adt/acl.c:1902 utils/adt/acl.c:2106 utils/adt/acl.c:2315
 # utils/adt/acl.c:2516
-#: pg_dump.c:19500
+#: pg_dump.c:19508
 #, c-format
 msgid "unrecognized sequence type: %d"
 msgstr "無法識別的序列型別: %d"
 
-#: pg_dump.c:19725
+#: pg_dump.c:19733
 #, c-format
 msgid "failed to get data for sequence \"%s\"; user may lack SELECT privilege on the sequence or the sequence may have been concurrently dropped"
 msgstr "無法取得序列 \"%s\" 的資料；使用者可能缺少該序列的 SELECT 權限，或者該序列可能已被並行刪除"
 
-#: pg_dump.c:20046
+#: pg_dump.c:20054
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "取得資料表 \"%2$s\" 的規則 \"%1$s\" 的查詢失敗: 傳回的資料筆數錯誤"
 
 # catalog/dependency.c:152
-#: pg_dump.c:20199
+#: pg_dump.c:20207
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "找不到被參考的擴充模組 %u"
 
-#: pg_dump.c:20298
+#: pg_dump.c:20306
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "擴充模組的組態和條件數量不一致"
 
-#: pg_dump.c:20430
+#: pg_dump.c:20438
 #, c-format
 msgid "reading dependency data"
 msgstr "讀取相依性資料"
 
-#: pg_dump.c:20516
+#: pg_dump.c:20524
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "沒有發起參考的物件 %u %u"
 
-#: pg_dump.c:20527
+#: pg_dump.c:20535
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "沒有被參考物件 %u %u"
@@ -2743,7 +2751,7 @@ msgstr "沒有被參考物件 %u %u"
 # commands/comment.c:1048 commands/indexcmds.c:216 commands/opclasscmds.c:108
 # commands/opclasscmds.c:648 commands/opclasscmds.c:800
 # commands/opclasscmds.c:900
-#: pg_dump.c:20960 pg_dump.c:20998 pg_dumpall.c:1858 pg_restore.c:642
+#: pg_dump.c:20968 pg_dump.c:21006 pg_dumpall.c:1858 pg_restore.c:642
 #: pg_restore.c:688
 #, c-format
 msgid "%s filter for \"%s\" is not allowed"

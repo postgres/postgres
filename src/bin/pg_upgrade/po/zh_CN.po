@@ -1,15 +1,16 @@
 # Simplified Chinese message translation file for pg_upgrade
-# Copyright (C) 2019 PostgreSQL Global Development Group
+# Copyright (C) 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
+#
 # Jie Zhang <zhangjie2@fujitsu.com>, 2019.
-# Ruohang Feng <rh@vonng.com>, 2026.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-23 14:52+0000\n"
-"PO-Revision-Date: 2026-09-23 23:11+0800\n"
+"POT-Creation-Date: 2026-11-03 15:50+0000\n"
+"PO-Revision-Date: 2026-11-04 08:45+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
@@ -877,17 +878,17 @@ msgstr ""
 "所有名称无效的对象列在以下文件中:\n"
 "    %s"
 
-#: check.c:2761
+#: check.c:2770
 #, c-format
 msgid "Checking oldestXID and oldestMultiXid consistency"
 msgstr "正在检查 oldestXID 和 oldestMultiXid 的一致性"
 
-#: check.c:2782
+#: check.c:2791
 #, c-format
 msgid "oldestXID (%u) in the control file is newer than the datfrozenxid (%u) of database \"%s\""
 msgstr "控制文件中的 oldestXID（%1$u）晚于数据库 \"%3$s\" 的 datfrozenxid（%2$u）"
 
-#: check.c:2787
+#: check.c:2796
 #, c-format
 msgid "oldestMultiXid (%u) in control file is newer than the datminmxid (%u) of database \"%s\""
 msgstr "控制文件中的 oldestMultiXid（%1$u）晚于数据库 \"%3$s\" 的 datminmxid（%2$u）"
@@ -1545,12 +1546,12 @@ msgstr "数据库中的逻辑复制槽:"
 msgid "slot name: \"%s\", output plugin: \"%s\", two_phase: %s"
 msgstr "槽名: \"%s\", 输出插件: \"%s\", two_phase: %s"
 
-#: multixact_read_v18.c:264
+#: multixact_read_v18.c:269
 #, c-format
 msgid "multixact %u has an invalid length (%d)"
 msgstr "多事务 %u 的长度无效（%d）"
 
-#: multixact_read_v18.c:335
+#: multixact_read_v18.c:340
 #, c-format
 msgid "multixact %u has more than one updating member"
 msgstr "多事务 %u 有不止一个执行更新的成员"

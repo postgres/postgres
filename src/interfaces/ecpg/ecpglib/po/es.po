@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-06 23:09+0000\n"
+"POT-Creation-Date: 2026-11-07 12:40+0000\n"
 "PO-Revision-Date: 2024-11-16 14:23+0100\n"
 "Last-Translator: Emanuel Calvo Franco <postgres-arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -22,11 +22,11 @@ msgstr ""
 msgid "empty message text"
 msgstr "mensaje de texto vacío"
 
-#: connect.c:391 connect.c:653
+#: connect.c:393 connect.c:665
 msgid "<DEFAULT>"
 msgstr "<POR OMISIÓN>"
 
-#: descriptor.c:866 misc.c:88
+#: descriptor.c:485 descriptor.c:883 misc.c:88
 msgid "NULL"
 msgstr "NULL"
 
@@ -122,79 +122,86 @@ msgstr "la inserción de un array de variables no está soportado en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:137
+#, fuzzy, c-format
+#| msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgid "invalid input syntax for type bytea: \"%s\", on line %d"
+msgstr "sintaxis de entrada no válida para el tipo entero: «%s», en línea %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
 #, c-format
 msgid "connection \"%s\" does not exist on line %d"
 msgstr "conexión «%s» no existe en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:144
+#: error.c:151
 #, c-format
 msgid "not connected to connection \"%s\" on line %d"
 msgstr "no conectada a la conexión «%s» en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:151
+#: error.c:158
 #, c-format
 msgid "invalid statement name \"%s\" on line %d"
 msgstr "nombre sentencia no válida «%s» en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:158
+#: error.c:165
 #, c-format
 msgid "descriptor \"%s\" not found on line %d"
 msgstr "descriptor «%s» no encontrado en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:165
+#: error.c:172
 #, c-format
 msgid "descriptor index out of range on line %d"
 msgstr "índice de descriptor fuera de rango en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:172
+#: error.c:179
 #, c-format
 msgid "unrecognized descriptor item \"%s\" on line %d"
 msgstr "elemento de descriptor no reconocido «%s» en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:179
+#: error.c:186
 #, c-format
 msgid "variable does not have a numeric type on line %d"
 msgstr "la variable no tiene un tipo numérico en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:186
+#: error.c:193
 #, c-format
 msgid "variable does not have a character type on line %d"
 msgstr "la variable no tiene un tipo textual en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:193
+#: error.c:200
 #, c-format
 msgid "error in transaction processing on line %d"
 msgstr "error en el procesamiento de transacción en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:200
+#: error.c:207
 #, c-format
 msgid "could not connect to database \"%s\" on line %d"
 msgstr "no se pudo conectar a la base de datos «%s» en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
-#: error.c:207
+#: error.c:214
 #, c-format
 msgid "SQL error %d on line %d"
 msgstr "error SQL %d en línea %d"
 
-#: error.c:253
+#: error.c:260
 msgid "the connection to the server was lost"
 msgstr "se ha perdido la conexión al servidor"
 
-#: error.c:345
+#: error.c:352
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "error SQL: %s\n"
 
-#: execute.c:2189 execute.c:2196
+#: execute.c:2209 execute.c:2216
 msgid "<empty>"
 msgstr "<vacío>"

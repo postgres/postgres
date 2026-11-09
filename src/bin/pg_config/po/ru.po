@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-08-05 06:37+0300\n"
+"POT-Creation-Date: 2026-09-25 22:46+0300\n"
 "PO-Revision-Date: 2026-08-05 07:49+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -28,47 +28,47 @@ msgstr ""
 msgid "not recorded"
 msgstr "не записано"
 
-#: ../../common/exec.c:174
+#: ../../common/exec.c:175
 #, c-format
 msgid "invalid binary \"%s\": %m"
 msgstr "неверный исполняемый файл \"%s\": %m"
 
-#: ../../common/exec.c:217
+#: ../../common/exec.c:218
 #, c-format
 msgid "could not read binary \"%s\": %m"
 msgstr "не удалось прочитать исполняемый файл \"%s\": %m"
 
-#: ../../common/exec.c:225
+#: ../../common/exec.c:226
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "не удалось найти запускаемый файл \"%s\""
 
-#: ../../common/exec.c:252
+#: ../../common/exec.c:253
 #, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
 msgstr "не удалось преобразовать относительный путь \"%s\" в абсолютный: %m"
 
-#: ../../common/exec.c:363
+#: ../../common/exec.c:364
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "не удалось выполнить команду \"%s\": %m"
 
-#: ../../common/exec.c:375
+#: ../../common/exec.c:376
 #, c-format
 msgid "could not read from command \"%s\": %m"
 msgstr "не удалось прочитать вывод команды \"%s\": %m"
 
-#: ../../common/exec.c:378
+#: ../../common/exec.c:379
 #, c-format
 msgid "no data was returned by command \"%s\""
 msgstr "команда \"%s\" не выдала данные"
 
-#: ../../common/exec.c:405
+#: ../../common/exec.c:406
 #, c-format
 msgid "%s() failed: %m"
 msgstr "ошибка в %s(): %m"
 
-#: ../../common/exec.c:543 ../../common/exec.c:588 ../../common/exec.c:680
+#: ../../common/exec.c:544 ../../common/exec.c:589 ../../common/exec.c:681
 msgid "out of memory"
 msgstr "нехватка памяти"
 

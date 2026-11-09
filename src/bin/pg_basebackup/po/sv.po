@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-08-13 15:54+0000\n"
-"PO-Revision-Date: 2026-08-13 19:45+0200\n"
+"POT-Creation-Date: 2026-10-17 01:50+0000\n"
+"PO-Revision-Date: 2026-10-17 06:23+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -38,10 +38,10 @@ msgid "hint: "
 msgstr "tips: "
 
 #: ../../common/compression.c:176 ../../common/compression.c:185
-#: ../../common/compression.c:194 ../../fe_utils/astreamer_gzip.c:140
-#: ../../fe_utils/astreamer_gzip.c:275 ../../fe_utils/astreamer_lz4.c:102
-#: ../../fe_utils/astreamer_lz4.c:302 ../../fe_utils/astreamer_zstd.c:130
-#: ../../fe_utils/astreamer_zstd.c:285
+#: ../../common/compression.c:194 ../../fe_utils/astreamer_gzip.c:141
+#: ../../fe_utils/astreamer_gzip.c:277 ../../fe_utils/astreamer_lz4.c:103
+#: ../../fe_utils/astreamer_lz4.c:304 ../../fe_utils/astreamer_zstd.c:131
+#: ../../fe_utils/astreamer_zstd.c:287
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "detta bygge stöder inte komprimering med %s"
@@ -283,69 +283,86 @@ msgstr "kunde inte skapa symbolisk länk från \"%s\" till \"%s\": %m"
 msgid "could not set permissions on file \"%s\": %m"
 msgstr "kunde inte sätta rättigheter på filen \"%s\": %m"
 
-#: ../../fe_utils/astreamer_gzip.c:115
+#: ../../fe_utils/astreamer_gzip.c:116
 #, c-format
 msgid "could not create compressed file \"%s\": %m"
 msgstr "kunde inte skapa komprimerad fil \"%s\": %m"
 
-#: ../../fe_utils/astreamer_gzip.c:127
+#: ../../fe_utils/astreamer_gzip.c:128
 #, c-format
 msgid "could not duplicate stdout: %m"
 msgstr "kunde inte duplicera stdout: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:131
+#: ../../fe_utils/astreamer_gzip.c:132
 #, c-format
 msgid "could not open output file: %m"
 msgstr "kunde inte öppna utdatafilen: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:135
+#: ../../fe_utils/astreamer_gzip.c:136
 #, c-format
 msgid "could not set compression level %d: %s"
 msgstr "kunde inte sätta komprimeringsnivå %d: %s"
 
-#: ../../fe_utils/astreamer_gzip.c:167
+#: ../../fe_utils/astreamer_gzip.c:168
 #, c-format
 msgid "could not write to compressed file \"%s\": %s"
 msgstr "kunde inte skriva till komprimerad fil \"%s\": %s"
 
-#: ../../fe_utils/astreamer_gzip.c:191
+#: ../../fe_utils/astreamer_gzip.c:192
 #, c-format
 msgid "could not close compressed file \"%s\": %m"
 msgstr "kunde inte stänga komprimerad fil \"%s\": %m"
 
-#: ../../fe_utils/astreamer_gzip.c:271 walmethods.c:880
+#: ../../fe_utils/astreamer_gzip.c:272 walmethods.c:880
 #, c-format
 msgid "could not initialize compression library"
 msgstr "kunde inte initierar komprimeringsbibliotek"
 
-#: ../../fe_utils/astreamer_gzip.c:322 ../../fe_utils/astreamer_lz4.c:358
-#: ../../fe_utils/astreamer_zstd.c:330
+#: ../../fe_utils/astreamer_gzip.c:328 ../../fe_utils/astreamer_lz4.c:360
+#: ../../fe_utils/astreamer_zstd.c:332 ../../fe_utils/astreamer_zstd.c:374
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "kunde inte dekomprimera data: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:97
+#: ../../fe_utils/astreamer_gzip.c:349 walmethods.c:755
+#, c-format
+msgid "could not reset compression stream"
+msgstr "kunde inte nollställa komprimeringsström"
+
+#: ../../fe_utils/astreamer_gzip.c:364 ../../fe_utils/astreamer_lz4.c:407
+#: ../../fe_utils/astreamer_zstd.c:385
+#, c-format
+msgid "could not decompress data: compressed stream is empty"
+msgstr "kunde inte dekomprimera data: den komprimerade strömmen är tom"
+
+#: ../../fe_utils/astreamer_gzip.c:366 ../../fe_utils/astreamer_lz4.c:409
+#: ../../fe_utils/astreamer_zstd.c:387
+#, c-format
+msgid "could not decompress data: compressed stream is incomplete"
+msgstr "kunde inte dekomprimera data: den komprimerade strömmen är ofullständig"
+
+#: ../../fe_utils/astreamer_lz4.c:98
 #, c-format
 msgid "could not create lz4 compression context: %s"
 msgstr "kunde inte skapa kontext för lz4-komprimering: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:142
+#: ../../fe_utils/astreamer_lz4.c:143
 #, c-format
 msgid "could not write lz4 header: %s"
 msgstr "kunde inte skriva lz4-header: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:182
-#: ../../fe_utils/astreamer_zstd.c:224
+#: ../../fe_utils/astreamer_lz4.c:192 ../../fe_utils/astreamer_zstd.c:183
+#: ../../fe_utils/astreamer_zstd.c:225
 #, c-format
 msgid "could not compress data: %s"
 msgstr "kunde inte komprimera data: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:243
+#: ../../fe_utils/astreamer_lz4.c:244
 #, c-format
 msgid "could not end lz4 compression: %s"
 msgstr "kunde inte avsluta lz4-komprimering: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:297
+#: ../../fe_utils/astreamer_lz4.c:298
 #, c-format
 msgid "could not initialize compression library: %s"
 msgstr "kunde inte initiera komprimeringsbibliotek: %s"
@@ -375,27 +392,27 @@ msgstr "pax-utökning av tar-formatet stöds inte"
 msgid "COPY stream ended before last file was finished"
 msgstr "COPY-ström avslutade innan sista filen var klar"
 
-#: ../../fe_utils/astreamer_zstd.c:89
+#: ../../fe_utils/astreamer_zstd.c:90
 #, c-format
 msgid "could not create zstd compression context"
 msgstr "kunde inte skapa kontext för zstd-komprimering"
 
-#: ../../fe_utils/astreamer_zstd.c:95
+#: ../../fe_utils/astreamer_zstd.c:96
 #, c-format
 msgid "could not set zstd compression level to %d: %s"
 msgstr "kunde inte sätta zstd-komprimeringsnivå till %d: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:109
+#: ../../fe_utils/astreamer_zstd.c:110
 #, c-format
 msgid "could not set compression worker count to %d: %s"
 msgstr "kunde inte sätta komprimeringsarbetarantalet till %d: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:119
+#: ../../fe_utils/astreamer_zstd.c:120
 #, c-format
 msgid "could not enable long-distance mode: %s"
 msgstr "kunde inte aktivera långdistansläge: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:276
+#: ../../fe_utils/astreamer_zstd.c:277
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "kunde inte skapa kontext för zstd-dekomprimering"
@@ -2781,10 +2798,6 @@ msgstr "kunde inte slänga replikeringsslot \"%s\": fick %d rader och %d fält, 
 #: walmethods.c:726 walmethods.c:1269
 msgid "could not compress data"
 msgstr "kunde inte komprimera data"
-
-#: walmethods.c:755
-msgid "could not reset compression stream"
-msgstr "kunde inte nollställa komprimeringsström"
 
 #: walmethods.c:892
 msgid "implementation error: tar files can't have more than one open file"

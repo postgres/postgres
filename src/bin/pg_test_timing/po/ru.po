@@ -1,13 +1,13 @@
 # Russian message translation file for pg_test_timing
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2021, 2024.
+# SPDX-FileCopyrightText: 2017, 2021, 2024, 2026 Alexander Lakhin <a.lakhin@postgrespro.ru>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-09-02 09:29+0300\n"
-"PO-Revision-Date: 2024-09-04 19:59+0300\n"
+"POT-Creation-Date: 2026-09-25 22:46+0300\n"
+"PO-Revision-Date: 2026-10-10 21:04+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -17,82 +17,213 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
 
-#: pg_test_timing.c:59
+#: ../../common/fe_memutils.c:209
 #, c-format
-msgid "Usage: %s [-d DURATION]\n"
-msgstr "Использование: %s [-d ДЛИТЕЛЬНОСТЬ]\n"
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu + %zu\n"
 
-#: pg_test_timing.c:81
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "недопустимый размер в запросе на выделение памяти: %zu * %zu\n"
+
+#: pg_test_timing.c:79
+#, c-format
+msgid "Usage: %s [-c CUTOFF] [-d DURATION]\n"
+msgstr "Использование: %s [-c ОТСЕЧКА] [-d ДЛИТЕЛЬНОСТЬ]\n"
+
+#: pg_test_timing.c:100 pg_test_timing.c:121
 #, c-format
 msgid "%s: invalid argument for option %s\n"
 msgstr "%s: недопустимый аргумент параметра %s\n"
 
-#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
+#: pg_test_timing.c:102 pg_test_timing.c:123 pg_test_timing.c:137
+#: pg_test_timing.c:149
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_test_timing.c:90
+#: pg_test_timing.c:108 pg_test_timing.c:130
 #, c-format
 msgid "%s: %s must be in range %u..%u\n"
 msgstr "%s: параметр %s должен быть в диапазоне %u..%u\n"
 
-#: pg_test_timing.c:107
+#: pg_test_timing.c:147
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
 
-#: pg_test_timing.c:115
+#: pg_test_timing.c:154
 #, c-format
-msgid "Testing timing overhead for %u second.\n"
-msgid_plural "Testing timing overhead for %u seconds.\n"
+msgid ""
+"Testing timing overhead for %u second.\n"
+"\n"
+msgid_plural ""
+"Testing timing overhead for %u seconds.\n"
+"\n"
 msgstr[0] "Оценка издержек замеров времени в течение %u сек.\n"
 msgstr[1] "Оценка издержек замеров времени в течение %u сек.\n"
 msgstr[2] "Оценка издержек замеров времени в течение %u сек.\n"
 
-#: pg_test_timing.c:151
+#: pg_test_timing.c:209
+#, c-format
+msgid "TSC frequency source: %s\n"
+msgstr "Источник частоты TSC: %s\n"
+
+#: pg_test_timing.c:210
+#, c-format
+msgid "TSC frequency in use: %d kHz\n"
+msgstr "Используемая частота TSC: %d кГц\n"
+
+#: pg_test_timing.c:216
+#, c-format
+msgid "TSC frequency from calibration: %d kHz\n"
+msgstr "Частота TSC по результатам калибровки: %d кГц\n"
+
+#: pg_test_timing.c:223
+#, c-format
+msgid ""
+"WARNING: Calibrated TSC frequency differs by %.1f%% from the TSC frequency "
+"in use\n"
+msgstr ""
+"ПРЕДУПРЕЖДЕНИЕ: откалиброванная частота TSC отличается от используемой "
+"частоты TSC на %.1f%%\n"
+
+#: pg_test_timing.c:225
+#, c-format
+msgid ""
+"HINT: Consider setting timing_clock_source to 'system'. Report bugs to "
+"<%s>.\n"
+msgstr ""
+"ПОДСКАЗКА: попробуйте задать timing_clock_source = 'system'. Об ошибках "
+"сообщайте по адресу <%s>.\n"
+
+#: pg_test_timing.c:230
+#, c-format
+msgid "TSC calibration did not converge\n"
+msgstr "калибровка TSC не сошлась\n"
+
+#: pg_test_timing.c:240
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will be used by default, unless timing_clock_source is set "
+"to 'system'.\n"
+msgstr ""
+"\n"
+"По умолчанию будет использован источник тактов TSC, если timing_clock_source "
+"— не 'system'.\n"
+
+#: pg_test_timing.c:242
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will not be used by default, unless timing_clock_source is "
+"set to 'tsc'.\n"
+msgstr ""
+"\n"
+"Источник тактов TSC не будет использоваться по умолчанию, если "
+"timing_clock_source — не 'tsc'.\n"
+
+#: pg_test_timing.c:245
+#, c-format
+msgid ""
+"\n"
+"TSC clock source is not usable. Likely unable to determine TSC frequency. "
+"Are you running in an unsupported virtualized environment?\n"
+msgstr ""
+"\n"
+"Источник тактов TSC нельзя использовать, вероятно, потому что не удалось "
+"определить частоту TSC. Возможно, применяется неподдерживаемая "
+"виртуализация?\n"
+
+#: pg_test_timing.c:270
+#, c-format
+msgid "Fast clock source: %s\n"
+msgstr "Быстрый источник тактов: %s\n"
+
+#: pg_test_timing.c:272
+#, c-format
+msgid "System clock source: %s\n"
+msgstr "Системный источник тактов: %s\n"
+
+#: pg_test_timing.c:274
+#, c-format
+msgid "Clock source: %s\n"
+msgstr "Источник тактов: %s\n"
+
+#: pg_test_timing.c:312
 #, c-format
 msgid "Detected clock going backwards in time.\n"
 msgstr "Обнаружен обратный ход часов.\n"
 
-#: pg_test_timing.c:152
+#: pg_test_timing.c:313
 #, c-format
-msgid "Time warp: %d ms\n"
-msgstr "Сдвиг времени: %d мс\n"
+msgid "Time warp: %<PRId64> ns\n"
+msgstr "Сдвиг времени: %<PRId64> нс\n"
 
-#: pg_test_timing.c:175
+#: pg_test_timing.c:351
 #, c-format
-msgid "Per loop time including overhead: %0.2f ns\n"
-msgstr "Время одного цикла, включая издержки: %0.2f нс\n"
+msgid "Average loop time including overhead: %0.2f ns\n"
+msgstr "Среднее время цикла, включая издержки: %0.2f нс\n"
 
-#: pg_test_timing.c:186
-msgid "< us"
-msgstr "< мкс"
+#: pg_test_timing.c:361
+msgid "<= ns"
+msgstr "<= нс"
 
-#: pg_test_timing.c:187
+#: pg_test_timing.c:362
+msgid "ns"
+msgstr "нс"
+
+#: pg_test_timing.c:363
 #, no-c-format
 msgid "% of total"
 msgstr "% от общего"
 
-#: pg_test_timing.c:188
+#: pg_test_timing.c:364
+#, no-c-format
+msgid "running %"
+msgstr "выполняется %"
+
+#: pg_test_timing.c:365
 msgid "count"
 msgstr "число"
 
-#: pg_test_timing.c:197
+#: pg_test_timing.c:375
+#, c-format
+msgid ""
+"WARNING: No timing measurements collected. Report this as a bug to <%s>.\n"
+msgstr ""
+"ПРЕДУПРЕЖДЕНИЕ: измерения времени не получены. Сообщите об этой ошибке в "
+"<%s>.\n"
+
+#: pg_test_timing.c:389
 #, c-format
 msgid "Histogram of timing durations:\n"
 msgstr "Гистограмма длительности замеров времени:\n"
+
+#: pg_test_timing.c:409
+#, c-format
+msgid ""
+"\n"
+"Observed timing durations up to %.4f%%:\n"
+msgstr ""
+"\n"
+"Полученные значения длительности до %.4f%%:\n"
+
+#~ msgid "< us"
+#~ msgstr "< мкс"
 
 #~ msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
 #~ msgstr ""

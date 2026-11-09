@@ -1,14 +1,15 @@
 # Traditional Chinese message translation file for plpgsql
+# Copyright (C) 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# Ruohang Feng <rh@vonng.com>, 2026.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-18 04:09+0000\n"
-"PO-Revision-Date: 2026-09-19 12:00+0800\n"
+"POT-Creation-Date: 2026-11-03 15:39+0000\n"
+"PO-Revision-Date: 2026-11-04 08:45+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
@@ -22,71 +23,71 @@ msgstr ""
 msgid "PL/pgSQL functions cannot accept type %s"
 msgstr "PL/pgSQL 函式不能接受型別 %s"
 
-#: pl_comp.c:425
+#: pl_comp.c:426
 #, c-format
 msgid "could not determine actual return type for polymorphic function \"%s\""
 msgstr "無法判斷多型函式 \"%s\" 實際傳回型別"
 
-#: pl_comp.c:455
+#: pl_comp.c:456
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "觸發器函式只能當做觸發器呼叫"
 
-#: pl_comp.c:459 pl_handler.c:480
+#: pl_comp.c:460 pl_handler.c:480
 #, c-format
 msgid "PL/pgSQL functions cannot return type %s"
 msgstr "PL/pgSQL 函式不能傳回型別 %s"
 
-#: pl_comp.c:499
+#: pl_comp.c:500
 #, c-format
 msgid "trigger functions cannot have declared arguments"
 msgstr "觸發器函式不能有宣告過的參數"
 
-#: pl_comp.c:500
+#: pl_comp.c:501
 #, c-format
 msgid "The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead."
 msgstr "觸發器的參數可以改透過 TG_NARGS 和 TG_ARGV 存取。"
 
-#: pl_comp.c:633
+#: pl_comp.c:634
 #, c-format
 msgid "event trigger functions cannot have declared arguments"
 msgstr "事件觸發器函式不能宣告參數"
 
-#: pl_comp.c:910
+#: pl_comp.c:911
 #, c-format
 msgid "compilation of PL/pgSQL function \"%s\" near line %d"
 msgstr "編譯 PL/pgSQL 函式 \"%s\"，靠近行 %d"
 
 # commands/copy.c:2716 parser/parse_target.c:648 parser/parse_target.c:658
-#: pl_comp.c:933
+#: pl_comp.c:934
 #, c-format
 msgid "parameter name \"%s\" used more than once"
 msgstr "多次使用參數名稱 \"%s\""
 
 # parser/parse_relation.c:510 parser/parse_relation.c:609
-#: pl_comp.c:1047
+#: pl_comp.c:1048
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
 msgstr "欄位參考 \"%s\" 模稜兩可"
 
-#: pl_comp.c:1049
+#: pl_comp.c:1050
 #, c-format
 msgid "It could refer to either a PL/pgSQL variable or a table column."
 msgstr "可能參考到 PL/pgSQL 變數或資料表欄位。"
 
 # commands/user.c:1396
-#: pl_comp.c:1231
+#: pl_comp.c:1232
 #, c-format
 msgid "field name \"%s\" is a reserved key word"
 msgstr "欄位名稱 \"%s\" 是保留關鍵字"
 
-#: pl_comp.c:1233
+#: pl_comp.c:1234
 #, c-format
 msgid "Use double quotes to quote it."
 msgstr "用雙引號將其括起。"
 
 # tcop/utility.c:77
-#: pl_comp.c:1550 pl_gram.y:665 pl_gram.y:680 pl_gram.y:706
+#: pl_comp.c:1551 pl_gram.y:665 pl_gram.y:680 pl_gram.y:706
 #, c-format
 msgid "variable \"%s\" does not exist"
 msgstr "變數 \"%s\" 不存在"
@@ -98,36 +99,36 @@ msgstr "變數 \"%s\" 不存在"
 # parser/parse_relation.c:1647 parser/parse_relation.c:1705
 # parser/parse_relation.c:1919 parser/parse_type.c:94
 # utils/adt/ruleutils.c:1300
-#: pl_comp.c:1639
+#: pl_comp.c:1640
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist"
 msgstr "關聯 \"%2$s\" 的欄位 \"%1$s\" 不存在"
 
 # catalog/namespace.c:200 utils/adt/regproc.c:837
-#: pl_comp.c:1697
+#: pl_comp.c:1698
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "關聯 \"%s\" 不存在"
 
 # access/heap/heapam.c:628 access/heap/heapam.c:663 access/heap/heapam.c:698
 # catalog/aclchk.c:293
-#: pl_comp.c:1704 pl_comp.c:1746
+#: pl_comp.c:1705 pl_comp.c:1747
 #, c-format
 msgid "relation \"%s\" does not have a composite type"
 msgstr "關聯 \"%s\" 沒有複合型別"
 
-#: pl_comp.c:1813
+#: pl_comp.c:1814
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
 msgstr "變數 \"%s\" 具有虛擬型別 %s"
 
-#: pl_comp.c:2006
+#: pl_comp.c:2007
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "型別 \"%s\" 只是 shell 型別"
 
 # utils/cache/typcache.c:414
-#: pl_comp.c:2088 pl_exec.c:7188
+#: pl_comp.c:2089 pl_exec.c:7202
 #, c-format
 msgid "type %s is not composite"
 msgstr "型別 %s 不是複合型別"
@@ -135,12 +136,12 @@ msgstr "型別 %s 不是複合型別"
 # parser/parse_coerce.c:1208 parser/parse_coerce.c:1225
 # parser/parse_coerce.c:1279 parser/parse_expr.c:794 parser/parse_expr.c:1350
 # parser/parse_expr.c:1389 parser/parse_oper.c:920
-#: pl_comp.c:2124
+#: pl_comp.c:2125
 #, c-format
 msgid "could not find array type for data type %s"
 msgstr "找不到資料型別 %s 的陣列型別"
 
-#: pl_comp.c:2163 pl_comp.c:2212
+#: pl_comp.c:2164 pl_comp.c:2213
 #, c-format
 msgid "unrecognized exception condition \"%s\""
 msgstr "無法辨識的例外條件 \"%s\""
@@ -153,7 +154,7 @@ msgstr "在初始化執行狀態期間"
 msgid "while storing call arguments into local variables"
 msgstr "儲存呼叫參數到區域變數時"
 
-#: pl_exec.c:619 pl_exec.c:1037
+#: pl_exec.c:619 pl_exec.c:1037 pl_exec.c:1202
 msgid "during function entry"
 msgstr "在函式進入期間"
 
@@ -166,25 +167,25 @@ msgstr "控制流程到達函式結尾，但未執行 RETURN"
 msgid "while casting return value to function's return type"
 msgstr "將傳回值轉換成函式的傳回型別時"
 
-#: pl_exec.c:660 pl_exec.c:3714
+#: pl_exec.c:660 pl_exec.c:3721
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "在不能接受集合的情境中呼叫傳回集合的函式"
 
-#: pl_exec.c:665 pl_exec.c:3720
+#: pl_exec.c:665 pl_exec.c:3727
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "需要物化模式，但此上下文不允許該模式"
 
-#: pl_exec.c:792 pl_exec.c:1063 pl_exec.c:1221
+#: pl_exec.c:792 pl_exec.c:1063 pl_exec.c:1228
 msgid "during function exit"
 msgstr "在函式結束期間"
 
-#: pl_exec.c:847 pl_exec.c:911 pl_exec.c:3512
+#: pl_exec.c:847 pl_exec.c:911 pl_exec.c:3519
 msgid "returned record type does not match expected record type"
 msgstr "傳回的記錄型別與預期的記錄型別不相符"
 
-#: pl_exec.c:1060 pl_exec.c:1218
+#: pl_exec.c:1060 pl_exec.c:1225
 #, c-format
 msgid "control reached end of trigger procedure without RETURN"
 msgstr "控制流程到達觸發器函式結尾，但未執行 RETURN"
@@ -201,7 +202,7 @@ msgstr "傳回的資料列結構與觸發器所在資料表的結構不相符"
 #. translator: last %s is a phrase such as "during statement block
 #. local variable initialization"
 #.
-#: pl_exec.c:1276
+#: pl_exec.c:1283
 #, c-format
 msgid "PL/pgSQL function %s line %d %s"
 msgstr "PL/pgSQL 函式 %s 第 %d 行 %s"
@@ -209,349 +210,349 @@ msgstr "PL/pgSQL 函式 %s 第 %d 行 %s"
 #. translator: last %s is a phrase such as "while storing call
 #. arguments into local variables"
 #.
-#: pl_exec.c:1287
+#: pl_exec.c:1294
 #, c-format
 msgid "PL/pgSQL function %s %s"
 msgstr "PL/pgSQL 函式 %s %s"
 
 #. translator: last %s is a plpgsql statement type name
-#: pl_exec.c:1295
+#: pl_exec.c:1302
 #, c-format
 msgid "PL/pgSQL function %s line %d at %s"
 msgstr "PL/pgSQL 函式 %s 第 %d 行於 %s"
 
-#: pl_exec.c:1301
+#: pl_exec.c:1308
 #, c-format
 msgid "PL/pgSQL function %s"
 msgstr "PL/pgSQL 函式 %s"
 
 # executor/spi.c:1574
-#: pl_exec.c:1332
+#: pl_exec.c:1339
 #, c-format
 msgid "SQL statement \"%s\""
 msgstr "SQL 敘述 \"%s\""
 
-#: pl_exec.c:1702
+#: pl_exec.c:1709
 msgid "during statement block local variable initialization"
 msgstr "在陳述式區塊區域變數初始化期間"
 
-#: pl_exec.c:1807
+#: pl_exec.c:1814
 msgid "during statement block entry"
 msgstr "在陳述式區塊進入期間"
 
-#: pl_exec.c:1839
+#: pl_exec.c:1846
 msgid "during statement block exit"
 msgstr "在陳述式區塊結束期間"
 
-#: pl_exec.c:1877
+#: pl_exec.c:1884
 msgid "during exception cleanup"
 msgstr "在例外清除期間"
 
-#: pl_exec.c:2413
+#: pl_exec.c:2420
 #, c-format
 msgid "procedure parameter \"%s\" is an output parameter but corresponding argument is not writable"
 msgstr "程序參數 \"%s\" 是輸出參數，但對應的實參不可寫"
 
-#: pl_exec.c:2418
+#: pl_exec.c:2425
 #, c-format
 msgid "procedure parameter %d is an output parameter but corresponding argument is not writable"
 msgstr "程序參數 %d 是輸出參數，但對應的實參不可寫"
 
-#: pl_exec.c:2454
+#: pl_exec.c:2461
 #, c-format
 msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
 msgstr "GET STACKED DIAGNOSTICS 不能用於例外處理器之外"
 
-#: pl_exec.c:2660
+#: pl_exec.c:2667
 #, c-format
 msgid "case not found"
 msgstr "找不到匹配的 CASE 分支"
 
-#: pl_exec.c:2661
+#: pl_exec.c:2668
 #, c-format
 msgid "CASE statement is missing ELSE part."
 msgstr "CASE 陳述式遺漏 ELSE 部分。"
 
-#: pl_exec.c:2754
+#: pl_exec.c:2761
 #, c-format
 msgid "lower bound of FOR loop cannot be null"
 msgstr "FOR 迴圈的下限不可為 NULL"
 
-#: pl_exec.c:2770
+#: pl_exec.c:2777
 #, c-format
 msgid "upper bound of FOR loop cannot be null"
 msgstr "FOR 迴圈的上限不可為 NULL"
 
-#: pl_exec.c:2788
+#: pl_exec.c:2795
 #, c-format
 msgid "BY value of FOR loop cannot be null"
 msgstr "FOR 迴圈的 BY 值不可為 NULL"
 
-#: pl_exec.c:2794
+#: pl_exec.c:2801
 #, c-format
 msgid "BY value of FOR loop must be greater than zero"
 msgstr "FOR 迴圈的 BY 值必須大於零"
 
-#: pl_exec.c:2928 pl_exec.c:4786
+#: pl_exec.c:2935 pl_exec.c:4800
 #, c-format
 msgid "cursor \"%s\" already in use"
 msgstr "游標 \"%s\" 已在使用中"
 
-#: pl_exec.c:2951 pl_exec.c:4856
+#: pl_exec.c:2958 pl_exec.c:4870
 #, c-format
 msgid "arguments given for cursor without arguments"
 msgstr "向沒有參數的游標傳入參數"
 
-#: pl_exec.c:2970 pl_exec.c:4875
+#: pl_exec.c:2977 pl_exec.c:4889
 #, c-format
 msgid "arguments required for cursor"
 msgstr "游標需要參數"
 
 # catalog/heap.c:1797
-#: pl_exec.c:3061
+#: pl_exec.c:3068
 #, c-format
 msgid "FOREACH expression must not be null"
 msgstr "FOREACH 運算式不能是 NULL"
 
-#: pl_exec.c:3076
+#: pl_exec.c:3083
 #, c-format
 msgid "FOREACH expression must yield an array, not type %s"
 msgstr "FOREACH 運算式必須產生陣列而非型別 %s"
 
 # utils/adt/varlena.c:1407 utils/adt/varlena.c:1438 utils/adt/varlena.c:1474
 # utils/adt/varlena.c:1517
-#: pl_exec.c:3093
+#: pl_exec.c:3100
 #, c-format
 msgid "slice dimension (%d) is out of the valid range 0..%d"
 msgstr "切片維度(%d)超出有效範圍 0..%d"
 
-#: pl_exec.c:3120
+#: pl_exec.c:3127
 #, c-format
 msgid "FOREACH ... SLICE loop variable must be of an array type"
 msgstr "FOREACH ... SLICE 迴圈變數必須是陣列型別"
 
-#: pl_exec.c:3124
+#: pl_exec.c:3131
 #, c-format
 msgid "FOREACH loop variable must not be of an array type"
 msgstr "FOREACH 迴圈變數不能是陣列型別"
 
-#: pl_exec.c:3286 pl_exec.c:3329 pl_exec.c:3505
+#: pl_exec.c:3293 pl_exec.c:3336 pl_exec.c:3512
 #, c-format
 msgid "cannot return non-composite value from function returning composite type"
 msgstr "傳回複合型別的函式不能傳回非複合值"
 
-#: pl_exec.c:3368 pl_gram.y:3448
+#: pl_exec.c:3375 pl_gram.y:3448
 #, c-format
 msgid "cannot use RETURN NEXT in a non-SETOF function"
 msgstr "不能在非 SETOF 函式中使用 RETURN NEXT"
 
-#: pl_exec.c:3409 pl_exec.c:3542
+#: pl_exec.c:3416 pl_exec.c:3549
 #, c-format
 msgid "wrong result type supplied in RETURN NEXT"
 msgstr "RETURN NEXT 中提供的結果型別錯誤"
 
-#: pl_exec.c:3448 pl_exec.c:3469
+#: pl_exec.c:3455 pl_exec.c:3476
 #, c-format
 msgid "wrong record type supplied in RETURN NEXT"
 msgstr "RETURN NEXT 中提供的記錄型別錯誤"
 
-#: pl_exec.c:3562
+#: pl_exec.c:3569
 #, c-format
 msgid "RETURN NEXT must have a parameter"
 msgstr "RETURN NEXT 必須要有參數"
 
-#: pl_exec.c:3590 pl_gram.y:3512
+#: pl_exec.c:3597 pl_gram.y:3512
 #, c-format
 msgid "cannot use RETURN QUERY in a non-SETOF function"
 msgstr "不能在非 SETOF 函式中使用 RETURN QUERY"
 
-#: pl_exec.c:3608
+#: pl_exec.c:3615
 msgid "structure of query does not match function result type"
 msgstr "查詢結果的結構與函式結果型別不相符"
 
-#: pl_exec.c:3663 pl_exec.c:4562 pl_exec.c:9092
+#: pl_exec.c:3670 pl_exec.c:4576 pl_exec.c:9106
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "EXECUTE 的查詢字串參數為 NULL"
 
-#: pl_exec.c:3748 pl_exec.c:3886
+#: pl_exec.c:3755 pl_exec.c:3893
 #, c-format
 msgid "RAISE option already specified: %s"
 msgstr "RAISE 選項已指定: %s"
 
-#: pl_exec.c:3782
+#: pl_exec.c:3789
 #, c-format
 msgid "RAISE without parameters cannot be used outside an exception handler"
 msgstr "沒有參數的 RAISE 不能在例外處理常式之外使用"
 
-#: pl_exec.c:3876
+#: pl_exec.c:3883
 #, c-format
 msgid "RAISE statement option cannot be null"
 msgstr "RAISE 陳述式選項不可為 NULL"
 
 # commands/vacuum.c:2258 commands/vacuumlazy.c:489 commands/vacuumlazy.c:770
 # nodes/print.c:86 storage/lmgr/deadlock.c:888 tcop/postgres.c:3285
-#: pl_exec.c:3946
+#: pl_exec.c:3953
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pl_exec.c:4001
+#: pl_exec.c:4008
 #, c-format
 msgid "assertion failed"
 msgstr "斷言失敗"
 
-#: pl_exec.c:4435 pl_exec.c:4625
+#: pl_exec.c:4449 pl_exec.c:4639
 #, c-format
 msgid "cannot COPY to/from client in PL/pgSQL"
 msgstr "不能在 PL/pgSQL 中與客戶端進行 COPY"
 
-#: pl_exec.c:4441
+#: pl_exec.c:4455
 #, c-format
 msgid "unsupported transaction command in PL/pgSQL"
 msgstr "PL/pgSQL 中不支援的交易命令"
 
-#: pl_exec.c:4464 pl_exec.c:4654
+#: pl_exec.c:4478 pl_exec.c:4668
 #, c-format
 msgid "INTO used with a command that cannot return data"
 msgstr "INTO 用於不能傳回資料的指令"
 
-#: pl_exec.c:4487 pl_exec.c:4677
+#: pl_exec.c:4501 pl_exec.c:4691
 #, c-format
 msgid "query returned no rows"
 msgstr "查詢沒有傳回任何資料列"
 
-#: pl_exec.c:4509 pl_exec.c:4696 pl_exec.c:5834
+#: pl_exec.c:4523 pl_exec.c:4710 pl_exec.c:5848
 #, c-format
 msgid "query returned more than one row"
 msgstr "查詢傳回多個資料列"
 
-#: pl_exec.c:4511
+#: pl_exec.c:4525
 #, c-format
 msgid "Make sure the query returns a single row, or use LIMIT 1."
 msgstr "確保查詢傳回單一資料列，或使用 LIMIT 1。"
 
-#: pl_exec.c:4527
+#: pl_exec.c:4541
 #, c-format
 msgid "query has no destination for result data"
 msgstr "查詢沒有結果資料的目的地"
 
-#: pl_exec.c:4528
+#: pl_exec.c:4542
 #, c-format
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "如果要捨棄 SELECT 的結果，請改用 PERFORM。"
 
-#: pl_exec.c:4617
+#: pl_exec.c:4631
 #, c-format
 msgid "EXECUTE of SELECT ... INTO is not implemented"
 msgstr "SELECT ... INTO 的 EXECUTE 尚未實作"
 
-#: pl_exec.c:4618
+#: pl_exec.c:4632
 #, c-format
 msgid "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead."
 msgstr "可以考慮改用 EXECUTE ... INTO 或 EXECUTE CREATE TABLE ... AS。"
 
-#: pl_exec.c:4631
+#: pl_exec.c:4645
 #, c-format
 msgid "EXECUTE of transaction commands is not implemented"
 msgstr "尚未實作透過 EXECUTE 執行交易命令"
 
-#: pl_exec.c:4941 pl_exec.c:5029
+#: pl_exec.c:4955 pl_exec.c:5043
 #, c-format
 msgid "cursor variable \"%s\" is null"
 msgstr "游標變數 \"%s\" 為 NULL"
 
 # commands/portalcmds.c:182 commands/portalcmds.c:229
-#: pl_exec.c:4952 pl_exec.c:5040
+#: pl_exec.c:4966 pl_exec.c:5054
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "游標 \"%s\" 不存在"
 
-#: pl_exec.c:4965
+#: pl_exec.c:4979
 #, c-format
 msgid "relative or absolute cursor position is null"
 msgstr "相對或絕對游標位置為 NULL"
 
-#: pl_exec.c:5189 pl_exec.c:5284
+#: pl_exec.c:5203 pl_exec.c:5298
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
 msgstr "不可將 NULL 值指派給宣告為 NOT NULL 的變數 \"%s\""
 
-#: pl_exec.c:5265
+#: pl_exec.c:5279
 #, c-format
 msgid "cannot assign non-composite value to a row variable"
 msgstr "不可將非複合值指派給資料列變數"
 
-#: pl_exec.c:5297
+#: pl_exec.c:5311
 #, c-format
 msgid "cannot assign non-composite value to a record variable"
 msgstr "不可將非複合值指派給 record 變數"
 
-#: pl_exec.c:5339 pl_exec.c:5512 pl_exec.c:5599 pl_exec.c:5690 pl_exec.c:6887
+#: pl_exec.c:5353 pl_exec.c:5526 pl_exec.c:5613 pl_exec.c:5704 pl_exec.c:6901
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "記錄 \"%s\" 沒有欄位 \"%s\""
 
 # parser/parse_target.c:268 parser/parse_target.c:501
-#: pl_exec.c:5348
+#: pl_exec.c:5362
 #, c-format
 msgid "cannot assign to system column \"%s\""
 msgstr "不能指派給系統欄位 \"%s\""
 
-#: pl_exec.c:5797
+#: pl_exec.c:5811
 #, c-format
 msgid "query did not return data"
 msgstr "查詢未傳回資料"
 
-#: pl_exec.c:5798 pl_exec.c:5810 pl_exec.c:5835 pl_exec.c:5915 pl_exec.c:5920
+#: pl_exec.c:5812 pl_exec.c:5824 pl_exec.c:5849 pl_exec.c:5929 pl_exec.c:5934
 #, c-format
 msgid "query: %s"
 msgstr "查詢: %s"
 
-#: pl_exec.c:5806
+#: pl_exec.c:5820
 #, c-format
 msgid "query returned %d column"
 msgid_plural "query returned %d columns"
 msgstr[0] "查詢傳回了 %d 個欄位"
 
-#: pl_exec.c:5914
+#: pl_exec.c:5928
 #, c-format
 msgid "query is SELECT INTO, but it should be plain SELECT"
 msgstr "查詢是 SELECT INTO，但應為一般 SELECT"
 
-#: pl_exec.c:5919
+#: pl_exec.c:5933
 #, c-format
 msgid "query is not a SELECT"
 msgstr "查詢不是 SELECT"
 
-#: pl_exec.c:6901 pl_exec.c:6941 pl_exec.c:6981
+#: pl_exec.c:6915 pl_exec.c:6955 pl_exec.c:6995
 #, c-format
 msgid "type of parameter %d (%s) does not match that when preparing the plan (%s)"
 msgstr "參數 %d 的型別 (%s) 與準備計畫時的型別 (%s) 不相符"
 
-#: pl_exec.c:7392 pl_exec.c:7426 pl_exec.c:7500 pl_exec.c:7526
+#: pl_exec.c:7406 pl_exec.c:7440 pl_exec.c:7514 pl_exec.c:7540
 #, c-format
 msgid "number of source and target fields in assignment does not match"
 msgstr "指派時來源欄位與目標欄位的數量不相符"
 
 #. translator: %s represents a name of an extra check
-#: pl_exec.c:7394 pl_exec.c:7428 pl_exec.c:7502 pl_exec.c:7528
+#: pl_exec.c:7408 pl_exec.c:7442 pl_exec.c:7516 pl_exec.c:7542
 #, c-format
 msgid "%s check of %s is active."
 msgstr "%2$s 的 %1$s 檢查已啟用。"
 
 # executor/functions.c:946
-#: pl_exec.c:7398 pl_exec.c:7432 pl_exec.c:7506 pl_exec.c:7532
+#: pl_exec.c:7412 pl_exec.c:7446 pl_exec.c:7520 pl_exec.c:7546
 #, c-format
 msgid "Make sure the query returns the exact list of columns."
 msgstr "確保查詢傳回確切的欄位清單。"
 
-#: pl_exec.c:7919
+#: pl_exec.c:7933
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "尚未指派記錄 \"%s\""
 
-#: pl_exec.c:7920
+#: pl_exec.c:7934
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr "尚未指派之記錄的元組結構未定。"
@@ -559,12 +560,12 @@ msgstr "尚未指派之記錄的元組結構未定。"
 # parser/parse_coerce.c:676 parser/parse_coerce.c:703
 # parser/parse_coerce.c:719 parser/parse_coerce.c:733
 # parser/parse_expr.c:1654
-#: pl_exec.c:8159
+#: pl_exec.c:8173
 #, c-format
 msgid "cannot cast type %s to %s"
 msgstr "不能將型別 %s 轉換成 %s"
 
-#: pl_exec.c:8681 pl_gram.y:3572
+#: pl_exec.c:8695 pl_gram.y:3572
 #, c-format
 msgid "variable \"%s\" is declared CONSTANT"
 msgstr "變數 \"%s\" 已宣告為 CONSTANT"

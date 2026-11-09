@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-08-05 06:37+0300\n"
-"PO-Revision-Date: 2026-08-05 07:46+0300\n"
+"POT-Creation-Date: 2026-09-25 22:46+0300\n"
+"PO-Revision-Date: 2026-10-10 18:48+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -17,22 +17,22 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: ../../../src/common/logging.c:279
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "ошибка: "
 
-#: ../../../src/common/logging.c:286
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "предупреждение: "
 
-#: ../../../src/common/logging.c:297
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "подробности: "
 
-#: ../../../src/common/logging.c:304
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "подсказка: "
@@ -231,6 +231,16 @@ msgstr "необходимо задать имя старейшего сохра
 msgid "too many command-line arguments"
 msgstr "слишком много аргументов командной строки"
 
+#: pg_archivecleanup.c:380
+#, c-format
+msgid "executing in dry-run mode"
+msgstr "выполнение в холостом режиме"
+
+#: pg_archivecleanup.c:381
+#, c-format
+msgid "No files will be removed."
+msgstr "Файлы не будут удалены."
+
 # well-spelled: РСШ
 #, c-format
 #~ msgid "  -x EXT         clean up files if they have this extension\n"
@@ -245,9 +255,6 @@ msgstr "слишком много аргументов командной стр
 #~ msgstr ""
 #~ "\n"
 #~ "Об ошибках сообщайте по адресу <pgsql-bugs@lists.postgresql.org>.\n"
-
-#~ msgid "%s: file \"%s\" would be removed\n"
-#~ msgstr "%s: файл \"%s\" не будет удалён\n"
 
 #~ msgid "%s: removing file \"%s\"\n"
 #~ msgstr "%s: удаление файла \"%s\"\n"

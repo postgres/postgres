@@ -1,14 +1,15 @@
 # Simplified Chinese message translation file for pg_combinebackup
 # Copyright (C) 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Ruohang Feng <rh@vonng.com>, 2026.
+#
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-17 05:55+0000\n"
-"PO-Revision-Date: 2026-09-17 16:00+0800\n"
+"POT-Creation-Date: 2026-11-03 15:52+0000\n"
+"PO-Revision-Date: 2026-11-04 08:45+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
@@ -43,7 +44,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "无法打开文件 \"%s\" 进行读取: %m"
 
 #: ../../common/controldata_utils.c:111 copy_file.c:164 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1369 reconstruct.c:542
+#: load_manifest.c:199 pg_combinebackup.c:1369 reconstruct.c:548
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "无法读取文件 \"%s\": %m"
@@ -55,7 +56,7 @@ msgstr "无法读取文件 \"%1$s\": 应读取 %3$zu，实际读取 %2$d"
 
 #: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
 #: backup_label.c:174 copy_file.c:71 pg_combinebackup.c:560 reconstruct.c:369
-#: reconstruct.c:745 write_manifest.c:187
+#: reconstruct.c:751 write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "无法关闭文件 \"%s\": %m"
@@ -82,13 +83,13 @@ msgstr ""
 #: ../../common/file_utils.c:370 ../../common/file_utils.c:428
 #: ../../common/file_utils.c:502 backup_label.c:143 copy_file.c:69
 #: copy_file.c:153 copy_file.c:185 copy_file.c:189 copy_file.c:239
-#: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:545 reconstruct.c:525
-#: reconstruct.c:640 write_manifest.c:250
+#: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:545 reconstruct.c:531
+#: reconstruct.c:646 write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "无法打开文件 \"%s\": %m"
 
-#: ../../common/controldata_utils.c:250 backup_label.c:160 reconstruct.c:764
+#: ../../common/controldata_utils.c:250 backup_label.c:160 reconstruct.c:770
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -501,13 +502,13 @@ msgstr "%s: 无法找到 %s"
 msgid "%s: %s requires %s"
 msgstr "%s: %s 需要 %s"
 
-#: backup_label.c:162 reconstruct.c:766
+#: backup_label.c:162 reconstruct.c:772
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "无法写入文件 \"%1$s\": 应写入 %3$d，实际写入 %2$d"
 
-#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:726
-#: reconstruct.c:772 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:732
+#: reconstruct.c:778 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "无法更新文件 \"%s\" 的校验和"
@@ -522,7 +523,7 @@ msgstr "无法写入文件 \"%s\": %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "无法在文件 \"%1$s\" 的偏移量 %2$u 处写入: 应写入 %4$d，实际写入 %3$d"
 
-#: copy_file.c:213 reconstruct.c:789
+#: copy_file.c:213 reconstruct.c:795
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "无法读取文件 \"%s\": %m"
@@ -547,12 +548,12 @@ msgstr "将文件 \"%s\" 克隆到 \"%s\" 时出错: %s"
 msgid "file cloning not supported on this platform"
 msgstr "此平台不支持文件克隆"
 
-#: copy_file.c:292 reconstruct.c:706
+#: copy_file.c:292 reconstruct.c:712
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "将文件范围从 \"%s\" 复制到 \"%s\" 时出错: %m"
 
-#: copy_file.c:299 pg_combinebackup.c:276 reconstruct.c:729
+#: copy_file.c:299 pg_combinebackup.c:276 reconstruct.c:735
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "此平台不支持 copy_file_range"
@@ -955,17 +956,22 @@ msgstr "文件 \"%s\" 的块数 %u 超过段大小 %u"
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "文件 \"%s\" 的截断长度为 %u 块，超过段大小 %u"
 
-#: reconstruct.c:544
+#: reconstruct.c:492
+#, c-format
+msgid "file \"%s\" has block number %u in excess of segment size %u"
+msgstr "文件 \"%s\" 的块号 %u 超过段大小 %u"
+
+#: reconstruct.c:550
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "无法读取文件 \"%1$s\": 应读取 %3$u，实际读取 %2$d"
 
-#: reconstruct.c:709
+#: reconstruct.c:715
 #, c-format
 msgid "unexpected end of file while copying file range from \"%s\" to \"%s\""
 msgstr "将文件范围从 \"%s\" 复制到 \"%s\" 时意外到达文件末尾"
 
-#: reconstruct.c:791
+#: reconstruct.c:797
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr ""

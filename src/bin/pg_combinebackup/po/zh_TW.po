@@ -1,14 +1,15 @@
 # Traditional Chinese message translation file for pg_combinebackup
+# Copyright (C) 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# Ruohang Feng <rh@vonng.com>, 2026.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-18 04:25+0000\n"
-"PO-Revision-Date: 2026-09-19 12:00+0800\n"
+"POT-Creation-Date: 2026-11-03 15:52+0000\n"
+"PO-Revision-Date: 2026-11-04 08:45+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
@@ -49,7 +50,7 @@ msgstr "無法開啟檔案 \"%s\" 以讀取: %m"
 # access/transam/xlog.c:5520 access/transam/xlog.c:5545
 # access/transam/xlog.c:5583
 #: ../../common/controldata_utils.c:111 copy_file.c:164 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1369 reconstruct.c:542
+#: load_manifest.c:199 pg_combinebackup.c:1369 reconstruct.c:548
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "無法讀取檔案 \"%s\": %m"
@@ -67,7 +68,7 @@ msgstr "無法讀取檔案 \"%1$s\": 應讀取 %3$zu，實際讀取 %2$d"
 # access/transam/xlog.c:1691 access/transam/xlog.c:3013
 #: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
 #: backup_label.c:174 copy_file.c:71 pg_combinebackup.c:560 reconstruct.c:369
-#: reconstruct.c:745 write_manifest.c:187
+#: reconstruct.c:751 write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "無法關閉檔案 \"%s\": %m"
@@ -98,14 +99,14 @@ msgstr ""
 #: ../../common/file_utils.c:370 ../../common/file_utils.c:428
 #: ../../common/file_utils.c:502 backup_label.c:143 copy_file.c:69
 #: copy_file.c:153 copy_file.c:185 copy_file.c:189 copy_file.c:239
-#: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:545 reconstruct.c:525
-#: reconstruct.c:640 write_manifest.c:250
+#: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:545 reconstruct.c:531
+#: reconstruct.c:646 write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "無法開啟檔案 \"%s\": %m"
 
 # access/transam/xlog.c:5319 access/transam/xlog.c:5439
-#: ../../common/controldata_utils.c:250 backup_label.c:160 reconstruct.c:764
+#: ../../common/controldata_utils.c:250 backup_label.c:160 reconstruct.c:770
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -568,13 +569,13 @@ msgstr "%s: 找不到 %s"
 msgid "%s: %s requires %s"
 msgstr "%s: %s 需要 %s"
 
-#: backup_label.c:162 reconstruct.c:766
+#: backup_label.c:162 reconstruct.c:772
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "無法寫入檔案 \"%1$s\": 應寫入 %3$d，實際寫入 %2$d"
 
-#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:726
-#: reconstruct.c:772 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:732
+#: reconstruct.c:778 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "無法更新檔案 \"%s\" 的檢查碼"
@@ -595,7 +596,7 @@ msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "無法在檔案 \"%1$s\" 位移 %2$u 處寫入: 應寫入 %4$d，實際寫入 %3$d"
 
 # utils/init/miscinit.c:792 utils/misc/guc.c:5074
-#: copy_file.c:213 reconstruct.c:789
+#: copy_file.c:213 reconstruct.c:795
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "無法讀取檔案 \"%s\": %m"
@@ -624,12 +625,12 @@ msgstr "將檔案 \"%s\" clone 至 \"%s\" 時出錯: %s"
 msgid "file cloning not supported on this platform"
 msgstr "此平臺不支援 clone 檔案"
 
-#: copy_file.c:292 reconstruct.c:706
+#: copy_file.c:292 reconstruct.c:712
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "將檔案範圍從 \"%s\" 複製到 \"%s\" 時出錯: %m"
 
-#: copy_file.c:299 pg_combinebackup.c:276 reconstruct.c:729
+#: copy_file.c:299 pg_combinebackup.c:276 reconstruct.c:735
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "此平台不支援 copy_file_range"
@@ -1023,17 +1024,22 @@ msgstr "檔案 \"%s\" 的區塊數 %u 超過區段大小 %u"
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "檔案 \"%s\" 的截斷長度為 %u 個區塊，超過區段大小 %u"
 
-#: reconstruct.c:544
+#: reconstruct.c:492
+#, c-format
+msgid "file \"%s\" has block number %u in excess of segment size %u"
+msgstr "檔案 \"%s\" 的區塊編號 %u 超過區段大小 %u"
+
+#: reconstruct.c:550
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "無法讀取檔案 \"%1$s\": 應讀取 %3$u，實際讀取 %2$d"
 
-#: reconstruct.c:709
+#: reconstruct.c:715
 #, c-format
 msgid "unexpected end of file while copying file range from \"%s\" to \"%s\""
 msgstr "將檔案範圍從 \"%s\" 複製到 \"%s\" 時非預期地到達檔案結尾"
 
-#: reconstruct.c:791
+#: reconstruct.c:797
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "無法從檔案 \"%1$s\" 的位移 %2$llu 處讀取: 應讀取 %4$d，實際讀取 %3$d"

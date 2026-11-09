@@ -780,7 +780,7 @@ msgstr "  -s, --show                interne Einstellungen zeigen, dann beenden\n
 #, c-format
 msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
 msgstr ""
-"      --sync-method=METHODE Methode zum Synchronisieren vond Dateien auf\n"
+"      --sync-method=METHODE Methode zum Synchronisieren von Dateien auf\n"
 "                            Festplatte setzen\n"
 
 #: initdb.c:2584

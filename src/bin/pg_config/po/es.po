@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-06 23:18+0000\n"
+"POT-Creation-Date: 2026-11-07 12:49+0000\n"
 "PO-Revision-Date: 2024-11-16 14:23+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -27,60 +27,72 @@ msgstr ""
 msgid "not recorded"
 msgstr "no registrado"
 
-#: ../../common/exec.c:174
+#: ../../common/exec.c:175
 #, c-format
 msgid "invalid binary \"%s\": %m"
 msgstr "binario «%s» no válido: %m"
 
-#: ../../common/exec.c:217
+#: ../../common/exec.c:218
 #, c-format
 msgid "could not read binary \"%s\": %m"
 msgstr "no se pudo leer el binario «%s»: %m"
 
-#: ../../common/exec.c:225
+#: ../../common/exec.c:226
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "no se pudo encontrar un «%s» para ejecutar"
 
-#: ../../common/exec.c:252
+#: ../../common/exec.c:253
 #, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
 msgstr "no se pudo resolver la ruta «%s» a forma absoluta: %m"
 
-#: ../../common/exec.c:363
+#: ../../common/exec.c:364
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "no se pudo ejecutar la orden «%s»: %m"
 
-#: ../../common/exec.c:375
+#: ../../common/exec.c:376
 #, c-format
 msgid "could not read from command \"%s\": %m"
 msgstr "no se pudo leer desde la orden «%s»: %m"
 
-#: ../../common/exec.c:378
+#: ../../common/exec.c:379
 #, c-format
 msgid "no data was returned by command \"%s\""
 msgstr "la orden «%s» no retornó datos"
 
-#: ../../common/exec.c:405
+#: ../../common/exec.c:406
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() falló: %m"
 
-#: ../../common/exec.c:543 ../../common/exec.c:588 ../../common/exec.c:680
+#: ../../common/exec.c:544 ../../common/exec.c:589 ../../common/exec.c:681
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
+
+#: ../../common/fe_memutils.c:209
+#, fuzzy, c-format
+#| msgid "invalid large object write request size: %d"
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+
+#: ../../common/fe_memutils.c:228
+#, fuzzy, c-format
+#| msgid "invalid large object write request size: %d"
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
 
 #: pg_config.c:73
 #, c-format

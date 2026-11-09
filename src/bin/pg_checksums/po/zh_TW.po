@@ -1,15 +1,16 @@
 # Traditional Chinese message translation file for pg_checksums
+# Copyright (C) 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Zhenbang Wei <znbang@gmail.com>, 2023.
-# Ruohang Feng <rh@vonng.com>, 2026.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_checksums (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-18 04:27+0000\n"
-"PO-Revision-Date: 2026-09-20 12:27+0800\n"
+"POT-Creation-Date: 2026-11-03 15:54+0000\n"
+"PO-Revision-Date: 2026-11-04 08:45+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
@@ -349,7 +350,7 @@ msgstr "已計算 %<PRId64>/%<PRId64> MB (%d%%)"
 #: pg_checksums.c:206
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
-msgstr "無法讀取檔案 \"%2$s\" 的區塊 %1$u: %3$m"
+msgstr "無法讀取檔案 \"%2$s\" 的區塊 %1$u: %m"
 
 #: pg_checksums.c:209
 #, c-format
@@ -364,13 +365,13 @@ msgstr "檔案 \"%s\" 中區塊 %u 的檢查碼驗證失敗: 算得檢查碼 %X�
 #: pg_checksums.c:255
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
-msgstr "在檔案 \"%2$s\" 中定位區塊 %1$u 失敗: %3$m"
+msgstr "在檔案 \"%2$s\" 中定位區塊 %1$u 失敗: %m"
 
 # utils/init/miscinit.c:672 utils/init/miscinit.c:682
 #: pg_checksums.c:262
 #, c-format
 msgid "could not write block %u in file \"%s\": %m"
-msgstr "無法寫入檔案 \"%2$s\" 的區塊 %1$u: %3$m"
+msgstr "無法寫入檔案 \"%2$s\" 的區塊 %1$u: %m"
 
 #: pg_checksums.c:265
 #, c-format

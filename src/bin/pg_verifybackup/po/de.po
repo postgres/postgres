@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-05-28 19:21+0000\n"
-"PO-Revision-Date: 2026-05-29 07:48+0200\n"
+"POT-Creation-Date: 2026-10-30 12:18+0000\n"
+"PO-Revision-Date: 2026-10-30 14:09+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -41,7 +41,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
 
 #: ../../common/controldata_utils.c:111 pg_verifybackup.c:455
-#: pg_verifybackup.c:493 pg_verifybackup.c:1047 pg_verifybackup.c:1166
+#: pg_verifybackup.c:493 pg_verifybackup.c:1051 pg_verifybackup.c:1170
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht lesen: %m"
@@ -52,7 +52,7 @@ msgid "could not read file \"%s\": read %d of %zu"
 msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
 
 #: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
-#: pg_verifybackup.c:1052 pg_verifybackup.c:1172
+#: pg_verifybackup.c:1056 pg_verifybackup.c:1176
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht schließen: %m"
@@ -76,7 +76,7 @@ msgstr ""
 "wäre inkompatibel mit diesem Datenverzeichnis."
 
 #: ../../common/controldata_utils.c:231 pg_verifybackup.c:423
-#: pg_verifybackup.c:1027 pg_verifybackup.c:1135
+#: pg_verifybackup.c:1031 pg_verifybackup.c:1139
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
@@ -389,76 +389,93 @@ msgstr "Manifestprüfsumme stimmt nicht überein"
 msgid "could not parse backup manifest: %s"
 msgstr "konnte Backup-Manifest nicht parsen: %s"
 
-#: ../../fe_utils/astreamer_gzip.c:115
+#: ../../fe_utils/astreamer_gzip.c:116
 #, c-format
 msgid "could not create compressed file \"%s\": %m"
 msgstr "konnte komprimierte Datei »%s« nicht erzeugen: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:127
+#: ../../fe_utils/astreamer_gzip.c:128
 #, c-format
 msgid "could not duplicate stdout: %m"
 msgstr "konnte Standardausgabe nicht duplizieren: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:131
+#: ../../fe_utils/astreamer_gzip.c:132
 #, c-format
 msgid "could not open output file: %m"
 msgstr "konnte Ausgabedatei nicht öffnen: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:135
+#: ../../fe_utils/astreamer_gzip.c:136
 #, c-format
 msgid "could not set compression level %d: %s"
 msgstr "konnte Komprimierungsniveau %d nicht setzen: %s"
 
-#: ../../fe_utils/astreamer_gzip.c:140 ../../fe_utils/astreamer_gzip.c:275
-#: ../../fe_utils/astreamer_lz4.c:102 ../../fe_utils/astreamer_lz4.c:302
-#: ../../fe_utils/astreamer_zstd.c:130 ../../fe_utils/astreamer_zstd.c:285
+#: ../../fe_utils/astreamer_gzip.c:141 ../../fe_utils/astreamer_gzip.c:277
+#: ../../fe_utils/astreamer_lz4.c:103 ../../fe_utils/astreamer_lz4.c:304
+#: ../../fe_utils/astreamer_zstd.c:131 ../../fe_utils/astreamer_zstd.c:287
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "diese Installation unterstützt keine Komprimierung mit %s"
 
-#: ../../fe_utils/astreamer_gzip.c:167
+#: ../../fe_utils/astreamer_gzip.c:168
 #, c-format
 msgid "could not write to compressed file \"%s\": %s"
 msgstr "konnte nicht in komprimierte Datei »%s« schreiben: %s"
 
-#: ../../fe_utils/astreamer_gzip.c:191
+#: ../../fe_utils/astreamer_gzip.c:192
 #, c-format
 msgid "could not close compressed file \"%s\": %m"
 msgstr "konnte komprimierte Datei »%s« nicht schließen: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:271
+#: ../../fe_utils/astreamer_gzip.c:272
 #, c-format
 msgid "could not initialize compression library"
 msgstr "konnte Komprimierungsbibliothek nicht initialisieren"
 
-#: ../../fe_utils/astreamer_gzip.c:322 ../../fe_utils/astreamer_lz4.c:358
-#: ../../fe_utils/astreamer_zstd.c:330
+#: ../../fe_utils/astreamer_gzip.c:328 ../../fe_utils/astreamer_lz4.c:360
+#: ../../fe_utils/astreamer_zstd.c:332 ../../fe_utils/astreamer_zstd.c:374
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "konnte Daten nicht dekomprimieren: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:97
+#: ../../fe_utils/astreamer_gzip.c:349
+#, c-format
+msgid "could not reset compression stream"
+msgstr "konnte Komprimierungsstrom nicht zurücksetzen"
+
+#: ../../fe_utils/astreamer_gzip.c:364 ../../fe_utils/astreamer_lz4.c:407
+#: ../../fe_utils/astreamer_zstd.c:385
+#, c-format
+msgid "could not decompress data: compressed stream is empty"
+msgstr "konnte Daten nicht dekomprimieren: komprimierter Strom ist leer"
+
+#: ../../fe_utils/astreamer_gzip.c:366 ../../fe_utils/astreamer_lz4.c:409
+#: ../../fe_utils/astreamer_zstd.c:387
+#, c-format
+msgid "could not decompress data: compressed stream is incomplete"
+msgstr "konnte Daten nicht dekomprimieren: komprimierter Strom ist unvollständig"
+
+#: ../../fe_utils/astreamer_lz4.c:98
 #, c-format
 msgid "could not create lz4 compression context: %s"
 msgstr "konnte lz4-Komprimierungskontext nicht erzeugen: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:142
+#: ../../fe_utils/astreamer_lz4.c:143
 #, c-format
 msgid "could not write lz4 header: %s"
 msgstr "konnte lz4-Header nicht schreiben: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:182
-#: ../../fe_utils/astreamer_zstd.c:224
+#: ../../fe_utils/astreamer_lz4.c:192 ../../fe_utils/astreamer_zstd.c:183
+#: ../../fe_utils/astreamer_zstd.c:225
 #, c-format
 msgid "could not compress data: %s"
 msgstr "konnte Daten nicht komprimieren: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:243
+#: ../../fe_utils/astreamer_lz4.c:244
 #, c-format
 msgid "could not end lz4 compression: %s"
 msgstr "konnte lz4-Komprimierung nicht beenden: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:297
+#: ../../fe_utils/astreamer_lz4.c:298
 #, c-format
 msgid "could not initialize compression library: %s"
 msgstr "konnte Komprimierungsbibliothek nicht initialisieren: %s"
@@ -493,27 +510,27 @@ msgstr "PAX-Erweiterungen des Tar-Formats werden nicht unterstützt"
 msgid "COPY stream ended before last file was finished"
 msgstr "COPY-Strom endete vor dem Ende der letzten Datei"
 
-#: ../../fe_utils/astreamer_zstd.c:89
+#: ../../fe_utils/astreamer_zstd.c:90
 #, c-format
 msgid "could not create zstd compression context"
 msgstr "konnte zstd-Komprimierungskontext nicht erzeugen"
 
-#: ../../fe_utils/astreamer_zstd.c:95
+#: ../../fe_utils/astreamer_zstd.c:96
 #, c-format
 msgid "could not set zstd compression level to %d: %s"
 msgstr "konnte zstd-Komprimierungsniveau nicht auf %d setzen: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:109
+#: ../../fe_utils/astreamer_zstd.c:110
 #, c-format
 msgid "could not set compression worker count to %d: %s"
 msgstr "konnte Komprimierungs-Worker-Anzahl nicht auf %d setzen: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:119
+#: ../../fe_utils/astreamer_zstd.c:120
 #, c-format
 msgid "could not enable long-distance mode: %s"
 msgstr "konnte Long-Distance-Modus nicht einschalten: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:276
+#: ../../fe_utils/astreamer_zstd.c:277
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "konnte zstd-Dekomprimierungskontext nicht erzeugen"
@@ -533,7 +550,7 @@ msgstr "Datei »%s« hat Größe %llu im Archiv »%s« aber Größe %<PRIu64> im
 msgid "%s: could not initialize checksum of file \"%s\""
 msgstr "%s: konnte Prüfsumme der Datei »%s« nicht initialisieren"
 
-#: astreamer_verify.c:274 pg_verifybackup.c:1155
+#: astreamer_verify.c:274 pg_verifybackup.c:1159
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "konnte Prüfsumme der Datei »%s« nicht aktualisieren"
@@ -543,7 +560,7 @@ msgstr "konnte Prüfsumme der Datei »%s« nicht aktualisieren"
 msgid "file \"%s\" in archive \"%s\" should contain %<PRIu64> bytes, but %<PRIu64> bytes were read"
 msgstr "Datei »%s« in Archiv »%s« sollte %<PRIu64> Bytes enthalten, aber %<PRIu64> Bytes wurden gelesen"
 
-#: astreamer_verify.c:312 pg_verifybackup.c:1201
+#: astreamer_verify.c:312 pg_verifybackup.c:1205
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
 msgstr "konnte Prüfsumme der Datei »%s« nicht abschließen"
@@ -698,47 +715,47 @@ msgstr "%s: Systemidentifikator im Manifest ist %<PRIu64>, aber Kontrolldatei ha
 msgid "file \"%s\" is not a regular file"
 msgstr "Datei »%s« ist keine normale Datei"
 
-#: pg_verifybackup.c:963 pg_verifybackup.c:974
+#: pg_verifybackup.c:963 pg_verifybackup.c:978
 #, c-format
 msgid "file \"%s\" is not expected in a tar format backup"
 msgstr "Datei »%s« wird in einem Backup im Tar-Format nicht erwartet"
 
-#: pg_verifybackup.c:1071
+#: pg_verifybackup.c:1075
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "»%s« steht im Manifest, ist aber nicht auf der Festplatte vorhanden"
 
-#: pg_verifybackup.c:1143
+#: pg_verifybackup.c:1147
 #, c-format
 msgid "could not initialize checksum of file \"%s\""
 msgstr "konnte Prüfsumme der Datei »%s« nicht initialisieren"
 
-#: pg_verifybackup.c:1191
+#: pg_verifybackup.c:1195
 #, c-format
 msgid "file \"%s\" should contain %<PRIu64> bytes, but read %<PRIu64>"
 msgstr "Datei »%s« sollte %<PRIu64> Bytes enthalten, aber %<PRIu64> Bytes wurden gelesen"
 
-#: pg_verifybackup.c:1209
+#: pg_verifybackup.c:1213
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "Datei »%s« hat Prüfsumme mit Länge %d, aber %d wurde erwartet"
 
-#: pg_verifybackup.c:1213
+#: pg_verifybackup.c:1217
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "Prüfsumme stimmt nicht überein für Datei »%s«"
 
-#: pg_verifybackup.c:1239
+#: pg_verifybackup.c:1243
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "Parsen des WAL fehlgeschlagen für Zeitleiste %u"
 
-#: pg_verifybackup.c:1373
+#: pg_verifybackup.c:1377
 #, c-format
 msgid "%*s/%s kB (%d%%) verified"
 msgstr "%*s/%s kB (%d%%) überprüft"
 
-#: pg_verifybackup.c:1390
+#: pg_verifybackup.c:1394
 #, c-format
 msgid ""
 "%s verifies a backup against the backup manifest.\n"
@@ -747,7 +764,7 @@ msgstr ""
 "%s überprüft ein Backup anhand eines Backup-Manifests.\n"
 "\n"
 
-#: pg_verifybackup.c:1391
+#: pg_verifybackup.c:1395
 #, c-format
 msgid ""
 "Usage:\n"
@@ -758,72 +775,72 @@ msgstr ""
 "  %s [OPTION]... BACKUPVERZ\n"
 "\n"
 
-#: pg_verifybackup.c:1392
+#: pg_verifybackup.c:1396
 #, c-format
 msgid "Options:\n"
 msgstr "Optionen:\n"
 
-#: pg_verifybackup.c:1393
+#: pg_verifybackup.c:1397
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error         bei Fehler sofort beenden\n"
 
-#: pg_verifybackup.c:1394
+#: pg_verifybackup.c:1398
 #, c-format
 msgid "  -F, --format=p|t            backup format (plain, tar)\n"
 msgstr "  -F, --format=p|t            Backup-Format (plain, tar)\n"
 
-#: pg_verifybackup.c:1395
+#: pg_verifybackup.c:1399
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=REL-PFAD       angegebenen Pfad ignorieren\n"
 
-#: pg_verifybackup.c:1396
+#: pg_verifybackup.c:1400
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=PFAD    angegebenen Pfad für Manifest verwenden\n"
 
-#: pg_verifybackup.c:1397
+#: pg_verifybackup.c:1401
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal          nicht versuchen WAL-Dateien zu parsen\n"
 
-#: pg_verifybackup.c:1398
+#: pg_verifybackup.c:1402
 #, c-format
 msgid "  -P, --progress              show progress information\n"
 msgstr "  -P, --progress              Fortschrittsinformationen zeigen\n"
 
-#: pg_verifybackup.c:1399
+#: pg_verifybackup.c:1403
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet                 keine Ausgabe, außer Fehler\n"
 
-#: pg_verifybackup.c:1400
+#: pg_verifybackup.c:1404
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums        Überprüfung der Prüfsummen überspringen\n"
 
-#: pg_verifybackup.c:1401
+#: pg_verifybackup.c:1405
 #, c-format
 msgid "  -w, --wal-path=PATH         use specified path for WAL files\n"
 msgstr "  -w, --wal-path=PFAD         angegebenen Pfad für WAL-Dateien verwenden\n"
 
-#: pg_verifybackup.c:1402
+#: pg_verifybackup.c:1406
 #, c-format
 msgid "      --wal-directory=PATH    (same as --wal-path, deprecated)\n"
 msgstr "      --wal-directory=PFAD    (gleich --wal-path, veraltet)\n"
 
-#: pg_verifybackup.c:1403
+#: pg_verifybackup.c:1407
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version               Versionsinformationen anzeigen, dann beenden\n"
 
-#: pg_verifybackup.c:1404
+#: pg_verifybackup.c:1408
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                  diese Hilfe anzeigen, dann beenden\n"
 
-#: pg_verifybackup.c:1405
+#: pg_verifybackup.c:1409
 #, c-format
 msgid ""
 "\n"
@@ -832,7 +849,7 @@ msgstr ""
 "\n"
 "Berichten Sie Fehler an <%s>.\n"
 
-#: pg_verifybackup.c:1406
+#: pg_verifybackup.c:1410
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s Homepage: <%s>\n"

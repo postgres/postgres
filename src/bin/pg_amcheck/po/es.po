@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-06 23:21+0000\n"
+"POT-Creation-Date: 2026-11-07 12:53+0000\n"
 "PO-Revision-Date: 2024-11-16 14:23+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -19,36 +19,48 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: BlackCAT 1.1\n"
 
-#: ../../../src/common/logging.c:279
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/common/logging.c:286
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "precaución: "
 
-#: ../../../src/common/logging.c:297
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "detalle: "
 
-#: ../../../src/common/logging.c:304
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "consejo: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
+
+#: ../../common/fe_memutils.c:209
+#, fuzzy, c-format
+#| msgid "invalid large object write request size: %d"
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+
+#: ../../common/fe_memutils.c:228
+#, fuzzy, c-format
+#| msgid "invalid large object write request size: %d"
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
 
 #: ../../common/file_utils.c:69 ../../common/file_utils.c:370
 #: ../../common/file_utils.c:428 ../../common/file_utils.c:502
@@ -139,22 +151,27 @@ msgstr "%s debe estar en el rango %d..%d"
 msgid "unrecognized sync method: %s"
 msgstr "método de sync no reconocido: %s"
 
-#: ../../fe_utils/parallel_slot.c:317
+#: ../../fe_utils/option_utils.c:139
+#, c-format
+msgid "options %s and %s cannot be used together"
+msgstr "las opciones %s y %s no pueden usarse juntas"
+
+#: ../../fe_utils/parallel_slot.c:316
 #, c-format
 msgid "too many jobs for this platform: %d"
 msgstr "demasiados procesos para esta plataforma: %d"
 
-#: ../../fe_utils/parallel_slot.c:326
+#: ../../fe_utils/parallel_slot.c:325
 #, c-format
 msgid "socket file descriptor out of range for select(): %d"
 msgstr "descriptor de archivo para socket fuera de rango para select(): %d"
 
-#: ../../fe_utils/parallel_slot.c:328
+#: ../../fe_utils/parallel_slot.c:327
 #, c-format
 msgid "Try fewer jobs."
 msgstr "Intente con menos trabajos."
 
-#: ../../fe_utils/parallel_slot.c:553
+#: ../../fe_utils/parallel_slot.c:551
 #, c-format
 msgid "processing of database \"%s\" failed: %s"
 msgstr "falló el procesamiento de la base de datos «%s»: %s"
@@ -171,12 +188,12 @@ msgstr "la consulta falló: %s"
 msgid "Query was: %s"
 msgstr "La consulta era: %s"
 
-#: ../../fe_utils/string_utils.c:587
+#: ../../fe_utils/string_utils.c:585
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
 msgstr "el argumento de la orden de shell contiene un salto de línea o retorno de carro: «%s»\n"
 
-#: ../../fe_utils/string_utils.c:760
+#: ../../fe_utils/string_utils.c:758
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "el nombre de base de datos contiene un salto de línea o retorno de carro: «%s»\n"

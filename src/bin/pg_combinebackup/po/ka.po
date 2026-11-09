@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-07-04 00:25+0000\n"
-"PO-Revision-Date: 2026-07-04 07:34+0200\n"
+"POT-Creation-Date: 2026-11-02 03:51+0000\n"
+"PO-Revision-Date: 2026-11-02 05:36+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: \n"
 "Language: ka\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.9\n"
+"X-Generator: Poedit 3.10\n"
 
 #: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
@@ -43,7 +43,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
 #: ../../common/controldata_utils.c:111 copy_file.c:164 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1369 reconstruct.c:542
+#: load_manifest.c:199 pg_combinebackup.c:1369 reconstruct.c:548
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
@@ -55,7 +55,7 @@ msgstr "\"%s\"-ის წაკითხვის შეცდომა: წა�
 
 #: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
 #: backup_label.c:174 copy_file.c:71 pg_combinebackup.c:560 reconstruct.c:369
-#: reconstruct.c:745 write_manifest.c:187
+#: reconstruct.c:751 write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
@@ -80,13 +80,13 @@ msgstr ""
 #: ../../common/file_utils.c:370 ../../common/file_utils.c:428
 #: ../../common/file_utils.c:502 backup_label.c:143 copy_file.c:69
 #: copy_file.c:153 copy_file.c:185 copy_file.c:189 copy_file.c:239
-#: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:545 reconstruct.c:525
-#: reconstruct.c:640 write_manifest.c:250
+#: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:545 reconstruct.c:531
+#: reconstruct.c:646 write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
-#: ../../common/controldata_utils.c:250 backup_label.c:160 reconstruct.c:764
+#: ../../common/controldata_utils.c:250 backup_label.c:160 reconstruct.c:770
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -496,13 +496,13 @@ msgstr "%s: %s ვერ ვიპოვე"
 msgid "%s: %s requires %s"
 msgstr "%s: %s-ს %s სჭირდება"
 
-#: backup_label.c:162 reconstruct.c:766
+#: backup_label.c:162 reconstruct.c:772
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "ფაილში \"%s\" ჩაწერა შეუძლებელია. ჩაწერილია %d %d-დან"
 
-#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:726
-#: reconstruct.c:772 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:732
+#: reconstruct.c:778 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "ფაილის (\"%s\") საკონტროლო ჯამის განახლების შეცდომა"
@@ -517,7 +517,7 @@ msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "ფაილში \"%s\" ჩაწერის შეცდომა. წანაცვლება %u: ჩავწერე %d ბაიტი %d-დან"
 
-#: copy_file.c:213 reconstruct.c:789
+#: copy_file.c:213 reconstruct.c:795
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "ფაილიდან (\"%s\") წაკითხვის შეცდომა: %m"
@@ -542,12 +542,12 @@ msgstr "შეცდომა ფაილის დაკლონვისა�
 msgid "file cloning not supported on this platform"
 msgstr "ამ პლატფორმაზე კლონირება მხარდაჭერილი არაა"
 
-#: copy_file.c:292 reconstruct.c:706
+#: copy_file.c:292 reconstruct.c:712
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "შეცდომა ფაილბის შუალედის კოპირებისას \"%s\"-დან \"%s\"-მდე: %m"
 
-#: copy_file.c:299 pg_combinebackup.c:276 reconstruct.c:729
+#: copy_file.c:299 pg_combinebackup.c:276 reconstruct.c:735
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "ამ პლატფორმაზე copy_file_range მხარდაჭერილი არაა"
@@ -937,17 +937,22 @@ msgstr "ფაილს \"%s\" აქვს ბლოკების რაო�
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "ფაილს \"%s\" აქვს წაკვეთის ბლოკის სიგრძე %u, რომელიც სეგმენტის ზომას %u აჭარბებს"
 
-#: reconstruct.c:544
+#: reconstruct.c:492
+#, c-format
+msgid "file \"%s\" has block number %u in excess of segment size %u"
+msgstr "ფაილს \"%s\" აქვს ბლოკების რაოდენობა %u, რომელიც სეგმენტის ზომას %u აჭარბებს"
+
+#: reconstruct.c:550
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "ფაილის \"%s\" წაკითხვის შეცდომა: წაკითხულია %d %u-დან"
 
-#: reconstruct.c:709
+#: reconstruct.c:715
 #, c-format
 msgid "unexpected end of file while copying file range from \"%s\" to \"%s\""
 msgstr "მოულოდნელი ფაილის დასასრული ფაილის შუალედის კოპირებისას \"%s\"-იდან \"%s\"-მდე"
 
-#: reconstruct.c:791
+#: reconstruct.c:797
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "ფაილიდან \"%s\" წაკითხვის შეცდომა. წანაცვლება %llu: წაკითხულია %d %d-დან"

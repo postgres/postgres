@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_fsync (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-06 23:22+0000\n"
+"POT-Creation-Date: 2026-11-07 12:54+0000\n"
 "PO-Revision-Date: 2024-11-16 14:24+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -20,36 +20,48 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Poedit 2.4.3\n"
 
-#: ../../../src/common/logging.c:279
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/common/logging.c:286
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "precaución: "
 
-#: ../../../src/common/logging.c:297
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "detalle: "
 
-#: ../../../src/common/logging.c:304
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "consejo: "
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
+
+#: ../../common/fe_memutils.c:209
+#, fuzzy, c-format
+#| msgid "invalid large object write request size: %d"
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+
+#: ../../common/fe_memutils.c:228
+#, fuzzy, c-format
+#| msgid "invalid large object write request size: %d"
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
 
 #. translator: maintain alignment with NA_FORMAT
 #: pg_test_fsync.c:37
@@ -57,82 +69,82 @@ msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 msgid "%13.3f ops/sec  %6.0f usecs/op\n"
 msgstr "%13.3f ops/seg  %6.0f usegs/op\n"
 
-#: pg_test_fsync.c:55
+#: pg_test_fsync.c:54
 #, c-format
 msgid "could not create thread for alarm"
 msgstr "no se pudo crear el thread para la alarma"
 
-#: pg_test_fsync.c:100
+#: pg_test_fsync.c:98
 #, c-format
 msgid "%s: %m"
 msgstr "%s: %m"
 
-#: pg_test_fsync.c:163
+#: pg_test_fsync.c:161
 #, c-format
 msgid "Usage: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
 msgstr "Empleo: %s [-f ARCHIVO] [-s SEG-POR-PRUEBA]\n"
 
-#: pg_test_fsync.c:189
+#: pg_test_fsync.c:187
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "argumento no válido para la opción %s"
 
-#: pg_test_fsync.c:190 pg_test_fsync.c:202 pg_test_fsync.c:211
+#: pg_test_fsync.c:188 pg_test_fsync.c:200 pg_test_fsync.c:209
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Pruebe «%s --help» para mayor información."
 
-#: pg_test_fsync.c:196
+#: pg_test_fsync.c:194
 #, c-format
 msgid "%s must be in range %u..%u"
 msgstr "%s debe estar en el rango %u..%u"
 
-#: pg_test_fsync.c:209
+#: pg_test_fsync.c:207
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)"
 
-#: pg_test_fsync.c:215
+#: pg_test_fsync.c:213
 #, c-format
 msgid "%u second per test\n"
 msgid_plural "%u seconds per test\n"
 msgstr[0] "%u segundo por prueba\n"
 msgstr[1] "%u segundos por prueba\n"
 
-#: pg_test_fsync.c:220
+#: pg_test_fsync.c:218
 #, c-format
 msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
 msgstr "O_DIRECT tiene soporte en esta plataforma para open_datasync y open_sync.\n"
 
-#: pg_test_fsync.c:222
+#: pg_test_fsync.c:220
 #, c-format
 msgid "F_NOCACHE supported on this platform for open_datasync and open_sync.\n"
 msgstr "F_NOCACHE tiene soporte en esta plataforma para open_datasync y open_sync.\n"
 
-#: pg_test_fsync.c:224
+#: pg_test_fsync.c:222
 #, c-format
 msgid "Direct I/O is not supported on this platform.\n"
 msgstr "Direct I/O no está soportado en esta plataforma.\n"
 
-#: pg_test_fsync.c:249 pg_test_fsync.c:339 pg_test_fsync.c:361
-#: pg_test_fsync.c:385 pg_test_fsync.c:529 pg_test_fsync.c:541
-#: pg_test_fsync.c:557 pg_test_fsync.c:563 pg_test_fsync.c:585
+#: pg_test_fsync.c:245 pg_test_fsync.c:335 pg_test_fsync.c:357
+#: pg_test_fsync.c:381 pg_test_fsync.c:525 pg_test_fsync.c:537
+#: pg_test_fsync.c:553 pg_test_fsync.c:559 pg_test_fsync.c:581
 msgid "could not open output file"
 msgstr "no se pudo abrir el archivo de salida"
 
-#: pg_test_fsync.c:253 pg_test_fsync.c:323 pg_test_fsync.c:348
-#: pg_test_fsync.c:370 pg_test_fsync.c:394 pg_test_fsync.c:433
-#: pg_test_fsync.c:492 pg_test_fsync.c:531 pg_test_fsync.c:559
-#: pg_test_fsync.c:590
+#: pg_test_fsync.c:249 pg_test_fsync.c:319 pg_test_fsync.c:344
+#: pg_test_fsync.c:366 pg_test_fsync.c:390 pg_test_fsync.c:429
+#: pg_test_fsync.c:488 pg_test_fsync.c:527 pg_test_fsync.c:555
+#: pg_test_fsync.c:586
 msgid "write failed"
 msgstr "escritura falló"
 
-#: pg_test_fsync.c:257 pg_test_fsync.c:372 pg_test_fsync.c:396
-#: pg_test_fsync.c:533 pg_test_fsync.c:565
+#: pg_test_fsync.c:253 pg_test_fsync.c:368 pg_test_fsync.c:392
+#: pg_test_fsync.c:529 pg_test_fsync.c:561
 msgid "fsync failed"
 msgstr "fsync falló"
 
-#: pg_test_fsync.c:296
+#: pg_test_fsync.c:292
 #, c-format
 msgid ""
 "\n"
@@ -141,7 +153,7 @@ msgstr ""
 "\n"
 "Comparar métodos de sincronización de archivos usando una escritura de %dkB:\n"
 
-#: pg_test_fsync.c:298
+#: pg_test_fsync.c:294
 #, c-format
 msgid ""
 "\n"
@@ -150,21 +162,21 @@ msgstr ""
 "\n"
 "Comparar métodos de sincronización de archivos usando dos escrituras de %dkB:\n"
 
-#: pg_test_fsync.c:299
+#: pg_test_fsync.c:295
 #, c-format
 msgid "(in \"wal_sync_method\" preference order, except fdatasync is Linux's default)\n"
 msgstr "(en orden de preferencia de «wal_sync_method», excepto en Linux donde fdatasync es el predeterminado)\n"
 
-#: pg_test_fsync.c:310 pg_test_fsync.c:413 pg_test_fsync.c:480
+#: pg_test_fsync.c:306 pg_test_fsync.c:409 pg_test_fsync.c:476
 msgid "n/a*"
 msgstr "n/a*"
 
-#: pg_test_fsync.c:329 pg_test_fsync.c:401 pg_test_fsync.c:439
-#: pg_test_fsync.c:498
+#: pg_test_fsync.c:325 pg_test_fsync.c:397 pg_test_fsync.c:435
+#: pg_test_fsync.c:494
 msgid "n/a"
 msgstr "n/a"
 
-#: pg_test_fsync.c:444
+#: pg_test_fsync.c:440
 #, c-format
 msgid ""
 "* This file system and its mount options do not support direct\n"
@@ -173,7 +185,7 @@ msgstr ""
 "* Este sistema de archivos con sus opciones de montaje no soportan\n"
 "  Direct I/O, e.g. ext4 en modo journal.\n"
 
-#: pg_test_fsync.c:452
+#: pg_test_fsync.c:448
 #, c-format
 msgid ""
 "\n"
@@ -182,7 +194,7 @@ msgstr ""
 "\n"
 "Comparar open_sync con diferentes tamaños de escritura:\n"
 
-#: pg_test_fsync.c:453
+#: pg_test_fsync.c:449
 #, c-format
 msgid ""
 "(This is designed to compare the cost of writing 16kB in different write\n"
@@ -191,27 +203,27 @@ msgstr ""
 "(Esto está diseñado para comparar el costo de escribir 16kB en diferentes\n"
 "tamaños de escrituras open_sync.)\n"
 
-#: pg_test_fsync.c:456
+#: pg_test_fsync.c:452
 msgid " 1 * 16kB open_sync write"
 msgstr " 1 * 16kB escritura open_sync"
 
-#: pg_test_fsync.c:457
+#: pg_test_fsync.c:453
 msgid " 2 *  8kB open_sync writes"
 msgstr " 2 *  8kB escrituras open_sync"
 
-#: pg_test_fsync.c:458
+#: pg_test_fsync.c:454
 msgid " 4 *  4kB open_sync writes"
 msgstr " 4 *  4kB escrituras open_sync"
 
-#: pg_test_fsync.c:459
+#: pg_test_fsync.c:455
 msgid " 8 *  2kB open_sync writes"
 msgstr " 8 *  2kB escrituras open_sync"
 
-#: pg_test_fsync.c:460
+#: pg_test_fsync.c:456
 msgid "16 *  1kB open_sync writes"
 msgstr "16 *  1kB escrituras open_sync"
 
-#: pg_test_fsync.c:514
+#: pg_test_fsync.c:510
 #, c-format
 msgid ""
 "\n"
@@ -220,7 +232,7 @@ msgstr ""
 "\n"
 "Probar si se respeta fsync en un descriptor de archivo que no es de escritura:\n"
 
-#: pg_test_fsync.c:515
+#: pg_test_fsync.c:511
 #, c-format
 msgid ""
 "(If the times are similar, fsync() can sync data written on a different\n"
@@ -229,7 +241,7 @@ msgstr ""
 "(Si los tiempos son similares, fsync() puede sincronizar datos escritos\n"
 "en un descriptor diferente.)\n"
 
-#: pg_test_fsync.c:580
+#: pg_test_fsync.c:576
 #, c-format
 msgid ""
 "\n"

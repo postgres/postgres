@@ -1,14 +1,17 @@
 # Simplified Chinese message translation file for pg_config
-# This file is put in the public domain.
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Bao Wei <weibao@imsi.cn>, 2004.
 # Dianjin Wang <wangdianjin@gmail.com>, 2024.
-# Ruohang Feng <rh@vonng.com>, 2026.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-17 05:51+0000\n"
-"PO-Revision-Date: 2026-09-17 16:00+0800\n"
+"POT-Creation-Date: 2026-11-03 15:49+0000\n"
+"PO-Revision-Date: 2026-11-04 08:45+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"

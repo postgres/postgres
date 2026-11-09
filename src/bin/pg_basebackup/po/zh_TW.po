@@ -1,15 +1,16 @@
 # Traditional Chinese message translation file for pg_basebackup
+# Copyright (C) 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Zhenbang Wei <znbang@gmail.com>, 2023.
-# Ruohang Feng <rh@vonng.com>, 2026.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-18 04:22+0000\n"
-"PO-Revision-Date: 2026-09-19 12:00+0800\n"
+"POT-Creation-Date: 2026-11-03 15:50+0000\n"
+"PO-Revision-Date: 2026-11-04 08:45+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
@@ -40,10 +41,10 @@ msgid "hint: "
 msgstr "提示: "
 
 #: ../../common/compression.c:176 ../../common/compression.c:185
-#: ../../common/compression.c:194 ../../fe_utils/astreamer_gzip.c:140
-#: ../../fe_utils/astreamer_gzip.c:275 ../../fe_utils/astreamer_lz4.c:102
-#: ../../fe_utils/astreamer_lz4.c:302 ../../fe_utils/astreamer_zstd.c:130
-#: ../../fe_utils/astreamer_zstd.c:285
+#: ../../common/compression.c:194 ../../fe_utils/astreamer_gzip.c:141
+#: ../../fe_utils/astreamer_gzip.c:277 ../../fe_utils/astreamer_lz4.c:103
+#: ../../fe_utils/astreamer_lz4.c:304 ../../fe_utils/astreamer_zstd.c:131
+#: ../../fe_utils/astreamer_zstd.c:287
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "此建置版本不支援使用 %s 進行壓縮"
@@ -357,69 +358,81 @@ msgstr "無法建立符號連結 \"%s\" 至 \"%s\": %m"
 msgid "could not set permissions on file \"%s\": %m"
 msgstr "無法設定檔案 \"%s\" 的權限: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:115
+#: ../../fe_utils/astreamer_gzip.c:116
 #, c-format
 msgid "could not create compressed file \"%s\": %m"
 msgstr "無法建立壓縮檔 \"%s\": %m"
 
-#: ../../fe_utils/astreamer_gzip.c:127
+#: ../../fe_utils/astreamer_gzip.c:128
 #, c-format
 msgid "could not duplicate stdout: %m"
 msgstr "無法複製標準輸出: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:131
+#: ../../fe_utils/astreamer_gzip.c:132
 #, c-format
 msgid "could not open output file: %m"
 msgstr "無法開啟輸出檔: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:135
+#: ../../fe_utils/astreamer_gzip.c:136
 #, c-format
 msgid "could not set compression level %d: %s"
 msgstr "無法設定壓縮等級 %d: %s"
 
-#: ../../fe_utils/astreamer_gzip.c:167
+#: ../../fe_utils/astreamer_gzip.c:168
 #, c-format
 msgid "could not write to compressed file \"%s\": %s"
 msgstr "無法寫入壓縮檔 \"%s\": %s"
 
-#: ../../fe_utils/astreamer_gzip.c:191
+#: ../../fe_utils/astreamer_gzip.c:192
 #, c-format
 msgid "could not close compressed file \"%s\": %m"
 msgstr "無法關閉壓縮檔 \"%s\": %m"
 
-#: ../../fe_utils/astreamer_gzip.c:271 walmethods.c:880
+#: ../../fe_utils/astreamer_gzip.c:272 walmethods.c:880
 #, c-format
 msgid "could not initialize compression library"
 msgstr "無法初始化壓縮程式庫"
 
-#: ../../fe_utils/astreamer_gzip.c:322 ../../fe_utils/astreamer_lz4.c:358
-#: ../../fe_utils/astreamer_zstd.c:330
+#: ../../fe_utils/astreamer_gzip.c:328 ../../fe_utils/astreamer_lz4.c:360
+#: ../../fe_utils/astreamer_zstd.c:332 ../../fe_utils/astreamer_zstd.c:374
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "無法解壓縮資料: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:97
+#: ../../fe_utils/astreamer_gzip.c:364 ../../fe_utils/astreamer_lz4.c:407
+#: ../../fe_utils/astreamer_zstd.c:385
+#, c-format
+msgid "could not decompress data: compressed stream is empty"
+msgstr "無法解壓縮資料：壓縮串流為空"
+
+#: ../../fe_utils/astreamer_gzip.c:366 ../../fe_utils/astreamer_lz4.c:409
+#: ../../fe_utils/astreamer_zstd.c:387
+#, c-format
+msgid "could not decompress data: compressed stream is incomplete"
+msgstr "無法解壓縮資料：壓縮串流不完整"
+
+#: ../../fe_utils/astreamer_lz4.c:98
 #, c-format
 msgid "could not create lz4 compression context: %s"
 msgstr "無法建立 lz4 壓縮上下文: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:142
+#: ../../fe_utils/astreamer_lz4.c:143
 #, c-format
 msgid "could not write lz4 header: %s"
 msgstr "無法寫入 lz4 標頭: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:182
-#: ../../fe_utils/astreamer_zstd.c:224
+#: ../../fe_utils/astreamer_lz4.c:192 ../../fe_utils/astreamer_zstd.c:183
+#: ../../fe_utils/astreamer_zstd.c:225
 #, c-format
 msgid "could not compress data: %s"
 msgstr "無法壓縮資料: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:243
+#: ../../fe_utils/astreamer_lz4.c:244
 #, c-format
 msgid "could not end lz4 compression: %s"
 msgstr "無法完成 lz4 壓縮: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:297
+#: ../../fe_utils/astreamer_lz4.c:298
 #, c-format
 msgid "could not initialize compression library: %s"
 msgstr "無法初始化壓縮程式庫: %s"
@@ -449,27 +462,27 @@ msgstr "不支援 tar 格式的 pax 延伸"
 msgid "COPY stream ended before last file was finished"
 msgstr "COPY 串流在最後一個檔案完成之前結束"
 
-#: ../../fe_utils/astreamer_zstd.c:89
+#: ../../fe_utils/astreamer_zstd.c:90
 #, c-format
 msgid "could not create zstd compression context"
 msgstr "無法建立 zstd 壓縮上下文"
 
-#: ../../fe_utils/astreamer_zstd.c:95
+#: ../../fe_utils/astreamer_zstd.c:96
 #, c-format
 msgid "could not set zstd compression level to %d: %s"
 msgstr "無法設定 zstd 壓縮等級至 %d: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:109
+#: ../../fe_utils/astreamer_zstd.c:110
 #, c-format
 msgid "could not set compression worker count to %d: %s"
 msgstr "無法將壓縮工作執行緒數設定為 %d: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:119
+#: ../../fe_utils/astreamer_zstd.c:120
 #, c-format
 msgid "could not enable long-distance mode: %s"
 msgstr "無法啟動長距離模式: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:276
+#: ../../fe_utils/astreamer_zstd.c:277
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "無法建立 zstd 解壓縮上下文"
@@ -2887,7 +2900,7 @@ msgstr "無法刪除複寫槽 \"%s\": 收到 %d 列和 %d 欄，預期 %d 列和
 msgid "could not compress data"
 msgstr "無法壓縮資料"
 
-#: walmethods.c:755
+#: ../../fe_utils/astreamer_gzip.c:349 walmethods.c:755
 msgid "could not reset compression stream"
 msgstr "無法重設壓縮串流"
 

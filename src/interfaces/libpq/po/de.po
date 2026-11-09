@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-08-07 15:40+0000\n"
-"PO-Revision-Date: 2026-07-04 01:02+0200\n"
+"POT-Creation-Date: 2026-10-30 12:10+0000\n"
+"PO-Revision-Date: 2026-10-30 14:09+0100\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -38,21 +38,20 @@ msgstr "WARNUNG: libcurl-Multi-Handle-Cleanup fehlgeschlagen: %s\n"
 #: fe-auth-scram.c:619 fe-auth-scram.c:643 fe-auth-scram.c:657
 #: fe-auth-scram.c:703 fe-auth-scram.c:739 fe-auth-scram.c:931 fe-auth.c:308
 #: fe-auth.c:382 fe-auth.c:416 fe-auth.c:694 fe-auth.c:827 fe-auth.c:1330
-#: fe-auth.c:1493 fe-cancel.c:178 fe-connect.c:1022 fe-connect.c:1062
-#: fe-connect.c:2189 fe-connect.c:2351 fe-connect.c:3744 fe-connect.c:5236
-#: fe-connect.c:5550 fe-connect.c:5828 fe-connect.c:5946 fe-connect.c:6219
-#: fe-connect.c:6262 fe-connect.c:6326 fe-connect.c:6424 fe-connect.c:6675
-#: fe-connect.c:6702 fe-connect.c:6778 fe-connect.c:6801 fe-connect.c:6825
-#: fe-connect.c:6860 fe-connect.c:6946 fe-connect.c:6954 fe-connect.c:7311
-#: fe-connect.c:7493 fe-connect.c:8106 fe-connect.c:8147 fe-exec.c:531
-#: fe-exec.c:1332 fe-exec.c:3285 fe-exec.c:4340 fe-exec.c:4533
-#: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:214 fe-protocol3.c:237
-#: fe-protocol3.c:260 fe-protocol3.c:277 fe-protocol3.c:298 fe-protocol3.c:372
-#: fe-protocol3.c:753 fe-protocol3.c:993 fe-protocol3.c:1608
-#: fe-protocol3.c:1662 fe-protocol3.c:1708 fe-protocol3.c:1729
-#: fe-protocol3.c:1993 fe-protocol3.c:2405 fe-secure-common.c:110
-#: fe-secure-gssapi.c:515 fe-secure-gssapi.c:706 fe-secure-openssl.c:436
-#: fe-secure-openssl.c:1167
+#: fe-auth.c:1493 fe-cancel.c:178 fe-connect.c:1017 fe-connect.c:1057
+#: fe-connect.c:2186 fe-connect.c:2348 fe-connect.c:3741 fe-connect.c:5198
+#: fe-connect.c:5512 fe-connect.c:5790 fe-connect.c:5908 fe-connect.c:6155
+#: fe-connect.c:6235 fe-connect.c:6333 fe-connect.c:6584 fe-connect.c:6611
+#: fe-connect.c:6687 fe-connect.c:6710 fe-connect.c:6734 fe-connect.c:6769
+#: fe-connect.c:6855 fe-connect.c:6863 fe-connect.c:7220 fe-connect.c:7402
+#: fe-connect.c:8015 fe-connect.c:8056 fe-exec.c:531 fe-exec.c:1332
+#: fe-exec.c:3285 fe-exec.c:4340 fe-exec.c:4533 fe-gssapi-common.c:109
+#: fe-lobj.c:870 fe-protocol3.c:214 fe-protocol3.c:237 fe-protocol3.c:260
+#: fe-protocol3.c:277 fe-protocol3.c:298 fe-protocol3.c:372 fe-protocol3.c:753
+#: fe-protocol3.c:993 fe-protocol3.c:1571 fe-protocol3.c:1625
+#: fe-protocol3.c:1671 fe-protocol3.c:1692 fe-protocol3.c:1956
+#: fe-protocol3.c:2368 fe-secure-common.c:110 fe-secure-gssapi.c:515
+#: fe-secure-gssapi.c:706 fe-secure-openssl.c:436 fe-secure-openssl.c:1167
 #, c-format
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
@@ -731,552 +730,542 @@ msgstr "Stornierungsanfrage wird auf dieser Verbindung bereits gesendet"
 msgid "unexpected response from server"
 msgstr "unerwartete Antwort vom Server"
 
-#: fe-connect.c:1319
+#: fe-connect.c:1314
 #, c-format
 msgid "could not match %d host names to %d hostaddr values"
 msgstr "fehlerhafte Angabe: %d Hostnamen und %d hostaddr-Angaben"
 
-#: fe-connect.c:1399
+#: fe-connect.c:1394
 #, c-format
 msgid "could not match %d port numbers to %d hosts"
 msgstr "fehlerhafte Angabe: %d Portnummern und %d Hosts"
 
-#: fe-connect.c:1480 fe-exec.c:532 fe-protocol3.c:2199
+#: fe-connect.c:1475 fe-exec.c:532 fe-protocol3.c:2162
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: fe-connect.c:1536
+#: fe-connect.c:1531
 #, c-format
 msgid "negative require_auth method \"%s\" cannot be mixed with non-negative methods"
 msgstr "negative require_auth-Methode »%s« kann nicht mit nicht-negativen Methoden vermischt werden"
 
-#: fe-connect.c:1549
+#: fe-connect.c:1544
 #, c-format
 msgid "require_auth method \"%s\" cannot be mixed with negative methods"
 msgstr "require_auth-Methode »%s« kann nicht mit negativen Methoden vermischt werden"
 
-#: fe-connect.c:1625 fe-connect.c:1754 fe-connect.c:1796 fe-connect.c:1839
-#: fe-connect.c:1942 fe-connect.c:1988 fe-connect.c:2028 fe-connect.c:2095
-#: fe-connect.c:8390
+#: fe-connect.c:1620 fe-connect.c:1749 fe-connect.c:1791 fe-connect.c:1834
+#: fe-connect.c:1937 fe-connect.c:1983 fe-connect.c:2023 fe-connect.c:2090
+#: fe-connect.c:8299
 #, c-format
 msgid "invalid %s value: \"%s\""
 msgstr "ungültiger %s-Wert: »%s«"
 
-#: fe-connect.c:1667
+#: fe-connect.c:1662
 #, c-format
 msgid "internal error: no space in allowed_sasl_mechs"
 msgstr "interner Fehler: kein Platz in allowed_sasl_mechs"
 
-#: fe-connect.c:1706
+#: fe-connect.c:1701
 #, c-format
 msgid "require_auth method \"%s\" is specified more than once"
 msgstr "require_auth-Methode »%s« ist mehrmals angegeben"
 
-#: fe-connect.c:1777 fe-connect.c:1816 fe-connect.c:1848 fe-connect.c:1950
+#: fe-connect.c:1772 fe-connect.c:1811 fe-connect.c:1843 fe-connect.c:1945
 #, c-format
 msgid "%s value \"%s\" invalid when SSL support is not compiled in"
 msgstr "%s-Wert »%s« ist ungültig, wenn SSL-Unterstützung nicht einkompiliert worden ist"
 
-#: fe-connect.c:1868
+#: fe-connect.c:1863
 #, c-format
 msgid "weak sslmode \"%s\" may not be used with sslnegotiation=direct (use \"require\", \"verify-ca\", or \"verify-full\")"
 msgstr "schwacher sslmode »%s« darf nicht mit sslnegotiation=direct verwendet werden (»require«, »verify-ca« oder »verify-full« verwenden)"
 
-#: fe-connect.c:1890
+#: fe-connect.c:1885
 #, c-format
 msgid "weak sslmode \"%s\" may not be used with sslrootcert=system (use \"verify-full\")"
 msgstr "schwacher sslmode »%s« darf nicht mit sslrootcert=system verwendet werden (»verify-full« verwenden)"
 
-#: fe-connect.c:1903 fe-connect.c:1911
+#: fe-connect.c:1898 fe-connect.c:1906
 #, c-format
 msgid "invalid \"%s\" value: \"%s\""
 msgstr "ungültiger »%s«-Wert: »%s«"
 
-#: fe-connect.c:1928
+#: fe-connect.c:1923
 #, c-format
 msgid "invalid SSL protocol version range"
 msgstr "ungültiges SSL-Protokollsintervall"
 
-#: fe-connect.c:1965
+#: fe-connect.c:1960
 #, c-format
 msgid "%s value \"%s\" is not supported (check OpenSSL version)"
 msgstr "%s-Wert »%s« wird nicht unterstützt (OpenSSL-Version prüfen)"
 
-#: fe-connect.c:1995
+#: fe-connect.c:1990
 #, c-format
 msgid "gssencmode value \"%s\" invalid when GSSAPI support is not compiled in"
 msgstr "gssencmode-Wert »%s« ist ungültig, wenn GSSAPI-Unterstützung nicht einkompiliert worden ist"
 
-#: fe-connect.c:2049
+#: fe-connect.c:2044
 #, c-format
 msgid "invalid SCRAM client key"
 msgstr "ungültiger SCRAM-Client-Schlüssel"
 
-#: fe-connect.c:2054
+#: fe-connect.c:2049
 #, c-format
 msgid "invalid SCRAM client key length: %d"
 msgstr "ungültige SCRAM-Client-Schlüssel-Länge: %d"
 
-#: fe-connect.c:2072
+#: fe-connect.c:2067
 #, c-format
 msgid "invalid SCRAM server key"
 msgstr "ungültiger SCRAM-Server-Schlüssel"
 
-#: fe-connect.c:2077
+#: fe-connect.c:2072
 #, c-format
 msgid "invalid SCRAM server key length: %d"
 msgstr "ungültige SCRAM-Server-Schlüssel-Länge: %d"
 
-#: fe-connect.c:2162
+#: fe-connect.c:2159
 #, c-format
 msgid "\"%s\" is greater than \"%s\""
 msgstr "»%s« ist größer als »%s«"
 
-#: fe-connect.c:2374
+#: fe-connect.c:2371
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s"
 msgstr "konnte Socket nicht auf TCP »No Delay«-Modus umstellen: %s"
 
-#: fe-connect.c:2433
+#: fe-connect.c:2430
 #, c-format
 msgid "connection to server on socket \"%s\" failed: "
 msgstr "Verbindung zum Server auf Socket »%s« fehlgeschlagen: "
 
-#: fe-connect.c:2459
+#: fe-connect.c:2456
 #, c-format
 msgid "connection to server at \"%s\" (%s), port %s failed: "
 msgstr "Verbindung zum Server auf »%s« (%s), Port %s fehlgeschlagen: "
 
-#: fe-connect.c:2464
+#: fe-connect.c:2461
 #, c-format
 msgid "connection to server at \"%s\", port %s failed: "
 msgstr "Verbindung zum Server auf »%s«, Port %s fehlgeschlagen: "
 
-#: fe-connect.c:2487
+#: fe-connect.c:2484
 #, c-format
 msgid "\tIs the server running locally and accepting connections on that socket?"
 msgstr "\tLäuft der Server lokal und akzeptiert er Verbindungen auf diesem Socket?"
 
-#: fe-connect.c:2489
+#: fe-connect.c:2486
 #, c-format
 msgid "\tIs the server running on that host and accepting TCP/IP connections?"
 msgstr "\tLäuft der Server auf diesem Host und akzeptiert er TCP/IP-Verbindungen?"
 
-#: fe-connect.c:2535 fe-connect.c:2569 fe-connect.c:2604 fe-connect.c:2702
-#: fe-connect.c:3428
+#: fe-connect.c:2532 fe-connect.c:2566 fe-connect.c:2601 fe-connect.c:2699
+#: fe-connect.c:3425
 #, c-format
 msgid "%s(%s) failed: %s"
 msgstr "%s(%s) fehlgeschlagen: %s"
 
-#: fe-connect.c:2668
+#: fe-connect.c:2665
 #, c-format
 msgid "%s(%s) failed: error code %d"
 msgstr "%s(%s) fehlgeschlagen: Fehlercode %d"
 
-#: fe-connect.c:2980
+#: fe-connect.c:2977
 #, c-format
 msgid "invalid connection state, probably indicative of memory corruption"
 msgstr "ungültiger Verbindungszustand, möglicherweise ein Speicherproblem"
 
-#: fe-connect.c:3063
+#: fe-connect.c:3060
 #, c-format
 msgid "invalid port number: \"%s\""
 msgstr "ungültige Portnummer: »%s«"
 
-#: fe-connect.c:3077
+#: fe-connect.c:3074
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s"
 msgstr "konnte Hostnamen »%s« nicht in Adresse übersetzen: %s"
 
-#: fe-connect.c:3089
+#: fe-connect.c:3086
 #, c-format
 msgid "could not parse network address \"%s\": %s"
 msgstr "konnte Netzwerkadresse »%s« nicht interpretieren: %s"
 
-#: fe-connect.c:3100
+#: fe-connect.c:3097
 #, c-format
 msgid "Unix-domain socket path \"%s\" is too long (maximum %zu bytes)"
 msgstr "Unix-Domain-Socket-Pfad »%s« ist zu lang (maximal %zu Bytes)"
 
-#: fe-connect.c:3114
+#: fe-connect.c:3111
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s"
 msgstr "konnte Unix-Domain-Socket-Pfad »%s« nicht in Adresse übersetzen: %s"
 
-#: fe-connect.c:3280 fe-connect.c:4761
+#: fe-connect.c:3277 fe-connect.c:4724
 #, c-format
 msgid "GSSAPI encryption required but it is not supported over a local socket"
 msgstr "GSSAPI-Verschlüsselung war gefordert aber wird über lokales Socket nicht unterstützt"
 
-#: fe-connect.c:3288 fe-connect.c:4890
+#: fe-connect.c:3285 fe-connect.c:4853
 #, c-format
 msgid "GSSAPI encryption required but no credential cache"
 msgstr "GSSAPI-Verschlüsselung war gefordert aber kein Credential-Cache"
 
-#: fe-connect.c:3356
+#: fe-connect.c:3353
 #, c-format
 msgid "could not create socket: %s"
 msgstr "konnte Socket nicht erzeugen: %s"
 
-#: fe-connect.c:3387
+#: fe-connect.c:3384
 #, c-format
 msgid "could not set socket to nonblocking mode: %s"
 msgstr "konnte Socket nicht auf nicht-blockierenden Modus umstellen: %s"
 
-#: fe-connect.c:3398
+#: fe-connect.c:3395
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s"
 msgstr "konnte Socket nicht auf »Close on exec«-Modus umstellen: %s"
 
-#: fe-connect.c:3555
+#: fe-connect.c:3552
 #, c-format
 msgid "could not get socket error status: %s"
 msgstr "konnte Socket-Fehlerstatus nicht ermitteln: %s"
 
-#: fe-connect.c:3582
+#: fe-connect.c:3579
 #, c-format
 msgid "could not get client address from socket: %s"
 msgstr "konnte Client-Adresse vom Socket nicht ermitteln: %s"
 
-#: fe-connect.c:3608
+#: fe-connect.c:3605
 #, c-format
 msgid "requirepeer parameter is not supported on this platform"
 msgstr "Parameter »requirepeer« wird auf dieser Plattform nicht unterstützt"
 
-#: fe-connect.c:3610
+#: fe-connect.c:3607
 #, c-format
 msgid "could not get peer credentials: %s"
 msgstr "konnte Credentials von Gegenstelle nicht ermitteln: %s"
 
-#: fe-connect.c:3623
+#: fe-connect.c:3620
 #, c-format
 msgid "requirepeer specifies \"%s\", but actual peer user name is \"%s\""
 msgstr "requirepeer gibt »%s« an, aber tatsächlicher Benutzername der Gegenstelle ist »%s«"
 
-#: fe-connect.c:3661
+#: fe-connect.c:3658
 #, c-format
 msgid "could not send GSSAPI negotiation packet: %s"
 msgstr "konnte Paket zur GSSAPI-Verhandlung nicht senden: %s"
 
-#: fe-connect.c:3700
+#: fe-connect.c:3697
 #, c-format
 msgid "could not send SSL negotiation packet: %s"
 msgstr "konnte Paket zur SSL-Verhandlung nicht senden: %s"
 
-#: fe-connect.c:3726
+#: fe-connect.c:3723
 #, c-format
 msgid "could not send cancel packet: %s"
 msgstr "konnte Cancel-Paket nicht senden: %s"
 
-#: fe-connect.c:3756
+#: fe-connect.c:3753
 #, c-format
 msgid "could not send startup packet: %s"
 msgstr "konnte Startpaket nicht senden: %s"
 
-#: fe-connect.c:3829
+#: fe-connect.c:3826
 msgid "server does not support SSL, but SSL was required"
 msgstr "Server unterstützt kein SSL, aber SSL wurde verlangt"
 
-#: fe-connect.c:3839
+#: fe-connect.c:3836
 #, c-format
 msgid "server sent an error response during SSL exchange"
 msgstr "Server hat während des SSL-Austauschs eine Fehlermeldung gesendet"
 
-#: fe-connect.c:3844
+#: fe-connect.c:3841
 #, c-format
 msgid "received invalid response to SSL negotiation: %c"
 msgstr "ungültige Antwort auf SSL-Verhandlungspaket empfangen: %c"
 
-#: fe-connect.c:3864
+#: fe-connect.c:3861
 #, c-format
 msgid "received unencrypted data after SSL response"
 msgstr "unverschlüsselte Daten nach SSL-Antwort empfangen"
 
-#: fe-connect.c:3927
+#: fe-connect.c:3924
 #, c-format
 msgid "server sent an error response during GSS encryption exchange"
 msgstr "Server hat während des GSS-Verschlüsselungsaustauschs eine Fehlermeldung gesendet"
 
-#: fe-connect.c:3945
+#: fe-connect.c:3942
 msgid "server doesn't support GSSAPI encryption, but it was required"
 msgstr "Server unterstützt keine GSSAPI-Verschlüsselung, sie wurde aber verlangt"
 
-#: fe-connect.c:3949
+#: fe-connect.c:3946
 #, c-format
 msgid "received invalid response to GSSAPI negotiation: %c"
 msgstr "ungültige Antwort auf GSSAPI-Verhandlungspaket empfangen: %c"
 
-#: fe-connect.c:3971
+#: fe-connect.c:3968
 #, c-format
 msgid "received unencrypted data after GSSAPI encryption response"
 msgstr "unverschlüsselte Daten nach GSSAPI-Verschlüsselungsantwort empfangen"
 
-#: fe-connect.c:4032
+#: fe-connect.c:4029
 #, c-format
 msgid "expected authentication request from server, but received %c"
 msgstr "Authentifizierungsanfrage wurde vom Server erwartet, aber %c wurde empfangen"
 
-#: fe-connect.c:4060 fe-connect.c:4218
+#: fe-connect.c:4057 fe-connect.c:4189
 #, c-format
 msgid "received invalid authentication request"
 msgstr "ungültige Authentifizierungsanforderung empfangen"
 
-#: fe-connect.c:4066
+#: fe-connect.c:4063
 #, c-format
 msgid "received invalid protocol negotiation message"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen"
 
-#: fe-connect.c:4085 fe-connect.c:4139
+#: fe-connect.c:4082 fe-connect.c:4136
 #, c-format
 msgid "received invalid error message"
 msgstr "ungültige Fehlermeldung empfangen"
 
-#: fe-connect.c:4195
+#: fe-connect.c:4166
 #, c-format
 msgid "received duplicate protocol negotiation message"
 msgstr "doppelte Protokollverhandlungsnachricht empfangen"
 
-#: fe-connect.c:4297
+#: fe-connect.c:4268
 #, c-format
 msgid "internal error: async authentication has no handler"
 msgstr "interner Fehler: async authentication has no handler"
 
-#: fe-connect.c:4322
+#: fe-connect.c:4293
 #, c-format
 msgid "internal error: async cleanup did not release polling socket"
 msgstr "interner Fehler: async cleanup did not release polling socket"
 
-#: fe-connect.c:4345
+#: fe-connect.c:4316
 #, c-format
 msgid "internal error: async authentication did not set a socket for polling"
 msgstr "interner Fehler: async authentication did not set a socket for polling"
 
-#: fe-connect.c:4378
+#: fe-connect.c:4349
 #, c-format
 msgid "unexpected message from server during startup"
 msgstr "unerwartete Nachricht vom Server beim Start"
 
-#: fe-connect.c:4421
-#, c-format
-msgid "server incorrectly accepted \"grease\" protocol version 3.9999 without negotiation"
-msgstr "Server hat inkorrekterweise die »Grease«-Protokollversion 3.9999 ohne Verhandlung akzeptiert"
-
-#: fe-connect.c:4477
+#: fe-connect.c:4440
 #, c-format
 msgid "session is read-only"
 msgstr "Sitzung ist read-only"
 
-#: fe-connect.c:4479
+#: fe-connect.c:4442
 #, c-format
 msgid "session is not read-only"
 msgstr "Sitzung ist nicht read-only"
 
-#: fe-connect.c:4532
+#: fe-connect.c:4495
 #, c-format
 msgid "server is in hot standby mode"
 msgstr "Server ist im Hot-Standby-Modus"
 
-#: fe-connect.c:4534
+#: fe-connect.c:4497
 #, c-format
 msgid "server is not in hot standby mode"
 msgstr "Server ist nicht im Hot-Standby-Modus"
 
-#: fe-connect.c:4659 fe-connect.c:4709
+#: fe-connect.c:4622 fe-connect.c:4672
 #, c-format
 msgid "\"%s\" failed"
 msgstr "»%s« fehlgeschlagen"
 
-#: fe-connect.c:4723
+#: fe-connect.c:4686
 #, c-format
 msgid "invalid connection state %d, probably indicative of memory corruption"
 msgstr "ungültiger Verbindungszustand %d, möglicherweise ein Speicherproblem"
 
-#: fe-connect.c:5563
+#: fe-connect.c:5525
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://"
 msgstr "ungültige LDAP-URL »%s«: Schema muss ldap:// sein"
 
-#: fe-connect.c:5578
+#: fe-connect.c:5540
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name"
 msgstr "ungültige LDAP-URL »%s«: Distinguished Name fehlt"
 
-#: fe-connect.c:5590 fe-connect.c:5648
+#: fe-connect.c:5552 fe-connect.c:5610
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute"
 msgstr "ungültige LDAP-URL »%s«: muss genau ein Attribut haben"
 
-#: fe-connect.c:5602 fe-connect.c:5664
+#: fe-connect.c:5564 fe-connect.c:5626
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)"
 msgstr "ungültige LDAP-URL »%s«: Suchbereich fehlt (base/one/sub)"
 
-#: fe-connect.c:5614
+#: fe-connect.c:5576
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter"
 msgstr "ungültige LDAP-URL »%s«: kein Filter"
 
-#: fe-connect.c:5636
+#: fe-connect.c:5598
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number"
 msgstr "ungültige LDAP-URL »%s«: ungültige Portnummer"
 
-#: fe-connect.c:5673
+#: fe-connect.c:5635
 #, c-format
 msgid "could not create LDAP structure"
 msgstr "konnte LDAP-Struktur nicht erzeugen"
 
-#: fe-connect.c:5680
+#: fe-connect.c:5642
 #, c-format
 msgid "could not set LDAP protocol version: %s"
 msgstr "konnte LDAP-Protokollversion nicht setzen: %s"
 
-#: fe-connect.c:5757
+#: fe-connect.c:5719
 #, c-format
 msgid "lookup on LDAP server failed: %s"
 msgstr "Suche auf LDAP-Server fehlgeschlagen: %s"
 
-#: fe-connect.c:5767
+#: fe-connect.c:5729
 #, c-format
 msgid "more than one entry found on LDAP lookup"
 msgstr "LDAP-Suche ergab mehr als einen Eintrag"
 
-#: fe-connect.c:5769 fe-connect.c:5780
+#: fe-connect.c:5731 fe-connect.c:5742
 #, c-format
 msgid "no entry found on LDAP lookup"
 msgstr "kein Eintrag gefunden bei LDAP-Suche"
 
-#: fe-connect.c:5790 fe-connect.c:5802
+#: fe-connect.c:5752 fe-connect.c:5764
 #, c-format
 msgid "attribute has no values on LDAP lookup"
 msgstr "Attribut hat keine Werte bei LDAP-Suche"
 
-#: fe-connect.c:5816
+#: fe-connect.c:5778
 #, c-format
 msgid "connection info string size exceeds the maximum allowed (%d)"
 msgstr "Größe der Verbindungsinfo-Zeichenkette überschreitet erlaubtes Maximum (%d)"
 
-#: fe-connect.c:5867 fe-connect.c:5886 fe-connect.c:6463
+#: fe-connect.c:5829 fe-connect.c:5848 fe-connect.c:6372
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string"
 msgstr "fehlendes »=« nach »%s« in der Zeichenkette der Verbindungsdaten"
 
-#: fe-connect.c:5957 fe-connect.c:6646 fe-connect.c:7476
+#: fe-connect.c:5919 fe-connect.c:6555 fe-connect.c:7385
 #, c-format
 msgid "invalid connection option \"%s\""
 msgstr "ungültige Verbindungsoption »%s«"
 
-#: fe-connect.c:5972 fe-connect.c:6511
+#: fe-connect.c:5934 fe-connect.c:6420
 #, c-format
 msgid "unterminated quoted string in connection info string"
 msgstr "fehlendes schließendes Anführungszeichen (\") in der Zeichenkette der Verbindungsdaten"
 
-#: fe-connect.c:6068
+#: fe-connect.c:6014
 #, c-format
 msgid "definition of service \"%s\" not found"
 msgstr "Definition von Service »%s« nicht gefunden"
 
-#: fe-connect.c:6094
+#: fe-connect.c:6040
 #, c-format
 msgid "service file \"%s\" not found"
 msgstr "Servicedatei »%s« nicht gefunden"
 
-#: fe-connect.c:6107
+#: fe-connect.c:6053
 #, c-format
 msgid "line %d too long in service file \"%s\""
 msgstr "Zeile %d zu lang in Servicedatei »%s«"
 
-#: fe-connect.c:6178 fe-connect.c:6231
+#: fe-connect.c:6124 fe-connect.c:6167
 #, c-format
 msgid "syntax error in service file \"%s\", line %d"
 msgstr "Syntaxfehler in Servicedatei »%s«, Zeile %d"
 
-#: fe-connect.c:6189
+#: fe-connect.c:6135
 #, c-format
-msgid "nested \"service\" specifications not supported in service file \"%s\", line %d"
-msgstr "geschachtelte »service«-Angaben werden nicht unterstützt in Servicedatei »%s«, Zeile %d"
+msgid "nested service specifications not supported in service file \"%s\", line %d"
+msgstr "geschachtelte Service-Angaben werden nicht unterstützt in Servicedatei »%s«, Zeile %d"
 
-#: fe-connect.c:6199
-#, c-format
-msgid "nested \"servicefile\" specifications not supported in service file \"%s\", line %d"
-msgstr "geschachtelte »servicefile«-Angaben werden nicht unterstützt in Servicedatei »%s«, Zeile %d"
-
-#: fe-connect.c:6965
+#: fe-connect.c:6874
 #, c-format
 msgid "invalid URI propagated to internal parser routine: \"%s\""
 msgstr "ungültige URI an interne Parserroutine weitergeleitet: »%s«"
 
-#: fe-connect.c:7042
+#: fe-connect.c:6951
 #, c-format
 msgid "end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\""
 msgstr "Ende der Eingabezeichenkette gefunden beim Suchen nach passendem »]« in IPv6-Hostadresse in URI: »%s«"
 
-#: fe-connect.c:7049
+#: fe-connect.c:6958
 #, c-format
 msgid "IPv6 host address may not be empty in URI: \"%s\""
 msgstr "IPv6-Hostadresse darf nicht leer sein in URI: »%s«"
 
-#: fe-connect.c:7064
+#: fe-connect.c:6973
 #, c-format
 msgid "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\""
 msgstr "unerwartetes Zeichen »%c« an Position %d in URI (»:« oder »/« erwartet): »%s«"
 
-#: fe-connect.c:7193
+#: fe-connect.c:7102
 #, c-format
 msgid "extra key/value separator \"=\" in URI query parameter: \"%s\""
 msgstr "zusätzliches Schlüssel/Wert-Trennzeichen »=« in URI-Query-Parameter: »%s«"
 
-#: fe-connect.c:7213
+#: fe-connect.c:7122
 #, c-format
 msgid "missing key/value separator \"=\" in URI query parameter: \"%s\""
 msgstr "fehlendes Schlüssel/Wert-Trennzeichen »=« in URI-Query-Parameter: »%s«"
 
-#: fe-connect.c:7265
+#: fe-connect.c:7174
 #, c-format
 msgid "invalid URI query parameter: \"%s\""
 msgstr "ungültiger URI-Query-Parameter: »%s«"
 
-#: fe-connect.c:7349
+#: fe-connect.c:7258
 #, c-format
 msgid "invalid percent-encoded token: \"%s\""
 msgstr "ungültiges Prozent-kodiertes Token: »%s«"
 
-#: fe-connect.c:7359
+#: fe-connect.c:7268
 #, c-format
 msgid "forbidden value %%00 in percent-encoded value: \"%s\""
 msgstr "verbotener Wert %%00 in Prozent-kodiertem Wert: »%s«"
 
-#: fe-connect.c:7381
+#: fe-connect.c:7290
 #, c-format
 msgid "unexpected spaces found in \"%s\", use percent-encoded spaces (%%20) instead"
 msgstr "unerwartete Leerzeichen in »%s« gefunden, verwenden Sie stattdessen Prozent-kodierte Leerzeichen (%%20)"
 
-#: fe-connect.c:7757
+#: fe-connect.c:7666
 msgid "connection pointer is NULL\n"
 msgstr "Verbindung ist ein NULL-Zeiger\n"
 
-#: fe-connect.c:7765 fe-exec.c:719 fe-exec.c:981 fe-exec.c:3490
+#: fe-connect.c:7674 fe-exec.c:719 fe-exec.c:981 fe-exec.c:3490
 #: fe-protocol3.c:1008 fe-protocol3.c:1041
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: fe-connect.c:8075
+#: fe-connect.c:7984
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "WARNUNG: Passwortdatei »%s« ist keine normale Datei\n"
 
-#: fe-connect.c:8085
+#: fe-connect.c:7994
 #, c-format
 msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr "WARNUNG: Passwortdatei »%s« erlaubt Lesezugriff für Gruppe oder Andere; Rechte sollten u=rw (0600) oder weniger sein\n"
 
-#: fe-connect.c:8192
+#: fe-connect.c:8101
 #, c-format
 msgid "password retrieved from file \"%s\""
 msgstr "Passwort wurde aus Datei »%s« gelesen"
 
-#: fe-connect.c:8358
+#: fe-connect.c:8267
 #, c-format
 msgid "invalid integer value \"%s\" for connection option \"%s\""
 msgstr "ungültiger Zahlenwert »%s« für Verbindungsoption »%s«"
@@ -1372,7 +1361,7 @@ msgstr "PQexec ist während COPY BOTH nicht erlaubt"
 msgid "unrecognized message type \"%c\""
 msgstr "unbekannter Message-Typ »%c«"
 
-#: fe-exec.c:2719 fe-exec.c:2773 fe-exec.c:2841 fe-protocol3.c:2130
+#: fe-exec.c:2719 fe-exec.c:2773 fe-exec.c:2841 fe-protocol3.c:2093
 #, c-format
 msgid "no COPY in progress"
 msgstr "keine COPY in Ausführung"
@@ -1542,23 +1531,6 @@ msgstr "ungültiges Socket"
 msgid "%s() failed: %s"
 msgstr "%s() fehlgeschlagen: %s"
 
-#: fe-misc.c:1580
-#, c-format
-msgid ""
-"\tThis indicates a bug in either the server being contacted\n"
-"\tor a proxy handling the connection. Please consider\n"
-"\treporting this to the maintainers of that software.\n"
-"\tFor more information, including instructions on how to\n"
-"\twork around this issue for now, visit\n"
-"\t\t%s"
-msgstr ""
-"\tDies deutet auf einen Fehler hin, entweder in dem kontaktierten Server\n"
-"\toder einem Proxy in der Verbindung. Bitte ziehen Sie in Erwägung, dies\n"
-"\tdem Verwalter dieser Software zu melden. Für weitere Informationen,\n"
-"\teinschließlich Anweisungen, wie dieses Problem vorübergehend umgangen\n"
-"\twerden kann, besuchen Sie\n"
-"\t\t%s"
-
 #: fe-protocol3.c:192
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
@@ -1678,92 +1650,87 @@ msgstr "%s:%s"
 msgid "LINE %d: "
 msgstr "ZEILE %d: "
 
-#: fe-protocol3.c:1473
+#: fe-protocol3.c:1464
 #, c-format
 msgid "received invalid protocol negotiation message: server requested \"grease\" protocol version 3.9999"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server verlangte »Grease«-Protokollversion 3.9999"
 
-#: fe-protocol3.c:1479
+#: fe-protocol3.c:1470
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to a higher-numbered version"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server verlangte Herabstufung auf eine Version mit einer höheren Nummer"
 
-#: fe-protocol3.c:1485
+#: fe-protocol3.c:1476
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to pre-3.0 protocol version"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server verlangte Herabstufung auf eine Protokollversion vor 3.0"
 
-#: fe-protocol3.c:1492
+#: fe-protocol3.c:1483
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to non-existent 3.1 protocol version"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server verlangte Herabstufung auf nicht existierende Protokollversion 3.1"
 
-#: fe-protocol3.c:1498
+#: fe-protocol3.c:1489
 #, c-format
 msgid "received invalid protocol negotiation message: server reported negative number of unsupported parameters"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server berichtete eine negative Anzahl nicht unterstützter Parameter"
 
-#: fe-protocol3.c:1504
+#: fe-protocol3.c:1495
 #, c-format
 msgid "received invalid protocol negotiation message: server negotiated but asks for no changes"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server hat verhandelt aber keine Änderungen verlangt"
 
-#: fe-protocol3.c:1510
+#: fe-protocol3.c:1501
 #, c-format
 msgid "server only supports protocol version %d.%d, but \"%s\" was set to %d.%d"
 msgstr "Server unterstützt nur Protokollversion %d.%d, aber »%s« war auf %d.%d gesetzt"
 
-#: fe-protocol3.c:1539
+#: fe-protocol3.c:1526
 #, c-format
 msgid "received invalid protocol negotiation message: server reported unsupported parameter name without a \"%s\" prefix (\"%s\")"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server sendete nicht unterstützten Parameter ohne Präfix »%s« (»%s«)"
 
-#: fe-protocol3.c:1551
+#: fe-protocol3.c:1529
 #, c-format
 msgid "received invalid protocol negotiation message: server reported an unsupported parameter that was not requested (\"%s\")"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server sendete nicht unterstützten Parameter, der nicht angefordert war (»%s«)"
 
-#: fe-protocol3.c:1564
-#, c-format
-msgid "server did not report the unsupported \"%s\" parameter in its protocol negotiation message"
-msgstr "Server hat den nicht unterstützten Parameter »%s« in seiner Protokollverhandlungsnachricht nicht gemeldet"
-
-#: fe-protocol3.c:1572
+#: fe-protocol3.c:1537
 #, c-format
 msgid "received invalid protocol negotiation message: message too short"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Nachricht zu kurz"
 
-#: fe-protocol3.c:1640
+#: fe-protocol3.c:1603
 #, c-format
 msgid "received invalid BackendKeyData message: cancel key with length %d not allowed in protocol version 3.0 (must be 4 bytes)"
 msgstr "ungültige BackendKeyData-Nachricht empfangen: Stornierungsschlüssel mit Länge %d nicht erlaubt in Protokoll 3.0 (muss 4 Bytes sein)"
 
-#: fe-protocol3.c:1647
+#: fe-protocol3.c:1610
 #, c-format
 msgid "received invalid BackendKeyData message: cancel key with length %d is too short (minimum 4 bytes)"
 msgstr "ungültige BackendKeyData-Nachricht empfangen: Stornierungsschlüssel mit Länge %d ist zu kurz (Minimum 4 Bytes)"
 
-#: fe-protocol3.c:1654
+#: fe-protocol3.c:1617
 #, c-format
 msgid "received invalid BackendKeyData message: cancel key with length %d is too long (maximum 256 bytes)"
 msgstr "ungültige BackendKeyData-Nachricht empfangen: Stornierungsschlüssel mit Länge %d ist zu lang (Maximum 256 Bytes)"
 
-#: fe-protocol3.c:2025
+#: fe-protocol3.c:1988
 #, c-format
 msgid "PQgetline: not doing text COPY OUT"
 msgstr "PQgetline: Text COPY OUT nicht ausgeführt"
 
-#: fe-protocol3.c:2356
+#: fe-protocol3.c:2319
 #, c-format
 msgid "server returned too much data"
 msgstr "Server hat zu viele Daten zurückgesendet"
 
-#: fe-protocol3.c:2411
+#: fe-protocol3.c:2374
 #, c-format
 msgid "protocol error: no function result"
 msgstr "Protokollfehler: kein Funktionsergebnis"
 
-#: fe-protocol3.c:2423
+#: fe-protocol3.c:2386
 #, c-format
 msgid "protocol error: id=0x%x"
 msgstr "Protokollfehler: id=0x%x"
@@ -2103,3 +2070,31 @@ msgstr "konnte keine Daten an den Server senden: %s"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "unbekannter Socket-Fehler: 0x%08X/%d"
+
+#, c-format
+#~ msgid ""
+#~ "\tThis indicates a bug in either the server being contacted\n"
+#~ "\tor a proxy handling the connection. Please consider\n"
+#~ "\treporting this to the maintainers of that software.\n"
+#~ "\tFor more information, including instructions on how to\n"
+#~ "\twork around this issue for now, visit\n"
+#~ "\t\t%s"
+#~ msgstr ""
+#~ "\tDies deutet auf einen Fehler hin, entweder in dem kontaktierten Server\n"
+#~ "\toder einem Proxy in der Verbindung. Bitte ziehen Sie in Erwägung, dies\n"
+#~ "\tdem Verwalter dieser Software zu melden. Für weitere Informationen,\n"
+#~ "\teinschließlich Anweisungen, wie dieses Problem vorübergehend umgangen\n"
+#~ "\twerden kann, besuchen Sie\n"
+#~ "\t\t%s"
+
+#, c-format
+#~ msgid "nested \"servicefile\" specifications not supported in service file \"%s\", line %d"
+#~ msgstr "geschachtelte »servicefile«-Angaben werden nicht unterstützt in Servicedatei »%s«, Zeile %d"
+
+#, c-format
+#~ msgid "server did not report the unsupported \"%s\" parameter in its protocol negotiation message"
+#~ msgstr "Server hat den nicht unterstützten Parameter »%s« in seiner Protokollverhandlungsnachricht nicht gemeldet"
+
+#, c-format
+#~ msgid "server incorrectly accepted \"grease\" protocol version 3.9999 without negotiation"
+#~ msgstr "Server hat inkorrekterweise die »Grease«-Protokollversion 3.9999 ohne Verhandlung akzeptiert"

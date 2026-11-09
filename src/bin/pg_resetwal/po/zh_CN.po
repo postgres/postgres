@@ -1,14 +1,15 @@
 # Simplified Chinese message translation file for pg_resetwal
-# Copyright (C) 2019 PostgreSQL Global Development Group
+# Copyright (C) 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Ruohang Feng <rh@vonng.com>, 2026.
+#
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetwal (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-17 05:53+0000\n"
-"PO-Revision-Date: 2026-09-17 16:00+0800\n"
+"POT-Creation-Date: 2026-11-03 15:51+0000\n"
+"PO-Revision-Date: 2026-11-04 08:45+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
@@ -37,12 +38,12 @@ msgstr "详情: "
 msgid "hint: "
 msgstr "提示: "
 
-#: ../../common/controldata_utils.c:98 pg_resetwal.c:424 pg_resetwal.c:614
+#: ../../common/controldata_utils.c:98 pg_resetwal.c:424 pg_resetwal.c:616
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "无法打开文件 \"%s\" 进行读取: %m"
 
-#: ../../common/controldata_utils.c:111 pg_resetwal.c:629
+#: ../../common/controldata_utils.c:111 pg_resetwal.c:631
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "无法读取文件 \"%s\": %m"
@@ -77,12 +78,12 @@ msgstr ""
 
 #: ../../common/controldata_utils.c:231 ../../common/file_utils.c:69
 #: ../../common/file_utils.c:370 ../../common/file_utils.c:428
-#: ../../common/file_utils.c:502 pg_resetwal.c:1186
+#: ../../common/file_utils.c:502 pg_resetwal.c:1188
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "无法打开文件 \"%s\": %m"
 
-#: ../../common/controldata_utils.c:250 pg_resetwal.c:1194 pg_resetwal.c:1206
+#: ../../common/controldata_utils.c:250 pg_resetwal.c:1196 pg_resetwal.c:1208
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "无法写入文件 \"%s\": %m"
@@ -132,13 +133,13 @@ msgid "this build does not support sync method \"%s\""
 msgstr "此构建版本不支持同步方法 \"%s\""
 
 #: ../../common/file_utils.c:156 ../../common/file_utils.c:304
-#: pg_resetwal.c:975 pg_resetwal.c:1028 pg_resetwal.c:1063 pg_resetwal.c:1103
+#: pg_resetwal.c:977 pg_resetwal.c:1030 pg_resetwal.c:1065 pg_resetwal.c:1105
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "无法打开目录 \"%s\": %m"
 
 #: ../../common/file_utils.c:174 ../../common/file_utils.c:338
-#: pg_resetwal.c:1001 pg_resetwal.c:1042 pg_resetwal.c:1080 pg_resetwal.c:1117
+#: pg_resetwal.c:1003 pg_resetwal.c:1044 pg_resetwal.c:1082 pg_resetwal.c:1119
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "无法读取目录 \"%s\": %m"
@@ -309,49 +310,49 @@ msgstr "锁文件 \"%s\" 存在"
 msgid "Is a server running?  If not, delete the lock file and try again."
 msgstr "服务器是否正在运行？如果没有，删除锁文件并重试。"
 
-#: pg_resetwal.c:533
+#: pg_resetwal.c:535
 #, c-format
 msgid "not proceeding because control file values were guessed"
 msgstr "不继续执行，因为控制文件中的值是推测得出的"
 
-#: pg_resetwal.c:534
+#: pg_resetwal.c:536
 #, c-format
 msgid "If these values seem acceptable, use -f to force reset."
 msgstr "如果这些值看起来可以接受，使用 -f 强制重置。"
 
-#: pg_resetwal.c:543
+#: pg_resetwal.c:545
 #, c-format
 msgid "database server was not shut down cleanly"
 msgstr "数据库服务器未正常关闭"
 
-#: pg_resetwal.c:544
+#: pg_resetwal.c:546
 #, c-format
 msgid "Resetting the write-ahead log might cause data to be lost."
 msgstr "重置预写日志可能导致数据丢失。"
 
-#: pg_resetwal.c:545
+#: pg_resetwal.c:547
 #, c-format
 msgid "If you want to proceed anyway, use -f to force reset."
 msgstr "如果仍要继续，使用 -f 强制重置。"
 
-#: pg_resetwal.c:558
+#: pg_resetwal.c:560
 #, c-format
 msgid "Write-ahead log reset\n"
 msgstr "预写日志已重置\n"
 
-#: pg_resetwal.c:583
+#: pg_resetwal.c:585
 #, c-format
 msgid "data directory is of wrong version"
 msgstr "数据目录版本错误"
 
-#: pg_resetwal.c:584
+#: pg_resetwal.c:586
 #, c-format
 msgid ""
 "File \"%s\" contains \"%s\", which is not compatible with this program's "
 "version \"%s\"."
 msgstr "文件 \"%s\" 包含 \"%s\"，与此程序的版本 \"%s\" 不兼容。"
 
-#: pg_resetwal.c:617
+#: pg_resetwal.c:619
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
@@ -362,12 +363,12 @@ msgstr ""
 "  touch %s\n"
 "然后重试。"
 
-#: pg_resetwal.c:645
+#: pg_resetwal.c:647
 #, c-format
 msgid "pg_control exists but has invalid CRC; proceed with caution"
 msgstr "pg_control 存在，但 CRC 无效；谨慎继续"
 
-#: pg_resetwal.c:654
+#: pg_resetwal.c:656
 #, c-format
 msgid ""
 "pg_control specifies invalid WAL segment size (%d byte); proceed with caution"
@@ -376,12 +377,12 @@ msgid_plural ""
 "caution"
 msgstr[0] "pg_control 指定的 WAL 段大小（%d 字节）无效；谨慎继续"
 
-#: pg_resetwal.c:665
+#: pg_resetwal.c:667
 #, c-format
 msgid "pg_control exists but is broken or wrong version; ignoring it"
 msgstr "pg_control 存在，但已损坏或版本错误；正在忽略它"
 
-#: pg_resetwal.c:761
+#: pg_resetwal.c:763
 #, c-format
 msgid ""
 "Guessed pg_control values:\n"
@@ -390,7 +391,7 @@ msgstr ""
 "推测的 pg_control 值:\n"
 "\n"
 
-#: pg_resetwal.c:763
+#: pg_resetwal.c:765
 #, c-format
 msgid ""
 "Current pg_control values:\n"
@@ -399,185 +400,185 @@ msgstr ""
 "当前的 pg_control 值:\n"
 "\n"
 
-#: pg_resetwal.c:765
+#: pg_resetwal.c:767
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control 版本号:                          %u\n"
 
-#: pg_resetwal.c:767
+#: pg_resetwal.c:769
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "系统目录版本号:                             %u\n"
 
-#: pg_resetwal.c:769
+#: pg_resetwal.c:771
 #, c-format
 msgid "Database system identifier:           %<PRIu64>\n"
 msgstr "数据库系统标识符:                           %<PRIu64>\n"
 
-#: pg_resetwal.c:771
+#: pg_resetwal.c:773
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "最新检查点的 TimeLineID:                    %u\n"
 
-#: pg_resetwal.c:773
+#: pg_resetwal.c:775
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "最新检查点的 full_page_writes:              %s\n"
 
-#: pg_resetwal.c:774
+#: pg_resetwal.c:776
 msgid "off"
 msgstr "关闭"
 
-#: pg_resetwal.c:774
+#: pg_resetwal.c:776
 msgid "on"
 msgstr "开启"
 
-#: pg_resetwal.c:775
+#: pg_resetwal.c:777
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "最新检查点的 NextXID:                       %u:%u\n"
 
-#: pg_resetwal.c:778
+#: pg_resetwal.c:780
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "最新检查点的 NextOID:                       %u\n"
 
-#: pg_resetwal.c:780
+#: pg_resetwal.c:782
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "最新检查点的 NextMultiXactId:               %u\n"
 
-#: pg_resetwal.c:782
+#: pg_resetwal.c:784
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %<PRIu64>\n"
 msgstr "最新检查点的 NextMultiOffset:               %<PRIu64>\n"
 
-#: pg_resetwal.c:784
+#: pg_resetwal.c:786
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "最新检查点的 oldestXID:                     %u\n"
 
-#: pg_resetwal.c:786
+#: pg_resetwal.c:788
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "最新检查点的 oldestXID 所在的数据库:        %u\n"
 
-#: pg_resetwal.c:788
+#: pg_resetwal.c:790
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "最新检查点的 oldestActiveXID:               %u\n"
 
-#: pg_resetwal.c:790
+#: pg_resetwal.c:792
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "最新检查点的 oldestMultiXid:                %u\n"
 
-#: pg_resetwal.c:792
+#: pg_resetwal.c:794
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "最新检查点的 oldestMulti 所在的数据库:      %u\n"
 
-#: pg_resetwal.c:794
+#: pg_resetwal.c:796
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "最新检查点的 oldestCommitTsXid:             %u\n"
 
-#: pg_resetwal.c:796
+#: pg_resetwal.c:798
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "最新检查点的 newestCommitTsXid:             %u\n"
 
-#: pg_resetwal.c:798
+#: pg_resetwal.c:800
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "最大数据对齐值:                             %u\n"
 
-#: pg_resetwal.c:801
+#: pg_resetwal.c:803
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "数据库块大小:                               %u\n"
 
-#: pg_resetwal.c:803
+#: pg_resetwal.c:805
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "大关系的每段块数:                           %u\n"
 
-#: pg_resetwal.c:805
+#: pg_resetwal.c:807
 #, c-format
 msgid "Pages per SLRU segment:               %u\n"
 msgstr "每个 SLRU 段的页数:                         %u\n"
 
-#: pg_resetwal.c:807
+#: pg_resetwal.c:809
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "WAL 块大小:                                 %u\n"
 
-#: pg_resetwal.c:809 pg_resetwal.c:898
+#: pg_resetwal.c:811 pg_resetwal.c:900
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "每个 WAL 段的字节数:                        %u\n"
 
-#: pg_resetwal.c:811
+#: pg_resetwal.c:813
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "标识符的最大长度:                           %u\n"
 
-#: pg_resetwal.c:813
+#: pg_resetwal.c:815
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "索引的最大列数:                             %u\n"
 
-#: pg_resetwal.c:815
+#: pg_resetwal.c:817
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "TOAST 分块的大小上限:                       %u\n"
 
-#: pg_resetwal.c:817
+#: pg_resetwal.c:819
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
 msgstr "大对象分块的大小:                           %u\n"
 
-#: pg_resetwal.c:820
+#: pg_resetwal.c:822
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "日期/时间类型的存储方式:                    %s\n"
 
-#: pg_resetwal.c:821
+#: pg_resetwal.c:823
 msgid "64-bit integers"
 msgstr "64 位整数"
 
-#: pg_resetwal.c:822
+#: pg_resetwal.c:824
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Float8 参数传递方式:                        %s\n"
 
-#: pg_resetwal.c:823
+#: pg_resetwal.c:825
 msgid "by reference"
 msgstr "按引用"
 
-#: pg_resetwal.c:823
+#: pg_resetwal.c:825
 msgid "by value"
 msgstr "按值"
 
-#: pg_resetwal.c:824
+#: pg_resetwal.c:826
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "数据页校验和版本:                           %u\n"
 
-#: pg_resetwal.c:826
+#: pg_resetwal.c:828
 #, c-format
 msgid "Default char data signedness:         %s\n"
 msgstr "char 类型的默认符号属性:                    %s\n"
 
-#: pg_resetwal.c:827
+#: pg_resetwal.c:829
 msgid "signed"
 msgstr "有符号"
 
-#: pg_resetwal.c:827
+#: pg_resetwal.c:829
 msgid "unsigned"
 msgstr "无符号"
 
-#: pg_resetwal.c:840
+#: pg_resetwal.c:842
 #, c-format
 msgid ""
 "\n"
@@ -590,82 +591,82 @@ msgstr ""
 "要更改的值:\n"
 "\n"
 
-#: pg_resetwal.c:844
+#: pg_resetwal.c:846
 #, c-format
 msgid "First log segment after reset:        %s\n"
 msgstr "重置后的首个日志段:                         %s\n"
 
-#: pg_resetwal.c:848
+#: pg_resetwal.c:850
 #, c-format
 msgid "NextMultiXactId:                      %u\n"
 msgstr "NextMultiXactId:                            %u\n"
 
-#: pg_resetwal.c:850
+#: pg_resetwal.c:852
 #, c-format
 msgid "OldestMultiXid:                       %u\n"
 msgstr "OldestMultiXid:                             %u\n"
 
-#: pg_resetwal.c:852
+#: pg_resetwal.c:854
 #, c-format
 msgid "OldestMulti's DB:                     %u\n"
 msgstr "OldestMulti 所在的数据库:                   %u\n"
 
-#: pg_resetwal.c:858
+#: pg_resetwal.c:860
 #, c-format
 msgid "NextMultiOffset:                      %<PRIu64>\n"
 msgstr "NextMultiOffset:                            %<PRIu64>\n"
 
-#: pg_resetwal.c:864
+#: pg_resetwal.c:866
 #, c-format
 msgid "NextOID:                              %u\n"
 msgstr "NextOID:                                    %u\n"
 
-#: pg_resetwal.c:870
+#: pg_resetwal.c:872
 #, c-format
 msgid "NextXID:                              %u\n"
 msgstr "NextXID:                                    %u\n"
 
-#: pg_resetwal.c:876
+#: pg_resetwal.c:878
 #, c-format
 msgid "OldestXID:                            %u\n"
 msgstr "OldestXID:                                  %u\n"
 
-#: pg_resetwal.c:878
+#: pg_resetwal.c:880
 #, c-format
 msgid "OldestXID's DB:                       %u\n"
 msgstr "OldestXID 所在的数据库:                     %u\n"
 
-#: pg_resetwal.c:884
+#: pg_resetwal.c:886
 #, c-format
 msgid "NextXID epoch:                        %u\n"
 msgstr "NextXID 的纪元:                             %u\n"
 
-#: pg_resetwal.c:890
+#: pg_resetwal.c:892
 #, c-format
 msgid "oldestCommitTsXid:                    %u\n"
 msgstr "oldestCommitTsXid:                          %u\n"
 
-#: pg_resetwal.c:892
+#: pg_resetwal.c:894
 #, c-format
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                          %u\n"
 
-#: pg_resetwal.c:1004 pg_resetwal.c:1045 pg_resetwal.c:1083 pg_resetwal.c:1120
+#: pg_resetwal.c:1006 pg_resetwal.c:1047 pg_resetwal.c:1085 pg_resetwal.c:1122
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "无法关闭目录 \"%s\": %m"
 
-#: pg_resetwal.c:1037 pg_resetwal.c:1075 pg_resetwal.c:1112
+#: pg_resetwal.c:1039 pg_resetwal.c:1077 pg_resetwal.c:1114
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "无法删除文件 \"%s\": %m"
 
-#: pg_resetwal.c:1211
+#: pg_resetwal.c:1213
 #, c-format
 msgid "fsync error: %m"
 msgstr "fsync 错误: %m"
 
-#: pg_resetwal.c:1220
+#: pg_resetwal.c:1222
 #, c-format
 msgid ""
 "%s resets the PostgreSQL write-ahead log.\n"
@@ -674,17 +675,17 @@ msgstr ""
 "%s 重置 PostgreSQL 的预写日志。\n"
 "\n"
 
-#: pg_resetwal.c:1221
+#: pg_resetwal.c:1223
 #, c-format
 msgid "Usage:\n"
 msgstr "用法:\n"
 
-#: pg_resetwal.c:1222
+#: pg_resetwal.c:1224
 #, c-format
 msgid "  %s [OPTION]... DATADIR\n"
 msgstr "  %s [选项]... 数据目录\n"
 
-#: pg_resetwal.c:1224
+#: pg_resetwal.c:1226
 #, c-format
 msgid ""
 "\n"
@@ -693,12 +694,12 @@ msgstr ""
 "\n"
 "选项:\n"
 
-#: pg_resetwal.c:1225
+#: pg_resetwal.c:1227
 #, c-format
 msgid " [-D, --pgdata=]DATADIR  data directory\n"
 msgstr " [-D, --pgdata=]DATADIR  数据目录\n"
 
-#: pg_resetwal.c:1226
+#: pg_resetwal.c:1228
 #, c-format
 msgid ""
 "  -f, --force            force update to be done even after unclean shutdown "
@@ -708,22 +709,22 @@ msgstr ""
 "  -f, --force            即使上次未正常关闭，或必须推测 pg_control 中的值，\n"
 "                         也强制执行更新\n"
 
-#: pg_resetwal.c:1228
+#: pg_resetwal.c:1230
 #, c-format
 msgid "  -n, --dry-run          no update, just show what would be done\n"
 msgstr "  -n, --dry-run          不更新，仅显示将执行的操作\n"
 
-#: pg_resetwal.c:1229
+#: pg_resetwal.c:1231
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          输出版本信息，然后退出\n"
 
-#: pg_resetwal.c:1230
+#: pg_resetwal.c:1232
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             显示此帮助，然后退出\n"
 
-#: pg_resetwal.c:1232
+#: pg_resetwal.c:1234
 #, c-format
 msgid ""
 "\n"
@@ -732,7 +733,7 @@ msgstr ""
 "\n"
 "覆盖控制文件中各值的选项:\n"
 
-#: pg_resetwal.c:1233
+#: pg_resetwal.c:1235
 #, c-format
 msgid ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
@@ -744,45 +745,45 @@ msgstr ""
 "                                   设置带有提交时间戳的最早和最新事务 ID\n"
 "                                   （零表示不更改）\n"
 
-#: pg_resetwal.c:1236
+#: pg_resetwal.c:1238
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
 msgstr "  -e, --epoch=XIDEPOCH             设置下一个事务 ID 的纪元\n"
 
-#: pg_resetwal.c:1237
+#: pg_resetwal.c:1239
 #, c-format
 msgid ""
 "  -l, --next-wal-file=WALFILE      set minimum starting location for new "
 "WAL\n"
 msgstr "  -l, --next-wal-file=WALFILE      设置新的 WAL 最小起始位置\n"
 
-#: pg_resetwal.c:1238
+#: pg_resetwal.c:1240
 #, c-format
 msgid ""
 "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
 msgstr "  -m, --multixact-ids=MXID,MXID    设置下一个和最早的多事务 ID\n"
 
-#: pg_resetwal.c:1239
+#: pg_resetwal.c:1241
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
 msgstr "  -o, --next-oid=OID               设置下一个 OID\n"
 
-#: pg_resetwal.c:1240
+#: pg_resetwal.c:1242
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
 msgstr "  -O, --multixact-offset=OFFSET    设置下一个多事务偏移量\n"
 
-#: pg_resetwal.c:1241
+#: pg_resetwal.c:1243
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
 msgstr "  -u, --oldest-transaction-id=XID  设置最早的事务 ID\n"
 
-#: pg_resetwal.c:1242
+#: pg_resetwal.c:1244
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
 msgstr "  -x, --next-transaction-id=XID    设置下一个事务 ID\n"
 
-#: pg_resetwal.c:1243
+#: pg_resetwal.c:1245
 #, c-format
 msgid ""
 "      --char-signedness=OPTION     set char signedness to \"signed\" or "
@@ -791,12 +792,12 @@ msgstr ""
 "      --char-signedness=OPTION     将 char 的符号属性设为 \"signed\" 或 "
 "\"unsigned\"\n"
 
-#: pg_resetwal.c:1244
+#: pg_resetwal.c:1246
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=SIZE           WAL 段的大小（兆字节）\n"
 
-#: pg_resetwal.c:1246
+#: pg_resetwal.c:1248
 #, c-format
 msgid ""
 "\n"
@@ -805,7 +806,7 @@ msgstr ""
 "\n"
 "请向 <%s> 报告缺陷。\n"
 
-#: pg_resetwal.c:1247
+#: pg_resetwal.c:1249
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 主页: <%s>\n"

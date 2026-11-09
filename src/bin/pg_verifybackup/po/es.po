@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-02-06 23:17+0000\n"
+"POT-Creation-Date: 2026-11-07 12:48+0000\n"
 "PO-Revision-Date: 2025-09-21 10:28+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -19,53 +19,53 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 2.4.3\n"
 
-#: ../../../src/common/logging.c:279
+#: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/common/logging.c:286
+#: ../../../src/common/logging.c:302 ../../../src/common/logging.c:304
 #, c-format
 msgid "warning: "
 msgstr "precaución: "
 
-#: ../../../src/common/logging.c:297
+#: ../../../src/common/logging.c:315 ../../../src/common/logging.c:317
 #, c-format
 msgid "detail: "
 msgstr "detalle: "
 
-#: ../../../src/common/logging.c:304
+#: ../../../src/common/logging.c:324 ../../../src/common/logging.c:326
 #, c-format
 msgid "hint: "
 msgstr "consejo: "
 
-#: ../../common/controldata_utils.c:97
+#: ../../common/controldata_utils.c:98
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "no se pudo abrir archivo «%s» para lectura: %m"
 
-#: ../../common/controldata_utils.c:110 pg_verifybackup.c:440
-#: pg_verifybackup.c:478 pg_verifybackup.c:1025 pg_verifybackup.c:1144
+#: ../../common/controldata_utils.c:111 pg_verifybackup.c:455
+#: pg_verifybackup.c:493 pg_verifybackup.c:1051 pg_verifybackup.c:1170
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
 
-#: ../../common/controldata_utils.c:119
+#: ../../common/controldata_utils.c:120
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
 
-#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
-#: pg_verifybackup.c:1030 pg_verifybackup.c:1150
+#: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
+#: pg_verifybackup.c:1056 pg_verifybackup.c:1176
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "no se pudo cerrar el archivo «%s»: %m"
 
-#: ../../common/controldata_utils.c:168
+#: ../../common/controldata_utils.c:169
 msgid "byte ordering mismatch"
 msgstr "discordancia en orden de bytes"
 
-#: ../../common/controldata_utils.c:170
+#: ../../common/controldata_utils.c:171
 #, c-format
 msgid ""
 "possible byte ordering mismatch\n"
@@ -79,24 +79,24 @@ msgstr ""
 "serían erróneos, y la instalación de PostgreSQL sería incompatible con este\n"
 "directorio de datos."
 
-#: ../../common/controldata_utils.c:230 pg_verifybackup.c:408
-#: pg_verifybackup.c:1005 pg_verifybackup.c:1113
+#: ../../common/controldata_utils.c:231 pg_verifybackup.c:423
+#: pg_verifybackup.c:1031 pg_verifybackup.c:1139
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
 
-#: ../../common/controldata_utils.c:249
+#: ../../common/controldata_utils.c:250
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "no se pudo escribir el archivo «%s»: %m"
 
-#: ../../common/controldata_utils.c:268
+#: ../../common/controldata_utils.c:269
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "no se pudo sincronizar (fsync) archivo «%s»: %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/jsonapi.c:2410 ../../common/parse_manifest.c:157
+#: ../../common/jsonapi.c:2459 ../../common/parse_manifest.c:157
 #: ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
@@ -115,114 +115,126 @@ msgstr "el búfer de destino es demasiado pequeño"
 msgid "OpenSSL failure"
 msgstr "falla de openSSL"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
-#: ../../common/jsonapi.c:2435
+#: ../../common/fe_memutils.c:209
+#, fuzzy, c-format
+#| msgid "invalid large object write request size: %d"
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+
+#: ../../common/fe_memutils.c:228
+#, fuzzy, c-format
+#| msgid "invalid large object write request size: %d"
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+
+#: ../../common/jsonapi.c:2484
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr "El parser recursivo descendiente no puede usar el lexer incremental."
 
-#: ../../common/jsonapi.c:2437
+#: ../../common/jsonapi.c:2486
 msgid "Incremental parser requires incremental lexer."
 msgstr "El parser incremental requiere el lexer incremental."
 
-#: ../../common/jsonapi.c:2439
+#: ../../common/jsonapi.c:2488
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr "JSON anidado demasiado profundamente, profundidad máxima es 6400."
 
-#: ../../common/jsonapi.c:2441
+#: ../../common/jsonapi.c:2490
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "La secuencia de escape «\\%.*s» no es válida."
 
-#: ../../common/jsonapi.c:2445
+#: ../../common/jsonapi.c:2494
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Los caracteres con valor 0x%02x deben ser escapados."
 
-#: ../../common/jsonapi.c:2449
+#: ../../common/jsonapi.c:2498
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "Se esperaba el fin de la entrada, se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2452
+#: ../../common/jsonapi.c:2501
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "Se esperaba un elemento de array o «]», se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2455
+#: ../../common/jsonapi.c:2504
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "Se esperaba «,» o «]», se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2458
+#: ../../common/jsonapi.c:2507
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "Se esperaba «:», se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2461
+#: ../../common/jsonapi.c:2510
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "Se esperaba un valor JSON, se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2464
+#: ../../common/jsonapi.c:2513
 msgid "The input string ended unexpectedly."
 msgstr "La cadena de entrada terminó inesperadamente."
 
-#: ../../common/jsonapi.c:2466
+#: ../../common/jsonapi.c:2515
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "Se esperaba una cadena o «}», se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2469
+#: ../../common/jsonapi.c:2518
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "Se esperaba «,» o «}», se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2472
+#: ../../common/jsonapi.c:2521
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "Se esperaba una cadena, se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2475
+#: ../../common/jsonapi.c:2524
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "El elemento «%.*s» no es válido."
 
-#: ../../common/jsonapi.c:2481
+#: ../../common/jsonapi.c:2530
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 no puede ser convertido a text."
 
-#: ../../common/jsonapi.c:2483
+#: ../../common/jsonapi.c:2532
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "«\\u» debe ser seguido por cuatro dígitos hexadecimales."
 
-#: ../../common/jsonapi.c:2486
+#: ../../common/jsonapi.c:2535
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Los valores de escape Unicode no se pueden utilizar para valores de código superiores a 007F cuando la codificación no es UTF8."
 
-#: ../../common/jsonapi.c:2495
+#: ../../common/jsonapi.c:2544
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "El valor de escape Unicode no pudo ser traducido a la codificación del servidor %s."
 
-#: ../../common/jsonapi.c:2502
+#: ../../common/jsonapi.c:2551
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Un «high-surrogate» Unicode no puede venir después de un «high-surrogate»."
 
-#: ../../common/jsonapi.c:2504
+#: ../../common/jsonapi.c:2553
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Un «low-surrogate» Unicode debe seguir a un «high-surrogate»."
 
-#: ../../common/jsonapi.c:2526
+#: ../../common/jsonapi.c:2575
 msgid "out of memory while constructing error description"
 msgstr "memoria agotada mientras se construía una descripción de error"
 
@@ -383,111 +395,143 @@ msgstr "discordancia en la suma de comprobación del manifiesto"
 msgid "could not parse backup manifest: %s"
 msgstr "no se pudo analizar el manifiesto de la copia de seguridad: %s"
 
-#: ../../fe_utils/astreamer_gzip.c:115
+#: ../../fe_utils/astreamer_gzip.c:116
 #, c-format
 msgid "could not create compressed file \"%s\": %m"
 msgstr "no se pudo crear el archivo comprimido «%s»: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:127
+#: ../../fe_utils/astreamer_gzip.c:128
 #, c-format
 msgid "could not duplicate stdout: %m"
 msgstr "no se pudo duplicar stdout: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:131
+#: ../../fe_utils/astreamer_gzip.c:132
 #, c-format
 msgid "could not open output file: %m"
 msgstr "no se pudo abrir el archivo de salida: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:135
+#: ../../fe_utils/astreamer_gzip.c:136
 #, c-format
 msgid "could not set compression level %d: %s"
 msgstr "no se pudo definir el nivel de compresión %d: %s"
 
-#: ../../fe_utils/astreamer_gzip.c:140 ../../fe_utils/astreamer_gzip.c:273
-#: ../../fe_utils/astreamer_lz4.c:102 ../../fe_utils/astreamer_lz4.c:300
-#: ../../fe_utils/astreamer_zstd.c:133 ../../fe_utils/astreamer_zstd.c:288
+#: ../../fe_utils/astreamer_gzip.c:141 ../../fe_utils/astreamer_gzip.c:277
+#: ../../fe_utils/astreamer_lz4.c:103 ../../fe_utils/astreamer_lz4.c:304
+#: ../../fe_utils/astreamer_zstd.c:131 ../../fe_utils/astreamer_zstd.c:287
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "esta instalación no soporta compresión con %s"
 
-#: ../../fe_utils/astreamer_gzip.c:167
+#: ../../fe_utils/astreamer_gzip.c:168
 #, c-format
 msgid "could not write to compressed file \"%s\": %s"
 msgstr "no se pudo escribir al archivo comprimido «%s»: %s"
 
-#: ../../fe_utils/astreamer_gzip.c:191
+#: ../../fe_utils/astreamer_gzip.c:192
 #, c-format
 msgid "could not close compressed file \"%s\": %m"
 msgstr "no se pudo cerrar el archivo comprimido «%s»: %m"
 
-#: ../../fe_utils/astreamer_gzip.c:269
+#: ../../fe_utils/astreamer_gzip.c:272
 #, c-format
 msgid "could not initialize compression library"
 msgstr "no se pudo inicializar la biblioteca de compresión"
 
-#: ../../fe_utils/astreamer_gzip.c:320 ../../fe_utils/astreamer_lz4.c:356
-#: ../../fe_utils/astreamer_zstd.c:333
+#: ../../fe_utils/astreamer_gzip.c:328 ../../fe_utils/astreamer_lz4.c:360
+#: ../../fe_utils/astreamer_zstd.c:332 ../../fe_utils/astreamer_zstd.c:374
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "no se pudo descomprimir datos: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:97
+#: ../../fe_utils/astreamer_gzip.c:349
+#, c-format
+msgid "could not reset compression stream"
+msgstr "no se pudo restablecer el flujo comprimido"
+
+#: ../../fe_utils/astreamer_gzip.c:364 ../../fe_utils/astreamer_lz4.c:407
+#: ../../fe_utils/astreamer_zstd.c:385
+#, fuzzy, c-format
+#| msgid "could not reset compression stream"
+msgid "could not decompress data: compressed stream is empty"
+msgstr "no se pudo restablecer el flujo comprimido"
+
+#: ../../fe_utils/astreamer_gzip.c:366 ../../fe_utils/astreamer_lz4.c:409
+#: ../../fe_utils/astreamer_zstd.c:387
+#, fuzzy, c-format
+#| msgid "could not reset compression stream"
+msgid "could not decompress data: compressed stream is incomplete"
+msgstr "no se pudo restablecer el flujo comprimido"
+
+#: ../../fe_utils/astreamer_lz4.c:98
 #, c-format
 msgid "could not create lz4 compression context: %s"
 msgstr "no se pudo crear un contexto de compresión lz4: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:142
+#: ../../fe_utils/astreamer_lz4.c:143
 #, c-format
 msgid "could not write lz4 header: %s"
 msgstr "no se pudo escribir la cabecera lz4: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:191 ../../fe_utils/astreamer_zstd.c:185
-#: ../../fe_utils/astreamer_zstd.c:227
+#: ../../fe_utils/astreamer_lz4.c:192 ../../fe_utils/astreamer_zstd.c:183
+#: ../../fe_utils/astreamer_zstd.c:225
 #, c-format
 msgid "could not compress data: %s"
 msgstr "no se pudo comprimir datos: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:243
+#: ../../fe_utils/astreamer_lz4.c:244
 #, c-format
 msgid "could not end lz4 compression: %s"
 msgstr "no se pudo terminar la compresión lz4: %s"
 
-#: ../../fe_utils/astreamer_lz4.c:295
+#: ../../fe_utils/astreamer_lz4.c:298
 #, c-format
 msgid "could not initialize compression library: %s"
 msgstr "no se pudo inicializar la biblioteca de compresión: %s"
 
-#: ../../fe_utils/astreamer_tar.c:244
-#, c-format
-msgid "tar file trailer exceeds 2 blocks"
-msgstr "la terminación del archivo tar excede de 2 bloques"
-
-#: ../../fe_utils/astreamer_tar.c:249 astreamer_verify.c:130
+#: ../../fe_utils/astreamer_tar.c:254 astreamer_verify.c:130
 #, c-format
 msgid "unexpected state while parsing tar archive"
 msgstr "se encontró un estado inesperado mientras se interpretaba el archivo tar"
 
-#: ../../fe_utils/astreamer_tar.c:292
+#: ../../fe_utils/astreamer_tar.c:300
+#, fuzzy, c-format
+#| msgid "input file does not appear to be a valid archive"
+msgid "input file does not appear to be a valid tar archive"
+msgstr "el archivo de entrada no parece ser un archivador válido"
+
+#: ../../fe_utils/astreamer_tar.c:307
 #, c-format
 msgid "tar member has empty name"
 msgstr "miembro de tar tiene nombre vacío"
 
-#: ../../fe_utils/astreamer_tar.c:326
+#: ../../fe_utils/astreamer_tar.c:309
+#, fuzzy, c-format
+#| msgid "tar member has empty name"
+msgid "tar member has unsafe path name: \"%s\""
+msgstr "miembro de tar tiene nombre vacío"
+
+#: ../../fe_utils/astreamer_tar.c:332
+#, fuzzy, c-format
+#| msgid "multidimensional arrays are not supported"
+msgid "pax extensions to tar format are not supported"
+msgstr "los arrays multidimensionales no están soportados"
+
+#: ../../fe_utils/astreamer_tar.c:361
 #, c-format
 msgid "COPY stream ended before last file was finished"
 msgstr "el flujo COPY terminó antes que el último archivo estuviera completo"
 
-#: ../../fe_utils/astreamer_zstd.c:89
+#: ../../fe_utils/astreamer_zstd.c:90
 #, c-format
 msgid "could not create zstd compression context"
 msgstr "no se pudo restablecer el contexto de compresión zstd"
 
-#: ../../fe_utils/astreamer_zstd.c:95
+#: ../../fe_utils/astreamer_zstd.c:96
 #, c-format
 msgid "could not set zstd compression level to %d: %s"
 msgstr "no se pudo definir el nivel de compresión zstd a %d: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:109
+#: ../../fe_utils/astreamer_zstd.c:110
 #, c-format
 msgid "could not set compression worker count to %d: %s"
 msgstr "no se pudo definir la cantidad de procesos ayudantes de compresión a %d: %s"
@@ -497,7 +541,7 @@ msgstr "no se pudo definir la cantidad de procesos ayudantes de compresión a %d
 msgid "could not enable long-distance mode: %s"
 msgstr "no se pudo habilitar el modo de larga distancia: %s"
 
-#: ../../fe_utils/astreamer_zstd.c:279
+#: ../../fe_utils/astreamer_zstd.c:277
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "no se pudo crear el contexto de descompresión zstd"
@@ -517,7 +561,7 @@ msgstr "el archivo «%s» tiene un tamaño %llu en el archivador «%s» pero tam
 msgid "%s: could not initialize checksum of file \"%s\""
 msgstr "%s: no se pudo inicializar la suma de verificación para el archivo «%s»"
 
-#: astreamer_verify.c:274 pg_verifybackup.c:1133
+#: astreamer_verify.c:274 pg_verifybackup.c:1159
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "no se pudo actualizar la suma de verificación para el archivo «%s»"
@@ -527,7 +571,7 @@ msgstr "no se pudo actualizar la suma de verificación para el archivo «%s»"
 msgid "file \"%s\" in archive \"%s\" should contain %<PRIu64> bytes, but %<PRIu64> bytes were read"
 msgstr "el archivo «%s» en el archivador «%s» debería contener %<PRIu64> bytes, pero se leyeron %<PRIu64> bytes"
 
-#: astreamer_verify.c:312 pg_verifybackup.c:1179
+#: astreamer_verify.c:312 pg_verifybackup.c:1205
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
 msgstr "no se pudo finalizar la suma de verificación para el archivo «%s»"
@@ -562,167 +606,169 @@ msgstr "%s: %s: versión de archivo de control inesperado"
 msgid "%s: %s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
 msgstr "%s: %s: el identificador de sistema del manifiesto es %<PRIu64>, pero el archivo de control tiene %<PRIu64>"
 
-#: pg_verifybackup.c:208
+#: pg_verifybackup.c:215
 #, c-format
 msgid "invalid backup format \"%s\", must be \"plain\" or \"tar\""
 msgstr "formato de respaldo «%s» no válido, debe ser «plain» o «tar»"
 
-#: pg_verifybackup.c:229 pg_verifybackup.c:238 pg_verifybackup.c:249
+#: pg_verifybackup.c:236 pg_verifybackup.c:245 pg_verifybackup.c:256
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Pruebe «%s --help» para mayor información."
 
-#: pg_verifybackup.c:237
+#: pg_verifybackup.c:244
 #, c-format
 msgid "no backup directory specified"
 msgstr "no fue especificado el directorio de respaldo"
 
-#: pg_verifybackup.c:247
+#: pg_verifybackup.c:254
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)"
 
-#: pg_verifybackup.c:255
+#: pg_verifybackup.c:262
 #, c-format
 msgid "cannot specify both %s and %s"
 msgstr "no se puede especificar %s junto con %s"
 
-#: pg_verifybackup.c:275
+#: pg_verifybackup.c:282
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "el programa «%s» es requerido por %s, pero no pudo encontrarlo en el mismo directorio que «%s»"
 
-#: pg_verifybackup.c:278
+#: pg_verifybackup.c:285
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "el programa «%s» fue encontrado por «%s», pero no es de la misma versión que %s"
 
-#: pg_verifybackup.c:304 pg_verifybackup.c:625
+#: pg_verifybackup.c:307 pg_verifybackup.c:640
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: pg_verifybackup.c:323 pg_verifybackup.c:412
+#: pg_verifybackup.c:326 pg_verifybackup.c:427
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
-#: pg_verifybackup.c:340
-#, c-format
-msgid "pg_waldump cannot read tar files"
-msgstr "pg_waldump no puede leer archivos tar"
+#: pg_verifybackup.c:379
+#, fuzzy, c-format
+#| msgid "case not found"
+msgid "WAL archive not found"
+msgstr "caso no encontrado"
 
-#: pg_verifybackup.c:341
-#, c-format
-msgid "You must use -n/--no-parse-wal when verifying a tar-format backup."
+#: pg_verifybackup.c:380
+#, fuzzy, c-format
+#| msgid "You must use -n/--no-parse-wal when verifying a tar-format backup."
+msgid "Specify the correct path using the option -w/--wal-path.  Or you must use -n/--no-parse-wal when verifying a tar-format backup."
 msgstr "Debe usar -n/--no-parse-wal al verificar un respaldo de formato tar."
 
-#: pg_verifybackup.c:383
+#: pg_verifybackup.c:398
 #, c-format
 msgid "backup successfully verified\n"
 msgstr "copia de seguridad verificada correctamente\n"
 
-#: pg_verifybackup.c:442
+#: pg_verifybackup.c:457
 #, c-format
 msgid "could not read file \"%s\": read %d of %lld"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %lld"
 
-#: pg_verifybackup.c:480
+#: pg_verifybackup.c:495
 #, c-format
 msgid "could not read file \"%s\": read %lld of %lld"
 msgstr "no se pudo leer el archivo «%s»: leídos %lld de %lld"
 
-#: pg_verifybackup.c:563
+#: pg_verifybackup.c:578
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "nombre de ruta duplicado en el manifiesto de la copia de seguridad: «%s»"
 
-#: pg_verifybackup.c:657 pg_verifybackup.c:827
+#: pg_verifybackup.c:672 pg_verifybackup.c:844
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: pg_verifybackup.c:678 pg_verifybackup.c:897
+#: pg_verifybackup.c:693 pg_verifybackup.c:918
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo o directorio «%s»: %m"
 
-#: pg_verifybackup.c:701
+#: pg_verifybackup.c:716
 #, c-format
 msgid "\"%s\" is not a regular file or directory"
 msgstr "«%s» no es un archivo regular o un directorio"
 
-#: pg_verifybackup.c:711
+#: pg_verifybackup.c:726
 #, c-format
 msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "«%s» está presente en el disco pero no en el manifiesto"
 
-#: pg_verifybackup.c:723
+#: pg_verifybackup.c:738
 #, c-format
 msgid "\"%s\" has size %llu on disk but size %llu in the manifest"
 msgstr "«%s» tiene un tamaño %llu en el disco pero un tamaño %llu en el manifiesto"
 
-#: pg_verifybackup.c:765
+#: pg_verifybackup.c:780
 #, c-format
 msgid "%s: CRC is incorrect"
 msgstr "%s: el valor de CRC es incorrecto"
 
-#: pg_verifybackup.c:769
+#: pg_verifybackup.c:784
 #, c-format
 msgid "%s: unexpected control file version"
 msgstr "%s: versión de archivo de control inesperado"
 
-#: pg_verifybackup.c:774
+#: pg_verifybackup.c:789
 #, c-format
 msgid "%s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
 msgstr "%s: el identificador de sistema del manifiesto es %<PRIu64>, pero el archivo de control tiene %<PRIu64>"
 
-#: pg_verifybackup.c:906
+#: pg_verifybackup.c:927
 #, c-format
 msgid "file \"%s\" is not a regular file"
 msgstr "el archivo «%s» no es un archivo regular"
 
-#: pg_verifybackup.c:936 pg_verifybackup.c:957
+#: pg_verifybackup.c:963 pg_verifybackup.c:978
 #, c-format
 msgid "file \"%s\" is not expected in a tar format backup"
 msgstr "el archivo «%s» no se esperaba en un respaldo de formato tar"
 
-#: pg_verifybackup.c:1049
+#: pg_verifybackup.c:1075
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "«%s» está presente en el manifiesto pero no en el disco"
 
-#: pg_verifybackup.c:1121
+#: pg_verifybackup.c:1147
 #, c-format
 msgid "could not initialize checksum of file \"%s\""
 msgstr "no se pudo inicializar la suma de verificación para el archivo «%s»"
 
-#: pg_verifybackup.c:1169
+#: pg_verifybackup.c:1195
 #, c-format
 msgid "file \"%s\" should contain %<PRIu64> bytes, but read %<PRIu64>"
 msgstr "el archivo «%s» debe contener %<PRIu64> bytes, pero se leyeron %<PRIu64>"
 
-#: pg_verifybackup.c:1187
+#: pg_verifybackup.c:1213
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "el archivo «%s» tiene una suma de comprobación de longitud %d, pero se esperaba %d"
 
-#: pg_verifybackup.c:1191
+#: pg_verifybackup.c:1217
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "no coincide la suma de comprobación para el archivo «%s»"
 
-#: pg_verifybackup.c:1217
+#: pg_verifybackup.c:1243
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "Error al interpretar el WAL para el timeline %u"
 
-#: pg_verifybackup.c:1351
+#: pg_verifybackup.c:1377
 #, c-format
 msgid "%*s/%s kB (%d%%) verified"
 msgstr "%*s/%s kB (%d%%) verificados"
 
-#: pg_verifybackup.c:1368
+#: pg_verifybackup.c:1394
 #, c-format
 msgid ""
 "%s verifies a backup against the backup manifest.\n"
@@ -731,7 +777,7 @@ msgstr ""
 "%s verifica una copia de seguridad con el fichero de manifiesto de la copia de seguridad.\n"
 "\n"
 
-#: pg_verifybackup.c:1369
+#: pg_verifybackup.c:1395
 #, c-format
 msgid ""
 "Usage:\n"
@@ -742,67 +788,74 @@ msgstr ""
 "  %s [OPCIÓN]... BACKUPDIR\n"
 "\n"
 
-#: pg_verifybackup.c:1370
+#: pg_verifybackup.c:1396
 #, c-format
 msgid "Options:\n"
 msgstr "Opciones:\n"
 
-#: pg_verifybackup.c:1371
+#: pg_verifybackup.c:1397
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error         salir inmediatamente en caso de error\n"
 
-#: pg_verifybackup.c:1372
+#: pg_verifybackup.c:1398
 #, c-format
 msgid "  -F, --format=p|t            backup format (plain, tar)\n"
 msgstr "  -F, --format=p|t            formato de salida (plain, tar)\n"
 
-#: pg_verifybackup.c:1373
+#: pg_verifybackup.c:1399
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIVE_PATH  ignorar la ruta indicada\n"
 
-#: pg_verifybackup.c:1374
+#: pg_verifybackup.c:1400
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=PATH    usar la ruta especificada para el manifiesto\n"
 
-#: pg_verifybackup.c:1375
+#: pg_verifybackup.c:1401
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal          no intentar analizar archivos WAL\n"
 
-#: pg_verifybackup.c:1376
+#: pg_verifybackup.c:1402
 #, c-format
 msgid "  -P, --progress              show progress information\n"
 msgstr "  -P, --progress              mostrar información de progreso\n"
 
-#: pg_verifybackup.c:1377
+#: pg_verifybackup.c:1403
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet                 no escribir ningún mensaje, excepto errores\n"
 
-#: pg_verifybackup.c:1378
+#: pg_verifybackup.c:1404
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums        omitir la verificación de la suma de comprobación\n"
 
-#: pg_verifybackup.c:1379
-#, c-format
-msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
+#: pg_verifybackup.c:1405
+#, fuzzy, c-format
+#| msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
+msgid "  -w, --wal-path=PATH         use specified path for WAL files\n"
 msgstr "  -w, --wal-directory=PATH    utilizar la ruta especificada para los archivos WAL\n"
 
-#: pg_verifybackup.c:1380
+#: pg_verifybackup.c:1406
+#, fuzzy, c-format
+#| msgid "      --two-phase        (same as --enable-two-phase, deprecated)\n"
+msgid "      --wal-directory=PATH    (same as --wal-path, deprecated)\n"
+msgstr "      --two-phase        (lo mismo que --enable-two-phase; obsoleto)\n"
+
+#: pg_verifybackup.c:1407
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version               mostrar la información de la versión, luego salir\n"
 
-#: pg_verifybackup.c:1381
+#: pg_verifybackup.c:1408
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                  muestra esta ayuda, luego salir\n"
 
-#: pg_verifybackup.c:1382
+#: pg_verifybackup.c:1409
 #, c-format
 msgid ""
 "\n"
@@ -811,7 +864,15 @@ msgstr ""
 "\n"
 "Reporte errores a <%s>.\n"
 
-#: pg_verifybackup.c:1383
+#: pg_verifybackup.c:1410
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Sitio web de %s: <%s>\n"
+
+#, c-format
+#~ msgid "tar file trailer exceeds 2 blocks"
+#~ msgstr "la terminación del archivo tar excede de 2 bloques"
+
+#, c-format
+#~ msgid "pg_waldump cannot read tar files"
+#~ msgstr "pg_waldump no puede leer archivos tar"
