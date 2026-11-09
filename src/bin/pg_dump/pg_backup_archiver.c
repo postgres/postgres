@@ -2830,7 +2830,20 @@ ReadToc(ArchiveHandle *AH)
 					depSize *= 2;
 					deps = pg_realloc_array(deps, DumpId, depSize);
 				}
-				sscanf(tmp, "%d", &deps[depIdx]);
+
+				/*
+				 * Sanity check.  Dependencies are used as subscripts into
+				 * arrays indexed by dump ID, so we can't let a corrupt TOC
+				 * hand us a value that isn't a valid dump ID.  Pre-8.0
+				 * archives record OIDs here instead, which needn't fit in a
+				 * DumpId.  Those are only ever used with bounds checks, since
+				 * such archives can't be restored in parallel, so leave them
+				 * be.
+				 */
+				if (sscanf(tmp, "%d", &deps[depIdx]) != 1 ||
+					(AH->version >= K_VERS_1_8 && deps[depIdx] <= 0))
+					pg_fatal("dependency ID \"%s\" out of range -- perhaps a corrupt TOC",
+							 tmp);
 				free(tmp);
 				depIdx++;
 			}
@@ -3886,9 +3899,15 @@ _getObjectDescription(PQExpBuffer buf, const TocEntry *te)
 			 strcmp(type, "OPERATOR FAMILY") == 0 ||
 			 strcmp(type, "PROCEDURE") == 0)
 	{
-		/* Chop "DROP " off the front and make a modifiable copy */
-		char	   *first = pg_strdup(te->dropStmt + 5);
+		char	   *first;
 		char	   *last;
+
+		if (strncmp(te->dropStmt, "DROP ", 5) != 0)
+			pg_fatal("unexpected DROP statement for object type \"%s\" -- perhaps a corrupt TOC",
+					 type);
+
+		/* Chop "DROP " off the front and make a modifiable copy */
+		first = pg_strdup(te->dropStmt + 5);
 
 		/* point to last character in string */
 		last = first + strlen(first) - 1;
