@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-05-12 14:41+0900\n"
-"PO-Revision-Date: 2026-05-14 16:50+0900\n"
+"POT-Creation-Date: 2026-08-17 10:43+0900\n"
+"PO-Revision-Date: 2026-08-17 14:31+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -114,7 +114,7 @@ msgstr "実行する\"%s\"がありませんでした"
 msgid "could not resolve path \"%s\" to absolute form: %m"
 msgstr "パス\"%s\"を絶対パス形式に変換できませんでした: %m"
 
-#: ../../common/exec.c:412 parallel.c:1609
+#: ../../common/exec.c:412 parallel.c:1611
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() が失敗しました: %m"
@@ -399,15 +399,20 @@ msgstr "健全性検査に失敗しました、テーブル\"%2$s\"(OID %3$u)の
 msgid "invalid number of parents %d for table \"%s\""
 msgstr "テーブル\"%2$s\"用の親テーブルの数%1$dが不正です"
 
-#: common.c:1068
+#: common.c:1089 common.c:1159
 #, c-format
 msgid "could not parse numeric array \"%s\": too many numbers"
-msgstr "数値配列\"%s\"のパースに失敗しました: 要素が多すぎます"
+msgstr "数値配列\"%s\"のパースに失敗しました: 数値が多すぎます"
 
-#: common.c:1080
+#: common.c:1101 common.c:1171
 #, c-format
 msgid "could not parse numeric array \"%s\": invalid character in number"
 msgstr "数値配列\"%s\"のパースに失敗しました: 数値に不正な文字が含まれています"
+
+#: common.c:1107 common.c:1177
+#, c-format
+msgid "could not parse numeric array \"%s\": too few numbers"
+msgstr "数値配列\"%s\"のパースに失敗しました: 数値が少なすぎます"
 
 #: compress_gzip.c:78 compress_gzip.c:192
 #, c-format
@@ -543,22 +548,27 @@ msgstr "%s()が失敗しました: エラーコード %d"
 msgid "could not create communication channels: %m"
 msgstr "通信チャンネルを作成できませんでした: %m"
 
-#: parallel.c:1016
+#: parallel.c:978
+#, c-format
+msgid "could not create worker thread: %m"
+msgstr "ワーカースレッドを作成できませんでした: %m"
+
+#: parallel.c:1018
 #, c-format
 msgid "could not create worker process: %m"
 msgstr "ワーカープロセスを作成できませんでした: %m"
 
-#: parallel.c:1146
+#: parallel.c:1148
 #, c-format
 msgid "unrecognized command received from leader: \"%s\""
 msgstr "リーダーから認識不能のコマンドを受信しました: \"%s\""
 
-#: parallel.c:1189 parallel.c:1427
+#: parallel.c:1191 parallel.c:1429
 #, c-format
 msgid "invalid message received from worker: \"%s\""
 msgstr "ワーカーから不正なメッセージを受信しました: \"%s\""
 
-#: parallel.c:1321
+#: parallel.c:1323
 #, c-format
 msgid ""
 "could not obtain lock on relation \"%s\"\n"
@@ -567,47 +577,47 @@ msgstr ""
 "リレーション\"%s\"のロックを獲得できませんでした。\n"
 "通常これは、pg_dumpの親プロセスが初期のACCESS SHAREロックを獲得した後にだれかがテーブルに対してACCESS EXCLUSIVEロックを要求したことを意味しています。"
 
-#: parallel.c:1410
+#: parallel.c:1412
 #, c-format
 msgid "a worker process died unexpectedly"
 msgstr "ワーカープロセスが突然終了しました"
 
-#: parallel.c:1532 parallel.c:1650
+#: parallel.c:1534 parallel.c:1652
 #, c-format
 msgid "could not write to the communication channel: %m"
 msgstr "通信チャンネルに書き込めませんでした: %m"
 
-#: parallel.c:1734
+#: parallel.c:1736
 #, c-format
 msgid "pgpipe: could not create socket: error code %d"
 msgstr "pgpipe: ソケットを作成できませんでした: エラーコード %d"
 
-#: parallel.c:1745
+#: parallel.c:1747
 #, c-format
 msgid "pgpipe: could not bind: error code %d"
 msgstr "pgpipe: バインドできませんでした: エラーコード %d"
 
-#: parallel.c:1752
+#: parallel.c:1754
 #, c-format
 msgid "pgpipe: could not listen: error code %d"
 msgstr "pgpipe: リッスンできませんでした: エラーコード %d"
 
-#: parallel.c:1759
+#: parallel.c:1761
 #, c-format
 msgid "pgpipe: %s() failed: error code %d"
 msgstr "pgpipe: %s()が失敗しました: エラーコード %d"
 
-#: parallel.c:1770
+#: parallel.c:1772
 #, c-format
 msgid "pgpipe: could not create second socket: error code %d"
 msgstr "pgpipe: 第二ソケットを作成できませんでした: エラーコード %d"
 
-#: parallel.c:1779
+#: parallel.c:1781
 #, c-format
 msgid "pgpipe: could not connect socket: error code %d"
 msgstr "pgpipe: ソケットを接続できませんでした: エラーコード %d"
 
-#: parallel.c:1788
+#: parallel.c:1790
 #, c-format
 msgid "pgpipe: could not accept connection: error code %d"
 msgstr "pgpipe: 接続を受け付けられませんでした: エラーコード %d"
@@ -2060,8 +2070,8 @@ msgstr "行レベルセキュリティポリシーを読み取ります"
 msgid "unexpected policy command type: %c"
 msgstr "想定外のポリシコマンドタイプ: \"%c\""
 
-#: pg_dump.c:4504 pg_dump.c:4870 pg_dump.c:12135 pg_dump.c:18081
-#: pg_dump.c:18083 pg_dump.c:18704
+#: pg_dump.c:4504 pg_dump.c:4870 pg_dump.c:12127 pg_dump.c:18071
+#: pg_dump.c:18073 pg_dump.c:18694
 #, c-format
 msgid "could not parse %s array"
 msgstr "%s配列をパースできませんでした"
@@ -2081,280 +2091,280 @@ msgstr "%s %sの親となる機能拡張がありませんでした"
 msgid "schema with OID %u does not exist"
 msgstr "OID %uのスキーマは存在しません"
 
-#: pg_dump.c:6916 pg_dump.c:17340
+#: pg_dump.c:6909 pg_dump.c:17330
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "健全性検査に失敗しました、OID %2$u であるシーケンスの OID %1$u である親テーブルがありません"
 
-#: pg_dump.c:7061
+#: pg_dump.c:7054
 #, c-format
 msgid "failed sanity check, table OID %u appearing in pg_partitioned_table not found"
 msgstr "健全性検査に失敗しました、pg_partitioned_tableにあるテーブルOID %u が見つかりません"
 
-#: pg_dump.c:7292 pg_dump.c:7563 pg_dump.c:8034 pg_dump.c:8698 pg_dump.c:8817
-#: pg_dump.c:8965
+#: pg_dump.c:7285 pg_dump.c:7555 pg_dump.c:8026 pg_dump.c:8690 pg_dump.c:8809
+#: pg_dump.c:8957
 #, c-format
 msgid "unrecognized table OID %u"
 msgstr "認識できないテーブルOID %u"
 
-#: pg_dump.c:7296
+#: pg_dump.c:7289
 #, c-format
 msgid "unexpected index data for table \"%s\""
 msgstr "テーブル\"%s\"に対する想定外のインデックスデータ"
 
-#: pg_dump.c:7795
+#: pg_dump.c:7787
 #, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found"
 msgstr "健全性検査に失敗しました、OID %2$u であるpg_rewriteエントリのOID %1$u である親テーブルが見つかりません"
 
-#: pg_dump.c:8086
+#: pg_dump.c:8078
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)"
 msgstr "問い合わせがテーブル\"%2$s\"上の外部キートリガ\"%1$s\"の参照テーブル名としてNULLを返しました(テーブルのOID: %3$u)"
 
-#: pg_dump.c:8702
+#: pg_dump.c:8694
 #, c-format
 msgid "unexpected column data for table \"%s\""
 msgstr "テーブル\"%s\"に対する想定外の列データ"
 
-#: pg_dump.c:8731
+#: pg_dump.c:8723
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "テーブル\"%s\"の列番号が不正です"
 
-#: pg_dump.c:8779
+#: pg_dump.c:8771
 #, c-format
 msgid "finding table default expressions"
 msgstr "テーブルのデフォルト式を探しています"
 
-#: pg_dump.c:8821
+#: pg_dump.c:8813
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "テーブル\"%2$s\"用のadnumの値%1$dが不正です"
 
-#: pg_dump.c:8915
+#: pg_dump.c:8907
 #, c-format
 msgid "finding table check constraints"
 msgstr "テーブルのチェック制約を探しています"
 
-#: pg_dump.c:8969
+#: pg_dump.c:8961
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
 msgstr[0] "テーブル\"%2$s\"で想定する検査制約は%1$d個でしたが、%3$dありました"
 
-#: pg_dump.c:8973
+#: pg_dump.c:8965
 #, c-format
 msgid "The system catalogs might be corrupted."
 msgstr "システムカタログが破損している可能性があります。"
 
-#: pg_dump.c:9663
+#: pg_dump.c:9655
 #, c-format
 msgid "role with OID %u does not exist"
 msgstr "OID が %u であるロールは存在しません"
 
-#: pg_dump.c:9775 pg_dump.c:9804
+#: pg_dump.c:9767 pg_dump.c:9796
 #, c-format
 msgid "unsupported pg_init_privs entry: %u %u %d"
 msgstr "非サポートのpg_init_privsエントリ: %u %u %d"
 
-#: pg_dump.c:10625
+#: pg_dump.c:10617
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "データ型\"%s\"のtyptypeが不正なようです"
 
-#: pg_dump.c:12204
+#: pg_dump.c:12194
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "関数\"%s\"のprovolatileの値が認識できません"
 
-#: pg_dump.c:12254 pg_dump.c:14136
+#: pg_dump.c:12244 pg_dump.c:14126
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "関数\"%s\"のproparallel値が認識できません"
 
-#: pg_dump.c:12384 pg_dump.c:12490 pg_dump.c:12497
+#: pg_dump.c:12374 pg_dump.c:12480 pg_dump.c:12487
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "OID %uの関数の関数定義が見つかりませんでした"
 
-#: pg_dump.c:12423
+#: pg_dump.c:12413
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "pg_cast.castfuncまたはpg_cast.castmethodフィールドの値がおかしいです"
 
-#: pg_dump.c:12426
+#: pg_dump.c:12416
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:12516
+#: pg_dump.c:12506
 #, c-format
 msgid "bogus transform definition, at least one of trffromsql and trftosql should be nonzero"
 msgstr "おかしな変換定義、trffromsql か trftosql の少なくとも一方は非ゼロであるはずです"
 
-#: pg_dump.c:12533
+#: pg_dump.c:12523
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:12554
+#: pg_dump.c:12544
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:12699
+#: pg_dump.c:12689
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "後置演算子は今後サポートされません(演算子\"%s\")"
 
-#: pg_dump.c:12869
+#: pg_dump.c:12859
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "OID %sの演算子がありませんでした"
 
-#: pg_dump.c:12937
+#: pg_dump.c:12927
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "アクセスメソッド\"%2$s\"の不正なタイプ\"%1$c\""
 
-#: pg_dump.c:13606 pg_dump.c:13665
+#: pg_dump.c:13596 pg_dump.c:13655
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "認識できないの照合順序プロバイダ: %s"
 
-#: pg_dump.c:13615 pg_dump.c:13624 pg_dump.c:13634 pg_dump.c:13649
+#: pg_dump.c:13605 pg_dump.c:13614 pg_dump.c:13624 pg_dump.c:13639
 #, c-format
 msgid "invalid collation \"%s\""
 msgstr "不正な照合順序\"%s\""
 
-#: pg_dump.c:14055
+#: pg_dump.c:14045
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "集約\"%s\"のaggfinalmodifyの値が識別できません"
 
-#: pg_dump.c:14111
+#: pg_dump.c:14101
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "集約\"%s\"のaggmfinalmodifyの値が識別できません"
 
-#: pg_dump.c:14828
+#: pg_dump.c:14818
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "デフォルト権限設定中の認識できないオブジェクト型: %d"
 
-#: pg_dump.c:14844
+#: pg_dump.c:14834
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "デフォルトの ACL リスト(%s)をパースできませんでした"
 
-#: pg_dump.c:14926
+#: pg_dump.c:14916
 #, c-format
 msgid "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "オブジェクト\"%3$s\"(%4$s)の初期ACLリスト(%1$s)またはデフォルト値(%2$s)をパースできませんでした"
 
-#: pg_dump.c:14951
+#: pg_dump.c:14941
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "オブジェクト\"%3$s\"(%4$s)のACLリスト(%1$s)またはデフォルト値(%2$s)をパースできませんでした"
 
-#: pg_dump.c:15492
+#: pg_dump.c:15482
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "ビュー\"%s\"の定義を取り出すための問い合わせがデータを返却しませんでした"
 
-#: pg_dump.c:15495
+#: pg_dump.c:15485
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "ビュー\"%s\"の定義を取り出すための問い合わせが2つ以上の定義を返却しました"
 
-#: pg_dump.c:15502
+#: pg_dump.c:15492
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "ビュー\"%s\"の定義が空のようです(長さが0)"
 
-#: pg_dump.c:15586
+#: pg_dump.c:15576
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDSは今後サポートされません(テーブル\"%s\")"
 
-#: pg_dump.c:16510
+#: pg_dump.c:16500
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "テーブル\"%2$s\"の列番号%1$dは不正です"
 
-#: pg_dump.c:16588
+#: pg_dump.c:16578
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "インデックス統計列をパースできませんでした"
 
-#: pg_dump.c:16590
+#: pg_dump.c:16580
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "インデックス統計値をパースできませんでした"
 
-#: pg_dump.c:16592
+#: pg_dump.c:16582
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "インデックス統計に対して列と値の数が合致しません"
 
-#: pg_dump.c:16822
+#: pg_dump.c:16812
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "制約\"%s\"のインデックスが見つかりません"
 
-#: pg_dump.c:17073
+#: pg_dump.c:17063
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "制約のタイプが識別できません: %c"
 
-#: pg_dump.c:17174 pg_dump.c:17404
+#: pg_dump.c:17164 pg_dump.c:17394
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "シーケンス\"%s\"のデータを得るための問い合わせが%d行返却しました(想定は1)"
 
-#: pg_dump.c:17206
+#: pg_dump.c:17196
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "認識されないシーケンスの型\"%s\""
 
-#: pg_dump.c:17496
+#: pg_dump.c:17486
 #, c-format
 msgid "unexpected tgtype value: %d"
 msgstr "想定外のtgtype値: %d"
 
-#: pg_dump.c:17568
+#: pg_dump.c:17558
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
 msgstr "テーブル\"%3$s\"上のトリガ\"%2$s\"の引数文字列(%1$s)が不正です"
 
-#: pg_dump.c:17842
+#: pg_dump.c:17832
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "テーブル\"%2$s\"のルール\"%1$s\"を得るための問い合わせが失敗しました: 間違った行数が返却されました"
 
-#: pg_dump.c:17995
+#: pg_dump.c:17985
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "親の機能拡張%uが見つかりません"
 
-#: pg_dump.c:18085
+#: pg_dump.c:18075
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "機能拡張に対して設定と条件の数が一致しません"
 
-#: pg_dump.c:18217
+#: pg_dump.c:18207
 #, c-format
 msgid "reading dependency data"
 msgstr "データの依存データを読み込んでいます"
 
-#: pg_dump.c:18303
+#: pg_dump.c:18293
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "参照元オブジェクト%u %uがありません"
 
-#: pg_dump.c:18314
+#: pg_dump.c:18304
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "参照先オブジェクト%u %uがありません"

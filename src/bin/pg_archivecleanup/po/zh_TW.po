@@ -1,20 +1,22 @@
 # Traditional Chinese message translation file for pg_archivecleanup
-# Copyright (C) 2023 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-11 20:51+0000\n"
-"PO-Revision-Date: 2023-11-06 08:49+0800\n"
-"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
-"Language-Team: \n"
+"POT-Creation-Date: 2026-10-07 07:17+0000\n"
+"PO-Revision-Date: 2026-10-08 16:06+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.1\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 # libpq/be-secure.c:294 libpq/be-secure.c:387
 #: ../../../src/common/logging.c:276
@@ -30,7 +32,7 @@ msgstr "警告: "
 #: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
-msgstr "詳細內容: "
+msgstr "詳情: "
 
 #: ../../../src/common/logging.c:301
 #, c-format
@@ -81,7 +83,7 @@ msgstr "用 \"%s --help\" 取得更多資訊。"
 msgid ""
 "%s removes older WAL files from PostgreSQL archives.\n"
 "\n"
-msgstr "%s 從 PostgreSQL 封存檔中移除較舊的 WAL 檔\n"
+msgstr "%s 從 PostgreSQL 封存檔中移除較舊的 WAL 檔。\n\n"
 
 #: pg_archivecleanup.c:252
 #, c-format
@@ -91,7 +93,7 @@ msgstr "用法:\n"
 #: pg_archivecleanup.c:253
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
-msgstr "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+msgstr "  %s [選項]... 封存位置 最早保留的WAL檔案\n"
 
 #: pg_archivecleanup.c:254
 #, c-format
@@ -105,12 +107,12 @@ msgstr ""
 #: pg_archivecleanup.c:255
 #, c-format
 msgid "  -d             generate debug output (verbose mode)\n"
-msgstr "  -d             產生除錯輸出(詳細模式)\n"
+msgstr "  -d             產生偵錯輸出（詳細模式）\n"
 
 #: pg_archivecleanup.c:256
 #, c-format
 msgid "  -n             dry run, show the names of the files that would be removed\n"
-msgstr "  -n             模擬執行，顯示將被移除的檔案名稱\n"
+msgstr "  -n             空跑，顯示將被刪除的檔案名\n"
 
 #: pg_archivecleanup.c:257
 #, c-format
@@ -135,12 +137,7 @@ msgid ""
 "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
 "e.g.\n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
-msgstr ""
-"\n"
-"用於 postgresql.conf 中的 archive_cleanup_command:\n"
-"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
-"例如:\n"
-"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+msgstr "\n用於 postgresql.conf 中的 archive_cleanup_command：\n  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n例如：\n  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 
 #: pg_archivecleanup.c:265
 #, c-format
@@ -167,12 +164,12 @@ msgstr ""
 #: pg_archivecleanup.c:270
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "%s 網站: <%s>\n"
+msgstr "%s 首頁: <%s>\n"
 
 #: pg_archivecleanup.c:332
 #, c-format
 msgid "must specify archive location"
-msgstr "必需指定封存檔位置"
+msgstr "必須指定封存檔位置"
 
 #: pg_archivecleanup.c:344
 #, c-format
@@ -183,3 +180,4 @@ msgstr "必須指定最早保留的 WAL 檔"
 #, c-format
 msgid "too many command-line arguments"
 msgstr "命令列參數過多"
+

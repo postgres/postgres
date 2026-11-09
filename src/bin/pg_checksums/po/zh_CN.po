@@ -1,56 +1,75 @@
-# LANGUAGE message translation file for pg_checksums
-# Copyright (C) 2020 PostgreSQL Global Development Group
+# Simplified Chinese message translation file for pg_checksums
+# Copyright (C) 2026 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <zhangjie2@cn.fujitsu.com>, 2019.
+#
+# Jie Zhang <zhangjie2@fujitsu.com>, 2019.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_checksums (PostgreSQL) 13\n"
+"Project-Id-Version: pg_checksums (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-06-05 01:47+0000\n"
-"PO-Revision-Date: 2020-06-21 16:00+0800\n"
-"Last-Translator: Jie Zhang <zhangjie2@cn.fujitsu.com>\n"
-"Language-Team: Chinese (Simplified) <zhangjie2@cn.fujitsu.com>\n"
+"POT-Creation-Date: 2026-10-07 07:18+0000\n"
+"PO-Revision-Date: 2026-10-08 16:06+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../../src/common/logging.c:236
-#, c-format
-msgid "fatal: "
-msgstr "致命的: "
-
-#: ../../../src/common/logging.c:243
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "错误: "
 
-#: ../../../src/common/logging.c:250
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: pg_checksums.c:75
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "详情: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "提示: "
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "选项 %2$s 的值 \"%1$s\" 无效"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s 必须位于 %d..%d 的范围内"
+
+#: pg_checksums.c:79
 #, c-format
 msgid ""
-"%s enables, disables, or verifies data checksums in a PostgreSQL database cluster.\n"
+"%s enables, disables, or verifies data checksums in a PostgreSQL database "
+"cluster.\n"
 "\n"
 msgstr ""
-"%s启用、禁用或验证PostgreSQL数据库群集中的数据校验和.\n"
+"%s 启用、禁用或验证 PostgreSQL 数据库集簇的数据校验和。\n"
 "\n"
 
-#: pg_checksums.c:76
+#: pg_checksums.c:80
 #, c-format
 msgid "Usage:\n"
-msgstr "使用方法:\n"
+msgstr "用法:\n"
 
-#: pg_checksums.c:77
+#: pg_checksums.c:81
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
-msgstr "  %s [选项]... [DATADIR]\n"
+msgstr "  %s [选项]... [数据目录]\n"
 
-#: pg_checksums.c:78
+#: pg_checksums.c:82
 #, c-format
 msgid ""
 "\n"
@@ -59,153 +78,153 @@ msgstr ""
 "\n"
 "选项:\n"
 
-#: pg_checksums.c:79
+#: pg_checksums.c:83
 #, c-format
 msgid " [-D, --pgdata=]DATADIR    data directory\n"
 msgstr " [-D, --pgdata=]DATADIR    数据目录\n"
 
-#: pg_checksums.c:80
+#: pg_checksums.c:84
 #, c-format
 msgid "  -c, --check              check data checksums (default)\n"
 msgstr "  -c, --check              检查数据校验和（默认）\n"
 
-#: pg_checksums.c:81
+#: pg_checksums.c:85
 #, c-format
 msgid "  -d, --disable            disable data checksums\n"
 msgstr "  -d, --disable            禁用数据校验和\n"
 
-#: pg_checksums.c:82
+#: pg_checksums.c:86
 #, c-format
 msgid "  -e, --enable             enable data checksums\n"
 msgstr "  -e, --enable             启用数据校验和\n"
 
-#: pg_checksums.c:83
+#: pg_checksums.c:87
 #, c-format
-msgid "  -f, --filenode=FILENODE  check only relation with specified filenode\n"
-msgstr "  -f, --filenode=FILENODE  仅检查与指定filenode的关系\n"
+msgid ""
+"  -f, --filenode=FILENODE  check only relation with specified filenode\n"
+msgstr "  -f, --filenode=FILENODE  仅检查具有指定 filenode 的关系\n"
 
-#: pg_checksums.c:84
+#: pg_checksums.c:88
 #, c-format
-msgid "  -N, --no-sync            do not wait for changes to be written safely to disk\n"
-msgstr "  -N, --no-sync            不用等待变化安全写入磁盘\n"
+msgid ""
+"  -N, --no-sync            do not wait for changes to be written safely to "
+"disk\n"
+msgstr "  -N, --no-sync            不等待变更安全写入磁盘\n"
 
-#: pg_checksums.c:85
+#: pg_checksums.c:89
 #, c-format
 msgid "  -P, --progress           show progress information\n"
 msgstr "  -P, --progress           显示进度信息\n"
 
-#: pg_checksums.c:86
+#: pg_checksums.c:90
 #, c-format
 msgid "  -v, --verbose            output verbose messages\n"
 msgstr "  -v, --verbose            输出详细的消息\n"
 
-#: pg_checksums.c:87
+#: pg_checksums.c:91
 #, c-format
 msgid "  -V, --version            output version information, then exit\n"
-msgstr "  -V, --version            输出版本信息, 然后退出\n"
+msgstr "  -V, --version            输出版本信息，然后退出\n"
 
-#: pg_checksums.c:88
+#: pg_checksums.c:92
 #, c-format
 msgid "  -?, --help               show this help, then exit\n"
-msgstr "  -?, --help               显示此帮助, 然后退出\n"
+msgstr "  -?, --help               显示此帮助，然后退出\n"
 
-#: pg_checksums.c:89
+#: pg_checksums.c:93
 #, c-format
 msgid ""
 "\n"
-"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
+"If no data directory (DATADIR) is specified, the environment variable "
+"PGDATA\n"
 "is used.\n"
 "\n"
 msgstr ""
 "\n"
-"如果没有指定数据目录(DATADIR), 将使用\n"
-"环境变量PGDATA.\n"
+"如果没有指定数据目录（DATADIR），将使用环境变量 PGDATA。\n"
 "\n"
 
-#: pg_checksums.c:91
+#: pg_checksums.c:95
 #, c-format
 msgid "Report bugs to <%s>.\n"
-msgstr "臭虫报告至 <%s>.\n"
+msgstr "请向 <%s> 报告缺陷。\n"
 
-#: pg_checksums.c:92
+#: pg_checksums.c:96
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 主页: <%s>\n"
 
-#: pg_checksums.c:161
+#: pg_checksums.c:153
 #, c-format
-msgid "%*s/%s MB (%d%%) computed"
-msgstr "已计算%*s/%s MB (%d%%)"
+msgid "%lld/%lld MB (%d%%) computed"
+msgstr "已计算 %lld/%lld MB（%d%%）"
 
-#: pg_checksums.c:204
+#: pg_checksums.c:200
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "无法打开文件 \"%s\": %m"
 
-#: pg_checksums.c:220
+#: pg_checksums.c:214
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
-msgstr "无法在文件\"%2$s\"中读取块%1$u: %3$m"
+msgstr "无法读取文件 \"%2$s\" 中的块 %1$u: %m"
 
-#: pg_checksums.c:223
+#: pg_checksums.c:217
 #, c-format
 msgid "could not read block %u in file \"%s\": read %d of %d"
-msgstr "无法读取文件\"%2$s\"中的块%1$u:读取第%3$d个，共%4$d个"
+msgstr "无法读取文件 \"%2$s\" 中的块 %1$u: 应读取 %4$d，实际读取 %3$d"
 
 #: pg_checksums.c:240
 #, c-format
-msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
-msgstr "校验和验证在文件\"%s\"中失败，块%u:计算的校验和 %X ，但块包含 %X"
+msgid ""
+"checksum verification failed in file \"%s\", block %u: calculated checksum "
+"%X but block contains %X"
+msgstr "文件 \"%s\" 中块 %u 的校验和验证失败: 计算值为 %X，但块中存储的值为 %X"
 
-#: pg_checksums.c:255
+#: pg_checksums.c:263
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
-msgstr "在文件\"%2$s\"中查找块%1$u失败: %3$m"
+msgstr "无法在文件 \"%2$s\" 中定位块 %1$u: %m"
 
-#: pg_checksums.c:264
+#: pg_checksums.c:270
 #, c-format
 msgid "could not write block %u in file \"%s\": %m"
-msgstr "无法在文件 \"%2$s\"中写入块%1$u: %3$m"
+msgstr "无法写入文件 \"%2$s\" 中的块 %1$u: %m"
 
-#: pg_checksums.c:267
+#: pg_checksums.c:273
 #, c-format
 msgid "could not write block %u in file \"%s\": wrote %d of %d"
-msgstr "无法对文件\"%2$s\"写操作数据块%1$u: 已写入%3$d个，共%4$d个"
+msgstr "无法写入文件 \"%2$s\" 中的块 %1$u: 应写入 %4$d，实际写入 %3$d"
 
-#: pg_checksums.c:280
+#: pg_checksums.c:285
 #, c-format
 msgid "checksums verified in file \"%s\""
-msgstr "在文件\"%s\"中验证的校验和"
+msgstr "已验证文件 \"%s\" 的校验和"
 
-#: pg_checksums.c:282
+#: pg_checksums.c:287
 #, c-format
 msgid "checksums enabled in file \"%s\""
-msgstr "文件\"%s\"中启用的校验和"
+msgstr "已为文件 \"%s\" 启用校验和"
 
-#: pg_checksums.c:307
+#: pg_checksums.c:318
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "无法打开目录 \"%s\": %m"
 
-#: pg_checksums.c:334 pg_checksums.c:413
+#: pg_checksums.c:346 pg_checksums.c:415
 #, c-format
 msgid "could not stat file \"%s\": %m"
-msgstr "无法取文件 \"%s\" 的状态: %m"
+msgstr "无法获取文件 \"%s\" 的状态: %m"
 
-#: pg_checksums.c:361
+#: pg_checksums.c:370
 #, c-format
 msgid "invalid segment number %d in file name \"%s\""
-msgstr "文件名\"%2$s\"中的无效段号%1$d"
+msgstr "文件名 \"%2$s\" 中的段号 %1$d 无效"
 
-#: pg_checksums.c:494
+#: pg_checksums.c:512 pg_checksums.c:528 pg_checksums.c:538 pg_checksums.c:546
 #, c-format
-msgid "invalid filenode specification, must be numeric: %s"
-msgstr "filenode指定无效，必须是数字: %s"
-
-#: pg_checksums.c:512 pg_checksums.c:528 pg_checksums.c:538 pg_checksums.c:547
-#, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "运行 \"%s --help\" 获取更多信息。"
 
 #: pg_checksums.c:527
 #, c-format
@@ -215,94 +234,118 @@ msgstr "未指定数据目录"
 #: pg_checksums.c:536
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "命令行参数太多（第一个是\"%s\")"
+msgstr "命令行参数过多（第一个多余参数是 \"%s\"）"
 
-#: pg_checksums.c:546
+#: pg_checksums.c:545
 #, c-format
 msgid "option -f/--filenode can only be used with --check"
-msgstr " -f/--filenode选项只能与--check一起使用"
+msgstr "选项 -f/--filenode 只能与 --check 一起使用"
+
+#: pg_checksums.c:553
+#, c-format
+msgid "pg_control CRC value is incorrect"
+msgstr "pg_control 的 CRC 值不正确"
 
 #: pg_checksums.c:556
 #, c-format
-msgid "pg_control CRC value is incorrect"
-msgstr "pg_control的CRC值不正确 "
-
-#: pg_checksums.c:562
-#, c-format
 msgid "cluster is not compatible with this version of pg_checksums"
-msgstr "群集与此版本的pg_checksums不兼容”"
+msgstr "集簇与此版本的 pg_checksums 不兼容"
 
-#: pg_checksums.c:568
+#: pg_checksums.c:560
 #, c-format
 msgid "database cluster is not compatible"
-msgstr "数据库群集不兼容"
+msgstr "数据库集簇不兼容"
 
-#: pg_checksums.c:569
+#: pg_checksums.c:561
 #, c-format
-msgid "The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u.\n"
-msgstr "数据库群集是用块大小%u初始化的，但pg_checksums是用块大小%u编译的.\n"
+msgid ""
+"The database cluster was initialized with block size %u, but pg_checksums "
+"was compiled with block size %u."
+msgstr "数据库集簇初始化时的块大小为 %u，但 pg_checksums 编译时的块大小为 %u。"
 
-#: pg_checksums.c:582
+#: pg_checksums.c:573
 #, c-format
 msgid "cluster must be shut down"
-msgstr "必须关闭群集"
+msgstr "集簇必须处于关闭状态"
 
-#: pg_checksums.c:589
+#: pg_checksums.c:577
 #, c-format
 msgid "data checksums are not enabled in cluster"
-msgstr "群集中未启用数据校验和"
+msgstr "集簇中未启用数据校验和"
 
-#: pg_checksums.c:596
+#: pg_checksums.c:581
 #, c-format
 msgid "data checksums are already disabled in cluster"
-msgstr "群集中已禁用数据校验和"
+msgstr "集簇中已禁用数据校验和"
 
-#: pg_checksums.c:603
+#: pg_checksums.c:585
 #, c-format
 msgid "data checksums are already enabled in cluster"
-msgstr "群集中已启用数据校验和"
+msgstr "集簇中已启用数据校验和"
 
-#: pg_checksums.c:632
+#: pg_checksums.c:609
 #, c-format
 msgid "Checksum operation completed\n"
 msgstr "校验和操作已完成\n"
 
-#: pg_checksums.c:633
+#: pg_checksums.c:610
 #, c-format
-msgid "Files scanned:  %s\n"
-msgstr "扫描的文件:  %s\n"
+msgid "Files scanned:   %lld\n"
+msgstr "已扫描文件:      %lld\n"
 
-#: pg_checksums.c:634
+#: pg_checksums.c:611
 #, c-format
-msgid "Blocks scanned: %s\n"
-msgstr "扫描的块: %s\n"
+msgid "Blocks scanned:  %lld\n"
+msgstr "已扫描块:        %lld\n"
 
-#: pg_checksums.c:637
+#: pg_checksums.c:614
 #, c-format
-msgid "Bad checksums:  %s\n"
-msgstr "坏校验和:  %s\n"
+msgid "Bad checksums:  %lld\n"
+msgstr "错误校验和:      %lld\n"
 
-#: pg_checksums.c:638 pg_checksums.c:665
+#: pg_checksums.c:615 pg_checksums.c:647
 #, c-format
-msgid "Data checksum version: %d\n"
-msgstr "数据校验和版本: %d\n"
+msgid "Data checksum version: %u\n"
+msgstr "数据校验和版本:  %u\n"
 
-#: pg_checksums.c:657
+#: pg_checksums.c:622
+#, c-format
+msgid "Files written:  %lld\n"
+msgstr "已写入文件:      %lld\n"
+
+#: pg_checksums.c:623
+#, c-format
+msgid "Blocks written: %lld\n"
+msgstr "已写入块:        %lld\n"
+
+#: pg_checksums.c:639
 #, c-format
 msgid "syncing data directory"
-msgstr "同步数据目录"
+msgstr "正在同步数据目录"
 
-#: pg_checksums.c:661
+#: pg_checksums.c:643
 #, c-format
 msgid "updating control file"
 msgstr "正在更新控制文件"
 
-#: pg_checksums.c:667
+#: pg_checksums.c:649
 #, c-format
 msgid "Checksums enabled in cluster\n"
-msgstr "群集中启用的校验和\n"
+msgstr "已在集簇中启用校验和\n"
 
-#: pg_checksums.c:669
+#: pg_checksums.c:651
 #, c-format
 msgid "Checksums disabled in cluster\n"
-msgstr "在群集中禁用校验和\n"
+msgstr "已在集簇中禁用校验和\n"
+
+#, c-format
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+
+#, c-format
+#~ msgid "fatal: "
+#~ msgstr "致命的: "
+
+#, c-format
+#~ msgid "invalid filenode specification, must be numeric: %s"
+#~ msgstr "filenode指定无效，必须是数字: %s"

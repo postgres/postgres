@@ -1,111 +1,127 @@
-# LANGUAGE message translation file for pltcl
-# Copyright (C) 2019 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pltcl (PostgreSQL) package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+# Simplified Chinese message translation file for pltcl
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL) 14\n"
+"Project-Id-Version: pltcl (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-14 05:38+0000\n"
-"PO-Revision-Date: 2021-08-16 18:00+0800\n"
-"Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
-"Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
+"POT-Creation-Date: 2026-10-07 07:05+0000\n"
+"PO-Revision-Date: 2026-10-08 16:06+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.7\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-#: pltcl.c:463
+#: pltcl.c:466
 msgid "PL/Tcl function to call once when pltcl is first used."
-msgstr "PL/Tcl函数在首次使用pltcl时调用一次."
+msgstr "首次使用 pltcl 时调用一次的 PL/Tcl 函数。"
 
-#: pltcl.c:470
+#: pltcl.c:473
 msgid "PL/TclU function to call once when pltclu is first used."
-msgstr "PL/TclU函数在首次使用pltcl时调用一次."
+msgstr "首次使用 pltclu 时调用一次的 PL/TclU 函数。"
 
-#: pltcl.c:634
+#: pltcl.c:640
 #, c-format
 msgid "function \"%s\" is in the wrong language"
-msgstr "函数\"%s\"的语言错误"
+msgstr "函数 \"%s\" 所用语言错误"
 
-#: pltcl.c:645
+#: pltcl.c:651
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
-msgstr "函数\"%s\"不能是安全定义者"
+msgstr "函数 \"%s\" 不得为 SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:679
+#: pltcl.c:685
 #, c-format
 msgid "processing %s parameter"
-msgstr "正在处理%s参数"
+msgstr "正在处理 %s 参数"
 
-#: pltcl.c:833
+#: pltcl.c:838
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
-msgstr "在不能接受使用集合的环境中调用set-valued函数"
+msgstr "在不能接受集合的上下文中调用返回集合的函数"
 
-#: pltcl.c:1006
+#: pltcl.c:843
 #, c-format
-msgid "function returning record called in context that cannot accept type record"
-msgstr "返回值类型是记录的函数在不接受使用记录类型的环境中调用"
+msgid "materialize mode required, but it is not allowed in this context"
+msgstr "需要物化模式，但此上下文不允许使用该模式"
 
-#: pltcl.c:1290
+#: pltcl.c:1016
 #, c-format
-msgid "could not split return value from trigger: %s"
-msgstr "无法分离来自触发器的返回值：%s"
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr "在不能接受 record 类型的上下文中调用返回 record 类型的函数"
 
-#: pltcl.c:1371 pltcl.c:1801
+#: pltcl.c:1035
+#, c-format
+msgid "could not parse function return value: %s"
+msgstr "无法解析函数返回值: %s"
+
+#: pltcl.c:1302
+#, c-format
+msgid "could not parse trigger return value: %s"
+msgstr "无法解析触发器返回值: %s"
+
+#: pltcl.c:1387 pltcl.c:1818
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1372
+#: pltcl.c:1388
 #, c-format
 msgid ""
 "%s\n"
 "in PL/Tcl function \"%s\""
 msgstr ""
 "%s\n"
-"在PL/Tcl函数\"%s\"中"
+"在 PL/Tcl 函数 \"%s\" 中"
 
-#: pltcl.c:1536
+#: pltcl.c:1552
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "触发器函数只能以触发器的形式调用"
 
-#: pltcl.c:1540
+#: pltcl.c:1556
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
-msgstr "PL/Tcl函数不能返回类型%s"
+msgstr "PL/Tcl 函数不能返回类型 %s"
 
-#: pltcl.c:1579
+#: pltcl.c:1594
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
-msgstr "PL/Tcl函数不能使用类型 %s"
+msgstr "PL/Tcl 函数不能接受类型为 %s 的参数"
 
-#: pltcl.c:1693
+#: pltcl.c:1708
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
-msgstr "无法创建内部过程\"%s\"：%s"
+msgstr "无法创建内部过程 \"%s\": %s"
 
-#: pltcl.c:3197
+#: pltcl.c:3214
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "列名/值列表必须具有偶数个元素"
 
-#: pltcl.c:3215
+#: pltcl.c:3232
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
-msgstr "列名/值列表包含不存在的列名\"%s\""
+msgstr "列名/值列表包含不存在的列名 \"%s\""
 
-#: pltcl.c:3222
+#: pltcl.c:3239
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "不能设置系统属性\"%s\""
+msgstr "不能设置系统属性 \"%s\""
 
-#: pltcl.c:3228
+#: pltcl.c:3245
 #, c-format
 msgid "cannot set generated column \"%s\""
-msgstr "无法设置生成的列 \"%s\""
+msgstr "不能设置生成列 \"%s\""
+
+#, c-format
+#~ msgid "could not split return value from trigger: %s"
+#~ msgstr "无法分离来自触发器的返回值：%s"

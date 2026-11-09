@@ -1,29 +1,30 @@
 # Traditional Chinese message translation file for pg_config
-# Copyright (C) 2023 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_config (PostgreSQL) package.
-# 2004-12-13 Zhenbang Wei <forth@zbwei.net>
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Zhenbang Wei <forth@zbwei.net>, 2004-12-13.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-08 21:48+0000\n"
-"PO-Revision-Date: 2023-11-06 08:49+0800\n"
-"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
-"Language-Team: \n"
+"POT-Creation-Date: 2026-10-07 07:14+0000\n"
+"PO-Revision-Date: 2026-10-08 16:06+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.1\n"
 
 #: ../../common/config_info.c:134 ../../common/config_info.c:142
 #: ../../common/config_info.c:150 ../../common/config_info.c:158
 #: ../../common/config_info.c:166 ../../common/config_info.c:174
 #: ../../common/config_info.c:182 ../../common/config_info.c:190
 msgid "not recorded"
-msgstr "未紀錄"
+msgstr "未記錄"
 
 # command.c:122
 #: ../../common/exec.c:172
@@ -99,9 +100,7 @@ msgstr "用法:\n"
 msgid ""
 "  %s [OPTION]...\n"
 "\n"
-msgstr ""
-"  %s [OPTION]...\n"
-"\n"
+msgstr "  %s [選項]...\n\n"
 
 #: pg_config.c:77
 #, c-format
@@ -180,7 +179,7 @@ msgstr "  --pgxs                顯示擴充模組 makefile 位置\n"
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
-msgstr "  --configure           顯示建立 PostgreSQL 時給 \"configure\" 腳本的參數\n"
+msgstr "  --configure           顯示建立 PostgreSQL 時給 \"configure\" 腳本的選項\n"
 
 #: pg_config.c:94
 #, c-format
@@ -230,7 +229,7 @@ msgstr "  --version             顯示 PostgreSQL 的版本\n"
 #: pg_config.c:103
 #, c-format
 msgid "  -?, --help            show this help, then exit\n"
-msgstr "  -?, --help                顯示說明，然後結束\n"
+msgstr "  -?, --help            顯示說明，然後結束\n"
 
 #: pg_config.c:104
 #, c-format
@@ -262,7 +261,7 @@ msgstr "用 \"%s --help\" 取得更多資訊。\n"
 #: pg_config.c:154
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: 找不到自身的程式執行檔\n"
+msgstr "%s: 找不到自身程式的執行檔\n"
 
 #: pg_config.c:181
 #, c-format
@@ -324,3 +323,4 @@ msgstr "%s: 無效的參數: %s\n"
 #, c-format
 #~ msgid "could not read symbolic link \"%s\""
 #~ msgstr "無法讀取符號連結 \"%s\""
+

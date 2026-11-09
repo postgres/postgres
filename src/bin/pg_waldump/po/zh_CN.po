@@ -1,104 +1,151 @@
-# LANGUAGE message translation file for pg_waldump
-# Copyright (C) 2019 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_waldump (PostgreSQL) package.
-# FIRST AUTHOR <zhangjie2@cn.fujitsu.com>, 2019.
+# Simplified Chinese message translation file for pg_waldump
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Jie Zhang <zhangjie2@fujitsu.com>, 2019.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_waldump (PostgreSQL) 13\n"
+"Project-Id-Version: pg_waldump (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-06-05 01:45+0000\n"
-"PO-Revision-Date: 2020-06-23 18:00+0800\n"
-"Last-Translator: Jie Zhang <zhangjie2@cn.fujitsu.com>\n"
-"Language-Team: Chinese (Simplified) <zhangjie2@cn.fujitsu.com>\n"
+"POT-Creation-Date: 2026-10-07 07:14+0000\n"
+"PO-Revision-Date: 2026-10-08 16:06+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../../src/common/logging.c:236
-#, c-format
-msgid "fatal: "
-msgstr "致命的: "
-
-#: ../../../src/common/logging.c:243
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "错误: "
 
-#: ../../../src/common/logging.c:250
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "详情: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "提示: "
+
+#: pg_waldump.c:137
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "无法创建目录 \"%s\": %m"
+
 #: pg_waldump.c:146
+#, c-format
+msgid "directory \"%s\" exists but is not empty"
+msgstr "目录 \"%s\" 已存在，但不为空"
+
+#: pg_waldump.c:150
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "无法访问目录 \"%s\": %m"
+
+#: pg_waldump.c:199 pg_waldump.c:528
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "无法打开文件 \"%s\": %m"
 
-#: pg_waldump.c:202
+#: pg_waldump.c:255
 #, c-format
-msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
-msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
-msgstr[0] "WAL段大小必须是1MB到1GB之间的2次幂，但WAL文件\"%s\"头指定了%d个字节"
-msgstr[1] "WAL段大小必须是1MB到1GB之间的2次幂，但WAL文件\"%s\"头指定了%d个字节"
+msgid ""
+"WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL "
+"file \"%s\" header specifies %d byte"
+msgid_plural ""
+"WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL "
+"file \"%s\" header specifies %d bytes"
+msgstr[0] ""
+"WAL 段大小必须是 1 MB 到 1 GB 之间的二的幂，但 WAL 文件 \"%s\" 的头部指定了 "
+"%d 字节"
 
-#: pg_waldump.c:210
+#: pg_waldump.c:261
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "无法读取文件 \"%s\": %m"
 
-#: pg_waldump.c:213
+#: pg_waldump.c:264
 #, c-format
-msgid "could not read file \"%s\": read %d of %zu"
-msgstr "无法读取文件\"%1$s\"：读取了%3$zu中的%2$d"
+msgid "could not read file \"%s\": read %d of %d"
+msgstr "无法读取文件 \"%1$s\": 应读取 %3$d，实际读取 %2$d"
 
-#: pg_waldump.c:275
+#: pg_waldump.c:325
 #, c-format
 msgid "could not locate WAL file \"%s\""
-msgstr "找不到WAL文件\"%s\""
+msgstr "无法找到 WAL 文件 \"%s\""
 
-#: pg_waldump.c:277
+#: pg_waldump.c:327
 #, c-format
 msgid "could not find any WAL file"
-msgstr "找不到任何WAL文件"
+msgstr "无法找到任何 WAL 文件"
 
-#: pg_waldump.c:318
+#: pg_waldump.c:368
 #, c-format
 msgid "could not find file \"%s\": %m"
-msgstr "找不到文件\"%s\": %m"
+msgstr "无法找到文件 \"%s\": %m"
 
-#: pg_waldump.c:367
+#: pg_waldump.c:417
 #, c-format
-msgid "could not read from file %s, offset %u: %m"
-msgstr "无法从文件 %s读取，偏移量 %u: %m"
+msgid "could not read from file %s, offset %d: %m"
+msgstr "无法从文件 %s 的偏移量 %d 处读取: %m"
 
-#: pg_waldump.c:371
+#: pg_waldump.c:421
 #, c-format
-msgid "could not read from file %s, offset %u: read %d of %zu"
-msgstr "无法从文件%1$s读取，偏移量%2$u，读取%4$zu中的%3$d"
+msgid "could not read from file %s, offset %d: read %d of %d"
+msgstr "无法读取文件 %1$s 的偏移量 %2$d 处的数据: 应读取 %4$d，实际读取 %3$d"
 
-#: pg_waldump.c:720
+#: pg_waldump.c:511
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_waldump.c:519
+#, c-format
+msgid "invalid fork number: %u"
+msgstr "无效的文件分支编号: %u"
+
+#: pg_waldump.c:531
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "无法写入文件 \"%s\": %m"
+
+#: pg_waldump.c:534
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "无法关闭文件 \"%s\": %m"
+
+#: pg_waldump.c:754
 #, c-format
 msgid ""
 "%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
 "\n"
 msgstr ""
-"%s 为了调试，解码并显示PostgreSQL预写日志.\n"
+"%s 解码并显示 PostgreSQL 预写日志，用于调试。\n"
 "\n"
 
-#: pg_waldump.c:722
+#: pg_waldump.c:756
 #, c-format
 msgid "Usage:\n"
-msgstr "使用方法:\n"
+msgstr "用法:\n"
 
-#: pg_waldump.c:723
+#: pg_waldump.c:757
 #, c-format
 msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
-msgstr "  %s [选项]... [STARTSEG [ENDSEG]]\n"
+msgstr "  %s [选项]... [起始段 [结束段]]\n"
 
-#: pg_waldump.c:724
+#: pg_waldump.c:758
 #, c-format
 msgid ""
 "\n"
@@ -107,201 +154,482 @@ msgstr ""
 "\n"
 "选项:\n"
 
-#: pg_waldump.c:725
+#: pg_waldump.c:759
 #, c-format
-msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
-msgstr "  -b, --bkp-details      输出有关备份块的详细信息\n"
+msgid ""
+"  -b, --bkp-details      output detailed information about backup blocks\n"
+msgstr "  -b, --bkp-details      输出有关备份块的详情\n"
 
-#: pg_waldump.c:726
+#: pg_waldump.c:760
+#, c-format
+msgid ""
+"  -B, --block=N          with --relation, only show records that modify "
+"block N\n"
+msgstr "  -B, --block=N          配合 --relation，仅显示修改块 N 的记录\n"
+
+#: pg_waldump.c:761
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
-msgstr "  -e, --end=RECPTR       在指定的WAL位置停止读取\n"
+msgstr "  -e, --end=RECPTR       在 WAL 位置 RECPTR 停止读取\n"
 
-#: pg_waldump.c:727
+#: pg_waldump.c:762
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
-msgstr "  -f, --follow           在到达可用WAL的末尾之后，继续重试\n"
+msgstr "  -f, --follow           在到达可用 WAL 的末尾之后，继续重试\n"
 
-#: pg_waldump.c:728
+#: pg_waldump.c:763
+#, c-format
+msgid ""
+"  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
+"                         valid names are main, fsm, vm, init\n"
+msgstr ""
+"  -F, --fork=FORK        仅显示修改文件分支 FORK 中块的记录；\n"
+"                         有效名称为 main, fsm, vm, init\n"
+
+#: pg_waldump.c:765
 #, c-format
 msgid "  -n, --limit=N          number of records to display\n"
 msgstr "  -n, --limit=N          要显示的记录数\n"
 
-#: pg_waldump.c:729
+#: pg_waldump.c:766
 #, c-format
 msgid ""
-"  -p, --path=PATH        directory in which to find log segment files or a\n"
+"  -p, --path=PATH        directory in which to find WAL segment files or a\n"
 "                         directory with a ./pg_wal that contains such files\n"
-"                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"
+"                         (default: current directory, ./pg_wal, $PGDATA/"
+"pg_wal)\n"
 msgstr ""
-"  -p, --path=PATH        在其中查找日志段文件的目录\n"
-"                         或包含此类文件的./pg_wal目录\n"
-"                         (默认值: 当前的目录, ./pg_wal, $PGDATA/pg_wal)\n"
+"  -p, --path=PATH        用于查找 WAL 段文件的目录，或者\n"
+"                         包含 ./pg_wal 子目录且该子目录含有这些文件的目录\n"
+"                         （默认: 当前目录, ./pg_wal, $PGDATA/pg_wal）\n"
 
-#: pg_waldump.c:732
+#: pg_waldump.c:769
 #, c-format
 msgid "  -q, --quiet            do not print any output, except for errors\n"
 msgstr "  -q, --quiet            不打印任何输出，错误除外\n"
 
-#: pg_waldump.c:733
+#: pg_waldump.c:770
 #, c-format
 msgid ""
-"  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
-"                         use --rmgr=list to list valid resource manager names\n"
+"  -r, --rmgr=RMGR        only show records generated by resource manager "
+"RMGR;\n"
+"                         use --rmgr=list to list valid resource manager "
+"names\n"
 msgstr ""
-"  -r, --rmgr=RMGR        只显示由RMGR资源管理器生成的记录\n"
-"                         使用--rmgr=list列出有效的资源管理器名称\n"
+"  -r, --rmgr=RMGR        仅显示由 RMGR 资源管理器生成的记录；\n"
+"                         使用 --rmgr=list 列出有效的资源管理器名称\n"
 
-#: pg_waldump.c:735
+#: pg_waldump.c:772
+#, c-format
+msgid ""
+"  -R, --relation=T/D/R   only show records that modify blocks in relation T/"
+"D/R\n"
+msgstr "  -R, --relation=T/D/R   仅显示修改关系 T/D/R 中块的记录\n"
+
+#: pg_waldump.c:773
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
-msgstr "  -s, --start=RECPTR     在WAL中位于RECPTR处开始阅读\n"
+msgstr "  -s, --start=RECPTR     从 WAL 位置 RECPTR 开始读取\n"
 
-#: pg_waldump.c:736
+#: pg_waldump.c:774
 #, c-format
 msgid ""
-"  -t, --timeline=TLI     timeline from which to read log records\n"
+"  -t, --timeline=TLI     timeline from which to read WAL records\n"
 "                         (default: 1 or the value used in STARTSEG)\n"
 msgstr ""
-"  -t, --timeline=TLI     要从哪个时间线读取日志记录\n"
-"                         (默认值：1或者是使用STARTSEG中的值)\n"
+"  -t, --timeline=TLI     要读取 WAL 记录的时间线\n"
+"                         （默认: 1 或 STARTSEG 中使用的值）\n"
 
-#: pg_waldump.c:738
+#: pg_waldump.c:776
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
-msgstr "  -V, --version          输出版本信息, 然后退出\n"
+msgstr "  -V, --version          输出版本信息，然后退出\n"
 
-#: pg_waldump.c:739
+#: pg_waldump.c:777
+#, c-format
+msgid "  -w, --fullpage         only show records with a full page write\n"
+msgstr "  -w, --fullpage         仅显示包含整页写入的记录\n"
+
+#: pg_waldump.c:778
 #, c-format
 msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
-msgstr "  -x, --xid=XID          只显示用给定事务ID标记的记录\n"
+msgstr "  -x, --xid=XID          仅显示事务 ID 为 XID 的记录\n"
 
-#: pg_waldump.c:740
+#: pg_waldump.c:779
 #, c-format
 msgid ""
 "  -z, --stats[=record]   show statistics instead of records\n"
 "                         (optionally, show per-record statistics)\n"
 msgstr ""
 "  -z, --stats[=record]   显示统计信息而不是记录\n"
-"                         (或者，显示每个记录的统计信息)\n"
+"                         （可选: 按记录类型显示统计信息）\n"
 
-#: pg_waldump.c:742
+#: pg_waldump.c:781
+#, c-format
+msgid "  --save-fullpage=DIR    save full page images to DIR\n"
+msgstr "  --save-fullpage=DIR    将整页镜像保存到 DIR\n"
+
+#: pg_waldump.c:782
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help             显示此帮助, 然后退出\n"
+msgstr "  -?, --help             显示此帮助，然后退出\n"
 
-#: pg_waldump.c:743
+#: pg_waldump.c:783
 #, c-format
 msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
 "\n"
-"臭虫报告至 <%s>.\n"
+"请向 <%s> 报告缺陷。\n"
 
-#: pg_waldump.c:744
+#: pg_waldump.c:784
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 主页: <%s>\n"
 
-#: pg_waldump.c:821
+#: pg_waldump.c:880
 #, c-format
 msgid "no arguments specified"
 msgstr "未指定参数"
 
-#: pg_waldump.c:836
+#: pg_waldump.c:896
 #, c-format
-msgid "could not parse end WAL location \"%s\""
-msgstr "无法解析WAL结束位置\"%s\""
+msgid "invalid block number: \"%s\""
+msgstr "无效的块号: \"%s\""
 
-#: pg_waldump.c:848
+#: pg_waldump.c:905 pg_waldump.c:1003
 #, c-format
-msgid "could not parse limit \"%s\""
-msgstr "无法解析限制\"%s\""
+msgid "invalid WAL location: \"%s\""
+msgstr "无效的 WAL 位置: \"%s\""
 
-#: pg_waldump.c:879
+#: pg_waldump.c:918
+#, c-format
+msgid "invalid fork name: \"%s\""
+msgstr "无效的文件分支名称: \"%s\""
+
+#: pg_waldump.c:926 pg_waldump.c:1029
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "选项 %2$s 的值 \"%1$s\" 无效"
+
+#: pg_waldump.c:957
+#, c-format
+msgid "custom resource manager \"%s\" does not exist"
+msgstr "自定义资源管理器 \"%s\" 不存在"
+
+#: pg_waldump.c:978
 #, c-format
 msgid "resource manager \"%s\" does not exist"
-msgstr "资源管理器\"%s\"不存在"
+msgstr "资源管理器 \"%s\" 不存在"
 
-#: pg_waldump.c:888
+#: pg_waldump.c:993
 #, c-format
-msgid "could not parse start WAL location \"%s\""
-msgstr "无法解析WAL起始位置\"%s\""
+msgid "invalid relation specification: \"%s\""
+msgstr "无效的关系标识: \"%s\""
 
-#: pg_waldump.c:898
+#: pg_waldump.c:994
 #, c-format
-msgid "could not parse timeline \"%s\""
-msgstr "无法解析时间线\"%s\""
+msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
+msgstr "预期为 \"表空间 OID/数据库 OID/关系文件节点\"。"
 
-#: pg_waldump.c:905
+#: pg_waldump.c:1036
 #, c-format
-msgid "could not parse \"%s\" as a transaction ID"
-msgstr "无法将\"%s\"解析为事务ID"
+msgid "%s must be in range %u..%u"
+msgstr "%s 必须位于 %u..%u 的范围内"
 
-#: pg_waldump.c:920
+#: pg_waldump.c:1051
 #, c-format
-msgid "unrecognized argument to --stats: %s"
-msgstr "无法识别的参数--stats: %s"
+msgid "invalid transaction ID specification: \"%s\""
+msgstr "无效的事务 ID: \"%s\""
 
-#: pg_waldump.c:933
+#: pg_waldump.c:1066
+#, c-format
+msgid "unrecognized value for option %s: %s"
+msgstr "选项 %s 的值无法识别: %s"
+
+#: pg_waldump.c:1083
+#, c-format
+msgid "option %s requires option %s to be specified"
+msgstr "选项 %s 需要同时指定选项 %s"
+
+#: pg_waldump.c:1090
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "命令行参数太多 (第一个是 \"%s\")"
+msgstr "命令行参数过多（第一个多余参数是 \"%s\"）"
 
-#: pg_waldump.c:943 pg_waldump.c:963
+#: pg_waldump.c:1100 pg_waldump.c:1123
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "无法打开目录 \"%s\": %m"
 
-#: pg_waldump.c:969 pg_waldump.c:1000
+#: pg_waldump.c:1129 pg_waldump.c:1159
 #, c-format
 msgid "could not open file \"%s\""
-msgstr "could not open file\"%s\""
+msgstr "无法打开文件 \"%s\""
 
-#: pg_waldump.c:979
+#: pg_waldump.c:1139
 #, c-format
 msgid "start WAL location %X/%X is not inside file \"%s\""
-msgstr "WAL开始位置%X/%X不在文件\"%s\"中"
+msgstr "WAL 起始位置 %X/%X 不在文件 \"%s\" 中"
 
-#: pg_waldump.c:1007
+#: pg_waldump.c:1166
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
-msgstr "ENDSEG %s在STARTSEG %s之前"
+msgstr "ENDSEG %s 在 STARTSEG %s 之前"
 
-#: pg_waldump.c:1022
+#: pg_waldump.c:1181
 #, c-format
 msgid "end WAL location %X/%X is not inside file \"%s\""
-msgstr "WAL结束位置%X/%X不在文件\"%s\"中"
+msgstr "WAL 结束位置 %X/%X 不在文件 \"%s\" 中"
 
-#: pg_waldump.c:1035
+#: pg_waldump.c:1193
 #, c-format
 msgid "no start WAL location given"
-msgstr "未给出WAL起始位置"
+msgstr "未给出 WAL 起始位置"
 
-#: pg_waldump.c:1049
+#: pg_waldump.c:1207
 #, c-format
-msgid "out of memory"
-msgstr "内存用尽"
+msgid "out of memory while allocating a WAL reading processor"
+msgstr "分配 WAL 读取器时内存不足"
 
-#: pg_waldump.c:1055
+#: pg_waldump.c:1213
 #, c-format
 msgid "could not find a valid record after %X/%X"
-msgstr "在%X/%X之后找不到有效记录"
+msgstr "无法在 %X/%X 之后找到有效记录"
 
-#: pg_waldump.c:1066
+#: pg_waldump.c:1223
 #, c-format
 msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
 msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
-msgstr[0] "第一条记录在%X/%X之后，位于%X/%X，跳过了%u个字节\n"
-msgstr[1] "第一条记录在%X/%X之后，位于%X/%X，跳过了%u个字节\n"
+msgstr[0] "第一条记录在 %X/%X 之后，位于 %X/%X，正在跳过 %u 字节\n"
 
-#: pg_waldump.c:1117
+#: pg_waldump.c:1308
 #, c-format
 msgid "error in WAL record at %X/%X: %s"
-msgstr "在WAL记录中的%X/%X处错误为: %s"
+msgstr "%X/%X 处的 WAL 记录存在错误: %s"
 
-#: pg_waldump.c:1127
+#: pg_waldump.c:1317
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "运行 \"%s --help\" 获取更多信息。"
+
+#: xlogreader.c:621
+#, c-format
+msgid "invalid record offset at %X/%X: expected at least %u, got %u"
+msgstr "%X/%X 处的记录偏移量无效: 至少应为 %u，实际为 %u"
+
+#: xlogreader.c:630
+#, c-format
+msgid "contrecord is requested by %X/%X"
+msgstr "请求的 %X/%X 处是续接记录"
+
+#: xlogreader.c:671 xlogreader.c:1146
+#, c-format
+msgid "invalid record length at %X/%X: expected at least %u, got %u"
+msgstr "%X/%X 处的记录长度无效: 至少应为 %u，实际为 %u"
+
+#: xlogreader.c:761
+#, c-format
+msgid "there is no contrecord flag at %X/%X"
+msgstr "%X/%X 处没有续接记录标志"
+
+#: xlogreader.c:774
+#, c-format
+msgid "invalid contrecord length %u (expected %lld) at %X/%X"
+msgstr "%3$X/%4$X 处的续接记录长度 %1$u 无效（预期为 %2$lld）"
+
+#: xlogreader.c:1154
+#, c-format
+msgid "invalid resource manager ID %u at %X/%X"
+msgstr "%2$X/%3$X 处的资源管理器 ID %1$u 无效"
+
+#: xlogreader.c:1167 xlogreader.c:1183
+#, c-format
+msgid "record with incorrect prev-link %X/%X at %X/%X"
+msgstr "%3$X/%4$X 处的记录具有不正确的前一记录链接 %1$X/%2$X"
+
+#: xlogreader.c:1221
+#, c-format
+msgid "incorrect resource manager data checksum in record at %X/%X"
+msgstr "%X/%X 处记录的资源管理器数据校验和不正确"
+
+#: xlogreader.c:1255
+#, c-format
+msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
+msgstr "WAL 段 %2$s 中的魔数 %1$04X 无效, LSN %3$X/%4$X, 偏移量 %5$u"
+
+#: xlogreader.c:1270 xlogreader.c:1312
+#, c-format
+msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
+msgstr "WAL 段 %2$s 中的信息位 %1$04X 无效, LSN %3$X/%4$X, 偏移量 %5$u"
+
+#: xlogreader.c:1286
+#, c-format
+msgid ""
+"WAL file is from different database system: WAL file database system "
+"identifier is %llu, pg_control database system identifier is %llu"
+msgstr ""
+"WAL 文件来自不同的数据库系统: WAL 文件中的数据库系统标识符为 %llu，"
+"pg_control 中的数据库系统标识符为 %llu"
+
+#: xlogreader.c:1294
+#, c-format
+msgid ""
+"WAL file is from different database system: incorrect segment size in page "
+"header"
+msgstr "WAL 文件来自不同的数据库系统: 页头部中有不正确的段大小"
+
+#: xlogreader.c:1300
+#, c-format
+msgid ""
+"WAL file is from different database system: incorrect XLOG_BLCKSZ in page "
+"header"
+msgstr "WAL 文件来自不同的数据库系统: 页头部中有不正确的 XLOG_BLCKSZ"
+
+#: xlogreader.c:1332
+#, c-format
+msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
+msgstr ""
+"WAL 段 %3$s 中出现意外的 pageaddr %1$X/%2$X, LSN %4$X/%5$X, 偏移量 %6$u"
+
+#: xlogreader.c:1358
+#, c-format
+msgid ""
+"out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, "
+"offset %u"
+msgstr ""
+"WAL 段 %3$s 中的时间线 ID %1$u 顺序错误（前一个为 %2$u）, LSN %4$X/%5$X, 偏移"
+"量 %6$u"
+
+#: xlogreader.c:1764
+#, c-format
+msgid "out-of-order block_id %u at %X/%X"
+msgstr "%2$X/%3$X 处的 block_id %1$u 顺序错误"
+
+#: xlogreader.c:1788
+#, c-format
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
+msgstr "%X/%X 处已设置 BKPBLOCK_HAS_DATA，但未包含数据"
+
+#: xlogreader.c:1795
+#, c-format
+msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
+msgstr "未设置 BKPBLOCK_HAS_DATA，但 %2$X/%3$X 处的数据长度为 %1$u"
+
+#: xlogreader.c:1831
+#, c-format
+msgid ""
+"BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at "
+"%X/%X"
+msgstr ""
+"已设置 BKPIMAGE_HAS_HOLE，但 %4$X/%5$X 处的空洞偏移量为 %1$u，长度为 %2$u，块"
+"镜像长度为 %3$u"
+
+#: xlogreader.c:1847
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
+msgstr ""
+"未设置 BKPIMAGE_HAS_HOLE，但 %3$X/%4$X 处的空洞偏移量为 %1$u，长度为 %2$u"
+
+#: xlogreader.c:1861
+#, c-format
+msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
+msgstr "已设置 BKPIMAGE_COMPRESSED，但 %2$X/%3$X 处的块镜像长度为 %1$u"
+
+#: xlogreader.c:1876
+#, c-format
+msgid ""
+"neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image "
+"length is %u at %X/%X"
+msgstr ""
+"既未设置 BKPIMAGE_HAS_HOLE，也未设置 BKPIMAGE_COMPRESSED，但 %2$X/%3$X 处的块"
+"镜像长度为 %1$u"
+
+#: xlogreader.c:1892
+#, c-format
+msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
+msgstr "%X/%X 处已设置 BKPBLOCK_SAME_REL，但没有先前的关系"
+
+#: xlogreader.c:1904
+#, c-format
+msgid "invalid block_id %u at %X/%X"
+msgstr "%2$X/%3$X 处的 block_id %1$u 无效"
+
+#: xlogreader.c:1971
+#, c-format
+msgid "record with invalid length at %X/%X"
+msgstr "%X/%X 处的记录长度无效"
+
+#: xlogreader.c:1997
+#, c-format
+msgid "could not locate backup block with ID %d in WAL record"
+msgstr "无法在 WAL 记录中找到 ID 为 %d 的备份块"
+
+#: xlogreader.c:2081
+#, c-format
+msgid "could not restore image at %X/%X with invalid block %d specified"
+msgstr "无法恢复 %X/%X 处的镜像，因为指定的块 %d 无效"
+
+#: xlogreader.c:2088
+#, c-format
+msgid "could not restore image at %X/%X with invalid state, block %d"
+msgstr "无法恢复 %X/%X 处的镜像，状态无效, 块 %d"
+
+#: xlogreader.c:2115 xlogreader.c:2132
+#, c-format
+msgid ""
+"could not restore image at %X/%X compressed with %s not supported by build, "
+"block %d"
+msgstr "无法恢复 %X/%X 处使用 %s 压缩的镜像，此构建版本不支持该压缩方式, 块 %d"
+
+#: xlogreader.c:2141
+#, c-format
+msgid ""
+"could not restore image at %X/%X compressed with unknown method, block %d"
+msgstr "无法恢复 %X/%X 处使用未知方法压缩的镜像, 块 %d"
+
+#: xlogreader.c:2149
+#, c-format
+msgid "could not decompress image at %X/%X, block %d"
+msgstr "无法解压缩 %X/%X 处的镜像, 块 %d"
+
+#, c-format
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+
+#, c-format
+#~ msgid "could not parse \"%s\" as a transaction ID"
+#~ msgstr "无法将\"%s\"解析为事务ID"
+
+#, c-format
+#~ msgid "could not parse end WAL location \"%s\""
+#~ msgstr "无法解析WAL结束位置\"%s\""
+
+#, c-format
+#~ msgid "could not parse limit \"%s\""
+#~ msgstr "无法解析限制\"%s\""
+
+#, c-format
+#~ msgid "could not parse start WAL location \"%s\""
+#~ msgstr "无法解析WAL起始位置\"%s\""
+
+#, c-format
+#~ msgid "could not parse timeline \"%s\""
+#~ msgstr "无法解析时间线\"%s\""
+
+#, c-format
+#~ msgid "could not read file \"%s\": read %d of %zu"
+#~ msgstr "无法读取文件\"%1$s\"：读取了%3$zu中的%2$d"
+
+#, c-format
+#~ msgid "fatal: "
+#~ msgstr "致命的: "
+
+#, c-format
+#~ msgid "out of memory"
+#~ msgstr "内存不足"
+
+#, c-format
+#~ msgid "unrecognized argument to --stats: %s"
+#~ msgstr "无法识别的参数--stats: %s"

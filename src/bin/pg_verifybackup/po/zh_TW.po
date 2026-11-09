@@ -1,21 +1,23 @@
 # Traditional Chinese message translation file for pg_verifybackup
-# Copyright (C) 2023 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_verifybackup (PostgreSQL) package.
+# Copyright (C) 2026 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
 # Zhenbang Wei <znbang@gmail.com>, 2023.
+# Ruohang Feng (vonng@pigsty) <rh@vonng.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-11 20:47+0000\n"
-"PO-Revision-Date: 2023-11-06 08:50+0800\n"
-"Last-Translator: Zhenbang Wei <znbang@gmail.com>\n"
-"Language-Team: \n"
+"POT-Creation-Date: 2026-10-07 07:13+0000\n"
+"PO-Revision-Date: 2026-10-08 16:06+0800\n"
+"Last-Translator: Ruohang Feng <rh@vonng.com>\n"
+"Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.1\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 # libpq/be-secure.c:294 libpq/be-secure.c:387
 #: ../../../src/common/logging.c:276
@@ -31,7 +33,7 @@ msgstr "警告: "
 #: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
-msgstr "詳細內容: "
+msgstr "詳情: "
 
 #: ../../../src/common/logging.c:301
 #, c-format
@@ -58,99 +60,109 @@ msgstr "提示: "
 # utils/init/miscinit.c:244 utils/misc/guc.c:1898 utils/misc/guc.c:1911
 # utils/misc/guc.c:1924 utils/mmgr/aset.c:337 utils/mmgr/aset.c:503
 # utils/mmgr/aset.c:700 utils/mmgr/aset.c:893 utils/mmgr/portalmem.c:75
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
-msgstr "記憶體用盡\n"
+msgstr "記憶體不足\n"
 
 # common.c:78
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
-msgstr "無法複製 null 指標(內部錯誤)\n"
+msgstr "不能複製空指標(內部錯誤)\n"
 
-#: ../../common/jsonapi.c:1144
+#: ../../common/fe_memutils.c:209
 #, c-format
-msgid "Escape sequence \"\\%s\" is invalid."
-msgstr "無效的跳脫序列 \"\\%s\"。"
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu + %zu\n"
+
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr "無效的記憶體配置請求大小 %zu * %zu\n"
 
 #: ../../common/jsonapi.c:1147
 #, c-format
-msgid "Character with value 0x%02x must be escaped."
-msgstr "必須跳脫值為 0x%02x 的字元。"
+msgid "Escape sequence \"\\%s\" is invalid."
+msgstr "逸出序列 \"\\%s\" 無效。"
 
 #: ../../common/jsonapi.c:1150
 #, c-format
-msgid "Expected end of input, but found \"%s\"."
-msgstr "預期輸入結束，但找到 \"%s\"。"
+msgid "Character with value 0x%02x must be escaped."
+msgstr "必須對值為 0x%02x 的字元進行逸出處理。"
 
 #: ../../common/jsonapi.c:1153
 #, c-format
-msgid "Expected array element or \"]\", but found \"%s\"."
-msgstr "預期是陣列元素或 \"]\"，但找到 \"%s\"。"
+msgid "Expected end of input, but found \"%s\"."
+msgstr "預期為輸入結束，實際為 \"%s\"。"
 
 #: ../../common/jsonapi.c:1156
 #, c-format
-msgid "Expected \",\" or \"]\", but found \"%s\"."
-msgstr "預期是 \",\" 或 \"]\"，但找到 \"%s\"。"
+msgid "Expected array element or \"]\", but found \"%s\"."
+msgstr "預期為陣列元素或 \"]\"，實際為 \"%s\"。"
 
 #: ../../common/jsonapi.c:1159
 #, c-format
-msgid "Expected \":\", but found \"%s\"."
-msgstr "預期是 \":\"，但找到 \"%s\""
+msgid "Expected \",\" or \"]\", but found \"%s\"."
+msgstr "預期為 \",\" 或 \"]\"，實際為 \"%s\"。"
 
 #: ../../common/jsonapi.c:1162
 #, c-format
-msgid "Expected JSON value, but found \"%s\"."
-msgstr "預期是 JSON 內容，但找到 \"%s\"。"
+msgid "Expected \":\", but found \"%s\"."
+msgstr "預期為 \":\"，實際為 \"%s\"。"
 
 #: ../../common/jsonapi.c:1165
+#, c-format
+msgid "Expected JSON value, but found \"%s\"."
+msgstr "預期為 JSON 值，實際為 \"%s\"。"
+
+#: ../../common/jsonapi.c:1168
 msgid "The input string ended unexpectedly."
 msgstr "輸入字串非預期地結束。"
 
-#: ../../common/jsonapi.c:1167
-#, c-format
-msgid "Expected string or \"}\", but found \"%s\"."
-msgstr "預期是字串或 \"}\"，但找到 \"%s\"。"
-
 #: ../../common/jsonapi.c:1170
 #, c-format
-msgid "Expected \",\" or \"}\", but found \"%s\"."
-msgstr "預期是 \",\" 或 \"}\"，但找到 \"%s\"。"
+msgid "Expected string or \"}\", but found \"%s\"."
+msgstr "預期為字串或 \"}\"，實際為 \"%s\"。"
 
 #: ../../common/jsonapi.c:1173
 #, c-format
-msgid "Expected string, but found \"%s\"."
-msgstr "預期是字串，但找到 \"%s\"。"
+msgid "Expected \",\" or \"}\", but found \"%s\"."
+msgstr "預期為 \",\" 或 \"}\"，實際為 \"%s\"。"
 
 #: ../../common/jsonapi.c:1176
 #, c-format
-msgid "Token \"%s\" is invalid."
-msgstr "Token \"%s\" 是無效的。"
+msgid "Expected string, but found \"%s\"."
+msgstr "預期為字串，實際為 \"%s\"。"
 
 #: ../../common/jsonapi.c:1179
-msgid "\\u0000 cannot be converted to text."
-msgstr "\\u0000 無法轉成文字。"
+#, c-format
+msgid "Token \"%s\" is invalid."
+msgstr "符記 \"%s\" 無效。"
 
-#: ../../common/jsonapi.c:1181
+#: ../../common/jsonapi.c:1182
+msgid "\\u0000 cannot be converted to text."
+msgstr "\\u0000 不能轉成文字。"
+
+#: ../../common/jsonapi.c:1184
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "\"\\u\" 必須後接四個十六進位數字。"
 
-#: ../../common/jsonapi.c:1184
-msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
-msgstr "當編碼不是 UTF8 時，無法使用 Unicode 跳脫值來表示大於 007F 的編碼位置。"
-
 #: ../../common/jsonapi.c:1187
-#, c-format
-msgid "Unicode escape value could not be translated to the server's encoding %s."
-msgstr "Unicode 跳脫值不能被轉成伺服器的編碼 %s。"
+msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
+msgstr "當編碼不是 UTF8 時，不能使用 Unicode 逸出值來表示大於 007F 的編碼位置。"
 
 #: ../../common/jsonapi.c:1190
+#, c-format
+msgid "Unicode escape value could not be translated to the server's encoding %s."
+msgstr "Unicode 逸出值無法轉成伺服器的編碼 %s。"
+
+#: ../../common/jsonapi.c:1193
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicode 高位代理不能跟著高位代理。"
 
-#: ../../common/jsonapi.c:1192
+#: ../../common/jsonapi.c:1195
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicode 低位代理必須跟著高位代理。"
 
@@ -180,7 +192,7 @@ msgstr "非預期的陣列結束"
 
 #: parse_manifest.c:307
 msgid "expected version indicator"
-msgstr "預期的版本指示器"
+msgstr "預期為版本標示"
 
 #: parse_manifest.c:336
 msgid "unrecognized top-level field"
@@ -233,7 +245,7 @@ msgstr "檔案大小不是整數"
 #: parse_manifest.c:522
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
-msgstr "無法識別的檢查碼演算法: \" %s\""
+msgstr "無法識別的檢查碼演算法: \"%s\""
 
 #: parse_manifest.c:541
 #, c-format
@@ -270,7 +282,7 @@ msgstr "預期至少有 2 行"
 
 #: parse_manifest.c:664
 msgid "last line not newline-terminated"
-msgstr "最後一行未以換行符號結束"
+msgstr "最後一行未以換行字元結束"
 
 # commands/sequence.c:798 executor/execGrouping.c:328
 # executor/execGrouping.c:388 executor/nodeIndexscan.c:1051 lib/dllist.c:43
@@ -310,7 +322,7 @@ msgstr "無法更新清單的檢查碼"
 #: parse_manifest.c:676
 #, c-format
 msgid "could not finalize checksum of manifest"
-msgstr "無法完成清單的檢查碼"
+msgstr "無法完成清單的檢查碼計算"
 
 #: parse_manifest.c:680
 #, c-format
@@ -346,17 +358,17 @@ msgstr "未指定備份目錄"
 #: pg_verifybackup.c:291
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "命令列參數過多(第一個是 \"%s\")"
+msgstr "命令列參數過多(第一個多餘參數是 \"%s\")"
 
 #: pg_verifybackup.c:299
 #, c-format
 msgid "cannot specify both %s and %s"
-msgstr "無法同時指定 %s 和 %s"
+msgstr "不能同時指定 %s 和 %s"
 
 #: pg_verifybackup.c:319
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
-msgstr "程式 \"%s\" 為 %s 所需，但未在同一目錄中找到 \"%s\""
+msgstr "%2$s 需要程式 \"%1$s\"，但在與 \"%3$s\" 相同的目錄中找不到該程式"
 
 #: pg_verifybackup.c:322
 #, c-format
@@ -397,7 +409,7 @@ msgstr "無法讀取檔案 \"%s\": %m"
 #: pg_verifybackup.c:431
 #, c-format
 msgid "could not read file \"%s\": read %d of %lld"
-msgstr "無法讀取檔案 \"%s\": 已讀取 %d / %lld"
+msgstr "無法讀取檔案 \"%1$s\": 應讀取 %3$lld，實際讀取 %2$d"
 
 #: pg_verifybackup.c:491
 #, c-format
@@ -428,7 +440,7 @@ msgstr "無法取得檔案或目錄 \"%s\" 的狀態: %m"
 #: pg_verifybackup.c:636
 #, c-format
 msgid "\"%s\" is not a file or directory"
-msgstr "%s 不是檔案也不是目錄"
+msgstr "\"%s\" 既不是檔案也不是目錄"
 
 #: pg_verifybackup.c:646
 #, c-format
@@ -438,7 +450,7 @@ msgstr "磁碟有 \"%s\" 但不在清單上"
 #: pg_verifybackup.c:658
 #, c-format
 msgid "\"%s\" has size %lld on disk but size %zu in the manifest"
-msgstr "\"%s\" 在磁碟的大小為 %lld 但在清單上的大小為 %zu"
+msgstr "\"%s\" 在磁碟上的大小為 %lld，但在清單中的大小為 %zu"
 
 #: pg_verifybackup.c:689
 #, c-format
@@ -460,7 +472,7 @@ msgstr "無法更新檔案 \"%s\" 的檢查碼"
 #: pg_verifybackup.c:785
 #, c-format
 msgid "could not close file \"%s\": %m"
-msgstr "無法關閉檔案\"%s\": %m"
+msgstr "無法關閉檔案 \"%s\": %m"
 
 #: pg_verifybackup.c:804
 #, c-format
@@ -470,7 +482,7 @@ msgstr "檔案 \"%s\" 應該包含 %zu 位元組，但實際讀取 %zu 位元組
 #: pg_verifybackup.c:814
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
-msgstr "無法完成檔案 \"%s\" 的檢查碼"
+msgstr "無法完成檔案 \"%s\" 的檢查碼計算"
 
 #: pg_verifybackup.c:822
 #, c-format
@@ -485,7 +497,7 @@ msgstr "檔案 \"%s\" 的檢查碼不一致"
 #: pg_verifybackup.c:851
 #, c-format
 msgid "WAL parsing failed for timeline %u"
-msgstr "WAL 解析失敗，時間線 %u"
+msgstr "WAL 解析失敗, 時間線 %u"
 
 #: pg_verifybackup.c:965
 #, c-format
@@ -507,16 +519,13 @@ msgid ""
 "Usage:\n"
 "  %s [OPTION]... BACKUPDIR\n"
 "\n"
-msgstr ""
-"用法:\n"
-"  %s [OPTION]... BACKUPDIR\n"
-"\n"
+msgstr "用法:\n  %s [選項]... 備份目錄\n\n"
 
 # postmaster/postmaster.c:1017 tcop/postgres.c:2115
 #: pg_verifybackup.c:984
 #, c-format
 msgid "Options:\n"
-msgstr "選項: \n"
+msgstr "選項:\n"
 
 #: pg_verifybackup.c:985
 #, c-format
@@ -556,7 +565,7 @@ msgstr "  -s, --skip-checksums        跳過檢查碼驗證\n"
 #: pg_verifybackup.c:992
 #, c-format
 msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
-msgstr "  -w, --wal-directory=PATH    用指定的路徑存放 WAL 檔\n"
+msgstr "  -w, --wal-directory=PATH    使用指定路徑尋找 WAL 檔\n"
 
 #: pg_verifybackup.c:993
 #, c-format
@@ -580,4 +589,5 @@ msgstr ""
 #: pg_verifybackup.c:996
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr "%s 網站: <%s>\n"
+msgstr "%s 首頁: <%s>\n"
+
