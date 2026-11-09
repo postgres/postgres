@@ -73,6 +73,7 @@
 #include "utils/formatting.h"
 #include "utils/json.h"
 #include "utils/jsonpath.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
 
@@ -3339,12 +3340,26 @@ JsonItemFromDatum(Datum val, Oid typid, int32 typmod, JsonbValue *res)
 			break;
 		case TEXTOID:
 		case VARCHAROID:
+		case BPCHAROID:
 			{
+				/*
+				 * Note that bpchar values keep their padding, as in
+				 * to_jsonb()
+				 */
 				text	   *txt = DatumGetTextPP(val);
 
 				res->type = jbvString;
 				res->val.string.val = VARDATA_ANY(txt);
 				res->val.string.len = VARSIZE_ANY_EXHDR(txt);
+				break;
+			}
+		case NAMEOID:
+			{
+				char	   *str = NameStr(*DatumGetName(val));
+
+				res->type = jbvString;
+				res->val.string.val = str;
+				res->val.string.len = strlen(str);
 				break;
 			}
 		case DATEOID:
@@ -3388,10 +3403,38 @@ JsonItemFromDatum(Datum val, Oid typid, int32 typmod, JsonbValue *res)
 				break;
 			}
 		default:
-			ereport(ERROR,
-					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("could not convert value of type %s to jsonpath",
-						   format_type_be(typid)));
+			{
+				char		typcategory;
+				bool		typispreferred;
+
+				/*
+				 * transformJsonValueExpr() passes values of any type of the
+				 * string category as they are, so handle those not covered
+				 * above (such as extension types) using their output
+				 * function, as to_jsonb() does.
+				 */
+				get_type_category_preferred(typid, &typcategory,
+											&typispreferred);
+				if (typcategory == TYPCATEGORY_STRING)
+				{
+					Oid			typoutput;
+					bool		typisvarlena;
+					char	   *str;
+
+					getTypeOutputInfo(typid, &typoutput, &typisvarlena);
+					str = OidOutputFunctionCall(typoutput, val);
+
+					res->type = jbvString;
+					res->val.string.val = str;
+					res->val.string.len = strlen(str);
+					break;
+				}
+
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("could not convert value of type %s to jsonpath",
+							   format_type_be(typid)));
+			}
 	}
 }
 
