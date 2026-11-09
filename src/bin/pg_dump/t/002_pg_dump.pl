@@ -1125,7 +1125,7 @@ my %tests = (
 		col1 int NOT NULL NO INHERIT,
 		col2 int);
 		CREATE TABLE dump_test.test_table_nonn_chld1 (
-		   CONSTRAINT nn NOT NULL col2 NO INHERIT)
+		   CONSTRAINT "n n" NOT NULL col2 NO INHERIT)
 		INHERITS (dump_test.test_table_nonn); ',
 		regexp => qr/^
 			\QCREATE TABLE dump_test.test_table_nonn (\E \n^\s+
@@ -1145,7 +1145,7 @@ my %tests = (
 	'CONSTRAINT NOT NULL / NO INHERIT (child1)' => {
 		regexp => qr/^
 			\QCREATE TABLE dump_test.test_table_nonn_chld1 (\E \n^\s+
-			\QCONSTRAINT nn NOT NULL col2 NO INHERIT\E
+			\QCONSTRAINT "n n" NOT NULL col2 NO INHERIT\E
 			/xm,
 		like => {
 			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
