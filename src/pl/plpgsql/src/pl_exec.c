@@ -5246,13 +5246,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					recfield->rectupledescid = erh->er_tupdesc_id;
 				}
 
-				/* We don't support assignments to system columns. */
-				if (recfield->finfo.fnumber <= 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot assign to system column \"%s\"",
-									recfield->fieldname)));
-
 				/* Cast the new value to the right type, if needed. */
 				value = exec_cast_value(estate,
 										value,
@@ -5262,7 +5255,41 @@ exec_assign_value(PLpgSQL_execstate *estate,
 										recfield->finfo.ftypeid,
 										recfield->finfo.ftypmod);
 
-				/* And assign it. */
+				/*
+				 * Edge case: the cast step can run user-defined code, which
+				 * could call the current plpgsql function recursively, and
+				 * potentially change the recfield datum underneath us.  If we
+				 * see the tupdesc ID change, repeat the lookup, and allow it
+				 * so long as the field datatype didn't change.
+				 */
+				if (unlikely(recfield->rectupledescid != erh->er_tupdesc_id))
+				{
+					ExpandedRecordFieldInfo save_finfo = recfield->finfo;
+
+					if (!expanded_record_lookup_field(erh,
+													  recfield->fieldname,
+													  &recfield->finfo))
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("record \"%s\" has no field \"%s\"",
+										rec->refname, recfield->fieldname)));
+					recfield->rectupledescid = erh->er_tupdesc_id;
+					if (save_finfo.ftypeid != recfield->finfo.ftypeid ||
+						save_finfo.ftypmod != recfield->finfo.ftypmod)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("record \"%s\" field \"%s\" changed type during assignment",
+										rec->refname, recfield->fieldname)));
+				}
+
+				/* We don't support assignments to system columns. */
+				if (recfield->finfo.fnumber <= 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot assign to system column \"%s\"",
+									recfield->fieldname)));
+
+				/* All OK, assign it. */
 				expanded_record_set_field(erh, recfield->finfo.fnumber,
 										  value, isNull, !estate->atomic);
 				break;
