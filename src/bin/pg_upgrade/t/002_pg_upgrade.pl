@@ -38,6 +38,24 @@ sub generate_db
 		"created database with ASCII characters from $from_char to $to_char");
 }
 
+sub generate_unsafe_foreign_connections
+{
+	my ($node, $dbname) = @_;
+
+	# XXX ALTER ... ENABLE stresses the PG17-era subscription upgrade with
+	# unsafe options, but it also fills the server logs with failure messages
+	# from the apply bgworkers.
+	$node->safe_psql(
+		$dbname, qq{
+		CREATE SUBSCRIPTION regress_upgrade_sub_unsafe
+			   CONNECTION 'dbname=regress_doesnotexist sslkeylogfile=./noexist/log'
+			   PUBLICATION foo
+			   WITH (connect = false);
+
+		ALTER SUBSCRIPTION regress_upgrade_sub_unsafe ENABLE;
+	});
+}
+
 # Filter the contents of a dump before its use in a content comparison for
 # upgrade testing. This returns the path to the filtered dump.
 sub filter_dump
@@ -294,6 +312,10 @@ else
 			"--outputdir=$outputdir"
 		],
 		'regression tests in old instance');
+
+	# CVE-2026-14661: push some unsafe options into subscriptions to ensure
+	# that upgrade doesn't fall over if they're encountered.
+	generate_unsafe_foreign_connections($oldnode, 'regression');
 }
 
 # Initialize a new node for the upgrade.

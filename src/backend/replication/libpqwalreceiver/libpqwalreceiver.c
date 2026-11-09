@@ -30,6 +30,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "pqexpbuffer.h"
+#include "replication/slotsync.h"
 #include "replication/walreceiver.h"
 #include "storage/latch.h"
 #include "utils/builtins.h"
@@ -139,11 +140,11 @@ _PG_init(void)
  *
  * If an error occurs, this function will normally return NULL and set *err
  * to a palloc'ed error message. However, if must_use_password is true and
- * the connection fails to use the password, this function will ereport(ERROR).
- * We do this because in that case the error includes a detail and a hint for
- * consistency with other parts of the system, and it's not worth adding the
- * machinery to pass all of those back to the caller just to cover this one
- * case.
+ * the connection fails to use the password, or if the connection string
+ * contains disallowed options, this function will ereport(ERROR). We do this
+ * because in that case the error includes a detail and a hint for consistency
+ * with other parts of the system, and it's not worth adding the machinery to
+ * pass all of those back to the caller just to cover this one case.
  */
 static WalReceiverConn *
 libpqrcv_connect(const char *conninfo, bool replication, bool logical,
@@ -154,6 +155,7 @@ libpqrcv_connect(const char *conninfo, bool replication, bool logical,
 	const char *vals[6];
 	int			i = 0;
 	char	   *options_val = NULL;
+	bool		allow_unsafe_opts = false;
 
 	/*
 	 * Re-validate connection string. The validation already happened at DDL
@@ -163,6 +165,33 @@ libpqrcv_connect(const char *conninfo, bool replication, bool logical,
 	 * PGPASSWORD.
 	 */
 	libpqrcv_check_conninfo(conninfo, must_use_password);
+
+	if (!must_use_password)
+	{
+		/*
+		 * CVE-2026-14661: Generally speaking, we want to protect any callers
+		 * of walrcv_connect() from connection options that could allow
+		 * elevation of privileges. But we also want to avoid restricting
+		 * primary_conninfo, which the DBA should have broad control over.
+		 *
+		 * For back branches, we detect that case in two ways: either the
+		 * conninfo pointer we were given is literally the primary_conninfo
+		 * GUC variable, or the WAL receiver is starting physical replication.
+		 *
+		 * This exception isn't granted if must_use_password is true, since we
+		 * don't know if unsafe options might allow that restriction to be
+		 * bypassed in other ways. (At time of writing, there are no callers
+		 * in core Postgres that use PrimaryConnInfo in combination with
+		 * must_use_password.)
+		 */
+		if (conninfo == PrimaryConnInfo ||
+			(AmWalReceiverProcess() && replication && !logical))
+			allow_unsafe_opts = true;
+	}
+
+	/* Final security check on the proxied connection options. */
+	if (!allow_unsafe_opts)
+		libpqsrv_check_proxy_conninfo(conninfo);
 
 	/*
 	 * We use the expand_dbname parameter to process the connection string (or
@@ -292,6 +321,10 @@ bad_connection:
  * an error. If must_use_password is true, the function raises an error
  * if no password is provided in the connection string. In any other case
  * it successfully completes.
+ *
+ * CVE-2026-14661: We don't check for unsafe options here; instead we defer to
+ * libpqrcv_connect() to keep dump/restore from failing. That's not the
+ * greatest UX, and it'd be good to improve this after the initial fix lands.
  */
 static void
 libpqrcv_check_conninfo(const char *conninfo, bool must_use_password)
