@@ -37,6 +37,7 @@
 #include "catalog/partition.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_attrdef.h"
+#include "catalog/pg_cast.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
@@ -46,6 +47,7 @@
 #include "catalog/pg_largeobject_metadata.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication_rel.h"
@@ -511,6 +513,8 @@ static void check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 											HTAB *visited);
 static void report_type_used_in_column(const char *relname, const char *attname,
 									   Relation origRelation, const char *origTypeName);
+static void report_type_used_in_expr(const ObjectAddress *obj, Relation origRelation,
+									 const char *origTypeName);
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 							bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode,
 							AlterTableUtilityContext *context);
@@ -7013,10 +7017,12 @@ ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
 /*
  * find_composite_type_dependencies
  *
- * Check to see if the type "typeOid" is being used as a column in some table
- * (possibly nested several levels deep in composite types, arrays, etc!).
- * Eventually, we'd like to propagate the check or rewrite operation
- * into such tables, but for now, just error out if we find any.
+ * Check to see if the type "typeOid" is being used in a way that prevents
+ * ALTER COLUMN / ALTER ATTRIBUTE on it.  For example, if it's used as a
+ * column in some table (possibly nested several levels deep in composite
+ * types, arrays, etc!), we must not allow it.  Eventually, we'd like to
+ * propagate the check or rewrite operation into such tables, but for now,
+ * just error out if we find any.
  *
  * Caller should provide either the associated relation of a rowtype, or a
  * type name (not both) for use in the error message, if any.
@@ -7025,9 +7031,6 @@ ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
  * another container type such as an array or range, or a domain over one of
  * these things.  The name of this function is therefore somewhat historical,
  * but it's not worth changing.
- *
- * We assume that functions and views depending on the type are not reasons
- * to reject the ALTER.  (How safe is this really?)
  */
 void
 find_composite_type_dependencies(Oid typeOid, Relation origRelation,
@@ -7139,8 +7142,36 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 	TupleDesc	tupleDesc;
 	Form_pg_attribute att;
 
+	/*
+	 * By default, a dependency on a type prevents ALTERing it.  But we make
+	 * many exceptions for cases that are safe:
+	 */
 	switch (classid)
 	{
+		case OperatorRelationId:
+
+			/*
+			 * Operators are OK.  The function implementing the operator will
+			 * have a dependency of its own and will be checked separately.
+			 */
+			break;
+
+		case CastRelationId:
+
+			/*
+			 * Casts are also OK.  If the cast uses a function, the function
+			 * will have a dependency of its own.
+			 */
+			break;
+
+		case ProcedureRelationId:
+			/* TODO: Accept for now, but next commits will tighten this */
+			break;
+
+		case ConstraintRelationId:
+			/* TODO: Accept for now, but next commits will tighten this */
+			break;
+
 		case TypeRelationId:
 
 			/*
@@ -7225,8 +7256,25 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 			relation_close(rel, AccessShareLock);
 			break;
 
+		case PublicationRelRelationId:
+
+			/*
+			 * pg_publication_rel.prqual contains an expression.  It should
+			 * not contain user-defined types, but CREATE PUBLICATION's
+			 * definition of a user-defined type is different from a pinned
+			 * object, so we might see these.
+			 */
+			report_type_used_in_expr(depobj, origRelation, origTypeName);
+			break;
+
+		case RewriteRelationId:
+		case AttrDefaultRelationId:
+		case TriggerRelationId:
+		case PolicyRelationId:
+		case StatisticExtRelationId:
 		default:
-			/* ignore dependees that aren't types or relations */
+			/* Forbid anything else */
+			report_type_used_in_expr(depobj, origRelation, origTypeName);
 			break;
 	}
 }
@@ -7265,6 +7313,42 @@ report_type_used_in_column(const char *relname, const char *attname,
 				 errmsg("cannot alter table \"%s\" because column \"%s.%s\" uses its row type",
 						RelationGetRelationName(origRelation),
 						relname, attname)));
+}
+
+/*
+ * report_type_used_in_expr
+ *
+ * Complain that the ALTER can't proceed because a stored expression holds a
+ * value of the type being altered.
+ */
+static void
+report_type_used_in_expr(const ObjectAddress *obj, Relation origRelation,
+						 const char *origTypeName)
+{
+	char	   *objdesc = getObjectDescription(obj, false);
+
+	if (origTypeName)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot alter type \"%s\" because %s uses it",
+						origTypeName, objdesc)));
+
+	if (origRelation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot alter type \"%s\" because %s uses it",
+						RelationGetRelationName(origRelation), objdesc)));
+
+	if (origRelation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot alter foreign table \"%s\" because %s uses its row type",
+						RelationGetRelationName(origRelation), objdesc)));
+
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot alter table \"%s\" because %s uses its row type",
+					RelationGetRelationName(origRelation), objdesc)));
 }
 
 /*
