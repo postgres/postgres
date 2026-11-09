@@ -15,6 +15,7 @@
 #define TUPMACS_H
 
 #include "catalog/pg_type_d.h"	/* for TYPALIGN macros */
+#include "common/int.h"
 
 
 /*
@@ -160,9 +161,14 @@
  * att_addlength_datum increments the given offset by the space needed for
  * the given Datum variable.  attdatum is only accessed if we are dealing
  * with a variable-length attribute.
+ *
+ * att_addlength_datum_overflow sets *overflow true if that occurs
+ * in the addition or false otherwise.
  */
 #define att_addlength_datum(cur_offset, attlen, attdatum) \
 	att_addlength_pointer(cur_offset, attlen, DatumGetPointer(attdatum))
+#define att_addlength_datum_overflow(cur_offset, attlen, attdatum, overflow) \
+	att_addlength_pointer_overflow(cur_offset, attlen, DatumGetPointer(attdatum), overflow)
 
 /*
  * att_addlength_pointer performs the same calculation as att_addlength_datum,
@@ -189,6 +195,30 @@
 		(cur_offset) + (strlen((char *) (attptr)) + 1) \
 	)) \
 )
+
+/*
+ * att_addlength_pointer_overflow: as att_addlength_pointer, but set *overflow
+ * true if that occurs (false if not).  Not a full att_addlength_pointer
+ * replacement, because it only allows Size as its first param, not a pointer.
+ */
+static inline Size
+att_addlength_pointer_overflow(Size cur_offset, int16 attlen,
+							   const void *attptr, bool *overflow)
+{
+	Size		add;
+
+	if (attlen > 0)
+		add = attlen;
+	else if (attlen == -1)
+		add = VARSIZE_ANY(attptr);
+	else if (attlen == -2)
+		add = strlen((const char *) attptr) + 1;
+	else
+		elog(ERROR, "invalid attlen %d", attlen);
+
+	*overflow = pg_add_size_overflow(cur_offset, add, &cur_offset);
+	return cur_offset;
+}
 
 /*
  * store_att_byval is a partial inverse of fetch_att: store a given Datum
