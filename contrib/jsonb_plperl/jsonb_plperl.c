@@ -132,7 +132,14 @@ static JsonbValue *
 AV_to_JsonbValue(AV *in, JsonbParseState **jsonb_state)
 {
 	dTHX;
-	Size_t		pcount = av_count(in);
+	Size_t		pcount;
+
+	/* Hold a reference on the array while we scan it */
+	ENTER;
+	SAVETMPS;
+	sv_2mortal(newRV((SV *) in));
+
+	pcount = av_count(in);
 
 	pushJsonbValue(jsonb_state, WJB_BEGIN_ARRAY, NULL);
 
@@ -143,6 +150,10 @@ AV_to_JsonbValue(AV *in, JsonbParseState **jsonb_state)
 		if (value)
 			(void) SV_to_JsonbValue(*value, jsonb_state, true);
 	}
+
+	/* release our reference on the array */
+	FREETMPS;
+	LEAVE;
 
 	return pushJsonbValue(jsonb_state, WJB_END_ARRAY, NULL);
 }
@@ -155,6 +166,11 @@ HV_to_JsonbValue(HV *obj, JsonbParseState **jsonb_state)
 	SV		   *val;
 	char	   *kstr;
 	I32			klen;
+
+	/* Hold a reference on the hash while we scan it */
+	ENTER;
+	SAVETMPS;
+	sv_2mortal(newRV((SV *) obj));
 
 	key.type = jbvString;
 
@@ -169,6 +185,10 @@ HV_to_JsonbValue(HV *obj, JsonbParseState **jsonb_state)
 		pushJsonbValue(jsonb_state, WJB_KEY, &key);
 		(void) SV_to_JsonbValue(val, jsonb_state, false);
 	}
+
+	/* release our reference on the hash */
+	FREETMPS;
+	LEAVE;
 
 	return pushJsonbValue(jsonb_state, WJB_END_OBJECT, NULL);
 }
