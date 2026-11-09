@@ -2958,6 +2958,15 @@ ExecOnConflictUpdate(ModifyTableContext *context,
 		 * checks/WCOs for SELECT security quals, using WCOs of the same kind,
 		 * and this check enforces them too.
 		 *
+		 * The rewriter also creates WCOs of "kind" WCO_VIEW_CONFLICT_CHECK
+		 * from the quals of any auto-updatable view the target relation was
+		 * reached through, so that the existing tuple must be visible through
+		 * each such view.  The checks run from the inside out: RLS first,
+		 * then each view's quals, innermost first (the rewriter lists them in
+		 * that order), and then finally the ON CONFLICT WHERE clause.  That
+		 * way a view's quals never see a row that the base relation or an
+		 * inner view hides, and the WHERE clause won't either.
+		 *
 		 * The rewriter will also have associated UPDATE-applicable straight
 		 * RLS checks/WCOs for the benefit of the ExecUpdate() call that
 		 * follows.  INSERTs and UPDATEs naturally have mutually exclusive WCO
@@ -2965,6 +2974,9 @@ ExecOnConflictUpdate(ModifyTableContext *context,
 		 * INSERT or UPDATE path.
 		 */
 		ExecWithCheckOptions(WCO_RLS_CONFLICT_CHECK, resultRelInfo,
+							 existing,
+							 mtstate->ps.state);
+		ExecWithCheckOptions(WCO_VIEW_CONFLICT_CHECK, resultRelInfo,
 							 existing,
 							 mtstate->ps.state);
 	}
@@ -3110,8 +3122,16 @@ ExecOnConflictSelect(ModifyTableContext *context,
 		 * target table, and the rewriter also adds WCOs built from the USING
 		 * quals of UPDATE policies, using WCOs of the same kind, and this
 		 * check enforces them too.
+		 *
+		 * The WCOs of "kind" WCO_VIEW_CONFLICT_CHECK, from the quals of any
+		 * auto-updatable view the target relation was reached through, come
+		 * after those, innermost view first, for the reasons given in
+		 * ExecOnConflictUpdate().
 		 */
 		ExecWithCheckOptions(WCO_RLS_CONFLICT_CHECK, resultRelInfo,
+							 existing,
+							 mtstate->ps.state);
+		ExecWithCheckOptions(WCO_VIEW_CONFLICT_CHECK, resultRelInfo,
 							 existing,
 							 mtstate->ps.state);
 	}

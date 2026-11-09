@@ -1394,6 +1394,10 @@ typedef enum WCOKind
 								 * policy */
 	WCO_RLS_MERGE_UPDATE_CHECK, /* RLS MERGE UPDATE USING policy */
 	WCO_RLS_MERGE_DELETE_CHECK, /* RLS MERGE DELETE USING policy */
+	WCO_VIEW_CONFLICT_CHECK,	/* auto-updatable view's WHERE quals, checked
+								 * against the existing row by ON CONFLICT DO
+								 * SELECT/UPDATE; neither a true WITH CHECK
+								 * OPTION check nor an RLS check */
 } WCOKind;
 
 typedef struct WithCheckOption
