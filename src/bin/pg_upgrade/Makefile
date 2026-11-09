@@ -38,7 +38,7 @@ OBJS = \
 override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 
-# required for 002_pg_upgrade.pl
+# required for 002_pg_upgrade.pl and 009_composite_types.pl
 REGRESS_SHLIB=$(abs_top_builddir)/src/test/regress/regress$(DLSUFFIX)
 export REGRESS_SHLIB
 
