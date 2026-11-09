@@ -57,10 +57,23 @@ char	   *log_connections_string = NULL;
  */
 ConnectionTiming conn_timing = {.ready_for_use = TIMESTAMP_MINUS_INFINITY};
 
+/*
+ * Cancel request parsed from a startup packet.
+ */
+#define STARTUP_CANCEL_KEY_MAX 256
+typedef struct PendingCancelRequest
+{
+	bool		valid;
+	int			backendPID;
+	int			cancel_key_len;
+	uint8		cancel_key[STARTUP_CANCEL_KEY_MAX];
+} PendingCancelRequest;
+
 static void BackendInitialize(ClientSocket *client_sock, CAC_state cac);
 static int	ProcessSSLStartup(Port *port);
-static int	ProcessStartupPacket(Port *port);
-static void ProcessCancelRequestPacket(Port *port, void *pkt, int pktlen);
+static int	ProcessStartupPacket(Port *port, PendingCancelRequest *cancel_req);
+static void ProcessCancelRequestPacket(Port *port, void *pkt, int pktlen,
+									   PendingCancelRequest *cancel_req);
 static void SendNegotiateProtocolVersion(List *unrecognized_protocol_options);
 static void process_startup_packet_die(SIGNAL_ARGS);
 static void StartupPacketTimeoutHandler(void);
@@ -147,6 +160,7 @@ BackendInitialize(ClientSocket *client_sock, CAC_state cac)
 	char		remote_port[NI_MAXSERV];
 	StringInfoData ps_data;
 	MemoryContext oldcontext;
+	PendingCancelRequest cancel_req = {0};
 
 	/* Tell fd.c about the long-lived FD associated with the client_sock */
 	ReserveExternalFD();
@@ -288,11 +302,11 @@ BackendInitialize(ClientSocket *client_sock, CAC_state cac)
 	status = ProcessSSLStartup(port);
 
 	/*
-	 * Receive the startup packet (which might turn out to be a cancel request
-	 * packet).
+	 * Receive the startup packet, which may be a cancel request, in which
+	 * case it is delayed for later dispatch.
 	 */
 	if (status == STATUS_OK)
-		status = ProcessStartupPacket(port);
+		status = ProcessStartupPacket(port, &cancel_req);
 
 	/*
 	 * If we're going to reject the connection due to database state, say so
@@ -363,6 +377,15 @@ BackendInitialize(ClientSocket *client_sock, CAC_state cac)
 	 * handlers unfortunately, since pq_init() already registered one.)
 	 */
 	check_on_shmem_exit_lists_are_empty();
+
+	/*
+	 * Now that STARTUP_PACKET_TIMEOUT is disabled and SIGTERM is blocked, it
+	 * is safe to touch shared memory.  Fire the cancel request.
+	 */
+	if (cancel_req.valid)
+		SendCancelRequest(cancel_req.backendPID,
+						  cancel_req.cancel_key,
+						  cancel_req.cancel_key_len);
 
 	/*
 	 * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
@@ -483,7 +506,7 @@ reject:
  *
  */
 static int
-ProcessStartupPacket(Port *port)
+ProcessStartupPacket(Port *port, PendingCancelRequest *cancel_req)
 {
 	int32		len;
 	char	   *buf = NULL;
@@ -574,7 +597,7 @@ retry:
 
 	if (proto == CANCEL_REQUEST_CODE)
 	{
-		ProcessCancelRequestPacket(port, buf, len);
+		ProcessCancelRequestPacket(port, buf, len, cancel_req);
 		/* Not really an error, but we don't want to proceed further */
 		goto fail;
 	}
@@ -915,11 +938,13 @@ fail:
 
 /*
  * The client has sent a cancel request packet, not a normal
- * start-a-new-connection packet.  Perform the necessary processing.  Nothing
- * is sent back to the client.
+ * start-a-new-connection packet.  Parse, validate, then stash the parsed
+ * request in *cancel_req so that BackendInitialize() can dispatch it later
+ * to SendCancelRequest().  Nothing is sent back to the client.
  */
 static void
-ProcessCancelRequestPacket(Port *port, void *pkt, int pktlen)
+ProcessCancelRequestPacket(Port *port, void *pkt, int pktlen,
+						   PendingCancelRequest *cancel_req)
 {
 	CancelRequestPacket *canc;
 	int			len;
@@ -932,7 +957,7 @@ ProcessCancelRequestPacket(Port *port, void *pkt, int pktlen)
 		return;
 	}
 	len = pktlen - offsetof(CancelRequestPacket, cancelAuthCode);
-	if (len == 0 || len > 256)
+	if (len == 0 || len > STARTUP_CANCEL_KEY_MAX)
 	{
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -941,7 +966,10 @@ ProcessCancelRequestPacket(Port *port, void *pkt, int pktlen)
 	}
 
 	canc = (CancelRequestPacket *) pkt;
-	SendCancelRequest(pg_ntoh32(canc->backendPID), canc->cancelAuthCode, len);
+	cancel_req->backendPID = pg_ntoh32(canc->backendPID);
+	cancel_req->cancel_key_len = len;
+	memcpy(cancel_req->cancel_key, canc->cancelAuthCode, len);
+	cancel_req->valid = true;
 }
 
 /*
