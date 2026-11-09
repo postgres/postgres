@@ -6555,8 +6555,8 @@ find_composite_type_dependencies(Oid typeOid, Relation origRelation,
 											 visited);
 
 	/*
-	 * XXX: We don't record pg_depend entries in some cases where we really
-	 * should.  Scan the catalog tables for those, too.
+	 * We used to not record pg_depend entries in some cases where we really
+	 * should have.  Scan the catalog tables for those, too.
 	 */
 	find_missing_composite_type_dependencies(visited, origRelation, origTypeName);
 
@@ -6784,15 +6784,16 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 				/*
 				 * We treat a whole-row dependency the same as a dependency
 				 * from a specific column, if the relation also has a column
-				 * of the given type.  This is because we have a gap:
-				 * expression indexes don't store a dependency on the indexed
-				 * type returned by the expression.  That's a bug, but in many
-				 * typical cases, the expression will have a dependency on the
-				 * row type, so we can often still catch it here.  Treat it as
-				 * if the dependency was on the column.  (It could also be
-				 * that the target type is embedded in some container type
-				 * that is stored in an index column, but the previous
-				 * recursion should catch such cases.)
+				 * of the given type.  This is because we used to have a gap
+				 * in dependency tracking: expression indexes didn't store a
+				 * dependency on the indexed type returned by the expression.
+				 * That was a bug, but in many typical cases, the expression
+				 * still had a dependency on the row type, so we can often
+				 * still catch it here.  Treat it as if the dependency was on
+				 * the column.  (It could also be that the target type is
+				 * embedded in some container type that is stored in an index
+				 * column, but the previous recursion should catch such
+				 * cases.)
 				 *
 				 * Any cases of missing dependencies not caught here are
 				 * handled by find_missing_composite_type_dependencies().
@@ -6893,13 +6894,10 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 						 * of the partitions.  But it's not worth
 						 * distinguishing that case.)
 						 *
-						 * XXX: We don't currently store a dependency for this
-						 * reason, but check it anyway, so that once we do,
-						 * we'll catch it here.  And in many cases the
-						 * expression references the rowtype in a way that
-						 * records a dependency, so we often get here anyway.
-						 * Any missing dependencies not caught here are
-						 * handled by
+						 * We had a gap in our dependency tracking in the
+						 * past, and didn't record a pg_depend entry for
+						 * these.  Any missing dependencies not caught here
+						 * are handled by
 						 * find_missing_composite_type_dependencies().
 						 */
 						if (exprType(partexpr) == typeOid)
@@ -7090,7 +7088,7 @@ get_node_tree_attr(enum SysCacheIdentifier cacheId, HeapTuple tup, AttrNumber at
 /*
  * find_missing_composite_type_dependencies
  *
- * Currently, we don't record pg_depend entries for a few cases that
+ * In the past, we failed to record pg_depend entries for a few cases that
  * clearly form a dependency and should prevent you from ALTERing a rowtype.
  * This function scans the catalogs for the missing dependencies.
  * Unfortunately, these need to resort to sequential scans, which is slow.
@@ -7105,12 +7103,11 @@ find_missing_composite_type_dependencies(HTAB *types, Relation origRelation,
 
 	/*
 	 * A partition bound is stored as a Const of the PARTITION BY expression's
-	 * result type.  However, we don't record a pg_depend entry for that.
-	 * Often an expression depends on its result type for other reasons, for
-	 * example a Const does record a dependency on its type, but as a
-	 * counter-example, a function call records a dependency only on the
-	 * function, not on its return type.  The pg_depend scan in
-	 * find_composite_type_dependencies() therefore doesn't find it.
+	 * result type.  However, we used to not record a pg_depend entry for
+	 * that.  Often an expression depends on its result type for other
+	 * reasons, for example a Const does record a dependency on its type, but
+	 * as a counter-example, a function call records a dependency only on the
+	 * function, not on its return type.
 	 *
 	 * To find such missing dependencies, scan pg_partitioned_table directly
 	 * for a key expression that produces typeOid.
@@ -7151,7 +7148,7 @@ find_missing_composite_type_dependencies(HTAB *types, Relation origRelation,
 
 	/*
 	 * Similarly, an expression index whose expression returns the target type
-	 * stores datums of that type in the index, but we don't record a
+	 * stores datums of that type in the index, but we used to not record a
 	 * pg_depend entry for that.  Scan pg_index for those.
 	 *
 	 * The predicate of a partial index always returns a boolean, so we don't
@@ -7186,7 +7183,7 @@ find_missing_composite_type_dependencies(HTAB *types, Relation origRelation,
 	/*
 	 * Similarly, extended statistics on an expression that returns the target
 	 * type stores a datum of the type into pg_statistic_ext_data at ANALYZE
-	 * time, and we don't record a pg_depend entry for that either.  Scan
+	 * time, and we used to not record a pg_depend entry for that either. Scan
 	 * pg_statistic_ext for those.
 	 */
 	catalog_rel = table_open(StatisticExtRelationId, AccessShareLock);
