@@ -193,6 +193,7 @@ typedef struct plperl_query_desc
 	Oid		   *argtypes;
 	FmgrInfo   *arginfuncs;
 	Oid		   *argtypioparams;
+	int			use_count;		/* number of executions in progress */
 } plperl_query_desc;
 
 /* hash table entry for query desc	*/
@@ -3948,7 +3949,7 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 				spi_rv;
 	char	   *nulls;
 	Datum	   *argvalues;
-	plperl_query_desc *qdesc;
+	plperl_query_desc *volatile qdesc = NULL;
 	plperl_query_entry *hash_entry;
 
 	/*
@@ -3977,6 +3978,14 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		qdesc = hash_entry->query_data;
 		if (qdesc == NULL)
 			elog(ERROR, "spi_exec_prepared: plperl query_hash value vanished");
+
+		/*
+		 * Mark the query as being in use, so that spi_freeplan() will refuse
+		 * to delete it out from under us.  Anything reached from qdesc, in
+		 * particular the argument input functions and whatever they cache in
+		 * their fn_mcxt, must stay valid until we are done below.
+		 */
+		qdesc->use_count++;
 
 		if (qdesc->nargs != argc)
 			elog(ERROR, "spi_exec_prepared: expected %d argument(s), %d passed",
@@ -4033,6 +4042,10 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 			pfree(nulls);
 		}
 
+		Assert(qdesc->use_count > 0);
+		qdesc->use_count--;
+		qdesc = NULL;			/* prevent double decrement in PG_CATCH */
+
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
@@ -4041,6 +4054,13 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 	PG_PERL_CATCH();
 	{
 		ErrorData  *edata;
+
+		/* Release our use-count first, in case anything below throws */
+		if (qdesc)
+		{
+			Assert(qdesc->use_count > 0);
+			qdesc->use_count--;
+		}
 
 		/* Save error info */
 		MemoryContextSwitchTo(oldcontext);
@@ -4070,7 +4090,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 	int			i;
 	char	   *nulls;
 	Datum	   *argvalues;
-	plperl_query_desc *qdesc;
+	plperl_query_desc *volatile qdesc = NULL;
 	plperl_query_entry *hash_entry;
 	SV		   *cursor;
 	Portal		portal = NULL;
@@ -4101,6 +4121,9 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		qdesc = hash_entry->query_data;
 		if (qdesc == NULL)
 			elog(ERROR, "spi_query_prepared: plperl query_hash value vanished");
+
+		/* Mark the query in use; see comments in plperl_spi_exec_prepared */
+		qdesc->use_count++;
 
 		if (qdesc->nargs != argc)
 			elog(ERROR, "spi_query_prepared: expected %d argument(s), %d passed",
@@ -4152,6 +4175,10 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 
 		PinPortal(portal);
 
+		Assert(qdesc->use_count > 0);
+		qdesc->use_count--;
+		qdesc = NULL;			/* prevent double decrement in PG_CATCH */
+
 		/* Commit the inner transaction, return to outer xact context */
 		ReleaseCurrentSubTransaction();
 		MemoryContextSwitchTo(oldcontext);
@@ -4160,6 +4187,13 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 	PG_PERL_CATCH();
 	{
 		ErrorData  *edata;
+
+		/* Release our use-count first, in case anything below throws */
+		if (qdesc)
+		{
+			Assert(qdesc->use_count > 0);
+			qdesc->use_count--;
+		}
 
 		/* Save error info */
 		MemoryContextSwitchTo(oldcontext);
@@ -4194,11 +4228,22 @@ plperl_spi_freeplan(char *query)
 	hash_entry = hash_search(plperl_active_interp->query_hash, query,
 							 HASH_FIND, NULL);
 	if (hash_entry == NULL)
-		elog(ERROR, "spi_freeplan: Invalid prepared query passed");
+		croak("spi_freeplan: Invalid prepared query passed");
 
 	qdesc = hash_entry->query_data;
 	if (qdesc == NULL)
-		elog(ERROR, "spi_freeplan: plperl query_hash value vanished");
+		croak("spi_freeplan: plperl query_hash value vanished");
+
+	/*
+	 * Refuse to free a query that is currently being executed.  Its plan, and
+	 * the query descriptor's plan_cxt (which holds the argument input
+	 * functions and whatever they cache in their fn_mcxt), are still in use
+	 * by the spi_exec_prepared() or spi_query_prepared() call running it.
+	 */
+	if (qdesc->use_count > 0)
+		croak("spi_freeplan: query is currently being executed");
+	Assert(qdesc->use_count == 0);
+
 	plan = qdesc->plan;
 
 	/*
