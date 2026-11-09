@@ -90,6 +90,7 @@ tests += {
   'tap': {
     'env': {
       'GZIP_PROGRAM': gzip.path(),
+      'TAR': tar.found() ? tar.path() : '',
       'LZ4': program_lz4.found() ? program_lz4.path() : '',
       'ZSTD': program_zstd.found() ? program_zstd.path() : '',
       'with_icu': icu.found() ? 'yes' : 'no',
@@ -100,6 +101,7 @@ tests += {
       't/003_pg_dump_with_server.pl',
       't/004_pg_dump_parallel.pl',
       't/010_dump_connstr.pl',
+      't/011_restore.pl',
     ],
   },
 }

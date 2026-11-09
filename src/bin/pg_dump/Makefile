@@ -18,6 +18,7 @@ include $(top_builddir)/src/Makefile.global
 
 export GZIP_PROGRAM=$(GZIP)
 export LZ4
+export TAR
 export ZSTD
 export with_icu
 
