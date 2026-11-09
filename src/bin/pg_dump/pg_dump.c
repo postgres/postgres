@@ -891,11 +891,13 @@ main(int argc, char **argv)
 
 	/* archiveFormat specific setup */
 	if (archiveFormat == archNull)
-	{
 		plainText = 1;
-
+	if (archiveFormat == archNull ||
+		archiveFormat == archTar)
+	{
 		/*
 		 * If you don't provide a restrict key, one will be appointed for you.
+		 * tar format uses this for its undocumented restore.sql file.
 		 */
 		if (!dopt.restrict_key)
 			dopt.restrict_key = generate_restrict_key();
@@ -905,8 +907,8 @@ main(int argc, char **argv)
 			pg_fatal("invalid restrict key");
 	}
 	else if (dopt.restrict_key)
-		pg_fatal("option %s can only be used with %s",
-				 "--restrict-key", "--format=plain");
+		pg_fatal("option %s can only be used with %s or %s",
+				 "--restrict-key", "--format=plain", "--format=tar");
 
 	/*
 	 * Custom and directory formats are compressed by default with gzip when
