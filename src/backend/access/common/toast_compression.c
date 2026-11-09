@@ -22,6 +22,7 @@
 #include "common/pg_lzcompress.h"
 #include "fmgr.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
 
 /* GUC */
 int			default_toast_compression = TOAST_PGLZ_COMPRESSION;
@@ -58,6 +59,10 @@ pglz_compress_datum(const struct varlena *value)
 	/*
 	 * Figure out the maximum possible size of the pglz output, add the bytes
 	 * that will be needed for varlena overhead, and allocate that amount.
+	 *
+	 * VARSIZE_ANY_EXHDR's refusal to return values higher than 1GB are what
+	 * protect this addition from wraparound; the PGLZ strategy doesn't
+	 * provide a useful backstop.
 	 */
 	tmp = (struct varlena *) palloc(PGLZ_MAX_OUTPUT(valsize) +
 									VARHDRSZ_COMPRESSED);
@@ -86,7 +91,10 @@ pglz_decompress_datum(const struct varlena *value)
 	struct varlena *result;
 	int32		rawsize;
 
-	/* allocate memory for the uncompressed data */
+	/*
+	 * Allocate memory for the uncompressed data.  VARLENA_EXTSIZE_MASK
+	 * protects this against overflow.
+	 */
 	result = (struct varlena *) palloc(VARDATA_COMPRESSED_GET_EXTSIZE(value) + VARHDRSZ);
 
 	/* decompress the data */
@@ -114,7 +122,12 @@ pglz_decompress_datum_slice(const struct varlena *value,
 	struct varlena *result;
 	int32		rawsize;
 
-	/* allocate memory for the uncompressed data */
+	/*
+	 * Allocate memory for the uncompressed data.  Caller must have checked
+	 * the requested size, but verify.
+	 */
+	if (!AllocSizeIsValid(slicelength))
+		elog(ERROR, "value is too big");
 	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
 
 	/* decompress the data */
@@ -154,8 +167,15 @@ lz4_compress_datum(const struct varlena *value)
 	/*
 	 * Figure out the maximum possible size of the LZ4 output, add the bytes
 	 * that will be needed for varlena overhead, and allocate that amount.
+	 *
+	 * The current (2026) definition of LZ4_compressBound cannot yield a value
+	 * that can wrap-around the VARHDRSZ_COMPRESSED addition in 32-bit
+	 * machines, but we have no way to prevent future LZ4 development (or a
+	 * malicious LZ4 library) from changing that, so verify.
 	 */
 	max_size = LZ4_compressBound(valsize);
+	if (!AllocSizeIsValid(max_size))
+		elog(ERROR, "toast object size is too big");
 	tmp = (struct varlena *) palloc(max_size + VARHDRSZ_COMPRESSED);
 
 	len = LZ4_compress_default(VARDATA_ANY(value),
@@ -190,7 +210,11 @@ lz4_decompress_datum(const struct varlena *value)
 	int32		rawsize;
 	struct varlena *result;
 
-	/* allocate memory for the uncompressed data */
+	/*
+	 * Allocate memory for the uncompressed data.  VARLENA_EXTSIZE_MASK
+	 * protects this against overflow.
+	 */
+	Assert(AllocSizeIsValid(VARDATA_COMPRESSED_GET_EXTSIZE(value)));
 	result = (struct varlena *) palloc(VARDATA_COMPRESSED_GET_EXTSIZE(value) + VARHDRSZ);
 
 	/* decompress the data */
@@ -227,7 +251,12 @@ lz4_decompress_datum_slice(const struct varlena *value, int32 slicelength)
 	if (LZ4_versionNumber() < 10803)
 		return lz4_decompress_datum(value);
 
-	/* allocate memory for the uncompressed data */
+	/*
+	 * Allocate memory for the uncompressed data.  Caller must have checked
+	 * the requested size, but verify.
+	 */
+	if (!AllocSizeIsValid(slicelength))
+		elog(ERROR, "toast object size is too big");
 	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
 
 	/* decompress the data */
