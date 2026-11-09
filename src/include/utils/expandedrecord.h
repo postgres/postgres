@@ -74,7 +74,7 @@ typedef struct ExpandedRecordHeader
 	int32		er_typmod;		/* typmod of the composite type */
 
 	/*
-	 * Tuple descriptor, if we have one, else NULL.  This may point to a
+	 * Tuple descriptor, acquired during construction.  This may point to a
 	 * reference-counted tupdesc originally belonging to the typcache, in
 	 * which case we use a memory context reset callback to release the
 	 * refcount.  It can also be locally allocated in this object's private
@@ -90,10 +90,9 @@ typedef struct ExpandedRecordHeader
 
 	/*
 	 * If we have a Datum-array representation of the record, it's kept here;
-	 * else ER_FLAG_DVALUES_VALID is not set, and dvalues/dnulls may be NULL
-	 * if they've not yet been allocated.  If allocated, the dvalues and
-	 * dnulls arrays are palloc'd within the object private context, and are
-	 * of length matching er_tupdesc->natts.  For pass-by-ref field types,
+	 * else ER_FLAG_DVALUES_VALID is not set.  The dvalues and dnulls arrays
+	 * are allocated along with the header in the object private context, and
+	 * are of length matching er_tupdesc->natts.  For pass-by-ref field types,
 	 * dvalues entries might point either into the fstartptr..fendptr area, or
 	 * to separately palloc'd chunks.
 	 */
@@ -207,10 +206,8 @@ extern void expanded_record_set_fields(ExpandedRecordHeader *erh,
 static inline TupleDesc
 expanded_record_get_tupdesc(ExpandedRecordHeader *erh)
 {
-	if (likely(erh->er_tupdesc != NULL))
-		return erh->er_tupdesc;
-	else
-		return expanded_record_fetch_tupdesc(erh);
+	Assert(erh->er_tupdesc != NULL);
+	return erh->er_tupdesc;
 }
 
 /* Get value of record field */
