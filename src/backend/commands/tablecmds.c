@@ -6919,8 +6919,10 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 			 * might contain Consts or other things that would become invalid.
 			 *
 			 * Fetch the procedure definition to see which parts are using the
-			 * type.
+			 * type.  Lock it to make sure that a DEFAULT expression is not
+			 * added to it concurrently with CREATE OR REPLACE FUNCTION.
 			 */
+			LockDatabaseObject(ProcedureRelationId, objid, 0, AccessShareLock);
 			catalog_tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(objid));
 			if (!HeapTupleIsValid(catalog_tup))
 				elog(ERROR, "cache lookup failed for function %u", objid);
@@ -6950,7 +6952,9 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 			 * referencing the type itself is ignored, if the expression
 			 * doesn't refer to the type.  In other words, if the dependency
 			 * exists just because it's a CHECK constraint on the domain, that
-			 * doesn't prevent altering the underlying type.
+			 * doesn't prevent altering the underlying type.  (We assume that
+			 * the constraint cannot be reassigned to a different type, so no
+			 * need to hold the lock just to check 'contypid'.)
 			 */
 			catalog_tup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(objid));
 			if (!HeapTupleIsValid(catalog_tup))
@@ -6962,6 +6966,7 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 				 * This is a CHECK constraint on the domain.  Look closer if
 				 * the expression actually refers to the target type.
 				 */
+				LockDatabaseObject(ConstraintRelationId, objid, 0, AccessShareLock);
 				expr = get_node_tree_attr(CONSTROID, catalog_tup,
 										  Anum_pg_constraint_conbin);
 				if (expr && CheckTypeDependencyInExpr(expr, NIL, typeOid))
@@ -6990,6 +6995,10 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 			/*
 			 * A domain's default expression can embed a Const of the altered
 			 * type, however.  We must reject that.
+			 *
+			 * find_composite_type_dependencies_recurse() acquired a lock on
+			 * the type, so we don't need to acquire it here again to inspect
+			 * the default.
 			 */
 			catalog_tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(objid));
 			if (!HeapTupleIsValid(catalog_tup))
