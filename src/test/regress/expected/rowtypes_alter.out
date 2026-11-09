@@ -523,11 +523,12 @@ $$;
 CREATE TRIGGER rta_trig BEFORE INSERT ON rta_tab
   FOR EACH ROW EXECUTE FUNCTION rta_trig();
 INSERT INTO rta_tab VALUES (0, NULL);
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
 SELECT * FROM rta_tab;
- a |      b       
----+--------------
- 1 | \x4649584d45
-(1 row)
+ a | b 
+---+---
+(0 rows)
 
 DROP TABLE rta_tab;
 DROP FUNCTION rta_trig();
@@ -545,11 +546,9 @@ BEGIN
 END;
 $$;
 SELECT rta_func();
-      rta_func       
----------------------
- (1,"\\x4649584d45")
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function rta_func() while casting return value to function's return type
 DROP FUNCTION rta_func();
 DROP TYPE rta_src, rta_dst;
 -- A variable of the row type

@@ -69,6 +69,7 @@
 #include "utils/expandeddatum.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
+#include "utils/typcache.h"
 
 
 /*
@@ -90,6 +91,9 @@
 /* FormData_pg_attribute.attstorage != TYPSTORAGE_PLAIN and an attlen of -1 */
 #define COMPACT_ATTR_IS_PACKABLE(att) \
 	((att)->attlen == -1 && (att)->attispackable)
+
+
+static void heap_datum_check_coercion(HeapTupleHeader tup, TupleDesc targetDesc);
 
 
 /* GUC variable */
@@ -1037,11 +1041,6 @@ heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc)
 	HeapTupleHeader td;
 
 	/*
-	 * TODO: Fetch the tupledesc for the datum tuple (if it's already one).
-	 * Without that it's somewhat easy to have this hide a mismatched tuple.
-	 */
-
-	/*
 	 * If the tuple contains any external TOAST pointers, we have to inline
 	 * those fields to meet the conventions for composite-type Datums.
 	 */
@@ -1366,17 +1365,153 @@ heap_tuple_set_datum(HeapTupleHeader tup, TupleDesc tupleDesc, uint32 len)
  * If the tuple already is a versioned datum, it is verified to be compatible
  * with tupleDesc first, as relabeling it would otherwise hide a
  * mismatch.
+ *
+ * Additionally, if the current type and the target type differ, the types are
+ * verified to be compatible (if possible).
  */
 void
 heap_datum_update_type(HeapTupleHeader tup, TupleDesc tupleDesc)
 {
 	Assert(HeapTupleHeaderReallyIsDatum(tup));
 
-	if (HeapTupleHeaderIsVersionedDatum(tup))
-		heap_datum_check(tup, tupleDesc);
+	heap_datum_check_coercion(tup, tupleDesc);
 
 	heap_tuple_set_datum(tup, tupleDesc,
 						 HeapTupleHeaderGetDatumLength(tup));
+}
+
+/*
+ * Verify that the datum tuple "tup" can be deformed with "deformingDesc",
+ * the descriptor the caller wants to use.
+ *
+ * "datumDesc" is the descriptor of the datum's own row type, against which
+ * the datum's version has already been checked (if it is versioned).  Only
+ * the attributes present in the tuple are compared, so this does not
+ * establish that the two descriptors are interchangeable for other tuples.
+ */
+static void
+verify_tupledesc_compatibility(HeapTupleHeader tup,
+							   TupleDesc datumDesc, TupleDesc deformingDesc)
+{
+	int			datum_natts = HeapTupleHeaderGetNatts(tup);
+	int			error_level =
+		composite_type_mismatch == COMPOSITE_TYPE_MISMATCH_WARN ?
+		WARNING : ERROR;
+
+	/*
+	 * Should never get here with a datumDesc that has insufficient
+	 * attributes.
+	 */
+	if (datumDesc->natts < datum_natts)
+	{
+		elog(error_level, "datum's descriptor has fewer (%d) attributes than tuple (%d)",
+			 datumDesc->natts, datum_natts);
+		return;
+	}
+
+	/*
+	 * We sometimes may get called with a deformingDesc that has extra
+	 * attributes for resjunk columns. That's safe iff the tuple itself does
+	 * not have those columns (the expected case). But we can't accept cases
+	 * where the datum has more attributes than deformingDesc.
+	 */
+	if (unlikely(deformingDesc->natts < datum_natts))
+	{
+		ereport(error_level,
+				errcode(ERRCODE_DATATYPE_MISMATCH),
+				errmsg("tuple descriptor has fewer (%d) attributes than tuple (%d)",
+					   deformingDesc->natts, datum_natts));
+		return;
+	}
+
+	/*
+	 * The message isn't translatable, due to the interpolated format strings.
+	 * That's OK, as this is just a defensive layer that shouldn't be reached.
+	 *
+	 * With composite_type_mismatch = warn, only the first mismatch is
+	 * reported.
+	 */
+#define check_attribute_aspect(aspect, format) \
+	if (unlikely(attr_datum->aspect != attr_deform->aspect)) \
+	{ \
+		ereport(error_level, \
+				errcode(ERRCODE_DATATYPE_MISMATCH), \
+				errmsg_internal("datum attribute \"%s\" at position %d does not match deforming descriptor's %s ("format" vs "format")", \
+								NameStr(attr_datum->attname), \
+								i + 1, \
+								CppAsString(aspect), \
+								attr_datum->aspect, attr_deform->aspect) \
+			); \
+		return; \
+	}
+
+	for (int i = 0; i < datum_natts; i++)
+	{
+		Form_pg_attribute attr_datum = TupleDescAttr(datumDesc, i);
+		Form_pg_attribute attr_deform = TupleDescAttr(deformingDesc, i);
+
+		/* don't care about the attribute's name being the same */
+
+		if (unlikely(attr_datum->attisdropped != attr_deform->attisdropped))
+		{
+			/*
+			 * Targetlists can represent dropped columns as NULL::int4.  A
+			 * NULL attribute consumes neither bytes nor alignment, so its
+			 * type and storage metadata need not match for deforming to be
+			 * safe.
+			 *
+			 * See eval-plan-qual-dropped-column.spec for a test exercising
+			 * this path.
+			 */
+			bool		isnull = (tup->t_infomask & HEAP_HASNULL) &&
+				att_isnull(i, tup->t_bits);
+
+			/*
+			 * XXX: At some point in the future we should also check that
+			 * attr_deform's NOT NULLness matches, due to the optimized
+			 * deforming slots can use for NOT NULL columns. But right now we
+			 * don't know if that's guaranteed here (and the constraints
+			 * applying to the tuple might not yet have been validated). We
+			 * also, at the moment, won't get here for slots with that
+			 * optimization. Therefore delay this for later.
+			 */
+			if (isnull)
+				continue;
+		}
+
+		/* Other dropped-column mismatches require explicit conversion. */
+		check_attribute_aspect(attisdropped, "%u");
+
+		/*
+		 * While, with an atttypid mismatch, the types could be binary
+		 * coercible, we can't know that here, and in any case, it should have
+		 * led to attribute mapping being used.
+		 */
+		if (!attr_datum->attisdropped)
+			check_attribute_aspect(atttypid, "%u");
+		check_attribute_aspect(attlen, "%d");
+		check_attribute_aspect(attalign, "%c");
+
+		/*
+		 * If the attribute is dropped, byval does not matter. It'd generally
+		 * be correct to check byval regardless, but check_attrmap_match()
+		 * doesn't currently, so that could cause spurious errors.
+		 */
+		if (!attr_datum->attisdropped)
+		{
+			/*
+			 * Theoretically bool could be wider than char, so I'm using %u
+			 * here.
+			 */
+			check_attribute_aspect(attbyval, "%u");
+		}
+
+		/*
+		 * It does not seem necessary to compare atttypmod, attcollation, etc,
+		 * they are not required to match for correct deforming.
+		 */
+	}
+#undef check_attribute_aspect
 }
 
 /*
@@ -1465,6 +1600,124 @@ datum_attribute_version_ok(TupleDesc tupleDesc, int tupNatts,
 }
 
 /*
+ * Fetch and return a pinned TupleDesc for the type/typmod combination.
+ *
+ * This switches to CurTransactionContext during the fetch, in case we get
+ * called from within something like a tuplesort with a bump context (which
+ * does not support freeing), which could be a problem during a syscache
+ * miss. Because syscache misses can leak some memory, it should be a context
+ * with a somewhat bounded lifetime. Using the current transaction context
+ * seems like the most obvious choice.
+ */
+static TupleDesc
+heap_datum_fetch_tupledesc(Oid tupTypeid, int32 tupTypmod)
+{
+	MemoryContext oldContext = MemoryContextSwitchTo(CurTransactionContext);
+	TupleDesc	descForTuple = lookup_rowtype_tupdesc(tupTypeid, tupTypmod);
+
+	MemoryContextSwitchTo(oldContext);
+
+	return descForTuple;
+}
+
+/*
+ * Fetch the tuple descriptor for the tuple using the tuple's typeid, check
+ * that the tuple has the same version as that fetched descriptor and finally
+ * verify that the callerDesc is compatible with that fetched TupleDesc.
+ *
+ * Normally this should not be needed, but we have a few codepaths that use
+ * tuple descriptors that are verified to be compatible, with mismatching
+ * typeids. In the places this function is used, we can't be sure that the
+ * mismatch is harmless, so we re-verify compatibility.
+ *
+ * NB: This is not cheap, so it's worth making sure that this path is only
+ * reached for cases with significant per-row costs.
+ */
+static void
+heap_datum_fetch_compare_tupledesc(HeapTupleHeader tup,
+								   Oid tupTypeid, int32 tupTypmod,
+								   TupleDesc callerDesc)
+{
+	int			tupNatts = HeapTupleHeaderGetNatts(tup);
+	TupleDesc	descForTuple = heap_datum_fetch_tupledesc(tupTypeid, tupTypmod);
+	XLogRecPtr	descForTupleVersion = TupleDescGetVersion(descForTuple);
+
+	/*
+	 * First check if the tuple descriptor we just looked up has a compatible
+	 * version. It's possible there have been incompatible alterations since
+	 * the tuple was formed.
+	 */
+	if (HeapTupleHeaderIsVersionedDatum(tup))
+	{
+		XLogRecPtr	tupVersion = HeapTupleHeaderGetVersion(tup);
+		XLogRecPtr	cmpVersion;
+
+		if (unlikely(descForTupleVersion != tupVersion) &&
+			!datum_attribute_version_ok(descForTuple, tupNatts, tupVersion,
+										&cmpVersion))
+			heap_datum_version_mismatch_error(tupTypeid, descForTuple->tdtypeid,
+											  tupVersion, cmpVersion);
+	}
+
+	/*
+	 * Now check that the caller's descriptor can decode this particular
+	 * tuple, including any physically NULL dropped-column placeholders.
+	 */
+	verify_tupledesc_compatibility(tup, descForTuple, callerDesc);
+
+	ReleaseTupleDesc(descForTuple);
+}
+
+/*
+ * Try to verify that it is safe to coerce tup to have targetDesc's type.
+ *
+ * This will often be used when the types don't actually differ, so we try to
+ * avoid unnecessary checks.
+ */
+static void
+heap_datum_check_coercion(HeapTupleHeader tup, TupleDesc targetDesc)
+{
+	Oid			tupTypeid = HeapTupleHeaderGetTypeId(tup);
+	int32		tupTypmod = HeapTupleHeaderGetTypMod(tup);
+
+	Assert(HeapTupleHeaderIsDatum(tup));
+
+	if (unlikely(composite_type_mismatch == COMPOSITE_TYPE_MISMATCH_DISABLED))
+		return;
+
+	/* can't check if this is wrongly marked as a datum tuple */
+	if (!HeapTupleHeaderReallyIsDatum(tup))
+		return;
+
+	/*
+	 * Source tuple has an ephemeral row type, so we can't fetch the tuple's
+	 * desc to cross-check against.
+	 */
+	if (tupTypeid == RECORDOID && tupTypmod == -1)
+		return;
+
+	if (tupTypeid != targetDesc->tdtypeid ||
+		(targetDesc->tdtypeid == RECORDOID &&
+		 tupTypmod != targetDesc->tdtypmod))
+	{
+		/*
+		 * The tuple's type and the target type differ, cross check the tuple
+		 * descriptors against each other.
+		 */
+		heap_datum_fetch_compare_tupledesc(tup, tupTypeid, tupTypmod, targetDesc);
+	}
+	else if (HeapTupleHeaderIsVersionedDatum(tup) &&
+			 TupleDescGetVersion(targetDesc) != HeapTupleHeaderGetVersion(tup))
+	{
+		/*
+		 * While the tuple's type and the target type are the same, their
+		 * versions differ. Make sure that's OK.
+		 */
+		heap_datum_check(tup, targetDesc);
+	}
+}
+
+/*
  * Check that a versioned datum tuple can be safely decoded with the
  * tupleDesc, raise an error if not.
  *
@@ -1474,6 +1727,11 @@ datum_attribute_version_ok(TupleDesc tupleDesc, int tupNatts,
  * This function implements the attribute versioning checks described in
  * src/backend/catalog/README.attver.md.  For partially historical reasons, it
  * needs to handle some corner cases, described below.
+ *
+ * In addition to the versioning checks, this also, if the descriptor and the
+ * tuple are for different types, tries to check that the datum's and the
+ * descriptor's types are compatible.  We should work towards making such
+ * mismatches errors, but until then the additional checks are helpful.
  */
 void
 heap_datum_check(HeapTupleHeader tup, TupleDesc tupleDesc)
@@ -1507,11 +1765,19 @@ heap_datum_check(HeapTupleHeader tup, TupleDesc tupleDesc)
 		 * but the datum has a different type, e.g. because some function just
 		 * updated the descriptor's type to RECORDOID.  In that case it's
 		 * really the caller's responsibility to have made sure that the type
-		 * is right.
+		 * is right. But we better make sure anyway.
 		 *
-		 * TODO: Make this case safer by fetching and comparing the tupledesc
-		 * associated with the record.
+		 * While it's not cheap, we can make sure this is safe by first
+		 * fetching the tuple descriptor for the tuple, verifying that its
+		 * version matches, and then checking that the two tuple descriptors
+		 * are compatible.
+		 *
+		 * The known paths reaching here involve per-row triggers, and
+		 * EvalPlanQual rechecks of whole-row references to function scans,
+		 * where the cost of the additional checking is acceptable.
 		 */
+		heap_datum_fetch_compare_tupledesc(tup, tupTypeid, tupTypmod,
+										   tupleDesc);
 	}
 	else if (unlikely(tupTypeid == InvalidOid))
 	{
@@ -1559,10 +1825,15 @@ heap_datum_check(HeapTupleHeader tup, TupleDesc tupleDesc)
 		 * tuple conversion paths should update the tuple's typeid even when
 		 * otherwise no conversion is needed.
 		 *
-		 * TODO: Make this case safer by fetching the tupledesc used by the
-		 * type, checking the version to verify it's still OK, and then
-		 * comparing the tupledescs.
+		 * To make sure this cannot lead to unsafe deforming, we check that
+		 * the tuple descriptor for the tuple (identified by typeid and
+		 * version) and the one used by the caller are compatible.
+		 *
+		 * The known cases leading here are DML with triggers and/or ON
+		 * CONFLICT, where the per-row cost of this check is acceptable.
 		 */
+		heap_datum_fetch_compare_tupledesc(tup, tupTypeid, tupTypmod,
+										   tupleDesc);
 	}
 	else if (unlikely(tupVersion != descVersion))
 	{
