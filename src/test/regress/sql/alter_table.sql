@@ -158,6 +158,28 @@ ALTER INDEX attmp_idx ALTER COLUMN 2 SET STATISTICS -1;
 
 DROP TABLE attmp;
 
+--
+-- add attribute when the row type is in use
+--
+CREATE TABLE attmp (initial int4);
+CREATE TABLE attmp2 (t text, tbl attmp);
+INSERT INTO attmp2 VALUES ('foo', '(1)');
+
+-- Adding a column to 'attmp' is allowed, even though it's used as the
+-- column type in another table.
+ALTER TABLE attmp ADD COLUMN a int4;
+
+-- XXX: With a DEFAULT, it is currently not allowed, but there's no
+-- good reason not to.  The presence of the DEFAULT doesn't make any
+-- difference to what's stored in 'attmp2'.
+ALTER TABLE attmp ADD COLUMN b int4 DEFAULT 100; -- fails
+
+-- Changing between LOGGED and UNLOGGED is allowed
+ALTER TABLE attmp SET UNLOGGED;
+
+SELECT * from attmp2;
+
+DROP TABLE attmp2, attmp;
 
 --
 -- rename - check on both non-temp and temp tables
