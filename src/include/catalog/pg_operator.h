@@ -123,6 +123,7 @@ extern void OperatorValidateParams(Oid leftTypeId,
 								   bool canMerge,
 								   bool canHash);
 
-extern void OperatorUpd(Oid baseId, Oid commId, Oid negId, bool isDelete);
+extern void UpdateOperatorLinks(Oid baseId, Oid commId, Oid negId,
+								Oid oprResultId, bool isDelete);
 
 #endif							/* PG_OPERATOR_H */

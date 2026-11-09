@@ -206,6 +206,18 @@ SELECT oprcanmerge, oprcanhash,
   FROM pg_operator WHERE oprname = '==='
   AND oprleft = 'boolean'::regtype AND oprright = 'real'::regtype;
 
+-- Check that a commutator can't be installed if it has the wrong result type
+CREATE FUNCTION alter_op_test_fn_real_bool_int(real, boolean)
+RETURNS integer AS $$ SELECT NULL::INTEGER; $$ LANGUAGE sql IMMUTABLE;
+
+CREATE OPERATOR @=@ (
+    LEFTARG = real,
+    RIGHTARG = boolean,
+    PROCEDURE = alter_op_test_fn_real_bool_int
+);
+
+ALTER OPERATOR @!=(boolean, real) SET (COMMUTATOR = @=@);
+
 --
 -- Clean up
 --
@@ -218,8 +230,10 @@ DROP OPERATOR ==== (real, boolean);
 DROP OPERATOR !==== (boolean, real);
 DROP OPERATOR @= (real, boolean);
 DROP OPERATOR @!= (boolean, real);
+DROP OPERATOR @=@ (real, boolean);
 
 DROP FUNCTION customcontsel(internal, oid, internal, integer);
 DROP FUNCTION alter_op_test_fn(boolean, boolean);
 DROP FUNCTION alter_op_test_fn_bool_real(boolean, real);
 DROP FUNCTION alter_op_test_fn_real_bool(real, boolean);
+DROP FUNCTION alter_op_test_fn_real_bool_int(real, boolean);
