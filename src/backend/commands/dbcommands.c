@@ -120,7 +120,6 @@ static bool get_db_info(const char *name, LOCKMODE lockmode,
 						Oid *dbTablespace, char **dbCollate, char **dbCtype, char **dbIculocale,
 						char *dbLocProvider,
 						char **dbCollversion);
-static bool have_createdb_privilege(void);
 static void remove_dbtablespaces(Oid db_id);
 static bool check_db_file_conflict(Oid db_id);
 static int	errdetail_busy_db(int notherbackends, int npreparedxacts);
@@ -2808,7 +2807,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 }
 
 /* Check if current user has createdb privileges */
-static bool
+bool
 have_createdb_privilege(void)
 {
 	bool		result = false;

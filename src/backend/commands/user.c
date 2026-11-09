@@ -1326,7 +1326,7 @@ ReassignOwnedObjects(ReassignOwnedStmt *stmt)
 					 errmsg("permission denied to reassign objects")));
 	}
 
-	/* Must have privileges on the receiving side too */
+	/* Must be able to become the new owner, as for ALTER ... OWNER TO */
 	newrole = get_rolespec_oid(stmt->newrole, false);
 
 	if (!has_privs_of_role(GetUserId(), newrole))

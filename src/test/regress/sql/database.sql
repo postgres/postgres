@@ -16,6 +16,18 @@ ROLLBACK;
 CREATE ROLE regress_datdba_before;
 CREATE ROLE regress_datdba_after;
 ALTER DATABASE regression_utf8 OWNER TO regress_datdba_before;
+-- fail, giving away a database needs CREATEDB
+GRANT regress_datdba_after TO regress_datdba_before;
+SET ROLE regress_datdba_before;
+ALTER DATABASE regression_utf8 OWNER TO regress_datdba_after;
+REASSIGN OWNED BY regress_datdba_before TO regress_datdba_after;
+RESET ROLE;
+ALTER ROLE regress_datdba_before CREATEDB;
+SET ROLE regress_datdba_before;
+REASSIGN OWNED BY regress_datdba_before TO regress_datdba_after;
+RESET ROLE;
+SELECT datdba::regrole FROM pg_database WHERE datname = 'regression_utf8';
+ALTER DATABASE regression_utf8 OWNER TO regress_datdba_before;
 REASSIGN OWNED BY regress_datdba_before TO regress_datdba_after;
 
 DROP DATABASE regression_utf8;
