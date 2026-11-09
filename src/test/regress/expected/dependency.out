@@ -53,8 +53,7 @@ DROP OWNED BY regress_dep_user0, regress_dep_user2;
 ERROR:  permission denied to drop objects
 DETAIL:  Only roles with privileges of role "regress_dep_user2" may drop objects owned by it.
 REASSIGN OWNED BY regress_dep_user0 TO regress_dep_user1;
-ERROR:  permission denied to reassign objects
-DETAIL:  Only roles with privileges of role "regress_dep_user1" may reassign objects to it.
+ERROR:  must be able to SET ROLE "regress_dep_user1"
 REASSIGN OWNED BY regress_dep_user1 TO regress_dep_user0;
 ERROR:  permission denied to reassign objects
 DETAIL:  Only roles with privileges of role "regress_dep_user1" may reassign objects owned by it.
