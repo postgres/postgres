@@ -673,19 +673,124 @@ $node_publisher->safe_psql('postgres', "DROP TABLE tab_upsert");
 
 $node_publisher->stop('fast');
 
+# Start clusters for tests with injection points. Rotate log files for making
+# debugging easier.
+$node_publisher->rotate_logfile();
 $node_publisher->start;
+$node_subscriber->rotate_logfile();
 $node_subscriber->start;
 
 SKIP:
 {
-	skip "injection points not supported by this build", 1
+	skip "injection points not supported by this build", 5
 	  if $node_subscriber->check_extension('injection_points') == 0;
+
+	# Test that relations which must never be a logical replication target are
+	# rejected.  A PostgreSQL publisher cannot name them in the first place, so
+	# simulate one that does by rewriting the relation of the RELATION message
+	# as the apply worker receives it.
+
+	# Use a separate relation per case below.  The publisher sends a RELATION
+	# message for a given relation only once per session, so a second case on
+	# the same relation would never reach the injection point.
+	$node_publisher->safe_psql(
+		'postgres', qq{
+CREATE TABLE tab_target_rel1 (a int);
+CREATE TABLE tab_target_rel2 (a int);
+CREATE TABLE tab_target_rel3 (a int);
+CREATE TABLE tab_target_rel4 (a int);
+CREATE PUBLICATION pub_target_rel
+  FOR TABLE tab_target_rel1, tab_target_rel2, tab_target_rel3,
+            tab_target_rel4;
+	});
+
+	$publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
+	$node_subscriber->safe_psql(
+		'postgres', qq{
+CREATE EXTENSION IF NOT EXISTS injection_points;
+CREATE TABLE tab_target_rel1 (a int);
+CREATE TABLE tab_target_rel2 (a int);
+CREATE TABLE tab_target_rel3 (a int);
+CREATE TABLE tab_target_rel4 (a int);
+CREATE TABLE tab_toasted (a text);
+CREATE MATERIALIZED VIEW matview_target AS SELECT 1 AS a;
+CREATE SUBSCRIPTION sub_target_rel
+  CONNECTION '$publisher_connstr'
+  PUBLICATION pub_target_rel
+  WITH (copy_data = false, conflict_log_destination = 'table');
+	});
+	$node_subscriber->wait_for_subscription_sync($node_publisher,
+		'sub_target_rel');
+
+	# The conflict log table of this very subscription will do as a target.
+	my $conflict_log_table = $node_subscriber->safe_psql(
+		'postgres',
+		"SELECT subconflictlogrelid::regclass::text FROM pg_subscription
+		   WHERE subname = 'sub_target_rel'");
+
+	# So will the TOAST table of an ordinary table.
+	my $toast_table = $node_subscriber->safe_psql(
+		'postgres',
+		"SELECT reltoastrelid::regclass::text FROM pg_class
+		   WHERE oid = 'tab_toasted'::regclass");
+	foreach my $case (
+		[ 'tab_target_rel1', 'pg_catalog.pg_class', 'system tables' ],
+		[ 'tab_target_rel2', $conflict_log_table, 'conflict log tables' ],
+		[ 'tab_target_rel3', $toast_table, 'TOAST tables' ],
+		[ 'tab_target_rel4', 'public.matview_target', 'materialized views' ])
+	{
+		my ($table, $target, $detail) = @$case;
+
+		$node_subscriber->safe_psql(
+			'postgres', qq{
+SELECT injection_points_attach('logical-replication-relation-received',
+  'injection_points', 'logicalrep_relation_redirect', '$target');
+		});
+
+		my $log_offset = -s $node_subscriber->logfile;
+		$node_publisher->safe_psql('postgres',
+			"INSERT INTO $table VALUES (1)");
+
+		$node_subscriber->wait_for_log(
+			qr/cannot use relation "\Q$target\E" as logical replication target/,
+			$log_offset);
+		$node_subscriber->wait_for_log(
+			qr/This operation is not supported for \Q$detail\E/, $log_offset);
+		pass("$detail are rejected as logical replication targets");
+
+		# Once the relation is no longer rewritten, the apply worker retries
+		# and gets past the change it failed on.
+		$node_subscriber->safe_psql('postgres',
+			"SELECT injection_points_detach('logical-replication-relation-received')"
+		);
+		$node_publisher->wait_for_catchup('sub_target_rel');
+	}
+
+	# Cleanup
+	$node_subscriber->safe_psql(
+		'postgres', qq{
+DROP SUBSCRIPTION sub_target_rel;
+DROP MATERIALIZED VIEW matview_target;
+DROP TABLE tab_target_rel1, tab_target_rel2, tab_target_rel3,
+           tab_target_rel4, tab_toasted;
+	});
+	$node_publisher->safe_psql(
+		'postgres', qq{
+DROP PUBLICATION pub_target_rel;
+DROP TABLE tab_target_rel1, tab_target_rel2, tab_target_rel3,
+           tab_target_rel4;
+	});
+
+	$node_publisher->stop('fast');
+	$node_subscriber->stop('fast');
 
 	# Test that ALTER SUBSCRIPTION ... REFRESH PUBLICATION skips a subscribed
 	# relation that is dropped concurrently during the refresh.
 
 	$node_publisher->rotate_logfile();
+	$node_publisher->start;
 	$node_subscriber->rotate_logfile();
+	$node_subscriber->start;
 
 	# Subscribe to a table and a sequence.
 	$node_publisher->safe_psql(

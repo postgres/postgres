@@ -202,8 +202,8 @@ logicalrep_relmap_update(LogicalRepRelation *remoterel)
 	 * XXX The walsender currently does not transmit the relkind of the remote
 	 * relation when replicating changes. Since we support replicating only
 	 * table changes at present, we default to initializing relkind as
-	 * RELKIND_RELATION. This is needed in CheckSubscriptionRelkind() to check
-	 * if the publisher and subscriber relation kinds are compatible.
+	 * RELKIND_RELATION. This is needed in CheckSubscriptionTargetRel() to
+	 * check if the publisher and subscriber relation kinds are compatible.
 	 */
 	entry->remoterel.relkind =
 		(remoterel->relkind == 0) ? RELKIND_RELATION : remoterel->relkind;
@@ -435,10 +435,9 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		entry->localrel = table_open(relid, NoLock);
 		entry->localreloid = relid;
 
-		/* Check for supported relkind. */
-		CheckSubscriptionRelkind(entry->localrel->rd_rel->relkind,
-								 remoterel->relkind,
-								 remoterel->nspname, remoterel->relname);
+		/* Check that the relation can be replicated into. */
+		CheckSubscriptionTargetRel(entry->localreloid, remoterel->relkind,
+								   remoterel->nspname, remoterel->relname);
 
 		/*
 		 * Build the mapping of local attribute numbers to remote attribute
