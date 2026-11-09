@@ -615,6 +615,18 @@ COPY check_ign_err FROM STDIN WITH (on_error ignore);
 1	{1}	3	abc
 \.
 
+-- a hard error in the row following one skipped by ON_ERROR must report the
+-- line correctly.
+COPY check_ign_err FROM STDIN WITH (on_error ignore);
+1	{1}	stale_ignore_text
+2	{2}	2	extra
+\.
+
+COPY check_ign_err FROM STDIN WITH (format csv, on_error ignore);
+1,{1},stale_ignore_csv
+2,{2},2,extra
+\.
+
 -- tests for reject_limit option
 COPY check_ign_err FROM STDIN WITH (on_error ignore, reject_limit 3);
 6	{6}	6

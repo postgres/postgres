@@ -1069,6 +1069,10 @@ CopyFromTextLikeOneRow(CopyFromState cstate, ExprContext *econtext,
 				cstate->relname_only = false;
 			}
 
+			/* The return below skips the clear at the bottom of the loop */
+			cstate->cur_attname = NULL;
+			cstate->cur_attval = NULL;
+
 			return true;
 		}
 
