@@ -251,6 +251,16 @@ SELECT oprcanmerge, oprcanhash,
  t           | t          | operator ====(real,boolean) | operator !====(boolean,real)
 (1 row)
 
+-- Check that a commutator can't be installed if it has the wrong result type
+CREATE FUNCTION alter_op_test_fn_real_bool_int(real, boolean)
+RETURNS integer AS $$ SELECT NULL::INTEGER; $$ LANGUAGE sql IMMUTABLE;
+CREATE OPERATOR @=@ (
+    LEFTARG = real,
+    RIGHTARG = boolean,
+    PROCEDURE = alter_op_test_fn_real_bool_int
+);
+ALTER OPERATOR @!=(boolean, real) SET (COMMUTATOR = @=@);
+ERROR:  commutator operator @=@ does not return the same data type as operator @!=
 --
 -- Clean up
 --
@@ -261,7 +271,9 @@ DROP OPERATOR ==== (real, boolean);
 DROP OPERATOR !==== (boolean, real);
 DROP OPERATOR @= (real, boolean);
 DROP OPERATOR @!= (boolean, real);
+DROP OPERATOR @=@ (real, boolean);
 DROP FUNCTION customcontsel(internal, oid, internal, integer);
 DROP FUNCTION alter_op_test_fn(boolean, boolean);
 DROP FUNCTION alter_op_test_fn_bool_real(boolean, real);
 DROP FUNCTION alter_op_test_fn_real_bool(real, boolean);
+DROP FUNCTION alter_op_test_fn_real_bool_int(real, boolean);

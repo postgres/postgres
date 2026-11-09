@@ -160,16 +160,44 @@ CREATE OR REPLACE FUNCTION fn_op2(boolean, boolean)
 RETURNS boolean AS $$
     SELECT NULL::BOOLEAN;
 $$ LANGUAGE sql IMMUTABLE;
-CREATE OPERATOR === (
+CREATE OPERATOR ===== (
     LEFTARG = boolean,
     RIGHTARG = boolean,
     PROCEDURE = fn_op2,
-    COMMUTATOR = ===,
-    NEGATOR = !==,
+    COMMUTATOR = =====,
+    NEGATOR = !====,
     RESTRICT = contsel,
     JOIN = contjoinsel,
     SORT1, SORT2, LTCMP, GTCMP, HASHES, MERGES
 );
+-- Verify that oprcom/oprnegate links are set up correctly
+SELECT oprname, oprcode, oprresult::regtype,
+       oprcom::regoper, oprnegate::regoper
+FROM pg_operator WHERE oprname IN ('=====', '!====') ORDER BY 1;
+ oprname | oprcode | oprresult | oprcom | oprnegate 
+---------+---------+-----------+--------+-----------
+ !====   | -       | -         | 0      | =====
+ =====   | fn_op2  | boolean   | =====  | !====
+(2 rows)
+
+-- Now fill in the shell operator
+CREATE OPERATOR !==== (
+    LEFTARG = boolean,
+    RIGHTARG = boolean,
+    PROCEDURE = fn_op2,
+    COMMUTATOR = !====
+    -- notice we leave NEGATOR to be inferred from the prior command
+);
+-- Verify that oprcom/oprnegate links are still set up correctly
+SELECT oprname, oprcode, oprresult::regtype,
+       oprcom::regoper, oprnegate::regoper
+FROM pg_operator WHERE oprname IN ('=====', '!====') ORDER BY 1;
+ oprname | oprcode | oprresult | oprcom | oprnegate 
+---------+---------+-----------+--------+-----------
+ !====   | fn_op2  | boolean   | !====  | =====
+ =====   | fn_op2  | boolean   | =====  | !====
+(2 rows)
+
 ROLLBACK;
 -- Should fail. Invalid attribute
 CREATE OPERATOR #@%# (
@@ -288,6 +316,60 @@ CREATE OPERATOR ===!!! (
 );
 ERROR:  operator cannot be its own negator
 ROLLBACK;
+-- Should fail. A commutator operator must return the same datatype.
+BEGIN TRANSACTION;
+CREATE OPERATOR === (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    commutator = <<
+);
+ERROR:  commutator operator << does not return the same data type as operator ===
+ROLLBACK;
+-- The same, detected when replacing a shell operator.
+BEGIN TRANSACTION;
+-- create a shell operator for ===!!! by referencing it as a commutator
+CREATE OPERATOR === (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    commutator = ===!!!
+);
+CREATE OPERATOR ===!!! (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4pl
+);
+ERROR:  commutator operator === does not return the same data type as operator ===!!!
+ROLLBACK;
+-- Should fail. A negator operator must return the same datatype.
+BEGIN TRANSACTION;
+CREATE OPERATOR === (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    negator = <<
+);
+ERROR:  negator operator << does not return the same data type as operator ===
+ROLLBACK;
+-- The same, detected when replacing a shell operator.
+-- (We actually get a must-be-boolean error, because that's detected first,
+-- but the important point is to reject this.)
+BEGIN TRANSACTION;
+-- create a shell operator for ===!!! by referencing it as a negator
+CREATE OPERATOR === (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    negator = ===!!!
+);
+CREATE OPERATOR ===!!! (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4pl
+);
+ERROR:  only boolean operators can have negators
+ROLLBACK;
 -- test that we can't use part of an existing commutator or negator pair
 -- as a commutator or negator
 CREATE OPERATOR === (
@@ -304,6 +386,40 @@ CREATE OPERATOR === (
     negator = <>
 );
 ERROR:  negator operator <> is already the negator of operator =
+-- Test that we can't change a shell operator's existing commutator link
+BEGIN TRANSACTION;
+-- create a shell operator for ===!!! by referencing it as a commutator
+CREATE OPERATOR === (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    commutator = ===!!!
+);
+CREATE OPERATOR ===!!! (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    commutator = <<
+);
+ERROR:  commutator operator === is already the commutator of operator ===!!!
+ROLLBACK;
+-- Test that we can't change a shell operator's existing negator link
+BEGIN TRANSACTION;
+-- create a shell operator for ===!!! by referencing it as a negator
+CREATE OPERATOR === (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    negator = ===!!!
+);
+CREATE OPERATOR ===!!! (
+    leftarg = integer,
+    rightarg = integer,
+    procedure = int4eq,
+    negator = <<
+);
+ERROR:  negator operator === is already the negator of operator ===!!!
+ROLLBACK;
 -- invalid: non-lowercase quoted identifiers
 CREATE OPERATOR ===
 (
