@@ -77,8 +77,11 @@ REASSIGN OWNED BY { <replaceable class="parameter">old_role</replaceable> | CURR
   </para>
 
   <para>
-   <command>REASSIGN OWNED</command> requires membership on both the
-   source role(s) and the target role.
+   You must have every privilege that an individual <literal>ALTER ... OWNER
+   TO</literal> would require you to have.  Unlike <literal>ALTER TABLE
+   ... OWNER TO</literal>, <literal>ALTER TYPE ... OWNER TO</literal>, and
+   other relation and type ownership changes, this does not require the target
+   role to have <literal>CREATE</literal> privilege on the containing schema.
   </para>
 
   <para>
