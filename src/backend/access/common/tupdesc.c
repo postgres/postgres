@@ -762,6 +762,9 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
  * - same composite type ID (but could both be zero)
  * - corresponding attributes (in order) have same the name, type, typmod,
  *   collation
+ * - corresponding dropped attributes have the same width and alignment
+ *   (needed because no other test reliably detects pairs of dropped
+ *   attributes whose types would otherwise make tuple deformation unsafe)
  *
  * This is used to check whether two record types are compatible, whether
  * function return row types are the same, and other similar situations.
@@ -798,6 +801,18 @@ equalRowTypes(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		/* Record types derived from tables could have dropped fields. */
 		if (attr1->attisdropped != attr2->attisdropped)
 			return false;
+
+		/*
+		 * Dropped fields could have incompatible lengths/alignments (can't
+		 * rely on atttypid for this)
+		 */
+		if (attr1->attisdropped)
+		{
+			if (attr1->attlen != attr2->attlen)
+				return false;
+			if (attr1->attalign != attr2->attalign)
+				return false;
+		}
 	}
 
 	return true;
