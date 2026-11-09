@@ -1862,8 +1862,22 @@ pg_get_statisticsobjdef_expressions(PG_FUNCTION_ARGS)
 	foreach(lc, exprs)
 	{
 		Node	   *expr = (Node *) lfirst(lc);
+		Oid			exprtype = exprType(expr);
 		char	   *str;
 		int			prettyFlags = PRETTYFLAG_INDENT;
+
+		/*
+		 * Reject an expression of a pseudo-type.  Such statistics can still
+		 * exist in v18 and older, built by an older minor release, and the
+		 * pg_stats_ext_exprs view reads them along with the result of this
+		 * function.
+		 */
+		if (get_typtype(exprtype) == TYPTYPE_PSEUDO)
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot interpret statistics on an expression of pseudo-type %s",
+						   format_type_be(exprtype)),
+					errhint("The extended statistics object should be dropped."));
 
 		str = deparse_expression_pretty(expr, context, false, false,
 										prettyFlags, 0);

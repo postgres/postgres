@@ -19,6 +19,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_statistic_ext_data.h"
+#include "catalog/pg_type.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
@@ -1095,6 +1096,22 @@ statext_mcv_deserialize(bytea *data)
 	/* Now copy the array of type Oids. */
 	memcpy(mcvlist->types, ptr, sizeof(Oid) * ndims);
 	ptr += (sizeof(Oid) * ndims);
+
+	/*
+	 * Reject a list built on a pseudo-type.  An anonymous record's typmod is
+	 * only valid in the session that built the list.  CREATE STATISTICS now
+	 * rejects pseudo-types, but such a list built by an older minor release
+	 * can still exist in v18 and older.
+	 */
+	for (dim = 0; dim < ndims; dim++)
+	{
+		if (get_typtype(mcvlist->types[dim]) == TYPTYPE_PSEUDO)
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot interpret statistics on an expression of pseudo-type %s",
+						   format_type_be(mcvlist->types[dim])),
+					errhint("The extended statistics object should be dropped."));
+	}
 
 	/* Now it's safe to access the dimension info. */
 	info = palloc(ndims * sizeof(DimensionInfo));

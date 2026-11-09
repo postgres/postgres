@@ -18,6 +18,7 @@
 #include "access/table.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
+#include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
@@ -321,6 +322,15 @@ CreateStatistics(List *relids, CreateStatsStmt *stmt, bool check_rights)
 							 errmsg("statistics creation on system columns is not supported")));
 			}
 
+			atttype = exprType(expr);
+
+			/*
+			 * The expression must be of a type that's safe to store in the
+			 * statistics; e.g., not an anonymous record, whose typmod is only
+			 * valid in the session that built the statistics.
+			 */
+			CheckAttributeType(NULL, atttype, exprCollation(expr), NIL, 0);
+
 			/*
 			 * Disallow data types without a less-than operator.
 			 *
@@ -330,7 +340,6 @@ CreateStatistics(List *relids, CreateStatsStmt *stmt, bool check_rights)
 			 */
 			if (list_length(stmt->exprs) > 1)
 			{
-				atttype = exprType(expr);
 				type = lookup_type_cache(atttype, TYPECACHE_LT_OPR);
 				if (type->lt_opr == InvalidOid)
 					ereport(ERROR,
