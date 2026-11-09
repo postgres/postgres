@@ -248,23 +248,27 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 ObjectAddress
 RenameSchema(const char *oldname, const char *newname)
 {
+	ObjectAddress address;
 	Oid			nspOid;
 	HeapTuple	tup;
 	Relation	rel;
 	AclResult	aclresult;
-	ObjectAddress address;
 	Form_pg_namespace nspform;
+
+	/* Locking before priv checks is bad, but DROP SCHEMA does the same. */
+	address = get_object_address(OBJECT_SCHEMA,
+								 (Node *) makeString(pstrdup(oldname)),
+								 NULL,
+								 AccessExclusiveLock, false);
+	nspOid = address.objectId;
 
 	rel = table_open(NamespaceRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy1(NAMESPACENAME, CStringGetDatum(oldname));
+	tup = SearchSysCacheCopy1(NAMESPACEOID, ObjectIdGetDatum(nspOid));
 	if (!HeapTupleIsValid(tup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-				 errmsg("schema \"%s\" does not exist", oldname)));
+		elog(ERROR, "cache lookup failed for schema %u", nspOid);
 
 	nspform = (Form_pg_namespace) GETSTRUCT(tup);
-	nspOid = nspform->oid;
 
 	/* make sure the new name doesn't exist */
 	if (OidIsValid(get_namespace_oid(newname, true)))
@@ -294,8 +298,6 @@ RenameSchema(const char *oldname, const char *newname)
 	CatalogTupleUpdate(rel, &tup->t_self, tup);
 
 	InvokeObjectPostAlterHook(NamespaceRelationId, nspOid, 0);
-
-	ObjectAddressSet(address, NamespaceRelationId, nspOid);
 
 	table_close(rel, NoLock);
 	heap_freetuple(tup);

@@ -1,0 +1,80 @@
+Parsed test spec with 3 sessions
+
+starting permutation: sleep2 create1 swap3 r2 crash2
+step sleep2: 
+	BEGIN;
+	CREATE FUNCTION s.text2ltree(text) RETURNS int LANGUAGE sql AS 'SELECT 0';
+
+step create1: CREATE EXTENSION ltree SCHEMA s VERSION '1.1'; <waiting ...>
+step swap3: 
+	ALTER SCHEMA s RENAME TO s_old;
+	CREATE SCHEMA s;
+	SET LOCAL search_path = s;
+	CREATE DOMAIN ltree AS int8;
+
+	CREATE FUNCTION ltree_fake(ltree, ltree) RETURNS bool LANGUAGE sql
+		AS 'SELECT false';
+	CREATE FUNCTION ltree_cmp(ltree, ltree) RETURNS int4 LANGUAGE sql
+		AS 'SELECT -1';
+
+	CREATE OPERATOR < (
+		LEFTARG = ltree,
+		RIGHTARG = ltree,
+		PROCEDURE = ltree_fake,
+		COMMUTATOR = '>',
+		NEGATOR = '>=',
+		RESTRICT = contsel,
+		JOIN = contjoinsel
+	);
+
+	CREATE OPERATOR <= (
+		LEFTARG = ltree,
+		RIGHTARG = ltree,
+		PROCEDURE = ltree_fake,
+		COMMUTATOR = '>=',
+		NEGATOR = '>',
+		RESTRICT = contsel,
+		JOIN = contjoinsel
+	);
+
+	CREATE OPERATOR >= (
+		LEFTARG = ltree,
+		RIGHTARG = ltree,
+		PROCEDURE = ltree_fake,
+		COMMUTATOR = '<=',
+		NEGATOR = '<',
+		RESTRICT = contsel,
+		JOIN = contjoinsel
+	);
+
+	CREATE OPERATOR > (
+		LEFTARG = ltree,
+		RIGHTARG = ltree,
+		PROCEDURE = ltree_fake,
+		COMMUTATOR = '<',
+		NEGATOR = '<=',
+		RESTRICT = contsel,
+		JOIN = contjoinsel
+	);
+
+	CREATE OPERATOR = (
+		LEFTARG = ltree,
+		RIGHTARG = ltree,
+		PROCEDURE = ltree_fake,
+		COMMUTATOR = '=',
+		NEGATOR = '<>',
+		RESTRICT = eqsel,
+		JOIN = eqjoinsel,
+		SORT1 = '<',
+		SORT2 = '<'
+	);
+ <waiting ...>
+step r2: ROLLBACK; <waiting ...>
+step create1: <... completed>
+step swap3: <... completed>
+step r2: <... completed>
+step crash2: 
+	SET LOCAL search_path = s, s_old;
+	SELECT lca(123::ltree, 456::ltree);
+
+ERROR:  function lca(ltree, ltree) does not exist
