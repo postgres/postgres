@@ -148,12 +148,14 @@ ALTER TABLE tenant2_table OWNER TO regress_tenant2;
 -- with SET but not INHERIT, we can give away objects but not take them
 REVOKE INHERIT OPTION FOR regress_tenant2 FROM regress_createrole;
 ALTER SCHEMA regress_tenant2_schema OWNER TO regress_tenant2;
+REASSIGN OWNED BY regress_createrole TO regress_tenant2;
 ALTER TABLE tenant2_table OWNER TO regress_createrole;
 
 -- with INHERIT but not SET, we can take objects but not give them away
 GRANT regress_tenant2 TO regress_createrole WITH INHERIT TRUE, SET FALSE;
 ALTER TABLE tenant2_table OWNER TO regress_createrole;
 ALTER TABLE tenant2_table OWNER TO regress_tenant2;
+REASSIGN OWNED BY regress_createrole TO regress_tenant2;
 DROP TABLE tenant2_table;
 
 -- fail, CREATEROLE is not enough to create roles in privileged roles
