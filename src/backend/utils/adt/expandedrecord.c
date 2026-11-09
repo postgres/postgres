@@ -1485,6 +1485,22 @@ build_dummy_expanded_header(ExpandedRecordHeader *main_erh)
 	erh->fvalue = main_erh->fvalue;
 	erh->fstartptr = main_erh->fstartptr;
 	erh->fendptr = main_erh->fendptr;
+
+	/*
+	 * We must create a new short-term context (if needed) in each cycle of
+	 * usage of the dummy header.  This is because if we create one, it will
+	 * be a child of the main header's short-term context, as per above, and
+	 * therefore will go away anytime something resets that context.  The
+	 * immediate callers of this function do so at their ends, so no long-term
+	 * leakage is implied, but the next time we come through here the dummy's
+	 * er_short_term_cxt will be a dangling pointer.
+	 */
+	erh->er_short_term_cxt = NULL;
+
+	/*
+	 * Needn't worry about the dummy header's er_dummy_header, er_domaininfo,
+	 * or er_mcb; none of them will be used.
+	 */
 }
 
 /*
