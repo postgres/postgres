@@ -25,11 +25,7 @@ step s1_upd_alter:
  <waiting ...>
 step s2_commit: COMMIT;
 step s1_upd_alter: <... completed>
-s      
--------
-(FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
 
 starting permutation: s2_upd s1_upd_alter_col s2_commit
 step s2_upd: BEGIN; UPDATE rta_tgt SET n = 0;
@@ -42,7 +38,7 @@ step s1_upd_alter_col:
  <waiting ...>
 step s2_commit: COMMIT;
 step s1_upd_alter_col: <... completed>
-ERROR:  attribute 1 of type record has wrong type
+ERROR:  row type of datum tuple was altered after the datum's creation
 
 starting permutation: s2_upd s3_lock s1_upd_lock s3_alter s2_commit
 step s2_upd: BEGIN; UPDATE rta_tgt SET n = 0;
@@ -57,8 +53,4 @@ step s1_upd_lock:
 step s3_alter: ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text; COMMIT;
 step s2_commit: COMMIT;
 step s1_upd_lock: <... completed>
-s      
--------
-(FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
