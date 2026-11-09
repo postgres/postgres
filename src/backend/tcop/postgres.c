@@ -1771,6 +1771,8 @@ exec_bind_message(StringInfo input_message)
 	else
 		portal = CreatePortal(portal_name, false, false);
 
+	INJECTION_POINT("bind-portal-created", NULL);
+
 	/*
 	 * Prepare to copy stuff into the portal's memory context.  We do all this
 	 * copying first, because it could possibly fail (out-of-memory) and we
@@ -2043,6 +2045,8 @@ exec_bind_message(StringInfo input_message)
 					  psrc->commandTag,
 					  cplan->stmt_list,
 					  cplan);
+
+	INJECTION_POINT("bind-portal-defined", NULL);
 
 	/* Portal is defined, set the plan ID based on its contents. */
 	foreach(lc, portal->stmts)
