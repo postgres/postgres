@@ -45,6 +45,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_partitioned_table.h"
 #include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication_rel.h"
@@ -6822,23 +6823,26 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 			tupleDesc = RelationGetDescr(rel);
 
 			/*
-			 * If objsubid identifies a specific column, refer to that in
-			 * error messages.  Otherwise, search to see if there's a user
-			 * column of the type.  (We assume system columns are never of
-			 * interesting types.)  The search is needed because an index
-			 * containing an expression column of the target type will just be
-			 * recorded as a whole-relation dependency.  If we do not find a
-			 * column of the type, the dependency must indicate that the type
-			 * is transiently referenced in an index expression but not stored
-			 * on disk, which we assume is OK, just as we do for references in
-			 * views.  (It could also be that the target type is embedded in
-			 * some container type that is stored in an index column, but the
-			 * previous recursion should catch such cases.)
+			 * First check for a dependency from a specific column.  (We
+			 * assume system columns are never of interesting types.)
 			 */
 			if (objsubid > 0 && objsubid <= tupleDesc->natts)
 				att = TupleDescAttr(tupleDesc, objsubid - 1);
 			else
 			{
+				/*
+				 * We treat a whole-row dependency the same as a dependency
+				 * from a specific column, if the relation also has a column
+				 * of the given type.  This is because we have a gap:
+				 * expression indexes don't store a dependency on the indexed
+				 * type returned by the expression.  That's a bug, but in many
+				 * typical cases, the expression will have a dependency on the
+				 * row type, so we can often still catch it here.  Treat it as
+				 * if the dependency was on the column.  (It could also be
+				 * that the target type is embedded in some container type
+				 * that is stored in an index column, but the previous
+				 * recursion should catch such cases.)
+				 */
 				att = NULL;
 				for (int attno = 1; attno <= tupleDesc->natts; attno++)
 				{
@@ -6847,42 +6851,162 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 						break;
 					att = NULL;
 				}
-				if (att == NULL)
+			}
+			if (att)
+			{
+				/*
+				 * A column uses the datatype.
+				 *
+				 * We definitely should reject if the relation has storage.
+				 *
+				 * If it's partitioned, then perhaps we wouldn't have to
+				 * reject: if there are partitions then we'll fail when we
+				 * find one, else there is no stored data to worry about.
+				 * However, it's possible that the type change would affect
+				 * conclusions about whether the type is sortable or hashable
+				 * and thus (if it's a partitioning column) break the
+				 * partitioning rule.  For now, reject for partitioned rels
+				 * too.
+				 */
+				if (RELKIND_HAS_STORAGE(rel->rd_rel->relkind) ||
+					RELKIND_HAS_PARTITIONS(rel->rd_rel->relkind))
 				{
-					/* No such column, so assume OK */
-					relation_close(rel, AccessShareLock);
-					break;
+					report_type_used_in_column(RelationGetRelationName(rel),
+											   NameStr(att->attname),
+											   origRelation, origTypeName);
+				}
+
+				if (OidIsValid(rel->rd_rel->reltype) && rel->rd_rel->reltype != typeOid)
+				{
+					/*
+					 * A view or composite type itself isn't a problem, but we
+					 * must recursively check for indirect dependencies via
+					 * its rowtype.
+					 */
+					find_composite_type_dependencies_recurse(rel->rd_rel->reltype,
+															 origRelation, origTypeName,
+															 visited);
 				}
 			}
 
 			/*
-			 * We definitely should reject if the relation has storage.  If
-			 * it's partitioned, then perhaps we don't have to reject: if
-			 * there are partitions then we'll fail when we find one, else
-			 * there is no stored data to worry about.  However, it's possible
-			 * that the type change would affect conclusions about whether the
-			 * type is sortable or hashable and thus (if it's a partitioning
-			 * column) break the partitioning rule.  For now, reject for
-			 * partitioned rels too.
+			 * If it's a dependency on the type as whole, look closer what
+			 * exactly in the relation uses it.  Some uses don't prevent
+			 * ALTERing the rowtype, but others do.
+			 *
+			 * NOTE: We must not use the expressions cached in the relcache,
+			 * because they go through eval_const_expressions(), which could
+			 * fold away the thing that caused the dependency.
 			 */
-			if (RELKIND_HAS_STORAGE(rel->rd_rel->relkind) ||
-				RELKIND_HAS_PARTITIONS(rel->rd_rel->relkind))
-			{
-				report_type_used_in_column(RelationGetRelationName(rel),
-										   NameStr(att->attname),
-										   origRelation, origTypeName);
-			}
-
-			if (OidIsValid(rel->rd_rel->reltype) && rel->rd_rel->reltype != typeOid)
+			if (objsubid == 0)
 			{
 				/*
-				 * A view or composite type itself isn't a problem, but we
-				 * must recursively check for indirect dependencies via its
-				 * rowtype.
+				 * If the type is used in a PARTITION BY expression, must be
+				 * rejected.
 				 */
-				find_composite_type_dependencies_recurse(rel->rd_rel->reltype,
-														 origRelation, origTypeName,
-														 visited);
+				if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+				{
+					List	   *partexprs;
+					ListCell   *lc;
+
+					catalog_tup = SearchSysCache1(PARTRELID,
+												  ObjectIdGetDatum(RelationGetRelid(rel)));
+					if (!HeapTupleIsValid(catalog_tup))
+						elog(ERROR, "cache lookup failed for partition key of relation %u",
+							 RelationGetRelid(rel));
+					partexprs = (List *)
+						get_node_tree_attr(PARTRELID, catalog_tup,
+										   Anum_pg_partitioned_table_partexprs);
+					foreach(lc, partexprs)
+					{
+						Node	   *partexpr = lfirst(lc);
+
+						/*
+						 * Check if it's the PARTITION BY's return type.
+						 *
+						 * (This could be allowed as long as the table has no
+						 * partitions.  The problem really only arises from
+						 * the partition bounds stored in the 'relpartbound'
+						 * of the partitions.  But it's not worth
+						 * distinguishing that case.)
+						 *
+						 * XXX: We don't currently store a dependency for this
+						 * reason, but check it anyway, so that once we do,
+						 * we'll catch it here.  And in many cases the
+						 * expression references the rowtype in a way that
+						 * records a dependency, so we often get here anyway.
+						 */
+						if (exprType(partexpr) == typeOid)
+							report_type_used_in_expr(depobj, origRelation, origTypeName);
+
+						/*
+						 * Check if the expression uses the rowtype.  We must
+						 * reject that case because otherwise we'd need to
+						 * rewrite the expression stored in the catalog, as
+						 * well as the partition bounds of all the partitions,
+						 * and also because the data might no longer be in the
+						 * correct partitions according to the new datatype's
+						 * sort order.
+						 */
+						if (CheckTypeDependencyInSingleRelExpr(partexpr, RelationGetRelid(rel), typeOid))
+							report_type_used_in_expr(depobj, origRelation, origTypeName);
+					}
+					ReleaseSysCache(catalog_tup);
+				}
+
+				/*
+				 * If it's an expression or partial index, must reject if the
+				 * expressions use the rowtype (it might include Consts).
+				 *
+				 * If an index uses the target type as a column, we will
+				 * rebuild it, but RememberAllDependentForRebuilding() doesn't
+				 * handle whole-row dependencies.
+				 */
+				if (rel->rd_indextuple)
+				{
+					expr = get_node_tree_attr(INDEXRELID, rel->rd_indextuple,
+											  Anum_pg_index_indexprs);
+					if (expr)
+					{
+						if (CheckTypeDependencyInSingleRelExpr(expr, RelationGetRelid(rel), typeOid))
+							report_type_used_in_expr(depobj, origRelation, origTypeName);
+
+						/*
+						 * If it's the *return type* of an index expression,
+						 * it becomes a column type and we checked that above
+						 * already.
+						 */
+					}
+					expr = get_node_tree_attr(INDEXRELID, rel->rd_indextuple,
+											  Anum_pg_index_indpred);
+					if (expr)
+					{
+						if (CheckTypeDependencyInSingleRelExpr(expr, RelationGetRelid(rel), typeOid))
+							report_type_used_in_expr(depobj, origRelation, origTypeName);
+					}
+				}
+
+				/*
+				 * We have now checked for all the known reasons that a
+				 * relation might depend on a type that prevents ALTERing it.
+				 * There are two reasons left that don't prevent ALTER: the
+				 * type is the table's reltype, or its TYPE OF type.  (The
+				 * TYPE OF case might still prevent the operation, but that's
+				 * handled separately by find_typed_table_dependencies())
+				 */
+				if (rel->rd_rel->reltype == typeOid || rel->rd_rel->reloftype == typeOid)
+				{
+					/* ok */
+				}
+				else
+				{
+					/*
+					 * We've covered all reasons for this dependency to exist,
+					 * so why are we here?  Better play safe and reject it.
+					 */
+					Assert(false);
+					report_type_used_in_expr(depobj, origRelation, origTypeName);
+				}
 			}
 
 			relation_close(rel, AccessShareLock);
