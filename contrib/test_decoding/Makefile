@@ -5,7 +5,8 @@ PGFILEDESC = "test_decoding - example of a logical decoding output plugin"
 
 REGRESS = ddl xact rewrite toast permissions decoding_in_xact \
 	decoding_into_rel binary prepared replorigin time messages \
-	repack spill slot truncate stream stats twophase twophase_stream
+	repack spill slot truncate stream stats twophase twophase_stream \
+	rowtypes_alter
 
 # slot_creation_error terminates another backend, whose FATAL message can be
 # lost on Windows, making the test unstable there.
