@@ -2654,6 +2654,75 @@ when not matched then
 
 drop table merge_source_table, merge_target_table;
 
+--
+-- test transition tables with MERGE into a partitioned table
+--
+create table merge_part_target_table (a int, b text) partition by list (a);
+create table merge_part_target_table_p1 partition of merge_part_target_table
+  for values in (1, 2);
+create index on merge_part_target_table (a);
+create trigger merge_part_target_table_update_trig
+  after update on merge_part_target_table
+  referencing old table as old_table new table as new_table
+  for each statement execute procedure dump_update();
+
+insert into merge_part_target_table values (2, 'original2');
+
+merge into merge_part_target_table t
+using (values (1, 'inserted1'), (2, 'updated2')) as s(a, b)
+on t.a = s.a
+when matched then
+	update set b = s.b
+when not matched then
+	insert values (s.a, s.b);
+
+select * from merge_part_target_table order by a;
+
+drop table merge_part_target_table;
+
+--
+-- Same again, but with a partition whose column order differs from the
+-- root, so that a child-to-root conversion is required.
+--
+create table merge_conv_table (a int, b text) partition by range (a);
+create table merge_conv_table_p (b text, a int);
+alter table merge_conv_table attach partition merge_conv_table_p
+  for values from (0) to (100);
+create index on merge_conv_table (a);
+create trigger merge_conv_table_update_trig
+  after update on merge_conv_table
+  referencing old table as old_table new table as new_table
+  for each statement execute procedure dump_update();
+
+insert into merge_conv_table values (2, 'original2');
+
+-- Coerce a nested loop join plan with the VALUES on the outer side
+-- and an index scan on the inner side.  This makes the MATCHED and
+-- NOT MATCHED rows to be processed in the order they're listed in the
+-- VALUES, i.e. the NOT MATCHED row before the MATCHED, which was
+-- relevant for hitting an old bug in inserting to the the transition
+-- table.  As of this writing, that's the plan you get with the
+-- defaults anyway, but the costs are pretty close.
+begin;
+set local enable_nestloop = on;
+set local enable_hashjoin = off;
+set local enable_mergejoin = off;
+set local enable_seqscan = off;
+
+merge into merge_conv_table t
+using (values (1, 'inserted1'), (2, 'updated2')) as s(a, b)
+on t.a = s.a
+when matched then
+	update set b = s.b
+when not matched then
+	insert values (s.a, s.b);
+
+commit;
+
+select * from merge_conv_table order by a;
+
+drop table merge_conv_table;
+
 -- cleanup
 drop function dump_insert();
 drop function dump_update();
