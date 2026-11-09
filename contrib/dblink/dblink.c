@@ -249,6 +249,16 @@ dblink_get_conn(char *conname_or_str,
 		dblink_connstr_check(connstr);
 
 		/*
+		 * Final security check on the proxied connection options. Like
+		 * dblink_connect, this happens whether the current user is a
+		 * superuser or not.
+		 *
+		 * This must be done prior to the AcquireExternalFD() call, so we
+		 * don't leak the reservation on ERROR.
+		 */
+		libpqsrv_check_proxy_conninfo(connstr);
+
+		/*
 		 * We must obey fd.c's limit on non-virtual file descriptors.  Assume
 		 * that a PGconn represents one long-lived FD.  (Doing this here also
 		 * ensures that VFDs are closed if needed to make room.)
@@ -367,6 +377,20 @@ dblink_connect(PG_FUNCTION_ARGS)
 	 */
 	if (!connname && pconn->conn)
 		dblink_check_conn_not_in_use(pconn, NULL);
+
+	/*
+	 * Final security check on the proxied connection options.
+	 *
+	 * NB: Validation happens regardless of whether the current user is a
+	 * superuser, because dblink_connect_u is implemented as a SECURITY
+	 * DEFINER function, and it's only documented to grant an exception for
+	 * the dblink_security_check. We don't really want to expand that set of
+	 * privileges arbitrarily.
+	 *
+	 * This must be done prior to the AcquireExternalFD() call, so we don't
+	 * leak the reservation on ERROR.
+	 */
+	libpqsrv_check_proxy_conninfo(connstr);
 
 	/*
 	 * We must obey fd.c's limit on non-virtual file descriptors.  Assume that
