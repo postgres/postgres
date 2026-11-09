@@ -2144,6 +2144,7 @@ PatternInfo
 PatternInfoArray
 Pattern_Prefix_Status
 Pattern_Type
+PendingCancelRequest
 PendingFsyncEntry
 PendingRelDelete
 PendingRelSync
