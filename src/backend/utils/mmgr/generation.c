@@ -706,10 +706,14 @@ GenerationFree(void *pointer)
 	 * If there is no freeblock set or if this is the freeblock then instead
 	 * of freeing this memory, we keep it around so that new allocations have
 	 * the option of recycling it.
+	 *
+	 * Don't reuse blocks larger than what we'd normally allocate
+	 * (maxBlockSize) though; as explained in GenerationContextCreate(), a
+	 * reused block must not exceed MEMORYCHUNK_MAX_BLOCKOFFSET.
 	 */
-	if (set->freeblock == NULL || set->freeblock == block)
+	if ((set->freeblock == NULL || set->freeblock == block) &&
+		block->blksize <= set->maxBlockSize)
 	{
-		/* XXX should we only recycle maxBlockSize sized blocks? */
 		set->freeblock = block;
 		GenerationBlockMarkEmpty(block);
 		return;
