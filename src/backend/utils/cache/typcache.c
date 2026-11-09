@@ -2993,12 +2993,13 @@ find_or_make_matching_shared_tupledesc(TupleDesc tupdesc)
 	PG_END_TRY();
 	typmod_table_entry->typmod = typmod;
 	typmod_table_entry->shared_tupdesc = shared_dp;
-	dshash_release_lock(CurrentSession->shared_typmod_table,
-						typmod_table_entry);
 
 	/*
 	 * Finally create an entry in the record table so others with matching
 	 * tuple descriptors can reuse the typmod.
+	 *
+	 * Note that we're still holding the lock on typmod_table_entry.  Any code
+	 * that needs both locks must acquire them in this order.
 	 */
 	record_table_entry = (SharedRecordTableEntry *)
 		dshash_find_or_insert(CurrentSession->shared_record_table, &key,
@@ -3012,10 +3013,15 @@ find_or_make_matching_shared_tupledesc(TupleDesc tupdesc)
 		dshash_release_lock(CurrentSession->shared_record_table,
 							record_table_entry);
 
-		/* Might as well free up the space used by the one we created. */
-		found = dshash_delete_key(CurrentSession->shared_typmod_table,
-								  &typmod);
-		Assert(found);
+		/*
+		 * In general, it's unsafe to delete a TupleDesc once it's referenced
+		 * from either hash table, because other backends might already be
+		 * accessing it.  However, since we haven't released the lock on
+		 * typmod_table_entry, no one can have seen it yet, and thus no one
+		 * can have a pointer to shared_dp.
+		 */
+		dshash_delete_entry(CurrentSession->shared_typmod_table,
+							typmod_table_entry);
 		dsa_free(CurrentSession->area, shared_dp);
 
 		/* Return the one we found. */
@@ -3033,6 +3039,8 @@ find_or_make_matching_shared_tupledesc(TupleDesc tupdesc)
 	record_table_entry->key.u.shared_tupdesc = shared_dp;
 	dshash_release_lock(CurrentSession->shared_record_table,
 						record_table_entry);
+	dshash_release_lock(CurrentSession->shared_typmod_table,
+						typmod_table_entry);
 	result = (TupleDesc)
 		dsa_get_address(CurrentSession->area, shared_dp);
 	Assert(result->tdrefcount == -1);
