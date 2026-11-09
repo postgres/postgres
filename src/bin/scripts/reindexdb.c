@@ -713,8 +713,11 @@ get_parallel_object_list(PGconn *conn, ReindexType type,
 		case REINDEX_INDEX:
 			{
 				SimpleStringListCell *cell;
+				PQExpBufferData relbuf;
 
 				Assert(user_list != NULL);
+
+				initPQExpBuffer(&relbuf);
 
 				/*
 				 * Straight-forward index-level REINDEX is not supported with
@@ -734,22 +737,32 @@ get_parallel_object_list(PGconn *conn, ReindexType type,
 									 "JOIN pg_catalog.pg_class t ON t.oid = x.indrelid\n"
 									 "JOIN pg_catalog.pg_class i ON i.oid = x.indexrelid\n"
 									 "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.relnamespace\n"
-									 "WHERE x.indexrelid OPERATOR(pg_catalog.=) ANY(ARRAY['");
+									 "WHERE x.indexrelid OPERATOR(pg_catalog.=) ANY(ARRAY[");
 
 				for (cell = user_list->head; cell; cell = cell->next)
 				{
 					if (cell != user_list->head)
-						appendPQExpBufferStr(&catalog_query, "', '");
+						appendPQExpBufferStr(&catalog_query, ", ");
 
-					appendQualifiedRelation(&catalog_query, cell->val, conn, echo);
+					/*
+					 * appendQualifiedRelation() yields a quoted identifier,
+					 * which is not safe to embed in a string literal as-is
+					 * (single quotes in the name would not be escaped).
+					 * Resolve the name into a separate buffer and then append
+					 * it as a properly-escaped literal.
+					 */
+					resetPQExpBuffer(&relbuf);
+					appendQualifiedRelation(&relbuf, cell->val, conn, echo);
+					appendStringLiteralConn(&catalog_query, relbuf.data, conn);
 				}
+				termPQExpBuffer(&relbuf);
 
 				/*
 				 * Order tables by the size of its greatest index.  Within the
 				 * table, order indexes by their sizes.
 				 */
 				appendPQExpBufferStr(&catalog_query,
-									 "']::pg_catalog.regclass[])\n"
+									 "]::pg_catalog.regclass[])\n"
 									 "ORDER BY max(i.relpages) OVER \n"
 									 "    (PARTITION BY n.nspname, t.relname),\n"
 									 "  n.nspname, t.relname, i.relpages;\n");
