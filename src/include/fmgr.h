@@ -263,6 +263,9 @@ extern varlena *pg_detoast_datum_packed(varlena *datum);
 			pfree(ptr); \
 	} while (0)
 
+/* to avoid including htup_details.h here */
+struct HeapTupleHeaderData;
+
 /* Macros for fetching arguments of standard types */
 
 #define PG_GETARG_DATUM(n)	 (fcinfo->args[n].value)
@@ -293,13 +296,18 @@ extern varlena *pg_detoast_datum_packed(varlena *datum);
 #define DatumGetTextPP(X)			((text *) PG_DETOAST_DATUM_PACKED(X))
 #define DatumGetBpCharPP(X)			((BpChar *) PG_DETOAST_DATUM_PACKED(X))
 #define DatumGetVarCharPP(X)		((VarChar *) PG_DETOAST_DATUM_PACKED(X))
-#define DatumGetHeapTupleHeader(X)	((HeapTupleHeader) PG_DETOAST_DATUM(X))
+/* implemented in heaptuple.c, but declared here, for backward compat */
+extern struct HeapTupleHeaderData *DatumGetHeapTupleHeader(Datum t);
+extern struct HeapTupleHeaderData *DatumGetHeapTupleHeaderExt(Datum t, bool *was_datum);
+
 /* And we also offer variants that return an OK-to-write copy */
 #define DatumGetByteaPCopy(X)		((bytea *) PG_DETOAST_DATUM_COPY(X))
 #define DatumGetTextPCopy(X)		((text *) PG_DETOAST_DATUM_COPY(X))
 #define DatumGetBpCharPCopy(X)		((BpChar *) PG_DETOAST_DATUM_COPY(X))
 #define DatumGetVarCharPCopy(X)		((VarChar *) PG_DETOAST_DATUM_COPY(X))
-#define DatumGetHeapTupleHeaderCopy(X)	((HeapTupleHeader) PG_DETOAST_DATUM_COPY(X))
+/* implemented in heaptuple.c, but declared here, for backward compat */
+extern struct HeapTupleHeaderData *DatumGetHeapTupleHeaderCopy(Datum t);
+
 /* Variants which return n bytes starting at pos. m */
 #define DatumGetByteaPSlice(X,m,n)	((bytea *) PG_DETOAST_DATUM_SLICE(X,m,n))
 #define DatumGetTextPSlice(X,m,n)	((text *) PG_DETOAST_DATUM_SLICE(X,m,n))

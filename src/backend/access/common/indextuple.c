@@ -529,8 +529,9 @@ index_truncate_tuple(TupleDesc sourceDescriptor, IndexTuple source,
 	Assert(IndexTupleSize(truncated) <= IndexTupleSize(source));
 
 	/*
-	 * Cannot leak memory here, TupleDescCopy() doesn't allocate any inner
-	 * structure, so, plain pfree() should clean all allocated memory
+	 * Cannot leak memory here, CreateTupleDescTruncatedCopy() doesn't
+	 * allocate any inner structure, so, plain pfree() should clean all
+	 * allocated memory
 	 */
 	pfree(truncdesc);
 
