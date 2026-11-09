@@ -3130,6 +3130,19 @@ delete from rem2;
 
 alter server loopback options (drop batch_size);
 
+
+-- ===================================================================
+-- test COPY TO
+-- ===================================================================
+
+-- test that COPY ... TO ... (FORMAT json) works
+
+-- once with a projection (due to dropped cols)
+COPY (SELECT * FROM ft1 ORDER BY c1 LIMIT 1) TO STDOUT (FORMAT json);
+-- and once without
+COPY (SELECT * FROM ft4 ORDER BY c1 LIMIT 1) TO STDOUT (FORMAT json);
+
+
 -- ===================================================================
 -- test for TRUNCATE
 -- ===================================================================
