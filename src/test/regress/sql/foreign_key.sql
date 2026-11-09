@@ -359,6 +359,28 @@ RESET ROLE;
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 
+-- Comparing the old and new key values to decide whether an UPDATE needs a
+-- check applies the FK column's cast function, as the user issuing the UPDATE.
+CREATE TYPE fk_acl_enum AS ENUM ('one');
+CREATE FUNCTION fk_acl_enum_to_int4(fk_acl_enum) RETURNS int4
+  AS 'SELECT 1' LANGUAGE sql IMMUTABLE STRICT;
+CREATE CAST (fk_acl_enum AS int4) WITH FUNCTION fk_acl_enum_to_int4(fk_acl_enum) AS IMPLICIT;
+REVOKE EXECUTE ON FUNCTION fk_acl_enum_to_int4(fk_acl_enum) FROM PUBLIC;
+CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY );
+CREATE TABLE FKTABLE ( ftest1 fk_acl_enum REFERENCES PKTABLE, ftest2 int );
+INSERT INTO PKTABLE VALUES (1);
+INSERT INTO FKTABLE VALUES ('one', 1);
+GRANT UPDATE ON FKTABLE TO regress_foreign_key_user;
+SET ROLE regress_foreign_key_user;
+UPDATE FKTABLE SET ftest2 = 2; -- fails
+RESET ROLE;
+
+DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
+DROP CAST (fk_acl_enum AS int4);
+DROP FUNCTION fk_acl_enum_to_int4(fk_acl_enum);
+DROP TYPE fk_acl_enum;
+
 DROP USER regress_foreign_key_user;
 
 --
