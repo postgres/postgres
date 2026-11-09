@@ -6736,14 +6736,28 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 		case TypeRelationId:
 
 			/*
-			 * This must be an array, domain, or range containing the given
-			 * type, so recursively check for uses of this type.  Note that
-			 * any error message will mention the original type not the
-			 * container; this is intentional.
+			 * An array, domain, or range containing the given type doesn't
+			 * prevent altering it.  But recursively check for uses of this
+			 * type.  Note that any error message will mention the original
+			 * type not the container; this is intentional.
 			 */
 			find_composite_type_dependencies_recurse(objid,
 													 origRelation, origTypeName,
 													 visited);
+
+			/*
+			 * A domain's default expression can embed a Const of the altered
+			 * type, however.  We must reject that.
+			 */
+			catalog_tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(objid));
+			if (!HeapTupleIsValid(catalog_tup))
+				elog(ERROR, "cache lookup failed for type %u", objid);
+
+			expr = get_node_tree_attr(TYPEOID, catalog_tup, Anum_pg_type_typdefaultbin);
+			if (expr && CheckTypeDependencyInExpr(expr, NIL, typeOid))
+				report_type_used_in_expr(depobj, origRelation, origTypeName);
+
+			ReleaseSysCache(catalog_tup);
 			break;
 
 		case RelationRelationId:
