@@ -83,8 +83,12 @@ dintdict_lexize(PG_FUNCTION_ARGS)
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	int			len = PG_GETARG_INT32(2);
 	char	   *txt;
-	TSLexeme   *res = palloc0_array(TSLexeme, 2);
+	TSLexeme   *res;
 
+	if (len <= 0)
+		PG_RETURN_POINTER(NULL);
+
+	res = palloc0_array(TSLexeme, 2);
 	res[1].lexeme = NULL;
 
 	if (d->absval && (in[0] == '+' || in[0] == '-'))
