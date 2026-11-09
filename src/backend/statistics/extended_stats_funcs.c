@@ -17,6 +17,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/relation.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_collation_d.h"
@@ -320,6 +321,7 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	char	   *stxname;
 	bool		inherited;
 	Relation	pg_stext = NULL;
+	Relation	targetrel = NULL;
 	HeapTuple	tup = NULL;
 
 	StakindFlags enabled = {false, false, false, false};
@@ -395,6 +397,16 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 	relid = RangeVarGetRelidExtended(makeRangeVar(relnspname, relname, -1),
 									 ShareUpdateExclusiveLock, 0,
 									 RangeVarCallbackForStats, &locked_table);
+
+	/*
+	 * Parsing the MCV and expression inputs below can run user-defined code
+	 * (such as a domain's CHECK constraint) that alters a column's type
+	 * within our own transaction, which our lock does not prevent.  Hold the
+	 * relation open so that such a reentrant ALTER TABLE is rejected by
+	 * CheckTableNotInUse().  NoLock is fine here as we already hold
+	 * ShareUpdateExclusiveLock on it.
+	 */
+	targetrel = relation_open(relid, NoLock);
 
 	nspoid = get_namespace_oid(nspname, true);
 	if (nspoid == InvalidOid)
@@ -749,9 +761,22 @@ extended_statistics_update(FunctionCallInfo fcinfo)
 			success = false;
 	}
 
+	/*
+	 * The user-defined code run while parsing the inputs above can also drop
+	 * the statistics object itself, which holding the relation open does not
+	 * prevent.  The object must not go away in the middle of restoring its
+	 * statistics, so error out, which also rolls back the drop.
+	 */
+	if (!SearchSysCacheExists1(STATEXTOID, ObjectIdGetDatum(stxform->oid)))
+		ereport(ERROR,
+				errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("could not restore extended statistics object \"%s.%s\": it was dropped during the import",
+					   nspname, stxname));
+
 	upsert_pg_statistic_ext_data(values, nulls, replaces);
 
 cleanup:
+	relation_close(targetrel, NoLock);
 	if (HeapTupleIsValid(tup))
 		heap_freetuple(tup);
 	if (pg_stext != NULL)
