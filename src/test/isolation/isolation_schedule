@@ -119,4 +119,5 @@ test: matview-write-skew
 test: ddl-dependency-locking
 test: tablespace-dependency-locking
 test: pub-concurrent-drop
+test: type-ddl-locking
 test: drop-owned-grant
