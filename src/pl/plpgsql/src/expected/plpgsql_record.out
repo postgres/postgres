@@ -780,7 +780,9 @@ begin
   r2 := r1;
   raise notice 'r2 = %', r2;
 end$$;
-NOTICE:  r2 = (1,2,)
+ERROR:  assigned value is incompatible with the variable's type
+DETAIL:  A variable can retain the type definition established when it was first used.
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at assignment
 drop table recmove_tab;
 create table recmove_tab (f1 int, f2 int);
 insert into recmove_tab values (1, 2);
@@ -793,7 +795,9 @@ begin
   r2 := r1;
   raise notice 'r2 = %', r2;
 end$$;
-NOTICE:  r2 = (1)
+ERROR:  assigned value is incompatible with the variable's type
+DETAIL:  A variable can retain the type definition established when it was first used.
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at assignment
 drop table recmove_tab;
 -- check access to system columns in a record variable
 create function sillytrig() returns trigger language plpgsql as
