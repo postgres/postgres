@@ -1450,25 +1450,19 @@ ExecInitExprRec(Expr *node, ExprState *state,
 			{
 				FieldStore *fstore = (FieldStore *) node;
 				TupleDesc	tupDesc;
-				ExprEvalRowtypeCache *rowcachep;
 				Datum	   *values;
 				bool	   *nulls;
 				int			ncolumns;
 				ListCell   *l1,
 						   *l2;
 
-				/* find out the number of columns in the composite type */
-				tupDesc = lookup_rowtype_tupdesc(fstore->resulttype, -1);
+				/* Copy the tupdesc to describe result tuples */
+				tupDesc = lookup_rowtype_tupdesc_copy(fstore->resulttype, -1);
 				ncolumns = tupDesc->natts;
-				DecrTupleDescRefCount(tupDesc);
 
 				/* create workspace for column values */
 				values = (Datum *) palloc(sizeof(Datum) * ncolumns);
 				nulls = (bool *) palloc(sizeof(bool) * ncolumns);
-
-				/* create shared composite-type-lookup cache struct */
-				rowcachep = palloc(sizeof(ExprEvalRowtypeCache));
-				rowcachep->cacheptr = NULL;
 
 				/* emit code to evaluate the composite input value */
 				ExecInitExprRec(fstore->arg, state, resv, resnull);
@@ -1476,23 +1470,37 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				/* next, deform the input tuple into our workspace */
 				scratch.opcode = EEOP_FIELDSTORE_DEFORM;
 				scratch.d.fieldstore.fstore = fstore;
-				scratch.d.fieldstore.rowcache = rowcachep;
+				scratch.d.fieldstore.tupdesc = tupDesc;
 				scratch.d.fieldstore.values = values;
 				scratch.d.fieldstore.nulls = nulls;
-				scratch.d.fieldstore.ncolumns = ncolumns;
 				ExprEvalPushStep(state, &scratch);
 
 				/* evaluate new field values, store in workspace columns */
 				forboth(l1, fstore->newvals, l2, fstore->fieldnums)
 				{
 					Expr	   *e = (Expr *) lfirst(l1);
+					Oid			etype = exprType((Node *) e);
 					AttrNumber	fieldnum = lfirst_int(l2);
+					Oid			atttype = TupleDescAttr(tupDesc, fieldnum - 1)->atttypid;
 					Datum	   *save_innermost_caseval;
 					bool	   *save_innermost_casenull;
 
 					if (fieldnum <= 0 || fieldnum > ncolumns)
 						elog(ERROR, "field number %d is out of range in FieldStore",
 							 fieldnum);
+
+					/*
+					 * Be paranoid about the plan and the current type
+					 * definition having gotten out of sync.
+					 */
+					if (etype != atttype)
+						ereport(ERROR,
+								(errcode(ERRCODE_DATATYPE_MISMATCH),
+								 errmsg("attribute %d of type %s has wrong type",
+										fieldnum, format_type_be(fstore->resulttype)),
+								 errdetail("Attribute has type %s, but query expects %s.",
+										   format_type_be(atttype),
+										   format_type_be(etype))));
 
 					/*
 					 * Use the CaseTestExpr mechanism to pass down the old
@@ -1534,10 +1542,9 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				/* finally, form result tuple */
 				scratch.opcode = EEOP_FIELDSTORE_FORM;
 				scratch.d.fieldstore.fstore = fstore;
-				scratch.d.fieldstore.rowcache = rowcachep;
+				scratch.d.fieldstore.tupdesc = tupDesc;
 				scratch.d.fieldstore.values = values;
 				scratch.d.fieldstore.nulls = nulls;
-				scratch.d.fieldstore.ncolumns = ncolumns;
 				ExprEvalPushStep(state, &scratch);
 				break;
 			}
