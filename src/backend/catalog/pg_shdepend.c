@@ -47,6 +47,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/alter.h"
+#include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/policy.h"
@@ -103,7 +104,8 @@ static void storeObjectDescription(StringInfo descs,
 								   ObjectAddress *object,
 								   SharedDependencyType deptype,
 								   int count);
-static void shdepReassignOwned_Owner(Form_pg_shdepend sdepForm, Oid newrole);
+static void shdepReassignOwned_Owner(Form_pg_shdepend sdepForm,
+									 Oid oldrole, Oid newrole);
 static void shdepReassignOwned_InitAcl(Form_pg_shdepend sdepForm,
 									   Oid oldrole, Oid newrole);
 
@@ -1538,6 +1540,25 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
  *
  * Change the owner of objects owned by any of the roles in roleids to
  * newrole.  Grants are not touched.
+ *
+ * This must check the same GetUserId() privileges as individual ALTER
+ * ... OWNER TO commands.
+ *
+ * This should also check the same newrole privileges as ALTER ... OWNER TO
+ * commands.  XXX Today, unlike ALTER TABLE and ALTER TYPE, this doesn't
+ * require newrole to have CREATE privilege on the containing schema.
+ * Long-term, remove the newrole privilege checks from ALTER ... OWNER TO or
+ * cover them here.  The newrole checks are intended to enforce that altering
+ * the owner doesn't do anything you couldn't do by dropping and recreating
+ * the object.  Failing to achieve that goal is a bug but not a vulnerability.
+ *
+ * There's also an ambiguity in the "same newrole privileges" goal.  When
+ * running more than one ALTER ... OWNER TO, order of commands can affect
+ * success of privilege checks.  For example, ALTER SCHEMA ... OWNER TO can
+ * change the success or failure of privilege checks in future ALTER FUNCTION
+ * ... OWNER.  ALTER DATABASE ... OWNER TO can change future ALTER PUBLICATION
+ * ... OWNER.  This operation runs ownership changes in an unspecified order,
+ * currently tied to catalog tuple physical order.
  */
 void
 shdepReassignOwned(List *roleids, Oid newrole)
@@ -1635,7 +1656,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 							break;
 						}
 					}
-					shdepReassignOwned_Owner(sdepForm, newrole);
+					shdepReassignOwned_Owner(sdepForm, roleid, newrole);
 					break;
 				case SHARED_DEPENDENCY_INITACL:
 					shdepReassignOwned_InitAcl(sdepForm, roleid, newrole);
@@ -1671,8 +1692,15 @@ shdepReassignOwned(List *roleids, Oid newrole)
  * shdepReassignOwned's processing of SHARED_DEPENDENCY_OWNER entries
  */
 static void
-shdepReassignOwned_Owner(Form_pg_shdepend sdepForm, Oid newrole)
+shdepReassignOwned_Owner(Form_pg_shdepend sdepForm, Oid oldrole, Oid newrole)
 {
+	/* mirror AlterDatabaseOwner() privilege check */
+	if (sdepForm->classid == DatabaseRelationId && oldrole != newrole &&
+		!have_createdb_privilege())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied to change owner of database")));
+
 	/* Issue the appropriate ALTER OWNER call */
 	switch (sdepForm->classid)
 	{

@@ -1640,15 +1640,9 @@ ReassignOwnedObjects(ReassignOwnedStmt *stmt)
 							   GetUserNameFromId(roleid, false))));
 	}
 
-	/* Must have privileges on the receiving side too */
+	/* Must be able to become the new owner, as for ALTER ... OWNER TO */
 	newrole = get_rolespec_oid(stmt->newrole, false);
-
-	if (!has_privs_of_role(GetUserId(), newrole))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied to reassign objects"),
-				 errdetail("Only roles with privileges of role \"%s\" may reassign objects to it.",
-						   GetUserNameFromId(newrole, false))));
+	check_can_set_role(GetUserId(), newrole);
 
 	/* Ok, do it */
 	shdepReassignOwned(role_ids, newrole);
