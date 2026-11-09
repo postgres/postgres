@@ -1399,8 +1399,8 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 				if (state->manifest_buffer != NULL)
 				{
 					/* Manifest data, buffer in memory. */
-					appendPQExpBuffer(state->manifest_buffer, copybuf + 1,
-									  r - 1);
+					appendBinaryPQExpBuffer(state->manifest_buffer, copybuf + 1,
+											r - 1);
 				}
 				else if (state->manifest_file != NULL)
 				{
@@ -1730,7 +1730,7 @@ ReceiveBackupManifestInMemoryChunk(size_t r, char *copybuf,
 {
 	PQExpBuffer buf = callback_data;
 
-	appendPQExpBuffer(buf, copybuf, r);
+	appendBinaryPQExpBuffer(buf, copybuf, r);
 }
 
 static void
