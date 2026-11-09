@@ -9,7 +9,7 @@ EXTENSION = injection_points
 DATA = injection_points--1.0.sql
 PGFILEDESC = "injection_points - facility for injection points"
 
-REGRESS = injection_points reindex_conc vacuum
+REGRESS = injection_points portal_bind reindex_conc vacuum
 REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
 
 # wait_cleanup terminates another backend, whose FATAL message can be lost

@@ -1,0 +1,133 @@
+-- Tests with portals set up by a Bind message.
+-- All these rely on the unnamed portal with \bind.
+CREATE EXTENSION injection_points;
+-- Make the injection points local to this session.
+SELECT injection_points_set_local();
+ injection_points_set_local 
+----------------------------
+ 
+(1 row)
+
+-- Portal is new, not fully set up yet.
+SELECT injection_points_attach('bind-portal-created', 'error');
+ injection_points_attach 
+-------------------------
+ 
+(1 row)
+
+-- No transaction block.
+SELECT 1 \bind \g
+ERROR:  error triggered for injection point bind-portal-created
+SELECT 2;
+ ?column? 
+----------
+        2
+(1 row)
+
+-- Transaction block, not aborted after failure.
+BEGIN;
+SELECT 3 \bind \g
+ERROR:  error triggered for injection point bind-portal-created
+ROLLBACK;
+SELECT 4;
+ ?column? 
+----------
+        4
+(1 row)
+
+-- Transaction block already aborted when failure happens.
+BEGIN;
+SELECT 1/0;
+ERROR:  division by zero
+ROLLBACK \bind \g
+ERROR:  error triggered for injection point bind-portal-created
+ROLLBACK;
+SELECT 5;
+ ?column? 
+----------
+        5
+(1 row)
+
+-- Sub-transaction already aborted when failure happens.
+BEGIN;
+SAVEPOINT s;
+SELECT 1/0;
+ERROR:  division by zero
+ROLLBACK TO s \bind \g
+ERROR:  error triggered for injection point bind-portal-created
+ROLLBACK TO s;
+SELECT 6;
+ ?column? 
+----------
+        6
+(1 row)
+
+COMMIT;
+SELECT injection_points_detach('bind-portal-created');
+ injection_points_detach 
+-------------------------
+ 
+(1 row)
+
+-- Portal is defined, not fully set up yet.
+SELECT injection_points_attach('bind-portal-defined', 'error');
+ injection_points_attach 
+-------------------------
+ 
+(1 row)
+
+-- No transaction block.
+SELECT 1 \bind \g
+ERROR:  error triggered for injection point bind-portal-defined
+SELECT 2;
+ ?column? 
+----------
+        2
+(1 row)
+
+-- Transaction block, not aborted under failure.
+BEGIN;
+SELECT 3 \bind \g
+ERROR:  error triggered for injection point bind-portal-defined
+ROLLBACK;
+SELECT 4;
+ ?column? 
+----------
+        4
+(1 row)
+
+-- Transaction block already aborted when failure happens.
+BEGIN;
+SELECT 1/0;
+ERROR:  division by zero
+ROLLBACK \bind \g
+ERROR:  error triggered for injection point bind-portal-defined
+ROLLBACK;
+SELECT 5;
+ ?column? 
+----------
+        5
+(1 row)
+
+-- Sub-transaction already aborted when failure happens.
+BEGIN;
+SAVEPOINT s;
+SELECT 1/0;
+ERROR:  division by zero
+ROLLBACK TO s \bind \g
+ERROR:  error triggered for injection point bind-portal-defined
+ROLLBACK TO s;
+SELECT 6;
+ ?column? 
+----------
+        6
+(1 row)
+
+COMMIT;
+SELECT injection_points_detach('bind-portal-defined');
+ injection_points_detach 
+-------------------------
+ 
+(1 row)
+
+DROP EXTENSION injection_points;

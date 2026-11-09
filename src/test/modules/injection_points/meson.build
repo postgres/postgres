@@ -50,6 +50,7 @@ tests += {
   'regress': {
     'sql': [
       'injection_points',
+      'portal_bind',
       'reindex_conc',
       'vacuum',
     ],
