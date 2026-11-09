@@ -33,7 +33,7 @@
  *		uint16			number of positions that follow
  *		WordEntryPos[]	positions
  *
- * The positions for each lexeme must be sorted.
+ * The positions for each lexeme must be nonzero, sorted, and unique.
  *
  * Note that while the WordEntry items must be sorted per tsCompareString(),
  * the per-lexeme data storage could be in some other order, ie the series

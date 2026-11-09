@@ -847,8 +847,18 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 			if (rptr->pos == (rptr - 1)->pos &&
 				rptr->data.map.entry == (rptr - 1)->data.map.entry)
 			{
-				storage.data.query.items[storage.data.query.nitem] = rptr->data.map.item;
-				storage.data.query.nitem++;
+				/*
+				 * A valid tsvector never lists the same position twice for a
+				 * lexeme, so a group can't have more than one item per query
+				 * operand.  But with corrupt data we might see too many
+				 * entries; if so, drop entries rather than overrunning
+				 * items[].
+				 */
+				if (storage.data.query.nitem < qr->query->size)
+				{
+					storage.data.query.items[storage.data.query.nitem] = rptr->data.map.item;
+					storage.data.query.nitem++;
+				}
 			}
 			else
 			{
