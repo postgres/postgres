@@ -464,7 +464,8 @@ RemoveOperatorById(Oid operOid)
 	 */
 	if (OidIsValid(op->oprcom) || OidIsValid(op->oprnegate))
 	{
-		OperatorUpd(operOid, op->oprcom, op->oprnegate, true);
+		UpdateOperatorLinks(operOid, op->oprcom, op->oprnegate,
+							op->oprresult, true);
 		if (operOid == op->oprcom || operOid == op->oprnegate)
 		{
 			ReleaseSysCache(tup);
@@ -499,6 +500,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 	Relation	catalog;
 	HeapTuple	tup;
 	Form_pg_operator oprForm;
+	Oid			oprResultId;
 	int			i;
 	ListCell   *pl;
 	Datum		values[Natts_pg_operator];
@@ -526,6 +528,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for operator %u", oprId);
 	oprForm = (Form_pg_operator) GETSTRUCT(tup);
+	oprResultId = oprForm->oprresult;
 
 	/* Process options */
 	foreach(pl, stmt->options)
@@ -723,8 +726,14 @@ AlterOperator(AlterOperatorStmt *stmt)
 
 	address = makeOperatorDependencies(tup, false, true);
 
+	/*
+	 * We only worry about checking/changing newly-installed commutator or
+	 * negator values.  This function cannot change a shell operator into a
+	 * non-shell, so there's no need to recheck pre-existing links.
+	 */
 	if (OidIsValid(commutatorOid) || OidIsValid(negatorOid))
-		OperatorUpd(oprId, commutatorOid, negatorOid, false);
+		UpdateOperatorLinks(oprId, commutatorOid, negatorOid,
+							oprResultId, false);
 
 	InvokeObjectPostAlterHook(OperatorRelationId, oprId, 0);
 
