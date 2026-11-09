@@ -76,6 +76,12 @@ typedef struct BTParallelScanDescData
 	ConditionVariable btps_cv;	/* used to synchronize parallel scan */
 
 	/*
+	 * btps_numArrayKeys is the number of arrays that the backend which last
+	 * serialized its array keys was working with.
+	 */
+	int			btps_numArrayKeys;
+
+	/*
 	 * btps_arrElems is used when scans need to schedule another primitive
 	 * index scan with one or more SAOP arrays.  Holds BTArrayKeyInfo.cur_elem
 	 * offsets for each = scan key associated with a ScalarArrayOp array.
@@ -668,6 +674,8 @@ _bt_parallel_serialize_arrays(Relation rel, BTParallelScanDesc btscan,
 {
 	char	   *datumshared;
 
+	btscan->btps_numArrayKeys = so->numArrayKeys;
+
 	/* Space for serialized datums begins immediately after btps_arrElems[] */
 	datumshared = ((char *) &btscan->btps_arrElems[so->numArrayKeys]);
 	for (int i = 0; i < so->numArrayKeys; i++)
@@ -711,6 +719,16 @@ _bt_parallel_restore_arrays(Relation rel, BTParallelScanDesc btscan,
 {
 	char	   *datumshared;
 
+	/*
+	 * The backend that serialized these arrays should have ended up with the
+	 * same number of them as us, but it might not if a function used to
+	 * compute them was mislabeled as PARALLEL SAFE or STABLE.
+	 */
+	if (btscan->btps_numArrayKeys != so->numArrayKeys)
+		elog(ERROR, "parallel scan of index \"%s\" serialized %d array keys, expected %d",
+			 RelationGetRelationName(rel),
+			 btscan->btps_numArrayKeys, so->numArrayKeys);
+
 	/* Space for serialized datums begins immediately after btps_arrElems[] */
 	datumshared = ((char *) &btscan->btps_arrElems[so->numArrayKeys]);
 	for (int i = 0; i < so->numArrayKeys; i++)
@@ -723,6 +741,19 @@ _bt_parallel_restore_arrays(Relation rel, BTParallelScanDesc btscan,
 		{
 			/* Restore SAOP array using its saved cur_elem */
 			Assert(!(skey->sk_flags & SK_BT_SKIP));
+
+			/*
+			 * The saved value might not be in range for our array, since the
+			 * backend that saved it could have ended up with a different
+			 * array if a function used to compute it was mislabeled as
+			 * PARALLEL SAFE or STABLE.
+			 */
+			if (btscan->btps_arrElems[i] < 0 ||
+				btscan->btps_arrElems[i] >= array->num_elems)
+				elog(ERROR, "parallel scan of index \"%s\" serialized array element offset %d, but the array has %d elements",
+					 RelationGetRelationName(rel),
+					 btscan->btps_arrElems[i], array->num_elems);
+
 			array->cur_elem = btscan->btps_arrElems[i];
 			skey->sk_argument = array->elem_values[array->cur_elem];
 			continue;
