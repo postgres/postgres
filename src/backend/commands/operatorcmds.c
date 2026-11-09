@@ -417,7 +417,8 @@ RemoveOperatorById(Oid operOid)
 	 */
 	if (OidIsValid(op->oprcom) || OidIsValid(op->oprnegate))
 	{
-		OperatorUpd(operOid, op->oprcom, op->oprnegate, true);
+		UpdateOperatorLinks(operOid, op->oprcom, op->oprnegate,
+							op->oprresult, true);
 		if (operOid == op->oprcom || operOid == op->oprnegate)
 		{
 			ReleaseSysCache(tup);

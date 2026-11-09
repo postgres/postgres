@@ -102,6 +102,9 @@ extern ObjectAddress makeOperatorDependencies(HeapTuple tuple,
 											  bool makeExtensionDep,
 											  bool isUpdate);
 
+extern void UpdateOperatorLinks(Oid baseId, Oid commId, Oid negId,
+								Oid oprResultId, bool isDelete);
+
 extern void OperatorUpd(Oid baseId, Oid commId, Oid negId, bool isDelete);
 
 #endif							/* PG_OPERATOR_H */
