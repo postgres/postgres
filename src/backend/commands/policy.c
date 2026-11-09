@@ -410,6 +410,8 @@ RemovePolicyById(Oid policy_id)
  * Returns false if the role was not removed because it would have left
  * polroles empty (which is disallowed, though perhaps it should not be).
  * On false return, the caller should instead drop the policy altogether.
+ * Note that a warning is raised and true is returned if we don't own the
+ * table, as the policy should be left alone in that case.
  *
  * roleid - the oid of the role to remove
  * classid - should always be PolicyRelationId
@@ -456,6 +458,25 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 
 	/* Identify rel the policy belongs to */
 	relid = ((Form_pg_policy) GETSTRUCT(tuple))->polrelid;
+
+	/*
+	 * Only the table owner can remove the role from the policy, so leave it
+	 * alone if we aren't the owner.
+	 */
+	if (!pg_class_ownercheck(relid, GetUserId()))
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_WARNING_PRIVILEGE_NOT_REVOKED),
+				 errmsg("role \"%s\" could not be removed from policy \"%s\" for table \"%s\"",
+						GetUserNameFromId(roleid, false),
+						NameStr(((Form_pg_policy) GETSTRUCT(tuple))->polname),
+						get_rel_name(relid))));
+
+		systable_endscan(sscan);
+		table_close(pg_policy_rel, RowExclusiveLock);
+
+		return true;
+	}
 
 	/* Get the current set of roles */
 	roles_datum = heap_getattr(tuple,

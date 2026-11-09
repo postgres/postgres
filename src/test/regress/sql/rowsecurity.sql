@@ -1809,6 +1809,13 @@ CREATE POLICY p1 ON dob_t2 TO regress_rls_dob_role1,regress_rls_dob_role2 USING 
 DROP OWNED BY regress_rls_dob_role1;
 DROP POLICY p1 ON dob_t2; -- should succeed
 
+-- only owner can change policies
+CREATE POLICY p1 ON dob_t1 TO regress_rls_dob_role1 USING (true);
+SET SESSION AUTHORIZATION regress_rls_dob_role1;
+DROP OWNED BY regress_rls_dob_role1; -- should warn
+RESET SESSION AUTHORIZATION;
+DROP POLICY p1 ON dob_t1; -- should succeed
+
 DROP USER regress_rls_dob_role1;
 DROP USER regress_rls_dob_role2;
 

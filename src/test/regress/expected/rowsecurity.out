@@ -3935,6 +3935,13 @@ DROP POLICY p1 ON dob_t1; -- should succeed
 CREATE POLICY p1 ON dob_t2 TO regress_rls_dob_role1,regress_rls_dob_role2 USING (true);
 DROP OWNED BY regress_rls_dob_role1;
 DROP POLICY p1 ON dob_t2; -- should succeed
+-- only owner can change policies
+CREATE POLICY p1 ON dob_t1 TO regress_rls_dob_role1 USING (true);
+SET SESSION AUTHORIZATION regress_rls_dob_role1;
+DROP OWNED BY regress_rls_dob_role1; -- should warn
+WARNING:  role "regress_rls_dob_role1" could not be removed from policy "p1" for table "dob_t1"
+RESET SESSION AUTHORIZATION;
+DROP POLICY p1 ON dob_t1; -- should succeed
 DROP USER regress_rls_dob_role1;
 DROP USER regress_rls_dob_role2;
 -- Bug #15708: view + table with RLS should check policies as view owner

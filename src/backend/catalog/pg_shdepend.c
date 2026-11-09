@@ -1440,8 +1440,8 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 				case SHARED_DEPENDENCY_POLICY:
 
 					/*
-					 * Try to remove role from policy; if unable to, remove
-					 * policy.
+					 * Try to remove role from policy; if that would leave the
+					 * policy with no roles, remove the policy.
 					 */
 					if (!RemoveRoleFromObjectPolicy(roleid,
 													sdepForm->classid,
