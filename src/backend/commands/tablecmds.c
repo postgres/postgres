@@ -443,6 +443,7 @@ static void report_type_used_in_column(const char *relname, const char *attname,
 									   Relation origRelation, const char *origTypeName);
 static void report_type_used_in_expr(const ObjectAddress *obj, Relation origRelation,
 									 const char *origTypeName);
+static Node *get_node_tree_attr(enum SysCacheIdentifier cacheId, HeapTuple tup, AttrNumber attnum);
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 							bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode,
 							AlterTableUtilityContext *context);
@@ -6637,6 +6638,8 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 	Oid			classid = depobj->classId;
 	Oid			objid = depobj->objectId;
 	int32		objsubid = depobj->objectSubId;
+	HeapTuple	catalog_tup;
+	Node	   *expr;
 	Relation	rel;
 	TupleDesc	tupleDesc;
 	Form_pg_attribute att;
@@ -6664,7 +6667,36 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 			break;
 
 		case ProcedureRelationId:
-			/* TODO: Accept for now, but next commits will tighten this */
+
+			/*
+			 * A function that uses the composite type as its return or
+			 * argument type doesn't prevent ALTERing it.  But if the type is
+			 * used in the DEFAULT expressions or in a new-style SQL
+			 * function's body, we need to reject, because the expression
+			 * might contain Consts or other things that would become invalid.
+			 *
+			 * Fetch the procedure definition to see which parts are using the
+			 * type.
+			 */
+			catalog_tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(objid));
+			if (!HeapTupleIsValid(catalog_tup))
+				elog(ERROR, "cache lookup failed for function %u", objid);
+
+			/* Is it used in the argument DEFAULTs? */
+			expr = get_node_tree_attr(PROCOID, catalog_tup, Anum_pg_proc_proargdefaults);
+			if (expr && CheckTypeDependencyInExpr(expr, NIL, typeOid))
+				report_type_used_in_expr(depobj, origRelation, origTypeName);
+
+			/* Is it used in the SQL body? */
+			expr = get_node_tree_attr(PROCOID, catalog_tup, Anum_pg_proc_prosqlbody);
+			if (expr && CheckTypeDependencyInExpr(expr, NIL, typeOid))
+				report_type_used_in_expr(depobj, origRelation, origTypeName);
+
+			/*
+			 * Otherwise, it must be used as a return or parameter type, which
+			 * is OK.
+			 */
+			ReleaseSysCache(catalog_tup);
 			break;
 
 		case ConstraintRelationId:
@@ -6848,6 +6880,20 @@ report_type_used_in_expr(const ObjectAddress *obj, Relation origRelation,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("cannot alter table \"%s\" because %s uses its row type",
 					RelationGetRelationName(origRelation), objdesc)));
+}
+
+/* Read a pg_node_tree column's value as a Node */
+static Node *
+get_node_tree_attr(enum SysCacheIdentifier cacheId, HeapTuple tup, AttrNumber attnum)
+{
+	Datum		val;
+	bool		isnull;
+
+	val = SysCacheGetAttr(cacheId, tup, attnum, &isnull);
+	if (isnull)
+		return NULL;
+
+	return stringToNode(TextDatumGetCString(val));
 }
 
 /*

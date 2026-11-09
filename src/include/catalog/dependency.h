@@ -169,6 +169,10 @@ extern void CheckUsageOnTypesInExpr(Node *expr, List *rtable, Oid roleid);
 
 extern void CheckUsageOnTypesInSingleRelExpr(Node *expr, Oid relId, Oid roleid);
 
+extern bool CheckTypeDependencyInExpr(Node *expr, List *rtable, Oid typeId);
+
+extern bool CheckTypeDependencyInSingleRelExpr(Node *expr, Oid relId, Oid typeId);
+
 extern ObjectAddresses *new_object_addresses(void);
 
 extern void add_exact_object_address(const ObjectAddress *object,
