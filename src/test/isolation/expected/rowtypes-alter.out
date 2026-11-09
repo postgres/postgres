@@ -1,0 +1,188 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s1_prepare s1_exec_tab s1_exec_type s2_alter_tab s2_alter_type s1_exec_tab s1_exec_type
+step s1_prepare: 
+    PREPARE rta_tab_const AS SELECT '(1,\\x4649584d45)'::rta_tab;
+    PREPARE rta_type_const AS SELECT '(1,\\x4649584d45)'::rta_type;
+
+step s1_exec_tab: EXECUTE rta_tab_const;
+rta_tab            
+-------------------
+(1,"\\x4649584d45")
+(1 row)
+
+step s1_exec_type: EXECUTE rta_type_const;
+rta_type           
+-------------------
+(1,"\\x4649584d45")
+(1 row)
+
+step s2_alter_tab: ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
+step s2_alter_type: ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text;
+step s1_exec_tab: EXECUTE rta_tab_const;
+rta_tab  
+---------
+(1,FIXME)
+(1 row)
+
+step s1_exec_type: EXECUTE rta_type_const;
+rta_type 
+---------
+(1,FIXME)
+(1 row)
+
+
+starting permutation: s1_begin s1_declare s1_fetch s2_alter_tab s1_inval s1_fetch s1_commit
+step s1_begin: BEGIN;
+step s1_declare: 
+    DECLARE rta_cur CURSOR FOR
+    SELECT '(1,\\x4649584d45)'::rta_tab FROM generate_series(1, 3);
+
+step s1_fetch: FETCH NEXT FROM rta_cur;
+rta_tab            
+-------------------
+(1,"\\x4649584d45")
+(1 row)
+
+step s2_alter_tab: ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
+step s1_inval: LOCK rta_lockme;
+step s1_fetch: FETCH NEXT FROM rta_cur;
+rta_tab  
+---------
+(1,FIXME)
+(1 row)
+
+step s1_commit: COMMIT;
+
+starting permutation: s1_declare_hold s1_fetch_hold s2_alter_tab s1_fetch_hold
+step s1_declare_hold: 
+    DECLARE rta_hold CURSOR WITH HOLD FOR
+    SELECT '(1,\\x4649584d45)'::rta_tab FROM generate_series(1, 3);
+
+step s1_fetch_hold: FETCH NEXT FROM rta_hold;
+rta_tab            
+-------------------
+(1,"\\x4649584d45")
+(1 row)
+
+step s2_alter_tab: ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
+step s1_fetch_hold: FETCH NEXT FROM rta_hold;
+rta_tab  
+---------
+(1,FIXME)
+(1 row)
+
+
+starting permutation: s2_lock s1_var s2_alter_tab s2_unlock
+step s2_lock: SELECT pg_advisory_lock(1);
+pg_advisory_lock
+----------------
+                
+(1 row)
+
+step s1_var: 
+    DO $$
+    DECLARE
+        v rta_tab;
+    BEGIN
+        v := '(1,\\x4649584d45)'::rta_tab;
+        COMMIT;
+        PERFORM rta_wait();
+        RAISE NOTICE 'v: %', v;
+    END;
+    $$;
+ <waiting ...>
+step s2_alter_tab: ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
+step s2_unlock: SELECT pg_advisory_unlock(1);
+pg_advisory_unlock
+------------------
+t                 
+(1 row)
+
+s1: NOTICE:  v: (1,FIXME)
+step s1_var: <... completed>
+
+starting permutation: s2_lock s1_query s2_alter_tab s2_unlock
+step s2_lock: SELECT pg_advisory_lock(1);
+pg_advisory_lock
+----------------
+                
+(1 row)
+
+step s1_query: 
+    SELECT x::text, rta_wait(), x::text
+    FROM (SELECT '(1,\\x4649584d45)'::rta_tab AS x OFFSET 0) s;
+ <waiting ...>
+step s2_alter_tab: ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
+step s2_unlock: SELECT pg_advisory_unlock(1);
+pg_advisory_unlock
+------------------
+t                 
+(1 row)
+
+step s1_query: <... completed>
+x                  |rta_wait|x        
+-------------------+--------+---------
+(1,"\\x4649584d45")|        |(1,FIXME)
+(1 row)
+
+
+starting permutation: s1_prepare s1_exec_tab s2_alter_tab_same s1_exec_tab
+step s1_prepare: 
+    PREPARE rta_tab_const AS SELECT '(1,\\x4649584d45)'::rta_tab;
+    PREPARE rta_type_const AS SELECT '(1,\\x4649584d45)'::rta_type;
+
+step s1_exec_tab: EXECUTE rta_tab_const;
+rta_tab            
+-------------------
+(1,"\\x4649584d45")
+(1 row)
+
+step s2_alter_tab_same: ALTER TABLE rta_tab ALTER COLUMN b TYPE bytea;
+step s1_exec_tab: EXECUTE rta_tab_const;
+rta_tab            
+-------------------
+(1,"\\x4649584d45")
+(1 row)
+
+
+starting permutation: s3_explain s2_lock s3_leader s2_alter_type s2_unlock
+step s3_explain: 
+    EXPLAIN (COSTS OFF, VERBOSE) SELECT rta_wait_read(r)
+    FROM (SELECT ROW(id, b)::rta_type AS r FROM rta_ptab WHERE id = 1 OFFSET 0) s;
+
+QUERY PLAN                                                  
+------------------------------------------------------------
+Subquery Scan on s                                          
+  Output: rta_wait_read(s.r)                                
+  ->  Gather                                                
+        Output: (ROW(rta_ptab.id, rta_ptab.b)::rta_type)    
+        Workers Planned: 2                                  
+        ->  Parallel Seq Scan on public.rta_ptab            
+              Output: ROW(rta_ptab.id, rta_ptab.b)::rta_type
+              Filter: (rta_ptab.id = 1)                     
+(8 rows)
+
+step s2_lock: SELECT pg_advisory_lock(1);
+pg_advisory_lock
+----------------
+                
+(1 row)
+
+step s3_leader: 
+    SELECT rta_wait_read(r)
+    FROM (SELECT ROW(id, b)::rta_type AS r FROM rta_ptab WHERE id = 1 OFFSET 0) s;
+ <waiting ...>
+step s2_alter_type: ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text;
+step s2_unlock: SELECT pg_advisory_unlock(1);
+pg_advisory_unlock
+------------------
+t                 
+(1 row)
+
+step s3_leader: <... completed>
+rta_wait_read
+-------------
+(1,FIXME)    
+(1 row)
+
