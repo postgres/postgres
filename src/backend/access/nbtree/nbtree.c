@@ -655,6 +655,21 @@ _bt_parallel_seize(IndexScanDesc scan, BlockNumber *pageno, bool first)
 					BTArrayKeyInfo *array = &so->arrayKeys[i];
 					ScanKey		skey = &so->keyData[array->scan_key];
 
+					/*
+					 * The saved value might not be in range for our array,
+					 * since the backend that saved it could have ended up
+					 * with a different array if a function used to compute it
+					 * was mislabeled as PARALLEL SAFE or STABLE.
+					 */
+					if (btscan->btps_arrElems[i] < 0 ||
+						btscan->btps_arrElems[i] >= array->num_elems)
+					{
+						SpinLockRelease(&btscan->btps_mutex);
+						elog(ERROR, "parallel scan of index \"%s\" serialized array element offset %d, but the array has %d elements",
+							 RelationGetRelationName(scan->indexRelation),
+							 btscan->btps_arrElems[i], array->num_elems);
+					}
+
 					array->cur_elem = btscan->btps_arrElems[i];
 					skey->sk_argument = array->elem_values[array->cur_elem];
 				}
