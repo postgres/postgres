@@ -1809,6 +1809,43 @@ CheckUsageOnTypesInSingleRelExpr(Node *expr, Oid relId, Oid roleid)
 }
 
 /*
+ * CheckTypeDependencyInExpr - does 'expr' depend on the given type?
+ */
+bool
+CheckTypeDependencyInExpr(Node *expr, List *rtable, Oid typeId)
+{
+	ObjectAddresses *addrs = new_object_addresses();
+	ObjectAddress typeAddr;
+	bool		result;
+
+	collectDependenciesOfExpr(addrs, expr, rtable);
+
+	ObjectAddressSet(typeAddr, TypeRelationId, typeId);
+	result = object_address_present(&typeAddr, addrs);
+	free_object_addresses(addrs);
+
+	return result;
+}
+
+/*
+ * CheckTypeDependencyInSingleRelExpr - as above, for a single-rel expression
+ */
+bool
+CheckTypeDependencyInSingleRelExpr(Node *expr, Oid relId, Oid typeId)
+{
+	RangeTblEntry rte = {0};
+
+	/* We gin up a rather bogus rangetable list to handle Vars */
+	rte.type = T_RangeTblEntry;
+	rte.rtekind = RTE_RELATION;
+	rte.relid = relId;
+	rte.relkind = RELKIND_RELATION;
+	rte.rellockmode = AccessShareLock;
+
+	return CheckTypeDependencyInExpr(expr, list_make1(&rte), typeId);
+}
+
+/*
  * Recursively search an expression tree for object references.
  *
  * Note: in many cases we do not need to create dependencies on the datatypes

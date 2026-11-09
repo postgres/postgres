@@ -49,12 +49,10 @@ drop table attbl;
 -- If it's used in a function's argument DEFAULT expression, however, it's not
 -- allowed. The expression is stored in parse-analyzed format in the catalog,
 -- and would need to be rewritten.
--- FIXME: This is currently allowed, but it's broken
 create table attbl(a bytea);
 create function atref_func(p attbl default '(\\x4649584d45)') returns attbl
   immutable language sql AS $$select p;$$;
 alter table attbl alter column a type text;  -- someday this should work
-select atref_func();
 drop function atref_func;
 drop table attbl;
 
@@ -72,12 +70,10 @@ drop table attbl;
 
 -- If it's used in a SQL function body, cannot allow it. The body is stored in
 -- the catalog in a parse-analyzed format and would need to be rewritten.
--- FIXME: This is currently allowed, but it's broken
 create table attbl(a bytea);
 create function atref_func() returns attbl
   immutable language sql begin atomic select '(\\x4649584d45)'::attbl; end;
 alter table attbl alter column a type text;  -- someday this should work
-select atref_func();
 drop function atref_func;
 drop table attbl;
 
