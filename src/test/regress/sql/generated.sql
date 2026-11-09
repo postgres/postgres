@@ -500,6 +500,24 @@ ALTER TABLE gtest_root ALTER COLUMN c DROP EXPRESSION;
 \d gtest_(root|node|leaf)
 DROP TABLE gtest_root;
 
+-- composite type dependencies
+CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') STORED, c text);
+CREATE TABLE gtest31_2 (x int, y gtest31_1);
+ALTER TABLE gtest31_1 ALTER COLUMN b TYPE varchar;  -- fails
+DROP TABLE gtest31_1, gtest31_2;
+
+-- Check it for a partitioned table, too
+CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') STORED, c text) PARTITION BY LIST (a);
+CREATE TABLE gtest31_2 (x int, y gtest31_1);
+ALTER TABLE gtest31_1 ALTER COLUMN b TYPE varchar;  -- fails
+DROP TABLE gtest31_1, gtest31_2;
+
+-- Check if the rowtype is used in PARTITION BY expression of another table.
+CREATE TABLE gtest31_1 (a int GENERATED ALWAYS AS (123) STORED);
+CREATE TABLE gtest31_2 (b text) PARTITION BY RANGE ((('(1)'::gtest31_1).a + length(b)));
+ALTER TABLE gtest31_1 ALTER COLUMN a TYPE bigint;
+DROP TABLE gtest31_1, gtest31_2;
+
 -- triggers
 CREATE TABLE gtest26 (
     a int PRIMARY KEY,
