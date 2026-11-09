@@ -53,6 +53,8 @@
  */
 #include "postgres_fe.h"
 
+#include <sys/stat.h>
+
 #include "compress_io.h"
 #include "pg_backup_utils.h"
 
@@ -517,7 +519,42 @@ cfopen_write(const char *path, const char *mode, int compression)
 cfp *
 cfopen(const char *path, const char *mode, int compression)
 {
-	cfp		   *fp = pg_malloc(sizeof(cfp));
+	cfp		   *fp;
+	struct stat st;
+
+	/*
+	 * When reading, refuse anything that isn't a regular file, so that a
+	 * symbolic link can't lead us outside the archive directory.  This check
+	 * is racy, but we're guarding against a compromised dump, not against a
+	 * directory under the active control of a hostile party.
+	 */
+	if (strchr(mode, 'r') != NULL &&
+		lstat(path, &st) == 0 && !S_ISREG(st.st_mode))
+		fatal("\"%s\" is not a regular file", path);
+
+#ifdef WIN32
+
+	/*
+	 * lstat() only recognizes junction points on Windows, so check the name's
+	 * reparse tag ourselves to catch symbolic links to files, too.
+	 */
+	if (strchr(mode, 'r') != NULL)
+	{
+		WIN32_FIND_DATA fd;
+		HANDLE		hFind = FindFirstFile(path, &fd);
+
+		if (hFind != INVALID_HANDLE_VALUE)
+		{
+			FindClose(hFind);
+			if ((fd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 &&
+				(fd.dwReserved0 == IO_REPARSE_TAG_SYMLINK ||
+				 fd.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT))
+				fatal("\"%s\" is not a regular file", path);
+		}
+	}
+#endif
+
+	fp = pg_malloc(sizeof(cfp));
 
 	if (compression != 0)
 	{
