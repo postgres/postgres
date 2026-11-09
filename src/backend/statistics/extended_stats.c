@@ -177,6 +177,25 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 		StatsBuildData *data;
 
 		/*
+		 * Error out on a statistics object that has an expression of a
+		 * pseudo-type.  Such an object can still exist in v18 and older,
+		 * built by an older minor release, but its statistics can't be read,
+		 * and the object should be dropped.
+		 */
+		foreach(lc2, stat->exprs)
+		{
+			if (get_typtype(exprType((Node *) lfirst(lc2))) == TYPTYPE_PSEUDO)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("statistics object \"%s.%s\" could not be computed for relation \"%s.%s\"",
+								stat->schema, stat->name,
+								get_namespace_name(onerel->rd_rel->relnamespace),
+								RelationGetRelationName(onerel)),
+						 errhint("The extended statistics object should be dropped."),
+						 errtable(onerel)));
+		}
+
+		/*
 		 * Check if we can build these stats based on the column analyzed. If
 		 * not, report this fact (except in autovacuum) and move on.
 		 */
