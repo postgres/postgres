@@ -48,6 +48,1532 @@
 
     <listitem>
 <!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [d4f9b1c35] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [31114b996] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [afaff70f0] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [bfcb6625e] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [c67a4a24b] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [22762f03a] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [6be4e665d] 2026-11-09 06:21:01 -0800
+Branch: master [f70f28fec] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [7575d08c6] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [692f4b3c4] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [3e8bb75c8] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [9528f2f31] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [3ee30c1dc] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [8587d949f] 2026-11-09 06:21:01 -0800
+Branch: master [163cb48ff] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [3f2ff7ec7] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [9ef1cd650] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [11658b4df] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [1d1650e52] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [2f5acf4fd] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [6c24b35e7] 2026-11-09 06:21:01 -0800
+Branch: master [f02b46fef] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [b129f05ab] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [9ddd897b3] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [fbee8e90f] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [148fc8249] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [4428c073a] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [e0765b6d5] 2026-11-09 06:21:01 -0800
+Branch: master [0b0f5c5af] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [15cf82750] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [1bb9942e2] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [7d089b28c] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [e5c581cd4] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [032544a39] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [9d0efd64b] 2026-11-09 06:21:01 -0800
+Branch: master [882eb5025] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [a407e940d] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [bcc692493] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [1e3b37da9] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [b219eed24] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [e90dffb9e] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [0a10508be] 2026-11-09 06:21:01 -0800
+Branch: master [1ff5607e9] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [1fa8ddab4] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [bb66a4e82] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [7e1aeaad3] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [7fe0b6c8e] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [4a4fffe35] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [b1ff3ce04] 2026-11-09 06:21:01 -0800
+Branch: master [3a98781ba] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [dd097cae9] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [05fc87f95] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [b65b69f2c] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [62761302b] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [e9e6af6ba] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [6b093b461] 2026-11-09 06:21:01 -0800
+Branch: master [6e578eeb6] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [61d0c57a6] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [d48d28c4b] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [23a1d8825] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [4a090c2a7] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [0cba22849] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [8513bfaa2] 2026-11-09 06:21:01 -0800
+Branch: master [fbd9f77ec] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [4744b0148] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [67d89bb22] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [f234ae72b] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [74681445e] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [d054d0f6e] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [f3cef207b] 2026-11-09 06:21:01 -0800
+Branch: master [ac460a144] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [39e620324] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [e72f4e91c] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [b019147c9] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [5024810ad] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [ece162bd7] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [1762f2e7c] 2026-11-09 06:21:01 -0800
+Branch: master [d98d99ba1] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [8490bd80e] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [5db4823d0] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [d4f8c3e15] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [cf3fcd765] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [bed004f15] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [f32e9d5b4] 2026-11-09 06:21:01 -0800
+Branch: master [b4e703af0] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [4993b83c5] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [26ff7cbd3] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [800e67351] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [1c0c88109] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [e00986934] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [ea00db41c] 2026-11-09 06:21:01 -0800
+Branch: master [ba6b37918] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [37c733dd3] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [fdbb7ffbb] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [83ec4accd] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [3429a10d4] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [b7b16664a] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [17a225d95] 2026-11-09 06:21:01 -0800
+Branch: master [af5f25e7b] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [f36ac883c] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [ff6d9deca] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [5da4d4b1b] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [ecdfe0307] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [b94b7254f] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [f5782736c] 2026-11-09 06:21:01 -0800
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [2387f43ba] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [dca6ff5dc] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [7bc2d46d1] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [d5cf40e02] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [2ce625266] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [646a2ae1b] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [bdef8fa63] 2026-11-09 06:21:02 -0800
+Branch: master [54568e4d8] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [b600a62f2] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [dcb2ff56d] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [98e9001cf] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [726ef27b8] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [bd5d3e2df] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [f7dcd99b9] 2026-11-09 06:21:02 -0800
+Branch: master [19db7bd09] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [3b2286331] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [7c32010ca] 2026-11-09 06:20:44 -0800
+Branch: REL_17_STABLE [05283881a] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [dd0278aa3] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [fe7810094] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [8e5da6768] 2026-11-09 06:21:02 -0800
+Branch: master [e874b2712] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [5b8f65da6] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [da2cb6090] 2026-11-09 06:20:44 -0800
+Branch: REL_17_STABLE [d3d599625] 2026-11-09 06:20:49 -0800
+Branch: REL_16_STABLE [0dcf804f2] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [237847ddc] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [510561c3f] 2026-11-09 06:21:02 -0800
+Branch: master [3d855ce1a] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [c920299ce] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [8b1a2a8ac] 2026-11-09 06:20:44 -0800
+Branch: REL_17_STABLE [f397e0ae3] 2026-11-09 06:20:49 -0800
+Branch: REL_16_STABLE [cfe611199] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [5ce00ae09] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [e8f50a412] 2026-11-09 06:21:02 -0800
+Branch: master [b6b14f642] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [3dc90fdf6] 2026-11-09 06:20:38 -0800
+Branch: master [ed121a1a4] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [8b5f46bf0] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [391884d5c] 2026-11-09 06:20:44 -0800
+Branch: REL_17_STABLE [3b2c73d0e] 2026-11-09 06:20:49 -0800
+Branch: REL_16_STABLE [eb64484eb] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [d9373e992] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [e7f11a295] 2026-11-09 06:21:02 -0800
+Branch: master [0f86e57d6] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [86e2e8fba] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [edcd260d9] 2026-11-09 06:20:44 -0800
+Branch: REL_17_STABLE [db59ee006] 2026-11-09 06:20:49 -0800
+Branch: REL_16_STABLE [7f8be5d19] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [17a138be4] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [97e0a9c4e] 2026-11-09 06:21:02 -0800
+Branch: master [bcaef7edb] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [4b7a4c2c9] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [d835dc88d] 2026-11-09 06:20:44 -0800
+Branch: REL_17_STABLE [deebcc772] 2026-11-09 06:20:49 -0800
+Branch: REL_16_STABLE [813d92afc] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [3964f037d] 2026-11-09 06:20:58 -0800
+Branch: REL_14_STABLE [7209daf61] 2026-11-09 06:21:02 -0800
+Branch: master [245eb832f] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [79ddf5bb8] 2026-11-09 06:20:39 -0800
+Branch: REL_18_STABLE [cfdd09589] 2026-11-09 06:20:44 -0800
+Branch: REL_17_STABLE [bcbcbd5a2] 2026-11-09 06:20:49 -0800
+Branch: REL_16_STABLE [0c8ffa1ad] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [c23382f0a] 2026-11-09 06:20:58 -0800
+Branch: REL_14_STABLE [1d74a4aaf] 2026-11-09 06:21:02 -0800
+Branch: master [a3caa6230] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [6b48cb76d] 2026-11-09 06:20:39 -0800
+Branch: REL_18_STABLE [5f0add5cf] 2026-11-09 06:20:44 -0800
+Branch: REL_17_STABLE [9f6302533] 2026-11-09 06:20:49 -0800
+Branch: REL_16_STABLE [788915adf] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [434594e74] 2026-11-09 06:20:58 -0800
+Branch: REL_14_STABLE [a4ba2720b] 2026-11-09 06:21:02 -0800
+Branch: master [17fc99f4e] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [3afe22bbc] 2026-11-09 06:20:39 -0800
+Branch: REL_18_STABLE [30d81a0ba] 2026-11-09 06:20:44 -0800
+Branch: REL_17_STABLE [d0b52be9b] 2026-11-09 06:20:49 -0800
+Branch: REL_16_STABLE [0453c5539] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [825e1bd41] 2026-11-09 06:20:58 -0800
+Branch: REL_14_STABLE [cb85ce77f] 2026-11-09 06:21:02 -0800
+Branch: REL_19_STABLE [9c5f9a41d] 2026-11-09 06:20:39 -0800
+Branch: REL_18_STABLE [edcc027ee] 2026-11-09 06:20:44 -0800
+Branch: REL_17_STABLE [5f8d39154] 2026-11-09 06:20:49 -0800
+Branch: REL_16_STABLE [5968dfa67] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [6d8d8438b] 2026-11-09 06:20:58 -0800
+Branch: REL_14_STABLE [37218773e] 2026-11-09 06:21:02 -0800
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL_18_STABLE [412297476] 2026-11-09 11:45:01 -0500
+Branch: REL_17_STABLE [3643ce425] 2026-11-09 11:45:01 -0500
+Branch: REL_16_STABLE [8d0db2258] 2026-11-09 11:45:01 -0500
+Branch: REL_15_STABLE [7875e1ec6] 2026-11-09 11:45:01 -0500
+Branch: REL_14_STABLE [cc4434f15] 2026-11-09 11:45:01 -0500
+-->
+     <para>
+      Add defenses against problems caused by altering composite types
+      concurrently with operations on data of those types (Heikki
+      Linnakangas, Andres Freund, Nathan Bossart, Nikhil Sontakke)
+      <ulink url="&commit_baseurl;6be4e665d">&sect;</ulink>
+      <ulink url="&commit_baseurl;8587d949f">&sect;</ulink>
+      <ulink url="&commit_baseurl;6c24b35e7">&sect;</ulink>
+      <ulink url="&commit_baseurl;e0765b6d5">&sect;</ulink>
+      <ulink url="&commit_baseurl;9d0efd64b">&sect;</ulink>
+      <ulink url="&commit_baseurl;0a10508be">&sect;</ulink>
+      <ulink url="&commit_baseurl;b1ff3ce04">&sect;</ulink>
+      <ulink url="&commit_baseurl;6b093b461">&sect;</ulink>
+      <ulink url="&commit_baseurl;8513bfaa2">&sect;</ulink>
+      <ulink url="&commit_baseurl;f3cef207b">&sect;</ulink>
+      <ulink url="&commit_baseurl;1762f2e7c">&sect;</ulink>
+      <ulink url="&commit_baseurl;f32e9d5b4">&sect;</ulink>
+      <ulink url="&commit_baseurl;ea00db41c">&sect;</ulink>
+      <ulink url="&commit_baseurl;17a225d95">&sect;</ulink>
+      <ulink url="&commit_baseurl;f5782736c">&sect;</ulink>
+      <ulink url="&commit_baseurl;bdef8fa63">&sect;</ulink>
+      <ulink url="&commit_baseurl;f7dcd99b9">&sect;</ulink>
+      <ulink url="&commit_baseurl;8e5da6768">&sect;</ulink>
+      <ulink url="&commit_baseurl;510561c3f">&sect;</ulink>
+      <ulink url="&commit_baseurl;e8f50a412">&sect;</ulink>
+      <ulink url="&commit_baseurl;e7f11a295">&sect;</ulink>
+      <ulink url="&commit_baseurl;97e0a9c4e">&sect;</ulink>
+      <ulink url="&commit_baseurl;7209daf61">&sect;</ulink>
+      <ulink url="&commit_baseurl;1d74a4aaf">&sect;</ulink>
+      <ulink url="&commit_baseurl;a4ba2720b">&sect;</ulink>
+      <ulink url="&commit_baseurl;cb85ce77f">&sect;</ulink>
+      <ulink url="&commit_baseurl;37218773e">&sect;</ulink>
+      <ulink url="&commit_baseurl;cc4434f15">&sect;</ulink>
+     </para>
+
+     <para>
+      Operations such as <command>ALTER TABLE ... ALTER COLUMN
+      TYPE</command> are hazardous because tuples of the older row layout
+      may still exist in the system.  While we have long had some checks
+      to defend against that, they were never really complete, and they
+      entirely failed to detect cases where composite types were changed
+      concurrently with queries using them.  This voluminous set of
+      patches attempts to improve that.
+     </para>
+
+     <para>
+      Introduce versioning logic to permit detection of composite datums
+      that don't match the tuple descriptor we wish to interpret them
+      with.  For full protection, this change requires rebuilding
+      C-language extensions, and there are some extensions that will
+      require source-code changes.  If necessary, the
+      new <varname>composite_type_mismatch</varname> server parameter can
+      be used to disable these checks, but doing so carries security
+      risks.
+     </para>
+
+     <para>
+      Add locking to prevent cases such as <literal>ALTER TYPE</literal>
+      on a composite type used in a <literal>CREATE TABLE</literal> that
+      hasn't committed yet.
+     </para>
+
+     <para>
+      Tighten the rules about whether <literal>ALTER COLUMN TYPE</literal>
+      is allowed when dependencies exist on the composite type.  For
+      example, it's no longer allowed when a function's default
+      expression or new-style SQL function body depends on the type.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Andrew Gierth, Alexander Lakhin, Francesco Verardi, Hcamael,
+      Tomer Fichman, OpenAI Security Research Team, Peter Geoghegan,
+      Mehmet Ince, Bryan Green, Sumedh Pathak,
+      Sergey Shinderuk, Yuxiao Guo, Nikhil Sontakke, Daniel Bakker,
+      the Anthropic OSS program, Claude and Ada Logics
+      for reporting this problem.
+      (CVE-2026-6460)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+Branch: master [3beee6e77] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [2ac7e6e8a] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [4ccea70a1] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [02ca67429] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [71c8a6ac4] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [357a99a4d] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [e8f249272] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Cope with concurrent rowtype changes
+      in <function>ExecEvalFieldStore[De]Form()</function> (Tomas Vondra,
+      Heikki Linnakangas)
+      <ulink url="&commit_baseurl;e8f249272">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      OpenAI Codex Security, Bronson Yen, Mehmet Ince,
+      Claude and Ada Logics
+      for reporting this problem.
+      (CVE-2026-116306)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+Branch: master [315c4e4e8] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [253252429] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [a244ef271] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [a14aacebe] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [629f54970] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [8bbd75721] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [4167810cf] 2026-11-09 06:21:01 -0800
+-->
+     <para>
+      Enforce view row visibility in <literal>INSERT ... ON
+      CONFLICT</literal> (Peter Geoghegan, Zsolt Parragi)
+      <ulink url="&commit_baseurl;4167810cf">&sect;</ulink>
+     </para>
+
+     <para>
+      When applied to a view, <literal>INSERT ... ON CONFLICT DO
+      UPDATE</literal> could update rows that should be hidden by the
+      view's <literal>WHERE</literal> clause.  Although it was documented,
+      this behavior is surely unexpected, and it gives rise to security
+      problems: a user can update rows he should have no privilege to
+      reach.  Updating is incorrect, but inserting is impossible too (it
+      would fail due to the unique arbiter index), so throw an error
+      instead when the case arises.  <literal>INSERT ... ON CONFLICT DO
+      SELECT</literal> could show such rows as well, but no longer does.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Qing Xu, Carl Andersen, Zsolt Parragi, the Anthropic OSS program,
+      Shihao Zhong, and Josef Šimánek
+      for reporting this problem.
+      (CVE-2026-16237)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [b2f1afd9f] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [5b6f8c974] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [ea228688e] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [0b8d1768f] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [dbc8a36d7] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [98ec97f67] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [b83eab069] 2026-11-09 06:21:01 -0800
+-->
+     <para>
+      Align <literal>REASSIGN OWNED</literal>'s caller-privilege checks
+      with <literal>ALTER ... OWNER TO</literal>'s checks (Zsolt Parragi)
+      <ulink url="&commit_baseurl;b83eab069">&sect;</ulink>
+     </para>
+
+     <para>
+      Since v16, giving an object to another role requires the ability
+      to <literal>SET ROLE</literal> to that role.  However, a role
+      granted <literal>INHERIT TRUE, SET FALSE</literal> could bypass that
+      via <literal>REASSIGN OWNED</literal>.  A role
+      granted <literal>INHERIT FALSE, SET TRUE</literal> saw the inverse
+      problem: <literal>REASSIGN OWNED</literal> failed
+      while <literal>ALTER OWNER</literal> succeeded.
+      Make <literal>REASSIGN</literal> follow the <literal>ALTER
+      OWNER</literal> rules.
+     </para>
+
+     <para>
+      <literal>REASSIGN OWNED</literal> also bypassed
+      the <literal>CREATEDB</literal> privilege check in <literal>ALTER
+      DATABASE OWNER</literal>.
+     </para>
+
+     <para>
+      In v15 and v14, <literal>REASSIGN OWNED</literal>'s privilege check
+      is stricter than the membership checks in <literal>ALTER
+      OWNER</literal>.  Leave that alone, but still fix the
+      missing <literal>CREATEDB</literal> check.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Zsolt Parragi
+      for reporting this problem.
+      (CVE-2026-120146)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [5b23669ea] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [b63c8123e] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [8a2982de9] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [36f42216e] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [38783780f] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [c65fee830] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [69b973c65] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Disallow closing a portal that is still being set up
+      (Michael Paquier)
+      <ulink url="&commit_baseurl;69b973c65">&sect;</ulink>
+     </para>
+
+     <para>
+      This change forestalls various use-after-free issues.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Tomas Vondra
+      for reporting this problem.
+      (CVE-2026-116332)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Jeff Davis <jdavis@postgresql.org>
+Branch: master [7a910b4e1] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [9ee5586a2] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [983bcb768] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [695d72c57] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [5b2bd1dc1] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [bccc9f389] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [84a4e2c18] 2026-11-09 06:21:01 -0800
+-->
+     <para>
+      Forcibly close portals associated with transition tables at the end
+      of the trigger function (Jeff Davis)
+      <ulink url="&commit_baseurl;84a4e2c18">&sect;</ulink>
+     </para>
+
+     <para>
+      This change avoids use-after-free hazards.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Peter Geoghegan
+      for reporting this problem.
+      (CVE-2026-120143)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [3bb99318e] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [4285796c2] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [861b5a869] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [a4d40a6ae] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [ba00c3576] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [49521f66d] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [792356244] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Fix race condition leading to use-after-free in shared tupledesc
+      management (Robert Haas)
+      <ulink url="&commit_baseurl;792356244">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Peter Geoghegan
+      for reporting this problem.
+      (CVE-2026-116304)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b93d8a554] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [05740dd40] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [2d91c1c78] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [f4d200615] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [4614c78a8] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [7c822f343] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [f4ca5327a] 2026-11-09 06:21:01 -0800
+-->
+     <para>
+      Fix use-after-free in expanded-record domain constraint checking
+      (Tom Lane)
+      <ulink url="&commit_baseurl;f4ca5327a">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Claude and Ada Logics
+      for reporting this problem.
+      (CVE-2026-120150)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [27dfe0e34] 2026-11-09 06:20:29 -0800
+Branch: REL_19_STABLE [418f055bf] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [9c2cadacd] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [cacc71935] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [834255ca8] 2026-11-09 06:20:50 -0800
+Branch: REL_15_STABLE [3efcadec9] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [d681b9f6a] 2026-11-09 06:20:59 -0800
+-->
+     <para>
+      Fix buffer overrun in <function>tsvector_delete()</function>
+      (Anthropic OSS program)
+      <ulink url="&commit_baseurl;d681b9f6a">&sect;</ulink>
+     </para>
+
+     <para>
+      With crafted input, <function>tsvector_delete()</function> could be
+      induced to write more bytes than it had allocated for its result.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      the Anthropic OSS program
+      for reporting this problem.
+      (CVE-2026-116315)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c8d128858] 2026-11-09 06:20:29 -0800
+Branch: REL_19_STABLE [f920b3c30] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [3e97c9a1f] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [7f8424ece] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [2d7573b00] 2026-11-09 06:20:50 -0800
+Branch: REL_15_STABLE [44a414c99] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [530a034aa] 2026-11-09 06:20:59 -0800
+-->
+     <para>
+      Fix buffer overrun in <function>ts_rank_cd()</function>
+      (Anthropic OSS program)
+      <ulink url="&commit_baseurl;530a034aa">&sect;</ulink>
+     </para>
+
+     <para>
+      With crafted input, <function>ts_rank_cd()</function> could be
+      induced to write more bytes than it had allocated for its result.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      the Anthropic OSS program
+      for reporting this problem.
+      (CVE-2026-116317)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [f22d6aba9] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [82ffa9d00] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [b3ef92518] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [5788eaee3] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [c673c0a61] 2026-11-09 06:20:50 -0800
+Branch: REL_15_STABLE [6ca1c604c] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [4d2710136] 2026-11-09 06:20:59 -0800
+-->
+     <para>
+      Prevent construction of invalid <type>name</type> values via
+      element assignment (Tom Lane)
+      <ulink url="&commit_baseurl;4d2710136">&sect;</ulink>
+     </para>
+
+     <para>
+      <function>array_set_element()</function> could be abused to make the
+      last byte of a <type>name</type>-type value nonzero.  Subsequent
+      uses of the value would then read past the end, resulting in crashes
+      or disclosure of server memory.  While at it, disallow construction
+      of invalidly-encoded strings through this mechanism.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      the Anthropic OSS program
+      for reporting this problem.
+      (CVE-2026-116321)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [4581711f3] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [36a8cb70a] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [9a96032e1] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [606c23540] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [fad845598] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [b33b48031] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [eca4935d2] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Treat application of a leaky function to
+      a <literal>CaseTestExpr</literal> or
+      internal <literal>Param</literal> node as leaky (Tom Lane)
+      <ulink url="&commit_baseurl;eca4935d2">&sect;</ulink>
+     </para>
+
+     <para>
+      A <literal>CaseTestExpr</literal> or
+      internal <literal>Param</literal> represents the value of an
+      expression somewhere else in the query.  If that expression contains
+      a <literal>Var</literal> then there is potential for information
+      leakage.  Therefore, reject such cases when deciding whether an
+      expression is leak-proof.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Only see myself
+      for reporting this problem.
+      (CVE-2026-116327)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [fffd8a41f] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [75c0441ba] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [2c03c7c48] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [dd2cd3803] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [63b204d9f] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [d35f66916] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [0eba29495] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Don't generate an index-based plan for an aggregate whose input and
+      output types don't match (Tom Lane)
+      <ulink url="&commit_baseurl;0eba29495">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, we'd blindly do this if the aggregate has
+      a <literal>SORTOP</literal> option attached.  The index-based plan
+      will return the aggregate's input column, leading to type
+      violations and potentially to arbitrary code execution if its
+      declared output type is different.  In the
+      master branch, disallow such aggregate declarations.  In released
+      branches, add a plan-time check to not generate such plans if the
+      types don't match.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Zheng Yu, Claude and Ada Logics
+      for reporting this problem.
+      (CVE-2026-116331)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [28e164e1d] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [420586131] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [165bbc265] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [22f838a6d] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [85420b358] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [332a81692] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [7282f7dfe] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Check that commutator and negator operator pairs return the same
+      data type (Tom Lane)
+      <ulink url="&commit_baseurl;7282f7dfe">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, substitution of a commutator or negator operator could
+      lead to a type violation.  This patch also cleans up some cases
+      where one operator had a commutator/negator link to another, but the
+      second operator didn't link back to the first.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Claude and Ada Logics
+      for reporting this problem.
+      (CVE-2026-116335)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [f24a08ec1] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [f3eba6492] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [061cc0ee6] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [23e7e2bde] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [2362bc619] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [3a70ff73c] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [122d1f8be] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Prevent functions in index predicates and expressions from
+      breaking <command>REINDEX CONCURRENTLY</command> by manipulating the
+      indexes (Michael Paquier)
+      <ulink url="&commit_baseurl;122d1f8be">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Florent Saudel
+      for reporting this problem.
+      (CVE-2026-116336)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [7f854a31f] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [fae85aa19] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [68ee5a816] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [79f9793fc] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [1dc59af89] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [2c8b00bbf] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [73c657797] 2026-11-09 06:21:00 -0800
+Branch: master [7fad20ce3] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [4fea981a3] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [b552d6efb] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [5c7515337] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [60341198b] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [b2f9e083f] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [b04910651] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Prevent corrupting a newly-installed extension by renaming its
+      target schema during <command>CREATE EXTENSION</command> or by
+      installing it into a temporary schema (Noah Misch)
+      <ulink url="&commit_baseurl;73c657797">&sect;</ulink>
+      <ulink url="&commit_baseurl;b04910651">&sect;</ulink>
+     </para>
+
+     <para>
+      With some ingenuity, an attacker could substitute objects of his
+      creation for objects in the extension.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Noah Misch
+      for reporting this problem.
+      (CVE-2026-6467)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [f47571018] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [d094e92be] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [d3c9f8c61] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [438b435f0] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [b0e85b99b] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [bc146a3d5] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [f233bee1e] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Reject more unsafe names in extension script substitutions
+      (Nathan Bossart)
+      <ulink url="&commit_baseurl;f233bee1e">&sect;</ulink>
+     </para>
+
+     <para>
+      We already rejected schema and owner names containing
+      quotes, backslashes, and dollar signs, but names containing
+      newlines, carriage returns, comment delimiters, or the substitution
+      tokens themselves can still achieve SQL injection.  Reject all those
+      cases too.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      the Anthropic OSS program, Sven Klemm, and Aaron Chen
+      for reporting this problem.
+      (CVE-2026-120153)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [296d035f4] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [af852c3a3] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [3531f4b34] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [9520dbea7] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [ab7594cd1] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [879c760d8] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [d275f6acc] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Check <literal>EXECUTE</literal> privilege before calling cast
+      functions within <function>to_json()</function> and other
+      conversion-to-<type>JSON</type> code (Nathan Bossart, Anthropic OSS
+      program)
+      <ulink url="&commit_baseurl;d275f6acc">&sect;</ulink>
+     </para>
+
+     <para>
+      Typically such functions would have
+      public <literal>EXECUTE</literal> privilege anyway, but this puts
+      the behavior on par with normal execution of casts.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Filip Janus and the Anthropic OSS program
+      for reporting this problem.
+      (CVE-2026-116303)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [e6695e2a7] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [d3c033944] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [d9b15fda5] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [445e10c50] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [3409adfbe] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [0fdf86e95] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [98090a0ff] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Check <literal>EXECUTE</literal> privilege before calling cast
+      functions within foreign key enforcement checks (Nathan Bossart)
+      <ulink url="&commit_baseurl;98090a0ff">&sect;</ulink>
+     </para>
+
+     <para>
+      Typically such functions would have
+      public <literal>EXECUTE</literal> privilege anyway, but this puts
+      the behavior on par with normal execution of casts.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Noah Misch
+      for reporting this problem.
+      (CVE-2026-116303)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [05680d41c] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [c98434b85] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [7f30f607a] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [21c732aad] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [d90159929] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [1f2dd21c1] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [368f52460] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Prevent <command>DROP OWNED BY</command> from changing row-level
+      security policies on tables that the current user does not own
+      (Zsolt Parragi, Anthropic OSS program)
+      <ulink url="&commit_baseurl;368f52460">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, an unprivileged role could remove itself from
+      restrictive policies on tables it does not own.  Instead issue a
+      warning, as is already done for privileges that the current user
+      cannot revoke.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Zsolt Parragi and the Anthropic OSS program
+      for reporting this problem.
+      (CVE-2026-116311)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [91ede1768] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [9c4d55de4] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [448db1451] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [3f082dcc7] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [0ed462c1f] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [ac809c8b1] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [44ebef3b5] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Disallow security-restricted operations from creating types in
+      temporary schemas (Anthropic OSS program, Nathan Bossart)
+      <ulink url="&commit_baseurl;44ebef3b5">&sect;</ulink>
+     </para>
+
+     <para>
+      We already disallowed creating temporary tables in this context, but
+      a type also presents a hazard of shadowing permanent objects and
+      thus allowing privilege escalation.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      the Anthropic OSS program
+      for reporting this problem.
+      (CVE-2026-116316)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [60d3e3f1f] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [ecb163f69] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [1e0a55a0f] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [e0bd77667] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [b7c0062c1] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [be83a07a5] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [56c7f155f] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Avoid out-of-bounds accesses in FDW batch inserts (Nathan Bossart)
+      <ulink url="&commit_baseurl;56c7f155f">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Sumedh Pathak and Sven Klemm
+      for reporting this problem.
+      (CVE-2026-120149)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+Branch: master [7c0735bd3] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [a98f50aec] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [74a999de1] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [7f51d62e1] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [30f67bdac] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [033886653] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [f2b6da9a6] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Refuse to create extended statistics on expressions of transient
+      types (Masahiko Sawada)
+      <ulink url="&commit_baseurl;f2b6da9a6">&sect;</ulink>
+     </para>
+
+     <para>
+      Disallow <command>CREATE STATISTICS</command> on expressions whose
+      types would not be allowed as table column types, most notably
+      anonymous record types.  This prevents other sessions from
+      misinterpreting the stored values.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Mehmet Ince
+      for reporting this problem.
+      (CVE-2026-120148)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+Branch: master [7becf1984] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [23c616158] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [cc2d1a4c9] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [9532d4c94] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [71bb0b587] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [60c7b4d04] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [d2ea7772e] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Reject system catalogs as logical replication targets (Masahiko
+      Sawada)
+      <ulink url="&commit_baseurl;d2ea7772e">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Qian Zhang
+      for reporting this problem.
+      (CVE-2026-120145)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+Branch: master [2f32e08ad] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [aac16b69f] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [a748ed909] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [9c677791d] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [9ee0723c0] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [48be6f9e8] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [661a0951b] 2026-11-09 06:21:01 -0800
+-->
+     <para>
+      Check <literal>ON CONFLICT</literal> target row against RLS policies
+      before applying user quals (Peter Geoghegan, Zsolt Parragi)
+      <ulink url="&commit_baseurl;661a0951b">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, leaky qual expressions could see rows that RLS policies
+      should forbid them from seeing.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Peter Geoghegan, Zsolt Parragi, Only see myself,
+      the Anthropic OSS program, Joao Detomini, Josef Šimánek, and Qing Xu
+      for reporting this problem.
+      (CVE-2026-120154)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Jacob Champion <jchampion@postgresql.org>
+Branch: master [08010fa4f] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [0adbf6bb1] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [780809ba6] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [ea9b427fa] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [f7b12b9f7] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [6925c6816] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [8bead7abd] 2026-11-09 06:21:01 -0800
+-->
+     <para>
+      Validate all connection options in replication subscriptions
+      and <filename>contrib/dblink</filename> (Jacob Champion)
+      <ulink url="&commit_baseurl;8bead7abd">&sect;</ulink>
+     </para>
+
+     <para>
+      Previously, these checks were applied inconsistently.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Andrey Krasichkov, Bashir Altawil, and Zsolt Parragi
+      for reporting this problem.
+      (CVE-2026-14661)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+Branch: master [eb423d598] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [c2f70845c] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [ff961cbbf] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [5e99fab61] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [4ac399b6e] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [046a36e03] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [ded6c00d3] 2026-11-09 06:21:01 -0800
+-->
+     <para>
+      Disallow declaring SQL functions as returning
+      type <type>"any"</type> (Peter Geoghegan)
+      <ulink url="&commit_baseurl;ded6c00d3">&sect;</ulink>
+     </para>
+
+     <para>
+      This allowed type violations.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Peter Geoghegan, Claude and Ada Logics
+      for reporting this problem.
+      (CVE-2026-18447)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+Branch: master [7bb89dbfd] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [01cdd163c] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [317b7bcab] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [bef80ad61] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [aa2d0aefe] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [249fa011f] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [9fe1c7813] 2026-11-09 06:21:01 -0800
+Branch: master [4a95f56c0] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [839b1a04e] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [f1b226dee] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [a17bc8b3c] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [c152f62ac] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [16aa33802] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [376324afd] 2026-11-09 06:21:02 -0800
+-->
+     <para>
+      Harden more memory-size calculations against integer overflow
+      (Álvaro Herrera)
+      <ulink url="&commit_baseurl;9fe1c7813">&sect;</ulink>
+      <ulink url="&commit_baseurl;376324afd">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Hillai Ben Sasson, Jayden Sarveshkumar, and Mehmet Ince
+      for reporting this problem.
+      (CVE-2026-120139)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [6f6e4a955] 2026-11-09 06:20:33 -0800
+Branch: REL_19_STABLE [c5dc8b0a0] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [4fb349500] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [55c00bffe] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [19cff5432] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [74bb8aa8c] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [9bb8b360f] 2026-11-09 06:21:01 -0800
+-->
+     <para>
+      Fix type confusion in set-returning functions that
+      return <type>RECORD</type>, when materialized in a query's target
+      list (Melanie Plageman, Robert Haas)
+      <ulink url="&commit_baseurl;9bb8b360f">&sect;</ulink>
+     </para>
+
+     <para>
+      The same tuple descriptor was used across multiple calls, which is
+      unsafe since the actual record type could vary.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Peter Geoghegan
+      for reporting this problem.
+      (CVE-2026-120141)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [ff2e66f49] 2026-11-09 06:20:32 -0800
+Branch: REL_19_STABLE [fd4e840b6] 2026-11-09 06:20:38 -0800
+Branch: REL_18_STABLE [6b1ca1333] 2026-11-09 06:20:43 -0800
+Branch: REL_17_STABLE [3a3eb7616] 2026-11-09 06:20:48 -0800
+Branch: REL_16_STABLE [cac94a040] 2026-11-09 06:20:53 -0800
+Branch: REL_15_STABLE [3754d3689] 2026-11-09 06:20:57 -0800
+Branch: REL_14_STABLE [c4a0b7919] 2026-11-09 06:21:01 -0800
+-->
+     <para>
+      Cope with concurrent rowtype changes in PL/pgSQL record field
+      assignment (Tom Lane)
+      <ulink url="&commit_baseurl;c4a0b7919">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Claude and Ada Logics
+      for reporting this problem.
+      (CVE-2026-120151)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [ccab6d36d] 2026-08-19 14:06:55 -0400
+Branch: REL_19_STABLE [a1a43897e] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [bbe476c74] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [217eb08b4] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [26a89a81a] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [8b3a668b1] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [68abacaca] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Support <quote>tied</quote> Perl objects in PL/Perl and associated
+      contrib modules (Andrey Rachitskiy)
+      <ulink url="&commit_baseurl;68abacaca">&sect;</ulink>
+     </para>
+
+     <para>
+      Up to now, if you passed a tied object to a PL/Perl operation, it
+      would most likely get treated as <literal>undef</literal>, since we
+      failed to perform Perl get magic on values we're passed.  Tied
+      hashes worked partially, in that you could read out their keys, but
+      the values always read as <literal>undef</literal>.
+     </para>
+
+     <para>
+      Originally this was intended as a master-only change, since it looks
+      like a feature addition.  But afterwards we discovered that assorted
+      security-grade misbehaviors could be triggered by tied objects even
+      without this patch.  Rather than trying to secure two sets of
+      behaviors, it seems best to back-patch this change first.
+      (CVE-2026-116326)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [daafcbd11] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [c6d81df55] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [8d308caee] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [62a19e158] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [ab70d013e] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [7db7244ee] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [8ab0f897d] 2026-11-09 06:21:00 -0800
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [41a3a980e] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [80e73b3ce] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [3ce3d94c0] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [6e5524cda] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [8d6ca4358] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [e9f179372] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [a38943996] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Fix PL/Perl to cope with errors thrown from tied objects
+      (Tom Lane, Andrew Dunstan)
+      <ulink url="&commit_baseurl;8ab0f897d">&sect;</ulink>
+      <ulink url="&commit_baseurl;a38943996">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Ngoc Tran, the Anthropic OSS program, and Dwij Mehta
+      for reporting this problem.
+      (CVE-2026-116326)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [832857532] 2026-11-09 06:20:29 -0800
+Branch: REL_19_STABLE [0bf1ac6be] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [030b28a8d] 2026-11-09 06:20:40 -0800
+Branch: REL_17_STABLE [dcc32e7d9] 2026-11-09 06:20:45 -0800
+Branch: REL_16_STABLE [25baebeb2] 2026-11-09 06:20:50 -0800
+Branch: REL_15_STABLE [7138dcbef] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [c032c0fbd] 2026-11-09 06:20:59 -0800
+-->
+     <para>
+      Fix type confusion in
+      PL/Perl's <function>get_perl_array_ref()</function> (Andrew Dunstan)
+      <ulink url="&commit_baseurl;c032c0fbd">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Zheng Yu
+      for reporting this problem.
+      (CVE-2026-116309)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [bcb007a72] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [f3e7fe9c6] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [5215e9d6a] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [d1883981a] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [adbbabe18] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [b9ad25564] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [bd76c497e] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Fix use-after-free in scans of Perl arrays and hashes (Tom Lane,
+      Anthropic OSS program)
+      <ulink url="&commit_baseurl;bd76c497e">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      the Anthropic OSS program
+      for reporting this problem.
+      (CVE-2026-116320)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [1388b0fbd] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [e51917d91] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [343663966] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [eab800134] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [a78974d34] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [f2f1fd38f] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [556614e04] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Fix use-after-free
+      in <function>plperl_return_next_internal()</function>
+      (Anthropic OSS program)
+      <ulink url="&commit_baseurl;556614e04">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      the Anthropic OSS program and Ngoc Tran
+      for reporting this problem.
+      (CVE-2026-116319)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+Branch: master [99c7967a7] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [31d908432] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [250405afb] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [2009539be] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [b4ebd7240] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [11ed90979] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [c148f9509] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      In PL/Perl, fix use-after-free triggered by releasing a prepared
+      query that is being executed (Masahiko Sawada)
+      <ulink url="&commit_baseurl;c148f9509">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Zheng Yu and the Anthropic OSS program
+      for reporting this problem.
+      (CVE-2026-116307)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [bc1fa1003] 2026-11-09 06:20:30 -0800
+Branch: REL_19_STABLE [5eaab71a7] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [f01727316] 2026-11-09 06:20:41 -0800
+Branch: REL_17_STABLE [9d15ca063] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [05114072c] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [c0ac961ce] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [b2b0f9507] 2026-11-09 06:20:59 -0800
+-->
+     <para>
+      Fix use-after-free hazards in re-entrant use of PL/Tcl (Tom Lane)
+      <ulink url="&commit_baseurl;b2b0f9507">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      the Anthropic OSS program
+      for reporting this problem.
+      (CVE-2026-116323)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+Branch: master [abe3b910a] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [2fe5aa626] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [b8fbeeb76] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [33f4232cb] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [f0aa15186] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [b90297426] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [887f6fee5] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Reject re-entrant use of <filename>contrib/dblink</filename>
+      (Masahiko Sawada)
+      <ulink url="&commit_baseurl;887f6fee5">&sect;</ulink>
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Jiyong Ahn
+      for reporting this problem.
+      (CVE-2026-120147)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [053e39d93] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [19b565088] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [8373a4215] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [b24a45486] 2026-11-09 06:20:46 -0800
+Branch: REL_16_STABLE [dec3a342d] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [4fb06bd93] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [fd0864aa0] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      In <filename>contrib/dict_int</filename>, return NULL for
+      zero-length tokens (Nathan Bossart, Anthropic OSS program)
+      <ulink url="&commit_baseurl;fd0864aa0">&sect;</ulink>
+     </para>
+
+     <para>
+      This behavior is consistent with other text-search dictionary types,
+      and it avoids disclosure of server memory as was possible
+      previously.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Nathan Bossart and the Anthropic OSS program
+      for reporting this problem.
+      (CVE-2026-116308)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [146e03e79] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [211e736a1] 2026-11-09 06:20:37 -0800
+Branch: REL_18_STABLE [17e57d06c] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [4d3c13724] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [40a81579e] 2026-11-09 06:20:52 -0800
+Branch: REL_15_STABLE [7d1f31c73] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [9d2cda9f3] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Make the <literal>\[un]restrict</literal> commands functional
+      in <application>pg_dump</application>'s tar-format output (Noah Misch)
+      <ulink url="&commit_baseurl;9d2cda9f3">&sect;</ulink>
+     </para>
+
+     <para>
+      This provides the intended level of protection to users who make use
+      of the undocumented <filename>restore.sql</filename> tar member.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Pavel Kopylov
+      for reporting this problem.
+      (CVE-2026-116330)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [405649322] 2026-11-09 06:20:31 -0800
+Branch: REL_19_STABLE [1f0ccd2f8] 2026-11-09 06:20:36 -0800
+Branch: REL_18_STABLE [673ef2341] 2026-11-09 06:20:42 -0800
+Branch: REL_17_STABLE [a6dc99b28] 2026-11-09 06:20:47 -0800
+Branch: REL_16_STABLE [cc13d5e0c] 2026-11-09 06:20:51 -0800
+Branch: REL_15_STABLE [265d71b28] 2026-11-09 06:20:56 -0800
+Branch: REL_14_STABLE [179c2c37e] 2026-11-09 06:21:00 -0800
+-->
+     <para>
+      Harden <application>pg_restore</application> against corrupt archive
+      files (Dilip Kumar, Yonghwa Lee, Nathan Bossart)
+      <ulink url="&commit_baseurl;179c2c37e">&sect;</ulink>
+     </para>
+
+     <para>
+      This patch fixes out-of-bounds accesses and file path traversal
+      hazards.  There remain other issues that don't seem to amount to
+      security bugs.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Dilip Kumar, Yonghwa Lee, OpenSec, and Ben Dixon
+      for reporting this problem.
+      (CVE-2026-116314)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+Branch: master [4a18e9b5f] 2026-11-09 06:20:29 -0800
+Branch: REL_19_STABLE [410b7056e] 2026-11-09 06:20:35 -0800
+Branch: REL_18_STABLE [af250ef26] 2026-11-09 06:20:40 -0800
+Branch: REL_17_STABLE [04986ad59] 2026-11-09 06:20:45 -0800
+Branch: REL_16_STABLE [885dfee08] 2026-11-09 06:20:50 -0800
+Branch: REL_15_STABLE [0f9f20c36] 2026-11-09 06:20:55 -0800
+Branch: REL_14_STABLE [50f650b91] 2026-11-09 06:20:59 -0800
+-->
+     <para>
+      Fix use of externally-controlled format string
+      in <application>pg_basebackup</application> (Peter Eisentraut)
+      <ulink url="&commit_baseurl;50f650b91">&sect;</ulink>
+     </para>
+
+     <para>
+      This problem could only be reached if files with unusual names exist
+      in the server's data directory.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Peter Eisentraut
+      for reporting this problem.
+      (CVE-2026-16240)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Peter Geoghegan <pg@bowt.ie>
 Branch: master [a32b8dc98] 2026-10-06 18:21:39 -0400
 Branch: REL_19_STABLE [18740523a] 2026-10-06 18:21:37 -0400
