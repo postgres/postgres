@@ -1156,6 +1156,7 @@ CREATE TABLE test13 (c int DEFAULT ('(0,1)'::priv_testtype1).a);
 ERROR:  permission denied for type priv_testtype1
 CREATE TABLE test_tbl_with_idx (c int, d text);
 CREATE INDEX ON test_tbl_with_idx ((cons_priv_testtype1(c, d)));
+ERROR:  permission denied for type priv_testtype1
 DROP TABLE test_tbl_with_idx;
 SET SESSION AUTHORIZATION regress_priv_user2;
 -- commands that should succeed
