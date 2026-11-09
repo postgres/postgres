@@ -138,7 +138,6 @@ permutation
     s1_create_rowtype_comp
     s1_begin
     s1_create_testview_with_rowtype_sub
-    # FIXME: This should block waiting on s1 to commit, and then error out
     s2_alter_rowtype_comp_to_text
     s1_commit
     s1_drop_testview
