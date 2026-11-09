@@ -351,8 +351,31 @@ Objects in extension "test_ext_cine"
 -- Test @extschema@ syntax.
 --
 CREATE SCHEMA "has space";
+CREATE SCHEMA "has
+newline";
+CREATE SCHEMA "has@extschema@";
+CREATE SCHEMA "has--comment";
+CREATE SCHEMA "has/*comment";
+CREATE SCHEMA "has*/comment";
+CREATE SCHEMA "has@extowner@";
+CREATE SCHEMA "hasMODULE_PATHNAME";
 CREATE EXTENSION test_ext_extschema SCHEMA has$dollar;
 ERROR:  invalid character in extension "test_ext_extschema" schema: must not contain any of ""$'\"
+CREATE EXTENSION test_ext_extschema SCHEMA "has
+newline";
+ERROR:  invalid string in extension "test_ext_extschema" schema: must not contain newline, carriage return, "--", "/*", or "*/"
+CREATE EXTENSION test_ext_extschema SCHEMA "has@extschema@";
+ERROR:  invalid string in extension "test_ext_extschema" schema: must not contain "@extowner@", "@extschema", or "MODULE_PATHNAME"
+CREATE EXTENSION test_ext_extschema SCHEMA "has--comment";
+ERROR:  invalid string in extension "test_ext_extschema" schema: must not contain newline, carriage return, "--", "/*", or "*/"
+CREATE EXTENSION test_ext_extschema SCHEMA "has/*comment";
+ERROR:  invalid string in extension "test_ext_extschema" schema: must not contain newline, carriage return, "--", "/*", or "*/"
+CREATE EXTENSION test_ext_extschema SCHEMA "has*/comment";
+ERROR:  invalid string in extension "test_ext_extschema" schema: must not contain newline, carriage return, "--", "/*", or "*/"
+CREATE EXTENSION test_ext_extschema SCHEMA "has@extowner@";
+ERROR:  invalid string in extension "test_ext_extschema" schema: must not contain "@extowner@", "@extschema", or "MODULE_PATHNAME"
+CREATE EXTENSION test_ext_extschema SCHEMA "hasMODULE_PATHNAME";
+ERROR:  invalid string in extension "test_ext_extschema" schema: must not contain "@extowner@", "@extschema", or "MODULE_PATHNAME"
 CREATE EXTENSION test_ext_extschema SCHEMA "has space";
 --
 -- Test extension with objects outside the extension's schema.
