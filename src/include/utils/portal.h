@@ -243,6 +243,7 @@ extern void PortalDefineQuery(Portal portal,
 							  CachedPlan *cplan);
 extern PlannedStmt *PortalGetPrimaryStmt(Portal portal);
 extern void PortalCreateHoldStore(Portal portal);
+extern void DropQueryEnvPortals(QueryEnvironment *queryEnv);
 extern void PortalHashTableDeleteAll(void);
 extern bool ThereAreNoReadyPortals(void);
 extern void HoldPinnedPortals(void);
