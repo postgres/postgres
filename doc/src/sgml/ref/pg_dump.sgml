@@ -1235,10 +1235,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Use the provided string as the <application>psql</application>
-        <command>\restrict</command> key in the dump output.  This can only be
-        specified for plain-text dumps, i.e., when <option>--format</option> is
-        set to <literal>plain</literal> or the <option>--format</option> option
-        is omitted.  If no restrict key is specified,
+        <command>\restrict</command> key in the dump output.  If no restrict
+        key is specified,
         <application>pg_dump</application> will generate a random one as
         needed.  Keys may contain only alphanumeric characters.
        </para>
