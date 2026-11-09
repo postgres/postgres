@@ -67,6 +67,22 @@ CREATE STATISTICS tst (ndistinct) ON xmin from ext_stats_test;
 CREATE STATISTICS tst (ndistinct) ON (y + z) FROM ext_stats_test;
 -- multivariate statistics without a less-than operator not supported
 CREATE STATISTICS tst (ndistinct) ON x, w from ext_stats_test;
+-- expressions of a pseudo-type (e.g. an anonymous record) not supported, as
+-- such values cannot be interpreted in another session
+CREATE STATISTICS tst ON (row(x, y)) FROM ext_stats_test;
+CREATE STATISTICS tst ON (array[row(x, y)]) FROM ext_stats_test;
+-- nor are types containing a pseudo-type
+CREATE STATISTICS tst ON (array[NULL::pg_statistic]) FROM ext_stats_test;
+CREATE STATISTICS tst ON (array[x::cstring]) FROM ext_stats_test;
+-- expressions without a derivable collation not supported
+CREATE TABLE ext_stats_coll (a text COLLATE "C", b text COLLATE "POSIX");
+CREATE STATISTICS tst ON ((a || b)) FROM ext_stats_coll;
+DROP TABLE ext_stats_coll;
+-- but an expression of a named composite type is fine
+CREATE TYPE ext_stats_rowtype AS (x text, y int);
+CREATE STATISTICS tst ON (row(x, y)::ext_stats_rowtype) FROM ext_stats_test;
+DROP STATISTICS tst;
+DROP TYPE ext_stats_rowtype;
 DROP TABLE ext_stats_test;
 
 -- Ensure stats are dropped sanely, and test IF NOT EXISTS while at it
