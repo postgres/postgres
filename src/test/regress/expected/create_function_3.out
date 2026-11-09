@@ -49,6 +49,52 @@ SELECT functest_A_3();
  f
 (1 row)
 
+-- pseudo-types are rejected as parameter types, output parameters included
+CREATE FUNCTION functest_A_4(x "any") RETURNS int LANGUAGE 'sql'
+       AS 'SELECT 1';
+ERROR:  SQL functions cannot have arguments of type "any"
+CREATE FUNCTION functest_A_5(OUT a "any", OUT b int) LANGUAGE 'sql'
+       AS 'SELECT 1, 2';
+ERROR:  SQL functions cannot have arguments of type "any"
+CREATE FUNCTION functest_A_6() RETURNS TABLE(a "any", b int) LANGUAGE 'sql'
+       AS 'SELECT 1, 2';
+ERROR:  SQL functions cannot have arguments of type "any"
+-- the check does not depend on the function body being validated
+SET check_function_bodies = off;
+CREATE FUNCTION functest_A_7(OUT a cstring, OUT b int) LANGUAGE 'sql'
+       AS 'SELECT ''x'', 2';
+ERROR:  SQL functions cannot have arguments of type cstring
+RESET check_function_bodies;
+-- polymorphic parameters and record/record[] output columns are allowed
+CREATE FUNCTION functest_A_8(x anyelement, OUT a anyelement, OUT b int)
+       LANGUAGE 'sql' AS 'SELECT $1, 2';
+SELECT * FROM functest_A_8(42);
+ a  | b 
+----+---
+ 42 | 2
+(1 row)
+
+CREATE FUNCTION functest_A_9(OUT a record, OUT b int) LANGUAGE 'sql'
+       AS 'SELECT ROW(1, 2), 3';
+SELECT * FROM functest_A_9();
+   a   | b 
+-------+---
+ (1,2) | 3
+(1 row)
+
+CREATE FUNCTION functest_A_10(OUT a record[], OUT b int) LANGUAGE 'sql'
+       AS 'SELECT ARRAY[ROW(1, 2)], 3';
+SELECT * FROM functest_A_10();
+     a     | b 
+-----------+---
+ {"(1,2)"} | 3
+(1 row)
+
+-- record is accepted as an output column type, but, unlike in PL/pgSQL, it is
+-- rejected as an input parameter type, for historical reasons
+CREATE FUNCTION functest_A_11(x record) RETURNS int LANGUAGE 'sql'
+       AS 'SELECT 1';
+ERROR:  SQL functions cannot have arguments of type record
 --
 -- IMMUTABLE | STABLE | VOLATILE
 --
@@ -684,10 +730,13 @@ SELECT double_append(array_append(ARRAY[q1], q2), q3)
 
 -- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 30 other objects
+NOTICE:  drop cascades to 33 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
+drop cascades to function functest_a_8(anyelement)
+drop cascades to function functest_a_9()
+drop cascades to function functest_a_10()
 drop cascades to function functest_b_2(integer)
 drop cascades to function functest_b_3(integer)
 drop cascades to function functest_b_4(integer)
