@@ -231,15 +231,7 @@ bt_index_block_validate(Relation rel, int64 blkno)
 				 errmsg("\"%s\" is not a %s index",
 						RelationGetRelationName(rel), "btree")));
 
-	/*
-	 * Reject attempts to read non-local temporary relations; we would be
-	 * likely to get wrong data since we have no visibility into the owning
-	 * session's local buffers.
-	 */
-	if (RELATION_IS_OTHER_TEMP(rel))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot access temporary tables of other sessions")));
+	check_relation_supported(rel, MAIN_FORKNUM);
 
 	if (blkno == 0)
 		ereport(ERROR,
@@ -864,15 +856,7 @@ bt_metap(PG_FUNCTION_ARGS)
 				 errmsg("\"%s\" is not a %s index",
 						RelationGetRelationName(rel), "btree")));
 
-	/*
-	 * Reject attempts to read non-local temporary relations; we would be
-	 * likely to get wrong data since we have no visibility into the owning
-	 * session's local buffers.
-	 */
-	if (RELATION_IS_OTHER_TEMP(rel))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot access temporary tables of other sessions")));
+	check_relation_supported(rel, MAIN_FORKNUM);
 
 	buffer = ReadBuffer(rel, 0);
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);

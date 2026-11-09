@@ -17,6 +17,7 @@
 
 #include "access/htup_details.h"
 #include "access/relation.h"
+#include "access/xlog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
@@ -165,15 +166,7 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 						RelationGetRelationName(rel)),
 				 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 
-	/*
-	 * Reject attempts to read non-local temporary relations; we would be
-	 * likely to get wrong data since we have no visibility into the owning
-	 * session's local buffers.
-	 */
-	if (RELATION_IS_OTHER_TEMP(rel))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot access temporary tables of other sessions")));
+	check_relation_supported(rel, forknum);
 
 	if (blkno >= RelationGetNumberOfBlocksInFork(rel, forknum))
 		ereport(ERROR,
@@ -200,6 +193,34 @@ get_raw_page_internal(text *relname, ForkNumber forknum, BlockNumber blkno)
 	return raw_page;
 }
 
+/*
+ * check_relation_supported
+ *
+ * Check that the given fork of a relation can be read by this session.
+ */
+void
+check_relation_supported(Relation rel, ForkNumber forknum)
+{
+	/*
+	 * Reject attempts to read non-local temporary relations; we would be
+	 * likely to get wrong data since we have no visibility into the owning
+	 * session's local buffers.
+	 */
+	if (RELATION_IS_OTHER_TEMP(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary tables of other sessions")));
+
+	/*
+	 * Temporary and unlogged relations are inaccessible during recovery,
+	 * except for the init fork of an unlogged relation, which does exist.
+	 */
+	if (!RelationIsPermanent(rel) && RecoveryInProgress() &&
+		forknum != INIT_FORKNUM)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary or unlogged relations during recovery")));
+}
 
 /*
  * get_page_from_raw

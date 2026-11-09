@@ -426,10 +426,7 @@ hash_bitmap_info(PG_FUNCTION_ARGS)
 				 errmsg("\"%s\" is not a %s index",
 						RelationGetRelationName(indexRel), "hash")));
 
-	if (RELATION_IS_OTHER_TEMP(indexRel))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot access temporary tables of other sessions")));
+	check_relation_supported(indexRel, MAIN_FORKNUM);
 
 	if (ovflblkno < 0 || ovflblkno > MaxBlockNumber)
 		ereport(ERROR,
