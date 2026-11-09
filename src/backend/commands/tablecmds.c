@@ -6612,10 +6612,19 @@ check_composite_type_dependency(ObjectAddress *depobj, Oid typeOid,
 				 * and thus (if it's a partitioning column) break the
 				 * partitioning rule.  For now, reject for partitioned rels
 				 * too.
+				 *
+				 * Foreign tables don't have storage as such, but they can
+				 * have statistics stored in the pg_statistic table.  (It
+				 * might be better to remove the statistics than fail the
+				 * operation, but with the current code structure, it'd be
+				 * inconvenient to memorize the need for removing the
+				 * statistics.  Note that if we allowed partitioned tables
+				 * here, they could also have statistics.)
 				 */
 				if (RELKIND_HAS_STORAGE(rel->rd_rel->relkind) ||
 					rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ||
-					rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX)
+					rel->rd_rel->relkind == RELKIND_PARTITIONED_INDEX ||
+					rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 				{
 					report_type_used_in_column(RelationGetRelationName(rel),
 											   NameStr(att->attname),
