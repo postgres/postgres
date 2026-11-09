@@ -578,9 +578,35 @@ AggregateCreate(const char *aggName,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("sort operator can only be specified for single-argument aggregates")));
+
+		/*
+		 * A sort operator only makes sense for an aggregate that behaves like
+		 * MIN or MAX.  We cannot check the aggregate's semantics carefully
+		 * enough to be sure of that, but we must at least insist that its
+		 * input and result types match; otherwise transforming to a
+		 * MinMaxAggregate plan would result in type violations.
+		 */
+		if (finaltype != aggArgTypes[0])
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("sort operator can only be specified when aggregate's input and result types match")));
+
 		sortop = LookupOperName(NULL, aggsortopName,
 								aggArgTypes[0], aggArgTypes[0],
 								false, -1);
+
+		/*
+		 * Ideally we'd insist that the sortop be an ordering operator in some
+		 * index opclass.  But checking that here risks dump/reload ordering
+		 * problems, and anyway it's not essential: if that isn't the case
+		 * then the planner will throw a "could not find equality operator"
+		 * error at plan time.  We can at least verify that the operator
+		 * returns boolean.
+		 */
+		if (get_op_rettype(sortop) != BOOLOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("sort operator must return boolean")));
 	}
 
 	/*
