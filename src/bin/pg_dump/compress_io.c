@@ -269,6 +269,36 @@ InitDiscoverCompressFileHandle(const char *path, const char *mode)
 			compression_spec.algorithm = PG_COMPRESSION_ZSTD;
 	}
 
+	/*
+	 * Refuse anything that isn't a regular file, so that a symbolic link
+	 * can't lead us outside the archive directory.  This check is racy, but
+	 * we're guarding against a compromised dump, not against a directory
+	 * under the active control of a hostile party.
+	 */
+	if (lstat(fname, &st) == 0 && !S_ISREG(st.st_mode))
+		pg_fatal("\"%s\" is not a regular file", fname);
+
+#ifdef WIN32
+
+	/*
+	 * lstat() only recognizes junction points on Windows, so check the name's
+	 * reparse tag ourselves to catch symbolic links to files, too.
+	 */
+	{
+		WIN32_FIND_DATA fd;
+		HANDLE		hFind = FindFirstFile(fname, &fd);
+
+		if (hFind != INVALID_HANDLE_VALUE)
+		{
+			FindClose(hFind);
+			if ((fd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 &&
+				(fd.dwReserved0 == IO_REPARSE_TAG_SYMLINK ||
+				 fd.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT))
+				pg_fatal("\"%s\" is not a regular file", fname);
+		}
+	}
+#endif
+
 	CFH = InitCompressFileHandle(compression_spec);
 	errno = 0;
 	if (!CFH->open_func(fname, -1, mode, CFH))
