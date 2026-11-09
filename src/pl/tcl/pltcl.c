@@ -103,6 +103,17 @@ utf_e2u(const char *src)
 #define UTF_E2U(x) \
 	(_pltcl_utf_dst = utf_e2u(_pltcl_utf_src = (x)))
 
+/* This variant always makes a pstrdup'd copy */
+static inline char *
+utf_u2e_copy(const char *src)
+{
+	char	   *dst = pg_any_to_server(src, strlen(src), PG_UTF8);
+
+	if ((const char *) dst == src)
+		dst = pstrdup(dst);
+	return dst;
+}
+
 
 /**********************************************************************
  * Information associated with a Tcl interpreter.  We have one interpreter
@@ -1041,10 +1052,20 @@ pltcl_func_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 		retval = HeapTupleGetDatum(tup);
 	}
 	else
+	{
+		/*
+		 * Notice that we forcibly copy the result of Tcl_GetStringResult, so
+		 * that the result_in_func is applied to data that doesn't belong to
+		 * the Tcl interpreter.  This avoids use-after-free problems if the
+		 * result_in_func calls another pltcl function.  No need to worry
+		 * about leaking the string, since this happens just once per pltcl
+		 * function call.
+		 */
 		retval = InputFunctionCall(&prodesc->result_in_func,
-								   utf_u2e(Tcl_GetStringResult(interp)),
+								   utf_u2e_copy(Tcl_GetStringResult(interp)),
 								   prodesc->result_typioparam,
 								   -1);
+	}
 
 	return retval;
 }
@@ -1381,7 +1402,7 @@ throw_tcl_error(Tcl_Interp *interp, const char *proname)
 	char	   *emsg;
 	char	   *econtext;
 
-	emsg = pstrdup(utf_u2e(Tcl_GetStringResult(interp)));
+	emsg = utf_u2e_copy(Tcl_GetStringResult(interp));
 	econtext = utf_u2e(Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY));
 	ereport(ERROR,
 			(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
@@ -2237,8 +2258,9 @@ pltcl_returnnext(ClientData cdata, Tcl_Interp *interp,
 			if (call_state->ret_tupdesc->natts != 1)
 				elog(ERROR, "wrong result type supplied in return_next");
 
+			/* as in pltcl_func_handler, copy the string out of Tcl */
 			retval = InputFunctionCall(&prodesc->result_in_func,
-									   utf_u2e((char *) Tcl_GetString(objv[1])),
+									   utf_u2e_copy(Tcl_GetString(objv[1])),
 									   prodesc->result_typioparam,
 									   -1);
 			tuplestore_putvalues(call_state->tuple_store, call_state->ret_tupdesc,
@@ -2694,6 +2716,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	int			count = 0;
 	Tcl_Size	callObjc;
 	Tcl_Obj   **callObjv = NULL;
+	char	  **argstrings;
 	Datum	   *argvalues;
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
@@ -2835,6 +2858,23 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	PG_TRY();
 	{
 		/************************************************************
+		 * As in pltcl_func_handler, copy all the argument strings out
+		 * of Tcl before calling any input function.  An input
+		 * function can re-enter the Tcl interpreter, which might free
+		 * not only the strings but also the callObjv array itself, if
+		 * the argument list object gets converted to some other type.
+		 ************************************************************/
+		argstrings = palloc_array(char *, callObjc);
+
+		for (j = 0; j < callObjc; j++)
+		{
+			if (nulls && nulls[j] == 'n')
+				argstrings[j] = NULL;
+			else
+				argstrings[j] = utf_u2e_copy(Tcl_GetString(callObjv[j]));
+		}
+
+		/************************************************************
 		 * Setup the value array for SPI_execute_plan() using
 		 * the type specific input functions
 		 ************************************************************/
@@ -2842,22 +2882,10 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 
 		for (j = 0; j < callObjc; j++)
 		{
-			if (nulls && nulls[j] == 'n')
-			{
-				argvalues[j] = InputFunctionCall(&qdesc->arginfuncs[j],
-												 NULL,
-												 qdesc->argtypioparams[j],
-												 -1);
-			}
-			else
-			{
-				UTF_BEGIN;
-				argvalues[j] = InputFunctionCall(&qdesc->arginfuncs[j],
-												 UTF_U2E(Tcl_GetString(callObjv[j])),
-												 qdesc->argtypioparams[j],
-												 -1);
-				UTF_END;
-			}
+			argvalues[j] = InputFunctionCall(&qdesc->arginfuncs[j],
+											 argstrings[j],
+											 qdesc->argtypioparams[j],
+											 -1);
 		}
 
 		/************************************************************
@@ -3248,7 +3276,12 @@ pltcl_build_tuple_result(Tcl_Interp *interp, Tcl_Obj **kvObjv, int kvObjc,
 					 errmsg("cannot set generated column \"%s\"",
 							fieldName)));
 
-		values[attn - 1] = utf_u2e(Tcl_GetString(kvObjv[i + 1]));
+		/*
+		 * As in pltcl_func_handler, copy each string out of the Tcl
+		 * interpreter before proceeding, to ensure it can't get freed or
+		 * overwritten by re-entrant use of the Tcl interpreter.
+		 */
+		values[attn - 1] = utf_u2e_copy(Tcl_GetString(kvObjv[i + 1]));
 	}
 
 	tuple = BuildTupleFromCStrings(attinmeta, values);
