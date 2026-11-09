@@ -843,6 +843,10 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	parse_error_callback_arg callback_arg;
 	ErrorContextCallback sqlerrcontext;
 	bool		haspolyarg;
+	Oid		   *argtypes;
+	char	  **argnames;
+	char	   *argmodes;
+	int			numargs;
 	int			i;
 
 	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
@@ -864,21 +868,31 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 				 errmsg("SQL functions cannot return type %s",
 						format_type_be(proc->prorettype))));
 
-	/* Disallow pseudotypes in arguments */
-	/* except for polymorphic */
+	/* Disallow pseudotypes in arguments (either IN or OUT) */
+	/* except for polymorphic, or RECORD/RECORD[] as an output column type */
 	haspolyarg = false;
-	for (i = 0; i < proc->pronargs; i++)
+	numargs = get_func_arg_info(tuple, &argtypes, &argnames, &argmodes);
+	for (i = 0; i < numargs; i++)
 	{
-		if (get_typtype(proc->proargtypes.values[i]) == TYPTYPE_PSEUDO)
+		char		argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
+
+		if (get_typtype(argtypes[i]) != TYPTYPE_PSEUDO)
+			continue;
+
+		if (IsPolymorphicType(argtypes[i]))
 		{
-			if (IsPolymorphicType(proc->proargtypes.values[i]))
-				haspolyarg = true;
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("SQL functions cannot have arguments of type %s",
-								format_type_be(proc->proargtypes.values[i]))));
+			haspolyarg = true;
+			continue;
 		}
+
+		if ((argtypes[i] == RECORDOID || argtypes[i] == RECORDARRAYOID) &&
+			(argmode == PROARGMODE_OUT || argmode == PROARGMODE_TABLE))
+			continue;
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("SQL functions cannot have arguments of type %s",
+						format_type_be(argtypes[i]))));
 	}
 
 	/* Postpone body checks if !check_function_bodies */
