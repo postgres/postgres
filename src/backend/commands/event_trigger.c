@@ -1798,6 +1798,15 @@ EventTriggerAlterTableRelid(Oid objectId)
 		currentEventTriggerState->commandCollectionInhibited)
 		return;
 
+	/*
+	 * TimescaleDB unfortunately calls AlterTableInternal() while some other
+	 * DDL command is being collected, i.e. without
+	 * EventTriggerAlterTableStart() having been called. Ignore such calls
+	 * instead of dereferencing a NULL pointer.
+	 */
+	if (currentEventTriggerState->currentCommand == NULL)
+		return;
+
 	currentEventTriggerState->currentCommand->d.alterTable.objectId = objectId;
 }
 
@@ -1820,8 +1829,11 @@ EventTriggerCollectAlterTableSubcmd(Node *subcmd, ObjectAddress address)
 		currentEventTriggerState->commandCollectionInhibited)
 		return;
 
+	/* see EventTriggerAlterTableRelid() */
+	if (currentEventTriggerState->currentCommand == NULL)
+		return;
+
 	Assert(IsA(subcmd, AlterTableCmd));
-	Assert(currentEventTriggerState->currentCommand != NULL);
 	Assert(OidIsValid(currentEventTriggerState->currentCommand->d.alterTable.objectId));
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
