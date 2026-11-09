@@ -1626,6 +1626,7 @@ typedef struct pg_signal_info
  * setjmp.  We now support the case only on Windows.  However, it seems
  * that MinGW-64 has some longstanding issues in its setjmp support,
  * so on that toolchain we cheat and use gcc's builtins.
+ * If you change this, see also PG_PERL_TRY in plperl.h.
  */
 #ifdef WIN32
 #ifdef __MINGW64__

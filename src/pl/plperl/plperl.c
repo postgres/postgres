@@ -252,9 +252,9 @@ static void plperl_destroy_interp(PerlInterpreter **interp);
 static void plperl_fini(int code, Datum arg);
 static void set_interp_require(bool trusted);
 
-static Datum plperl_func_handler(PG_FUNCTION_ARGS);
-static Datum plperl_trigger_handler(PG_FUNCTION_ARGS);
-static void plperl_event_trigger_handler(PG_FUNCTION_ARGS);
+static Datum plperl_func_handler(plperl_proc_desc *prodesc, PG_FUNCTION_ARGS);
+static Datum plperl_trigger_handler(plperl_proc_desc *prodesc, PG_FUNCTION_ARGS);
+static void plperl_event_trigger_handler(plperl_proc_desc *prodesc, PG_FUNCTION_ARGS);
 
 static void free_plperl_function(plperl_proc_desc *prodesc);
 
@@ -333,10 +333,10 @@ _PG_init(void)
 	/*
 	 * Be sure we do initialization only once.
 	 *
-	 * If initialization fails due to, e.g., plperl_init_interp() throwing an
-	 * exception, then we'll return here on the next usage and the user will
-	 * get a rather cryptic: ERROR:  attempt to redefine parameter
-	 * "plperl.use_strict"
+	 * If initialization fails, we'll return here on the next usage and the
+	 * user will get a rather cryptic: ERROR: attempt to redefine parameter
+	 * "plperl.use_strict".  We minimize the risk of that by not treating
+	 * plperl_init_interp() as part of required initialization.
 	 */
 	static bool inited = false;
 	HASHCTL		hash_ctl;
@@ -428,12 +428,20 @@ _PG_init(void)
 	 */
 	PLPERL_SET_OPMASK(plperl_opmask);
 
+	/* Once the hash tables are made, we can arrange for cleanup */
+	on_proc_exit(plperl_fini, 0);
+
+	/*
+	 * We can now consider initialization complete.  If plperl_init_interp
+	 * fails, we'll leave plperl_held_interp NULL; but we can recover from
+	 * that later (if MULTIPLICITY is set, which it is on most builds).
+	 */
+	inited = true;
+
 	/*
 	 * Create the first Perl interpreter, but only partially initialize it.
 	 */
 	plperl_held_interp = plperl_init_interp();
-
-	inited = true;
 }
 
 
@@ -499,6 +507,11 @@ plperl_fini(int code, Datum arg)
 
 /*
  * Select and activate an appropriate Perl interpreter.
+ *
+ * On success, the selected interpreter is Perl's active interpreter and is
+ * referenced by plperl_active_interp.  On failure, we'll throw a Postgres
+ * error and preserve Perl's interpreter setting; plperl_active_interp won't
+ * change either.
  */
 static void
 select_perl_context(bool trusted)
@@ -507,6 +520,7 @@ select_perl_context(bool trusted)
 	plperl_interp_desc *interp_desc;
 	bool		found;
 	PerlInterpreter *interp = NULL;
+	void	   *old_perl_context = PERL_GET_CONTEXT;
 
 	/* Find or create the interpreter hashtable entry for this userid */
 	if (trusted)
@@ -555,39 +569,16 @@ select_perl_context(bool trusted)
 		interp = plperl_held_interp;
 
 		/*
-		 * Reset the plperl_held_interp pointer first; if we fail during init
-		 * we don't want to try again with the partially-initialized interp.
+		 * Reset the plperl_held_interp pointer now; if we fail during init we
+		 * don't want to try again with the partially-initialized interp.
 		 */
 		plperl_held_interp = NULL;
-
-		if (trusted)
-			plperl_trusted_init();
-		else
-			plperl_untrusted_init();
-
-		/* successfully initialized, so arrange for cleanup */
-		on_proc_exit(plperl_fini, 0);
 	}
 	else
 	{
 #ifdef MULTIPLICITY
-
-		/*
-		 * plperl_init_interp will change Perl's idea of the active
-		 * interpreter.  Reset plperl_active_interp temporarily, so that if we
-		 * hit an error partway through here, we'll make sure to switch back
-		 * to a non-broken interpreter before running any other Perl
-		 * functions.
-		 */
-		plperl_active_interp = NULL;
-
-		/* Now build the new interpreter */
+		/* Build the new interpreter */
 		interp = plperl_init_interp();
-
-		if (trusted)
-			plperl_trusted_init();
-		else
-			plperl_untrusted_init();
 #else
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -595,27 +586,50 @@ select_perl_context(bool trusted)
 #endif
 	}
 
-	set_interp_require(trusted);
-
 	/*
-	 * Since the timing of first use of PL/Perl can't be predicted, any
-	 * database interaction during initialization is problematic. Including,
-	 * but not limited to, security definer issues. So we only enable access
-	 * to the database AFTER on_*_init code has run. See
-	 * http://archives.postgresql.org/pgsql-hackers/2010-01/msg02669.php
+	 * Now we have an active Perl interpreter.  If any error occurs while
+	 * finishing its initialization, we need to restore Perl's previous
+	 * interpreter setting, just as in plperl_init_interp().  Note that we'll
+	 * then leak the partially-initialized interpreter; not clear if it's
+	 * worth trying to clean it up.
 	 */
 	{
 		dTHX;
 
-		newXS("PostgreSQL::InServer::SPI::bootstrap",
-			  boot_PostgreSQL__InServer__SPI, __FILE__);
+		PG_PERL_TRY();
+		{
+			/* Finish initialization of the new interpreter */
+			if (trusted)
+				plperl_trusted_init();
+			else
+				plperl_untrusted_init();
 
-		eval_pv("PostgreSQL::InServer::SPI::bootstrap()", FALSE);
-		if (SvTRUE(ERRSV))
-			ereport(ERROR,
-					(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
-					 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
-					 errcontext("while executing PostgreSQL::InServer::SPI::bootstrap")));
+			set_interp_require(trusted);
+
+			/*
+			 * Since the timing of first use of PL/Perl can't be predicted,
+			 * any database interaction during initialization is problematic.
+			 * Including, but not limited to, security definer issues.  So we
+			 * only enable access to the database AFTER on_*_init code has
+			 * run.  See
+			 * http://archives.postgresql.org/pgsql-hackers/2010-01/msg02669.php
+			 */
+			newXS("PostgreSQL::InServer::SPI::bootstrap",
+				  boot_PostgreSQL__InServer__SPI, __FILE__);
+
+			eval_pv("PostgreSQL::InServer::SPI::bootstrap()", FALSE);
+			if (SvTRUE(ERRSV))
+				ereport(ERROR,
+						(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+						 errmsg("%s", strip_trailing_ws(sv2cstr(ERRSV))),
+						 errcontext("while executing PostgreSQL::InServer::SPI::bootstrap")));
+		}
+		PG_PERL_CATCH();
+		{
+			PERL_SET_CONTEXT(old_perl_context);
+			PG_RE_THROW();
+		}
+		PG_PERL_END_TRY();
 	}
 
 	/* Fully initialized, so mark the hashtable entry valid */
@@ -630,6 +644,8 @@ select_perl_context(bool trusted)
  *
  * A call with NULL does nothing.  This is so that "restoring" to a previously
  * null state of plperl_active_interp doesn't result in useless thrashing.
+ *
+ * We assume this cannot fail.
  */
 static void
 activate_interpreter(plperl_interp_desc *interp_desc)
@@ -647,6 +663,10 @@ activate_interpreter(plperl_interp_desc *interp_desc)
 /*
  * Create a new Perl interpreter.
  *
+ * On success, the new interpreter is Perl's active interpreter.  On failure,
+ * we'll throw a Postgres error and preserve Perl's interpreter setting.
+ * Either way, this doesn't change plperl_active_interp.
+ *
  * We initialize the interpreter as far as we can without knowing whether
  * it will become a trusted or untrusted interpreter; in particular, the
  * plperl.on_init code will get executed.  Later, either plperl_trusted_init
@@ -656,7 +676,7 @@ static PerlInterpreter *
 plperl_init_interp(void)
 {
 	PerlInterpreter *plperl;
-
+	void	   *old_perl_context = PERL_GET_CONTEXT;
 	static char *embedding[3 + 2] = {
 		"", "-e", PLC_PERLBOOT
 	};
@@ -756,17 +776,25 @@ plperl_init_interp(void)
 	if (!plperl)
 		elog(ERROR, "could not allocate Perl interpreter");
 
+	/* Establish the new interpreter as Perl's active interpreter */
 	PERL_SET_CONTEXT(plperl);
-	perl_construct(plperl);
 
 	/*
-	 * Run END blocks in perl_destruct instead of perl_run.  Note that dTHX
-	 * loads up a pointer to the current interpreter, so we have to postpone
-	 * it to here rather than put it at the function head.
+	 * Use a PG_TRY block to ensure that PERL_SET_CONTEXT() gets undone on
+	 * failure.  Ideally we'd use PG_PERL_TRY, but that doesn't quite work
+	 * because perl_construct() overwrites PL_top_env.  So instead we must
+	 * trust that these Perl functions won't longjmp.  Also note that we can't
+	 * set up dTHX any earlier than here, because it gets its pointer to the
+	 * current interpreter from PERL_GET_CONTEXT.
 	 */
+	PG_TRY();
 	{
 		dTHX;
 
+		/* Finish constructing the interpreter */
+		perl_construct(plperl);
+
+		/* Run END blocks in perl_destruct instead of perl_run */
 		PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 
 		/*
@@ -815,6 +843,19 @@ plperl_init_interp(void)
 		PLPERL_RESTORE_LOCALE(LC_TIME, save_time);
 #endif
 	}
+	PG_CATCH();
+	{
+		PERL_SET_CONTEXT(old_perl_context);
+#ifdef PLPERL_RESTORE_LOCALE
+		PLPERL_RESTORE_LOCALE(LC_COLLATE, save_collate);
+		PLPERL_RESTORE_LOCALE(LC_CTYPE, save_ctype);
+		PLPERL_RESTORE_LOCALE(LC_MONETARY, save_monetary);
+		PLPERL_RESTORE_LOCALE(LC_NUMERIC, save_numeric);
+		PLPERL_RESTORE_LOCALE(LC_TIME, save_time);
+#endif
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	return plperl;
 }
@@ -1858,16 +1899,61 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
+		plperl_proc_desc *prodesc;
+		bool		is_trigger = false;
+		bool		is_event_trigger = false;
+		ErrorContextCallback pl_error_context;
+
 		current_call_data = &this_call_data;
+
 		if (CALLED_AS_TRIGGER(fcinfo))
-			retval = plperl_trigger_handler(fcinfo);
+			is_trigger = true;
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
+			is_event_trigger = true;
+
+		/* Find and compile the correct function */
+		prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid,
+										  is_trigger, is_event_trigger);
+		this_call_data.prodesc = prodesc;
+		increment_prodesc_refcount(prodesc);
+
+		/* Now we can select the correct interpreter */
+		activate_interpreter(prodesc->interp);
+
+		/* Set a callback for error reporting */
+		pl_error_context.callback = plperl_exec_callback;
+		pl_error_context.previous = error_context_stack;
+		pl_error_context.arg = prodesc->proname;
+		error_context_stack = &pl_error_context;
+
+		/*
+		 * Trap any Perl error thrown within the execution handlers, and
+		 * convert to a Postgres error.  We can't set this up till we have the
+		 * correct interpreter, so it requires an additional level of TRY.
+		 */
 		{
-			plperl_event_trigger_handler(fcinfo);
-			retval = (Datum) 0;
+			dTHX;
+
+			PG_PERL_TRY(2);
+			{
+				if (is_trigger)
+					retval = plperl_trigger_handler(prodesc, fcinfo);
+				else if (is_event_trigger)
+				{
+					plperl_event_trigger_handler(prodesc, fcinfo);
+					retval = (Datum) 0;
+				}
+				else
+					retval = plperl_func_handler(prodesc, fcinfo);
+			}
+			PG_PERL_FINALLY(2);
+			{
+			}
+			PG_PERL_END_TRY(2);
 		}
-		else
-			retval = plperl_func_handler(fcinfo);
+
+		/* Restore the previous error callback */
+		error_context_stack = pl_error_context.previous;
 	}
 	PG_FINALLY();
 	{
@@ -1937,36 +2023,42 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 	this_call_data.prodesc = &desc;
 	/* we do not bother with refcounting the fake prodesc */
 
-	PG_TRY();
+	/* Select the correct Perl interpreter */
+	select_perl_context(desc.lanpltrusted);
+
+	/* Use PG_PERL_TRY to ensure the previous interpreter gets restored */
 	{
-		SV		   *perlret;
+		dTHX;
 
-		current_call_data = &this_call_data;
+		PG_PERL_TRY();
+		{
+			SV		   *perlret;
 
-		SPI_connect_ext(codeblock->atomic ? 0 : SPI_OPT_NONATOMIC);
+			current_call_data = &this_call_data;
 
-		select_perl_context(desc.lanpltrusted);
+			SPI_connect_ext(codeblock->atomic ? 0 : SPI_OPT_NONATOMIC);
 
-		plperl_create_sub(&desc, codeblock->source_text, 0);
+			plperl_create_sub(&desc, codeblock->source_text, 0);
 
-		if (!desc.reference)	/* can this happen? */
-			elog(ERROR, "could not create internal procedure for anonymous code block");
+			if (!desc.reference)	/* can this happen? */
+				elog(ERROR, "could not create internal procedure for anonymous code block");
 
-		perlret = plperl_call_perl_func(&desc, fake_fcinfo);
+			perlret = plperl_call_perl_func(&desc, fake_fcinfo);
 
-		SvREFCNT_dec_current(perlret);
+			SvREFCNT_dec_current(perlret);
 
-		if (SPI_finish() != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish() failed");
+			if (SPI_finish() != SPI_OK_FINISH)
+				elog(ERROR, "SPI_finish() failed");
+		}
+		PG_PERL_FINALLY();
+		{
+			if (desc.reference)
+				SvREFCNT_dec_current(desc.reference);
+			current_call_data = save_call_data;
+			activate_interpreter(oldinterp);
+		}
+		PG_PERL_END_TRY();
 	}
-	PG_FINALLY();
-	{
-		if (desc.reference)
-			SvREFCNT_dec_current(desc.reference);
-		current_call_data = save_call_data;
-		activate_interpreter(oldinterp);
-	}
-	PG_END_TRY();
 
 	error_context_stack = pl_error_context.previous;
 
@@ -2394,30 +2486,18 @@ plperl_call_perl_event_trigger_func(plperl_proc_desc *desc,
 }
 
 static Datum
-plperl_func_handler(PG_FUNCTION_ARGS)
+plperl_func_handler(plperl_proc_desc *prodesc, PG_FUNCTION_ARGS)
 {
 	bool		nonatomic;
-	plperl_proc_desc *prodesc;
 	SV		   *perlret;
 	Datum		retval = 0;
 	ReturnSetInfo *rsi;
-	ErrorContextCallback pl_error_context;
 
 	nonatomic = fcinfo->context &&
 		IsA(fcinfo->context, CallContext) &&
 		!castNode(CallContext, fcinfo->context)->atomic;
 
 	SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0);
-
-	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false, false);
-	current_call_data->prodesc = prodesc;
-	increment_prodesc_refcount(prodesc);
-
-	/* Set a callback for error reporting */
-	pl_error_context.callback = plperl_exec_callback;
-	pl_error_context.previous = error_context_stack;
-	pl_error_context.arg = prodesc->proname;
-	error_context_stack = &pl_error_context;
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
@@ -2434,8 +2514,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("materialize mode required, but it is not allowed in this context")));
 	}
-
-	activate_interpreter(prodesc->interp);
 
 	perlret = plperl_call_perl_func(prodesc, fcinfo);
 
@@ -2504,9 +2582,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			rsi->isDone = ExprEndResult;
 	}
 
-	/* Restore the previous error callback */
-	error_context_stack = pl_error_context.previous;
-
 	SvREFCNT_dec_current(perlret);
 
 	return retval;
@@ -2514,15 +2589,13 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 
 
 static Datum
-plperl_trigger_handler(PG_FUNCTION_ARGS)
+plperl_trigger_handler(plperl_proc_desc *prodesc, PG_FUNCTION_ARGS)
 {
 	dTHX;
-	plperl_proc_desc *prodesc;
 	SV		   *perlret;
 	Datum		retval;
 	SV		   *svTD;
 	HV		   *hvTD;
-	ErrorContextCallback pl_error_context;
 	TriggerData *tdata;
 	int			rc PG_USED_FOR_ASSERTS_ONLY;
 
@@ -2533,19 +2606,6 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	tdata = (TriggerData *) fcinfo->context;
 	rc = SPI_register_trigger_data(tdata);
 	Assert(rc >= 0);
-
-	/* Find or compile the function */
-	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, true, false);
-	current_call_data->prodesc = prodesc;
-	increment_prodesc_refcount(prodesc);
-
-	/* Set a callback for error reporting */
-	pl_error_context.callback = plperl_exec_callback;
-	pl_error_context.previous = error_context_stack;
-	pl_error_context.arg = prodesc->proname;
-	error_context_stack = &pl_error_context;
-
-	activate_interpreter(prodesc->interp);
 
 	svTD = plperl_trigger_build_args(fcinfo);
 	perlret = plperl_call_perl_trigger_func(prodesc, fcinfo, svTD);
@@ -2617,9 +2677,6 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		pfree(tmp);
 	}
 
-	/* Restore the previous error callback */
-	error_context_stack = pl_error_context.previous;
-
 	SvREFCNT_dec_current(svTD);
 	if (perlret)
 		SvREFCNT_dec_current(perlret);
@@ -2629,36 +2686,18 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 
 
 static void
-plperl_event_trigger_handler(PG_FUNCTION_ARGS)
+plperl_event_trigger_handler(plperl_proc_desc *prodesc, PG_FUNCTION_ARGS)
 {
-	plperl_proc_desc *prodesc;
 	SV		   *svTD;
-	ErrorContextCallback pl_error_context;
 
 	/* Connect to SPI manager */
 	SPI_connect();
-
-	/* Find or compile the function */
-	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false, true);
-	current_call_data->prodesc = prodesc;
-	increment_prodesc_refcount(prodesc);
-
-	/* Set a callback for error reporting */
-	pl_error_context.callback = plperl_exec_callback;
-	pl_error_context.previous = error_context_stack;
-	pl_error_context.arg = prodesc->proname;
-	error_context_stack = &pl_error_context;
-
-	activate_interpreter(prodesc->interp);
 
 	svTD = plperl_event_trigger_build_args(fcinfo);
 	plperl_call_perl_event_trigger_func(prodesc, fcinfo, svTD);
 
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed");
-
-	/* Restore the previous error callback */
-	error_context_stack = pl_error_context.previous;
 
 	SvREFCNT_dec_current(svTD);
 }
@@ -2711,6 +2750,11 @@ free_plperl_function(plperl_proc_desc *prodesc)
 }
 
 
+/*
+ * Find or create a plperl_proc_desc structure for the given function.
+ *
+ * We expect this not to allow Perl to throw an error out to callers.
+ */
 static plperl_proc_desc *
 compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 {
@@ -2940,9 +2984,24 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 
 		prodesc->interp = plperl_active_interp;
 
-		plperl_create_sub(prodesc, proc_source, fn_oid);
+		/*
+		 * We must ensure we have an active TRY block in the target
+		 * interpreter (in case a Perl error is thrown in plperl_create_sub),
+		 * and that we switch back to the caller's interpreter before exiting.
+		 */
+		{
+			dTHX;
 
-		activate_interpreter(oldinterp);
+			PG_PERL_TRY(2);
+			{
+				plperl_create_sub(prodesc, proc_source, fn_oid);
+			}
+			PG_PERL_FINALLY(2);
+			{
+				activate_interpreter(oldinterp);
+			}
+			PG_PERL_END_TRY(2);
+		}
 
 		pfree(proc_source);
 
@@ -2974,9 +3033,6 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 			free_plperl_function(prodesc);
 		else if (proc_cxt)
 			MemoryContextDelete(proc_cxt);
-
-		/* Be sure to restore the previous interpreter, too, for luck */
-		activate_interpreter(oldinterp);
 
 		PG_RE_THROW();
 	}
@@ -3132,6 +3188,7 @@ check_spi_usage_allowed(void)
 HV *
 plperl_spi_exec(char *query, int limit)
 {
+	dTHX;
 	HV		   *ret_hv;
 
 	/*
@@ -3147,7 +3204,7 @@ plperl_spi_exec(char *query, int limit)
 	/* Want to run inside function's memory context */
 	MemoryContextSwitchTo(oldcontext);
 
-	PG_TRY();
+	PG_PERL_TRY();
 	{
 		int			spi_rv;
 
@@ -3163,7 +3220,7 @@ plperl_spi_exec(char *query, int limit)
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 	}
-	PG_CATCH();
+	PG_PERL_CATCH();
 	{
 		ErrorData  *edata;
 
@@ -3183,7 +3240,7 @@ plperl_spi_exec(char *query, int limit)
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
 	}
-	PG_END_TRY();
+	PG_PERL_END_TRY();
 
 	return ret_hv;
 }
@@ -3244,15 +3301,16 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 processed,
 void
 plperl_return_next(SV *sv)
 {
+	dTHX;
 	MemoryContext oldcontext = CurrentMemoryContext;
 
 	check_spi_usage_allowed();
 
-	PG_TRY();
+	PG_PERL_TRY();
 	{
 		plperl_return_next_internal(sv);
 	}
-	PG_CATCH();
+	PG_PERL_CATCH();
 	{
 		ErrorData  *edata;
 
@@ -3264,7 +3322,7 @@ plperl_return_next(SV *sv)
 		/* Punt the error to Perl */
 		croak_cstr(edata->message);
 	}
-	PG_END_TRY();
+	PG_PERL_END_TRY();
 }
 
 /*
@@ -3405,6 +3463,7 @@ plperl_return_next_internal(SV *sv)
 SV *
 plperl_spi_query(char *query)
 {
+	dTHX;
 	SV		   *cursor;
 
 	/*
@@ -3420,7 +3479,7 @@ plperl_spi_query(char *query)
 	/* Want to run inside function's memory context */
 	MemoryContextSwitchTo(oldcontext);
 
-	PG_TRY();
+	PG_PERL_TRY();
 	{
 		SPIPlanPtr	plan;
 		Portal		portal;
@@ -3448,7 +3507,7 @@ plperl_spi_query(char *query)
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 	}
-	PG_CATCH();
+	PG_PERL_CATCH();
 	{
 		ErrorData  *edata;
 
@@ -3468,7 +3527,7 @@ plperl_spi_query(char *query)
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
 	}
-	PG_END_TRY();
+	PG_PERL_END_TRY();
 
 	return cursor;
 }
@@ -3477,6 +3536,7 @@ plperl_spi_query(char *query)
 SV *
 plperl_spi_fetchrow(char *cursor)
 {
+	dTHX;
 	SV		   *row;
 
 	/*
@@ -3492,9 +3552,8 @@ plperl_spi_fetchrow(char *cursor)
 	/* Want to run inside function's memory context */
 	MemoryContextSwitchTo(oldcontext);
 
-	PG_TRY();
+	PG_PERL_TRY();
 	{
-		dTHX;
 		Portal		p = SPI_cursor_find(cursor);
 
 		if (!p)
@@ -3524,7 +3583,7 @@ plperl_spi_fetchrow(char *cursor)
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 	}
-	PG_CATCH();
+	PG_PERL_CATCH();
 	{
 		ErrorData  *edata;
 
@@ -3544,7 +3603,7 @@ plperl_spi_fetchrow(char *cursor)
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
 	}
-	PG_END_TRY();
+	PG_PERL_END_TRY();
 
 	return row;
 }
@@ -3568,6 +3627,7 @@ plperl_spi_cursor_close(char *cursor)
 SV *
 plperl_spi_prepare(char *query, int argc, SV **argv)
 {
+	dTHX;
 	volatile SPIPlanPtr plan = NULL;
 	volatile MemoryContext plan_cxt = NULL;
 	plperl_query_desc *volatile qdesc = NULL;
@@ -3583,7 +3643,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 	BeginInternalSubTransaction(NULL);
 	MemoryContextSwitchTo(oldcontext);
 
-	PG_TRY();
+	PG_PERL_TRY();
 	{
 		CHECK_FOR_INTERRUPTS();
 
@@ -3675,7 +3735,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 	}
-	PG_CATCH();
+	PG_PERL_CATCH();
 	{
 		ErrorData  *edata;
 
@@ -3705,7 +3765,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
 	}
-	PG_END_TRY();
+	PG_PERL_END_TRY();
 
 	/************************************************************
 	 * Return the query's hash key to the caller.
@@ -3716,6 +3776,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 HV *
 plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 {
+	dTHX;
 	HV		   *ret_hv;
 	SV		  **sv;
 	int			i,
@@ -3739,10 +3800,8 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 	/* Want to run inside function's memory context */
 	MemoryContextSwitchTo(oldcontext);
 
-	PG_TRY();
+	PG_PERL_TRY();
 	{
-		dTHX;
-
 		/************************************************************
 		 * Fetch the saved plan descriptor, see if it's o.k.
 		 ************************************************************/
@@ -3815,7 +3874,7 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 	}
-	PG_CATCH();
+	PG_PERL_CATCH();
 	{
 		ErrorData  *edata;
 
@@ -3835,7 +3894,7 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
 	}
-	PG_END_TRY();
+	PG_PERL_END_TRY();
 
 	return ret_hv;
 }
@@ -3843,6 +3902,7 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 SV *
 plperl_spi_query_prepared(char *query, int argc, SV **argv)
 {
+	dTHX;
 	int			i;
 	char	   *nulls;
 	Datum	   *argvalues;
@@ -3864,7 +3924,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 	/* Want to run inside function's memory context */
 	MemoryContextSwitchTo(oldcontext);
 
-	PG_TRY();
+	PG_PERL_TRY();
 	{
 		/************************************************************
 		 * Fetch the saved plan descriptor, see if it's o.k.
@@ -3933,7 +3993,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		MemoryContextSwitchTo(oldcontext);
 		CurrentResourceOwner = oldowner;
 	}
-	PG_CATCH();
+	PG_PERL_CATCH();
 	{
 		ErrorData  *edata;
 
@@ -3953,7 +4013,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 		/* Can't get here, but keep compiler quiet */
 		return NULL;
 	}
-	PG_END_TRY();
+	PG_PERL_END_TRY();
 
 	return cursor;
 }
@@ -3996,6 +4056,7 @@ plperl_spi_commit(void)
 
 	check_spi_usage_allowed();
 
+	/* Shouldn't need PG_PERL_TRY here; no Perl functions called within TRY */
 	PG_TRY();
 	{
 		SPI_commit();
@@ -4022,6 +4083,7 @@ plperl_spi_rollback(void)
 
 	check_spi_usage_allowed();
 
+	/* Shouldn't need PG_PERL_TRY here; no Perl functions called within TRY */
 	PG_TRY();
 	{
 		SPI_rollback();
@@ -4055,6 +4117,7 @@ plperl_spi_rollback(void)
 void
 plperl_util_elog(int level, SV *msg)
 {
+	dTHX;
 	MemoryContext oldcontext = CurrentMemoryContext;
 	char	   *volatile cmsg = NULL;
 
@@ -4063,13 +4126,13 @@ plperl_util_elog(int level, SV *msg)
 	 * safe to allow even in the contexts that that function rejects.
 	 */
 
-	PG_TRY();
+	PG_PERL_TRY();
 	{
 		cmsg = sv2cstr(msg);
 		elog(level, "%s", cmsg);
 		pfree(cmsg);
 	}
-	PG_CATCH();
+	PG_PERL_CATCH();
 	{
 		ErrorData  *edata;
 
@@ -4084,7 +4147,7 @@ plperl_util_elog(int level, SV *msg)
 		/* Punt the error to Perl */
 		croak_cstr(edata->message);
 	}
-	PG_END_TRY();
+	PG_PERL_END_TRY();
 }
 
 /*

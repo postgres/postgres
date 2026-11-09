@@ -383,6 +383,9 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
  * statements are required.  The optional suffix may contain any character
  * that's allowed in a variable name.  The suffix, if specified, must be the
  * same within each component macro of the given PG_TRY() statement.
+ *
+ * If you modify these macros, check whether similar modifications are
+ * needed in plperl's PG_PERL_TRY and friends.
  *----------
  */
 #define PG_TRY(...)  \
@@ -475,6 +478,7 @@ extern void ThrowErrorData(ErrorData *edata);
 pg_noreturn extern void pg_re_throw(void);
 
 extern char *GetErrorContextStack(void);
+extern bool HaveCompleteError(void);
 
 /* Hook for intercepting messages before they are sent to the server log */
 typedef void (*emit_log_hook_type) (ErrorData *edata);
