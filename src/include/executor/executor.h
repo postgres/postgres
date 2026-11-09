@@ -804,8 +804,9 @@ extern void ExecSimpleRelationDelete(ResultRelInfo *resultRelInfo,
 									 TupleTableSlot *searchslot);
 extern void CheckCmdReplicaIdentity(Relation rel, CmdType cmd);
 
-extern void CheckSubscriptionRelkind(char localrelkind, char remoterelkind,
-									 const char *nspname, const char *relname);
+extern void CheckSubscriptionTargetRel(Oid relid, char remoterelkind,
+									   const char *nspname,
+									   const char *relname);
 
 /*
  * prototypes from functions in nodeModifyTable.c

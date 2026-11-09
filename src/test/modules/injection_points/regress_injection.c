@@ -18,9 +18,36 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
+#include "replication/logicalproto.h"
 #include "storage/procarray.h"
 #include "utils/rel.h"
 #include "utils/xid8.h"
+
+extern PGDLLEXPORT void logicalrep_relation_redirect(const char *name,
+													 const void *private_data,
+													 void *arg);
+
+/*
+ * Pretend that the publisher asked for a different target relation than it
+ * really did, so that relations which must never be replication targets can
+ * be reached.  The private data is the new qualified name, as
+ * "nspname.relname".
+ */
+void
+logicalrep_relation_redirect(const char *name, const void *private_data,
+							 void *arg)
+{
+	LogicalRepRelation *rel = (LogicalRepRelation *) arg;
+	char	   *target = pstrdup((const char *) private_data);
+	char	   *sep = strchr(target, '.');
+
+	if (sep == NULL)
+		elog(ERROR, "malformed target relation \"%s\"", target);
+
+	*sep = '\0';
+	rel->nspname = target;
+	rel->relname = sep + 1;
+}
 
 /*
  * removable_cutoff - for syscache-update-pruned.spec
