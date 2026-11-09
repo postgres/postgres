@@ -130,6 +130,11 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 				 errmsg("cannot transform non-hash Perl value to hstore")));
 	hv = (HV *) in;
 
+	/* Hold a reference on the hash while we scan it */
+	ENTER;
+	SAVETMPS;
+	sv_2mortal(newRV((SV *) hv));
+
 	(void) hv_iterinit(hv);
 
 	pcount = 64;				/* arbitrary initial guess */
@@ -168,6 +173,10 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 
 		i++;
 	}
+
+	/* release our reference on the hash */
+	FREETMPS;
+	LEAVE;
 
 	pcount = hstoreUniquePairs(pairs, i, &buflen);
 	out = hstorePairs(pairs, pcount, buflen);
