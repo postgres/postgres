@@ -22,6 +22,8 @@ HEADERS = ltree.h
 
 REGRESS = ltree
 
+ISOLATION = schema-rename-attack
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
