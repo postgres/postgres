@@ -20,17 +20,9 @@ rta_type
 step s2_alter_tab: ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 step s2_alter_type: ALTER TYPE rta_type ALTER ATTRIBUTE b TYPE text;
 step s1_exec_tab: EXECUTE rta_tab_const;
-rta_tab  
----------
-(1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
 step s1_exec_type: EXECUTE rta_type_const;
-rta_type 
----------
-(1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
 
 starting permutation: s1_begin s1_declare s1_fetch s2_alter_tab s1_inval s1_fetch s1_commit
 step s1_begin: BEGIN;
@@ -47,11 +39,7 @@ rta_tab
 step s2_alter_tab: ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 step s1_inval: LOCK rta_lockme;
 step s1_fetch: FETCH NEXT FROM rta_cur;
-rta_tab  
----------
-(1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
 step s1_commit: COMMIT;
 
 starting permutation: s1_declare_hold s1_fetch_hold s2_alter_tab s1_fetch_hold
@@ -67,11 +55,7 @@ rta_tab
 
 step s2_alter_tab: ALTER TABLE rta_tab ALTER COLUMN b TYPE text;
 step s1_fetch_hold: FETCH NEXT FROM rta_hold;
-rta_tab  
----------
-(1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
 
 starting permutation: s2_lock s1_var s2_alter_tab s2_unlock
 step s2_lock: SELECT pg_advisory_lock(1);
@@ -99,8 +83,8 @@ pg_advisory_unlock
 t                 
 (1 row)
 
-s1: NOTICE:  v: (1,FIXME)
 step s1_var: <... completed>
+ERROR:  row type of datum tuple was altered after the datum's creation
 
 starting permutation: s2_lock s1_query s2_alter_tab s2_unlock
 step s2_lock: SELECT pg_advisory_lock(1);
@@ -121,11 +105,7 @@ t
 (1 row)
 
 step s1_query: <... completed>
-x                  |rta_wait|x        
--------------------+--------+---------
-(1,"\\x4649584d45")|        |(1,FIXME)
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
 
 starting permutation: s1_prepare s1_exec_tab s2_alter_tab_same s1_exec_tab
 step s1_prepare: 
@@ -140,11 +120,7 @@ rta_tab
 
 step s2_alter_tab_same: ALTER TABLE rta_tab ALTER COLUMN b TYPE bytea;
 step s1_exec_tab: EXECUTE rta_tab_const;
-rta_tab            
--------------------
-(1,"\\x4649584d45")
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation
 
 starting permutation: s3_explain s2_lock s3_leader s2_alter_type s2_unlock
 step s3_explain: 
@@ -181,8 +157,4 @@ t
 (1 row)
 
 step s3_leader: <... completed>
-rta_wait_read
--------------
-(1,FIXME)    
-(1 row)
-
+ERROR:  row type of datum tuple was altered after the datum's creation

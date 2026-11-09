@@ -3546,7 +3546,17 @@ populate_record(TupleDesc tupdesc,
 	 * nulls.
 	 */
 	if (defaultval && JsObjectIsEmpty(obj))
+	{
+		/*
+		 * XXX: There's currently no guarantee that the default tuple matches
+		 * the tupledesc without this check. But this should probably have
+		 * been enforced much earlier.
+		 */
+		if (HeapTupleHeaderIsVersionedDatum(defaultval))
+			heap_datum_check(defaultval, tupdesc);
+
 		return defaultval;
+	}
 
 	/* (re)allocate metadata cache */
 	if (record == NULL ||

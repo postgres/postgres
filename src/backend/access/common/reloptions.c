@@ -1373,6 +1373,106 @@ untransformRelOptions(Datum options)
 }
 
 /*
+ * Storage for per-attribute version in the backbranches.
+ *
+ * See the "Version storage in the catalog" section in
+ * src/backend/catalog/README.attver.md.
+ */
+
+/*
+ * Extract the attribute version from an attoptions datum.  Returns
+ * InvalidXLogRecPtr if the datum is null or does not carry a version (e.g. a
+ * pg_upgrade'd or older-minor-version row).
+ */
+XLogRecPtr
+attoptions_get_version(Datum attoptions, bool isnull)
+{
+	XLogRecPtr	version = InvalidXLogRecPtr;
+	Datum	   *optiondatums;
+	int			noptions;
+
+	if (isnull || DatumGetPointer(attoptions) == NULL)
+		return InvalidXLogRecPtr;
+
+	/*
+	 * Open code untransformRelOptions(), it seems unnecessary to do the full
+	 * transformation here, as that would introduce more memory allocations.
+	 * The code ends up being similarly long as not open-coding.
+	 */
+
+	deconstruct_array_builtin(DatumGetArrayTypeP(attoptions), TEXTOID,
+							  &optiondatums, NULL, &noptions);
+
+	for (int i = 0; i < noptions; i++)
+	{
+		char	   *optname;
+		char	   *optval;
+
+		optname = TextDatumGetCString(optiondatums[i]);
+		optval = strchr(optname, '=');
+
+		if (optval)
+		{
+			*optval++ = '\0';
+
+			if (strcmp(optname, ATTRIBUTE_VERSION_ATTOPTION) == 0)
+			{
+				char	   *endptr;
+
+				errno = 0;
+				version = strtou64(optval, &endptr, 10);
+
+				/*
+				 * Don't accept -, any range errors, require whole string to
+				 * be consumed. This should never be reached, but we shouldn't
+				 * just ignore errors.
+				 */
+				if (!isdigit((unsigned char) *optval) || endptr == optval ||
+					*endptr != 0 || errno != 0)
+					elog(ERROR, "could not parse attribute version \"%s\"", optval);
+				pfree(optname);
+				break;
+			}
+		}
+		pfree(optname);
+	}
+
+	pfree(optiondatums);
+
+	return version;
+}
+
+/*
+ * Return a new attoptions text[] datum with the attribute version set, or
+ * removed if version is InvalidXLogRecPtr.  Other options already present in
+ * attoptions (if not isnull) are kept; any previous version is replaced.
+ */
+Datum
+attoptions_set_version(Datum attoptions, bool isnull, XLogRecPtr version)
+{
+	DefElem    *def;
+	List	   *defList;
+	String	   *str;
+	bool		isReset = XLogRecPtrIsInvalid(version);
+
+	/*
+	 * Using the full reloptions machinery here isn't the cheapest, but
+	 * compared to the cost of DDL it should not matter.
+	 */
+
+	if (isReset)
+		str = NULL;
+	else
+		str = makeString(psprintf("%llu", (long long unsigned) version));
+
+	def = makeDefElem(ATTRIBUTE_VERSION_ATTOPTION, (Node *) str, -1);
+	defList = list_make1(def);
+
+	return transformRelOptions(isnull ? (Datum) 0 : attoptions,
+							   defList, NULL, NULL, false, isReset);
+}
+
+/*
  * Extract and parse reloptions from a pg_class tuple.
  *
  * This is a low-level routine, expected to be used by relcache code and
@@ -2081,6 +2181,16 @@ attribute_reloptions(Datum reloptions, bool validate)
 		{"n_distinct", RELOPT_TYPE_REAL, offsetof(AttributeOpts, n_distinct)},
 		{"n_distinct_inherited", RELOPT_TYPE_REAL, offsetof(AttributeOpts, n_distinct_inherited)}
 	};
+
+	/*
+	 * The reserved attribute version key is stored inside attoptions in the
+	 * back branches, but it is not a user-visible / settable option.  Strip
+	 * it before parsing so it is neither validated nor rejected as an
+	 * unrecognized option.
+	 */
+	if (DatumGetPointer(reloptions) != NULL)
+		reloptions = attoptions_set_version(reloptions, false,
+											InvalidXLogRecPtr);
 
 	return (bytea *) build_reloptions(reloptions, validate,
 									  RELOPT_KIND_ATTRIBUTE,

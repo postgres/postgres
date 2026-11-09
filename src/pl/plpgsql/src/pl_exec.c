@@ -870,8 +870,7 @@ coerce_function_result_tuple(PLpgSQL_execstate *estate, TupleDesc tupdesc)
 			resultsize = EOH_get_flat_size(&erh->hdr);
 			tuphdr = (HeapTupleHeader) SPI_palloc(resultsize);
 			EOH_flatten_into(&erh->hdr, (void *) tuphdr, resultsize);
-			HeapTupleHeaderSetTypeId(tuphdr, tupdesc->tdtypeid);
-			HeapTupleHeaderSetTypMod(tuphdr, tupdesc->tdtypmod);
+			heap_datum_update_type(tuphdr, tupdesc);
 			estate->retval = PointerGetDatum(tuphdr);
 		}
 		else
@@ -3407,6 +3406,13 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 					tuple = expanded_record_get_tuple(rec->erh);
 					if (tupmap)
 						tuple = execute_attr_map_tuple(tuple, tupmap);
+					else
+					{
+						/*
+						 * Expanded records should always have valid contents,
+						 * so we don't need a version check here.
+						 */
+					}
 					tuplestore_puttuple(estate->tuple_store, tuple);
 					MemoryContextSwitchTo(oldcontext);
 				}
@@ -3470,6 +3476,14 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 													gettext_noop("returned record type does not match expected record type"));
 				if (tupmap)
 					tuple = execute_attr_map_tuple(tuple, tupmap);
+				else
+				{
+					/*
+					 * No need to check the version here, due to
+					 * deconstruct_composite_datum() already having checked.
+					 */
+				}
+
 				tuplestore_puttuple(estate->tuple_store, tuple);
 				ReleaseTupleDesc(retvaldesc);
 				MemoryContextSwitchTo(oldcontext);
@@ -7415,6 +7429,7 @@ static TupleDesc
 deconstruct_composite_datum(Datum value, HeapTupleData *tmptup)
 {
 	HeapTupleHeader td;
+	TupleDesc	tupdesc;
 	Oid			tupType;
 	int32		tupTypmod;
 
@@ -7430,7 +7445,20 @@ deconstruct_composite_datum(Datum value, HeapTupleData *tmptup)
 	/* Extract rowtype info and find a tupdesc */
 	tupType = HeapTupleHeaderGetTypeId(td);
 	tupTypmod = HeapTupleHeaderGetTypMod(td);
-	return lookup_rowtype_tupdesc(tupType, tupTypmod);
+	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+
+	/*
+	 * The tuple might have a different version than the tupledesc. We could
+	 * check this in all callers instead, but duplicating the check doesn't
+	 * make a whole lot of sense.
+	 *
+	 * XXX: It'd be much better if we had a core API that wrapped all this,
+	 * there are many copies of this around our tree and extensions.
+	 */
+	if (HeapTupleHeaderIsVersionedDatum(td))
+		heap_datum_check(td, tupdesc);
+
+	return tupdesc;
 }
 
 /*

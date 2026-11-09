@@ -253,6 +253,7 @@ BernoulliSamplerData
 BgWorkerStartTime
 BgwHandleStatus
 BinaryArithmFunc
+BinaryUpgradeAttributeVersions
 BindParamCbData
 BipartiteMatchState
 BitString
@@ -455,6 +456,7 @@ CommonTableExpr
 CompareScalarsContext
 CompiledExprState
 CompositeIOData
+CompositeTypeMismatchOptions
 CompositeTypeStmt
 CompoundAffixFlag
 CompressFileHandle
@@ -2971,6 +2973,7 @@ TupStoreStatus
 TupleConstr
 TupleConversionMap
 TupleDesc
+TupleDescVersionData
 TupleHashEntry
 TupleHashEntryData
 TupleHashIterator

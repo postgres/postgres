@@ -382,10 +382,17 @@ rewrite_heap_tuple(RewriteState state,
 
 	/*
 	 * If the tuple has been updated, check the old-to-new mapping hash table.
+	 *
+	 * TimescaleDB passes a freshly formed tuple as the old tuple, after
+	 * copying the visibility information of an on-disk tuple into it. Its
+	 * t_ctid then still holds the datum version, which, like the marker of a
+	 * tuple moved to another partition, doesn't point to a newer version.
 	 */
 	if (!((old_tuple->t_data->t_infomask & HEAP_XMAX_INVALID) ||
 		  HeapTupleHeaderIsOnlyLocked(old_tuple->t_data)) &&
 		!HeapTupleHeaderIndicatesMovedPartitions(old_tuple->t_data) &&
+		ItemPointerGetOffsetNumberNoCheck(&old_tuple->t_data->t_ctid) !=
+		VersionedDatumOffsetNumber &&
 		!(ItemPointerEquals(&(old_tuple->t_self),
 							&(old_tuple->t_data->t_ctid))))
 	{
@@ -598,6 +605,9 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	Size		len;
 	OffsetNumber newoff;
 	HeapTuple	heaptup;
+
+	/* should never get here with a datum tuple */
+	Assert(!HeapTupleHeaderIsDatum(tup->t_data));
 
 	/*
 	 * If the new tuple is too big for storage or contains already toasted
