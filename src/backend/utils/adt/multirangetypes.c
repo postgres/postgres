@@ -587,9 +587,16 @@ multirange_size_estimate(TypeCacheEntry *rangetyp, int32 range_count,
 
 	/* Count space for range bounds */
 	for (i = 0; i < range_count; i++)
+	{
 		size += att_nominal_alignby(VARSIZE(ranges[i]) -
 									sizeof(RangeType) -
 									sizeof(char), elemalignby);
+
+		if (!AllocSizeIsValid(size))
+			ereport(ERROR,
+					errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					errmsg("multirange is too big"));
+	}
 
 	return size;
 }
