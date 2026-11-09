@@ -264,19 +264,13 @@ DROP TYPE atcomp;
 -- expression would need to be rewritten.
 create table at_tab1 (a int, b numeric);
 create table at_tab2 (x int, y text, check((x,y)::at_tab1 = (1,'42')::at_tab1));
-alter table at_tab1 alter column b type bigint; -- FIXME: should fail
-select pg_catalog.pg_get_constraintdef(r.oid, true) from pg_catalog.pg_constraint r
-  where r.conrelid = 'at_tab2'::regclass;
-insert into at_tab2 values (1, '42');
+alter table at_tab1 alter column b type bigint; -- fails
 drop table at_tab1, at_tab2;
 
 -- Rowtype constant appears in the CHECK constraint
--- FIXME: should fail, but instead, the constant stored in the catalog is corrupted
 create table at_tab1 (a int, b bytea);
 create table at_tab2 (x int, y text, check(y::text = '(1,\\x4649584d45)'::at_tab1::text));
-alter table at_tab1 alter column b type text; -- FIXME: should fail
-select pg_catalog.pg_get_constraintdef(r.oid, true) from pg_catalog.pg_constraint r
-  where r.conrelid = 'at_tab2'::regclass;
+alter table at_tab1 alter column b type text; -- fails
 drop table at_tab1, at_tab2;
 
 -- Test using the rowtype in a column of a partitioned table, too
