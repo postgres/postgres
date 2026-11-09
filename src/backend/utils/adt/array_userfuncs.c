@@ -1003,7 +1003,8 @@ array_agg_array_combine(PG_FUNCTION_ARGS)
 
 		/* Calculate new sizes, guarding against overflow. */
 		if (pg_add_s32_overflow(state1->nbytes, state2->nbytes, &reqsize) ||
-			pg_add_s32_overflow(state1->nitems, state2->nitems, &newnitems))
+			pg_add_s32_overflow(state1->nitems, state2->nitems, &newnitems) ||
+			!AllocSizeIsValid(reqsize))
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("array size exceeds the maximum allowed (%zu)",

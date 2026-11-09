@@ -697,6 +697,10 @@ struct MinimalTupleData
 /* prototypes for functions in common/heaptuple.c */
 extern Size heap_compute_data_size(TupleDesc tupleDesc,
 								   Datum *values, bool *isnull);
+extern Size heap_compute_data_size_ext(TupleDesc tupleDesc,
+									   const Datum *values, const bool *isnull,
+									   bool allow_huge);
+
 extern void heap_fill_tuple(TupleDesc tupleDesc,
 							Datum *values, bool *isnull,
 							char *data, Size data_size,
