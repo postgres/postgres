@@ -141,9 +141,17 @@ $standby1->init_from_backup(
 	has_streaming => 1,
 	has_restoring => 1);
 
+# CVE-2026-14661: Make sure otherwise-unsafe connection parameters are still
+# allowed in primary_conninfo, by setting up an unused sslkeylogfile and
+# referencing it throughout. (The tests here provide coverage of
+# pg_sync_replication_slots() in addition to standard physical replication,
+# which is convenient.)
+my $tmpdir = PostgreSQL::Test::Utils::tempdir;
+my $sslkeylogfile = "$tmpdir/noexist/sslkeylog";
+
 # Increase the log_min_messages setting to DEBUG2 on both the standby and
 # primary to debug test failures, if any.
-my $connstr_1 = $primary->connstr;
+my $connstr_1 = $primary->connstr . " sslkeylogfile=''$sslkeylogfile''";
 $standby1->append_conf(
 	'postgresql.conf', qq(
 hot_standby_feedback = on

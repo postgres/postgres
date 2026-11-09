@@ -659,6 +659,19 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 
 		construct_connection_params(server, user, &keywords, &values, &appname);
 
+		/*
+		 * Final security check on proxied keywords. Note that expand_dbname
+		 * is false below; we don't need to worry about parsing dbname itself.
+		 */
+		for (int i = 0; keywords[i]; i++)
+		{
+			if (!libpqsrv_is_valid_proxy_option(keywords[i]))
+				ereport(ERROR,
+						errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("permission denied to set connection option \"%s\"",
+							   keywords[i]));
+		}
+
 		/* first time, allocate or get the custom wait event */
 		if (pgfdw_we_connect == 0)
 			pgfdw_we_connect = WaitEventExtensionNew("PostgresFdwConnect");
