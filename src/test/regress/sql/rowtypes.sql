@@ -686,3 +686,24 @@ SELECT v::text AS stored_value FROM compositetable_holder;
 DROP FUNCTION compositetable_drop();
 DROP TABLE compositetable_holder;
 DROP TABLE compositetable_type_1;
+
+--
+-- Tests for expanded records built from a flat composite datum, which core
+-- code never does, see make_expanded_record_from_datum().
+--
+
+CREATE TYPE expanded_comp AS (a int, b text);
+
+-- A named rowtype must keep typmod -1, a RECORD must keep its blessed typmod.
+SELECT expanded_record_info(ROW(1, 'named')::expanded_comp);
+SELECT expanded_record_info(ROW(2, 'anonymous'));
+
+-- Round-tripping through an expanded record must preserve the value.
+SELECT expanded_record_identity(ROW(3, 'roundtrip')::expanded_comp);
+SELECT expanded_record_identity(ROW(4, 'anonymous roundtrip'));
+
+-- Reading a field forces a deform against the resolved descriptor.
+SELECT expanded_record_field_text(ROW(5, 'field')::expanded_comp, 1),
+       expanded_record_field_text(ROW(5, 'field')::expanded_comp, 2);
+
+DROP TYPE expanded_comp;
