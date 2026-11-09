@@ -16,11 +16,14 @@ step s1_create_testview_with_domain { CREATE VIEW testview AS SELECT 123::testdo
 step s1_create_testtab_with_rowtype { CREATE TABLE testtab (a int, b rowtype); }
 step s1_create_testview_with_rowtype_top { CREATE VIEW testview AS SELECT '(1,b)'::rowtype; }
 step s1_create_testview_with_rowtype_sub { CREATE VIEW testview AS SELECT '(1,b)'::rowtype IS NULL; }
+step s1_create_function { CREATE FUNCTION testfunc(rowtype) RETURNS rowtype AS $$ SELECT $1 $$ LANGUAGE SQL; }
+step s1_alter_function_with_default { CREATE OR REPLACE FUNCTION testfunc(rowtype DEFAULT '(1,b)'::rowtype) RETURNS rowtype AS $$ SELECT $1 $$ LANGUAGE SQL; }
 step s1_commit { COMMIT; }
 
 step s1_drop_domain { DROP DOMAIN testdom; }
 step s1_drop_testtab { DROP TABLE testtab; }
 step s1_drop_testview { DROP VIEW testview; }
+step s1_drop_function { DROP FUNCTION testfunc; }
 step s1_drop_rowtype_tbl { DROP TABLE rowtype; }
 step s1_drop_rowtype_comp { DROP TYPE rowtype; }
 
@@ -65,6 +68,18 @@ permutation
     s1_commit
     s1_drop_testview
     s1_drop_domain
+
+# Test the similar race condition where a DEFAULT expression is added
+# to an existing function, which prevents altering the composite type.
+permutation
+    s1_create_rowtype_comp
+    s1_create_function
+    s1_begin
+    s1_alter_function_with_default
+    s2_alter_rowtype_comp_to_text
+    s1_commit
+    s1_drop_function
+    s1_drop_rowtype_comp
 
 # Test that a new reference to a rowtype that is concurrently being
 # dropped is handled correctly. Here the drop happens first.
