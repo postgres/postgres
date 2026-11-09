@@ -1467,15 +1467,14 @@ alter table skip_wal_skip_rewrite_index alter c type varchar(20);
 commit;
 
 -- We disallow changing table's row type if it's used for storage
--- (see alter_column_type for more variants of this)
+-- (see alter_column_type for many more variants of these)
 create table at_tab1 (a int, b text);
 create table at_tab2 (x int, y at_tab1);
 alter table at_tab1 alter column b type varchar; -- fails
 drop table at_tab2;
--- Use of row type in an expression is defended differently
+-- Or if it's used in expressions stored in catalogs
 create table at_tab2 (x int, y text, check((x,y)::at_tab1 = (1,'42')::at_tab1));
-alter table at_tab1 alter column b type varchar; -- allowed, but ...
-insert into at_tab2 values(1,'42'); -- ... this will fail
+alter table at_tab1 alter column b type varchar; -- fails
 drop table at_tab1, at_tab2;
 -- Check it for a partitioned table, too
 create table at_tab1 (a int, b text) partition by list(a);
