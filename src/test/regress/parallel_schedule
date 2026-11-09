@@ -102,7 +102,7 @@ test: publication subscription
 # Another group of parallel tests
 # select_views depends on create_view
 # ----------
-test: select_views portals_p2 portals_inflight foreign_key dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock indirect_toast equivclass stats_rewrite
+test: select_views portals_p2 portals_inflight foreign_key dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock indirect_toast equivclass stats_rewrite alter_column_type
 
 # ----------
 # Another group of parallel tests (JSON related)
