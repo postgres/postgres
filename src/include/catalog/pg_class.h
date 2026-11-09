@@ -231,6 +231,17 @@ MAKE_SYSCACHE(RELNAMENSP, pg_class_relname_nsp_index, 128);
 	 (relkind) == RELKIND_TOASTVALUE || \
 	 (relkind) == RELKIND_MATVIEW)
 
+/*
+ * Relation kinds with a rowtype.
+ */
+#define RELKIND_HAS_ROWTYPE(relkind) \
+	((relkind) == RELKIND_RELATION || \
+	 (relkind) == RELKIND_VIEW || \
+	 (relkind) == RELKIND_MATVIEW || \
+	 (relkind) == RELKIND_COMPOSITE_TYPE || \
+	 (relkind) == RELKIND_FOREIGN_TABLE || \
+	 (relkind) == RELKIND_PARTITIONED_TABLE)
+
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 
 extern int	errdetail_relkind_not_supported(char relkind);

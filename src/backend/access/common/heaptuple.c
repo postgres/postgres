@@ -60,8 +60,11 @@
 #include "access/heaptoast.h"
 #include "access/sysattr.h"
 #include "access/tupdesc_details.h"
+#include "access/xlogdefs.h"
+#include "catalog/pg_type_d.h"
 #include "common/hashfn.h"
 #include "common/int.h"
+#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/expandeddatum.h"
 #include "utils/hsearch.h"
@@ -87,6 +90,11 @@
 /* FormData_pg_attribute.attstorage != TYPSTORAGE_PLAIN and an attlen of -1 */
 #define COMPACT_ATTR_IS_PACKABLE(att) \
 	((att)->attlen == -1 && (att)->attispackable)
+
+
+/* GUC variable */
+int			composite_type_mismatch = COMPOSITE_TYPE_MISMATCH_ERROR;
+
 
 /*
  * Setup for caching pass-by-ref missing attributes in a way that survives
@@ -894,6 +902,9 @@ expand_tuple(HeapTuple *targetHeapTuple,
 	Assert((targetHeapTuple && !targetMinimalTuple)
 		   || (!targetHeapTuple && targetMinimalTuple));
 
+	if (HeapTupleHeaderIsVersionedDatum(sourceTHeader))
+		heap_datum_check(sourceTHeader, tupleDesc);
+
 	Assert(sourceNatts < natts);
 
 	sourceNullLen = (hasNulls ? BITMAPLEN(sourceNatts) : 0);
@@ -997,11 +1008,9 @@ expand_tuple(HeapTuple *targetHeapTuple,
 		targetTHeader->t_infomask = sourceTHeader->t_infomask;
 		targetTHeader->t_hoff = hoff;
 		HeapTupleHeaderSetNatts(targetTHeader, natts);
-		HeapTupleHeaderSetDatumLength(targetTHeader, len);
-		HeapTupleHeaderSetTypeId(targetTHeader, tupleDesc->tdtypeid);
-		HeapTupleHeaderSetTypMod(targetTHeader, tupleDesc->tdtypmod);
-		/* We also make sure that t_ctid is invalid unless explicitly set */
-		ItemPointerSetInvalid(&(targetTHeader->t_ctid));
+		/* invalidates t_ctid */
+		heap_tuple_set_datum(targetTHeader, tupleDesc, len);
+
 		if (targetNullLen > 0)
 			nullBits = (bits8 *) ((char *) (*targetHeapTuple)->t_data
 								  + offsetof(HeapTupleHeaderData, t_bits));
@@ -1020,6 +1029,10 @@ expand_tuple(HeapTuple *targetHeapTuple,
 		(*targetMinimalTuple)->t_infomask = sourceTHeader->t_infomask;
 		/* Same macro works for MinimalTuples */
 		HeapTupleHeaderSetNatts(*targetMinimalTuple, natts);
+
+		/* like HeapTupleHeaderClearDatum() */
+		(*targetMinimalTuple)->t_infomask &= ~HEAP_IS_DATUM;
+
 		if (targetNullLen > 0)
 			nullBits = (bits8 *) ((char *) *targetMinimalTuple
 								  + offsetof(MinimalTupleData, t_bits));
@@ -1128,6 +1141,11 @@ heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc)
 	HeapTupleHeader td;
 
 	/*
+	 * TODO: Fetch the tupledesc for the datum tuple (if it's already one).
+	 * Without that it's somewhat easy to have this hide a mismatched tuple.
+	 */
+
+	/*
 	 * If the tuple contains any external TOAST pointers, we have to inline
 	 * those fields to meet the conventions for composite-type Datums.
 	 */
@@ -1144,9 +1162,11 @@ heap_copy_tuple_as_datum(HeapTuple tuple, TupleDesc tupleDesc)
 	td = (HeapTupleHeader) palloc(tuple->t_len);
 	memcpy(td, tuple->t_data, tuple->t_len);
 
-	HeapTupleHeaderSetDatumLength(td, tuple->t_len);
-	HeapTupleHeaderSetTypeId(td, tupleDesc->tdtypeid);
-	HeapTupleHeaderSetTypMod(td, tupleDesc->tdtypmod);
+	/* if wrongly marked, set the type from scratch */
+	if (HeapTupleHeaderReallyIsDatum(td))
+		heap_datum_update_type(td, tupleDesc);
+	else
+		heap_tuple_set_datum(td, tupleDesc, tuple->t_len);
 
 	return PointerGetDatum(td);
 }
@@ -1220,14 +1240,20 @@ heap_form_tuple(TupleDesc tupleDescriptor,
 	ItemPointerSetInvalid(&(tuple->t_self));
 	tuple->t_tableOid = InvalidOid;
 
-	HeapTupleHeaderSetDatumLength(td, len);
-	HeapTupleHeaderSetTypeId(td, tupleDescriptor->tdtypeid);
-	HeapTupleHeaderSetTypMod(td, tupleDescriptor->tdtypmod);
-	/* We also make sure that t_ctid is invalid unless explicitly set */
-	ItemPointerSetInvalid(&(td->t_ctid));
-
+	/*
+	 * Mark the tuple as a datum-style tuple. This is safe even if we
+	 * eventually use it as a row type tuple, as e.g. inserting it into a
+	 * table will reset the relevant state.
+	 *
+	 * The reason we always set the datum fields is that there are a lot of
+	 * callers to heap_form_tuple() and the vast majority should have the
+	 * datum information. It's easier to call HeapTupleHeaderClearDatum() in
+	 * the few other cases.
+	 */
 	HeapTupleHeaderSetNatts(td, numberOfAttributes);
 	td->t_hoff = hoff;
+
+	heap_tuple_set_datum(td, tupleDescriptor, len);
 
 	heap_fill_tuple(tupleDescriptor,
 					values,
@@ -1298,9 +1324,12 @@ heap_modify_tuple(HeapTuple tuple,
 	pfree(isnull);
 
 	/*
-	 * copy the identification info of the old tuple: t_ctid, t_self
+	 * copy the identification info of the old tuple: t_self, t_tableOid.
+	 *
+	 * We used to also set t_data->t_ctid here, but that would invalidate the
+	 * version included in datum tuples. There are no known callers that need
+	 * t_ctid copied.
 	 */
-	newTuple->t_data->t_ctid = tuple->t_data->t_ctid;
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_tableOid = tuple->t_tableOid;
 
@@ -1360,14 +1389,393 @@ heap_modify_tuple_by_cols(HeapTuple tuple,
 	pfree(values);
 	pfree(isnull);
 
-	/*
-	 * copy the identification info of the old tuple: t_ctid, t_self
-	 */
-	newTuple->t_data->t_ctid = tuple->t_data->t_ctid;
+	/* see equivalent code in heap_modify_tuple() */
 	newTuple->t_self = tuple->t_self;
 	newTuple->t_tableOid = tuple->t_tableOid;
 
 	return newTuple;
+}
+
+/*
+ * Mark the tuple as a datum-style tuple.
+ *
+ * This includes setting the datum's length, typeid and version information.
+ *
+ * The caller already needs to have done HeapTupleHeaderSetNatts().
+ *
+ * Note that the caller needs to be sure that it is safe to use tupleDesc to
+ * deform tup, since this function may remove information that could otherwise
+ * have been used to detect unsafe deforming.
+ *
+ * See also src/backend/catalog/README.attver.md
+ */
+void
+heap_tuple_set_datum(HeapTupleHeader tup, TupleDesc tupleDesc, uint32 len)
+{
+	HeapTupleHeaderSetDatumLength(tup, len);
+	HeapTupleHeaderSetTypeId(tup, tupleDesc->tdtypeid);
+	HeapTupleHeaderSetDatum(tup);
+
+	if (tupleDesc->tdtypeid == RECORDOID)
+	{
+		/*
+		 * RECORDOID tuples are not protected by versioning (and do not need
+		 * to be).
+		 */
+		HeapTupleHeaderSetTypMod(tup, tupleDesc->tdtypmod);
+
+		/*
+		 * Invalidating t_ctid makes the tuple an unversioned datum, even if
+		 * it previously was a versioned one.
+		 */
+		ItemPointerSetInvalid(&tup->t_ctid);
+	}
+	else
+	{
+		int			natts = HeapTupleHeaderGetNatts(tup);
+		XLogRecPtr	version;
+
+		/*
+		 * Stamp the datum with the version of the last attribute it actually
+		 * contains, not the version of the last attribute in the tuple desc.
+		 * That is important in case the tuple has fewer attributes than the
+		 * descriptor.
+		 *
+		 * A zero-attribute tuple contains no data to decode, so it is always
+		 * safe to deform; give it an explicit version of InvalidXLogRecPtr,
+		 * so it can be deformed if columns are added later (as the version is
+		 * stored in pg_attribute, a rowtype without columns has no version).
+		 *
+		 * It is never valid to have fewer attributes in the descriptor than
+		 * the tuple when forming a tuple, so error out in that case.
+		 * Hopefully unreachable.
+		 */
+		if (natts == 0)
+			version = InvalidXLogRecPtr;
+		else if (natts == tupleDesc->natts)
+			version = TupleDescGetVersion(tupleDesc);
+		else if (natts < tupleDesc->natts)
+			version = TupleDescGetAttrVersion(tupleDesc, natts);
+		else
+			elog(ERROR, "datum's descriptor has fewer (%d) attributes than tuple (%d)",
+				 tupleDesc->natts, natts);
+
+		HeapTupleHeaderSetVersion(tup, version);
+	}
+}
+
+/*
+ * Update the type of a datum tuple to the type of tupleDesc.
+ *
+ * If the tuple already is a versioned datum, it is verified to be compatible
+ * with tupleDesc first, as relabeling it would otherwise hide a
+ * mismatch.
+ */
+void
+heap_datum_update_type(HeapTupleHeader tup, TupleDesc tupleDesc)
+{
+	Assert(HeapTupleHeaderReallyIsDatum(tup));
+
+	if (HeapTupleHeaderIsVersionedDatum(tup))
+		heap_datum_check(tup, tupleDesc);
+
+	heap_tuple_set_datum(tup, tupleDesc,
+						 HeapTupleHeaderGetDatumLength(tup));
+}
+
+/*
+ * Report accessing a tuple with an incompatible tuple descriptor, due to a
+ * version mismatch.  descVersion is the version the tuple was compared with,
+ * see datum_attribute_version_ok().  This is out-of-line because it can be
+ * reached via several paths.
+ */
+pg_noinline static void
+heap_datum_version_mismatch_error(Oid tupTypeid, Oid descTypeid,
+								  XLogRecPtr tupVersion, XLogRecPtr descVersion)
+{
+	int			error_level =
+		composite_type_mismatch == COMPOSITE_TYPE_MISMATCH_WARN ?
+		WARNING : ERROR;
+
+	/*
+	 * NB: We can't embed the versions in the primary message without making
+	 * test output unstable. Putting them into DETAIL would require the tests
+	 * to use \set VERBOSITY terse, which would also hide the other DETAIL and
+	 * CONTEXT lines that many of them benefit from. Therefore the versions
+	 * are only reported in the server log. That's not pretty, but ...
+	 */
+
+	/* log details about the mismatch */
+	ereport(LOG_SERVER_ONLY,
+			errcode(ERRCODE_DATUM_VERSION_MISMATCH),
+			errmsg("tuple descriptor for type %s (OID %u), version %X/%X is incompatible with tuple type %s (OID %u), version %X/%X",
+				   format_type_be(descTypeid), descTypeid,
+				   LSN_FORMAT_ARGS(descVersion),
+				   format_type_be(tupTypeid), tupTypeid,
+				   LSN_FORMAT_ARGS(tupVersion)));
+
+	/* raise the actual error / warning */
+	ereport(error_level,
+			errcode(ERRCODE_DATUM_VERSION_MISMATCH),
+			tupVersion < descVersion ?
+			errmsg("row type of datum tuple was altered after the datum's creation")
+			:
+			errmsg("using outdated tuple descriptor when deforming row type"),
+			errhint("See server log for additional details."));
+}
+
+/*
+ * Check if the tuple can be safely decoded, despite a mismatch between the
+ * descriptor's version and the tuple's, due to the tuple having fewer
+ * attributes and that subset having a matching version.
+ *
+ * This can happen legitimately if the tuple has fewer attributes than the
+ * descriptor, and only attributes not included in the tuple have been
+ * altered.  To handle that case, we just need to compare the tuple's version
+ * with the version number of attribute tupNatts in the tuple descriptor.
+ *
+ * *cmpVersion is set to the version the tuple was compared with, for the
+ * caller to report a mismatch.
+ */
+static bool
+datum_attribute_version_ok(TupleDesc tupleDesc, int tupNatts,
+						   XLogRecPtr tupVersion, XLogRecPtr *cmpVersion)
+{
+	*cmpVersion = TupleDescGetVersion(tupleDesc);
+
+	/* should only be called if the aggregate version does not match */
+	Assert(*cmpVersion != tupVersion);
+
+	/* always safe to deform no columns */
+	if (tupNatts == 0)
+		return true;
+
+	/*
+	 * Iff the tuple is lacking columns in the descriptor, we can check the
+	 * version of the last column present.
+	 *
+	 * We do not allow cases where the tuple descriptor has fewer columns than
+	 * the tuple, as that indicates using a too old descriptor. It might be
+	 * safe to allow that in some cases, but there don't seem to be any
+	 * convincing cases that'd benefit.
+	 */
+	if (tupleDesc->natts > tupNatts)
+	{
+		*cmpVersion = TupleDescGetAttrVersion(tupleDesc, tupNatts);
+		return tupVersion == *cmpVersion;
+	}
+
+	return false;
+}
+
+/*
+ * Check that a versioned datum tuple can be safely decoded with the
+ * tupleDesc, raise an error if not.
+ *
+ * It is an error to call this for an unversioned datum, callers need to check
+ * HeapTupleHeaderIsVersionedDatum() first.
+ *
+ * This function implements the attribute versioning checks described in
+ * src/backend/catalog/README.attver.md.  For partially historical reasons, it
+ * needs to handle some corner cases, described below.
+ */
+void
+heap_datum_check(HeapTupleHeader tup, TupleDesc tupleDesc)
+{
+	XLogRecPtr	descVersion = TupleDescGetVersion(tupleDesc);
+	Oid			tupTypeid = HeapTupleHeaderGetTypeId(tup);
+	int32		tupTypmod = HeapTupleHeaderGetTypMod(tup);
+	XLogRecPtr	tupVersion;
+
+	if (unlikely(composite_type_mismatch == COMPOSITE_TYPE_MISMATCH_DISABLED))
+		return;
+
+	/*
+	 * This should not be reachable, but given this is new infrastructure and
+	 * out-of-tree code might be doing unexpected things, it seems better to
+	 * verify with a runtime check than just an Assert().
+	 */
+	if (unlikely(!HeapTupleHeaderIsVersionedDatum(tup)))
+		elog(ERROR, "heap_datum_check() called on an unversioned datum");
+
+	/* can't check if this is wrongly marked as a datum tuple */
+	if (unlikely(!HeapTupleHeaderReallyIsDatum(tup)))
+		return;
+
+	tupVersion = HeapTupleHeaderGetVersion(tup);
+
+	if (unlikely(tupleDesc->tdtypeid == RECORDOID))
+	{
+		/*
+		 * It's possible that we will get called with a RECORDOID tupledesc
+		 * but the datum has a different type, e.g. because some function just
+		 * updated the descriptor's type to RECORDOID.  In that case it's
+		 * really the caller's responsibility to have made sure that the type
+		 * is right.
+		 *
+		 * TODO: Make this case safer by fetching and comparing the tupledesc
+		 * associated with the record.
+		 */
+	}
+	else if (unlikely(tupTypeid == InvalidOid))
+	{
+		/*
+		 * This could happen if code does a heap_form_tuple() and then
+		 * overwrites typeid etc with invalid fields. However most such code
+		 * is already handled via the HeapTupleHeaderReallyIsDatum() above.
+		 *
+		 * NB: In contrast to some other paths in this function, we can't
+		 * fetch the tuple's "real" tuple descriptor, we lack a valid type
+		 * oid.
+		 */
+		ereport(ERROR,
+				errmsg_internal("datum tuple without type information"),
+				errhint_internal("An extension may need to be updated."));
+	}
+	else if (unlikely(tupTypeid == RECORDOID))
+	{
+		/*
+		 * The tupledesc has a version number, but the tuple is a record
+		 * tuple, for which we do not store a version number (since it has to
+		 * be a blessed tupledesc that can never change and there are no
+		 * catalog entries to associate the version with either).
+		 *
+		 * This should not be reached, we don't mark a datum as versioned for
+		 * RECORDOID, but could be reached if some caller relabels a versioned
+		 * datum as RECORDOID without going through heap_tuple_set_datum().
+		 */
+		elog(ERROR, "processing record datum (%u, %d) with rowtype tupdesc (%u, %d, %X/%X)",
+			 tupTypeid, tupTypmod,
+			 tupleDesc->tdtypeid, tupleDesc->tdtypmod,
+			 LSN_FORMAT_ARGS(descVersion));
+	}
+	else if (unlikely(tupleDesc->tdtypeid != tupTypeid))
+	{
+		/*
+		 * In some partitioned workloads, we currently use the parent
+		 * tupledesc to deform a child tuple, or vice versa. Typically the
+		 * caller will have verified that no conversion is necessary (c.f.
+		 * build_attrmap_by_name_if_req()), but we can't verify that that
+		 * happened here.
+		 *
+		 * XXX: This code pattern seems problematic, but it's probably not
+		 * feasible to fix this in the back branches. Medium term I think the
+		 * tuple conversion paths should update the tuple's typeid even when
+		 * otherwise no conversion is needed.
+		 *
+		 * TODO: Make this case safer by fetching the tupledesc used by the
+		 * type, checking the version to verify it's still OK, and then
+		 * comparing the tupledescs.
+		 */
+	}
+	else if (unlikely(tupVersion != descVersion))
+	{
+		XLogRecPtr	cmpVersion;
+
+		/*
+		 * The tuple's version does not match the tuple descriptor's.
+		 *
+		 * Check if that's solely because the tuple is shorter (i.e. only new
+		 * columns have been added since the tuple was formed).
+		 *
+		 * Otherwise report the mismatch.
+		 */
+		if (!datum_attribute_version_ok(tupleDesc, HeapTupleHeaderGetNatts(tup),
+										tupVersion, &cmpVersion))
+			heap_datum_version_mismatch_error(tupTypeid, tupleDesc->tdtypeid,
+											  tupVersion, cmpVersion);
+	}
+}
+
+/*
+ * Helper for DatumGetHeapTupleHeader / DatumGetHeapTupleHeaderCopy.
+ *
+ * This implements the "Upgrading from pre-versioning composite datums" logic
+ * in src/backend/catalog/README.attver.md.
+ *
+ * Due to requiring a copy of the input tuple, this isn't exactly cheap, but
+ * there should be fewer and fewer unversioned tuples in clusters over time, as
+ * such datums get re-formed or deleted. We unfortunately can't just fix them
+ * in-place without causing larger issues.
+ */
+static inline HeapTupleHeader
+DatumGetHeapTupleHeaderImpl(Datum t, bool copy, bool *was_datum)
+{
+	struct varlena *tpr = (struct varlena *) DatumGetPointer(t);
+	HeapTupleHeader tp;
+	Oid			tupTypeid;
+
+	if (copy)
+		tp = (HeapTupleHeader) pg_detoast_datum_copy(tpr);
+	else
+	{
+		tp = (HeapTupleHeader) pg_detoast_datum(tpr);
+		copy = ((struct varlena *) tp) != tpr;
+	}
+
+	tupTypeid = HeapTupleHeaderGetTypeId(tp);
+
+	if (was_datum)
+		*was_datum = true;
+
+	if (!HeapTupleHeaderIsDatum(tp))
+	{
+		Assert(HeapTupleHeaderGetDatumLength(tp) > 0);
+
+		if (was_datum)
+			*was_datum = false;
+
+		/*
+		 * We need to modify the tuple header but it hasn't been copied yet
+		 * (not detoasted, not called by DatumGetHeapTupleHeaderCopy), copy it
+		 * now.
+		 */
+		if (!copy)
+		{
+			Size		sz = HeapTupleHeaderGetDatumLength(tp);
+			HeapTupleHeader tp2;
+
+			copy = true;
+
+			tp2 = (HeapTupleHeader) palloc(sz);
+			memcpy(tp2, tp, sz);
+			tp = tp2;
+		}
+
+		/*
+		 * Mark as a datum tuple, versioned at version InvalidXLogRecPtr
+		 * unless it's a RECORDOID style datum.
+		 */
+		HeapTupleHeaderSetDatum(tp);
+		if (tupTypeid != RECORDOID)
+			HeapTupleHeaderSetVersion(tp, InvalidXLogRecPtr);
+	}
+
+	Assert(HeapTupleHeaderReallyIsDatum(tp));
+
+	return tp;
+}
+
+HeapTupleHeader
+DatumGetHeapTupleHeader(Datum t)
+{
+	return DatumGetHeapTupleHeaderImpl(t, false, NULL);
+}
+
+/*
+ * Like DatumGetHeapTupleHeader but returns whether the datum was already
+ * marked as a datum in *was_datum.
+ */
+HeapTupleHeader
+DatumGetHeapTupleHeaderExt(Datum t, bool *was_datum)
+{
+	return DatumGetHeapTupleHeaderImpl(t, false, was_datum);
+}
+
+HeapTupleHeader
+DatumGetHeapTupleHeaderCopy(Datum t)
+{
+	return DatumGetHeapTupleHeaderImpl(t, true, NULL);
 }
 
 /*
@@ -1400,6 +1808,9 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 	uint32		off;			/* offset in tuple data */
 	bits8	   *bp = tup->t_bits;	/* ptr to null bitmap in tuple */
 	bool		slow = false;	/* can we use/set attcacheoff? */
+
+	if (HeapTupleHeaderIsVersionedDatum(tup))
+		heap_datum_check(tup, tupleDesc);
 
 	natts = HeapTupleHeaderGetNatts(tup);
 
@@ -1642,6 +2053,22 @@ minimal_tuple_from_heap_tuple(HeapTuple htup, Size extra)
 	memset(mem, 0, extra);
 	result = (MinimalTuple) (mem + extra);
 	memcpy(result, (char *) htup->t_data + MINIMAL_TUPLE_OFFSET, len);
+
+	/*
+	 * A minimal tuple won't have the necessary fields to be treated as a
+	 * datum tuple, so we better reset those fields lest they trigger assert
+	 * failures at a later point.
+	 *
+	 * XXX: It'd be good to call heap_datum_check() before losing the ability
+	 * to do so, but we don't have the tupledesc, so we can't trivially do so.
+	 * We could try to fetch the tupledesc from typeid and verify that way?
+	 * But that's not cheap.
+	 */
+	if (HeapTupleHeaderIsDatum(htup->t_data))
+	{
+		/* like HeapTupleHeaderClearDatum() */
+		result->t_infomask &= ~HEAP_IS_DATUM;
+	}
 
 	result->t_len = len;
 	return result;

@@ -735,7 +735,9 @@ begin
   r2 := r1;
   raise notice 'r2.a = %', r2.a;
 end$$;
-NOTICE:  r2.a = 2
+ERROR:  using outdated tuple descriptor when deforming row type
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 7 at assignment
 drop type recmove;
 -- Same, with a plain composite datum as the source.
 create type recmove as (a int);
@@ -747,7 +749,9 @@ begin
   r := row(2)::recmove;
   raise notice 'r.a = %', r.a;
 end$$;
-NOTICE:  r.a = 2
+ERROR:  using outdated tuple descriptor when deforming row type
+HINT:  See server log for additional details.
+CONTEXT:  PL/pgSQL function inline_code_block line 6 at assignment
 drop type recmove;
 -- Copy an executor-derived record with an older descriptor, then assign a
 -- fresh datum.  The first copy must not prevent the subsequent assignment.
@@ -1004,8 +1008,8 @@ BEGIN
     RAISE NOTICE 'r_after failed: %', sqlerrm;
   END;
 END $$;
-NOTICE:  r_before: (2)
-NOTICE:  r_again_after: (3)
+NOTICE:  r_before failed: row type of datum tuple was altered after the datum's creation
+NOTICE:  r_again_after failed: using outdated tuple descriptor when deforming row type
 NOTICE:  r_after: (4)
 DROP TYPE altered_type;
 -- Check behavior when using variables used before/after SET TYPE that does
@@ -1044,8 +1048,8 @@ BEGIN
     RAISE NOTICE 'r_after failed: %', sqlerrm;
   END;
 END $$;
-NOTICE:  r_before: (2)
-NOTICE:  r_again_after: (3)
+NOTICE:  r_before failed: row type of datum tuple was altered after the datum's creation
+NOTICE:  r_again_after failed: using outdated tuple descriptor when deforming row type
 NOTICE:  r_after: (4)
 DROP TYPE altered_type;
 -- check returning a composite datum from a trigger

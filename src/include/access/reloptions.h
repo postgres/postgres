@@ -232,6 +232,10 @@ extern void add_local_string_reloption(local_relopts *relopts, const char *name,
 									   validate_string_relopt validator,
 									   fill_string_relopt filler, int offset);
 
+extern XLogRecPtr attoptions_get_version(Datum attoptions, bool isnull);
+extern Datum attoptions_set_version(Datum attoptions, bool isnull,
+									XLogRecPtr version);
+
 extern Datum transformRelOptions(Datum oldOptions, List *defList,
 								 const char *namspace, const char *const validnsps[],
 								 bool acceptOidsOff, bool isReset);
