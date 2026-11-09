@@ -909,6 +909,21 @@ SET SESSION AUTHORIZATION regress_priv_user4;
 SELECT '{1}'::int4[]::int8[]; --other user, fail
 ROLLBACK;
 
+-- verify privilege checks on cast functions used by to_json()/to_jsonb()
+CREATE TYPE priv_testenum1 AS ENUM ('a');
+CREATE FUNCTION priv_testenum1_to_json(priv_testenum1) RETURNS json
+  LANGUAGE sql IMMUTABLE AS $$ SELECT to_json($1::text) $$;
+CREATE CAST (priv_testenum1 AS json) WITH FUNCTION priv_testenum1_to_json(priv_testenum1);
+REVOKE ALL ON FUNCTION priv_testenum1_to_json(priv_testenum1) FROM PUBLIC;
+SELECT to_json('a'::priv_testenum1); -- superuser, succeed
+SET SESSION AUTHORIZATION regress_priv_user4;
+SELECT to_json('a'::priv_testenum1); -- other user, fail
+SELECT to_jsonb('a'::priv_testenum1); -- other user, fail
+RESET SESSION AUTHORIZATION;
+DROP CAST (priv_testenum1 AS json);
+DROP FUNCTION priv_testenum1_to_json(priv_testenum1);
+DROP TYPE priv_testenum1;
+
 -- privileges on types
 
 -- switch to superuser
