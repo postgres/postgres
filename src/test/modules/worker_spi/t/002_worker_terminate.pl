@@ -19,12 +19,13 @@ if ($ENV{enable_injection_points} ne 'yes')
 # Returns the PID of the worker launched.
 sub launch_bgworker
 {
-	my ($node, $database, $testcase, $interruptible) = @_;
+	my ($node, $database, $testcase, $interruptible, $restart_time) = @_;
+	$restart_time //= -1;
 
 	# Launch a background worker on the given database.
 	my $pid = $node->safe_psql(
 		'postgres', qq(
-        SELECT worker_spi_launch($testcase, '$database'::regdatabase, 0, '{}', $interruptible);
+        SELECT worker_spi_launch($testcase, '$database'::regdatabase, 0, '{}', $interruptible, $restart_time);
     ));
 
 	# Check that the bgworker is initialized and napping.
@@ -160,5 +161,20 @@ run_bgworker_interruptible_test(
 	$node,
 	"DROP DATABASE renameddb",
 	"DROP DATABASE", $pid);
+
+# Test case 5: restart after termination.  Restart time at 0 implies zero
+# delay in the restart.
+$pid = launch_bgworker($node, 'postgres', 5, 'true', 0);
+run_bgworker_interruptible_test(
+	$node,
+	"CREATE DATABASE testdb2 WITH TEMPLATE postgres",
+	"CREATE DATABASE WITH TEMPLATE, restartable worker", $pid);
+$result = $node->poll_query_until(
+	'postgres',
+	qq[SELECT count(*) FROM pg_stat_activity
+		WHERE backend_type = 'worker_spi dynamic'
+		AND wait_event = 'WorkerSpiMain';],
+	'1');
+is($result, 1, "bgworker restarted after termination");
 
 done_testing();

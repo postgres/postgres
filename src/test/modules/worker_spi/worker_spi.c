@@ -406,6 +406,7 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 	int			nelems;
 	Datum	   *datum_flags;
 	bool		interruptible = PG_GETARG_BOOL(4);
+	int			restart_time = PG_GETARG_INT32(5);
 
 	memset(&worker, 0, sizeof(worker));
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS |
@@ -415,7 +416,8 @@ worker_spi_launch(PG_FUNCTION_ARGS)
 		worker.bgw_flags |= BGWORKER_INTERRUPTIBLE;
 
 	worker.bgw_start_time = BgWorkerStart_RecoveryFinished;
-	worker.bgw_restart_time = BGW_NEVER_RESTART;
+	worker.bgw_restart_time = restart_time >= 0 ?
+		restart_time : BGW_NEVER_RESTART;
 	sprintf(worker.bgw_library_name, "worker_spi");
 	sprintf(worker.bgw_function_name, "worker_spi_main");
 	snprintf(worker.bgw_name, BGW_MAXLEN, "worker_spi dynamic worker %d", i);

@@ -1418,17 +1418,21 @@ GetBackgroundWorkerTypeByPid(pid_t pid)
 
 /*
  * Terminate all background workers connected to the given database, if the
- * workers can be interrupted.
+ * workers can be interrupted.  The workers are signaled directly, so that
+ * they can be restarted based on their bgw_restart_time.
  */
 void
 TerminateBackgroundWorkersForDatabase(Oid databaseId)
 {
-	bool		signal_postmaster = false;
+	pid_t	   *pids;
+	int			npids = 0;
 
 	elog(DEBUG1, "attempting worker termination for database %u",
 		 databaseId);
 
-	LWLockAcquire(BackgroundWorkerLock, LW_EXCLUSIVE);
+	pids = palloc_array(pid_t, BackgroundWorkerData->total_slots);
+
+	LWLockAcquire(BackgroundWorkerLock, LW_SHARED);
 
 	/*
 	 * Iterate through slots, looking for workers connected to the given
@@ -1447,20 +1451,22 @@ TerminateBackgroundWorkersForDatabase(Oid databaseId)
 			LWLockAcquire(ProcArrayLock, LW_SHARED);
 			proc = BackendPidGetProcWithLock(pid);
 			if (proc && proc->databaseId == databaseId)
-			{
-				slot->terminate = true;
-				signal_postmaster = true;
-
-				elog(DEBUG1, "termination requested for worker (PID %d) on database %u",
-					 (int) pid, databaseId);
-			}
+				pids[npids++] = pid;
 			LWLockRelease(ProcArrayLock);
 		}
 	}
 
 	LWLockRelease(BackgroundWorkerLock);
 
-	/* Make sure the postmaster notices the change to shared memory. */
-	if (signal_postmaster)
-		SendPostmasterSignal(PMSIGNAL_BACKGROUND_WORKER_CHANGE);
+	/*
+	 * Signal the workers, avoiding kill() while holding the locks.
+	 */
+	for (int i = 0; i < npids; i++)
+	{
+		elog(DEBUG1, "termination requested for worker (PID %d) on database %u",
+			 (int) pids[i], databaseId);
+		(void) kill(pids[i], SIGTERM);	/* ignore any error */
+	}
+
+	pfree(pids);
 }

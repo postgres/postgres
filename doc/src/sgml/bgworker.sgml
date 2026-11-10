@@ -115,8 +115,8 @@ typedef struct BackgroundWorker
       <indexterm><primary>BGWORKER_INTERRUPTIBLE</primary></indexterm>
       Requests termination of the background worker when its connected database is
       dropped, renamed, moved to a different tablespace, or used as a template for
-      <command>CREATE DATABASE</command>. Specifically, the postmaster sends a
-      termination signal when any of these commands affect the worker's database:
+      <command>CREATE DATABASE</command>. Specifically, a termination signal is
+      sent when any of these commands affect the worker's database:
       <itemizedlist>
        <listitem><para><command>DROP DATABASE</command></para></listitem>
        <listitem><para><command>ALTER DATABASE RENAME
@@ -125,6 +125,8 @@ typedef struct BackgroundWorker
        TABLESPACE</command></para></listitem>
        <listitem><para><command>CREATE DATABASE</command></para></listitem>
       </itemizedlist>
+      The worker is then restarted or unregistered as after any other exit,
+      depending on its exit code and <structfield>bgw_restart_time</structfield>.
       Requires both <literal>BGWORKER_SHMEM_ACCESS</literal> and
       <literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal>.
      </para>
