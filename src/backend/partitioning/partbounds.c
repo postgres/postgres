@@ -2932,8 +2932,8 @@ check_new_partition_bound(char *relname, Relation parent,
 
 				if (partdesc->nparts > 0)
 				{
-					int			greatest_modulus;
-					int			remainder;
+					int64		greatest_modulus;
+					int64		remainder;
 					int			offset;
 
 					/*
