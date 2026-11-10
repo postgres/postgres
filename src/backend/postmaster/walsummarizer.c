@@ -277,11 +277,6 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 	MemoryContextSwitchTo(context);
 
 	/*
-	 * Reset some signals that are accepted by postmaster but not here
-	 */
-	pqsignal(SIGCHLD, PG_SIG_DFL);
-
-	/*
 	 * If an exception is encountered, processing resumes here.
 	 */
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)

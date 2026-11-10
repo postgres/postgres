@@ -4426,13 +4426,6 @@ PostgresMain(const char *dbname, const char *username)
 		pqsignal(SIGUSR1, procsignal_sigusr1_handler);
 		pqsignal(SIGUSR2, PG_SIG_IGN);
 		pqsignal(SIGFPE, FloatExceptionHandler);
-
-		/*
-		 * Reset some signals that are accepted by postmaster but not by
-		 * backend
-		 */
-		pqsignal(SIGCHLD, PG_SIG_DFL);	/* system() requires this on some
-										 * platforms */
 	}
 
 	/* Early initialization */

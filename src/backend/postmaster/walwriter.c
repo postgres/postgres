@@ -111,11 +111,6 @@ WalWriterMain(const void *startup_data, size_t startup_data_len)
 	pqsignal(SIGUSR2, PG_SIG_IGN);	/* not used */
 
 	/*
-	 * Reset some signals that are accepted by postmaster but not here
-	 */
-	pqsignal(SIGCHLD, PG_SIG_DFL);
-
-	/*
 	 * Create a memory context that we will do all our work in.  We do this so
 	 * that we can reset the context during error recovery and thereby avoid
 	 * possible memory leaks.  Formerly this code just ran in

@@ -4031,9 +4031,6 @@ WalSndSignals(void)
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
 	pqsignal(SIGUSR2, WalSndLastCycleHandler);	/* request a last cycle and
 												 * shutdown */
-
-	/* Reset some signals that are accepted by postmaster but not here */
-	pqsignal(SIGCHLD, PG_SIG_DFL);
 }
 
 /* Register shared-memory space needed by walsender */

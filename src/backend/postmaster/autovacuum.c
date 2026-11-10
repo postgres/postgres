@@ -442,7 +442,6 @@ AutoVacLauncherMain(const void *startup_data, size_t startup_data_len)
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
 	pqsignal(SIGUSR2, avl_sigusr2_handler);
 	pqsignal(SIGFPE, FloatExceptionHandler);
-	pqsignal(SIGCHLD, PG_SIG_DFL);
 
 	/*
 	 * Create a per-backend PGPROC struct in shared memory.  We must do this
@@ -1449,7 +1448,6 @@ AutoVacWorkerMain(const void *startup_data, size_t startup_data_len)
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
 	pqsignal(SIGUSR2, PG_SIG_IGN);
 	pqsignal(SIGFPE, FloatExceptionHandler);
-	pqsignal(SIGCHLD, PG_SIG_DFL);
 
 	/*
 	 * Create a per-backend PGPROC struct in shared memory.  We must do this

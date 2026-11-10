@@ -235,11 +235,6 @@ StartupProcessMain(const void *startup_data, size_t startup_data_len)
 	pqsignal(SIGUSR2, StartupProcTriggerHandler);
 
 	/*
-	 * Reset some signals that are accepted by postmaster but not here
-	 */
-	pqsignal(SIGCHLD, PG_SIG_DFL);
-
-	/*
 	 * Register timeouts needed for standby mode
 	 */
 	RegisterTimeout(STANDBY_DEADLOCK_TIMEOUT, StandbyDeadLockHandler);

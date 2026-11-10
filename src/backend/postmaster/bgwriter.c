@@ -110,11 +110,6 @@ BackgroundWriterMain(const void *startup_data, size_t startup_data_len)
 	pqsignal(SIGUSR2, PG_SIG_IGN);
 
 	/*
-	 * Reset some signals that are accepted by postmaster but not here
-	 */
-	pqsignal(SIGCHLD, PG_SIG_DFL);
-
-	/*
 	 * We just started, assume there has been either a shutdown or
 	 * end-of-recovery snapshot.
 	 */

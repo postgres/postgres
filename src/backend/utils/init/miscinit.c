@@ -144,11 +144,21 @@ InitPostmasterChild(void)
 #endif
 
 	/*
+	 * Reset SIGCHLD.  It's used by postmaster but not child processes.
+	 */
+	pqsignal(SIGCHLD, PG_SIG_DFL);	/* system() requires this to be SIG_DFL
+									 * rather than SIG_IGN on some platforms */
+
+	/*
 	 * Every postmaster child process is expected to respond promptly to
 	 * SIGQUIT at all times.  Therefore we centrally remove SIGQUIT from
 	 * BlockSig and install a suitable signal handler.  (Client-facing
 	 * processes may choose to replace this default choice of handler with
-	 * quickdie().)  All other blockable signals remain blocked for now.
+	 * quickdie().)
+	 *
+	 * All other blockable signals remain blocked for now.  The Main function
+	 * (e.g. PostgresMain) may install other signal handlers appropriate for
+	 * the child process, before it unblocks signals.
 	 */
 	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
 

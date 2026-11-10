@@ -232,11 +232,6 @@ CheckpointerMain(const void *startup_data, size_t startup_data_len)
 	pqsignal(SIGUSR2, SignalHandlerForShutdownRequest);
 
 	/*
-	 * Reset some signals that are accepted by postmaster but not here
-	 */
-	pqsignal(SIGCHLD, PG_SIG_DFL);
-
-	/*
 	 * Initialize so that first time-driven event happens at the correct time.
 	 */
 	last_checkpoint_time = last_xlog_switch_time = (pg_time_t) time(NULL);
