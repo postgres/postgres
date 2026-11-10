@@ -1601,36 +1601,84 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 	}
 }
 
-/* Convert the perl SV to a string returned by the type output function */
+/*
+ * Convert the perl SV to a string returned by the type output function,
+ * or NULL if the SV is undef.
+ */
 char *
 plperl_sv_to_literal(SV *sv, char *fqtypename)
 {
-	Oid			typid;
-	Oid			typoutput;
-	Datum		datum;
-	bool		typisvarlena,
-				isnull;
+	/*
+	 * Execute the conversion inside a sub-transaction, so we can cope with
+	 * errors sanely
+	 */
+	dTHX;
+	char	   *volatile result = NULL;
+	MemoryContext oldcontext = CurrentMemoryContext;
+	ResourceOwner oldowner = CurrentResourceOwner;
 
 	check_spi_usage_allowed();
 
-	typid = DirectFunctionCall1(regtypein, CStringGetDatum(fqtypename));
-	if (!OidIsValid(typid))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("lookup failed for type %s", fqtypename)));
+	BeginInternalSubTransaction(NULL);
+	/* Want to run inside function's memory context */
+	MemoryContextSwitchTo(oldcontext);
 
-	datum = plperl_sv_to_datum(sv,
-							   typid, -1,
-							   NULL, NULL, InvalidOid,
-							   &isnull);
+	PG_PERL_TRY();
+	{
+		Oid			typid;
+		Oid			typoutput;
+		Datum		datum;
+		bool		typisvarlena,
+					isnull;
 
-	if (isnull)
+		typid = DatumGetObjectId(DirectFunctionCall1(regtypein,
+													 CStringGetDatum(fqtypename)));
+		if (!OidIsValid(typid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("lookup failed for type %s", fqtypename)));
+
+		datum = plperl_sv_to_datum(sv,
+								   typid, -1,
+								   NULL, NULL, InvalidOid,
+								   &isnull);
+
+		if (!isnull)
+		{
+			getTypeOutputInfo(typid,
+							  &typoutput, &typisvarlena);
+
+			result = OidOutputFunctionCall(typoutput, datum);
+		}
+
+		/* Commit the inner transaction, return to outer xact context */
+		ReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+	}
+	PG_PERL_CATCH();
+	{
+		ErrorData  *edata;
+
+		/* Save error info */
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
+
+		/* Abort the inner transaction */
+		RollbackAndReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+
+		/* Punt the error to Perl */
+		croak_cstr(edata->message);
+
+		/* Can't get here, but keep compiler quiet */
 		return NULL;
+	}
+	PG_PERL_END_TRY();
 
-	getTypeOutputInfo(typid,
-					  &typoutput, &typisvarlena);
-
-	return OidOutputFunctionCall(typoutput, datum);
+	return result;
 }
 
 /*
