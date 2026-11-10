@@ -1012,6 +1012,10 @@ ExecAppendAsyncRequest(AppendState *node, TupleTableSlot **result)
  *		ExecAppendAsyncEventWait
  *
  *		Wait or poll for file descriptor events and fire callbacks.
+ *
+ *		If as_syncdone is true, we wait until at least one event
+ *		occurs; otherwise, we poll for events, but do not wait at
+ *		all.
  * ----------------------------------------------------------------
  */
 static void
@@ -1071,10 +1075,7 @@ ExecAppendAsyncEventWait(AppendState *node)
 	if (nevents > EVENT_BUFFER_SIZE)
 		nevents = EVENT_BUFFER_SIZE;
 
-	/*
-	 * If the timeout is -1, wait until at least one event occurs.  If the
-	 * timeout is 0, poll for events, but do not wait at all.
-	 */
+	/* Wait or poll for file descriptor events. */
 	noccurred = WaitEventSetWait(node->as_eventset, timeout, occurred_event,
 								 nevents, WAIT_EVENT_APPEND_READY);
 	FreeWaitEventSet(node->as_eventset);
