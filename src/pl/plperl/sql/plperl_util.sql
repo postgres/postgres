@@ -119,3 +119,7 @@ create or replace function perl_encode_typed_literal() returns setof text langua
 $$;
 
 select perl_encode_typed_literal();  -- fail
+-- on some platforms, this crashed after several iterations
+select perl_encode_typed_literal();  -- fail
+select perl_encode_typed_literal();  -- fail
+select perl_encode_typed_literal();  -- fail
