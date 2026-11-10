@@ -29,6 +29,9 @@ BEGIN
         EXECUTE format('explain (analyze %s, costs on, summary off, timing off, buffers off) %s',
             analyze_str, query)
     LOOP
+        -- ignore Storage output because the size varies depending on platform
+        CONTINUE WHEN ln ~ '^\s*Storage: ';
+
         IF hide_costs = true THEN
             ln := regexp_replace(ln, 'cost=\d+\.\d\d\.\.\d+\.\d\d', 'cost=N..N');
         END IF;

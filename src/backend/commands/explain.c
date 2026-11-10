@@ -130,6 +130,8 @@ static void show_hash_info(HashState *hashstate, ExplainState *es);
 static void show_material_info(MaterialState *mstate, ExplainState *es);
 static void show_windowagg_info(WindowAggState *winstate, ExplainState *es);
 static void show_ctescan_info(CteScanState *ctescanstate, ExplainState *es);
+static void show_functionscan_info(FunctionScanState *fsstate,
+								   ExplainState *es);
 static void show_table_func_scan_info(TableFuncScanState *tscanstate,
 									  ExplainState *es);
 static void show_recursive_union_info(RecursiveUnionState *rstate,
@@ -2097,6 +2099,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
+			show_functionscan_info(castNode(FunctionScanState, planstate), es);
 			break;
 		case T_TableFuncScan:
 			if (es->verbose)
@@ -3568,6 +3571,75 @@ show_ctescan_info(CteScanState *ctescanstate, ExplainState *es)
 
 	tuplestore_get_stats(tupstore, &usedDisk, &maxSpaceUsed);
 	show_storage_info(usedDisk, maxSpaceUsed, es);
+}
+
+/*
+ * Show information on Function Scan node, storage method and maximum
+ * memory/disk space used.
+ */
+static void
+show_functionscan_info(FunctionScanState *fsstate, ExplainState *es)
+{
+	bool		totalDiskUsed = false;
+	int64		totalSpaceUsed = 0;
+
+	if (!es->analyze)
+		return;
+
+	/*
+	 * Similar to nodeFunctionscan.c's update_storage_stats() function, we
+	 * need to fetch the stats from the final scan and use those values if
+	 * they're higher than what's already stored in FunctionScanState.stats.
+	 */
+	for (int i = 0; i < fsstate->nfuncs; i++)
+	{
+		FunctionScanPerFuncState *fs = &fsstate->funcstates[i];
+
+		if (fs->tstore != NULL)
+		{
+			bool		diskUsed;
+			int64		spaceUsed;
+
+			tuplestore_get_stats(fs->tstore, &diskUsed, &spaceUsed);
+			totalSpaceUsed += spaceUsed;
+			totalDiskUsed |= diskUsed;
+		}
+	}
+
+	fsstate->stats.maxSpaceUsed = Max(fsstate->stats.maxSpaceUsed,
+									  totalSpaceUsed);
+	fsstate->stats.usedDisk |= totalDiskUsed;
+
+	/*
+	 * Nothing to show for the leader if execution didn't get as far as
+	 * creating any tuplestore.
+	 */
+	if (fsstate->stats.maxSpaceUsed > 0)
+		show_storage_info(fsstate->stats.usedDisk,
+						  fsstate->stats.maxSpaceUsed, es);
+
+	if (fsstate->shared_info == NULL)
+		return;
+
+	/* Show details from parallel workers */
+	for (int n = 0; n < fsstate->shared_info->num_workers; n++)
+	{
+		FunctionScanInstrumentation *si;
+
+		si = &fsstate->shared_info->sinstrument[n];
+
+		/* Skip workers that didn't create a tuplestore */
+		if (si->maxSpaceUsed == 0)
+			continue;
+
+		if (es->workers_state)
+			ExplainOpenWorker(n, es);
+
+		show_storage_info(si->usedDisk, si->maxSpaceUsed, es);
+
+		if (es->workers_state)
+			ExplainCloseWorker(n, es);
+	}
 }
 
 /*

@@ -190,4 +190,12 @@ set work_mem to 64;
 select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over() from generate_series(1,2500) a(n)');
 -- Test tuplestore storage usage in Window aggregate (memory and disk case, final result is disk)
 select explain_filter('explain (analyze,buffers off,costs off) select sum(n) over(partition by m) from (SELECT n < 3 as m, n from generate_series(1,2500) a(n))');
+
+-- Test tuplestore storage usage in Function Scan (memory case)
+select explain_filter('explain (analyze,buffers off,costs off) select count(*) from generate_series(1,10) a(n)');
+-- Test tuplestore storage usage in Function Scan (disk case)
+select explain_filter('explain (analyze,buffers off,costs off) select count(*) from generate_series(1,2500) a(n)');
+-- Test tuplestore storage usage in Function Scan with ROWS FROM, which uses
+-- one tuplestore per function
+select explain_filter('explain (analyze,buffers off,costs off) select count(*) from rows from (generate_series(1,2500), generate_series(1,2500)) a(n,m)');
 reset work_mem;

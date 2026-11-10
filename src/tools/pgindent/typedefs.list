@@ -1040,6 +1040,7 @@ FunctionCallInfoBaseData
 FunctionParameter
 FunctionParameterMode
 FunctionScan
+FunctionScanInstrumentation
 FunctionScanPerFuncState
 FunctionScanState
 FuzzyAttrMatchState
@@ -2853,6 +2854,7 @@ SharedDependencyObjectType
 SharedDependencyType
 SharedExecutorInstrumentation
 SharedFileSet
+SharedFunctionScanInfo
 SharedHashInfo
 SharedIncrementalSortInfo
 SharedIndexScanInstrumentation

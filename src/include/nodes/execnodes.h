@@ -1912,6 +1912,20 @@ typedef struct SubqueryScanState
 } SubqueryScanState;
 
 /* ----------------
+ *		Runtime data for each function being scanned by a FunctionScan node.
+ * ----------------
+ */
+typedef struct FunctionScanPerFuncState
+{
+	SetExprState *setexpr;		/* state of the expression being evaluated */
+	TupleDesc	tupdesc;		/* desc of the function result type */
+	int			colcount;		/* expected number of result columns */
+	Tuplestorestate *tstore;	/* holds the function result set */
+	int64		rowcount;		/* # of rows in result set, -1 if not known */
+	TupleTableSlot *func_slot;	/* function result slot (or NULL) */
+} FunctionScanPerFuncState;
+
+/* ----------------
  *	 FunctionScanState information
  *
  *		Function nodes are used to scan the results of a
@@ -1922,13 +1936,12 @@ typedef struct SubqueryScanState
  *		simple				true if we have 1 function and no ordinality
  *		ordinal				current ordinal column value
  *		nfuncs				number of functions being executed
- *		funcstates			per-function execution states (private in
- *							nodeFunctionscan.c)
+ *		funcstates			per-function execution states
  *		argcontext			memory context to evaluate function arguments in
+ *		stats				storage statistics to report in EXPLAIN ANALYZE
+ *		shared_info			storage statistics for parallel workers
  * ----------------
  */
-struct FunctionScanPerFuncState;
-
 typedef struct FunctionScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
@@ -1937,8 +1950,10 @@ typedef struct FunctionScanState
 	bool		simple;
 	int64		ordinal;
 	int			nfuncs;
-	struct FunctionScanPerFuncState *funcstates;	/* array of length nfuncs */
+	FunctionScanPerFuncState *funcstates;	/* array of length nfuncs */
 	MemoryContext argcontext;
+	FunctionScanInstrumentation stats;
+	SharedFunctionScanInfo *shared_info;
 } FunctionScanState;
 
 /* ----------------

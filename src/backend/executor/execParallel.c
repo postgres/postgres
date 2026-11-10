@@ -31,6 +31,7 @@
 #include "executor/nodeBitmapIndexscan.h"
 #include "executor/nodeCustom.h"
 #include "executor/nodeForeignscan.h"
+#include "executor/nodeFunctionscan.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIncrementalSort.h"
@@ -343,6 +344,10 @@ ExecParallelEstimate(PlanState *planstate, ExecParallelEstimateContext *e)
 			/* even when not parallel-aware, for EXPLAIN ANALYZE */
 			ExecMaterialEstimate((MaterialState *) planstate, e->pcxt);
 			break;
+		case T_FunctionScanState:
+			/* even when not parallel-aware, for EXPLAIN ANALYZE */
+			ExecFunctionScanEstimate((FunctionScanState *) planstate, e->pcxt);
+			break;
 		default:
 			break;
 	}
@@ -594,6 +599,11 @@ ExecParallelInitializeDSM(PlanState *planstate,
 		case T_MaterialState:
 			/* even when not parallel-aware, for EXPLAIN ANALYZE */
 			ExecMaterialInitializeDSM((MaterialState *) planstate, d->pcxt);
+			break;
+		case T_FunctionScanState:
+			/* even when not parallel-aware, for EXPLAIN ANALYZE */
+			ExecFunctionScanInitializeDSM((FunctionScanState *) planstate,
+										  d->pcxt);
 			break;
 		default:
 			break;
@@ -1084,6 +1094,7 @@ ExecParallelReInitializeDSM(PlanState *planstate,
 		case T_IncrementalSortState:
 		case T_MemoizeState:
 		case T_MaterialState:
+		case T_FunctionScanState:
 			/* these nodes have DSM state, but no reinitialization is required */
 			break;
 
@@ -1167,6 +1178,9 @@ ExecParallelRetrieveInstrumentation(PlanState *planstate,
 			break;
 		case T_MaterialState:
 			ExecMaterialRetrieveInstrumentation((MaterialState *) planstate);
+			break;
+		case T_FunctionScanState:
+			ExecFunctionScanRetrieveInstrumentation((FunctionScanState *) planstate);
 			break;
 		case T_BitmapHeapScanState:
 			ExecBitmapHeapRetrieveInstrumentation((BitmapHeapScanState *) planstate);
@@ -1500,6 +1514,11 @@ ExecParallelInitializeWorker(PlanState *planstate, ParallelWorkerContext *pwcxt)
 		case T_MaterialState:
 			/* even when not parallel-aware, for EXPLAIN ANALYZE */
 			ExecMaterialInitializeWorker((MaterialState *) planstate, pwcxt);
+			break;
+		case T_FunctionScanState:
+			/* even when not parallel-aware, for EXPLAIN ANALYZE */
+			ExecFunctionScanInitializeWorker((FunctionScanState *) planstate,
+											 pwcxt);
 			break;
 		default:
 			break;

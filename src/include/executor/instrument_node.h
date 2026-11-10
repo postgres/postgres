@@ -195,6 +195,27 @@ typedef struct SharedMaterialInfo
 
 
 /* ---------------------
+ *	Instrumentation information for FunctionScan
+ * ---------------------
+ */
+typedef struct FunctionScanInstrumentation
+{
+	int64		maxSpaceUsed;	/* peak memory/disk usage in bytes, or 0 if no
+								 * tuplestore was created */
+	bool		usedDisk;		/* did any tuplestore spill to disk? */
+} FunctionScanInstrumentation;
+
+/*
+ * Shared memory container for per-worker function scan information
+ */
+typedef struct SharedFunctionScanInfo
+{
+	int			num_workers;
+	pg_attribute_counted_by(num_workers) FunctionScanInstrumentation sinstrument[FLEXIBLE_ARRAY_MEMBER];
+} SharedFunctionScanInfo;
+
+
+/* ---------------------
  *	Instrumentation information for Sorts.
  * ---------------------
  */
