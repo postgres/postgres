@@ -194,5 +194,15 @@ create or replace function perl_encode_typed_literal() returns setof text langua
 	return_next encode_typed_literal({a => 0, b => ['PL','/','Perl']}, 'perl_foo_pos');
 $$;
 select perl_encode_typed_literal();  -- fail
-ERROR:  value for domain perl_foo_pos violates check constraint "perl_foo_pos_check"
+ERROR:  value for domain perl_foo_pos violates check constraint "perl_foo_pos_check" at line 2.
+CONTEXT:  PL/Perl function "perl_encode_typed_literal"
+-- on some platforms, this crashed after several iterations
+select perl_encode_typed_literal();  -- fail
+ERROR:  value for domain perl_foo_pos violates check constraint "perl_foo_pos_check" at line 2.
+CONTEXT:  PL/Perl function "perl_encode_typed_literal"
+select perl_encode_typed_literal();  -- fail
+ERROR:  value for domain perl_foo_pos violates check constraint "perl_foo_pos_check" at line 2.
+CONTEXT:  PL/Perl function "perl_encode_typed_literal"
+select perl_encode_typed_literal();  -- fail
+ERROR:  value for domain perl_foo_pos violates check constraint "perl_foo_pos_check" at line 2.
 CONTEXT:  PL/Perl function "perl_encode_typed_literal"
