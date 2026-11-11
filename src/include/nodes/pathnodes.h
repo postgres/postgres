@@ -3387,6 +3387,9 @@ typedef struct SemiAntiJoinFactors
  * sjinfo is extra info about special joins for selectivity estimation
  * semifactors is as shown above (only valid for SEMI/ANTI/inner_unique joins)
  * param_source_rels are OK targets for parameterization of result paths
+ * ojrelids are the outer joins computed at this join (sjinfo's own OJ, if
+ *		any, plus any pushed-down OJs completed here); input paths must not
+ *		be parameterized by any of these
  */
 typedef struct JoinPathExtraData
 {
@@ -3396,6 +3399,7 @@ typedef struct JoinPathExtraData
 	SpecialJoinInfo *sjinfo;
 	SemiAntiJoinFactors semifactors;
 	Relids		param_source_rels;
+	Relids		ojrelids;
 } JoinPathExtraData;
 
 /*
