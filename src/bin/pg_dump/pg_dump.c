@@ -18838,7 +18838,8 @@ dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo)
 		 *   catalogs.
 		 * - In v18 and older versions, ndistinct and dependencies have a
 		 *   different format that needs translation.
-		 * - In v14 and older versions, inherited does not exist.
+		 * - In v14 and older versions, there is no inherited flag, hence
+		 *   it is deduced from the relation's relkind.
 		 * - In v11 and older versions, there is no pg_stats_ext, hence
 		 *   the logic joins pg_statistic_ext and pg_namespace.
 		 *---------
@@ -19026,9 +19027,20 @@ dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo)
 		for (int i = 0; i < nstats; i++)
 		{
 			TableInfo  *tbinfo = statsextinfo->stattable;
+			const char *inherited;
 
 			if (PQgetisnull(res, i, i_inherited))
 				pg_fatal("inherited cannot be NULL");
+
+			/*
+			 * v14 and older have no inherited flag; only partitioned tables
+			 * store inherited extended statistics there.
+			 */
+			if (fout->remoteVersion >= 150000)
+				inherited = PQgetvalue(res, i, i_inherited);
+			else
+				inherited =
+					(tbinfo->relkind == RELKIND_PARTITIONED_TABLE) ? "t" : "f";
 
 			appendPQExpBufferStr(out,
 								 "SELECT * FROM pg_catalog.pg_restore_extended_stats(\n");
@@ -19046,8 +19058,7 @@ dumpStatisticsExtStats(Archive *fout, const StatsExtInfo *statsextinfo)
 			appendStringLiteralAH(out, statsextinfo->dobj.namespace->dobj.name, fout);
 			appendPQExpBufferStr(out, ",\n\t'statistics_name', ");
 			appendStringLiteralAH(out, statsextinfo->dobj.name, fout);
-			appendNamedArgument(out, fout, "inherited", "boolean",
-								PQgetvalue(res, i, i_inherited));
+			appendNamedArgument(out, fout, "inherited", "boolean", inherited);
 
 			if (!PQgetisnull(res, i, i_ndistinct))
 				appendNamedArgument(out, fout, "n_distinct", "pg_ndistinct",
