@@ -1270,8 +1270,8 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 
 			/*
 			 * Unlike fileIterateForeignScan(), we intentionally ignore
-			 * reject_limit so that ANALYZE can collect statistics from
-			 * valid rows even if the limit is exceeded.
+			 * reject_limit so that ANALYZE can collect statistics from valid
+			 * rows even if the limit is exceeded.
 			 */
 			continue;
 		}
