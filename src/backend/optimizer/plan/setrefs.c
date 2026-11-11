@@ -1558,6 +1558,14 @@ clean_up_removed_plan_level(Plan *parent, Plan *child)
 		 */
 		child->initPlan = list_concat(parent->initPlan,
 									  child->initPlan);
+
+		/*
+		 * The child must also take over the Params that the initplans depend
+		 * on, else a change in them would not cause the initplans to be
+		 * re-evaluated at rescan.
+		 */
+		child->extParam = bms_add_members(child->extParam, parent->extParam);
+		child->allParam = bms_add_members(child->allParam, parent->allParam);
 	}
 
 	/*
