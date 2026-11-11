@@ -156,7 +156,10 @@
     <para>
      Specifies the maximum number of errors tolerated while converting a column's
      input value to its data type, the same as <command>COPY</command>'s
-    <literal>REJECT_LIMIT</literal> option.
+     <literal>REJECT_LIMIT</literal> option.
+     This limit is not enforced when <command>ANALYZE</command> samples rows
+     from the foreign table, so that statistics can still be collected
+     from valid rows.
     </para>
    </listitem>
   </varlistentry>
