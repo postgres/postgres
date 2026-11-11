@@ -3882,9 +3882,13 @@ start_repack_decoding_worker(Oid relid)
 	shared->backend_pid = MyProcPid;
 	shared->backend_proc_number = MyProcNumber;
 
-	/* Transmit our timeouts to the worker too */
+	/*
+	 * Transmit any relevant settings to the worker too.  These would override
+	 * any role- or database-level configuration with that from this session.
+	 */
 	shared->lock_timeout = LockTimeout;
 	shared->transaction_timeout = TransactionTimeout;
+	shared->temp_file_limit = temp_file_limit;
 
 	mq = shm_mq_create((char *) BUFFERALIGN(shared->error_queue),
 					   REPACK_ERROR_QUEUE_SIZE);
