@@ -620,9 +620,16 @@ SELECT * FROM multiout_simple_setof(3);
   <title>Sharing Data</title>
   <para>
    The global dictionary <varname>SD</varname> is available to store
-   private data between repeated calls to the same function.
+   private data between repeated calls to the same function
+   within a session.  Each PL/Python function has its own instance
+   of <varname>SD</varname>, except that for trigger functions, there is
+   one instance of <varname>SD</varname> per function per triggered-on
+   relation.
+  </para>
+
+  <para>
    The global dictionary <varname>GD</varname> is public data,
-   that is available to all Python functions within a session;  use with
+   that is available to all PL/Python functions within a session;  use with
    care.<indexterm><primary>global data</primary>
    <secondary>in PL/Python</secondary></indexterm>
   </para>
