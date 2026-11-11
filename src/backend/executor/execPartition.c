@@ -1069,7 +1069,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 												  RelationGetDescr(leaf_part_rri->ri_RelationDesc),
 												  econtext,
 												  leaf_part_rri->ri_newTupleSlot,
-												  NULL);
+												  &mtstate->ps);
 					break;
 				case CMD_DELETE:
 				case CMD_NOTHING:
