@@ -154,6 +154,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	extra.sjinfo = sjinfo;
 	extra.param_source_rels = NULL;
 	extra.pgs_mask = joinrel->pgs_mask;
+	extra.ojrelids = NULL;
 
 	/*
 	 * Give extensions a chance to take control. In particular, an extension
@@ -312,6 +313,28 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 */
 	extra.param_source_rels = bms_add_members(extra.param_source_rels,
 											  joinrel->lateral_relids);
+
+	/*
+	 * Identify the outer joins computed at this join, since it'd be
+	 * nonsensical to use an input path that is parameterized by any of them
+	 * (see try_nestloop_path).
+	 *
+	 * Besides sjinfo's own OJ, this includes any pushed-down OJs that are
+	 * completed at this join per outer-join identity 3; those are the members
+	 * of the joinrel's relids that are in neither input rel. (We add
+	 * sjinfo->ojrelid explicitly because it won't be in the joinrel's relids
+	 * if this join has itself been pushed down into the RHS of a lower outer
+	 * join.)
+	 *
+	 * If sjinfo has no ojrelid, then no outer joins can be computed here; see
+	 * add_outer_joins_to_relids.
+	 */
+	if (sjinfo->ojrelid != 0)
+	{
+		extra.ojrelids = bms_difference(joinrel->relids, outerrel->relids);
+		extra.ojrelids = bms_del_members(extra.ojrelids, innerrel->relids);
+		extra.ojrelids = bms_add_member(extra.ojrelids, sjinfo->ojrelid);
+	}
 
 	/*
 	 * 1. Consider mergejoin paths where both relations must be explicitly
@@ -1026,11 +1049,13 @@ try_nestloop_path(PlannerInfo *root,
 	 * If we are forming an outer join at this join, it's nonsensical to use
 	 * an input path that uses the outer join as part of its parameterization.
 	 * (This can happen despite our join order restrictions, since those apply
-	 * to what is in an input relation not what its parameters are.)
+	 * to what is in an input relation not what its parameters are.)  The same
+	 * goes for any pushed-down outer joins that are completed at this join,
+	 * so we must check against all of extra->ojrelids, not just
+	 * sjinfo->ojrelid.
 	 */
-	if (extra->sjinfo->ojrelid != 0 &&
-		(bms_is_member(extra->sjinfo->ojrelid, inner_paramrels) ||
-		 bms_is_member(extra->sjinfo->ojrelid, outer_paramrels)))
+	if (bms_overlap(extra->ojrelids, inner_paramrels) ||
+		bms_overlap(extra->ojrelids, outer_paramrels))
 		return;
 
 	/*
@@ -1241,11 +1266,13 @@ try_mergejoin_path(PlannerInfo *root,
 	 * If we are forming an outer join at this join, it's nonsensical to use
 	 * an input path that uses the outer join as part of its parameterization.
 	 * (This can happen despite our join order restrictions, since those apply
-	 * to what is in an input relation not what its parameters are.)
+	 * to what is in an input relation not what its parameters are.)  The same
+	 * goes for any pushed-down outer joins that are completed at this join,
+	 * so we must check against all of extra->ojrelids, not just
+	 * sjinfo->ojrelid.
 	 */
-	if (extra->sjinfo->ojrelid != 0 &&
-		(bms_is_member(extra->sjinfo->ojrelid, PATH_REQ_OUTER(inner_path)) ||
-		 bms_is_member(extra->sjinfo->ojrelid, PATH_REQ_OUTER(outer_path))))
+	if (bms_overlap(extra->ojrelids, PATH_REQ_OUTER(inner_path)) ||
+		bms_overlap(extra->ojrelids, PATH_REQ_OUTER(outer_path)))
 		return;
 
 	/*
@@ -1415,11 +1442,13 @@ try_hashjoin_path(PlannerInfo *root,
 	 * If we are forming an outer join at this join, it's nonsensical to use
 	 * an input path that uses the outer join as part of its parameterization.
 	 * (This can happen despite our join order restrictions, since those apply
-	 * to what is in an input relation not what its parameters are.)
+	 * to what is in an input relation not what its parameters are.)  The same
+	 * goes for any pushed-down outer joins that are completed at this join,
+	 * so we must check against all of extra->ojrelids, not just
+	 * sjinfo->ojrelid.
 	 */
-	if (extra->sjinfo->ojrelid != 0 &&
-		(bms_is_member(extra->sjinfo->ojrelid, PATH_REQ_OUTER(inner_path)) ||
-		 bms_is_member(extra->sjinfo->ojrelid, PATH_REQ_OUTER(outer_path))))
+	if (bms_overlap(extra->ojrelids, PATH_REQ_OUTER(inner_path)) ||
+		bms_overlap(extra->ojrelids, PATH_REQ_OUTER(outer_path)))
 		return;
 
 	/*
