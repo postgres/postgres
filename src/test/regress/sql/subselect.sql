@@ -759,6 +759,23 @@ select sum(o.four), sum(ss.a) from
 where o.ten = 1;
 
 --
+-- Test rescan of an initplan moved to a lower plan node by setrefs.c, here
+-- from a removed single-child Append
+--
+create temp table rescan_ptbl (a int) partition by list (a);
+create temp table rescan_ptbl_1 partition of rescan_ptbl for values in (1);
+insert into rescan_ptbl values (1);
+
+explain (costs off)
+select v.x, s.y from (values (1), (2)) v(x),
+  lateral (select (select v.x) as y from rescan_ptbl offset 0) s
+  where s.y > 0;
+
+select v.x, s.y from (values (1), (2)) v(x),
+  lateral (select (select v.x) as y from rescan_ptbl offset 0) s
+  where s.y > 0;
+
+--
 -- Check we don't misoptimize a NOT IN where the subquery returns no rows.
 --
 create temp table notinouter (a int);
