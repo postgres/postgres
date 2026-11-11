@@ -3637,6 +3637,9 @@ typedef struct SemiAntiJoinFactors
  * semifactors is as shown above (only valid for SEMI/ANTI/inner_unique joins)
  * param_source_rels are OK targets for parameterization of result paths
  * pgs_mask is a bitmask of PGS_* constants to limit the join strategy
+ * ojrelids are the outer joins computed at this join (sjinfo's own OJ, if
+ *		any, plus any pushed-down OJs completed here); input paths must not
+ *		be parameterized by any of these
  */
 typedef struct JoinPathExtraData
 {
@@ -3647,6 +3650,7 @@ typedef struct JoinPathExtraData
 	SemiAntiJoinFactors semifactors;
 	Relids		param_source_rels;
 	uint64		pgs_mask;
+	Relids		ojrelids;
 } JoinPathExtraData;
 
 /*
