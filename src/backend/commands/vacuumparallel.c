@@ -599,7 +599,7 @@ parallel_vacuum_reset_dead_items(ParallelVacuumState *pvs)
  * Do parallel index bulk-deletion with parallel workers.
  */
 void
-parallel_vacuum_bulkdel_all_indexes(ParallelVacuumState *pvs, long num_table_tuples,
+parallel_vacuum_bulkdel_all_indexes(ParallelVacuumState *pvs, double num_table_tuples,
 									int num_index_scans, PVWorkerStats *wstats)
 {
 	Assert(!IsParallelWorker());
@@ -618,7 +618,7 @@ parallel_vacuum_bulkdel_all_indexes(ParallelVacuumState *pvs, long num_table_tup
  * Do parallel index cleanup with parallel workers.
  */
 void
-parallel_vacuum_cleanup_all_indexes(ParallelVacuumState *pvs, long num_table_tuples,
+parallel_vacuum_cleanup_all_indexes(ParallelVacuumState *pvs, double num_table_tuples,
 									int num_index_scans, bool estimated_count,
 									PVWorkerStats *wstats)
 {
