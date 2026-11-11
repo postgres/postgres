@@ -679,6 +679,10 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 		seed_2 = 2;
 	}
 
+	/* seed_2 can be the last entry, so fill its cache first */
+	maxoff = OffsetNumberNext(maxoff);
+	fillcache(&cache[maxoff], GETENTRY(entryvec, maxoff), siglen);
+
 	/* form initial .. */
 	datum_l = gtsvector_alloc(SIGNKEY | (cache[seed_1].allistrue ? ALLISTRUE : 0),
 							  siglen, cache[seed_1].sign);
@@ -686,8 +690,6 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 							  siglen, cache[seed_2].sign);
 	union_l = GETSIGN(datum_l);
 	union_r = GETSIGN(datum_r);
-	maxoff = OffsetNumberNext(maxoff);
-	fillcache(&cache[maxoff], GETENTRY(entryvec, maxoff), siglen);
 	/* sort before ... */
 	costvector = palloc_array(SPLITCOST, maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
