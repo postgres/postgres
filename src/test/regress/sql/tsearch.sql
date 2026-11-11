@@ -222,6 +222,19 @@ RESET enable_bitmapscan;
 
 DROP INDEX wowidx;
 
+-- Check picksplit with only two entries.
+CREATE TABLE test_tsvector_wide (a tsvector, b text);
+-- The EXTERNAL INCLUDE column means that two index tuples do not fit on
+-- one leaf page.  The second INSERT splits that page.
+ALTER TABLE test_tsvector_wide ALTER COLUMN b SET STORAGE EXTERNAL;
+CREATE INDEX ON test_tsvector_wide USING gist (a) INCLUDE (b);
+INSERT INTO test_tsvector_wide VALUES ('foo', repeat('x', 5000));
+INSERT INTO test_tsvector_wide SELECT 'bar', b FROM test_tsvector_wide;
+SET enable_seqscan = off;
+SELECT count(*) FROM test_tsvector_wide WHERE a @@ 'bar';
+RESET enable_seqscan;
+DROP TABLE test_tsvector_wide;
+
 CREATE INDEX wowidx ON test_tsvector USING gin (a);
 
 SET enable_seqscan=OFF;
