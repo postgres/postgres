@@ -2117,6 +2117,21 @@ select 1 from t t1
 rollback;
 
 --
+-- check a similar case where the parameterization refers to an outer join
+-- that was pushed down per outer-join identity 3
+--
+
+explain (costs off)
+select 1 from tenk1 t1
+where t1.thousand in
+  (select t2.thousand
+   from tenk1 t2
+     left join tenk1 t3 on t2.thousand = t3.thousand
+     left join (tenk1 t4 left join tenk1 t5 on t4.thousand = t5.thousand)
+       on t3.thousand = t4.thousand
+   where coalesce(t5.tenthous, 0) = t2.tenthous);
+
+--
 -- check a case in which a PlaceHolderVar forces join order
 --
 
