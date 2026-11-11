@@ -422,6 +422,10 @@ BEGIN;
 REPACK (ANALYZE) clstr_tst;
 ROLLBACK;
 
+-- Shared rels are not allowed with USING INDEX.
+REPACK pg_database USING INDEX pg_database_oid_index;
+CLUSTER pg_database USING pg_database_oid_index;
+
 -- REPACK is allowed within a PL, as long as there's no ANALYZE.
 DO $$ BEGIN EXECUTE 'REPACK clstr_tst'; END $$;
 DO $$ BEGIN EXECUTE 'REPACK (ANALYZE) clstr_tst'; END $$;

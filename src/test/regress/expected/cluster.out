@@ -844,6 +844,13 @@ BEGIN;
 REPACK (ANALYZE) clstr_tst;
 ERROR:  REPACK (ANALYZE) cannot run inside a transaction block
 ROLLBACK;
+-- Shared rels are not allowed with USING INDEX.
+REPACK pg_database USING INDEX pg_database_oid_index;
+ERROR:  cannot execute REPACK ... USING INDEX on a shared catalog
+DETAIL:  Marking an index as clustered on a shared catalog would only take effect in the current database.
+CLUSTER pg_database USING pg_database_oid_index;
+ERROR:  cannot execute CLUSTER on a shared catalog
+DETAIL:  Marking an index as clustered on a shared catalog would only take effect in the current database.
 -- REPACK is allowed within a PL, as long as there's no ANALYZE.
 DO $$ BEGIN EXECUTE 'REPACK clstr_tst'; END $$;
 DO $$ BEGIN EXECUTE 'REPACK (ANALYZE) clstr_tst'; END $$;
