@@ -445,26 +445,26 @@ contain_mutable_functions_walker(Node *node, void *context)
 				return true;
 		}
 
-		/* Check all subnodes */
+		/* Fall through to check subnodes */
 	}
 
 	if (IsA(node, JsonExpr))
 	{
-		JsonExpr   *jexpr = castNode(JsonExpr, node);
+		JsonExpr   *jexpr = (JsonExpr *) node;
 		Const	   *cnst;
 
+		/* If non-constant path_spec, must treat as mutable */
 		if (!IsA(jexpr->path_spec, Const))
 			return true;
 
-		cnst = castNode(Const, jexpr->path_spec);
-
+		cnst = (Const *) jexpr->path_spec;
 		Assert(cnst->consttype == JSONPATHOID);
-		if (cnst->constisnull)
-			return false;
-
-		if (jspIsMutable(DatumGetJsonPathP(cnst->constvalue),
+		if (!cnst->constisnull &&
+			jspIsMutable(DatumGetJsonPathP(cnst->constvalue),
 						 jexpr->passing_names, jexpr->passing_values))
 			return true;
+
+		/* Fall through to check subnodes */
 	}
 
 	if (IsA(node, SQLValueFunction))
