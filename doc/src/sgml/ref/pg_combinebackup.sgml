@@ -255,16 +255,15 @@ PostgreSQL documentation
        <para>
         When set to <literal>fsync</literal>, which is the default,
         <command>pg_combinebackup</command> will recursively open and synchronize
-        all files in the backup directory.  When the plain format is used, the
-        search for files will follow symbolic links for the WAL directory and
-        each configured tablespace.
+        all files in the output directory.  The search for files will follow
+        symbolic links for the WAL directory and each configured tablespace.
        </para>
        <para>
         On Linux, <literal>syncfs</literal> may be used instead to ask the
         operating system to synchronize the whole file system that contains the
-        backup directory.  When the plain format is used,
-        <command>pg_combinebackup</command> will also synchronize the file systems
-        that contain the WAL files and each tablespace.  See
+        output directory.  <command>pg_combinebackup</command> will also
+        synchronize the file systems that contain the WAL files and each
+        tablespace.  See
         <xref linkend="guc-recovery-init-sync-method"/> for information about
         the caveats to be aware of when using <literal>syncfs</literal>.
        </para>
