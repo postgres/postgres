@@ -756,6 +756,47 @@ GROUP BY t2.x ORDER BY t2.x;
 
 ROLLBACK;
 
+-- Try Memoize with a case-sensitive hashable join operator that is not the
+-- type's default equality operator.  Memoize must use the join operator's
+-- notion of equality for its cache keys.
+BEGIN;
+
+CREATE FUNCTION test_memoize_byteeq(text, text) RETURNS bool
+  AS $$ BEGIN RETURN $1::bytea = $2::bytea; END $$
+  LANGUAGE plpgsql IMMUTABLE STRICT;
+CREATE FUNCTION test_memoize_bytehash(text) RETURNS int
+  AS $$ SELECT hashtext($1 COLLATE "C") $$
+  LANGUAGE sql IMMUTABLE STRICT;
+CREATE OPERATOR === (LEFTARG = text, RIGHTARG = text,
+  FUNCTION = test_memoize_byteeq, COMMUTATOR = ===, HASHES);
+CREATE OPERATOR CLASS test_memoize_byteops FOR TYPE text USING hash AS
+  OPERATOR 1 === (text, text),
+  FUNCTION 1 test_memoize_bytehash(text);
+
+CREATE TABLE test_memoize_ci (x text COLLATE case_insensitive);
+INSERT INTO test_memoize_ci SELECT x FROM test3ci, generate_series(1, 10);
+CREATE TABLE test_memoize_ci_inner (x text COLLATE case_insensitive);
+INSERT INTO test_memoize_ci_inner SELECT x FROM test3ci;
+CREATE INDEX ON test_memoize_ci_inner USING hash (x test_memoize_byteops);
+ANALYZE test_memoize_ci, test_memoize_ci_inner;
+
+SET LOCAL enable_hashjoin TO off;
+SET LOCAL enable_mergejoin TO off;
+SET LOCAL enable_seqscan TO off;
+SET LOCAL enable_sort TO off;
+
+-- Ensure we get a Memoize plan
+EXPLAIN (COSTS OFF)
+SELECT t1.x COLLATE "C", t2.x COLLATE "C", count(*) FROM test_memoize_ci t1
+  INNER JOIN test_memoize_ci_inner t2 ON t2.x === t1.x
+GROUP BY 1, 2 ORDER BY 1, 2;
+
+-- Ensure we get the expected results
+SELECT t1.x COLLATE "C", t2.x COLLATE "C", count(*) FROM test_memoize_ci t1
+  INNER JOIN test_memoize_ci_inner t2 ON t2.x === t1.x
+GROUP BY 1, 2 ORDER BY 1, 2;
+
+ROLLBACK;
 -- bpchar
 CREATE TABLE test1bpci (x char(3) COLLATE case_insensitive);
 CREATE TABLE test2bpci (x char(3) COLLATE case_insensitive);
