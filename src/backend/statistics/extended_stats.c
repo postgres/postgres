@@ -2333,14 +2333,13 @@ build_expr_data(List *exprs, int stattarget)
 	return exprdata;
 }
 
-/* form an array of pg_statistic rows (per update_attstats) */
+/* form an array of pg_statistic rows, one per expression */
 static Datum
 serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 {
 	int			exprno;
 	Oid			typOid;
 	Relation	sd;
-
 	ArrayBuildState *astate = NULL;
 
 	sd = table_open(StatisticRelationId, RowExclusiveLock);
@@ -2355,12 +2354,7 @@ serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 
 	for (exprno = 0; exprno < nexprs; exprno++)
 	{
-		int			i,
-					k;
 		VacAttrStats *stats = exprdata[exprno].vacattrstat;
-
-		Datum		values[Natts_pg_statistic];
-		bool		nulls[Natts_pg_statistic];
 		HeapTuple	stup;
 
 		if (!stats->stats_valid)
@@ -2373,80 +2367,9 @@ serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 			continue;
 		}
 
-		/*
-		 * Construct a new pg_statistic tuple
-		 */
-		for (i = 0; i < Natts_pg_statistic; ++i)
-		{
-			nulls[i] = false;
-		}
-
-		values[Anum_pg_statistic_starelid - 1] = ObjectIdGetDatum(InvalidOid);
-		values[Anum_pg_statistic_staattnum - 1] = Int16GetDatum(InvalidAttrNumber);
-		values[Anum_pg_statistic_stainherit - 1] = BoolGetDatum(false);
-		values[Anum_pg_statistic_stanullfrac - 1] = Float4GetDatum(stats->stanullfrac);
-		values[Anum_pg_statistic_stawidth - 1] = Int32GetDatum(stats->stawidth);
-		values[Anum_pg_statistic_stadistinct - 1] = Float4GetDatum(stats->stadistinct);
-		i = Anum_pg_statistic_stakind1 - 1;
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			values[i++] = Int16GetDatum(stats->stakind[k]); /* stakindN */
-		}
-		i = Anum_pg_statistic_staop1 - 1;
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			values[i++] = ObjectIdGetDatum(stats->staop[k]);	/* staopN */
-		}
-		i = Anum_pg_statistic_stacoll1 - 1;
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			values[i++] = ObjectIdGetDatum(stats->stacoll[k]);	/* stacollN */
-		}
-		i = Anum_pg_statistic_stanumbers1 - 1;
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			int			nnum = stats->numnumbers[k];
-
-			if (nnum > 0)
-			{
-				int			n;
-				Datum	   *numdatums = palloc_array(Datum, nnum);
-				ArrayType  *arry;
-
-				for (n = 0; n < nnum; n++)
-					numdatums[n] = Float4GetDatum(stats->stanumbers[k][n]);
-				arry = construct_array_builtin(numdatums, nnum, FLOAT4OID);
-				values[i++] = PointerGetDatum(arry);	/* stanumbersN */
-			}
-			else
-			{
-				nulls[i] = true;
-				values[i++] = (Datum) 0;
-			}
-		}
-		i = Anum_pg_statistic_stavalues1 - 1;
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			if (stats->numvalues[k] > 0)
-			{
-				ArrayType  *arry;
-
-				arry = construct_array(stats->stavalues[k],
-									   stats->numvalues[k],
-									   stats->statypid[k],
-									   stats->statyplen[k],
-									   stats->statypbyval[k],
-									   stats->statypalign[k]);
-				values[i++] = PointerGetDatum(arry);	/* stavaluesN */
-			}
-			else
-			{
-				nulls[i] = true;
-				values[i++] = (Datum) 0;
-			}
-		}
-
-		stup = heap_form_tuple(RelationGetDescr(sd), values, nulls);
+		stup = build_statistic_tuple(InvalidOid, InvalidAttrNumber, false,
+									 stats,
+									 RelationGetDescr(sd), NULL);
 
 		astate = accumArrayResult(astate,
 								  heap_copy_tuple_as_datum(stup, RelationGetDescr(sd)),

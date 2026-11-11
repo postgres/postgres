@@ -1714,6 +1714,114 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 
 
 /*
+ * build_statistic_tuple() -- build a pg_statistic tuple from a VacAttrStats
+ *
+ * relid/attnum/inh represent the primary key of the pg_statistic tuple;
+ * all other fields are taken from the stats data structure.
+ *
+ * tupdesc must be a tuple descriptor for pg_statistic.  oldtup is the
+ * existing pg_statistic tuple we intend to replace, or NULL to build
+ * a new pg_statistic tuple.
+ *
+ * This is exported so that extended_stats.c can use it.  (In that usage,
+ * the primary-key fields are meaningless.)
+ */
+HeapTuple
+build_statistic_tuple(Oid relid, int attnum, bool inh,
+					  VacAttrStats *stats,
+					  TupleDesc tupdesc,
+					  HeapTuple oldtup)
+{
+	HeapTuple	stup;
+	Datum		values[Natts_pg_statistic];
+	bool		nulls[Natts_pg_statistic];
+	bool		replaces[Natts_pg_statistic];
+	int			i,
+				k;
+
+	for (i = 0; i < Natts_pg_statistic; ++i)
+	{
+		nulls[i] = false;
+		replaces[i] = true;
+	}
+
+	values[Anum_pg_statistic_starelid - 1] = ObjectIdGetDatum(relid);
+	values[Anum_pg_statistic_staattnum - 1] = Int16GetDatum(attnum);
+	values[Anum_pg_statistic_stainherit - 1] = BoolGetDatum(inh);
+	values[Anum_pg_statistic_stanullfrac - 1] = Float4GetDatum(stats->stanullfrac);
+	values[Anum_pg_statistic_stawidth - 1] = Int32GetDatum(stats->stawidth);
+	values[Anum_pg_statistic_stadistinct - 1] = Float4GetDatum(stats->stadistinct);
+	i = Anum_pg_statistic_stakind1 - 1;
+	for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
+	{
+		values[i++] = Int16GetDatum(stats->stakind[k]); /* stakindN */
+	}
+	i = Anum_pg_statistic_staop1 - 1;
+	for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
+	{
+		values[i++] = ObjectIdGetDatum(stats->staop[k]);	/* staopN */
+	}
+	i = Anum_pg_statistic_stacoll1 - 1;
+	for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
+	{
+		values[i++] = ObjectIdGetDatum(stats->stacoll[k]);	/* stacollN */
+	}
+	i = Anum_pg_statistic_stanumbers1 - 1;
+	for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
+	{
+		if (stats->stanumbers[k] != NULL)
+		{
+			int			nnum = stats->numnumbers[k];
+			Datum	   *numdatums = palloc_array(Datum, nnum);
+			ArrayType  *arry;
+
+			for (int n = 0; n < nnum; n++)
+				numdatums[n] = Float4GetDatum(stats->stanumbers[k][n]);
+			arry = construct_array_builtin(numdatums, nnum, FLOAT4OID);
+			values[i++] = PointerGetDatum(arry);	/* stanumbersN */
+		}
+		else
+		{
+			nulls[i] = true;
+			values[i++] = (Datum) 0;
+		}
+	}
+	i = Anum_pg_statistic_stavalues1 - 1;
+	for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
+	{
+		if (stats->stavalues[k] != NULL)
+		{
+			ArrayType  *arry;
+
+			arry = construct_array(stats->stavalues[k],
+								   stats->numvalues[k],
+								   stats->statypid[k],
+								   stats->statyplen[k],
+								   stats->statypbyval[k],
+								   stats->statypalign[k]);
+			values[i++] = PointerGetDatum(arry);	/* stavaluesN */
+		}
+		else
+		{
+			nulls[i] = true;
+			values[i++] = (Datum) 0;
+		}
+	}
+
+	/* Build a replacement or all-new tuple */
+	if (HeapTupleIsValid(oldtup))
+		stup = heap_modify_tuple(oldtup,
+								 tupdesc,
+								 values,
+								 nulls,
+								 replaces);
+	else
+		stup = heap_form_tuple(tupdesc, values, nulls);
+
+	return stup;
+}
+
+/*
  *	update_attstats() -- update attribute statistics for one relation
  *
  *		Statistics are stored in several places: the pg_class row for the
@@ -1752,88 +1860,14 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 		VacAttrStats *stats = vacattrstats[attno];
 		HeapTuple	stup,
 					oldtup;
-		int			i,
-					k,
-					n;
-		Datum		values[Natts_pg_statistic];
-		bool		nulls[Natts_pg_statistic];
-		bool		replaces[Natts_pg_statistic];
 
 		/* Ignore attr if we weren't able to collect stats */
 		if (!stats->stats_valid)
 			continue;
 
-		/*
-		 * Construct a new pg_statistic tuple
-		 */
-		for (i = 0; i < Natts_pg_statistic; ++i)
-		{
-			nulls[i] = false;
-			replaces[i] = true;
-		}
-
-		values[Anum_pg_statistic_starelid - 1] = ObjectIdGetDatum(relid);
-		values[Anum_pg_statistic_staattnum - 1] = Int16GetDatum(stats->tupattnum);
-		values[Anum_pg_statistic_stainherit - 1] = BoolGetDatum(inh);
-		values[Anum_pg_statistic_stanullfrac - 1] = Float4GetDatum(stats->stanullfrac);
-		values[Anum_pg_statistic_stawidth - 1] = Int32GetDatum(stats->stawidth);
-		values[Anum_pg_statistic_stadistinct - 1] = Float4GetDatum(stats->stadistinct);
-		i = Anum_pg_statistic_stakind1 - 1;
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			values[i++] = Int16GetDatum(stats->stakind[k]); /* stakindN */
-		}
-		i = Anum_pg_statistic_staop1 - 1;
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			values[i++] = ObjectIdGetDatum(stats->staop[k]);	/* staopN */
-		}
-		i = Anum_pg_statistic_stacoll1 - 1;
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			values[i++] = ObjectIdGetDatum(stats->stacoll[k]);	/* stacollN */
-		}
-		i = Anum_pg_statistic_stanumbers1 - 1;
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			if (stats->stanumbers[k] != NULL)
-			{
-				int			nnum = stats->numnumbers[k];
-				Datum	   *numdatums = palloc_array(Datum, nnum);
-				ArrayType  *arry;
-
-				for (n = 0; n < nnum; n++)
-					numdatums[n] = Float4GetDatum(stats->stanumbers[k][n]);
-				arry = construct_array_builtin(numdatums, nnum, FLOAT4OID);
-				values[i++] = PointerGetDatum(arry);	/* stanumbersN */
-			}
-			else
-			{
-				nulls[i] = true;
-				values[i++] = (Datum) 0;
-			}
-		}
-		i = Anum_pg_statistic_stavalues1 - 1;
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			if (stats->stavalues[k] != NULL)
-			{
-				ArrayType  *arry;
-
-				arry = construct_array(stats->stavalues[k],
-									   stats->numvalues[k],
-									   stats->statypid[k],
-									   stats->statyplen[k],
-									   stats->statypbyval[k],
-									   stats->statypalign[k]);
-				values[i++] = PointerGetDatum(arry);	/* stavaluesN */
-			}
-			else
-			{
-				nulls[i] = true;
-				values[i++] = (Datum) 0;
-			}
-		}
+		/* Open index information when we know we need it */
+		if (indstate == NULL)
+			indstate = CatalogOpenIndexes(sd);
 
 		/* Is there already a pg_statistic tuple for this attribute? */
 		oldtup = SearchSysCache3(STATRELATTINH,
@@ -1841,25 +1875,20 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 								 Int16GetDatum(stats->tupattnum),
 								 BoolGetDatum(inh));
 
-		/* Open index information when we know we need it */
-		if (indstate == NULL)
-			indstate = CatalogOpenIndexes(sd);
+		/* Build the new or replacement tuple */
+		stup = build_statistic_tuple(relid, stats->tupattnum, inh,
+									 stats,
+									 RelationGetDescr(sd), oldtup);
 
 		if (HeapTupleIsValid(oldtup))
 		{
 			/* Yes, replace it */
-			stup = heap_modify_tuple(oldtup,
-									 RelationGetDescr(sd),
-									 values,
-									 nulls,
-									 replaces);
 			ReleaseSysCache(oldtup);
 			CatalogTupleUpdateWithInfo(sd, &stup->t_self, stup, indstate);
 		}
 		else
 		{
 			/* No, insert new tuple */
-			stup = heap_form_tuple(RelationGetDescr(sd), values, nulls);
 			CatalogTupleInsertWithInfo(sd, stup, indstate);
 		}
 

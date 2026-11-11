@@ -441,6 +441,10 @@ extern void analyze_rel(Oid relid, RangeVar *relation,
 						BufferAccessStrategy bstrategy);
 extern bool attribute_is_analyzable(Relation onerel, int attnum, Form_pg_attribute attr,
 									int *p_attstattarget);
+extern HeapTuple build_statistic_tuple(Oid relid, int attnum, bool inh,
+									   VacAttrStats *stats,
+									   TupleDesc tupdesc,
+									   HeapTuple oldtup);
 extern bool std_typanalyze(VacAttrStats *stats);
 
 /* in utils/misc/sampling.c --- duplicate of declarations in utils/sampling.h */

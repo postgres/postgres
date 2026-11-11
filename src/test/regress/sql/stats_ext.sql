@@ -1944,3 +1944,13 @@ SELECT range_length_histogram, range_empty_frac, range_bounds_histogram
    FROM pg_stats_ext_exprs
    WHERE statistics_name = 'stats_ext_range';
 DROP TABLE stats_ext_tbl_range;
+
+-- Expression statistics on arrays with no elements
+CREATE TABLE stats_ext_tbl_mcelem (a int[]);
+INSERT INTO stats_ext_tbl_mcelem VALUES ('{}');
+CREATE STATISTICS stats_ext_mcelem ON (a || a) FROM stats_ext_tbl_mcelem;
+ANALYZE stats_ext_tbl_mcelem;
+SELECT most_common_elems, most_common_elem_freqs
+  FROM pg_stats_ext_exprs WHERE statistics_name = 'stats_ext_mcelem';
+SELECT * FROM stats_ext_tbl_mcelem WHERE (a || a) @> '{1}';
+DROP TABLE stats_ext_tbl_mcelem;
