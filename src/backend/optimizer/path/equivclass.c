@@ -2444,6 +2444,8 @@ reconsider_full_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo)
 				right_type;
 	Relids		left_relids,
 				right_relids;
+	JoinDomain *left_jdomain,
+			   *right_jdomain;
 	ListCell   *lc1;
 
 	/* Extract needed info from the clause */
@@ -2455,6 +2457,29 @@ reconsider_full_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo)
 	rightvar = (Expr *) get_rightop(rinfo->clause);
 	left_relids = rinfo->left_relids;
 	right_relids = rinfo->right_relids;
+
+	/*
+	 * Identify the child JoinDomains within which LEFTVAR = CONSTANT and
+	 * RIGHTVAR = CONSTANT would hold.  We mustn't assume that LEFTVAR comes
+	 * from the join's lefthand input, since the clause might have been
+	 * written as, say, "a FULL JOIN b ON b.y = a.x".  If the clause doesn't
+	 * relate an expression of one input to an expression of the other, we
+	 * can't deduce anything from it.
+	 */
+	if (bms_is_subset(left_relids, sjinfo->syn_lefthand) &&
+		bms_is_subset(right_relids, sjinfo->syn_righthand))
+	{
+		left_jdomain = find_join_domain(root, sjinfo->syn_lefthand);
+		right_jdomain = find_join_domain(root, sjinfo->syn_righthand);
+	}
+	else if (bms_is_subset(left_relids, sjinfo->syn_righthand) &&
+			 bms_is_subset(right_relids, sjinfo->syn_lefthand))
+	{
+		left_jdomain = find_join_domain(root, sjinfo->syn_righthand);
+		right_jdomain = find_join_domain(root, sjinfo->syn_lefthand);
+	}
+	else
+		return false;
 
 	foreach(lc1, root->eq_classes)
 	{
@@ -2547,7 +2572,6 @@ reconsider_full_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo)
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
 			Oid			eq_op;
 			RestrictInfo *newrinfo;
-			JoinDomain *jdomain;
 
 			if (!cur_em->em_is_const)
 				continue;		/* ignore non-const members */
@@ -2563,9 +2587,8 @@ reconsider_full_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo)
 													   cur_em->em_expr,
 													   bms_copy(left_relids),
 													   cur_ec->ec_min_security);
-				/* This equality holds within the lefthand child JoinDomain */
-				jdomain = find_join_domain(root, sjinfo->syn_lefthand);
-				if (process_equivalence(root, &newrinfo, jdomain))
+				/* This equality holds within LEFTVAR's child JoinDomain */
+				if (process_equivalence(root, &newrinfo, left_jdomain))
 					matchleft = true;
 			}
 			eq_op = select_equality_operator(cur_ec,
@@ -2580,9 +2603,8 @@ reconsider_full_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo)
 													   cur_em->em_expr,
 													   bms_copy(right_relids),
 													   cur_ec->ec_min_security);
-				/* This equality holds within the righthand child JoinDomain */
-				jdomain = find_join_domain(root, sjinfo->syn_righthand);
-				if (process_equivalence(root, &newrinfo, jdomain))
+				/* This equality holds within RIGHTVAR's child JoinDomain */
+				if (process_equivalence(root, &newrinfo, right_jdomain))
 					matchright = true;
 			}
 		}
