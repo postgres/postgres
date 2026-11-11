@@ -111,11 +111,13 @@ RepackWorkerMain(Datum main_arg)
 											  BGWORKER_BYPASS_ALLOWCONN |
 											  BGWORKER_BYPASS_ROLELOGINCHECK);
 
-	/* Adopt the steering backend's relevant timeouts. */
+	/* Adopt the steering backend's relevant settings. */
 	snprintf(buf, sizeof(buf), "%d", shared->lock_timeout);
 	SetConfigOption("lock_timeout", buf, PGC_SUSET, PGC_S_OVERRIDE);
 	snprintf(buf, sizeof(buf), "%d", shared->transaction_timeout);
 	SetConfigOption("transaction_timeout", buf, PGC_SUSET, PGC_S_OVERRIDE);
+	snprintf(buf, sizeof(buf), "%d", shared->temp_file_limit);
+	SetConfigOption("temp_file_limit", buf, PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
 	 * Transaction is needed to open relation, and it also provides us with a

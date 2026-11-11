@@ -95,9 +95,10 @@ typedef struct DecodingWorkerShared
 	/* Role to connect as. */
 	Oid			roleid;
 
-	/* Timeouts to use in the worker */
+	/* Settings to use in the worker */
 	int			lock_timeout;
 	int			transaction_timeout;
+	int			temp_file_limit;
 
 	/* Relation from which data changes to decode. */
 	Oid			relid;
