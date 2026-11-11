@@ -1268,7 +1268,11 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 			 */
 			cstate->escontext->error_occurred = false;
 
-			/* Repeat NextCopyFrom() until no soft error occurs */
+			/*
+			 * Unlike fileIterateForeignScan(), we intentionally ignore
+			 * reject_limit so that ANALYZE can collect statistics from
+			 * valid rows even if the limit is exceeded.
+			 */
 			continue;
 		}
 
