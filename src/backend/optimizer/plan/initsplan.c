@@ -1905,9 +1905,9 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 * If it is a full outer-join qualification, we add it to
 	 * root->full_join_clauses.  (Ideally we'd discard cases that aren't
 	 * leftvar = rightvar, as we do for left/right joins, but this routine
-	 * doesn't have the info needed to do that; and the current usage of the
-	 * full_join_clauses list doesn't require that, so it's not currently
-	 * worth complicating this routine's API to make it possible.)
+	 * doesn't have the info needed to do that, so we leave it to
+	 * reconsider_full_join_clause(), which looks up the join's
+	 * SpecialJoinInfo to work out which side each operand comes from.)
 	 *
 	 * If none of the above hold, pass it off to
 	 * distribute_restrictinfo_to_rels().

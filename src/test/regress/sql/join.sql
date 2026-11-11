@@ -1355,6 +1355,39 @@ select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
   where a.unique2 < 10 and coalesce(b.twothousand, a.twothousand) = 44;
 
 --
+-- check deductions from FULL JOIN clauses and COALESCE() = constant: the
+-- join clause's operands may appear in either order, but must come from
+-- different inputs of the join
+--
+
+-- operands in reversed order: we can still deduce a.f1 = 0 and c.f1 = 0
+explain (costs off)
+select * from int4_tbl a full join int4_tbl c on c.f1 = a.f1
+  where coalesce(c.f1, a.f1) = 0;
+
+select * from int4_tbl a full join int4_tbl c on c.f1 = a.f1
+  where coalesce(c.f1, a.f1) = 0;
+
+-- nothing can be deduced from a clause with an operand that references both
+-- inputs
+explain (costs off)
+select * from (int4_tbl a cross join int4_tbl b)
+  full join int4_tbl c on a.f1 - c.f1 = b.f1 and a.f1 = c.f1
+  where coalesce(a.f1 - c.f1, b.f1) = 123456
+  order by a.f1;
+
+select * from (int4_tbl a cross join int4_tbl b)
+  full join int4_tbl c on a.f1 - c.f1 = b.f1 and a.f1 = c.f1
+  where coalesce(a.f1 - c.f1, b.f1) = 123456
+  order by a.f1;
+
+-- if the only join condition relates two vars of the same input, the FULL
+-- JOIN can't be planned, just as without the WHERE condition
+select * from (int4_tbl a cross join int4_tbl b)
+  full join int4_tbl c on a.f1 = b.f1
+  where coalesce(a.f1, b.f1) = 0;
+
+--
 -- check handling of join aliases when flattening multiple levels of subquery
 --
 

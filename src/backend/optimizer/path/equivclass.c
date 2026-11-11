@@ -2200,6 +2200,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 				right_relids,
 				left_nullable_relids,
 				right_nullable_relids;
+	SpecialJoinInfo *sjinfo = NULL;
 	ListCell   *lc1;
 
 	/* Can't use an outerjoin_delayed clause here */
@@ -2219,6 +2220,43 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 										 rinfo->nullable_relids);
 	right_nullable_relids = bms_intersect(right_relids,
 										  rinfo->nullable_relids);
+
+	/*
+	 * Find the SpecialJoinInfo of the FULL JOIN the clause belongs to.  The
+	 * outer_relids of a FULL JOIN clause are all the base rels syntactically
+	 * within the join (see distribute_qual_to_rels), which identifies the
+	 * join uniquely.
+	 */
+	foreach(lc1, root->join_info_list)
+	{
+		SpecialJoinInfo *cur_sjinfo = (SpecialJoinInfo *) lfirst(lc1);
+
+		if (cur_sjinfo->jointype == JOIN_FULL &&
+			bms_equal(rinfo->outer_relids,
+					  bms_union(cur_sjinfo->syn_lefthand,
+								cur_sjinfo->syn_righthand)))
+		{
+			sjinfo = cur_sjinfo;
+			break;
+		}
+	}
+
+	/* We should have found a matching FULL JOIN SpecialJoinInfo. */
+	Assert(sjinfo);
+
+	/*
+	 * We can't deduce anything from the clause unless it relates an
+	 * expression of one input of the join to an expression of the other.
+	 * The operands may appear in either order, though, since the clause
+	 * might have been written as, say, "a FULL JOIN b ON b.y = a.x".  That
+	 * doesn't matter below, as the derived clauses are placed according to
+	 * their own relids.
+	 */
+	if (!(bms_is_subset(left_relids, sjinfo->syn_lefthand) &&
+		  bms_is_subset(right_relids, sjinfo->syn_righthand)) &&
+		!(bms_is_subset(left_relids, sjinfo->syn_righthand) &&
+		  bms_is_subset(right_relids, sjinfo->syn_lefthand)))
+		return false;
 
 	foreach(lc1, root->eq_classes)
 	{

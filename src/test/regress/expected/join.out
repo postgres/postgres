@@ -4047,6 +4047,75 @@ select a.unique1, b.unique1, c.unique1, coalesce(b.twothousand, a.twothousand)
 (0 rows)
 
 --
+-- check deductions from FULL JOIN clauses and COALESCE() = constant: the
+-- join clause's operands may appear in either order, but must come from
+-- different inputs of the join
+--
+-- operands in reversed order: we can still deduce a.f1 = 0 and c.f1 = 0
+explain (costs off)
+select * from int4_tbl a full join int4_tbl c on c.f1 = a.f1
+  where coalesce(c.f1, a.f1) = 0;
+             QUERY PLAN             
+------------------------------------
+ Hash Full Join
+   Hash Cond: (a.f1 = c.f1)
+   ->  Seq Scan on int4_tbl a
+         Filter: (f1 = 0)
+   ->  Hash
+         ->  Seq Scan on int4_tbl c
+               Filter: (f1 = 0)
+(7 rows)
+
+select * from int4_tbl a full join int4_tbl c on c.f1 = a.f1
+  where coalesce(c.f1, a.f1) = 0;
+ f1 | f1 
+----+----
+  0 |  0
+(1 row)
+
+-- nothing can be deduced from a clause with an operand that references both
+-- inputs
+explain (costs off)
+select * from (int4_tbl a cross join int4_tbl b)
+  full join int4_tbl c on a.f1 - c.f1 = b.f1 and a.f1 = c.f1
+  where coalesce(a.f1 - c.f1, b.f1) = 123456
+  order by a.f1;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Sort
+   Sort Key: a.f1
+   ->  Hash Full Join
+         Hash Cond: (a.f1 = c.f1)
+         Join Filter: ((a.f1 - c.f1) = b.f1)
+         Filter: (COALESCE((a.f1 - c.f1), b.f1) = 123456)
+         ->  Nested Loop
+               ->  Seq Scan on int4_tbl a
+               ->  Materialize
+                     ->  Seq Scan on int4_tbl b
+         ->  Hash
+               ->  Seq Scan on int4_tbl c
+(12 rows)
+
+select * from (int4_tbl a cross join int4_tbl b)
+  full join int4_tbl c on a.f1 - c.f1 = b.f1 and a.f1 = c.f1
+  where coalesce(a.f1 - c.f1, b.f1) = 123456
+  order by a.f1;
+     f1      |   f1   | f1 
+-------------+--------+----
+ -2147483647 | 123456 |   
+     -123456 | 123456 |   
+           0 | 123456 |   
+      123456 | 123456 |   
+  2147483647 | 123456 |   
+(5 rows)
+
+-- if the only join condition relates two vars of the same input, the FULL
+-- JOIN can't be planned, just as without the WHERE condition
+select * from (int4_tbl a cross join int4_tbl b)
+  full join int4_tbl c on a.f1 = b.f1
+  where coalesce(a.f1, b.f1) = 0;
+ERROR:  FULL JOIN is only supported with merge-joinable or hash-joinable join conditions
+--
 -- check handling of join aliases when flattening multiple levels of subquery
 --
 explain (verbose, costs off)
