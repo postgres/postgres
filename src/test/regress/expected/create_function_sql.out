@@ -485,6 +485,73 @@ SELECT pg_get_functiondef('functest_S_16'::regproc);
 
 DROP TABLE functest1 CASCADE;
 NOTICE:  drop cascades to function functest_s_16(integer,integer)
+-- check cases with OUT parameters before IN ones
+CREATE FUNCTION functest_out_point(OUT p point, x float8, y float8)
+LANGUAGE sql AS $$ select point(x,y); $$;
+SELECT functest_out_point(11,22);
+ functest_out_point 
+--------------------
+ (11,22)
+(1 row)
+
+CREATE FUNCTION functest_out_point2(OUT p point, float8, y float8)
+LANGUAGE sql AS $$ select point($1,y); $$;
+SELECT functest_out_point2(11,22);
+ functest_out_point2 
+---------------------
+ (11,22)
+(1 row)
+
+CREATE FUNCTION functest_out_point_sql(OUT p point, x float8, y float8)
+BEGIN ATOMIC SELECT point(x,y); END;
+SELECT functest_out_point_sql(11,22);
+ functest_out_point_sql 
+------------------------
+ (11,22)
+(1 row)
+
+SELECT pg_get_functiondef('functest_out_point_sql'::regproc);
+                                                  pg_get_functiondef                                                   
+-----------------------------------------------------------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_out_point_sql(OUT p point, x double precision, y double precision)+
+  RETURNS point                                                                                                       +
+  LANGUAGE sql                                                                                                        +
+ BEGIN ATOMIC                                                                                                         +
+  SELECT point(x, y) AS point;                                                                                        +
+ END                                                                                                                  +
+ 
+(1 row)
+
+CREATE FUNCTION functest_out_point2_sql(OUT p point, float8, y float8)
+BEGIN ATOMIC SELECT point($1,y); END;
+SELECT functest_out_point2_sql(11,22);
+ functest_out_point2_sql 
+-------------------------
+ (11,22)
+(1 row)
+
+SELECT pg_get_functiondef('functest_out_point2_sql'::regproc);
+                                                  pg_get_functiondef                                                  
+----------------------------------------------------------------------------------------------------------------------
+ CREATE OR REPLACE FUNCTION temp_func_test.functest_out_point2_sql(OUT p point, double precision, y double precision)+
+  RETURNS point                                                                                                      +
+  LANGUAGE sql                                                                                                       +
+ BEGIN ATOMIC                                                                                                        +
+  SELECT point($1, y) AS point;                                                                                      +
+ END                                                                                                                 +
+ 
+(1 row)
+
+CREATE FUNCTION functest_out_error(OUT p point, x float8, y float8)
+LANGUAGE sql AS $$ select point(p,x); $$;
+ERROR:  column "p" does not exist
+LINE 2: LANGUAGE sql AS $$ select point(p,x); $$;
+                                        ^
+CREATE FUNCTION functest_out_error_sql(OUT p point, x float8, y float8)
+BEGIN ATOMIC SELECT point(p,x); END;
+ERROR:  column "p" does not exist
+LINE 2: BEGIN ATOMIC SELECT point(p,x); END;
+                                  ^
 -- test with views
 CREATE TABLE functest3 (a int);
 INSERT INTO functest3 VALUES (1), (2);
@@ -846,7 +913,7 @@ CONTEXT:  SQL function "test1" during startup
 RESET check_function_bodies;
 -- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 41 other objects
+NOTICE:  drop cascades to 45 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
@@ -872,6 +939,10 @@ drop cascades to function functest_s_3a()
 drop cascades to function functest_s_10(text,date)
 drop cascades to function functest_s_13()
 drop cascades to function functest_s_15(integer)
+drop cascades to function functest_out_point(double precision,double precision)
+drop cascades to function functest_out_point2(double precision,double precision)
+drop cascades to function functest_out_point_sql(double precision,double precision)
+drop cascades to function functest_out_point2_sql(double precision,double precision)
 drop cascades to function functest_b_2(bigint)
 drop cascades to function functest_srf0()
 drop cascades to function functest_sri1()

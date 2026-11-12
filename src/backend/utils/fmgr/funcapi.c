@@ -1375,6 +1375,9 @@ get_type_func_class(Oid typid, Oid *base_typeid)
  * *p_argnames and *p_argmodes will be set NULL in the default cases
  * (no names, and all IN arguments, respectively).
  *
+ * If there are both named and unnamed arguments, p_argnames[] will
+ * contain empty strings (not NULLs) for the unnamed ones.
+ *
  * Note that this function simply fetches what is in the pg_proc tuple;
  * it doesn't do any interpretation of polymorphic types.
  */
@@ -1519,7 +1522,8 @@ get_func_trftypes(HeapTuple procTup,
  *
  * Returns the number of input arguments, which is the length of the
  * palloc'd array returned to *arg_names.  Entries for unnamed args
- * are set to NULL.  You don't get anything if proargnames is NULL.
+ * are set to NULL (note the inconsistency with get_func_arg_info!).
+ * You don't get anything if proargnames is NULL.
  */
 int
 get_func_input_arg_names(Datum proargnames, Datum proargmodes,
