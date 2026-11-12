@@ -2046,7 +2046,7 @@ brin_minmax_multi_distance_numeric(PG_FUNCTION_ARGS)
 	 * instead of error-ing out.
 	 */
 	d = numeric_sub_safe(a2, a1, (Node *) &escontext);
-	if (SOFT_ERROR_OCCURRED(&escontext))
+	if (escontext.error_occurred)
 		distance = get_float8_infinity();
 	else
 	{
