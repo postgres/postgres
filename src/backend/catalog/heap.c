@@ -4111,8 +4111,9 @@ heap_truncate_find_FKs(List *relationIds)
 	oids = list_copy(relationIds);
 
 	/*
-	 * Must scan pg_constraint.  Right now, it is a seqscan because there is
-	 * no available index on confrelid.
+	 * Must scan pg_constraint.  It is a seqscan although confrelid is
+	 * indexed, because probing the index once for each relation in the list
+	 * costs more than one pass over a small catalog.
 	 */
 	fkeyRel = table_open(ConstraintRelationId, AccessShareLock);
 

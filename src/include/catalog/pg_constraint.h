@@ -185,6 +185,7 @@ DECLARE_UNIQUE_INDEX(pg_constraint_conrelid_contypid_conname_index, 2665, Constr
 DECLARE_INDEX(pg_constraint_contypid_index, 2666, ConstraintTypidIndexId, pg_constraint, btree(contypid oid_ops));
 DECLARE_UNIQUE_INDEX_PKEY(pg_constraint_oid_index, 2667, ConstraintOidIndexId, pg_constraint, btree(oid oid_ops));
 DECLARE_INDEX(pg_constraint_conparentid_index, 2579, ConstraintParentIndexId, pg_constraint, btree(conparentid oid_ops));
+DECLARE_INDEX(pg_constraint_confrelid_index, 9370, ConstraintForeignRelIndexId, pg_constraint, btree(confrelid oid_ops));
 
 MAKE_SYSCACHE(CONSTROID, pg_constraint_oid_index, 16);
 
