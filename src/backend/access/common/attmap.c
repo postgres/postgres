@@ -174,6 +174,22 @@ AttrMap *
 build_attrmap_by_name(TupleDesc indesc,
 					  TupleDesc outdesc)
 {
+	return build_attrmap_by_name_new(indesc, outdesc, false);
+}
+
+/*
+ * build_attrmap_by_name_new
+ *
+ * Backported version of build_attrmap_by_name() with 'missing_ok' argument.
+ * If 'missing_ok' is true, a column from 'outdesc' not being present in
+ * 'indesc' is not flagged as an error; AttrMap.attnums[] entry for such an
+ * outdesc column will be 0 in that case.
+ */
+AttrMap *
+build_attrmap_by_name_new(TupleDesc indesc,
+						  TupleDesc outdesc,
+						  bool missing_ok)
+{
 	AttrMap    *attrMap;
 	int			outnatts;
 	int			innatts;
@@ -235,7 +251,7 @@ build_attrmap_by_name(TupleDesc indesc,
 				break;
 			}
 		}
-		if (attrMap->attnums[i] == 0)
+		if (attrMap->attnums[i] == 0 && !missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("could not convert row type"),
