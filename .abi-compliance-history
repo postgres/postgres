@@ -18,6 +18,15 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+1603fe94fa05f66056aa29e7ad0d58f8f3b8231e
+#
+# Reject join input paths parameterized by pushed-down outer joins.
+# 2026-11-11 18:48:54 +0100
+#
+# JoinPathExtraData gains a new field, placed at the end of the struct.
+# The struct is allocated only in add_paths_to_joinrel (on stack), and
+# only passed through a pointer.
+
 bcbcbd5a23c6740a55d024a5e24c003fc1f2891a
 #
 # Introduce attribute versioning to prevent unsafe deforming
