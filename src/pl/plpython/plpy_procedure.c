@@ -311,7 +311,8 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 									 proc);
 
 				/* get argument name */
-				proc->argnames[pos] = names ? pstrdup(names[i]) : NULL;
+				proc->argnames[pos] =
+					(names && names[i][0] != '\0') ? pstrdup(names[i]) : NULL;
 
 				ReleaseSysCache(argTypeTup);
 
