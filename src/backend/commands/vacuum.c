@@ -1372,14 +1372,15 @@ vac_estimate_reltuples(Relation relation,
 	 * If the relation is _exactly_ the same size according to the existing
 	 * pg_class entry, and only a few of its pages (less than 2%) were
 	 * scanned, keep the existing value of reltuples.  Also keep the existing
-	 * value when only a subset of rel's pages <= a single page were scanned.
+	 * value when at most one page was scanned.  When the relation size has
+	 * changed, use the old density to account for the added or removed pages
+	 * instead of preserving a stale tuple count.
 	 *
 	 * (Note: we might be returning -1 here.)
 	 */
 	if (old_rel_pages == total_pages &&
-		scanned_pages < (double) total_pages * 0.02)
-		return old_rel_tuples;
-	if (scanned_pages <= 1)
+		(scanned_pages <= 1 ||
+		 scanned_pages < (double) total_pages * 0.02))
 		return old_rel_tuples;
 
 	/*
