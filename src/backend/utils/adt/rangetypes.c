@@ -1885,7 +1885,7 @@ numrange_subdiff(PG_FUNCTION_ARGS)
 	 * saturate to infinity (or round to zero) instead.
 	 */
 	numresult = numeric_sub_safe(v1, v2, (Node *) &escontext);
-	if (SOFT_ERROR_OCCURRED(&escontext))
+	if (escontext.error_occurred)
 	{
 		/* The values v1 and v2 may be in arbitrary order. */
 		if (DatumGetBool(DirectFunctionCall2(numeric_lt, NumericGetDatum(v1),
