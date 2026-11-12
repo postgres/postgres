@@ -977,7 +977,7 @@ heap_vacuum_rel(Relation rel, const VacuumParams *params,
 	 * vacuuming.
 	 */
 	pgstat_report_vacuum(rel,
-						 Max(vacrel->new_live_tuples, 0),
+						 vacrel->new_live_tuples,
 						 vacrel->recently_dead_tuples +
 						 vacrel->missed_dead_tuples,
 						 starttime);
