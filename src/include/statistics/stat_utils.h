@@ -57,7 +57,8 @@ extern void statatt_set_slot(Datum *values, bool *nulls, bool *replaces,
 							 Datum stavalues, bool stavalues_isnull);
 
 extern Datum statatt_build_stavalues(const char *staname, FmgrInfo *array_in, Datum d,
-									 Oid typid, int32 typmod, bool *ok);
+									 Oid typid, int32 typmod, bool allow_empty,
+									 bool *ok);
 extern bool statatt_get_elem_type(TypeCacheEntry *basetypcache,
 								  Oid *elemtypid, Oid *elem_eq_opr);
 extern bool statatt_get_range_type(TypeCacheEntry *basetypcache,

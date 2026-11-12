@@ -2933,4 +2933,52 @@ SELECT count(*) FROM pg_statistic s
                       AND a.attnum = s.staattnum
                       AND NOT a.attisdropped);
 
+-- Empty arrays of values
+-- ok: range_length_histogram
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'arange',
+    'inherited', false::boolean,
+    'range_length_histogram', '{}'::text,
+    'range_empty_frac', '1'::real);
+-- ok: most_common_elems
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'tags',
+    'inherited', false::boolean,
+    'most_common_elems', '{}'::text,
+    'most_common_elem_freqs', '{0.1,0.1,0}'::real[]);
+SELECT attname, range_length_histogram, range_empty_frac,
+       most_common_elems, most_common_elem_freqs
+  FROM pg_stats
+  WHERE schemaname = 'stats_import'
+    AND tablename = 'test'
+    AND attname IN ('arange', 'tags')
+  ORDER BY attname;
+-- warn: most_common_vals and most_common_freqs
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'id',
+    'inherited', false::boolean,
+    'most_common_vals', '{}'::text,
+    'most_common_freqs', '{}'::real[]);
+-- warn: histogram_bounds
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'id',
+    'inherited', false::boolean,
+    'histogram_bounds', '{}'::text);
+-- warn: multi-dimensional array
+SELECT pg_catalog.pg_restore_attribute_stats(
+    'schemaname', 'stats_import',
+    'relname', 'test',
+    'attname', 'tags',
+    'inherited', false::boolean,
+    'most_common_elems', '{{one},{two}}'::text,
+    'most_common_elem_freqs', '{0.1,0.1,0.1,0.1,0}'::real[]);
+
 DROP SCHEMA stats_import CASCADE;

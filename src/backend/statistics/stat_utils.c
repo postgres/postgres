@@ -84,7 +84,7 @@ stats_check_arg_array(FunctionCallInfo fcinfo,
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("argument \"%s\" must not be a multidimensional array",
+				 errmsg("argument \"%s\" must be a non-empty one-dimensional array",
 						arginfo[argnum].argname)));
 		return false;
 	}
@@ -596,11 +596,16 @@ statatt_get_range_type(TypeCacheEntry *basetypcache, Oid *rangetypid)
  * If an error is encountered, capture it and throw a WARNING, with "ok" set
  * to false.  If the resulting array contains NULLs, raise a WARNING and
  * set "ok" to false.  When the operation succeeds, set "ok" to true.
+ *
+ * The array must be one-dimensional.  If "allow_empty" is true, an empty
+ * array is also accepted.
  */
 Datum
 statatt_build_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid typid,
-						int32 typmod, bool *ok)
+						int32 typmod, bool allow_empty, bool *ok)
 {
+	int			ndim;
+
 	char	   *s;
 	Datum		result;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
@@ -621,11 +626,18 @@ statatt_build_stavalues(const char *staname, FmgrInfo *array_in, Datum d, Oid ty
 
 	pfree(s);
 
-	if (ARR_NDIM(DatumGetArrayTypeP(result)) != 1)
+	ndim = ARR_NDIM(DatumGetArrayTypeP(result));
+	if (ndim != 1 && !(allow_empty && ndim == 0))
 	{
-		ereport(WARNING,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"%s\" must be a one-dimensional array", staname)));
+		if (allow_empty)
+			ereport(WARNING,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("\"%s\" must be an empty or one-dimensional array",
+							staname)));
+		else
+			ereport(WARNING,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("\"%s\" must be a one-dimensional array", staname)));
 		*ok = false;
 		return (Datum) 0;
 	}

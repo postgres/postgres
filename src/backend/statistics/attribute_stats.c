@@ -399,7 +399,7 @@ attribute_statistics_update_internal(Oid reloid,
 														&array_in_fn,
 														PG_GETARG_DATUM(MOST_COMMON_VALS_ARG),
 														atttypid, atttypmod,
-														&converted);
+														false, &converted);
 
 		if (converted)
 		{
@@ -439,7 +439,7 @@ attribute_statistics_update_internal(Oid reloid,
 											&array_in_fn,
 											PG_GETARG_DATUM(HISTOGRAM_BOUNDS_ARG),
 											atttypid, atttypmod,
-											&converted);
+											false, &converted);
 
 		if (converted)
 		{
@@ -476,7 +476,7 @@ attribute_statistics_update_internal(Oid reloid,
 											&array_in_fn,
 											PG_GETARG_DATUM(MOST_COMMON_ELEMS_ARG),
 											elemtypid, atttypmod,
-											&converted);
+											true, &converted);
 
 		if (converted)
 		{
@@ -518,7 +518,7 @@ attribute_statistics_update_internal(Oid reloid,
 											&array_in_fn,
 											PG_GETARG_DATUM(RANGE_BOUNDS_HISTOGRAM_ARG),
 											bounds_typid, atttypmod,
-											&converted);
+											false, &converted);
 
 		if (converted)
 		{
@@ -545,7 +545,7 @@ attribute_statistics_update_internal(Oid reloid,
 		stavalues = statatt_build_stavalues("range_length_histogram",
 											&array_in_fn,
 											PG_GETARG_DATUM(RANGE_LENGTH_HISTOGRAM_ARG),
-											FLOAT8OID, 0, &converted);
+											FLOAT8OID, 0, true, &converted);
 
 		if (converted)
 		{
