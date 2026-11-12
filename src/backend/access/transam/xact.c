@@ -3358,6 +3358,14 @@ CommitTransactionCommandInternal(void)
 			if (s->blockState == TBLOCK_END)
 			{
 				Assert(s->parent == NULL);
+
+				/*
+				 * Save the characteristics again, now that the
+				 * subtransactions are committed.  A subtransaction may have
+				 * switched to read-only, which should not be inherited by the
+				 * next AND CHAIN, if any.
+				 */
+				SaveTransactionCharacteristics(&savetc);
 				CommitTransaction();
 				s->blockState = TBLOCK_DEFAULT;
 				if (s->chain)
@@ -3488,6 +3496,10 @@ static bool
 AbortCurrentTransactionInternal(void)
 {
 	TransactionState s = CurrentTransactionState;
+	SavedTransactionCharacteristics savetc;
+
+	/* Must save in case we need to restore below */
+	SaveTransactionCharacteristics(&savetc);
 
 	switch (s->blockState)
 	{
@@ -3545,6 +3557,12 @@ AbortCurrentTransactionInternal(void)
 		case TBLOCK_INPROGRESS:
 		case TBLOCK_PARALLEL_INPROGRESS:
 			AbortTransaction();
+
+			/*
+			 * AbortTransaction() has reset the transaction characteristics;
+			 * restore them for AND CHAIN.
+			 */
+			RestoreTransactionCharacteristics(&savetc);
 			s->blockState = TBLOCK_ABORT;
 			/* CleanupTransaction happens when we exit TBLOCK_ABORT_END */
 			break;
