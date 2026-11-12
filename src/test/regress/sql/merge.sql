@@ -1812,15 +1812,41 @@ CREATE VIEW bug18634v AS
 CREATE TABLE bug18634s (a int, b int, c text);
 INSERT INTO bug18634s VALUES (1, 2, 'src1');
 
+BEGIN;
 MERGE INTO bug18634v t USING bug18634s s ON s.a = t.a
   WHEN MATCHED THEN UPDATE SET b = s.b
   WHEN NOT MATCHED BY SOURCE THEN DELETE
   RETURNING merge_action(), s.c, t.*;
 
 SELECT * FROM bug18634t;
+ROLLBACK;
+
+-- as above, but with a join as the source
+CREATE TABLE bug18634s2 (a int, b int, c text NOT NULL);
+INSERT INTO bug18634s2 VALUES (1, 2, 'src2');
+
+BEGIN;
+MERGE INTO bug18634t t
+  USING (bug18634s s JOIN bug18634s2 s2 ON s.a = s2.a) ON s.a = t.a
+  WHEN MATCHED THEN UPDATE SET b = s.b
+  WHEN NOT MATCHED BY SOURCE THEN DELETE
+  RETURNING merge_action(), s.c, s2.c AS c2,
+            s.c IS NULL AS c_null, s2.c IS NULL c2_null, t.*;
+
+SELECT * FROM bug18634t;
+ROLLBACK;
+
+MERGE INTO bug18634v t
+  USING (bug18634s s JOIN bug18634s2 s2 ON s.a = s2.a) ON s.a = t.a
+  WHEN MATCHED THEN UPDATE SET b = s.b
+  WHEN NOT MATCHED BY SOURCE THEN DELETE
+  RETURNING merge_action(), s.c, s2.c AS c2,
+            s.c IS NULL AS c_null, s2.c IS NULL c2_null, t.*;
+
+SELECT * FROM bug18634t;
 
 DROP TABLE bug18634t CASCADE;
-DROP TABLE bug18634s;
+DROP TABLE bug18634s, bug18634s2;
 
 -- prepare
 

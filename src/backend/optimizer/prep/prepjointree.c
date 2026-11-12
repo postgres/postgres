@@ -317,31 +317,39 @@ transform_MERGE_to_join(Query *parse)
 	 * join (in the ModifyTable node) to distinguish between the MATCHED and
 	 * NOT MATCHED BY SOURCE cases -- see ExecMergeMatched().  Note that this
 	 * creates a modified copy of the join condition, for use above the join,
-	 * without modifying the the original join condition, inside the join.
+	 * without modifying the original join condition, inside the join.
 	 */
 	if (jointype == JOIN_LEFT || jointype == JOIN_FULL)
 	{
+		Relids		sourcerelids;
+
+		/*
+		 * If the source relation is a join, we must mark any Vars referring
+		 * to relations under the join as well as the join relation itself.
+		 */
+		sourcerelids = get_relids_in_jointree(source, true, true);
+
 		parse->mergeJoinCondition =
 			add_nulling_relids(parse->mergeJoinCondition,
-							   bms_make_singleton(sourcerti),
+							   sourcerelids,
 							   bms_make_singleton(joinrti));
 
 		foreach_node(MergeAction, action, parse->mergeActionList)
 		{
 			action->qual =
 				add_nulling_relids(action->qual,
-								   bms_make_singleton(sourcerti),
+								   sourcerelids,
 								   bms_make_singleton(joinrti));
 
 			action->targetList = (List *)
 				add_nulling_relids((Node *) action->targetList,
-								   bms_make_singleton(sourcerti),
+								   sourcerelids,
 								   bms_make_singleton(joinrti));
 		}
 
 		parse->returningList = (List *)
 			add_nulling_relids((Node *) parse->returningList,
-							   bms_make_singleton(sourcerti),
+							   sourcerelids,
 							   bms_make_singleton(joinrti));
 	}
 
