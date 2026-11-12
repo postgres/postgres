@@ -126,6 +126,11 @@ get_partition_parent_worker(Relation inhRel, Oid relid, bool *detach_pending)
  * The first element is the immediate parent and the last one is the topmost
  * parent in the partition hierarchy.
  *
+ * A partition pending concurrent detach is treated as having no parent. The
+ * list can therefore be empty even if the relation is still marked as a
+ * partition in pg_class. If an ancestor is pending detach, the list ends at
+ * that ancestor.
+ *
  * Note: Because this function assumes that the relation whose OID is passed
  * as an argument and each ancestor will have precisely one parent, it should
  * only be called when it is known that the relation is a partition.
