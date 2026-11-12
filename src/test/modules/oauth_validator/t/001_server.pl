@@ -60,6 +60,7 @@ my $exec_backend = $node->safe_psql('postgres', 'SHOW debug_exec_backend');
 
 # Save a background connection for later configuration changes.
 my $bgconn = $node->background_psql('postgres');
+$bgconn->set_query_timer_restart();
 
 my $webserver = OAuth::Server->new();
 $webserver->run();
