@@ -517,6 +517,40 @@ SHOW transaction_read_only;
 SHOW transaction_deferrable;
 ROLLBACK;
 
+-- failed transaction with characteristics set by START TRANSACTION.
+START TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ WRITE, DEFERRABLE;
+INSERT INTO trans_abc VALUES ('error');
+COMMIT AND CHAIN;  -- TBLOCK_ABORT_END
+SHOW transaction_isolation;
+SHOW transaction_read_only;
+SHOW transaction_deferrable;
+ROLLBACK;
+
+-- failed transaction with characteristics set by SET TRANSACTION.
+START TRANSACTION;
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ WRITE, DEFERRABLE;
+INSERT INTO trans_abc VALUES ('error');
+ROLLBACK AND CHAIN;  -- TBLOCK_ABORT_END
+SHOW transaction_isolation;
+SHOW transaction_read_only;
+SHOW transaction_deferrable;
+ROLLBACK;
+
+-- read-only set in a subtransaction, not inherited by the next transaction
+START TRANSACTION READ WRITE;
+SAVEPOINT x;
+SET TRANSACTION READ ONLY;
+COMMIT AND CHAIN;  -- TBLOCK_SUBCOMMIT
+SHOW transaction_read_only;
+ROLLBACK;
+
+START TRANSACTION READ WRITE;
+SAVEPOINT x;
+SET TRANSACTION READ ONLY;
+ROLLBACK AND CHAIN;  -- TBLOCK_ABORT_PENDING
+SHOW transaction_read_only;
+ROLLBACK;
+
 -- not allowed outside a transaction block
 COMMIT AND CHAIN;  -- error
 ROLLBACK AND CHAIN;  -- error
