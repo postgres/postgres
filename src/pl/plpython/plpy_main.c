@@ -359,6 +359,11 @@ plpython3_inline_handler(PG_FUNCTION_ARGS)
 		plerrcontext.previous = error_context_stack;
 		error_context_stack = &plerrcontext;
 
+		/* An inline block has its own SD, used for this call only */
+		proc.statics = PyDict_New();
+		if (!proc.statics)
+			PLy_elog(ERROR, NULL);
+
 		PLy_procedure_compile(&proc, codeblock->source_text);
 		exec_ctx->curr_proc = &proc;
 		PLy_exec_function(fake_fcinfo, &pcache);
