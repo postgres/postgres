@@ -36,3 +36,21 @@ SELECT static_test();
 SELECT static_test();
 SELECT global_test_one();
 SELECT global_test_two();
+
+-- SD is shared by all calls of a function, whatever the input collation,
+-- and survives CREATE OR REPLACE FUNCTION
+CREATE FUNCTION static_test_coll(t text) RETURNS int4
+AS $$
+SD["n"] = SD.get("n", 0) + 1
+return SD["n"]
+$$ LANGUAGE plpython3u;
+
+SELECT static_test_coll('a'), static_test_coll('a' COLLATE "C");
+
+CREATE OR REPLACE FUNCTION static_test_coll(t text) RETURNS int4
+AS $$
+SD["n"] = SD.get("n", 0) + 1
+return SD["n"]
+$$ LANGUAGE plpython3u;
+
+SELECT static_test_coll('a');
