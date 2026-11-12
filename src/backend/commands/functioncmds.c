@@ -317,6 +317,9 @@ interpret_function_parameter_list(ParseState *pstate,
 			isinput = true;
 			if (parameterTypes_list)
 				*parameterTypes_list = lappend_oid(*parameterTypes_list, toid);
+			if (inParameterNames_list)
+				*inParameterNames_list = lappend(*inParameterNames_list,
+												 makeString(fp->name ? fp->name : pstrdup("")));
 		}
 
 		/* handle output parameters */
@@ -409,9 +412,6 @@ interpret_function_parameter_list(ParseState *pstate,
 			paramNames[i] = CStringGetTextDatum(fp->name);
 			have_names = true;
 		}
-
-		if (inParameterNames_list)
-			*inParameterNames_list = lappend(*inParameterNames_list, makeString(fp->name ? fp->name : pstrdup("")));
 
 		if (fp->defexpr)
 		{
@@ -918,9 +918,10 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
 
 		pinfo->fname = funcname;
 		pinfo->nargs = list_length(parameterTypes);
+		Assert(pinfo->nargs == list_length(inParameterNames));
 		pinfo->argtypes = (Oid *) palloc(pinfo->nargs * sizeof(Oid));
 		pinfo->argnames = (char **) palloc(pinfo->nargs * sizeof(char *));
-		for (int i = 0; i < list_length(parameterTypes); i++)
+		for (int i = 0; i < pinfo->nargs; i++)
 		{
 			char	   *s = strVal(list_nth(inParameterNames, i));
 
