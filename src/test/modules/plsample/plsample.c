@@ -110,6 +110,7 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 	Oid			prorettype;
 	FmgrInfo	result_in_func;
 	int			numargs;
+	int			inargno;
 
 	/* Fetch the function's pg_proc entry. */
 	pl_tuple = SearchSysCache1(PROCOID,
@@ -148,23 +149,34 @@ plsample_func_handler(PG_FUNCTION_ARGS)
 	 * Iterate through all of the function arguments, printing each input
 	 * value.
 	 */
+	inargno = 0;
 	for (int i = 0; i < numargs; i++)
 	{
-		Oid			argtype = pl_struct->proargtypes.values[i];
+		Oid			argtype = argtypes[i];
 		char	   *value;
+
+		if (argmodes &&
+			(argmodes[i] == PROARGMODE_OUT ||
+			 argmodes[i] == PROARGMODE_TABLE))
+			continue;			/* skip OUT arguments */
 
 		type_tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(argtype));
 		if (!HeapTupleIsValid(type_tuple))
 			elog(ERROR, "cache lookup failed for type %u", argtype);
 
 		type_struct = (Form_pg_type) GETSTRUCT(type_tuple);
-		fmgr_info_cxt(type_struct->typoutput, &(arg_out_func[i]), proc_cxt);
+		fmgr_info_cxt(type_struct->typoutput,
+					  &(arg_out_func[inargno]), proc_cxt);
 		ReleaseSysCache(type_tuple);
 
-		value = OutputFunctionCall(&arg_out_func[i], fcinfo->args[i].value);
+		value = OutputFunctionCall(&arg_out_func[inargno],
+								   fcinfo->args[inargno].value);
 		ereport(NOTICE,
 				(errmsg("argument: %d; name: %s; value: %s",
-						i, argnames[i], value)));
+						inargno,
+						(argnames && argnames[i][0]) ? argnames[i] : "(none)",
+						value)));
+		inargno++;
 	}
 
 	/* Type of the result */

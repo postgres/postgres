@@ -180,8 +180,8 @@ typedef struct
 	List	   *index_tlist;	/* referent for INDEX_VAR Vars */
 	/* Special namespace representing a function signature: */
 	char	   *funcname;
-	int			numargs;
-	char	  **argnames;
+	int			numargs;		/* number of input arguments */
+	char	  **argnames;		/* names of input args (NULL if unnamed) */
 } deparse_namespace;
 
 /*
@@ -3525,19 +3525,29 @@ pg_get_function_arg_default(PG_FUNCTION_ARGS)
 static void
 print_function_sqlbody(StringInfo buf, HeapTuple proctup)
 {
-	int			numargs;
-	Oid		   *argtypes;
-	char	  **argnames;
-	char	   *argmodes;
+	Datum		proargnames;
+	Datum		proargmodes;
+	bool		isNull;
 	deparse_namespace dpns = {0};
 	Datum		tmp;
 	Node	   *n;
 
 	dpns.funcname = pstrdup(NameStr(((Form_pg_proc) GETSTRUCT(proctup))->proname));
-	numargs = get_func_arg_info(proctup,
-								&argtypes, &argnames, &argmodes);
-	dpns.numargs = numargs;
-	dpns.argnames = argnames;
+
+	proargnames = SysCacheGetAttr(PROCOID, proctup,
+								  Anum_pg_proc_proargnames,
+								  &isNull);
+	if (isNull)
+		proargnames = PointerGetDatum(NULL);	/* just to be sure */
+
+	proargmodes = SysCacheGetAttr(PROCOID, proctup,
+								  Anum_pg_proc_proargmodes,
+								  &isNull);
+	if (isNull)
+		proargmodes = PointerGetDatum(NULL);	/* just to be sure */
+
+	dpns.numargs = get_func_input_arg_names(proargnames, proargmodes,
+											&dpns.argnames);
 
 	tmp = SysCacheGetAttrNotNull(PROCOID, proctup, Anum_pg_proc_prosqlbody);
 	n = stringToNode(TextDatumGetCString(tmp));

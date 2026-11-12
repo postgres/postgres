@@ -257,6 +257,38 @@ SELECT pg_get_functiondef('functest_S_16'::regproc);
 
 DROP TABLE functest1 CASCADE;
 
+-- check cases with OUT parameters before IN ones
+
+CREATE FUNCTION functest_out_point(OUT p point, x float8, y float8)
+LANGUAGE sql AS $$ select point(x,y); $$;
+
+SELECT functest_out_point(11,22);
+
+CREATE FUNCTION functest_out_point2(OUT p point, float8, y float8)
+LANGUAGE sql AS $$ select point($1,y); $$;
+
+SELECT functest_out_point2(11,22);
+
+CREATE FUNCTION functest_out_point_sql(OUT p point, x float8, y float8)
+BEGIN ATOMIC SELECT point(x,y); END;
+
+SELECT functest_out_point_sql(11,22);
+
+SELECT pg_get_functiondef('functest_out_point_sql'::regproc);
+
+CREATE FUNCTION functest_out_point2_sql(OUT p point, float8, y float8)
+BEGIN ATOMIC SELECT point($1,y); END;
+
+SELECT functest_out_point2_sql(11,22);
+
+SELECT pg_get_functiondef('functest_out_point2_sql'::regproc);
+
+CREATE FUNCTION functest_out_error(OUT p point, x float8, y float8)
+LANGUAGE sql AS $$ select point(p,x); $$;
+
+CREATE FUNCTION functest_out_error_sql(OUT p point, x float8, y float8)
+BEGIN ATOMIC SELECT point(p,x); END;
+
 -- test with views
 CREATE TABLE functest3 (a int);
 INSERT INTO functest3 VALUES (1), (2);
