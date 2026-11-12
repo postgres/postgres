@@ -820,7 +820,7 @@ ExecMemoize(PlanState *pstate)
 					 * cache lookups to work even when the scan has not been
 					 * executed to completion.
 					 */
-					entry->complete = node->singlerow;
+					node->entry->complete = node->singlerow;
 					node->mstatus = MEMO_FILLING_CACHE;
 				}
 
