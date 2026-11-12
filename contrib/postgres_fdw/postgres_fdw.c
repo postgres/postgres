@@ -5978,10 +5978,10 @@ remattrmap_cmp(const void *v1, const void *v2)
 /*
  * Match local columns to result set rows.
  *
- * As the result set consists of the attribute stats for some/all of distinct
- * mapped remote columns in the RemoteAttributeMapping, every entry in it
- * should have at most one match in the result set; which is also ordered by
- * remote_attname, so we find such pairs by doing a merge join.
+ * As the result set consists of the attribute stats for distinct mapped
+ * remote columns, every entry in the RemoteAttributeMapping should have at
+ * most one match in the result set; which is also ordered by remote_attname,
+ * so we find such pairs by doing a merge join.
  *
  * Returns true if every entry in it has a match, and false if not.
  */
@@ -6040,8 +6040,8 @@ match_attrmap(PGresult *res,
 		row += 1;
 
 		/*
-		 * If the attname in the entry is less than that in the next stats
-		 * row, it means the stats for the entry are missing.
+		 * If the remote_attname in the entry is less than that in the next
+		 * stats row, it means the stats for the entry are missing.
 		 */
 		if (strcmp(remattrmap[mapidx].remote_attname,
 				   PQgetvalue(res, row, ATTSTATS_ATTNAME)) < 0)
@@ -6073,7 +6073,7 @@ match_attrmap(PGresult *res,
 }
 
 /*
- * Import fetched statistics into the local statistics tables.
+ * Attempt to import fetched statistics into the local statistics tables.
  */
 static bool
 import_fetched_statistics(Relation relation,
@@ -6083,6 +6083,12 @@ import_fetched_statistics(Relation relation,
 						  const RemoteAttributeMapping *remattrmap,
 						  int attrcnt)
 {
+	/*
+	 * ATTSTATS_NUM_FIELDS corresponds to the number of NullableDatum
+	 * arguments for import_attribute_statistics(), which is larger than that
+	 * for import_relation_statistics().  Therefore, a NullableDatum array of
+	 * that length is used to store data for each argument in both functions.
+	 */
 	NullableDatum args[ATTSTATS_NUM_FIELDS];
 
 	/* Set the 'version' parameter, which is common to both statistics. */
