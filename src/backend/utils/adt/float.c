@@ -3652,19 +3652,10 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 	else
 	{
 		N = N1 + N2;
-		Sx = float8_pl(Sx1, Sx2);
-		tmp1 = Sx1 / N1 - Sx2 / N2;
-		Sxx = Sxx1 + Sxx2 + N1 * N2 * tmp1 * tmp1 / N;
-		if (unlikely(isinf(Sxx)) && !isinf(Sxx1) && !isinf(Sxx2))
-			float_overflow_error();
-		Sy = float8_pl(Sy1, Sy2);
-		tmp2 = Sy1 / N1 - Sy2 / N2;
-		Syy = Syy1 + Syy2 + N1 * N2 * tmp2 * tmp2 / N;
-		if (unlikely(isinf(Syy)) && !isinf(Syy1) && !isinf(Syy2))
-			float_overflow_error();
-		Sxy = Sxy1 + Sxy2 + N1 * N2 * tmp1 * tmp2 / N;
-		if (unlikely(isinf(Sxy)) && !isinf(Sxy1) && !isinf(Sxy2))
-			float_overflow_error();
+		Sx = Sx1 + Sx2;
+		Sy = Sy1 + Sy2;
+
+		/* Check to see if we have seen distinct inputs */
 		if (float8_eq(Cx1, Cx2))
 			Cx = Cx1;
 		else
@@ -3673,6 +3664,62 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 			Cy = Cy1;
 		else
 			Cy = get_float8_nan();
+
+		tmp1 = Sx1 / N1 - Sx2 / N2;
+		tmp2 = Sy1 / N1 - Sy2 / N2;
+
+		/*
+		 * As in float8_regr_accum, if we have not seen distinct inputs for X
+		 * (or Y) in either state, the corresponding sums should remain
+		 * exactly zero: both means are then exactly Cx, and computing the
+		 * correction terms from the rounded sums Sx1 and Sx2 would just
+		 * inject roundoff error.  We need exact zero results so that the
+		 * final functions will return NULL in the right cases.
+		 */
+		Sxx = Sxx1 + Sxx2;
+		if (isnan(Cx))
+			Sxx += N1 * N2 * tmp1 * tmp1 / N;
+		Syy = Syy1 + Syy2;
+		if (isnan(Cy))
+			Syy += N1 * N2 * tmp2 * tmp2 / N;
+		Sxy = Sxy1 + Sxy2;
+		if (isnan(Cx) && isnan(Cy))
+			Sxy += N1 * N2 * tmp1 * tmp2 / N;
+		else if (isnan(Sx) || isinf(Sx) ||
+				 isnan(Sy) || isinf(Sy))
+		{
+			/*
+			 * If one input has been constant so far, but the other one has
+			 * been Inf or NaN, we must force Sxy to NaN to avoid falsely
+			 * reporting variance zero.  (We can't see individual X/Y values
+			 * from here, but if any one has been Inf or NaN, the sum Sx/Sy
+			 * must now be Inf or NaN.)  Sxx and Syy don't have this issue.
+			 */
+			Sxy = get_float8_nan();
+		}
+
+		/*
+		 * Overflow check, same logic as in float8_regr_accum.  (Some of this
+		 * is dead code here, but it's simpler to just make it match.)
+		 */
+		if (isinf(Sx) || isinf(Sxx) || isinf(Sy) || isinf(Syy) || isinf(Sxy))
+		{
+			if (((isinf(Sx) || isinf(Sxx)) &&
+				 !isinf(Sx1) && !isinf(Sx2)) ||
+				((isinf(Sy) || isinf(Syy)) &&
+				 !isinf(Sy1) && !isinf(Sy2)) ||
+				(isinf(Sxy) &&
+				 !isinf(Sx1) && !isinf(Sx2) &&
+				 !isinf(Sy1) && !isinf(Sy2)))
+				float_overflow_error();
+
+			if (isinf(Sxx))
+				Sxx = get_float8_nan();
+			if (isinf(Syy))
+				Syy = get_float8_nan();
+			if (isinf(Sxy))
+				Sxy = get_float8_nan();
+		}
 	}
 
 	/*
