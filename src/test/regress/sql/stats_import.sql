@@ -1899,8 +1899,9 @@ CREATE STATISTICS stats_import.test_mr_stat_clone
   ON name, mrange, ( mrange + '{[10000,10200)}'::int4multirange)
   FROM stats_import.test_mr_clone;
 
--- Check for invalid value combinations for range types.
--- Only range_bounds_histogram (other two missing)
+-- Check value combinations for range types.  range_length_histogram and
+-- range_empty_frac must be given together.
+-- ok: only range_bounds_histogram, other two missing
 SELECT pg_catalog.pg_restore_extended_stats(
   'schemaname', 'stats_import',
   'relname', 'test_mr',
@@ -1908,8 +1909,8 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'statistics_name', 'test_mr_stat',
   'inherited', false,
   'exprs', '[{"range_bounds_histogram": "{\"[1,10200)\",\"[11,10200)\"}"}]'::jsonb);
--- Only range_length_histogram and range_empty_frac
--- (range_bounds_histogram missing)
+-- ok: range_length_histogram and range_empty_frac defined,
+-- range_bounds_histogram missing.
 SELECT pg_catalog.pg_restore_extended_stats(
   'schemaname', 'stats_import',
   'relname', 'test_mr',
@@ -1917,24 +1918,22 @@ SELECT pg_catalog.pg_restore_extended_stats(
   'statistics_name', 'test_mr_stat',
   'inherited', false,
   'exprs', '[{"range_length_histogram": "{10179,10189}", "range_empty_frac": "0"}]'::jsonb);
--- Only range_bounds_histogram and range_empty_frac
--- (range_length_histogram missing)
+-- warn: only range_empty_frac, range_length_histogram missing
 SELECT pg_catalog.pg_restore_extended_stats(
   'schemaname', 'stats_import',
   'relname', 'test_mr',
   'statistics_schemaname', 'stats_import',
   'statistics_name', 'test_mr_stat',
   'inherited', false,
-  'exprs', '[{"range_bounds_histogram": "{\"[1,10200)\"}", "range_empty_frac": "0"}]'::jsonb);
--- Only range_bounds_histogram and range_length_histogram
--- (range_empty_frac missing)
+  'exprs', '[{"range_empty_frac": "0"}]'::jsonb);
+-- warn: only range_length_histogram, range_empty_frac missing
 SELECT pg_catalog.pg_restore_extended_stats(
   'schemaname', 'stats_import',
   'relname', 'test_mr',
   'statistics_schemaname', 'stats_import',
   'statistics_name', 'test_mr_stat',
   'inherited', false,
-  'exprs', '[{"range_bounds_histogram": "{\"[1,10200)\"}", "range_length_histogram": "{10179}"}]'::jsonb);
+  'exprs', '[{"range_length_histogram": "{10179}"}]'::jsonb);
 
 -- ok: multirange stats
 SELECT pg_catalog.pg_restore_extended_stats(
