@@ -5,7 +5,7 @@ backend_sources += files(
 )
 
 
-if cdata.has('USE_UNNAMED_POSIX_SEMAPHORES') or cdata.has('USE_NAMED_POSIX_SEMAPHORES')
+if cdata.has('USE_UNNAMED_POSIX_SEMAPHORES')
   backend_sources += files('posix_sema.c')
 endif
 

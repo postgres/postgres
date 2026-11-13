@@ -714,9 +714,7 @@ psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: No such
     (see <xref linkend="guc-shared-memory-type"/>).
 
     In addition a significant number of semaphores, which can be either
-    System V or POSIX style, are created at server startup.  Currently,
-    POSIX semaphores are used on Linux and FreeBSD systems while other
-    platforms use System V semaphores.
+    System V or POSIX style, are created at server startup.
    </para>
 
    <para>
@@ -933,7 +931,6 @@ $ <userinput>postgres -D $PGDATA -C num_os_semaphores</userinput>
        <para>
         The default shared memory settings are usually good enough, unless
         you have set <literal>shared_memory_type</literal> to <literal>sysv</literal>.
-        System V semaphores are not used on this platform.
        </para>
 
        <para>
@@ -1040,7 +1037,6 @@ $ <userinput>postgres -D $PGDATA -C num_os_semaphores</userinput>
         The default shared memory settings are usually good enough, unless
         you have set <literal>shared_memory_type</literal> to <literal>sysv</literal>,
         and even then only on older kernel versions that shipped with low defaults.
-        System V semaphores are not used on this platform.
        </para>
 
        <para>
