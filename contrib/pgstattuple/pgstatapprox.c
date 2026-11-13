@@ -56,6 +56,7 @@ typedef struct StatApproxReadStreamPrivate
 	BlockNumber current_blocknum;
 	BlockNumber nblocks;
 	BlockNumber scanned;		/* count of pages actually read */
+	BlockNumber scanned_new;	/* count of scanned PageIsNew pages */
 	Buffer		vmbuffer;		/* for VM lookups */
 } StatApproxReadStreamPrivate;
 
@@ -132,6 +133,7 @@ statapprox_heap(Relation rel, output_type *stat)
 	p.current_blocknum = 0;
 	p.nblocks = nblocks;
 	p.scanned = 0;
+	p.scanned_new = 0;
 	p.vmbuffer = InvalidBuffer;
 
 	/*
@@ -167,7 +169,14 @@ statapprox_heap(Relation rel, output_type *stat)
 
 		stat->free_space += PageGetExactFreeSpace(page);
 
-		if (PageIsNew(page) || PageIsEmpty(page))
+		if (PageIsNew(page))
+		{
+			p.scanned_new++;
+			UnlockReleaseBuffer(buf);
+			continue;
+		}
+
+		if (PageIsEmpty(page))
 		{
 			UnlockReleaseBuffer(buf);
 			continue;
@@ -245,6 +254,7 @@ statapprox_heap(Relation rel, output_type *stat)
 	 * we already accounted for the space in those pages, too.
 	 */
 	stat->tuple_count = vac_estimate_reltuples(rel, nblocks, p.scanned,
+											   p.scanned_new,
 											   stat->tuple_count);
 
 	/* It's not clear if we could get -1 here, but be safe. */
@@ -255,6 +265,10 @@ statapprox_heap(Relation rel, output_type *stat)
 	 */
 	if (nblocks != 0)
 	{
+		/*
+		 * Includes PageIsNew blocks that were read but excluded from the
+		 * live-tuple estimate.
+		 */
 		stat->scanned_percent = 100.0 * p.scanned / nblocks;
 		stat->tuple_percent = 100.0 * stat->tuple_len / stat->table_len;
 		stat->dead_tuple_percent = 100.0 * stat->dead_tuple_len / stat->table_len;
