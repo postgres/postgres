@@ -119,9 +119,10 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
       Optionally, <literal>*</literal> can be specified after the
       <replaceable class="parameter">table_name</replaceable> to
       explicitly indicate that descendant tables are included.
-      This does not apply to a partitioned table, however.  The partitions of
-      a partitioned table are always implicitly considered part of the
-      publication, so they are never explicitly added to the publication.
+      For a partitioned table, <literal>ONLY</literal> and <literal>*</literal>
+      have no effect.  The partitions of a partitioned table are always
+      implicitly considered part of the publication, so they do not need to be
+      added explicitly.
      </para>
 
      <para>

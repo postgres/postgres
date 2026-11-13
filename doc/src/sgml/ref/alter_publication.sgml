@@ -170,6 +170,8 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
       <literal>*</literal> can be specified after the
       <replaceable class="parameter">table_name</replaceable> to explicitly
       indicate that descendant tables are included.
+      For a partitioned table, <literal>ONLY</literal> and <literal>*</literal>
+      have no effect.
      </para>
 
      <para>
