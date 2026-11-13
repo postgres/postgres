@@ -634,6 +634,11 @@ alter table t2 alter column z drop not null;
 create unique index t2_z_uidx on t2(z) nulls not distinct;
 explain (costs off) select y,z from t2 group by y,z;
 
+-- But not if the table is nullable by an outer join, as null-extended rows
+-- would be conflated with the row having a NULL in the indexed column.
+explain (costs off)
+select t2.y,t2.z from t1 left join t2 on true group by t2.y,t2.z;
+
 drop table t1 cascade;
 drop table t2;
 drop table t3;
