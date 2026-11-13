@@ -425,6 +425,7 @@ remove_useless_groupby_columns(PlannerInfo *root)
 	Bitmapset **groupbyattnos;
 	List	  **groupbycols;
 	Bitmapset **surplusvars;
+	Relids		nullable_relids = NULL;
 	bool		tryremove = false;
 	ListCell   *lc;
 	int			relid;
@@ -471,6 +472,10 @@ remove_useless_groupby_columns(PlannerInfo *root)
 		/* OK, remember we have this Var */
 		relid = var->varno;
 		Assert(relid <= list_length(parse->rtable));
+
+		/* Remember rels whose GROUP BY Vars can be nulled by an outer join */
+		if (!bms_is_empty(var->varnullingrels))
+			nullable_relids = bms_add_member(nullable_relids, relid);
 
 		/*
 		 * If this isn't the first column for this relation then we now have
@@ -569,9 +574,12 @@ remove_useless_groupby_columns(PlannerInfo *root)
 				 * can relax this check when the index is defined with NULLS
 				 * NOT DISTINCT as there can only be 1 NULL row, therefore
 				 * functional dependency on the unique columns is maintained,
-				 * despite the NULL.
+				 * despite the NULL.  That doesn't hold if the rel is nullable
+				 * by an outer join, though, as null-extended rows would be
+				 * conflated with that NULL row.
 				 */
-				if (!index->nullsnotdistinct &&
+				if ((!index->nullsnotdistinct ||
+					 bms_is_member(relid, nullable_relids)) &&
 					!bms_is_member(indkey_attno, rel->notnullattnums))
 				{
 					index_check_ok = false;
