@@ -1196,10 +1196,10 @@ import_pg_statistic(Relation pgsd, JsonbContainer *cont,
 		goto pg_statistic_error;
 
 	/*
-	 * There are two arg pairs, MCV+MCF and MCEV+MCEF.  Both values must
-	 * either be found or not be found.  Any disagreement is a warning.  Once
-	 * we have ruled out disagreeing pairs, we can use either found flag as a
-	 * proxy for the other.
+	 * There are three arg pairs, MCV+MCF, MCEV+MCEF, and RLH+REF.  Both
+	 * values must either be found or not be found.  Any disagreement is a
+	 * warning.  Once we have ruled out disagreeing pairs, we can use either
+	 * found flag as a proxy for the other.
 	 */
 	if (found[MOST_COMMON_VALS_ELEM] != found[MOST_COMMON_FREQS_ELEM])
 	{
@@ -1224,21 +1224,15 @@ import_pg_statistic(Relation pgsd, JsonbContainer *cont,
 		goto pg_statistic_error;
 	}
 
-	/*
-	 * Range types may expect three values to be set.  All three of them must
-	 * either be found or not be found.  Any disagreement is a warning.
-	 */
-	if (found[RANGE_LENGTH_HISTOGRAM_ELEM] != found[RANGE_EMPTY_FRAC_ELEM] ||
-		found[RANGE_LENGTH_HISTOGRAM_ELEM] != found[RANGE_BOUNDS_HISTOGRAM_ELEM])
+	if (found[RANGE_LENGTH_HISTOGRAM_ELEM] != found[RANGE_EMPTY_FRAC_ELEM])
 	{
 		ereport(WARNING,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("could not parse \"%s\": invalid element in expression %d",
 					   argname, exprnum),
-				errhint("\"%s\", \"%s\", and \"%s\" must be all either strings or all nulls.",
+				errhint("\"%s\" and \"%s\" must be both either strings or nulls.",
 						extexprargname[RANGE_LENGTH_HISTOGRAM_ELEM],
-						extexprargname[RANGE_EMPTY_FRAC_ELEM],
-						extexprargname[RANGE_BOUNDS_HISTOGRAM_ELEM]));
+						extexprargname[RANGE_EMPTY_FRAC_ELEM]));
 		goto pg_statistic_error;
 	}
 
