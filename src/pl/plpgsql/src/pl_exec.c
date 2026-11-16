@@ -4538,7 +4538,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 						(errcode(ERRCODE_TOO_MANY_ROWS),
 						 errmsg("query returned more than one row"),
 						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0,
-						 errhint("Make sure the query returns a single row, or use LIMIT 1.")));
+						 errhint("Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.")));
 			}
 			/* Put the first result row into the target */
 			exec_move_row(estate, target, tuptab->vals[0], tuptab->tupdesc);

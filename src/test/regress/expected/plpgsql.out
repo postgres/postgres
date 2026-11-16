@@ -2732,7 +2732,7 @@ begin
 end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
-HINT:  Make sure the query returns a single row, or use LIMIT 1.
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
 create or replace function stricttest() returns void as $$
 declare x record;
@@ -2806,7 +2806,7 @@ begin
 end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
-HINT:  Make sure the query returns a single row, or use LIMIT 1.
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
 create or replace function stricttest() returns void as $$
 declare x record;
@@ -2886,7 +2886,7 @@ end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: p1 = '2', p3 = 'foo'
-HINT:  Make sure the query returns a single row, or use LIMIT 1.
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 CONTEXT:  PL/pgSQL function stricttest() line 8 at SQL statement
 create or replace function stricttest() returns void as $$
 declare x record;
@@ -2897,7 +2897,7 @@ begin
 end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
-HINT:  Make sure the query returns a single row, or use LIMIT 1.
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 CONTEXT:  PL/pgSQL function stricttest() line 5 at SQL statement
 create or replace function stricttest() returns void as $$
 declare x record;
@@ -2945,7 +2945,7 @@ begin
 end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
-HINT:  Make sure the query returns a single row, or use LIMIT 1.
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 CONTEXT:  PL/pgSQL function stricttest() line 10 at SQL statement
 reset plpgsql.print_strict_params;
 create or replace function stricttest() returns void as $$
@@ -2963,7 +2963,7 @@ end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: p1 = '2', p3 = 'foo'
-HINT:  Make sure the query returns a single row, or use LIMIT 1.
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 CONTEXT:  PL/pgSQL function stricttest() line 10 at SQL statement
 -- test warnings and errors
 set plpgsql.extra_warnings to 'all';
@@ -3096,7 +3096,7 @@ begin
 end;
 $$;
 WARNING:  query returned more than one row
-HINT:  Make sure the query returns a single row, or use LIMIT 1.
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 set plpgsql.extra_errors to 'too_many_rows';
 do $$
 declare x int;
@@ -3105,7 +3105,7 @@ begin
 end;
 $$;
 ERROR:  query returned more than one row
-HINT:  Make sure the query returns a single row, or use LIMIT 1.
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 CONTEXT:  PL/pgSQL function inline_code_block line 4 at SQL statement
 reset plpgsql.extra_errors;
 reset plpgsql.extra_warnings;
