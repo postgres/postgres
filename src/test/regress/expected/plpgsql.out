@@ -2841,6 +2841,7 @@ begin
 end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
 drop function stricttest();
 -- test printing parameters after failure due to STRICT
@@ -2920,6 +2921,7 @@ end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
 DETAIL:  parameters: $1 = '1'
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
 create or replace function stricttest() returns void as $$
 declare x record;
@@ -2930,6 +2932,7 @@ begin
 end$$ language plpgsql;
 select stricttest();
 ERROR:  query returned more than one row
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 CONTEXT:  PL/pgSQL function stricttest() line 5 at EXECUTE
 create or replace function stricttest() returns void as $$
 -- override the global
@@ -3097,6 +3100,14 @@ end;
 $$;
 WARNING:  query returned more than one row
 HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
+do $$
+declare x int;
+begin
+  execute 'select v from generate_series(1,2) g(v)' into x;
+end;
+$$;
+WARNING:  query returned more than one row
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 set plpgsql.extra_errors to 'too_many_rows';
 do $$
 declare x int;
@@ -3107,6 +3118,15 @@ $$;
 ERROR:  query returned more than one row
 HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
 CONTEXT:  PL/pgSQL function inline_code_block line 4 at SQL statement
+do $$
+declare x int;
+begin
+  execute 'select v from generate_series(1,2) g(v)' into x;
+end;
+$$;
+ERROR:  query returned more than one row
+HINT:  Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.
+CONTEXT:  PL/pgSQL function inline_code_block line 4 at EXECUTE
 reset plpgsql.extra_errors;
 reset plpgsql.extra_warnings;
 set plpgsql.extra_warnings to 'strict_multi_assignment';

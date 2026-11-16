@@ -4580,6 +4580,12 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	ParamListInfo paramLI;
 	SPIExecuteOptions options;
 	MemoryContext stmt_mcontext = get_stmt_mcontext(estate);
+	int			too_many_rows_level = 0;
+
+	if (plpgsql_extra_errors & PLPGSQL_XCHECK_TOOMANYROWS)
+		too_many_rows_level = ERROR;
+	else if (plpgsql_extra_warnings & PLPGSQL_XCHECK_TOOMANYROWS)
+		too_many_rows_level = WARNING;
 
 	/*
 	 * First we evaluate the string expression after the EXECUTE keyword. Its
@@ -4687,9 +4693,9 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 		target = (PLpgSQL_variable *) estate->datums[stmt->target->dno];
 
 		/*
-		 * If SELECT ... INTO specified STRICT, and the query didn't find
-		 * exactly one row, throw an error.  If STRICT was not specified, then
-		 * allow the query to find any number of rows.
+		 * If STRICT was specified, require exactly one row.  Otherwise, allow
+		 * any number of rows, but report a warning or error for multiple rows
+		 * if the too_many_rows extra check is enabled.
 		 */
 		if (n == 0)
 		{
@@ -4712,19 +4718,23 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 		}
 		else
 		{
-			if (n > 1 && stmt->strict)
+			if (n > 1 && (stmt->strict || too_many_rows_level))
 			{
 				char	   *errdetail;
+				int			errlevel;
 
 				if (estate->func->print_strict_params)
 					errdetail = format_preparedparamsdata(estate, paramLI);
 				else
 					errdetail = NULL;
 
-				ereport(ERROR,
+				errlevel = stmt->strict ? ERROR : too_many_rows_level;
+
+				ereport(errlevel,
 						(errcode(ERRCODE_TOO_MANY_ROWS),
 						 errmsg("query returned more than one row"),
-						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0));
+						 errdetail ? errdetail_internal("parameters: %s", errdetail) : 0,
+						 errhint("Make sure the query returns a single row, for example by using LIMIT 1 with SELECT.")));
 			}
 
 			/* Put the first result row into the target */

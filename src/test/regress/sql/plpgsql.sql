@@ -2628,12 +2628,26 @@ begin
 end;
 $$;
 
+do $$
+declare x int;
+begin
+  execute 'select v from generate_series(1,2) g(v)' into x;
+end;
+$$;
+
 set plpgsql.extra_errors to 'too_many_rows';
 
 do $$
 declare x int;
 begin
   select v from generate_series(1,2) g(v) into x;
+end;
+$$;
+
+do $$
+declare x int;
+begin
+  execute 'select v from generate_series(1,2) g(v)' into x;
 end;
 $$;
 
