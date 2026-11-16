@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-07 12:53+0000\n"
+"POT-Creation-Date: 2026-11-09 11:52+0000\n"
 "PO-Revision-Date: 2025-11-08 19:01+0100\n"
 "Last-Translator: Álvaro Herrera <alvherre@lvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -135,16 +135,14 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
 #: ../../common/fe_memutils.c:209
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu + %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu + %zu\n"
 
 #: ../../common/fe_memutils.c:228
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu * %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu * %zu\n"
 
 #: ../../common/file_utils.c:75
 #, c-format
@@ -949,10 +947,9 @@ msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "el archivo «%s» tiene una longitud de truncado de bloque %u en exceso del tamaño de segmento %u"
 
 #: reconstruct.c:492
-#, fuzzy, c-format
-#| msgid "file \"%s\" has block count %u in excess of segment size %u"
+#, c-format
 msgid "file \"%s\" has block number %u in excess of segment size %u"
-msgstr "el archivo «%s» tiene una cantidad de bloques %u más allá del tamaño de bloque %u"
+msgstr "el archivo «%s» tiene número de bloque %u más allá del tamaño de segmento %u"
 
 #: reconstruct.c:550
 #, c-format
@@ -960,10 +957,9 @@ msgid "could not read file \"%s\": read %d of %u"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %u"
 
 #: reconstruct.c:715
-#, fuzzy, c-format
-#| msgid "error while copying file range from \"%s\" to \"%s\": %m"
+#, c-format
 msgid "unexpected end of file while copying file range from \"%s\" to \"%s\""
-msgstr "error mientras se copiaba un rango de archivo de «%s» a «%s»: %m"
+msgstr "error inesperado mientras se copiaba un rango de archivo de «%s» a «%s»"
 
 #: reconstruct.c:797
 #, c-format
@@ -975,7 +971,3 @@ msgstr "no se pudo leer del archivo \"%s\", posición %llu: leídos %d de %d"
 #| msgid "could not write file \"%s\": wrote %d of %d"
 msgid "could not write file \"%s\": wrote %zd of %d"
 msgstr "no se pudo escribir al archivo «%s»: se escribió %d de %d"
-
-#, c-format
-#~ msgid "%s: could not parse version number"
-#~ msgstr "%s: no se pudo interpretar el número de versión"

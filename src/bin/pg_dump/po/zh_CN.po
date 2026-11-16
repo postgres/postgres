@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-03 15:52+0000\n"
-"PO-Revision-Date: 2026-11-04 08:45+0800\n"
+"POT-Creation-Date: 2026-11-11 19:52+0000\n"
+"PO-Revision-Date: 2026-11-12 07:19+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
@@ -41,7 +41,7 @@ msgstr "提示: "
 
 #: ../../common/compression.c:176 ../../common/compression.c:185
 #: ../../common/compression.c:194 compress_gzip.c:455 compress_gzip.c:462
-#: compress_io.c:108 compress_lz4.c:823 compress_lz4.c:830 compress_zstd.c:26
+#: compress_io.c:109 compress_lz4.c:823 compress_lz4.c:830 compress_zstd.c:26
 #: compress_zstd.c:32
 #, c-format
 msgid "this build does not support compression with %s"
@@ -542,11 +542,16 @@ msgid "could not read from input file: %m"
 msgstr "无法读取输入文件: %m"
 
 #: compress_gzip.c:327 compress_lz4.c:608 compress_none.c:197
-#: compress_zstd.c:455 pg_backup_custom.c:655 pg_backup_directory.c:515
+#: compress_zstd.c:455 pg_backup_custom.c:655 pg_backup_directory.c:519
 #: pg_backup_tar.c:740 pg_backup_tar.c:763
 #, c-format
 msgid "could not read from input file: end of file"
 msgstr "无法读取输入文件: 已到达文件末尾"
+
+#: compress_io.c:279 compress_io.c:297
+#, c-format
+msgid "\"%s\" is not a regular file"
+msgstr "文件 \"%s\" 不是常规文件"
 
 #: compress_lz4.c:173
 #, c-format
@@ -634,7 +639,7 @@ msgstr "无法解压缩数据: %s"
 msgid "Password: "
 msgstr "密码: "
 
-#: connectdb.c:83 connectdb.c:174 pg_backup_db.c:203 pg_dump.c:943
+#: connectdb.c:83 connectdb.c:174 pg_backup_db.c:203 pg_dump.c:949
 #: pg_dump_sort.c:1477 pg_dump_sort.c:1497
 #, c-format
 msgid "%s"
@@ -960,7 +965,7 @@ msgstr "正在恢复带有 OID %u 的大对象"
 msgid "could not create large object %u: %s"
 msgstr "无法创建大对象 %u: %s"
 
-#: pg_backup_archiver.c:1528 pg_dump.c:4194
+#: pg_backup_archiver.c:1528 pg_dump.c:4200
 #, c-format
 msgid "could not open large object %u: %s"
 msgstr "无法打开大对象 %u: %s"
@@ -981,14 +986,14 @@ msgid "could not find entry for ID %d"
 msgstr "无法为 ID %d 找到条目"
 
 #: pg_backup_archiver.c:1642 pg_backup_directory.c:187
-#: pg_backup_directory.c:563
+#: pg_backup_directory.c:567
 #, c-format
 msgid "could not close TOC file: %m"
 msgstr "无法关闭 TOC 文件: %m"
 
-#: pg_backup_archiver.c:1729 pg_backup_custom.c:151 pg_backup_directory.c:301
-#: pg_backup_directory.c:550 pg_backup_directory.c:616
-#: pg_backup_directory.c:634 pg_dumpall.c:558
+#: pg_backup_archiver.c:1729 pg_backup_custom.c:151 pg_backup_directory.c:303
+#: pg_backup_directory.c:554 pg_backup_directory.c:620
+#: pg_backup_directory.c:638 pg_dumpall.c:558
 #, c-format
 msgid "could not open output file \"%s\": %m"
 msgstr "无法打开输出文件 \"%s\": %m"
@@ -1062,7 +1067,7 @@ msgid ""
 msgstr "目录 \"%s\" 看起来不是有效的归档（\"toc.dat\" 不存在）"
 
 #: pg_backup_archiver.c:2296 pg_backup_custom.c:168 pg_backup_custom.c:820
-#: pg_backup_directory.c:172 pg_backup_directory.c:358
+#: pg_backup_directory.c:172 pg_backup_directory.c:360
 #, c-format
 msgid "could not open input file \"%s\": %m"
 msgstr "无法打开输入文件 \"%s\": %m"
@@ -1112,12 +1117,12 @@ msgstr "无法打开标准输出以追加内容: %m"
 msgid "unrecognized file format \"%d\""
 msgstr "无法识别的文件格式 \"%d\""
 
-#: pg_backup_archiver.c:2568 pg_backup_archiver.c:4848
+#: pg_backup_archiver.c:2568 pg_backup_archiver.c:4867
 #, c-format
 msgid "finished item %d %s %s"
 msgstr "已完成条目 %d %s %s"
 
-#: pg_backup_archiver.c:2572 pg_backup_archiver.c:4861
+#: pg_backup_archiver.c:2572 pg_backup_archiver.c:4880
 #, c-format
 msgid "worker process failed: exit code %d"
 msgstr "工作进程失败: 退出码 %d"
@@ -1144,151 +1149,161 @@ msgstr "条目 ID %d 超出范围；可能是 TOC 已损坏"
 msgid "restoring tables WITH OIDS is not supported anymore"
 msgstr "不再支持恢复带有 WITH OIDS 的表"
 
-#: pg_backup_archiver.c:2897
+#: pg_backup_archiver.c:2845
+#, c-format
+msgid "dependency ID \"%s\" out of range -- perhaps a corrupt TOC"
+msgstr "依赖项 ID \"%s\" 超出范围；可能是 TOC 已损坏"
+
+#: pg_backup_archiver.c:2910
 #, c-format
 msgid "unrecognized encoding \"%s\""
 msgstr "无法识别的编码: \"%s\""
 
-#: pg_backup_archiver.c:2903
+#: pg_backup_archiver.c:2916
 #, c-format
 msgid "invalid ENCODING item: %s"
 msgstr "无效的 ENCODING 条目: %s"
 
-#: pg_backup_archiver.c:2921
+#: pg_backup_archiver.c:2934
 #, c-format
 msgid "invalid STDSTRINGS item: %s"
 msgstr "无效的 STDSTRINGS 条目: %s"
 
-#: pg_backup_archiver.c:2946
+#: pg_backup_archiver.c:2959
 #, c-format
 msgid "schema \"%s\" not found"
 msgstr "未找到模式 \"%s\""
 
-#: pg_backup_archiver.c:2953
+#: pg_backup_archiver.c:2966
 #, c-format
 msgid "table \"%s\" not found"
 msgstr "未找到表 \"%s\""
 
-#: pg_backup_archiver.c:2960
+#: pg_backup_archiver.c:2973
 #, c-format
 msgid "index \"%s\" not found"
 msgstr "未找到索引 \"%s\""
 
-#: pg_backup_archiver.c:2967
+#: pg_backup_archiver.c:2980
 #, c-format
 msgid "function \"%s\" not found"
 msgstr "未找到函数 \"%s\""
 
-#: pg_backup_archiver.c:2974
+#: pg_backup_archiver.c:2987
 #, c-format
 msgid "trigger \"%s\" not found"
 msgstr "未找到触发器 \"%s\""
 
-#: pg_backup_archiver.c:3519
+#: pg_backup_archiver.c:3532
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "无法把会话用户设为 \"%s\": %s"
 
-#: pg_backup_archiver.c:3663
+#: pg_backup_archiver.c:3676
 #, c-format
 msgid "could not set \"search_path\" to \"%s\": %s"
 msgstr "无法把 \"search_path\" 设为 \"%s\": %s"
 
-#: pg_backup_archiver.c:3724
+#: pg_backup_archiver.c:3737
 #, c-format
 msgid "could not set \"default_tablespace\" to %s: %s"
 msgstr "无法把 \"default_tablespace\" 设为 %s: %s"
 
-#: pg_backup_archiver.c:3773
+#: pg_backup_archiver.c:3786
 #, c-format
 msgid "could not set \"default_table_access_method\": %s"
 msgstr "无法设置 \"default_table_access_method\": %s"
 
-#: pg_backup_archiver.c:3822
+#: pg_backup_archiver.c:3835
 #, c-format
 msgid "could not alter table access method: %s"
 msgstr "无法修改表访问方法: %s"
 
-#: pg_backup_archiver.c:3923
+#: pg_backup_archiver.c:3906
+#, c-format
+msgid "unexpected DROP statement for object type \"%s\" -- perhaps a corrupt TOC"
+msgstr "对象类型 \"%s\" 出现意外的 DROP 语句；可能是 TOC 已损坏"
+
+#: pg_backup_archiver.c:3942
 #, c-format
 msgid "don't know how to set owner for object type \"%s\""
 msgstr "不知道如何为对象类型 \"%s\" 设置所有者"
 
-#: pg_backup_archiver.c:4058
+#: pg_backup_archiver.c:4077
 #, c-format
 msgid "unexpected TOC entry in _printTocEntry(): %d %s %s"
 msgstr "_printTocEntry() 中出现意外的 TOC 条目: %d %s %s"
 
-#: pg_backup_archiver.c:4206
+#: pg_backup_archiver.c:4225
 #, c-format
 msgid "did not find magic string in file header"
 msgstr "文件头部中未找到魔数字符串"
 
-#: pg_backup_archiver.c:4220
+#: pg_backup_archiver.c:4239
 #, c-format
 msgid "unsupported version (%d.%d) in file header"
 msgstr "在文件头部中有不支持的版本（%d.%d）"
 
-#: pg_backup_archiver.c:4225
+#: pg_backup_archiver.c:4244
 #, c-format
 msgid "sanity check on integer size (%zu) failed"
 msgstr "整数大小（%zu）的合理性检查失败"
 
-#: pg_backup_archiver.c:4228
+#: pg_backup_archiver.c:4247
 #, c-format
 msgid ""
 "archive was made on a machine with larger integers, some operations might "
 "fail"
 msgstr "归档由使用更大整数类型的机器生成，某些操作可能失败"
 
-#: pg_backup_archiver.c:4238
+#: pg_backup_archiver.c:4257
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)"
 msgstr "预期格式为 %d，与文件中找到的格式 %d 不同"
 
-#: pg_backup_archiver.c:4260
+#: pg_backup_archiver.c:4279
 #, c-format
 msgid ""
 "archive is compressed, but this installation does not support compression "
 "(%s) -- no data will be available"
 msgstr "归档已压缩，但此安装不支持压缩（%s）；将没有可用数据"
 
-#: pg_backup_archiver.c:4296
+#: pg_backup_archiver.c:4315
 #, c-format
 msgid "invalid creation date in header"
 msgstr "在头部中的创建日期无效"
 
-#: pg_backup_archiver.c:4430
+#: pg_backup_archiver.c:4449
 #, c-format
 msgid "processing item %d %s %s"
 msgstr "正在处理条目 %d %s %s"
 
-#: pg_backup_archiver.c:4515
+#: pg_backup_archiver.c:4534
 #, c-format
 msgid "entering main parallel loop"
 msgstr "正在进入主并行循环"
 
-#: pg_backup_archiver.c:4526
+#: pg_backup_archiver.c:4545
 #, c-format
 msgid "skipping item %d %s %s"
 msgstr "正在跳过条目 %d %s %s"
 
-#: pg_backup_archiver.c:4535
+#: pg_backup_archiver.c:4554
 #, c-format
 msgid "launching item %d %s %s"
 msgstr "正在启动条目 %d %s %s"
 
-#: pg_backup_archiver.c:4589
+#: pg_backup_archiver.c:4608
 #, c-format
 msgid "finished main parallel loop"
 msgstr "已完成主并行循环"
 
-#: pg_backup_archiver.c:4625
+#: pg_backup_archiver.c:4644
 #, c-format
 msgid "processing missed item %d %s %s"
 msgstr "正在处理遗漏的条目 %d %s %s"
 
-#: pg_backup_archiver.c:5167
+#: pg_backup_archiver.c:5186
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data"
 msgstr "无法创建表 \"%s\"，将不恢复其数据"
@@ -1408,7 +1423,7 @@ msgstr "PQputCopyEnd 返回错误: %s"
 msgid "COPY failed for table \"%s\": %s"
 msgstr "对表 \"%s\" 执行 COPY 失败: %s"
 
-#: pg_backup_db.c:460 pg_dump.c:2514
+#: pg_backup_db.c:460 pg_dump.c:2520
 #, c-format
 msgid "unexpected extra results during COPY of table \"%s\""
 msgstr "对表 \"%s\" 执行 COPY 时出现意外的额外结果"
@@ -1421,52 +1436,62 @@ msgstr "无法开始数据库事务"
 msgid "could not commit database transaction"
 msgstr "无法提交数据库事务"
 
+#: pg_backup_db.c:587
+#, c-format
+msgid "missing large object OID in ACL entry -- perhaps a corrupt TOC"
+msgstr "ACL 条目中缺少大对象 OID；可能是 TOC 已损坏"
+
 #: pg_backup_directory.c:154
 #, c-format
 msgid "no output directory specified"
 msgstr "未指定输出目录"
 
-#: pg_backup_directory.c:337
+#: pg_backup_directory.c:266 pg_backup_directory.c:438
+#, c-format
+msgid "invalid file name in archive: \"%s\""
+msgstr "归档中的文件名无效：\"%s\""
+
+#: pg_backup_directory.c:339
 #, c-format
 msgid "could not close data file: %m"
 msgstr "无法关闭数据文件: %m"
 
-#: pg_backup_directory.c:370
+#: pg_backup_directory.c:372
 #, c-format
 msgid "could not close data file \"%s\": %m"
 msgstr "无法关闭数据文件 \"%s\": %m"
 
-#: pg_backup_directory.c:422
+#: pg_backup_directory.c:424
 #, c-format
 msgid "could not open large object TOC file \"%s\" for input: %m"
 msgstr "无法为输入打开大对象 TOC 文件 \"%s\": %m"
 
-#: pg_backup_directory.c:433
+#: pg_backup_directory.c:435
 #, c-format
 msgid "invalid line in large object TOC file \"%s\": \"%s\""
 msgstr "大对象 TOC 文件 \"%s\" 中的行无效: \"%s\""
 
-#: pg_backup_directory.c:442
+#: pg_backup_directory.c:446
 #, c-format
 msgid "error reading large object TOC file \"%s\""
 msgstr "读取大对象 TOC 文件 \"%s\" 时出错"
 
-#: pg_backup_directory.c:446
+#: pg_backup_directory.c:450
 #, c-format
 msgid "could not close large object TOC file \"%s\": %m"
 msgstr "无法关闭大对象 TOC 文件 \"%s\": %m"
 
-#: pg_backup_directory.c:652
+#: pg_backup_directory.c:656
 #, c-format
 msgid "could not close LO data file: %m"
 msgstr "无法关闭大对象数据文件: %m"
 
-#: pg_backup_directory.c:671
+#: pg_backup_directory.c:675
 #, c-format
 msgid "could not close LOs TOC file: %m"
 msgstr "无法关闭大对象 TOC 文件: %m"
 
-#: pg_backup_directory.c:690
+#: pg_backup_directory.c:694
 #, c-format
 msgid "file name too long: \"%s\""
 msgstr "文件名过长: \"%s\""
@@ -1532,12 +1557,17 @@ msgstr "无法关闭临时文件: %m"
 msgid "actual file length (%lld) does not match expected (%lld)"
 msgstr "实际文件长度（%lld）与预期长度（%lld）不匹配"
 
-#: pg_backup_tar.c:1072 pg_backup_tar.c:1103
+#: pg_backup_tar.c:1072 pg_backup_tar.c:1114
 #, c-format
 msgid "could not find header for file \"%s\" in tar archive"
 msgstr "无法在 tar 归档中找到文件 \"%s\" 的头部"
 
-#: pg_backup_tar.c:1090
+#: pg_backup_tar.c:1096
+#, c-format
+msgid "tar member \"%s\" precedes \"%s\" -- perhaps a corrupt archive"
+msgstr "tar 成员 \"%s\" 位于 \"%s\" 之前；可能是归档文件已损坏"
+
+#: pg_backup_tar.c:1101
 #, c-format
 msgid ""
 "restoring data out of order is not supported in this archive format: \"%s\" "
@@ -1545,13 +1575,13 @@ msgid ""
 msgstr ""
 "此归档格式不支持乱序恢复数据: 需要 \"%s\"，但它在归档文件中位于 \"%s\" 之前。"
 
-#: pg_backup_tar.c:1137
+#: pg_backup_tar.c:1148
 #, c-format
 msgid "incomplete tar header found (%lu byte)"
 msgid_plural "incomplete tar header found (%lu bytes)"
 msgstr[0] "发现不完整的 tar 头部（%lu 字节）"
 
-#: pg_backup_tar.c:1176
+#: pg_backup_tar.c:1187
 #, c-format
 msgid ""
 "corrupt tar header found in %s (expected %d, computed %d) file position %llu"
@@ -1559,12 +1589,17 @@ msgstr ""
 "发现 %1$s 的 tar 头部损坏（预期为 %2$d, 计算结果为 %3$d），归档文件位置为 "
 "%4$llu"
 
+#: pg_backup_tar.c:1196
+#, c-format
+msgid "corrupt tar header found in %s (invalid file length) file position %lld"
+msgstr "在 %s 中发现损坏的 tar 头部（文件长度无效），归档文件位置为 %lld"
+
 #: pg_backup_utils.c:56
 #, c-format
 msgid "unrecognized section name: \"%s\""
 msgstr "无法识别的节名称: \"%s\""
 
-#: pg_backup_utils.c:57 pg_dump.c:804 pg_dump.c:821 pg_dumpall.c:384
+#: pg_backup_utils.c:57 pg_dump.c:808 pg_dump.c:825 pg_dumpall.c:384
 #: pg_dumpall.c:394 pg_dumpall.c:404 pg_dumpall.c:413 pg_dumpall.c:421
 #: pg_dumpall.c:438 pg_dumpall.c:540 pg_restore.c:326 pg_restore.c:342
 #: pg_restore.c:357
@@ -1577,82 +1612,82 @@ msgstr "运行 \"%s --help\" 获取更多信息。"
 msgid "out of on_exit_nicely slots"
 msgstr "on_exit_nicely 槽位已用尽"
 
-#: pg_dump.c:819 pg_dumpall.c:392 pg_restore.c:340
+#: pg_dump.c:823 pg_dumpall.c:392 pg_restore.c:340
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "命令行参数过多（第一个多余参数是 \"%s\"）"
 
-#: pg_dump.c:856
+#: pg_dump.c:860
 #, c-format
 msgid "option %s is not supported with parallel backup"
 msgstr "并行备份不支持选项 %s"
 
-#: pg_dump.c:864 pg_dumpall.c:426 pg_restore.c:460
+#: pg_dump.c:868 pg_dumpall.c:426 pg_restore.c:460
 #, c-format
 msgid "option %s requires option %s"
 msgstr "选项 %s 需要选项 %s"
 
-#: pg_dump.c:885
+#: pg_dump.c:889
 #, c-format
 msgid "option %s requires option %s, %s, or %s"
 msgstr "选项 %s 需要选项 %s, %s 或 %s"
 
-#: pg_dump.c:903 pg_dumpall.c:508 pg_restore.c:375
+#: pg_dump.c:909 pg_dumpall.c:508 pg_restore.c:375
 #, c-format
 msgid "could not generate restrict key"
 msgstr "无法生成限制模式密钥"
 
-#: pg_dump.c:905 pg_dumpall.c:510 pg_restore.c:377
+#: pg_dump.c:911 pg_dumpall.c:510 pg_restore.c:377
 #, c-format
 msgid "invalid restrict key"
 msgstr "无效的限制模式密钥"
 
-#: pg_dump.c:908
+#: pg_dump.c:914
 #, c-format
-msgid "option %s can only be used with %s"
-msgstr "选项 %s 只能与 %s 一起使用"
+msgid "option %s can only be used with %s or %s"
+msgstr "选项 %s 只能与 %s 或 %s 一起使用"
 
-#: pg_dump.c:931
+#: pg_dump.c:937
 #, c-format
 msgid "unrecognized compression algorithm: \"%s\""
 msgstr "无法识别的压缩算法: \"%s\""
 
-#: pg_dump.c:938
+#: pg_dump.c:944
 #, c-format
 msgid "invalid compression specification: %s"
 msgstr "压缩设置无效: %s"
 
-#: pg_dump.c:951
+#: pg_dump.c:957
 #, c-format
 msgid "compression option \"%s\" is not currently supported by pg_dump"
 msgstr "pg_dump 当前不支持压缩选项 \"%s\""
 
-#: pg_dump.c:963
+#: pg_dump.c:969
 #, c-format
 msgid "parallel backup only supported by the directory format"
 msgstr "只有目录格式支持并行备份"
 
-#: pg_dump.c:1009
+#: pg_dump.c:1015
 #, c-format
 msgid "last built-in OID is %u"
 msgstr "最后的内置 OID 是 %u"
 
-#: pg_dump.c:1018
+#: pg_dump.c:1024
 #, c-format
 msgid "no matching schemas were found"
 msgstr "未找到匹配的模式"
 
-#: pg_dump.c:1035
+#: pg_dump.c:1041
 #, c-format
 msgid "no matching tables were found"
 msgstr "未找到匹配的表"
 
-#: pg_dump.c:1063
+#: pg_dump.c:1069
 #, c-format
 msgid "no matching extensions were found"
 msgstr "未找到匹配的扩展"
 
-#: pg_dump.c:1293
+#: pg_dump.c:1299
 #, c-format
 msgid ""
 "%s exports a PostgreSQL database as an SQL script or to other formats.\n"
@@ -1661,17 +1696,17 @@ msgstr ""
 "%s 将 PostgreSQL 数据库导出为 SQL 脚本或其他格式。\n"
 "\n"
 
-#: pg_dump.c:1294 pg_dumpall.c:705 pg_restore.c:536
+#: pg_dump.c:1300 pg_dumpall.c:705 pg_restore.c:536
 #, c-format
 msgid "Usage:\n"
 msgstr "用法:\n"
 
-#: pg_dump.c:1295
+#: pg_dump.c:1301
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [选项]... [数据库名]\n"
 
-#: pg_dump.c:1297 pg_dumpall.c:708 pg_restore.c:539
+#: pg_dump.c:1303 pg_dumpall.c:708 pg_restore.c:539
 #, c-format
 msgid ""
 "\n"
@@ -1680,12 +1715,12 @@ msgstr ""
 "\n"
 "一般选项:\n"
 
-#: pg_dump.c:1298
+#: pg_dump.c:1304
 #, c-format
 msgid "  -f, --file=FILENAME          output file or directory name\n"
 msgstr "  -f, --file=FILENAME          输出文件或目录名\n"
 
-#: pg_dump.c:1299
+#: pg_dump.c:1305
 #, c-format
 msgid ""
 "  -F, --format=c|d|t|p         output file format (custom, directory, tar,\n"
@@ -1694,22 +1729,22 @@ msgstr ""
 "  -F, --format=c|d|t|p         输出格式（自定义、目录、tar、纯文本（默"
 "认））\n"
 
-#: pg_dump.c:1301
+#: pg_dump.c:1307
 #, c-format
 msgid "  -j, --jobs=NUM               use this many parallel jobs to dump\n"
 msgstr "  -j, --jobs=NUM               使用指定数量的并行任务进行转储\n"
 
-#: pg_dump.c:1302 pg_dumpall.c:710
+#: pg_dump.c:1308 pg_dumpall.c:710
 #, c-format
 msgid "  -v, --verbose                verbose mode\n"
 msgstr "  -v, --verbose                详细模式\n"
 
-#: pg_dump.c:1303 pg_dumpall.c:711
+#: pg_dump.c:1309 pg_dumpall.c:711
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                输出版本信息，然后退出\n"
 
-#: pg_dump.c:1304
+#: pg_dump.c:1310
 #, c-format
 msgid ""
 "  -Z, --compress=METHOD[:DETAIL]\n"
@@ -1718,30 +1753,30 @@ msgstr ""
 "  -Z, --compress=METHOD[:DETAIL]\n"
 "                               按指定方式压缩\n"
 
-#: pg_dump.c:1306 pg_dumpall.c:712
+#: pg_dump.c:1312 pg_dumpall.c:712
 #, c-format
 msgid ""
 "  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"
 msgstr "  --lock-wait-timeout=TIMEOUT  在等待表锁超时后操作失败\n"
 
-#: pg_dump.c:1307 pg_dumpall.c:744
+#: pg_dump.c:1313 pg_dumpall.c:744
 #, c-format
 msgid ""
 "  --no-sync                    do not wait for changes to be written safely "
 "to disk\n"
 msgstr "  --no-sync                    不等待变更安全写入磁盘\n"
 
-#: pg_dump.c:1308
+#: pg_dump.c:1314
 #, c-format
 msgid "  --sync-method=METHOD         set method for syncing files to disk\n"
 msgstr "  --sync-method=METHOD         设置将文件同步到磁盘的方法\n"
 
-#: pg_dump.c:1309 pg_dumpall.c:713
+#: pg_dump.c:1315 pg_dumpall.c:713
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   显示此帮助，然后退出\n"
 
-#: pg_dump.c:1311 pg_dumpall.c:714
+#: pg_dump.c:1317 pg_dumpall.c:714
 #, c-format
 msgid ""
 "\n"
@@ -1750,36 +1785,36 @@ msgstr ""
 "\n"
 "控制输出内容的选项:\n"
 
-#: pg_dump.c:1312 pg_dumpall.c:715
+#: pg_dump.c:1318 pg_dumpall.c:715
 #, c-format
 msgid ""
 "  -a, --data-only              dump only the data, not the schema or "
 "statistics\n"
 msgstr "  -a, --data-only              仅转储数据，不转储模式定义或统计信息\n"
 
-#: pg_dump.c:1313
+#: pg_dump.c:1319
 #, c-format
 msgid "  -b, --large-objects          include large objects in dump\n"
 msgstr "  -b, --large-objects          在转储中包含大对象\n"
 
-#: pg_dump.c:1314
+#: pg_dump.c:1320
 #, c-format
 msgid "  --blobs                      (same as --large-objects, deprecated)\n"
 msgstr "  --blobs                      （与 --large-objects 相同，已弃用）\n"
 
-#: pg_dump.c:1315
+#: pg_dump.c:1321
 #, c-format
 msgid "  -B, --no-large-objects       exclude large objects in dump\n"
 msgstr "  -B, --no-large-objects       从转储中排除大对象\n"
 
-#: pg_dump.c:1316
+#: pg_dump.c:1322
 #, c-format
 msgid ""
 "  --no-blobs                   (same as --no-large-objects, deprecated)\n"
 msgstr ""
 "  --no-blobs                   （与 --no-large-objects 相同，已弃用）\n"
 
-#: pg_dump.c:1317 pg_restore.c:550
+#: pg_dump.c:1323 pg_restore.c:550
 #, c-format
 msgid ""
 "  -c, --clean                  clean (drop) database objects before "
@@ -1787,33 +1822,33 @@ msgid ""
 msgstr ""
 "  -c, --clean                  在重新创建之前，先清除（删除）数据库对象\n"
 
-#: pg_dump.c:1318
+#: pg_dump.c:1324
 #, c-format
 msgid ""
 "  -C, --create                 include commands to create database in dump\n"
 msgstr "  -C, --create                 在转储中包含创建数据库的命令\n"
 
-#: pg_dump.c:1319
+#: pg_dump.c:1325
 #, c-format
 msgid "  -e, --extension=PATTERN      dump the specified extension(s) only\n"
 msgstr "  -e, --extension=PATTERN      仅转储指定的扩展\n"
 
-#: pg_dump.c:1320 pg_dumpall.c:717
+#: pg_dump.c:1326 pg_dumpall.c:717
 #, c-format
 msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
 msgstr "  -E, --encoding=ENCODING      使用 ENCODING 编码转储数据\n"
 
-#: pg_dump.c:1321
+#: pg_dump.c:1327
 #, c-format
 msgid "  -n, --schema=PATTERN         dump the specified schema(s) only\n"
 msgstr "  -n, --schema=PATTERN         仅转储指定的模式\n"
 
-#: pg_dump.c:1322
+#: pg_dump.c:1328
 #, c-format
 msgid "  -N, --exclude-schema=PATTERN do NOT dump the specified schema(s)\n"
 msgstr "  -N, --exclude-schema=PATTERN 不转储指定的模式\n"
 
-#: pg_dump.c:1323
+#: pg_dump.c:1329
 #, c-format
 msgid ""
 "  -O, --no-owner               skip restoration of object ownership in\n"
@@ -1821,60 +1856,60 @@ msgid ""
 msgstr ""
 "  -O, --no-owner               使用纯文本格式时，跳过对象所有权的恢复\n"
 
-#: pg_dump.c:1325 pg_dumpall.c:721
+#: pg_dump.c:1331 pg_dumpall.c:721
 #, c-format
 msgid ""
 "  -s, --schema-only            dump only the schema, no data or statistics\n"
 msgstr "  -s, --schema-only            仅转储模式定义，不转储数据或统计信息\n"
 
-#: pg_dump.c:1326
+#: pg_dump.c:1332
 #, c-format
 msgid ""
 "  -S, --superuser=NAME         superuser user name to use in plain-text "
 "format\n"
 msgstr "  -S, --superuser=NAME         纯文本格式中使用的超级用户名\n"
 
-#: pg_dump.c:1327
+#: pg_dump.c:1333
 #, c-format
 msgid "  -t, --table=PATTERN          dump only the specified table(s)\n"
 msgstr "  -t, --table=PATTERN          仅转储指定的表\n"
 
-#: pg_dump.c:1328
+#: pg_dump.c:1334
 #, c-format
 msgid "  -T, --exclude-table=PATTERN  do NOT dump the specified table(s)\n"
 msgstr "  -T, --exclude-table=PATTERN  不转储指定的表\n"
 
-#: pg_dump.c:1329 pg_dumpall.c:724
+#: pg_dump.c:1335 pg_dumpall.c:724
 #, c-format
 msgid "  -x, --no-privileges          do not dump privileges (grant/revoke)\n"
 msgstr "  -x, --no-privileges          不转储权限（grant/revoke）\n"
 
-#: pg_dump.c:1330 pg_dumpall.c:725
+#: pg_dump.c:1336 pg_dumpall.c:725
 #, c-format
 msgid "  --binary-upgrade             for use by upgrade utilities only\n"
 msgstr "  --binary-upgrade             只能由升级工具使用\n"
 
-#: pg_dump.c:1331 pg_dumpall.c:726
+#: pg_dump.c:1337 pg_dumpall.c:726
 #, c-format
 msgid ""
 "  --column-inserts             dump data as INSERT commands with column "
 "names\n"
 msgstr "  --column-inserts             以带有列名的 INSERT 命令形式转储数据\n"
 
-#: pg_dump.c:1332 pg_dumpall.c:727
+#: pg_dump.c:1338 pg_dumpall.c:727
 #, c-format
 msgid ""
 "  --disable-dollar-quoting     disable dollar quoting, use SQL standard "
 "quoting\n"
 msgstr "  --disable-dollar-quoting     禁用美元引号，使用 SQL 标准引号\n"
 
-#: pg_dump.c:1333 pg_dumpall.c:728 pg_restore.c:567
+#: pg_dump.c:1339 pg_dumpall.c:728 pg_restore.c:567
 #, c-format
 msgid ""
 "  --disable-triggers           disable triggers during data-only restore\n"
 msgstr "  --disable-triggers           在只恢复数据的过程中禁用触发器\n"
 
-#: pg_dump.c:1334
+#: pg_dump.c:1340
 #, c-format
 msgid ""
 "  --enable-row-security        enable row security (dump only content user "
@@ -1883,12 +1918,12 @@ msgid ""
 msgstr ""
 "  --enable-row-security        启用行安全性（仅转储用户有权访问的内容）\n"
 
-#: pg_dump.c:1336
+#: pg_dump.c:1342
 #, c-format
 msgid "  --exclude-extension=PATTERN  do NOT dump the specified extension(s)\n"
 msgstr "  --exclude-extension=PATTERN  不转储指定的扩展\n"
 
-#: pg_dump.c:1337
+#: pg_dump.c:1343
 #, c-format
 msgid ""
 "  --exclude-table-and-children=PATTERN\n"
@@ -1899,13 +1934,13 @@ msgstr ""
 "  --exclude-table-and-children=PATTERN\n"
 "                               不转储指定的表，包括其子表和分区表\n"
 
-#: pg_dump.c:1340
+#: pg_dump.c:1346
 #, c-format
 msgid ""
 "  --exclude-table-data=PATTERN do NOT dump data for the specified table(s)\n"
 msgstr "  --exclude-table-data=PATTERN 不转储指定的表中的数据\n"
 
-#: pg_dump.c:1341
+#: pg_dump.c:1347
 #, c-format
 msgid ""
 "  --exclude-table-data-and-children=PATTERN\n"
@@ -1916,14 +1951,14 @@ msgstr ""
 "                               不转储指定表的数据，\n"
 "                               包括其子表和分区表的数据\n"
 
-#: pg_dump.c:1344 pg_dumpall.c:730
+#: pg_dump.c:1350 pg_dumpall.c:730
 #, c-format
 msgid ""
 "  --extra-float-digits=NUM     override default setting for "
 "extra_float_digits\n"
 msgstr "  --extra-float-digits=NUM     覆盖 extra_float_digits 的默认设置\n"
 
-#: pg_dump.c:1345
+#: pg_dump.c:1351
 #, c-format
 msgid ""
 "  --filter=FILENAME            include or exclude objects and data from "
@@ -1933,12 +1968,12 @@ msgstr ""
 "  --filter=FILENAME            根据 FILENAME 中的表达式，在转储中\n"
 "                               包含或排除对象及数据\n"
 
-#: pg_dump.c:1347 pg_dumpall.c:732 pg_restore.c:571
+#: pg_dump.c:1353 pg_dumpall.c:732 pg_restore.c:571
 #, c-format
 msgid "  --if-exists                  use IF EXISTS when dropping objects\n"
 msgstr "  --if-exists                  当删除对象时使用 IF EXISTS\n"
 
-#: pg_dump.c:1348
+#: pg_dump.c:1354
 #, c-format
 msgid ""
 "  --include-foreign-data=PATTERN\n"
@@ -1949,7 +1984,7 @@ msgstr ""
 "                               包含名称与 PATTERN 匹配的外部服务器\n"
 "                               上外部表的数据\n"
 
-#: pg_dump.c:1351 pg_dumpall.c:733
+#: pg_dump.c:1357 pg_dumpall.c:733
 #, c-format
 msgid ""
 "  --inserts                    dump data as INSERT commands, rather than "
@@ -1958,72 +1993,72 @@ msgstr ""
 "  --inserts                    以 INSERT 命令，而不是 COPY 命令的形式转储数"
 "据\n"
 
-#: pg_dump.c:1352 pg_dumpall.c:734
+#: pg_dump.c:1358 pg_dumpall.c:734
 #, c-format
 msgid "  --load-via-partition-root    load partitions via the root table\n"
 msgstr "  --load-via-partition-root    通过根表加载分区\n"
 
-#: pg_dump.c:1353 pg_dumpall.c:735
+#: pg_dump.c:1359 pg_dumpall.c:735
 #, c-format
 msgid "  --no-comments                do not dump comment commands\n"
 msgstr "  --no-comments                不转储注释命令\n"
 
-#: pg_dump.c:1354 pg_dumpall.c:736
+#: pg_dump.c:1360 pg_dumpall.c:736
 #, c-format
 msgid "  --no-data                    do not dump data\n"
 msgstr "  --no-data                    不转储数据\n"
 
-#: pg_dump.c:1355 pg_dumpall.c:737
+#: pg_dump.c:1361 pg_dumpall.c:737
 #, c-format
 msgid "  --no-policies                do not dump row security policies\n"
 msgstr "  --no-policies                不转储行安全策略\n"
 
-#: pg_dump.c:1356 pg_dumpall.c:738
+#: pg_dump.c:1362 pg_dumpall.c:738
 #, c-format
 msgid "  --no-publications            do not dump publications\n"
 msgstr "  --no-publications            不转储发布\n"
 
-#: pg_dump.c:1357 pg_dumpall.c:740
+#: pg_dump.c:1363 pg_dumpall.c:740
 #, c-format
 msgid "  --no-schema                  do not dump schema\n"
 msgstr "  --no-schema                  不转储模式定义\n"
 
-#: pg_dump.c:1358 pg_dumpall.c:741
+#: pg_dump.c:1364 pg_dumpall.c:741
 #, c-format
 msgid "  --no-security-labels         do not dump security label assignments\n"
 msgstr "  --no-security-labels         不转储安全标签的分配\n"
 
-#: pg_dump.c:1359 pg_dumpall.c:742
+#: pg_dump.c:1365 pg_dumpall.c:742
 #, c-format
 msgid "  --no-statistics              do not dump statistics\n"
 msgstr "  --no-statistics              不转储统计信息\n"
 
-#: pg_dump.c:1360 pg_dumpall.c:743
+#: pg_dump.c:1366 pg_dumpall.c:743
 #, c-format
 msgid "  --no-subscriptions           do not dump subscriptions\n"
 msgstr "  --no-subscriptions           不转储订阅\n"
 
-#: pg_dump.c:1361 pg_dumpall.c:745
+#: pg_dump.c:1367 pg_dumpall.c:745
 #, c-format
 msgid "  --no-table-access-method     do not dump table access methods\n"
 msgstr "  --no-table-access-method     不转储表访问方法\n"
 
-#: pg_dump.c:1362 pg_dumpall.c:746
+#: pg_dump.c:1368 pg_dumpall.c:746
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
 msgstr "  --no-tablespaces             不转储表空间分配信息\n"
 
-#: pg_dump.c:1363 pg_dumpall.c:747
+#: pg_dump.c:1369 pg_dumpall.c:747
 #, c-format
 msgid "  --no-toast-compression       do not dump TOAST compression methods\n"
 msgstr "  --no-toast-compression       不转储 TOAST 压缩方法\n"
 
-#: pg_dump.c:1364 pg_dumpall.c:748
+#: pg_dump.c:1370 pg_dumpall.c:748
 #, c-format
 msgid "  --no-unlogged-table-data     do not dump unlogged table data\n"
 msgstr "  --no-unlogged-table-data     不转储不记录 WAL 的表的数据\n"
 
-#: pg_dump.c:1365 pg_dumpall.c:749
+#: pg_dump.c:1371 pg_dumpall.c:749
 #, c-format
 msgid ""
 "  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT "
@@ -2031,27 +2066,27 @@ msgid ""
 msgstr ""
 "  --on-conflict-do-nothing     将 ON CONFLICT DO NOTHING 添加到 INSERT 命令\n"
 
-#: pg_dump.c:1366 pg_dumpall.c:750
+#: pg_dump.c:1372 pg_dumpall.c:750
 #, c-format
 msgid ""
 "  --quote-all-identifiers      quote all identifiers, even if not key words\n"
 msgstr "  --quote-all-identifiers      为所有标识符加引号，即使不是关键字\n"
 
-#: pg_dump.c:1367 pg_dumpall.c:751 pg_restore.c:584
+#: pg_dump.c:1373 pg_dumpall.c:751 pg_restore.c:584
 #, c-format
 msgid ""
 "  --restrict-key=RESTRICT_KEY  use provided string as psql \\restrict key\n"
 msgstr ""
 "  --restrict-key=RESTRICT_KEY  使用指定字符串作为 psql \\restrict 密钥\n"
 
-#: pg_dump.c:1368 pg_dumpall.c:752
+#: pg_dump.c:1374 pg_dumpall.c:752
 #, c-format
 msgid ""
 "  --rows-per-insert=NROWS      number of rows per INSERT; implies --inserts\n"
 msgstr ""
 "  --rows-per-insert=NROWS      每条 INSERT 的行数；隐含启用 --inserts\n"
 
-#: pg_dump.c:1369
+#: pg_dump.c:1375
 #, c-format
 msgid ""
 "  --section=SECTION            dump named section (pre-data, data, or post-"
@@ -2059,35 +2094,35 @@ msgid ""
 msgstr ""
 "  --section=SECTION            转储指定的节（pre-data, data 或 post-data）\n"
 
-#: pg_dump.c:1370 pg_dumpall.c:753
+#: pg_dump.c:1376 pg_dumpall.c:753
 #, c-format
 msgid "  --sequence-data              include sequence data in dump\n"
 msgstr "  --sequence-data              在转储中包含序列数据\n"
 
-#: pg_dump.c:1371
+#: pg_dump.c:1377
 #, c-format
 msgid ""
 "  --serializable-deferrable    wait until the dump can run without "
 "anomalies\n"
 msgstr "  --serializable-deferrable    等待转储能够在无并发异常的情况下运行\n"
 
-#: pg_dump.c:1372
+#: pg_dump.c:1378
 #, c-format
 msgid "  --snapshot=SNAPSHOT          use given snapshot for the dump\n"
 msgstr "  --snapshot=SNAPSHOT          为转储使用给定的快照\n"
 
-#: pg_dump.c:1373 pg_dumpall.c:754
+#: pg_dump.c:1379 pg_dumpall.c:754
 #, c-format
 msgid "  --statistics                 dump the statistics\n"
 msgstr "  --statistics                 转储统计信息\n"
 
-#: pg_dump.c:1374 pg_dumpall.c:755
+#: pg_dump.c:1380 pg_dumpall.c:755
 #, c-format
 msgid ""
 "  --statistics-only            dump only the statistics, not schema or data\n"
 msgstr "  --statistics-only            仅转储统计信息，不转储模式定义或数据\n"
 
-#: pg_dump.c:1375 pg_restore.c:588
+#: pg_dump.c:1381 pg_restore.c:588
 #, c-format
 msgid ""
 "  --strict-names               require table and/or schema include patterns "
@@ -2097,14 +2132,14 @@ msgstr ""
 "  --strict-names               需要用于包含表或模式的每个匹配表达式\n"
 "                               都至少匹配一个对象\n"
 
-#: pg_dump.c:1377
+#: pg_dump.c:1383
 #, c-format
 msgid ""
 "  --table-and-children=PATTERN dump only the specified table(s), including\n"
 "                               child and partition tables\n"
 msgstr "  --table-and-children=PATTERN 仅转储指定的表，包括其子表和分区表\n"
 
-#: pg_dump.c:1379 pg_dumpall.c:756 pg_restore.c:591
+#: pg_dump.c:1385 pg_dumpall.c:756 pg_restore.c:591
 #, c-format
 msgid ""
 "  --use-set-session-authorization\n"
@@ -2116,7 +2151,7 @@ msgstr ""
 "                               使用 SET SESSION AUTHORIZATION 命令\n"
 "                               代替 ALTER OWNER 命令设置所有权\n"
 
-#: pg_dump.c:1383 pg_dumpall.c:760 pg_restore.c:595
+#: pg_dump.c:1389 pg_dumpall.c:760 pg_restore.c:595
 #, c-format
 msgid ""
 "\n"
@@ -2125,44 +2160,44 @@ msgstr ""
 "\n"
 "连接选项:\n"
 
-#: pg_dump.c:1384
+#: pg_dump.c:1390
 #, c-format
 msgid "  -d, --dbname=DBNAME      database to dump\n"
 msgstr "  -d, --dbname=DBNAME      要转储的数据库\n"
 
-#: pg_dump.c:1385 pg_dumpall.c:762 pg_restore.c:596
+#: pg_dump.c:1391 pg_dumpall.c:762 pg_restore.c:596
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME      数据库服务器主机或套接字目录\n"
 
-#: pg_dump.c:1386 pg_dumpall.c:764 pg_restore.c:597
+#: pg_dump.c:1392 pg_dumpall.c:764 pg_restore.c:597
 #, c-format
 msgid "  -p, --port=PORT          database server port number\n"
 msgstr "  -p, --port=PORT          数据库服务器端口号\n"
 
-#: pg_dump.c:1387 pg_dumpall.c:765 pg_restore.c:598
+#: pg_dump.c:1393 pg_dumpall.c:765 pg_restore.c:598
 #, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
 msgstr "  -U, --username=NAME      以指定的数据库用户连接\n"
 
-#: pg_dump.c:1388 pg_dumpall.c:766 pg_restore.c:599
+#: pg_dump.c:1394 pg_dumpall.c:766 pg_restore.c:599
 #, c-format
 msgid "  -w, --no-password        never prompt for password\n"
 msgstr "  -w, --no-password        永远不提示输入密码\n"
 
-#: pg_dump.c:1389 pg_dumpall.c:767 pg_restore.c:600
+#: pg_dump.c:1395 pg_dumpall.c:767 pg_restore.c:600
 #, c-format
 msgid ""
 "  -W, --password           force password prompt (should happen "
 "automatically)\n"
 msgstr "  -W, --password           强制提示输入密码（应当自动提示）\n"
 
-#: pg_dump.c:1390 pg_dumpall.c:768
+#: pg_dump.c:1396 pg_dumpall.c:768
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before dump\n"
 msgstr "  --role=ROLENAME          在转储前运行 SET ROLE\n"
 
-#: pg_dump.c:1392
+#: pg_dump.c:1398
 #, c-format
 msgid ""
 "\n"
@@ -2174,473 +2209,473 @@ msgstr ""
 "如果未提供数据库名，则使用 PGDATABASE 环境变量的值。\n"
 "\n"
 
-#: pg_dump.c:1394 pg_dumpall.c:772 pg_restore.c:607
+#: pg_dump.c:1400 pg_dumpall.c:772 pg_restore.c:607
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "请向 <%s> 报告缺陷。\n"
 
-#: pg_dump.c:1395 pg_dumpall.c:773 pg_restore.c:608
+#: pg_dump.c:1401 pg_dumpall.c:773 pg_restore.c:608
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 主页: <%s>\n"
 
-#: pg_dump.c:1413 pg_dumpall.c:570
+#: pg_dump.c:1419 pg_dumpall.c:570
 #, c-format
 msgid "invalid client encoding \"%s\" specified"
 msgstr "指定的客户端编码 \"%s\" 无效"
 
-#: pg_dump.c:1573
+#: pg_dump.c:1579
 #, c-format
 msgid ""
 "parallel dumps from standby servers are not supported by this server version"
 msgstr "此服务器版本不支持从备库并行转储"
 
-#: pg_dump.c:1638
+#: pg_dump.c:1644
 #, c-format
 msgid "invalid output format \"%s\" specified"
 msgstr "指定的输出格式 \"%s\" 无效"
 
-#: pg_dump.c:1679 pg_dump.c:1735 pg_dump.c:1788 pg_dumpall.c:1610
+#: pg_dump.c:1685 pg_dump.c:1741 pg_dump.c:1794 pg_dumpall.c:1610
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "限定名不正确（点号分隔的名称部分过多）: %s"
 
-#: pg_dump.c:1687
+#: pg_dump.c:1693
 #, c-format
 msgid "no matching schemas were found for pattern \"%s\""
 msgstr "未找到与 \"%s\" 匹配的模式"
 
-#: pg_dump.c:1740
+#: pg_dump.c:1746
 #, c-format
 msgid "no matching extensions were found for pattern \"%s\""
 msgstr "未找到与 \"%s\" 匹配的扩展"
 
-#: pg_dump.c:1793
+#: pg_dump.c:1799
 #, c-format
 msgid "no matching foreign servers were found for pattern \"%s\""
 msgstr "未找到与 \"%s\" 匹配的外部服务器"
 
-#: pg_dump.c:1864
+#: pg_dump.c:1870
 #, c-format
 msgid "improper relation name (too many dotted names): %s"
 msgstr "关系名不正确（点号分隔的名称部分过多）: %s"
 
-#: pg_dump.c:1886
+#: pg_dump.c:1892
 #, c-format
 msgid "no matching tables were found for pattern \"%s\""
 msgstr "未找到与 \"%s\" 匹配的表"
 
-#: pg_dump.c:1913
+#: pg_dump.c:1919
 #, c-format
 msgid "You are currently not connected to a database."
 msgstr "你目前没有连接到数据库。"
 
-#: pg_dump.c:1916
+#: pg_dump.c:1922
 #, c-format
 msgid "cross-database references are not implemented: %s"
 msgstr "尚未实现跨数据库引用: %s"
 
-#: pg_dump.c:2382
+#: pg_dump.c:2388
 #, c-format
 msgid "dumping contents of table \"%s.%s\""
 msgstr "正在转储表 \"%s.%s\" 的内容"
 
-#: pg_dump.c:2495
+#: pg_dump.c:2501
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed."
 msgstr "转储表 \"%s\" 的内容失败: PQgetCopyData() 失败。"
 
-#: pg_dump.c:2496 pg_dump.c:2506
+#: pg_dump.c:2502 pg_dump.c:2512
 #, c-format
 msgid "Error message from server: %s"
 msgstr "来自服务器的错误信息: %s"
 
-#: pg_dump.c:2497 pg_dump.c:2507
+#: pg_dump.c:2503 pg_dump.c:2513
 #, c-format
 msgid "Command was: %s"
 msgstr "命令为: %s"
 
-#: pg_dump.c:2505
+#: pg_dump.c:2511
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetResult() failed."
 msgstr "转储表 \"%s\" 的内容失败: PQgetResult() 失败。"
 
-#: pg_dump.c:2596
+#: pg_dump.c:2602
 #, c-format
 msgid "wrong number of fields retrieved from table \"%s\""
 msgstr "从表 \"%s\" 获取的字段数量不正确"
 
-#: pg_dump.c:3314
+#: pg_dump.c:3320
 #, c-format
 msgid "saving database definition"
 msgstr "正在保存数据库定义"
 
-#: pg_dump.c:3429
+#: pg_dump.c:3435
 #, c-format
 msgid "unrecognized locale provider: %s"
 msgstr "无法识别的区域设置提供者: %s"
 
-#: pg_dump.c:3827
+#: pg_dump.c:3833
 #, c-format
 msgid "saving encoding = %s"
 msgstr "正在保存 encoding = %s"
 
-#: pg_dump.c:3852
+#: pg_dump.c:3858
 #, c-format
 msgid "saving \"standard_conforming_strings = %s\""
 msgstr "正在保存 \"standard_conforming_strings = %s\""
 
-#: pg_dump.c:3891
+#: pg_dump.c:3897
 #, c-format
 msgid "could not parse result of current_schemas()"
 msgstr "无法解析 current_schemas() 的结果"
 
-#: pg_dump.c:3910
+#: pg_dump.c:3916
 #, c-format
 msgid "saving \"search_path = %s\""
 msgstr "正在保存 \"search_path = %s\""
 
-#: pg_dump.c:3946
+#: pg_dump.c:3952
 #, c-format
 msgid "reading large objects"
 msgstr "正在读取大对象"
 
-#: pg_dump.c:4183
+#: pg_dump.c:4189
 #, c-format
 msgid "saving large objects \"%s\""
 msgstr "正在保存大对象 \"%s\""
 
-#: pg_dump.c:4204
+#: pg_dump.c:4210
 #, c-format
 msgid "error reading large object %u: %s"
 msgstr "读取大对象 %u 时出错: %s"
 
-#: pg_dump.c:4312
+#: pg_dump.c:4318
 #, c-format
 msgid "reading row-level security policies"
 msgstr "正在读取行级安全策略"
 
-#: pg_dump.c:4453
+#: pg_dump.c:4459
 #, c-format
 msgid "unexpected policy command type: %c"
 msgstr "意外的策略命令类型: %c"
 
-#: pg_dump.c:4981 pg_dump.c:5597 pg_dump.c:8228 pg_dump.c:13781 pg_dump.c:20302
-#: pg_dump.c:20304 pg_dump.c:20934
+#: pg_dump.c:4987 pg_dump.c:5603 pg_dump.c:8265 pg_dump.c:13890 pg_dump.c:20427
+#: pg_dump.c:20429 pg_dump.c:21059
 #, c-format
 msgid "could not parse %s array"
 msgstr "无法解析 %s 数组"
 
-#: pg_dump.c:5201
+#: pg_dump.c:5207
 #, c-format
 msgid "subscriptions not dumped because current user is not a superuser"
 msgstr "订阅未转储，因为当前用户不是超级用户"
 
-#: pg_dump.c:5452
+#: pg_dump.c:5458
 #, c-format
 msgid "subscription with OID %u does not exist"
 msgstr "OID 为 %u 的订阅不存在"
 
-#: pg_dump.c:5459
+#: pg_dump.c:5465
 #, c-format
 msgid "failed sanity check, relation with OID %u not found"
 msgstr "合理性检查失败: 未找到 OID 为 %u 的关系"
 
-#: pg_dump.c:6062
+#: pg_dump.c:6099
 #, c-format
 msgid "could not find parent extension for %s %s"
 msgstr "无法找到 %s %s 所属的扩展"
 
-#: pg_dump.c:6200
+#: pg_dump.c:6237
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "OID 为 %u 的模式不存在"
 
-#: pg_dump.c:7251
+#: pg_dump.c:7288
 #, c-format
 msgid "cannot dump statistics for relation kind \"%c\""
 msgstr "不能为关系种类 \"%c\" 转储统计信息"
 
-#: pg_dump.c:7763 pg_dump.c:19629
+#: pg_dump.c:7800 pg_dump.c:19754
 #, c-format
 msgid ""
 "failed sanity check, parent table with OID %u of sequence with OID %u not "
 "found"
 msgstr "合理性检查失败: 未找到序列（OID %2$u）的所属表（OID %1$u）"
 
-#: pg_dump.c:7908
+#: pg_dump.c:7945
 #, c-format
 msgid ""
 "failed sanity check, table OID %u appearing in pg_partitioned_table not found"
 msgstr "合理性检查失败: 未找到 pg_partitioned_table 中出现的表 OID %u"
 
-#: pg_dump.c:8171 pg_dump.c:8468 pg_dump.c:8931 pg_dump.c:9599 pg_dump.c:9743
-#: pg_dump.c:9888 pg_dump.c:9988
+#: pg_dump.c:8208 pg_dump.c:8505 pg_dump.c:8968 pg_dump.c:9664 pg_dump.c:9813
+#: pg_dump.c:9958 pg_dump.c:10058
 #, c-format
 msgid "unrecognized table OID %u"
 msgstr "无法识别的表 OID %u"
 
-#: pg_dump.c:8175
+#: pg_dump.c:8212
 #, c-format
 msgid "unexpected index data for table \"%s\""
 msgstr "表 \"%s\" 出现意外的索引数据"
 
-#: pg_dump.c:8718
+#: pg_dump.c:8755
 #, c-format
 msgid ""
 "failed sanity check, parent table with OID %u of pg_rewrite entry with OID "
 "%u not found"
 msgstr "合理性检查失败: 未找到 pg_rewrite 条目（OID %2$u）的所属表（OID %1$u）"
 
-#: pg_dump.c:9606
+#: pg_dump.c:9671
 #, c-format
 msgid "unexpected column data for table \"%s\""
 msgstr "表 \"%s\" 出现意外的列数据"
 
-#: pg_dump.c:9640
+#: pg_dump.c:9706
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "表 \"%s\" 的列编号无效"
 
-#: pg_dump.c:9705
+#: pg_dump.c:9775
 #, c-format
 msgid "finding table default expressions"
 msgstr "正在查找表的默认表达式"
 
-#: pg_dump.c:9747
+#: pg_dump.c:9817
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "表 \"%2$s\" 的 adnum 值 %1$d 无效"
 
-#: pg_dump.c:9840
+#: pg_dump.c:9910
 #, c-format
 msgid "finding invalid not-null constraints"
 msgstr "正在查找无效的非空约束"
 
-#: pg_dump.c:9938
+#: pg_dump.c:10008
 #, c-format
 msgid "finding table check constraints"
 msgstr "正在查找表的检查约束"
 
-#: pg_dump.c:9992
+#: pg_dump.c:10062
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
 msgstr[0] "表 \"%2$s\" 上的检查约束数量预期为 %1$d，实际找到 %3$d 个"
 
-#: pg_dump.c:9996
+#: pg_dump.c:10066
 #, c-format
 msgid "The system catalogs might be corrupted."
 msgstr "系统目录可能已损坏。"
 
-#: pg_dump.c:10811
+#: pg_dump.c:10881
 #, c-format
 msgid "role with OID %u does not exist"
 msgstr "OID 为 %u 的角色不存在"
 
-#: pg_dump.c:10923 pg_dump.c:10952
+#: pg_dump.c:10993 pg_dump.c:11022
 #, c-format
 msgid "unsupported pg_init_privs entry: %u %u %d"
 msgstr "不支持的 pg_init_privs 条目: %u %u %d"
 
-#: pg_dump.c:11274
+#: pg_dump.c:11344
 #, c-format
 msgid "statistics dumped out of order (current: %d %s %s, expected: %d %s %s)"
 msgstr "统计信息转储顺序错误（当前: %d %s %s, 预期: %d %s %s）"
 
-#: pg_dump.c:11427
+#: pg_dump.c:11497
 #, c-format
 msgid "unexpected null attname"
 msgstr "attname 意外为 NULL"
 
-#: pg_dump.c:11456
+#: pg_dump.c:11526
 #, c-format
 msgid "could not find index attname \"%s\""
 msgstr "无法找到索引 attname \"%s\""
 
-#: pg_dump.c:11943
+#: pg_dump.c:12013
 #, c-format
 msgid "missing metadata for large objects \"%s\""
 msgstr "缺少大对象 \"%s\" 的元数据"
 
-#: pg_dump.c:12224
+#: pg_dump.c:12294
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "数据类型 \"%s\" 的 typtype 似乎无效"
 
-#: pg_dump.c:13850
+#: pg_dump.c:13959
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "函数 \"%s\" 的 provolatile 值无法识别"
 
-#: pg_dump.c:13900 pg_dump.c:15814
+#: pg_dump.c:14009 pg_dump.c:15923
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "函数 \"%s\" 的 proparallel 值无法识别"
 
-#: pg_dump.c:14034 pg_dump.c:14140 pg_dump.c:14147
+#: pg_dump.c:14143 pg_dump.c:14249 pg_dump.c:14256
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "无法找到带有 OID %u 的函数的函数定义"
 
-#: pg_dump.c:14073
+#: pg_dump.c:14182
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "pg_cast.castfunc 或 pg_cast.castmethod 字段的值无效"
 
-#: pg_dump.c:14076
+#: pg_dump.c:14185
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "pg_cast.castmethod 字段的值无效"
 
-#: pg_dump.c:14166
+#: pg_dump.c:14275
 #, c-format
 msgid ""
 "bogus transform definition, at least one of trffromsql and trftosql should "
 "be nonzero"
 msgstr "转换定义无效，trffromsql 和 trftosql 至少有一个应为非零值"
 
-#: pg_dump.c:14183
+#: pg_dump.c:14292
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "pg_transform.trffromsql 字段的值无效"
 
-#: pg_dump.c:14204
+#: pg_dump.c:14313
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "pg_transform.trftosql 字段的值无效"
 
-#: pg_dump.c:14349
+#: pg_dump.c:14458
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "不再支持后缀操作符（操作符 \"%s\"）"
 
-#: pg_dump.c:14519
+#: pg_dump.c:14628
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "无法找到 OID 为 %s 的操作符"
 
-#: pg_dump.c:14587
+#: pg_dump.c:14696
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "访问方法 \"%2$s\" 的类型 \"%1$c\" 无效"
 
-#: pg_dump.c:15261 pg_dump.c:15329
+#: pg_dump.c:15370 pg_dump.c:15438
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "无法识别的排序规则提供者: %s"
 
-#: pg_dump.c:15270 pg_dump.c:15277 pg_dump.c:15288 pg_dump.c:15298
-#: pg_dump.c:15313
+#: pg_dump.c:15379 pg_dump.c:15386 pg_dump.c:15397 pg_dump.c:15407
+#: pg_dump.c:15422
 #, c-format
 msgid "invalid collation \"%s\""
 msgstr "无效的排序规则 \"%s\""
 
-#: pg_dump.c:15728
+#: pg_dump.c:15837
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "聚合函数 \"%s\" 的 aggfinalmodify 值无法识别"
 
-#: pg_dump.c:15784
+#: pg_dump.c:15893
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "聚合函数 \"%s\" 的 aggmfinalmodify 值无法识别"
 
-#: pg_dump.c:16512
+#: pg_dump.c:16621
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "默认权限中存在无法识别的对象类型: %d"
 
-#: pg_dump.c:16528
+#: pg_dump.c:16637
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "无法解析默认 ACL 列表（%s）"
 
-#: pg_dump.c:16612
+#: pg_dump.c:16721
 #, c-format
 msgid ""
 "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "无法解析对象 \"%3$s\"（%4$s）的初始 ACL 列表（%1$s）或默认 ACL（%2$s）"
 
-#: pg_dump.c:16637
+#: pg_dump.c:16746
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "无法解析对象 \"%3$s\"（%4$s）的 ACL 列表（%1$s）或默认 ACL（%2$s）"
 
-#: pg_dump.c:17180
+#: pg_dump.c:17289
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "获取视图 \"%s\" 定义的查询没有返回数据"
 
-#: pg_dump.c:17183
+#: pg_dump.c:17292
 #, c-format
 msgid ""
 "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "获取视图 \"%s\" 定义的查询返回超过一个定义"
 
-#: pg_dump.c:17190
+#: pg_dump.c:17299
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "视图 \"%s\" 的定义似乎为空（长度为零）"
 
-#: pg_dump.c:17275
+#: pg_dump.c:17384
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "不再支持 WITH OIDS（表 \"%s\"）"
 
-#: pg_dump.c:18418
+#: pg_dump.c:18532
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "表 \"%2$s\" 的列号 %1$d 无效"
 
-#: pg_dump.c:18441
+#: pg_dump.c:18555
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "无法解析索引统计信息列"
 
-#: pg_dump.c:18443
+#: pg_dump.c:18557
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "无法解析索引统计信息值"
 
-#: pg_dump.c:18445
+#: pg_dump.c:18559
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "索引统计信息的列数与值的数量不匹配"
 
-#: pg_dump.c:18917
+#: pg_dump.c:19033
 #, c-format
 msgid "inherited cannot be NULL"
 msgstr "inherited 不能为 NULL"
 
-#: pg_dump.c:19014
+#: pg_dump.c:19139
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "约束 \"%s\" 缺少对应的索引"
 
-#: pg_dump.c:19286
+#: pg_dump.c:19411
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "无法识别的约束类型: %c"
 
-#: pg_dump.c:19339
+#: pg_dump.c:19464
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "无法识别的序列类型: %s"
 
-#: pg_dump.c:19472 pg_dump.c:19710
+#: pg_dump.c:19597 pg_dump.c:19835
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural ""
 "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "获取序列 \"%s\" 数据的查询返回 %d 行（预期为 1 行）"
 
-#: pg_dump.c:19508
+#: pg_dump.c:19633
 #, c-format
 msgid "unrecognized sequence type: %d"
 msgstr "无法识别的序列类型: %d"
 
-#: pg_dump.c:19733
+#: pg_dump.c:19858
 #, c-format
 msgid ""
 "failed to get data for sequence \"%s\"; user may lack SELECT privilege on "
@@ -2649,39 +2684,39 @@ msgstr ""
 "无法获取序列 \"%s\" 的数据；用户可能缺少该序列的 SELECT 权限，或者该序列可能"
 "已被并发删除"
 
-#: pg_dump.c:20054
+#: pg_dump.c:20179
 #, c-format
 msgid ""
 "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows "
 "returned"
 msgstr "获取表 \"%2$s\" 的规则 \"%1$s\" 的查询失败: 返回的行数错误"
 
-#: pg_dump.c:20207
+#: pg_dump.c:20332
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "无法找到被引用的扩展 %u"
 
-#: pg_dump.c:20306
+#: pg_dump.c:20431
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "扩展的配置和条件数量不匹配"
 
-#: pg_dump.c:20438
+#: pg_dump.c:20563
 #, c-format
 msgid "reading dependency data"
 msgstr "正在读取依赖数据"
 
-#: pg_dump.c:20524
+#: pg_dump.c:20649
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "找不到发起引用的对象 %u %u"
 
-#: pg_dump.c:20535
+#: pg_dump.c:20660
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "找不到被引用的对象 %u %u"
 
-#: pg_dump.c:20968 pg_dump.c:21006 pg_dumpall.c:1858 pg_restore.c:642
+#: pg_dump.c:21093 pg_dump.c:21131 pg_dumpall.c:1858 pg_restore.c:642
 #: pg_restore.c:688
 #, c-format
 msgid "%s filter for \"%s\" is not allowed"

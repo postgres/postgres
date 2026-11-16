@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-07 12:48+0000\n"
+"POT-Creation-Date: 2026-11-09 11:48+0000\n"
 "PO-Revision-Date: 2025-12-06 09:44+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -102,16 +102,14 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
 #: ../../common/fe_memutils.c:209
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu + %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu + %zu\n"
 
 #: ../../common/fe_memutils.c:228
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu * %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu * %zu\n"
 
 #: ../../common/username.c:43
 #, c-format
@@ -1154,10 +1152,9 @@ msgid "COPY in a pipeline is not supported, aborting connection"
 msgstr "no se soporta COPY en un pipeline, abortando conexión"
 
 #: common.c:2013
-#, fuzzy, c-format
-#| msgid "unexpected EOF on standby connection"
+#, c-format
 msgid "unexpected COPY_IN result, aborting connection"
-msgstr "se encontró fin de archivo inesperado en la conexión standby"
+msgstr "resultado COPY_IN inesperado, abortando la conexión"
 
 #: copy.c:98
 #, c-format
@@ -2049,9 +2046,9 @@ msgstr "leyendo membresía de tablas en publicaciones"
 
 #: describe.c:3217
 #, fuzzy
-#| msgid "publication of %s in publication %s"
+#| msgid "List of publications"
 msgid "Excluded from publications:"
-msgstr "publicación de %s en la publicación %s"
+msgstr "Listado de publicaciones"
 
 #: describe.c:3234
 #, fuzzy
@@ -3040,10 +3037,8 @@ msgid "Publication %s"
 msgstr "Publicación %s"
 
 #: describe.c:6879
-#, fuzzy
-#| msgid "relation \"%s\" is not a partition of relation \"%s\""
 msgid "Get tables published by this publication"
-msgstr "relación «%s» no es una partición de la relación «%s»"
+msgstr ""
 
 #: describe.c:6910
 msgid "Tables:"
@@ -3728,16 +3723,12 @@ msgid "  \\d[Sx+]                list tables, views, and sequences\n"
 msgstr "  \\d[Sx+]            listar tablas, vistas y secuencias\n"
 
 #: help.c:223
-#, fuzzy
-#| msgid "  \\d[S+]   NAME          describe table, view, sequence, or index\n"
 msgid "  \\d[Sx+]  NAME          describe table, view, sequence, or index\n"
-msgstr "  \\d[S+]  NOMBRE     describir tabla, índice, secuencia o vista\n"
+msgstr "  \\d[Sx+]  NOMBRE   describir tabla, índice, secuencia o vista\n"
 
 #: help.c:224
-#, fuzzy
-#| msgid "  \\d[Sx+]                list tables, views, and sequences\n"
 msgid "                         (x applies only to sequences)\n"
-msgstr "  \\d[Sx+]            listar tablas, vistas y secuencias\n"
+msgstr "                     (x aplica sólo a secuencias)\n"
 
 #: help.c:225
 msgid "  \\da[Sx]  [PATTERN]     list aggregates\n"
@@ -7592,25 +7583,3 @@ msgid ""
 msgstr ""
 "valor «%s» no reconocido para «%s»\n"
 "Los valores disponibles son: %s."
-
-#~ msgid ", "
-#~ msgstr ", "
-
-#~ msgid "Publications:"
-#~ msgstr "Publicaciones:"
-
-#~ msgid ""
-#~ "  \\pset [NAME [VALUE]]   set table output option\n"
-#~ "                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
-#~ "                         fieldsep_zero|footer|format|linestyle|null|\n"
-#~ "                         numericlocale|pager|pager_min_lines|recordsep|\n"
-#~ "                         recordsep_zero|tableattr|title|tuples_only|\n"
-#~ "                         unicode_border_linestyle|unicode_column_linestyle|\n"
-#~ "                         unicode_header_linestyle|xheader_width)\n"
-#~ msgstr ""
-#~ "  \\pset [NOMBRE [VALOR]]  define opción de tabla de salida\n"
-#~ "                  (border|columns|csv_fieldsep|expanded|fieldsep|fieldsep_zero|\n"
-#~ "                   footer|format|linestyle|null|numericlocale|pager|\n"
-#~ "                   pager_min_lines|recordsep|recordsep_zero|tableattr|title|\n"
-#~ "                   tuples_only|unicode_border_linestyle|unicode_column_linestyle|\n"
-#~ "                   unicode_header_linestyle|xheader_width)\n"

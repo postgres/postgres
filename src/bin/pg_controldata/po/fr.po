@@ -13,8 +13,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-05-21 02:57+0000\n"
-"PO-Revision-Date: 2026-05-21 14:40+0200\n"
+"POT-Creation-Date: 2026-10-26 14:24+0000\n"
+"PO-Revision-Date: 2026-10-26 17:43+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -22,7 +22,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.9\n"
+"X-Generator: Poedit 3.10\n"
 
 #: ../../common/controldata_utils.c:98
 #, c-format
@@ -312,73 +312,75 @@ msgstr "Dernier PrevTimeLineID du point de contrôle :           %u\n"
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "Dernier full_page_writes du point de contrôle :         %s\n"
 
-#: pg_controldata.c:266 pg_controldata.c:309 pg_controldata.c:321
+#: pg_controldata.c:266 pg_controldata.c:268 pg_controldata.c:309
+#: pg_controldata.c:321
 msgid "off"
 msgstr "désactivé"
 
-#: pg_controldata.c:266 pg_controldata.c:309 pg_controldata.c:321
+#: pg_controldata.c:266 pg_controldata.c:268 pg_controldata.c:309
+#: pg_controldata.c:321
 msgid "on"
 msgstr "activé"
 
 #: pg_controldata.c:267
 #, c-format
+msgid "Latest checkpoint's logical decoding: %s\n"
+msgstr "Dernier checkpoint du décodage logique :          %s\n"
+
+#: pg_controldata.c:269
+#, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "Dernier NextXID du point de contrôle :                  %u:%u\n"
 
-#: pg_controldata.c:270
+#: pg_controldata.c:272
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "Dernier NextOID du point de contrôle :                  %u\n"
 
-#: pg_controldata.c:272
+#: pg_controldata.c:274
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "Dernier NextMultiXactId du point de contrôle :          %u\n"
 
-#: pg_controldata.c:274
+#: pg_controldata.c:276
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %<PRIu64>\n"
 msgstr "Dernier NextMultiOffset du point de contrôle :          %<PRIu64>\n"
 
-#: pg_controldata.c:276
+#: pg_controldata.c:278
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "Dernier oldestXID du point de contrôle :                %u\n"
 
-#: pg_controldata.c:278
+#: pg_controldata.c:280
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "Dernier oldestXID du point de contrôle de la base :     %u\n"
 
-#: pg_controldata.c:280
+#: pg_controldata.c:282
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "Dernier oldestActiveXID du point de contrôle :          %u\n"
 
-#: pg_controldata.c:282
+#: pg_controldata.c:284
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "Dernier oldestMultiXid du point de contrôle :           %u\n"
 
-#: pg_controldata.c:284
+#: pg_controldata.c:286
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "Dernier oldestMulti du point de contrôle de la base :   %u\n"
 
-#: pg_controldata.c:286
+#: pg_controldata.c:288
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "Dernier oldestCommitTsXid du point de contrôle :        %u\n"
 
-#: pg_controldata.c:288
+#: pg_controldata.c:290
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "Dernier newestCommitTsXid du point de contrôle :        %u\n"
-
-#: pg_controldata.c:290
-#, c-format
-msgid "Latest checkpoint's data_checksum_version:%u\n"
-msgstr "Dernier data_checksum_version du point de contrôle :        %u\n"
 
 #: pg_controldata.c:292
 #, c-format
@@ -557,3 +559,7 @@ msgstr "non signé"
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "Nonce pour simuler une identité:            %s\n"
+
+#, c-format
+#~ msgid "Latest checkpoint's data_checksum_version:%u\n"
+#~ msgstr "Dernier data_checksum_version du point de contrôle :        %u\n"

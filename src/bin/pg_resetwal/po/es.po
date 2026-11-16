@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetwal (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-07 12:51+0000\n"
+"POT-Creation-Date: 2026-11-09 11:51+0000\n"
 "PO-Revision-Date: 2025-12-06 09:41+0100\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -111,16 +111,14 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
 #: ../../common/fe_memutils.c:209
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu + %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu + %zu\n"
 
 #: ../../common/fe_memutils.c:228
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu * %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu * %zu\n"
 
 #: ../../common/file_utils.c:75
 #, c-format
@@ -513,7 +511,7 @@ msgstr "Bloques por segmento de relación grande:         %u\n"
 #, fuzzy, c-format
 #| msgid "Bytes per WAL segment:                %u\n"
 msgid "Pages per SLRU segment:               %u\n"
-msgstr "Bytes por segmento WAL:                     %u\n"
+msgstr "Bytes por segmento WAL:                          %u\n"
 
 #: pg_resetwal.c:809
 #, c-format
@@ -817,19 +815,3 @@ msgstr ""
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Sitio web de %s: <%s>\n"
-
-#, c-format
-#~ msgid "transaction ID epoch (-e) must not be -1"
-#~ msgstr "el \"epoch\" de ID de transacción (-e) no debe ser -1"
-
-#, c-format
-#~ msgid "multitransaction offset (-O) must be between 0 and %u"
-#~ msgstr "la posición de multitransacción (-O) debe estar entre 0 y %u"
-
-#, c-format
-#~ msgid "unexpected empty file \"%s\""
-#~ msgstr "archivo vacío inesperado «%s»"
-
-#, c-format
-#~ msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-#~ msgstr "NextMultiOffset del checkpoint más reciente:     %u\n"

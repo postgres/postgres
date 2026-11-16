@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plperl (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-03 15:39+0000\n"
-"PO-Revision-Date: 2026-11-04 08:45+0800\n"
+"POT-Creation-Date: 2026-11-11 19:39+0000\n"
+"PO-Revision-Date: 2026-11-12 07:19+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Traditional) <pgsql-translators@postgresql.org>\n"
 "Language: zh_TW\n"
@@ -36,68 +36,59 @@ msgid "Perl initialization code to execute once when plperlu is first used."
 msgstr "初次使用 plperlu 時執行一次的 Perl 初始化程式碼。"
 
 # commands/tablespace.c:386 commands/tablespace.c:483
-#: plperl.c:649
+#: plperl.c:640
 #, c-format
 msgid "cannot allocate multiple Perl interpreters on this platform"
 msgstr "不能在此平台配置多個 Perl 直譯器"
 
-# commands/vacuum.c:2258 commands/vacuumlazy.c:489 commands/vacuumlazy.c:770
-# nodes/print.c:86 storage/lmgr/deadlock.c:888 tcop/postgres.c:3285
-#: plperl.c:672 plperl.c:856 plperl.c:862 plperl.c:979 plperl.c:991
-#: plperl.c:1034 plperl.c:1057 plperl.c:2182 plperl.c:2290 plperl.c:2358
-#: plperl.c:2421
-#, c-format
-msgid "%s"
-msgstr "%s"
-
-#: plperl.c:673
+#: plperl.c:683
 #, c-format
 msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
 msgstr "在執行 PostgreSQL::InServer::SPI::bootstrap 時"
 
-#: plperl.c:857
+#: plperl.c:892
 #, c-format
 msgid "while parsing Perl initialization"
 msgstr "在解析 Perl 初始化程式碼時"
 
-#: plperl.c:863
+#: plperl.c:902
 #, c-format
 msgid "while running Perl initialization"
 msgstr "在執行 Perl 初始化程式碼時"
 
-#: plperl.c:980
+#: plperl.c:1036
 #, c-format
 msgid "while executing PLC_TRUSTED"
 msgstr "在執行 PLC_TRUSTED 時"
 
-#: plperl.c:992
+#: plperl.c:1052
 #, c-format
 msgid "while executing utf8fix"
 msgstr "在執行 utf8fix 時"
 
-#: plperl.c:1035
+#: plperl.c:1099
 #, c-format
 msgid "while executing plperl.on_plperl_init"
 msgstr "在執行 plperl.on_plperl_init 時"
 
-#: plperl.c:1058
+#: plperl.c:1126
 #, c-format
 msgid "while executing plperl.on_plperlu_init"
 msgstr "在執行 plperl.on_plperlu_init 時"
 
-#: plperl.c:1104 plperl.c:1834
+#: plperl.c:1183 plperl.c:2026
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
 msgstr "Perl 雜湊包含不存在的欄位 \"%s\""
 
 # commands/tablecmds.c:5425
-#: plperl.c:1109 plperl.c:1839
+#: plperl.c:1188 plperl.c:2031
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "不能設定系統屬性 \"%s\""
 
 # executor/execQual.c:2085 utils/adt/arrayfuncs.c:507
-#: plperl.c:1210 plperl.c:1225 plperl.c:1242
+#: plperl.c:1329 plperl.c:1344 plperl.c:1365
 #, c-format
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr "多維陣列中的陣列運算式必須具有相符的維度"
@@ -106,13 +97,13 @@ msgstr "多維陣列中的陣列運算式必須具有相符的維度"
 # utils/adt/array_userfuncs.c:362 utils/adt/arrayfuncs.c:216
 # utils/adt/arrayfuncs.c:472 utils/adt/arrayfuncs.c:1153
 # utils/adt/arrayfuncs.c:2421
-#: plperl.c:1215
+#: plperl.c:1334
 #, c-format
 msgid "number of array dimensions exceeds the maximum allowed (%d)"
 msgstr "陣列維度數超過允許的最大值(%d)"
 
 # access/nbtree/nbtinsert.c:404 access/nbtree/nbtsort.c:499
-#: plperl.c:1278
+#: plperl.c:1401
 #, c-format
 msgid "array size exceeds the maximum allowed (%zu)"
 msgstr "陣列大小超過允許的最大值 (%zu)"
@@ -120,130 +111,130 @@ msgstr "陣列大小超過允許的最大值 (%zu)"
 # commands/tablecmds.c:3079 commands/tablecmds.c:3172
 # commands/tablecmds.c:3222 commands/tablecmds.c:3318
 # commands/tablecmds.c:3379 commands/tablecmds.c:4573
-#: plperl.c:1304
+#: plperl.c:1427
 #, c-format
 msgid "cannot convert Perl array to non-array type %s"
 msgstr "不能將 Perl 陣列轉換為非陣列型別 %s"
 
 # utils/adt/numeric.c:1761
-#: plperl.c:1405
+#: plperl.c:1540
 #, c-format
 msgid "cannot convert Perl hash to non-composite type %s"
 msgstr "不能將 Perl 雜湊轉換為非複合型別 %s"
 
-#: plperl.c:1427 plperl.c:3347
+#: plperl.c:1562 plperl.c:3589
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "在不能接受 record 型別的上下文中呼叫傳回 record 的函式"
 
 # utils/cache/lsyscache.c:1720
-#: plperl.c:1488
+#: plperl.c:1642
 #, c-format
 msgid "lookup failed for type %s"
 msgstr "尋找型別 %s 失敗"
 
-#: plperl.c:1809
+#: plperl.c:1993
 #, c-format
 msgid "$_TD->{new} does not exist"
 msgstr "$_TD->{new} 不存在"
 
-#: plperl.c:1813
+#: plperl.c:2000
 #, c-format
 msgid "$_TD->{new} is not a hash reference"
 msgstr "$_TD->{new} 不是雜湊參考"
 
 # commands/tablecmds.c:4580
-#: plperl.c:1846
+#: plperl.c:2038
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "不能設定產生欄位 \"%s\""
 
-#: plperl.c:2057 plperl.c:2896
+#: plperl.c:2304 plperl.c:3123
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
 msgstr "PL/Perl 函式不能傳回型別 %s"
 
-#: plperl.c:2070 plperl.c:2935
+#: plperl.c:2317 plperl.c:3162
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
 msgstr "PL/Perl 函式不能接受型別 %s"
 
-#: plperl.c:2187
+#: plperl.c:2438
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
 msgstr "未從編譯函式 \"%s\" 取得 CODE 參考"
 
-#: plperl.c:2278
+#: plperl.c:2529
 #, c-format
 msgid "didn't get a return item from function"
 msgstr "未從函式取得傳回項目"
 
-#: plperl.c:2322 plperl.c:2389
+#: plperl.c:2576 plperl.c:2646
 #, c-format
 msgid "couldn't fetch $_TD"
 msgstr "無法擷取 $_TD"
 
-#: plperl.c:2346 plperl.c:2409
+#: plperl.c:2600 plperl.c:2666
 #, c-format
 msgid "didn't get a return item from trigger function"
 msgstr "未從觸發器函式取得傳回項目"
 
-#: plperl.c:2466
+#: plperl.c:2714
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "在不能接受集合的情境中呼叫傳回集合的函式"
 
-#: plperl.c:2471
+#: plperl.c:2719
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "需要物化模式，但此上下文不允許該模式"
 
-#: plperl.c:2516
+#: plperl.c:2774
 #, c-format
 msgid "set-returning PL/Perl function must return reference to array or use return_next"
 msgstr "傳回集合的 PL/Perl 函式必須傳回陣列的參考或用 return_next"
 
-#: plperl.c:2636
+#: plperl.c:2879
 #, c-format
 msgid "ignoring modified row in DELETE trigger"
 msgstr "正在忽略 DELETE 觸發器中已修改的列"
 
-#: plperl.c:2644
+#: plperl.c:2887
 #, c-format
 msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr "PL/Perl 觸發器函式的結果必須是 undef, \"SKIP\" 或 \"MODIFY\""
 
-#: plperl.c:2891
+#: plperl.c:3118
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "觸發器函式只能當做觸發器呼叫"
 
-#: plperl.c:3252
+#: plperl.c:3492
 #, c-format
 msgid "query result has too many rows to fit in a Perl array"
 msgstr "查詢結果的列數過多，無法放入 Perl 陣列中"
 
-#: plperl.c:3324
+#: plperl.c:3566
 #, c-format
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "在非 SETOF 函式中不能使用 return_next"
 
-#: plperl.c:3398
+#: plperl.c:3644
 #, c-format
 msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
 msgstr "傳回 SETOF 複合型別的 PL/Perl 函式必須以雜湊參考為參數呼叫 return_next"
 
-#: plperl.c:4180
+#: plperl.c:4475
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "PL/Perl 函式 \"%s\""
 
-#: plperl.c:4192
+#: plperl.c:4487
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "編譯 PL/Perl 函式 \"%s\""
 
-#: plperl.c:4201
+#: plperl.c:4496
 #, c-format
 msgid "PL/Perl anonymous code block"
 msgstr "PL/Perl 匿名程式碼區塊"
@@ -261,4 +252,3 @@ msgstr "PL/Perl 匿名程式碼區塊"
 # common.c:123
 #~ msgid "out of memory"
 #~ msgstr "記憶體用盡"
-

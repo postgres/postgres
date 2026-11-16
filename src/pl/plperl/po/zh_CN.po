@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plperl (PostgreSQL) 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-03 15:39+0000\n"
-"PO-Revision-Date: 2026-11-04 08:45+0800\n"
+"POT-Creation-Date: 2026-11-11 19:39+0000\n"
+"PO-Revision-Date: 2026-11-12 07:19+0800\n"
 "Last-Translator: Ruohang Feng <rh@vonng.com>\n"
 "Language-Team: Chinese (Simplified) <pgsql-translators@postgresql.org>\n"
 "Language: zh_CN\n"
@@ -36,206 +36,199 @@ msgstr "首次使用 plperl 时执行一次的 Perl 初始化代码。"
 msgid "Perl initialization code to execute once when plperlu is first used."
 msgstr "首次使用 plperlu 时执行一次的 Perl 初始化代码。"
 
-#: plperl.c:649
+#: plperl.c:640
 #, c-format
 msgid "cannot allocate multiple Perl interpreters on this platform"
 msgstr "在这个平台上不能分配多个 Perl 解释器"
 
-#: plperl.c:672 plperl.c:856 plperl.c:862 plperl.c:979 plperl.c:991
-#: plperl.c:1034 plperl.c:1057 plperl.c:2182 plperl.c:2290 plperl.c:2358
-#: plperl.c:2421
-#, c-format
-msgid "%s"
-msgstr "%s"
-
-#: plperl.c:673
+#: plperl.c:683
 #, c-format
 msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
 msgstr "执行 PostgreSQL::InServer::SPI::bootstrap 时"
 
-#: plperl.c:857
+#: plperl.c:892
 #, c-format
 msgid "while parsing Perl initialization"
 msgstr "解析 Perl 初始化代码时"
 
-#: plperl.c:863
+#: plperl.c:902
 #, c-format
 msgid "while running Perl initialization"
 msgstr "运行 Perl 初始化代码时"
 
-#: plperl.c:980
+#: plperl.c:1036
 #, c-format
 msgid "while executing PLC_TRUSTED"
 msgstr "执行 PLC_TRUSTED 时"
 
-#: plperl.c:992
+#: plperl.c:1052
 #, c-format
 msgid "while executing utf8fix"
 msgstr "执行 utf8fix 时"
 
-#: plperl.c:1035
+#: plperl.c:1099
 #, c-format
 msgid "while executing plperl.on_plperl_init"
 msgstr "执行 plperl.on_plperl_init 时"
 
-#: plperl.c:1058
+#: plperl.c:1126
 #, c-format
 msgid "while executing plperl.on_plperlu_init"
 msgstr "执行 plperl.on_plperlu_init 时"
 
-#: plperl.c:1104 plperl.c:1834
+#: plperl.c:1183 plperl.c:2026
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
 msgstr "Perl 哈希包含不存在的列 \"%s\""
 
-#: plperl.c:1109 plperl.c:1839
+#: plperl.c:1188 plperl.c:2031
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "不能设置系统属性 \"%s\""
 
-#: plperl.c:1210 plperl.c:1225 plperl.c:1242
+#: plperl.c:1329 plperl.c:1344 plperl.c:1365
 #, c-format
 msgid ""
 "multidimensional arrays must have array expressions with matching dimensions"
 msgstr "多维数组中各数组表达式的维度必须匹配"
 
-#: plperl.c:1215
+#: plperl.c:1334
 #, c-format
 msgid "number of array dimensions exceeds the maximum allowed (%d)"
 msgstr "数组维数超过允许的最大值（%d）"
 
-#: plperl.c:1278
+#: plperl.c:1401
 #, c-format
 msgid "array size exceeds the maximum allowed (%zu)"
 msgstr "数组大小超过允许的最大值（%zu）"
 
-#: plperl.c:1304
+#: plperl.c:1427
 #, c-format
 msgid "cannot convert Perl array to non-array type %s"
 msgstr "不能将 Perl 数组转换为非数组类型 %s"
 
-#: plperl.c:1405
+#: plperl.c:1540
 #, c-format
 msgid "cannot convert Perl hash to non-composite type %s"
 msgstr "不能将 Perl 哈希转换为非复合类型 %s"
 
-#: plperl.c:1427 plperl.c:3347
+#: plperl.c:1562 plperl.c:3589
 #, c-format
 msgid ""
 "function returning record called in context that cannot accept type record"
 msgstr "在不能接受 record 类型的上下文中调用返回 record 类型的函数"
 
-#: plperl.c:1488
+#: plperl.c:1642
 #, c-format
 msgid "lookup failed for type %s"
 msgstr "类型 %s 查找失败"
 
-#: plperl.c:1809
+#: plperl.c:1993
 #, c-format
 msgid "$_TD->{new} does not exist"
 msgstr "$_TD->{new} 不存在"
 
-#: plperl.c:1813
+#: plperl.c:2000
 #, c-format
 msgid "$_TD->{new} is not a hash reference"
 msgstr "$_TD->{new} 不是哈希引用"
 
-#: plperl.c:1846
+#: plperl.c:2038
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "不能设置生成列 \"%s\""
 
-#: plperl.c:2057 plperl.c:2896
+#: plperl.c:2304 plperl.c:3123
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
 msgstr "PL/Perl 函数不能返回类型 %s"
 
-#: plperl.c:2070 plperl.c:2935
+#: plperl.c:2317 plperl.c:3162
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
 msgstr "PL/Perl 函数不能接受类型为 %s 的参数"
 
-#: plperl.c:2187
+#: plperl.c:2438
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
 msgstr "编译函数 \"%s\" 后未得到 CODE 引用"
 
-#: plperl.c:2278
+#: plperl.c:2529
 #, c-format
 msgid "didn't get a return item from function"
 msgstr "未从函数得到一个返回项"
 
-#: plperl.c:2322 plperl.c:2389
+#: plperl.c:2576 plperl.c:2646
 #, c-format
 msgid "couldn't fetch $_TD"
 msgstr "无法获取 $_TD"
 
-#: plperl.c:2346 plperl.c:2409
+#: plperl.c:2600 plperl.c:2666
 #, c-format
 msgid "didn't get a return item from trigger function"
 msgstr "未从触发器函数得到一个返回项"
 
-#: plperl.c:2466
+#: plperl.c:2714
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "在不能接受集合的上下文中调用返回集合的函数"
 
-#: plperl.c:2471
+#: plperl.c:2719
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "需要物化模式，但此上下文不允许使用该模式"
 
-#: plperl.c:2516
+#: plperl.c:2774
 #, c-format
 msgid ""
 "set-returning PL/Perl function must return reference to array or use "
 "return_next"
 msgstr "返回集合的 PL/Perl 函数必须返回对数组的引用或者使用 return_next"
 
-#: plperl.c:2636
+#: plperl.c:2879
 #, c-format
 msgid "ignoring modified row in DELETE trigger"
 msgstr "正在忽略 DELETE 触发器中已修改的行"
 
-#: plperl.c:2644
+#: plperl.c:2887
 #, c-format
 msgid ""
 "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr "PL/Perl 触发器函数的结果必须为 undef, \"SKIP\" 或 \"MODIFY\""
 
-#: plperl.c:2891
+#: plperl.c:3118
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "触发器函数只能以触发器的形式调用"
 
-#: plperl.c:3252
+#: plperl.c:3492
 #, c-format
 msgid "query result has too many rows to fit in a Perl array"
 msgstr "查询结果中的行数过多，无法放在 Perl 数组中"
 
-#: plperl.c:3324
+#: plperl.c:3566
 #, c-format
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "不能在非 SETOF 函数中使用 return_next"
 
-#: plperl.c:3398
+#: plperl.c:3644
 #, c-format
 msgid ""
 "SETOF-composite-returning PL/Perl function must call return_next with "
 "reference to hash"
 msgstr "返回 SETOF 复合类型的 PL/Perl 函数必须以哈希引用为参数调用 return_next"
 
-#: plperl.c:4180
+#: plperl.c:4475
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "PL/Perl 函数 \"%s\""
 
-#: plperl.c:4192
+#: plperl.c:4487
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "编译 PL/Perl 函数 \"%s\""
 
-#: plperl.c:4201
+#: plperl.c:4496
 #, c-format
 msgid "PL/Perl anonymous code block"
 msgstr "PL/Perl 匿名代码块"

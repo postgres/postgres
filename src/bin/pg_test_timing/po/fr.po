@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 17\n"
+"Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-22 10:20+0000\n"
-"PO-Revision-Date: 2024-09-16 16:28+0200\n"
+"POT-Creation-Date: 2026-10-26 14:21+0000\n"
+"PO-Revision-Date: 2026-10-27 10:10+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,80 +19,218 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.10\n"
 
-#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
 #, c-format
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
 
-#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "ne peut pas dupliquer un pointeur nul (erreur interne)\n"
 
-#: pg_test_timing.c:59
+#: ../../common/fe_memutils.c:209
 #, c-format
-msgid "Usage: %s [-d DURATION]\n"
-msgstr "Usage: %s [-d DURÉE]\n"
+msgid "invalid memory allocation request size %zu + %zu\n"
+msgstr ""
+"taille de la requête d'allocation mémoire invalide %zu + %zu\n"
 
-#: pg_test_timing.c:81
+#: ../../common/fe_memutils.c:228
+#, c-format
+msgid "invalid memory allocation request size %zu * %zu\n"
+msgstr ""
+"taille de la requête d'allocation mémoire invalide %zu * %zu\n"
+
+#: pg_test_timing.c:79
+#, c-format
+msgid "Usage: %s [-c CUTOFF] [-d DURATION]\n"
+msgstr "Usage: %s [-c ARRET] [-d DURÉE]\n"
+
+#: pg_test_timing.c:100 pg_test_timing.c:121
 #, c-format
 msgid "%s: invalid argument for option %s\n"
 msgstr "%s : argument invalide pour l'option %s\n"
 
-#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
+#: pg_test_timing.c:102 pg_test_timing.c:123 pg_test_timing.c:137
+#: pg_test_timing.c:149
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
-#: pg_test_timing.c:90
+#: pg_test_timing.c:108 pg_test_timing.c:130
 #, c-format
 msgid "%s: %s must be in range %u..%u\n"
 msgstr "%s : %s doit être compris entre %u et %u\n"
 
-#: pg_test_timing.c:107
+#: pg_test_timing.c:147
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
+msgstr ""
+"%s : trop d'arguments en ligne de commande (le premier étant "
+"« %s »)\n"
 
-#: pg_test_timing.c:115
+#: pg_test_timing.c:154
 #, c-format
-msgid "Testing timing overhead for %u second.\n"
-msgid_plural "Testing timing overhead for %u seconds.\n"
+msgid ""
+"Testing timing overhead for %u second.\n"
+"\n"
+msgid_plural ""
+"Testing timing overhead for %u seconds.\n"
+"\n"
 msgstr[0] "Test du coût du chronométrage pour %u seconde.\n"
 msgstr[1] "Test du coût du chronométrage pour %u secondes.\n"
 
-#: pg_test_timing.c:151
+#: pg_test_timing.c:209
+#, c-format
+msgid "TSC frequency source: %s\n"
+msgstr "Source de la fréquence TSC : %s\n"
+
+#: pg_test_timing.c:210
+#, c-format
+msgid "TSC frequency in use: %d kHz\n"
+msgstr "Fréquence TSC utilisée : %d kHz\n"
+
+#: pg_test_timing.c:216
+#, c-format
+msgid "TSC frequency from calibration: %d kHz\n"
+msgstr "Fréquence TSC à partir de la calibration : %d kHz\n"
+
+#: pg_test_timing.c:223
+#, c-format
+msgid ""
+"WARNING: Calibrated TSC frequency differs by %.1f%% from the "
+"TSC frequency in use\n"
+msgstr ""
+"ATTENTION : La fréquence TSC étalonnée diffère de %.1f%% de la "
+"fréquence TSC actuellement utilisée\n"
+
+#: pg_test_timing.c:225
+#, c-format
+msgid ""
+"HINT: Consider setting timing_clock_source to 'system'. Report "
+"bugs to <%s>.\n"
+msgstr ""
+"CONSEIL : Essayez de configurer timing_clock_source à "
+"'system'. Rapportez les bugs à <%s>.\n"
+
+#: pg_test_timing.c:230
+#, c-format
+msgid "TSC calibration did not converge\n"
+msgstr "la calibration TSC ne converge pas\n"
+
+#: pg_test_timing.c:240
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will be used by default, unless "
+"timing_clock_source is set to 'system'.\n"
+msgstr ""
+"\n"
+"La source d'horloge TSC sera utilisée par défaut, sauf si "
+"timing_clock_source est configuré à 'system'.\n"
+
+#: pg_test_timing.c:242
+#, c-format
+msgid ""
+"\n"
+"TSC clock source will not be used by default, unless "
+"timing_clock_source is set to 'tsc'.\n"
+msgstr ""
+"\n"
+"La source d'horloge TSC ne sera pas utilisée par défaut, sauf "
+"si timing_clock_source est configurée à 'tsc'.\n"
+
+#: pg_test_timing.c:245
+#, c-format
+msgid ""
+"\n"
+"TSC clock source is not usable. Likely unable to determine TSC "
+"frequency. Are you running in an unsupported virtualized "
+"environment?\n"
+msgstr ""
+"\n"
+"La source d'horloge TSC est inutilisable. Il est probable que "
+"la fréquence TSC ne puisse pas être déterminée. Votre "
+"environnement virtualisé est-il pris en charge ?\n"
+
+#: pg_test_timing.c:270
+#, c-format
+msgid "Fast clock source: %s\n"
+msgstr "Source de l'horloge rapide : %s\n"
+
+#: pg_test_timing.c:272
+#, c-format
+msgid "System clock source: %s\n"
+msgstr "Source de l'horloge système : %s\n"
+
+#: pg_test_timing.c:274
+#, c-format
+msgid "Clock source: %s\n"
+msgstr "Source d'horloge : %s\n"
+
+#: pg_test_timing.c:312
 #, c-format
 msgid "Detected clock going backwards in time.\n"
 msgstr "Détection d'une horloge partant à rebours.\n"
 
-#: pg_test_timing.c:152
+#: pg_test_timing.c:313
 #, c-format
-msgid "Time warp: %d ms\n"
-msgstr "Décalage de temps : %d ms\n"
+msgid "Time warp: %<PRId64> ns\n"
+msgstr "Décalage de temps : %<PRId64> ns\n"
 
-#: pg_test_timing.c:175
+#: pg_test_timing.c:351
 #, c-format
-msgid "Per loop time including overhead: %0.2f ns\n"
-msgstr "Durée par boucle incluant le coût : %0.2f ns\n"
+msgid "Average loop time including overhead: %0.2f ns\n"
+msgstr ""
+"Durée moyenne par boucle incluant le surcoût : %0.2f ns\n"
 
-#: pg_test_timing.c:186
-msgid "< us"
-msgstr "< us"
+#: pg_test_timing.c:361
+msgid "<= ns"
+msgstr "<= ns"
 
-#: pg_test_timing.c:187
+#: pg_test_timing.c:362
+msgid "ns"
+msgstr "ns"
+
+#: pg_test_timing.c:363
 #, no-c-format
 msgid "% of total"
 msgstr "% du total"
 
-#: pg_test_timing.c:188
+#: pg_test_timing.c:364
+#, no-c-format
+msgid "running %"
+msgstr "exécute %"
+
+#: pg_test_timing.c:365
 msgid "count"
 msgstr "nombre"
 
-#: pg_test_timing.c:197
+#: pg_test_timing.c:375
+#, c-format
+msgid ""
+"WARNING: No timing measurements collected. Report this as a "
+"bug to <%s>.\n"
+msgstr ""
+"ATTENTION : Aucune mesure de durée n’a été recueillie. "
+"Rapportez ce bug à <%s>.\n"
+
+#: pg_test_timing.c:389
 #, c-format
 msgid "Histogram of timing durations:\n"
 msgstr "Histogramme des durées de chronométrage\n"
+
+#: pg_test_timing.c:409
+#, c-format
+msgid ""
+"\n"
+"Observed timing durations up to %.4f%%:\n"
+msgstr ""
+"\n"
+"Durées observées de chronométrage jusqu'à %.4f%%:\n"
+
+#~ msgid "< us"
+#~ msgstr "< us"

@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-05-21 02:56+0000\n"
-"PO-Revision-Date: 2026-05-21 15:12+0200\n"
+"POT-Creation-Date: 2026-10-26 14:23+0000\n"
+"PO-Revision-Date: 2026-10-26 17:42+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.9\n"
+"X-Generator: Poedit 3.10\n"
 
 #: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
@@ -255,17 +255,17 @@ msgstr "n'a pas pu écrire dans le fichier « %s » : %m"
 msgid "could not create file \"%s\": %m"
 msgstr "n'a pas pu créer le fichier « %s » : %m"
 
-#: ../../fe_utils/recovery_gen.c:215 pg_rewind.c:314
+#: ../../fe_utils/recovery_gen.c:215 pg_rewind.c:316
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: ../../fe_utils/string_utils.c:581
+#: ../../fe_utils/string_utils.c:585
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
 msgstr "l'argument de la commande shell contient un retour à la ligne ou un retour chariot : « %s »\n"
 
-#: ../../fe_utils/string_utils.c:754
+#: ../../fe_utils/string_utils.c:758
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "le nom de la base contient un retour à la ligne ou un retour chariot : « %s »\n"
@@ -768,183 +768,184 @@ msgstr "Vous devez exécuter %s en tant que super-utilisateur PostgreSQL."
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "n'a pas pu lire les droits du répertoire « %s » : %m"
 
-#: pg_rewind.c:305
+#: pg_rewind.c:306
 #, c-format
-msgid ""
-"Executing in dry-run mode.\n"
-"The target directory will not be modified."
-msgstr ""
-"Exécution en mode test.\n"
-"Le répertoire cible ne sera pas supprimé."
+msgid "executing in dry-run mode"
+msgstr "lancé en mode test"
 
-#: pg_rewind.c:317
+#: pg_rewind.c:307
+#, c-format
+msgid "The target directory will not be modified."
+msgstr "Le répertoire cible ne sera pas modifié."
+
+#: pg_rewind.c:319
 #, c-format
 msgid "connected to server"
 msgstr "connecté au serveur"
 
-#: pg_rewind.c:378
+#: pg_rewind.c:380
 #, c-format
 msgid "source and target cluster are on the same timeline"
 msgstr "les instances source et cible sont sur la même ligne de temps"
 
-#: pg_rewind.c:399
+#: pg_rewind.c:401
 #, c-format
 msgid "servers diverged at WAL location %X/%08X on timeline %u"
 msgstr "les serveurs ont divergé à la position %X/%08X des WAL sur la timeline %u"
 
-#: pg_rewind.c:460
+#: pg_rewind.c:462
 #, c-format
 msgid "no rewind required"
 msgstr "pas de retour en arrière requis"
 
-#: pg_rewind.c:473
+#: pg_rewind.c:475
 #, c-format
 msgid "rewinding from last common checkpoint at %X/%08X on timeline %u"
 msgstr "retour en arrière depuis le dernier checkpoint commun à %X/%08X sur la ligne de temps %u"
 
-#: pg_rewind.c:483
+#: pg_rewind.c:485
 #, c-format
 msgid "reading source file list"
 msgstr "lecture de la liste des fichiers sources"
 
-#: pg_rewind.c:487
+#: pg_rewind.c:489
 #, c-format
 msgid "reading target file list"
 msgstr "lecture de la liste des fichiers cibles"
 
-#: pg_rewind.c:496
+#: pg_rewind.c:498
 #, c-format
 msgid "reading WAL in target"
 msgstr "lecture du WAL dans la cible"
 
-#: pg_rewind.c:517
+#: pg_rewind.c:519
 #, c-format
 msgid "need to copy %<PRIu64> MB (total source directory size is %<PRIu64> MB)"
 msgstr "a besoin de copier %<PRIu64> Mo (la taille totale du répertoire source est %<PRIu64> Mo)"
 
-#: pg_rewind.c:535
+#: pg_rewind.c:537
 #, c-format
 msgid "syncing target data directory"
 msgstr "synchronisation du répertoire des données cible"
 
-#: pg_rewind.c:552
+#: pg_rewind.c:554
 #, c-format
 msgid "Done!"
 msgstr "Terminé !"
 
-#: pg_rewind.c:632
+#: pg_rewind.c:634
 #, c-format
 msgid "no action decided for file \"%s\""
 msgstr "aucune action décidée pour le fichier « %s »"
 
-#: pg_rewind.c:664
+#: pg_rewind.c:666
 #, c-format
 msgid "source system was modified while pg_rewind was running"
 msgstr "le système source a été modifié alors que pg_rewind était en cours d'exécution"
 
-#: pg_rewind.c:668
+#: pg_rewind.c:670
 #, c-format
 msgid "creating backup label and updating control file"
 msgstr "création du fichier backup_label et mise à jour du fichier contrôle"
 
-#: pg_rewind.c:718
+#: pg_rewind.c:720
 #, c-format
 msgid "source system was in unexpected state at end of rewind"
 msgstr "le système source était dans un état inattendu en fin de rewind"
 
-#: pg_rewind.c:750
+#: pg_rewind.c:752
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "les instances source et cible proviennent de systèmes différents"
 
-#: pg_rewind.c:758
+#: pg_rewind.c:760
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "les instances ne sont pas compatibles avec cette version de pg_rewind"
 
-#: pg_rewind.c:768
+#: pg_rewind.c:770
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
 msgstr "le serveur cible doit soit utiliser les sommes de contrôle sur les données soit avoir wal_log_hints configuré à on"
 
-#: pg_rewind.c:779
+#: pg_rewind.c:781
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "le serveur cible doit être arrêté proprement"
 
-#: pg_rewind.c:789
+#: pg_rewind.c:791
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "le répertoire de données source doit être arrêté proprement"
 
-#: pg_rewind.c:836
+#: pg_rewind.c:838
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s Ko (%d%%) copiés"
 
-#: pg_rewind.c:962
+#: pg_rewind.c:964
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "n'a pas pu trouver l'ancêtre commun des lignes de temps des instances source et cible"
 
-#: pg_rewind.c:1003
+#: pg_rewind.c:1005
 #, c-format
 msgid "backup label buffer too small"
 msgstr "tampon du label de sauvegarde trop petit"
 
-#: pg_rewind.c:1026
+#: pg_rewind.c:1028
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "CRC inattendu pour le fichier de contrôle"
 
-#: pg_rewind.c:1038
+#: pg_rewind.c:1040
 #, c-format
 msgid "unexpected control file size %zu, expected %d"
 msgstr "taille %zu inattendue du fichier de contrôle, %d attendu"
 
-#: pg_rewind.c:1048
+#: pg_rewind.c:1050
 #, c-format
 msgid "invalid WAL segment size in control file (%d byte)"
 msgid_plural "invalid WAL segment size in control file (%d bytes)"
 msgstr[0] "taille invalide du segment WAL dans le fichier de contrôle (%d octet)"
 msgstr[1] "taille invalide du segment WAL dans le fichier de contrôle (%d octets)"
 
-#: pg_rewind.c:1052
+#: pg_rewind.c:1054
 #, c-format
 msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
 msgstr "La taille du segment WAL doit être une puissance de deux comprise entre 1 Mo et 1 Go."
 
-#: pg_rewind.c:1089 pg_rewind.c:1157
+#: pg_rewind.c:1091 pg_rewind.c:1159
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "le programme « %s » est nécessaire pour %s, mais n'a pas été trouvé dans le même répertoire que « %s »"
 
-#: pg_rewind.c:1092 pg_rewind.c:1160
+#: pg_rewind.c:1094 pg_rewind.c:1162
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "le programme « %s » a été trouvé par « %s » mais n'est pas de la même version que %s"
 
-#: pg_rewind.c:1121
+#: pg_rewind.c:1123
 #, c-format
 msgid "could not read \"restore_command\" from target cluster"
 msgstr "n'a pas pu lire le paramètre « restore_command » à partir de l'instance cible"
 
-#: pg_rewind.c:1126
+#: pg_rewind.c:1128
 #, c-format
 msgid "\"restore_command\" is not set in the target cluster"
 msgstr "« restore_command» n'est pas configuré sur l'instance cible"
 
-#: pg_rewind.c:1164
+#: pg_rewind.c:1166
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr "exécution de « %s » pour terminer la restauration après crash du serveur cible"
 
-#: pg_rewind.c:1202
+#: pg_rewind.c:1204
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr "le mot simple-utilisateur de postgres a échoué pour l'instance cible"
 
-#: pg_rewind.c:1203
+#: pg_rewind.c:1205
 #, c-format
 msgid "Command was: %s"
 msgstr "La commande était : %s"
@@ -1063,82 +1064,82 @@ msgstr "pageaddr %X/%08X inattendue dans le journal de transactions %s, LSN %X/%
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%08X, offset %u"
 msgstr "identifiant timeline %u hors de la séquence (après %u) dans le segment WAL %s, LSN %X/%08X, décalage %u"
 
-#: xlogreader.c:1788
+#: xlogreader.c:1790
 #, c-format
 msgid "out-of-order block_id %u at %X/%08X"
 msgstr "block_id %u désordonné à %X/%08X"
 
-#: xlogreader.c:1812
+#: xlogreader.c:1814
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%08X"
 msgstr "BKPBLOCK_HAS_DATA configuré, mais aucune donnée inclus à %X/%08X"
 
-#: xlogreader.c:1819
+#: xlogreader.c:1821
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %d at %X/%08X"
 msgstr "BKPBLOCK_HAS_DATA non configuré, mais la longueur des données est %d à %X/%08X"
 
-#: xlogreader.c:1855
+#: xlogreader.c:1857
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %d length %d block image length %d at %X/%08X"
 msgstr "BKPIMAGE_HAS_HOLE activé, mais décalage trou %d longueur %d longueur image bloc %d à %X/%08X"
 
-#: xlogreader.c:1871
+#: xlogreader.c:1873
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %d length %d at %X/%08X"
 msgstr "BKPIMAGE_HAS_HOLE désactivé, mais décalage trou %d longueur %d à %X/%08X"
 
-#: xlogreader.c:1885
+#: xlogreader.c:1887
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %d at %X/%08X"
 msgstr "BKPIMAGE_COMPRESSED configuré, mais la longueur de l'image du bloc est %d à %X/%08X"
 
-#: xlogreader.c:1900
+#: xlogreader.c:1902
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %d at %X/%08X"
 msgstr "ni BKPIMAGE_HAS_HOLE ni BKPIMAGE_COMPRESSED configuré, mais la longueur de l'image du bloc est %d à %X/%08X"
 
-#: xlogreader.c:1916
+#: xlogreader.c:1918
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%08X"
 msgstr "BKPBLOCK_SAME_REL configuré, mais pas de relation précédente à %X/%08X"
 
-#: xlogreader.c:1928
+#: xlogreader.c:1930
 #, c-format
 msgid "invalid block_id %u at %X/%08X"
 msgstr "block_id %u invalide à %X/%08X"
 
-#: xlogreader.c:1995
+#: xlogreader.c:1997
 #, c-format
 msgid "record with invalid length at %X/%08X"
 msgstr "enregistrement de longueur invalide à %X/%08X"
 
-#: xlogreader.c:2021
+#: xlogreader.c:2023
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "n'a pas pu localiser le bloc de sauvegarde d'ID %d dans l'enregistrement WAL"
 
-#: xlogreader.c:2105
+#: xlogreader.c:2107
 #, c-format
 msgid "could not restore image at %X/%08X with invalid block %d specified"
 msgstr "n'a pas pu restaurer l'image à %X/%08X avec le bloc invalide %d indiqué"
 
-#: xlogreader.c:2112
+#: xlogreader.c:2114
 #, c-format
 msgid "could not restore image at %X/%08X with invalid state, block %d"
 msgstr "n'a pas pu restaurer l'image à %X/%08X avec un état invalide, bloc %d"
 
-#: xlogreader.c:2139 xlogreader.c:2156
+#: xlogreader.c:2141 xlogreader.c:2158
 #, c-format
 msgid "could not restore image at %X/%08X compressed with %s not supported by build, block %d"
 msgstr "n'a pas pu restaurer l'image à %X/%08X compressé avec %s, qui n'est pas accepté par le serveur, bloc %d"
 
-#: xlogreader.c:2165
+#: xlogreader.c:2167
 #, c-format
 msgid "could not restore image at %X/%08X compressed with unknown method, block %d"
 msgstr "n'a pas pu restaurer l'image à %X/%08X compressé avec une méthode inconnue, bloc %d"
 
-#: xlogreader.c:2173
+#: xlogreader.c:2175
 #, c-format
 msgid "could not decompress image at %X/%08X, block %d"
 msgstr "n'a pas pu décompresser l'image à %X/%08X, bloc %d"

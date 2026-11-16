@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-07 12:40+0000\n"
+"POT-Creation-Date: 2026-11-09 11:40+0000\n"
 "PO-Revision-Date: 2026-02-07 09:55+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -1545,7 +1545,7 @@ msgstr ""
 #: fe-misc.c:942
 #, c-format
 msgid "drained only %zd of %zd pending bytes in transport buffer"
-msgstr ""
+msgstr "se consumieron sólo %zd de %zd bytes pendientes en el búfer de transporte"
 
 #: fe-misc.c:1004
 msgid "connection not open\n"
@@ -1757,10 +1757,9 @@ msgid "PQgetline: not doing text COPY OUT"
 msgstr "PQgetline: no se está haciendo COPY OUT de texto"
 
 #: fe-protocol3.c:2319
-#, fuzzy, c-format
-#| msgid "server sent unexpected additional OAuth data"
+#, c-format
 msgid "server returned too much data"
-msgstr "el servidor envió datos OAuth adicionales inesperados"
+msgstr "el servidor retornó demasiados datos"
 
 #: fe-protocol3.c:2374
 #, c-format
@@ -1873,12 +1872,12 @@ msgstr "código de error SSL no reconocido: %d"
 #: fe-secure-openssl.c:251
 #, c-format
 msgid "OpenSSL reports negative bytes pending"
-msgstr ""
+msgstr "OpenSSL reporta cantidad negativa de bytes pendientes"
 
 #: fe-secure-openssl.c:263
 #, c-format
 msgid "OpenSSL reports INT_MAX bytes pending"
-msgstr ""
+msgstr "OpenSSL reporta INT_MAX bytes pendientes"
 
 #: fe-secure-openssl.c:399
 #, c-format
@@ -2107,8 +2106,3 @@ msgstr "no se pudo enviar datos al servidor: %s"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "código de error de socket no reconocido: 0x%08X/%d"
-
-#, c-format
-#~| msgid "failed to create kqueue: %m"
-#~ msgid "failed to lock mutex (%d)"
-#~ msgstr "no se pudo bloquear el mutex (%d)"

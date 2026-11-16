@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-07 12:39+0000\n"
+"POT-Creation-Date: 2026-11-09 11:39+0000\n"
 "PO-Revision-Date: 2024-11-16 14:24+0100\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -45,10 +45,9 @@ msgstr[1] "Se esperaba una secuencia de %d argumentos, se obtuvo %d: %s"
 
 #: plpy_cursorobject.c:264 plpy_spi.c:93 plpy_spi.c:261 plpy_typeio.c:1215
 #: plpy_typeio.c:1466
-#, fuzzy, c-format
-#| msgid "could not get client address from socket: %s"
+#, c-format
 msgid "could not get element %d from sequence"
-msgstr "no se pudo obtener la dirección del cliente desde el socket: %s"
+msgstr "no se pudo obtener el elemento %d de la secuencia"
 
 #: plpy_cursorobject.c:354
 #, c-format
@@ -446,19 +445,3 @@ msgstr "no se pudo convertir el objeto Unicode de Python a bytes"
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "no se pudo extraer bytes desde la cadena codificada"
-
-#, c-format
-#~ msgid "multiple Python libraries are present in session"
-#~ msgstr "hay múltiples librerías de Python presentes en esta sesión"
-
-#, c-format
-#~ msgid "Only one Python major version can be used in one session."
-#~ msgstr "Sólo se puede usar una versión mayor de Python en cada sesión."
-
-#, c-format
-#~ msgid "could not import \"__main__\" module"
-#~ msgstr "no se pudo importar el módulo «__main__»"
-
-#, c-format
-#~ msgid "could not initialize globals"
-#~ msgstr "no se pudo inicializar las globales"

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-07 12:40+0000\n"
+"POT-Creation-Date: 2026-11-13 10:10+0000\n"
 "PO-Revision-Date: 2024-11-16 14:23+0100\n"
 "Last-Translator: Emanuel Calvo Franco <postgres-arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -122,10 +122,9 @@ msgstr "la inserción de un array de variables no está soportado en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:137
-#, fuzzy, c-format
-#| msgid "invalid input syntax for type int: \"%s\", on line %d"
+#, c-format
 msgid "invalid input syntax for type bytea: \"%s\", on line %d"
-msgstr "sintaxis de entrada no válida para el tipo entero: «%s», en línea %d"
+msgstr "sintaxis de entrada no válida para el tipo bytea: «%s», en línea %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:144

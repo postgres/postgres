@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-07 12:50+0000\n"
-"PO-Revision-Date: 2026-02-07 09:55+0100\n"
+"POT-Creation-Date: 2026-11-13 10:20+0000\n"
+"PO-Revision-Date: 2026-11-15 12:31+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -166,16 +166,14 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
 #: ../../common/fe_memutils.c:209
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu + %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu + %zu\n"
 
 #: ../../common/fe_memutils.c:228
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu * %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu * %zu\n"
 
 #: ../../common/file_utils.c:75
 #, c-format
@@ -255,15 +253,14 @@ msgid "could not write to file \"%s\": %m"
 msgstr "no se pudo escribir a archivo «%s»: %m"
 
 #: ../../fe_utils/astreamer_file.c:222 ../../fe_utils/astreamer_tar.c:309
-#, fuzzy, c-format
-#| msgid "tar member has empty name"
+#, c-format
 msgid "tar member has unsafe path name: \"%s\""
-msgstr "miembro de tar tiene nombre vacío"
+msgstr "miembro de tar tiene nombre de ruta no segura: «%s»"
 
 #: ../../fe_utils/astreamer_file.c:251
 #, c-format
 msgid "link target has unsafe path name: \"%s\""
-msgstr ""
+msgstr "destino de enlace tiene nombre de ruta no segura: «%s»"
 
 #: ../../fe_utils/astreamer_file.c:292
 #, c-format
@@ -339,17 +336,15 @@ msgstr "no se pudo restablecer el flujo comprimido"
 
 #: ../../fe_utils/astreamer_gzip.c:364 ../../fe_utils/astreamer_lz4.c:407
 #: ../../fe_utils/astreamer_zstd.c:385
-#, fuzzy, c-format
-#| msgid "could not reset compression stream"
+#, c-format
 msgid "could not decompress data: compressed stream is empty"
-msgstr "no se pudo restablecer el flujo comprimido"
+msgstr "no se pudo descomprimir los datos: el flujo comprimido está vacío"
 
 #: ../../fe_utils/astreamer_gzip.c:366 ../../fe_utils/astreamer_lz4.c:409
 #: ../../fe_utils/astreamer_zstd.c:387
-#, fuzzy, c-format
-#| msgid "could not reset compression stream"
+#, c-format
 msgid "could not decompress data: compressed stream is incomplete"
-msgstr "no se pudo restablecer el flujo comprimido"
+msgstr "no se pudo descomprimir los datos: el flujo comprimido está incompleto"
 
 #: ../../fe_utils/astreamer_lz4.c:98
 #, c-format
@@ -383,10 +378,9 @@ msgid "unexpected state while parsing tar archive"
 msgstr "se encontró un estado inesperado mientras se interpretaba el archivo tar"
 
 #: ../../fe_utils/astreamer_tar.c:300
-#, fuzzy, c-format
-#| msgid "input file does not appear to be a valid archive"
+#, c-format
 msgid "input file does not appear to be a valid tar archive"
-msgstr "el archivo de entrada no parece ser un archivador válido"
+msgstr "el archivo de entrada no parece ser un archivo tar válido"
 
 #: ../../fe_utils/astreamer_tar.c:307
 #, c-format
@@ -394,10 +388,9 @@ msgid "tar member has empty name"
 msgstr "miembro de tar tiene nombre vacío"
 
 #: ../../fe_utils/astreamer_tar.c:332
-#, fuzzy, c-format
-#| msgid "multidimensional arrays are not supported"
+#, c-format
 msgid "pax extensions to tar format are not supported"
-msgstr "los arrays multidimensionales no están soportados"
+msgstr "las extenxiones pax al formato tar no está soportadas"
 
 #: ../../fe_utils/astreamer_tar.c:361
 #, c-format
@@ -1370,7 +1363,7 @@ msgstr "no se pudo crear el enlace simbólico «%s»: %m"
 #: pg_createsubscriber.c:217
 #, c-format
 msgid "A manual removal of the recovery parameters might be required."
-msgstr ""
+msgstr "Puede ser necesaria una eliminación manual de los parámetros de recuperación."
 
 #: pg_createsubscriber.c:231
 #, c-format
@@ -1441,10 +1434,9 @@ msgid "  -D, --pgdata=DATADIR            location for the subscriber data direct
 msgstr "  -D, --pgdata=DATADIR           ubicación del directorio de datos del suscriptor\n"
 
 #: pg_createsubscriber.c:294
-#, fuzzy, c-format
-#| msgid "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
+#, c-format
 msgid "  -l, --logdir=LOGDIR             location for the log directory\n"
-msgstr "  -X, --waldir=WALDIR       ubicación del directorio WAL\n"
+msgstr "  -l, --logdir=LOGDIR            ubicación del directorio de registro\n"
 
 #: pg_createsubscriber.c:295
 #, c-format
@@ -1650,16 +1642,14 @@ msgid "could not obtain database OID: got %d rows, expected %d row"
 msgstr "no se pudo obtener el OID de base de datos: se obtuvieron %d filas, se esperaban %d filas"
 
 #: pg_createsubscriber.c:845
-#, fuzzy, c-format
-#| msgid "could not drop publication \"%s\" in database \"%s\": %s"
+#, c-format
 msgid "could not find publication \"%s\" in database \"%s\": %s"
-msgstr "no se pudo eliminar la publicación «%s» en la base de datos «%s»: %s"
+msgstr "no se pudo encontrar la publicación «%s» en la base de datos «%s»: %s"
 
 #: pg_createsubscriber.c:899
-#, fuzzy, c-format
-#| msgid "creating publication \"%s\" in database \"%s\""
+#, c-format
 msgid "using existing publication \"%s\" in database \"%s\""
-msgstr "creando la publicación «%s» en la base de datos «%s»"
+msgstr "usando la publicación existente «%s» en la base de datos «%s»"
 
 #: pg_createsubscriber.c:938
 #, c-format
@@ -1688,10 +1678,9 @@ msgstr "no se pudo obtener configuraciones del publicador: %s"
 
 # FIXME see slot.c:779.  See also  postmaster.c:835
 #: pg_createsubscriber.c:1094
-#, fuzzy, c-format
-#| msgid "publisher requires \"wal_level\" >= \"logical\""
+#, c-format
 msgid "publisher requires \"wal_level\" >= \"replica\""
-msgstr "el publicador requiere «wal_level» >= «logical»"
+msgstr "el publicador requiere «wal_level» >= «replica»"
 
 #: pg_createsubscriber.c:1100
 #, c-format
@@ -1951,16 +1940,14 @@ msgid "dropping all existing publications in database \"%s\""
 msgstr "eliminando todas las publicaciones existentes en la base de datos «%s»"
 
 #: pg_createsubscriber.c:1964
-#, fuzzy, c-format
-#| msgid "dry-run: would create publication \"%s\" in database \"%s\""
+#, c-format
 msgid "dry-run: would preserve existing publication \"%s\" in database \"%s\""
-msgstr "modo de prueba: se crearía la publicación «%s» en la base de datos «%s»"
+msgstr "modo de prueba: se preservaría la publicación existente «%s» en la base de datos «%s»"
 
 #: pg_createsubscriber.c:1967
-#, fuzzy, c-format
-#| msgid "creating publication \"%s\" in database \"%s\""
+#, c-format
 msgid "preserving existing publication \"%s\" in database \"%s\""
-msgstr "creando la publicación «%s» en la base de datos «%s»"
+msgstr "preservando la publicación existente «%s» en la base de datos «%s»"
 
 #: pg_createsubscriber.c:2002
 #, c-format
@@ -2073,16 +2060,14 @@ msgid "could not open log file \"%s\": %m"
 msgstr "no se pudo abrir el archivo de registro «%s»: %m"
 
 #: pg_createsubscriber.c:2518
-#, fuzzy, c-format
-#| msgid "Running in debug mode.\n"
+#, c-format
 msgid "executing in dry-run mode"
-msgstr "Ejecutando en modo de depuración.\n"
+msgstr "ejecutando en modo de prueba"
 
 #: pg_createsubscriber.c:2519
-#, fuzzy, c-format
-#| msgid "no target directory specified"
+#, c-format
 msgid "The target directory will not be modified."
-msgstr "no se especificó un directorio de salida"
+msgstr "El directorio de destino no se modificará."
 
 #: pg_createsubscriber.c:2522
 #, c-format
@@ -2140,10 +2125,9 @@ msgid "The number of specified replication slot names (%d) must match the number
 msgstr "La cantidad de nombres de slots de replicación especificados (%d) debe coincidir con el número de nombres de bases de datos (%d)."
 
 #: pg_createsubscriber.c:2598
-#, fuzzy, c-format
-#| msgid "invalid object type \"%s\" specified for %s"
+#, c-format
 msgid "invalid object type \"%s\" specified for option %s"
-msgstr "tipo de objeto «%s» no válido especificado para %s"
+msgstr "tipo de objeto «%s» no válido especificado para la opción %s"
 
 #: pg_createsubscriber.c:2600
 #, c-format
@@ -2263,22 +2247,19 @@ msgid "      --drop-slot        drop the replication slot (for the slot's name s
 msgstr "      --drop-slot        eliminar un slot de replicación (para el nombre, vea --slot)\n"
 
 #: pg_receivewal.c:191
-#, fuzzy, c-format
-#| msgid "finished segment at %X/%X (timeline %u)"
+#, c-format
 msgid "finished segment at %X/%08X (timeline %u)"
-msgstr "terminó el segmento en %X/%X (timeline %u)"
+msgstr "terminó el segmento en %X/%08X (timeline %u)"
 
 #: pg_receivewal.c:198
-#, fuzzy, c-format
-#| msgid "stopped log streaming at %X/%X (timeline %u)"
+#, c-format
 msgid "stopped log streaming at %X/%08X (timeline %u)"
-msgstr "detenido el flujo de log en %X/%X (timeline %u)"
+msgstr "detenido el flujo de log en %X/%08X (timeline %u)"
 
 #: pg_receivewal.c:214
-#, fuzzy, c-format
-#| msgid "switched to timeline %u at %X/%X"
+#, c-format
 msgid "switched to timeline %u at %X/%08X"
-msgstr "cambiado al timeline %u en %X/%X"
+msgstr "cambiado al timeline %u en %X/%08X"
 
 #: pg_receivewal.c:224 pg_recvlogical.c:1086
 #, c-format
@@ -2346,10 +2327,9 @@ msgid "cannot check file \"%s\": compression with %s not supported by this build
 msgstr "no se puede verificar el archivo «%s»: la compresión con %s no está soportada en este servidor"
 
 #: pg_receivewal.c:578
-#, fuzzy, c-format
-#| msgid "starting log streaming at %X/%X (timeline %u)"
+#, c-format
 msgid "starting log streaming at %X/%08X (timeline %u)"
-msgstr "iniciando el flujo de log en %X/%X (timeline %u)"
+msgstr "iniciando el flujo de log en %X/%08X (timeline %u)"
 
 #: pg_receivewal.c:693 pg_recvlogical.c:811
 #, c-format
@@ -2490,10 +2470,9 @@ msgid "  -d, --dbname=DBNAME    database to connect to\n"
 msgstr "  -d, --dbname=BASE      base de datos a la cual conectarse\n"
 
 #: pg_recvlogical.c:148
-#, fuzzy, c-format
-#| msgid "confirming write up to %X/%X, flush to %X/%X (slot %s)"
+#, c-format
 msgid "confirming write up to %X/%08X, flush to %X/%08X (slot %s)"
-msgstr "confirmando escritura hasta %X/%X, fsync hasta %X/%X (slot %s)"
+msgstr "confirmando escritura hasta %X/%08X, flush hasta %X/%08X (slot %s)"
 
 #: pg_recvlogical.c:172 receivelog.c:360
 #, c-format
@@ -2501,10 +2480,9 @@ msgid "could not send feedback packet: %s"
 msgstr "no se pudo enviar el paquete de retroalimentación: %s"
 
 #: pg_recvlogical.c:245
-#, fuzzy, c-format
-#| msgid "starting log streaming at %X/%X (slot %s)"
+#, c-format
 msgid "starting log streaming at %X/%08X (slot %s)"
-msgstr "iniciando el flujo de log en %X/%X (slot %s)"
+msgstr "iniciando el flujo de log en %X/%08X (slot %s)"
 
 #: pg_recvlogical.c:291
 #, c-format
@@ -2598,16 +2576,14 @@ msgid "could not establish database-specific replication connection"
 msgstr "no se pudo establecer una conexión de replicación específica a una base de datos"
 
 #: pg_recvlogical.c:1089
-#, fuzzy, c-format
-#| msgid "end position %X/%X reached by keepalive"
+#, c-format
 msgid "end position %X/%08X reached by keepalive"
-msgstr "ubicación de término %X/%X alcanzado por «keep-alive»"
+msgstr "ubicación de término %X/%08X alcanzado por «keep-alive»"
 
 #: pg_recvlogical.c:1094
-#, fuzzy, c-format
-#| msgid "end position %X/%X reached by WAL record at %X/%X"
+#, c-format
 msgid "end position %X/%08X reached by WAL record at %X/%08X"
-msgstr "ubicación de término %X/%X alcanzado por registro WAL en %X/%X"
+msgstr "ubicación de término %X/%08X alcanzado por registro WAL en %X/%08X"
 
 #: receivelog.c:66
 #, c-format
@@ -2702,10 +2678,9 @@ msgid "server reported unexpected next timeline %u, following timeline %u"
 msgstr "el servidor reportó un timeline siguiente %u inesperado, a continuación del timeline %u"
 
 #: receivelog.c:638
-#, fuzzy, c-format
-#| msgid "server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X"
+#, c-format
 msgid "server stopped streaming timeline %u at %X/%08X, but reported next timeline %u to begin at %X/%08X"
-msgstr "el servidor paró la transmisión del timeline %u en %X/%X, pero reportó que el siguiente timeline %u comienza en %X/%X"
+msgstr "el servidor paró la transmisión del timeline %u en %X/%08X, pero reportó que el siguiente timeline %u comienza en %X/%08X"
 
 #: receivelog.c:678
 #, c-format
@@ -2856,19 +2831,3 @@ msgstr "unlink no soportado con compresión"
 #: walmethods.c:1293
 msgid "could not close compression stream"
 msgstr "no se pudo cerrar el flujo comprimido"
-
-#, c-format
-#~ msgid "tar file trailer exceeds 2 blocks"
-#~ msgstr "la terminación del archivo tar excede de 2 bloques"
-
-#, c-format
-#~ msgid "directory \"%s\" is not a database cluster directory"
-#~ msgstr "el directorio «%s» no es un directorio de base de datos"
-
-#, c-format
-#~ msgid "create replication slot \"%s\" on publisher"
-#~ msgstr "crear el slot de replicación «%s» en el publicador"
-
-#, c-format
-#~ msgid "publication \"%s\" specified more than once for --publication"
-#~ msgstr "la publicación «%s» fue especificada más de una vez para --publication"

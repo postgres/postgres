@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-07 12:50+0000\n"
+"POT-Creation-Date: 2026-11-09 11:50+0000\n"
 "PO-Revision-Date: 2025-11-08 19:07+0100\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -32,16 +32,14 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
 #: ../../common/fe_memutils.c:209
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu + %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu + %zu\n"
 
 #: ../../common/fe_memutils.c:228
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu * %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu * %zu\n"
 
 #: ../../common/restricted_token.c:168
 #, c-format
@@ -782,19 +780,12 @@ msgid "\"wal_level\" must be \"replica\" or \"logical\" but is set to \"%s\""
 msgstr "«wal_level» debe ser «logical», pero está definido a «%s»"
 
 #: check.c:2309
-#, fuzzy, c-format
-#| msgid "could not parse connection string: %s"
+#, c-format
 msgid "could not parse \"output_plugin_libraries\" setting '%s'"
-msgstr "no se pudo interpretar la cadena de conexión: %s"
+msgstr "no se pudo interpretar el parámetro «output_plugin_libraries» «%s»"
 
 #: check.c:2356
-#, fuzzy, c-format
-#| msgid ""
-#| "Your installation contains logical replication slots that cannot be upgraded.\n"
-#| "You can remove invalid slots and/or consume the pending WAL for other slots,\n"
-#| "and then restart the upgrade.\n"
-#| "A list of the problematic slots is in the file:\n"
-#| "    %s"
+#, c-format
 msgid ""
 "Your installation contains logical replication slots with plugins\n"
 "that are not allowed by the new cluster's output_plugin_libraries\n"
@@ -803,9 +794,10 @@ msgid ""
 "A list of the problematic slots is in the file:\n"
 "    %s"
 msgstr ""
-"Su instalación contiene slots de replicación lógica que no pueden ser actualizados.\n"
-"Puede eliminar slots inválidos y/o consumir el WAL pendiente en los otros slots,\n"
-"y reiniciar la actualización.\n"
+"Su instalación contiene slots de replicación lógica con “plugins”\n"
+"no permitidos en el parámetro output_plugin_libraries de la nueva\n"
+"instalación. Puede agregar “plugins” confiables en output_plugin_libraries\n"
+"y/o eliminar los slots afectados, y luego reiniciar la actualización.\n"
 "Un listado de los slots problemáticos está en el archivo:\n"
 "    %s"
 
@@ -2370,7 +2362,3 @@ msgstr ""
 "    %s\n"
 "cuando se ejecute en psql con el superusuario de la base de datos\n"
 "actualizará estas extensiones."
-
-#, c-format
-#~ msgid "Setting oldest multixact ID in new cluster"
-#~ msgstr "Seteando el multixact ID más antiguo en el nuevo clúster"

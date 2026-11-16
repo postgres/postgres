@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-07 12:52+0000\n"
+"POT-Creation-Date: 2026-11-09 11:52+0000\n"
 "PO-Revision-Date: 2026-02-07 09:58+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -150,16 +150,14 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
 #: ../../common/fe_memutils.c:209
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu + %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu + %zu\n"
 
 #: ../../common/fe_memutils.c:228
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu * %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu * %zu\n"
 
 #: ../../common/file_utils.c:69 ../../common/file_utils.c:370
 #: ../../common/file_utils.c:428 ../../common/file_utils.c:502
@@ -499,10 +497,9 @@ msgid "could not parse numeric array \"%s\": invalid character in number"
 msgstr "no se pudo interpretar el arreglo numérico «%s»: carácter no válido en número"
 
 #: common.c:1169 common.c:1239
-#, fuzzy, c-format
-#| msgid "could not parse numeric array \"%s\": too many numbers"
+#, c-format
 msgid "could not parse numeric array \"%s\": too few numbers"
-msgstr "no se pudo interpretar el arreglo numérico «%s»: demasiados números"
+msgstr "no se pudo interpretar el arreglo numérico «%s»: muy pocos números"
 
 #: compress_gzip.c:78 compress_gzip.c:192
 #, c-format
@@ -1095,10 +1092,9 @@ msgid "input file does not appear to be a valid archive (too short?)"
 msgstr "el archivo de entrada no parece ser un archivador válido (¿demasiado corto?)"
 
 #: pg_backup_archiver.c:2354
-#, fuzzy, c-format
-#| msgid "input file does not appear to be a valid archive"
+#, c-format
 msgid "input file does not appear to be a valid tar archive"
-msgstr "el archivo de entrada no parece ser un archivador válido"
+msgstr "el archivo de entrada no parece ser un archivo tar válido"
 
 #: pg_backup_archiver.c:2363
 #, c-format
@@ -2805,7 +2801,7 @@ msgstr "omitido nombre de rol que empieza con «pg_» (%s)"
 #: pg_dumpall.c:1132
 #, c-format
 msgid "ignoring role grant for missing role with OID %s"
-msgstr ""
+msgstr "ignorando un “grant” de rol para el rol faltante con OID %s"
 
 #: pg_dumpall.c:1170
 #, c-format
@@ -2816,18 +2812,18 @@ msgstr "no se pudo encontrar un orden legal para membresías del rol «%s»"
 #: pg_dumpall.c:1196
 #, c-format
 msgid "ignoring role grant to missing role with OID %s"
-msgstr ""
+msgstr "ignorando el “grant” de rol al rol faltante con OID %s"
 
 #. translator: %s represents a numeric role OID
 #: pg_dumpall.c:1211
 #, c-format
 msgid "grant of role \"%s\" to \"%s\" has invalid grantor OID %s"
-msgstr ""
+msgstr "el “grant” del rol «%s» a «%s» tiene otorgador no válido con OID %s"
 
 #: pg_dumpall.c:1213
 #, c-format
 msgid "This grant will be dumped without GRANTED BY."
-msgstr ""
+msgstr "Este “grant” será volcado sin GRANTED BY."
 
 #: pg_dumpall.c:1331
 #, c-format
@@ -3158,11 +3154,3 @@ msgstr ""
 "\n"
 "Si no se especifica un archivo de entrada, se usa la entrada estándar.\n"
 "\n"
-
-#, c-format
-#~ msgid "input file does not appear to be a valid archive"
-#~ msgstr "el archivo de entrada no parece ser un archivador válido"
-
-#, c-format
-#~ msgid "found orphaned pg_auth_members entry for role %s"
-#~ msgstr "se encontró entrada huérfana de pg_auth_members para el rol %s"

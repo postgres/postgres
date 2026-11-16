@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 19\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-05-21 02:56+0000\n"
-"PO-Revision-Date: 2026-05-21 14:36+0200\n"
+"POT-Creation-Date: 2026-10-26 14:23+0000\n"
+"PO-Revision-Date: 2026-10-26 17:40+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.9\n"
+"X-Generator: Poedit 3.10\n"
 
 #: ../../../src/common/logging.c:293 ../../../src/common/logging.c:295
 #, c-format
@@ -217,11 +217,20 @@ msgstr "doit spécifier le plus ancien journal de transactions conservé"
 msgid "too many command-line arguments"
 msgstr "trop d'arguments en ligne de commande"
 
-#: pg_archivecleanup.c:379
+#: pg_archivecleanup.c:380
 #, c-format
-msgid ""
-"Executing in dry-run mode.\n"
-"No files will be removed."
-msgstr ""
-"Exécution en mode test.\n"
-"Aucun fichier ne sera supprimé."
+msgid "executing in dry-run mode"
+msgstr "lancé en mode test"
+
+#: pg_archivecleanup.c:381
+#, c-format
+msgid "No files will be removed."
+msgstr "Aucun fichier ne sera supprimé."
+
+#, c-format
+#~ msgid ""
+#~ "Executing in dry-run mode.\n"
+#~ "No files will be removed."
+#~ msgstr ""
+#~ "Exécution en mode test.\n"
+#~ "Aucun fichier ne sera supprimé."

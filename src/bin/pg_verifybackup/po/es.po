@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-11-07 12:48+0000\n"
-"PO-Revision-Date: 2025-09-21 10:28+0200\n"
+"POT-Creation-Date: 2026-11-13 10:18+0000\n"
+"PO-Revision-Date: 2026-11-14 20:22+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -127,16 +127,14 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
 #: ../../common/fe_memutils.c:209
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu + %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu + %zu\n"
 
 #: ../../common/fe_memutils.c:228
-#, fuzzy, c-format
-#| msgid "invalid large object write request size: %d"
+#, c-format
 msgid "invalid memory allocation request size %zu * %zu\n"
-msgstr "tamaño de petición de escritura de objeto grande no válido: %d"
+msgstr "tamaño de petición de memoria no válido %zu * %zu\n"
 
 #: ../../common/jsonapi.c:2484
 msgid "Recursive descent parser cannot use incremental lexer."
@@ -450,17 +448,15 @@ msgstr "no se pudo restablecer el flujo comprimido"
 
 #: ../../fe_utils/astreamer_gzip.c:364 ../../fe_utils/astreamer_lz4.c:407
 #: ../../fe_utils/astreamer_zstd.c:385
-#, fuzzy, c-format
-#| msgid "could not reset compression stream"
+#, c-format
 msgid "could not decompress data: compressed stream is empty"
-msgstr "no se pudo restablecer el flujo comprimido"
+msgstr "no se pudo descomprimir los datos: el flujo comprimido está vacío"
 
 #: ../../fe_utils/astreamer_gzip.c:366 ../../fe_utils/astreamer_lz4.c:409
 #: ../../fe_utils/astreamer_zstd.c:387
-#, fuzzy, c-format
-#| msgid "could not reset compression stream"
+#, c-format
 msgid "could not decompress data: compressed stream is incomplete"
-msgstr "no se pudo restablecer el flujo comprimido"
+msgstr "no se pudo descomprimir los datos: el flujo comprimido está incompleto"
 
 #: ../../fe_utils/astreamer_lz4.c:98
 #, c-format
@@ -494,10 +490,9 @@ msgid "unexpected state while parsing tar archive"
 msgstr "se encontró un estado inesperado mientras se interpretaba el archivo tar"
 
 #: ../../fe_utils/astreamer_tar.c:300
-#, fuzzy, c-format
-#| msgid "input file does not appear to be a valid archive"
+#, c-format
 msgid "input file does not appear to be a valid tar archive"
-msgstr "el archivo de entrada no parece ser un archivador válido"
+msgstr "el archivo de entrada no parece ser un archivo tar válido"
 
 #: ../../fe_utils/astreamer_tar.c:307
 #, c-format
@@ -505,16 +500,14 @@ msgid "tar member has empty name"
 msgstr "miembro de tar tiene nombre vacío"
 
 #: ../../fe_utils/astreamer_tar.c:309
-#, fuzzy, c-format
-#| msgid "tar member has empty name"
+#, c-format
 msgid "tar member has unsafe path name: \"%s\""
-msgstr "miembro de tar tiene nombre vacío"
+msgstr "miembro de tar tiene nombre de ruta no segura: «%s»"
 
 #: ../../fe_utils/astreamer_tar.c:332
-#, fuzzy, c-format
-#| msgid "multidimensional arrays are not supported"
+#, c-format
 msgid "pax extensions to tar format are not supported"
-msgstr "los arrays multidimensionales no están soportados"
+msgstr "las extensiones pax al formato tar no están soportadas"
 
 #: ../../fe_utils/astreamer_tar.c:361
 #, c-format
@@ -652,16 +645,14 @@ msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
 #: pg_verifybackup.c:379
-#, fuzzy, c-format
-#| msgid "case not found"
+#, c-format
 msgid "WAL archive not found"
-msgstr "caso no encontrado"
+msgstr "archivo WAL no encontrado"
 
 #: pg_verifybackup.c:380
-#, fuzzy, c-format
-#| msgid "You must use -n/--no-parse-wal when verifying a tar-format backup."
+#, c-format
 msgid "Specify the correct path using the option -w/--wal-path.  Or you must use -n/--no-parse-wal when verifying a tar-format backup."
-msgstr "Debe usar -n/--no-parse-wal al verificar un respaldo de formato tar."
+msgstr "Especifique la ruta correcta usando la opción -w/--wal-path.  O debe usar -n/--no-parse-wal al verificar un respaldo de formato tar."
 
 #: pg_verifybackup.c:398
 #, c-format
@@ -834,16 +825,14 @@ msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums        omitir la verificación de la suma de comprobación\n"
 
 #: pg_verifybackup.c:1405
-#, fuzzy, c-format
-#| msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
+#, c-format
 msgid "  -w, --wal-path=PATH         use specified path for WAL files\n"
-msgstr "  -w, --wal-directory=PATH    utilizar la ruta especificada para los archivos WAL\n"
+msgstr "  -w, --wal-path=RUTA         utilizar la ruta especificada para los archivos WAL\n"
 
 #: pg_verifybackup.c:1406
-#, fuzzy, c-format
-#| msgid "      --two-phase        (same as --enable-two-phase, deprecated)\n"
+#, c-format
 msgid "      --wal-directory=PATH    (same as --wal-path, deprecated)\n"
-msgstr "      --two-phase        (lo mismo que --enable-two-phase; obsoleto)\n"
+msgstr "      --wal-directory=RUTA    (lo mismo que --wal-path; obsoleto)\n"
 
 #: pg_verifybackup.c:1407
 #, c-format
@@ -868,11 +857,3 @@ msgstr ""
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Sitio web de %s: <%s>\n"
-
-#, c-format
-#~ msgid "tar file trailer exceeds 2 blocks"
-#~ msgstr "la terminación del archivo tar excede de 2 bloques"
-
-#, c-format
-#~ msgid "pg_waldump cannot read tar files"
-#~ msgstr "pg_waldump no puede leer archivos tar"

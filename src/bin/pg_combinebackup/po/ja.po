@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL 19)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2026-09-15 10:55+0900\n"
-"PO-Revision-Date: 2026-09-15 14:17+0900\n"
+"POT-Creation-Date: 2026-10-28 15:41+0900\n"
+"PO-Revision-Date: 2026-10-30 17:07+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: \n"
 "Language: ja\n"
@@ -43,20 +43,20 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "ファイル\"%s\"を読み込み用にオープンできませんでした: %m"
 
 #: ../../common/controldata_utils.c:111 copy_file.c:164 load_manifest.c:165
-#: load_manifest.c:204 pg_combinebackup.c:1378 reconstruct.c:541
+#: load_manifest.c:204 pg_combinebackup.c:1378 reconstruct.c:547
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ファイル\"%s\"の読み込みに失敗しました: %m"
 
 #: ../../common/controldata_utils.c:120 load_manifest.c:167
-#: pg_combinebackup.c:1380 reconstruct.c:543
+#: pg_combinebackup.c:1380 reconstruct.c:549
 #, c-format
 msgid "could not read file \"%s\": read %zd of %zu"
 msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$zuバイト中%2$zdバイト読み込みました"
 
 #: ../../common/controldata_utils.c:133 ../../common/controldata_utils.c:281
 #: backup_label.c:176 copy_file.c:71 pg_combinebackup.c:560 reconstruct.c:368
-#: reconstruct.c:744 write_manifest.c:187
+#: reconstruct.c:750 write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "ファイル\"%s\"をクローズできませんでした: %m"
@@ -82,13 +82,13 @@ msgstr ""
 #: ../../common/file_utils.c:370 ../../common/file_utils.c:428
 #: ../../common/file_utils.c:502 backup_label.c:144 copy_file.c:69
 #: copy_file.c:153 copy_file.c:185 copy_file.c:189 copy_file.c:239
-#: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:545 reconstruct.c:522
-#: reconstruct.c:639 write_manifest.c:250
+#: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:545 reconstruct.c:528
+#: reconstruct.c:645 write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
 
-#: ../../common/controldata_utils.c:250 backup_label.c:162 reconstruct.c:763
+#: ../../common/controldata_utils.c:250 backup_label.c:162 reconstruct.c:769
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -121,22 +121,22 @@ msgid "OpenSSL failure"
 msgstr "OpenSSLのエラー"
 
 #: ../../common/fe_memutils.c:41 ../../common/fe_memutils.c:81
-#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:167
+#: ../../common/fe_memutils.c:104 ../../common/fe_memutils.c:166
 #, c-format
 msgid "out of memory\n"
 msgstr "メモリ不足です\n"
 
-#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:159
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:158
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "nullポインタは複製できません(内部エラー)\n"
 
-#: ../../common/fe_memutils.c:209
+#: ../../common/fe_memutils.c:208
 #, c-format
 msgid "invalid memory allocation request size %zu + %zu\n"
 msgstr "メモリ割り当て要求サイズ %zu + %zu が不正です\n"
 
-#: ../../common/fe_memutils.c:228
+#: ../../common/fe_memutils.c:227
 #, c-format
 msgid "invalid memory allocation request size %zu * %zu\n"
 msgstr "メモリ割り当て要求サイズ %zu * %zu が不正です\n"
@@ -498,13 +498,13 @@ msgstr "%s: %sが見つかりませんでした"
 msgid "%s: %s requires %s"
 msgstr "%s: %sは%sを必要とします"
 
-#: backup_label.c:164 reconstruct.c:765 write_manifest.c:262
+#: backup_label.c:164 reconstruct.c:771 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %zd of %zu"
 msgstr "ファイル\"%1$s\"の書き込みができませんでした: %3$zuバイト中%2$zdバイト書き込みました"
 
-#: backup_label.c:168 copy_file.c:160 copy_file.c:207 reconstruct.c:725
-#: reconstruct.c:771 write_manifest.c:270
+#: backup_label.c:168 copy_file.c:160 copy_file.c:207 reconstruct.c:731
+#: reconstruct.c:777 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "ファイル\"%s\"のチェックサムの更新ができませんでした"
@@ -519,7 +519,7 @@ msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 msgid "could not write to file \"%s\", offset %zu: wrote %zd of %zu"
 msgstr "ファイル \"%1$s\"、オフセット%2$zuで書き込みができませんでした: %4$zuバイト中%3$zdバイト書き込みました"
 
-#: copy_file.c:213 reconstruct.c:788
+#: copy_file.c:213 reconstruct.c:794
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "ファイル\"%s\"から読み取れませんでした: %m"
@@ -544,12 +544,12 @@ msgstr "ファイル\"%s\"の\"%s\"へのクローニング中のエラー: %s"
 msgid "file cloning not supported on this platform"
 msgstr "このプラットフォームではファイルのクローンはサポートされません"
 
-#: copy_file.c:292 reconstruct.c:705
+#: copy_file.c:292 reconstruct.c:711
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "\"%s\"の\"%s\"へのファイル範囲のコピー中のエラー: %m"
 
-#: copy_file.c:299 pg_combinebackup.c:276 reconstruct.c:728
+#: copy_file.c:299 pg_combinebackup.c:276 reconstruct.c:734
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "このプラットフォームではcopy_file_rangeはサポートされません"
@@ -931,12 +931,17 @@ msgstr "ファイル\"%s\"のブロック数%uがセグメントサイズ%uを�
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "ファイル\"%s\"の切り詰めブロック長%uがセグメントサイズ%uを超えています"
 
-#: reconstruct.c:708
+#: reconstruct.c:489
+#, c-format
+msgid "file \"%s\" has block number %u in excess of segment size %u"
+msgstr "ファイル\"%s\"のブロック数%uがセグメントサイズ%uを超えています"
+
+#: reconstruct.c:714
 #, c-format
 msgid "unexpected end of file while copying file range from \"%s\" to \"%s\""
 msgstr "\"%s\"の\"%s\"へのファイル範囲のコピー中に予期しないファイル終端"
 
-#: reconstruct.c:790
+#: reconstruct.c:796
 #, c-format
 msgid "could not read from file \"%s\", offset %lld: read %zd of %zu"
 msgstr "ファイル \"%1$s\"、オフセット%2$lldから読み取れませんでした: %4$zuバイト中%3$zdバイト読み取りました"
