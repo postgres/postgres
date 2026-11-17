@@ -871,6 +871,13 @@
   boot_val => 'true',
 },
 
+{ name => 'enable_async_merge_append', type => 'bool', context => 'PGC_USERSET', group => 'QUERY_TUNING_METHOD',
+  short_desc => 'Enables the planner\'s use of async merge-append plans.',
+  flags => 'GUC_EXPLAIN',
+  variable => 'enable_async_merge_append',
+  boot_val => 'true',
+},
+
 { name => 'enable_bitmapscan', type => 'bool', context => 'PGC_USERSET', group => 'QUERY_TUNING_METHOD',
   short_desc => 'Enables the planner\'s use of bitmap-scan plans.',
   flags => 'GUC_EXPLAIN',

@@ -1887,7 +1887,8 @@ postgresReScanForeignScan(ForeignScanState *node)
 
 	/*
 	 * If the node is async-capable, any asynchronous fetch made for it should
-	 * have been processed before we get here (see ExecAppendAsyncReset()).
+	 * have been processed before we get here (see ExecAppendAsyncReset() and
+	 * ExecMergeAppendAsyncReset()).
 	 */
 	Assert(!fsstate->async_capable || !fsstate->conn_state->pendingAreq ||
 		   fsstate->conn_state->pendingAreq->requestee != (PlanState *) node);
@@ -8663,11 +8664,13 @@ postgresForeignAsyncConfigureWait(AsyncRequest *areq)
 	ForeignScanState *node = (ForeignScanState *) areq->requestee;
 	PgFdwScanState *fsstate = (PgFdwScanState *) node->fdw_state;
 	AsyncRequest *pendingAreq = fsstate->conn_state->pendingAreq;
-	AppendState *requestor = (AppendState *) areq->requestor;
-	WaitEventSet *set = requestor->as_eventset;
+	PlanState  *requestor = areq->requestor;
+	WaitEventSet *set = ExecAsyncGetRequestorEventSet(requestor);
 
 	/* This should not be called unless callback_pending */
 	Assert(areq->callback_pending);
+	/* The requestor should be an Append or MergeAppend node */
+	Assert(IsA(requestor, AppendState) || IsA(requestor, MergeAppendState));
 
 	/*
 	 * If process_pending_request() has been invoked on the given request
@@ -8688,37 +8691,48 @@ postgresForeignAsyncConfigureWait(AsyncRequest *areq)
 	/* The core code would have registered postmaster death event */
 	Assert(GetNumRegisteredWaitEvents(set) >= 1);
 
-	/* Begin an asynchronous data fetch if not already done */
+	/* Begin an asynchronous data fetch if appropriate */
 	if (!pendingAreq)
 		fetch_more_data_begin(areq);
-	else if (pendingAreq->requestor != areq->requestor)
+	else if (pendingAreq->requestor != requestor)
 	{
 		/*
-		 * This is the case when the in-process request was made by another
-		 * Append.  Note that it might be useless to process the request made
-		 * by that Append, because the query might not need tuples from that
-		 * Append anymore; so we avoid processing it to begin a fetch for the
-		 * given request if possible.  If there are any child subplans of the
-		 * same parent that are ready for new requests, skip the given
-		 * request.  Likewise, if there are any configured events other than
-		 * the postmaster death event, skip it.  Otherwise, process the
-		 * in-process request, then begin a fetch to configure the event
-		 * below, because we might otherwise end up with no configured events
-		 * other than the postmaster death event.
+		 * This is the case when an asynchronous request made by another
+		 * requestor is currently in-progress.  If our requestor is an Append,
+		 * consider skipping configuration of the file descriptor event to
+		 * improve concurrency.  If it's a MergeAppend, it cannot make
+		 * progress unless the given request returns a result; in which case
+		 * configure the file descriptor event below.
 		 */
-		if (!bms_is_empty(requestor->as_needrequest))
-			return;
-		if (GetNumRegisteredWaitEvents(set) > 1)
-			return;
+		if (IsA(requestor, AppendState))
+		{
+			/*
+			 * If the Append node already has results that are ready for new
+			 * requests or it has already configured file descriptor events
+			 * for other subplans, skip the configuration.
+			 */
+			if (!bms_is_empty(((AppendState *) requestor)->as_needrequest))
+				return;
+			if (GetNumRegisteredWaitEvents(set) > 1)
+				return;
+		}
+
+		/*
+		 * Otherwise, process the in-progress request, begin an asynchronous
+		 * data fetch for the given request, and configure the file descriptor
+		 * event below.
+		 */
 		process_pending_request(pendingAreq);
 		fetch_more_data_begin(areq);
 	}
 	else if (pendingAreq->requestee != areq->requestee)
 	{
 		/*
-		 * This is the case when the in-process request was made by the same
-		 * parent but for a different child.  Since we configure only the
-		 * event for the request made for that child, skip the given request.
+		 * This is the case when an asynchronous request made by the requestor
+		 * for another subplan is currently in-progress.  Skip the
+		 * configuration even in the MergeAppend case; in that case just defer
+		 * the configuration until the caller drains the request(s) for
+		 * preceding subplan(s).
 		 */
 		return;
 	}

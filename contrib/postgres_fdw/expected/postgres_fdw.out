@@ -12435,12 +12435,104 @@ SELECT * FROM result_tbl ORDER BY a;
 (2 rows)
 
 DELETE FROM result_tbl;
+-- MergeAppend cases
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM async_pt WHERE b % 100 = 0 ORDER BY b, a;
+                                                          QUERY PLAN                                                          
+------------------------------------------------------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: async_pt.b, async_pt.a
+   ->  Async Foreign Scan on public.async_p1 async_pt_1
+         Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+         Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE (((b % 100) = 0)) ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+   ->  Async Foreign Scan on public.async_p2 async_pt_2
+         Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+         Remote SQL: SELECT a, b, c FROM public.base_tbl2 WHERE (((b % 100) = 0)) ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+(8 rows)
+
+SELECT * FROM async_pt WHERE b % 100 = 0 ORDER BY b, a;
+  a   |  b  |  c   
+------+-----+------
+ 1000 |   0 | 0000
+ 2000 |   0 | 0000
+ 1100 | 100 | 0100
+ 2100 | 100 | 0100
+ 1200 | 200 | 0200
+ 2200 | 200 | 0200
+ 1300 | 300 | 0300
+ 2300 | 300 | 0300
+ 1400 | 400 | 0400
+ 2400 | 400 | 0400
+ 1500 | 500 | 0500
+ 2500 | 500 | 0500
+ 1600 | 600 | 0600
+ 2600 | 600 | 0600
+ 1700 | 700 | 0700
+ 2700 | 700 | 0700
+ 1800 | 800 | 0800
+ 2800 | 800 | 0800
+ 1900 | 900 | 0900
+ 2900 | 900 | 0900
+(20 rows)
+
+-- Test that steady-state execution of an async MergeAppend re-fetches from
+-- an async subplan instead of just consuming its initial batch and treating
+-- exhaustion of that batch as end-of-data.  Each partition here has 200
+-- matching rows, more than the FDW's default fetch_size (100), so getting
+-- the right count requires more than one fetch from at least one partition
+-- after the initial heap fill.  The LIMIT keeps the ORDER BY (and therefore
+-- the MergeAppend) from being optimized away in the subquery.
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT count(*) FROM (SELECT * FROM async_pt ORDER BY b, a LIMIT 100000) ss;
+                                                  QUERY PLAN                                                   
+---------------------------------------------------------------------------------------------------------------
+ Aggregate
+   Output: count(*)
+   ->  Limit
+         Output: async_pt.a, async_pt.b, NULL::text
+         ->  Merge Append
+               Sort Key: async_pt.b, async_pt.a
+               ->  Async Foreign Scan on public.async_p1 async_pt_1
+                     Output: async_pt_1.a, async_pt_1.b, NULL::text
+                     Remote SQL: SELECT a, b FROM public.base_tbl1 ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+               ->  Async Foreign Scan on public.async_p2 async_pt_2
+                     Output: async_pt_2.a, async_pt_2.b, NULL::text
+                     Remote SQL: SELECT a, b FROM public.base_tbl2 ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+(12 rows)
+
+SELECT count(*) FROM (SELECT * FROM async_pt ORDER BY b, a LIMIT 100000) ss;
+ count 
+-------
+   400
+(1 row)
+
 -- Test error handling, if accessing one of the foreign partitions errors out
 CREATE FOREIGN TABLE async_p_broken PARTITION OF async_pt FOR VALUES FROM (10000) TO (10001)
   SERVER loopback OPTIONS (table_name 'non_existent_table');
 SELECT * FROM async_pt;
 ERROR:  relation "public.non_existent_table" does not exist
 CONTEXT:  remote SQL command: SELECT a, b, c FROM public.non_existent_table
+-- MergeAppend cases
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM async_pt ORDER BY b, a;
+                                                  QUERY PLAN                                                   
+---------------------------------------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: async_pt.b, async_pt.a
+   ->  Async Foreign Scan on public.async_p1 async_pt_1
+         Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+         Remote SQL: SELECT a, b, c FROM public.base_tbl1 ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+   ->  Async Foreign Scan on public.async_p2 async_pt_2
+         Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+         Remote SQL: SELECT a, b, c FROM public.base_tbl2 ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+   ->  Async Foreign Scan on public.async_p_broken async_pt_3
+         Output: async_pt_3.a, async_pt_3.b, async_pt_3.c
+         Remote SQL: SELECT a, b, c FROM public.non_existent_table ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+(11 rows)
+
+SELECT * FROM async_pt ORDER BY b, a;
+ERROR:  relation "public.non_existent_table" does not exist
+CONTEXT:  remote SQL command: SELECT a, b, c FROM public.non_existent_table ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
 DROP FOREIGN TABLE async_p_broken;
 -- Check case where multiple partitions use the same connection
 CREATE TABLE base_tbl3 (a int, b int, c text);
@@ -12544,13 +12636,77 @@ SELECT o.x FROM (VALUES (2505), (3505)) o(x), LATERAL (SELECT a FROM async_pt WH
  3505
 (2 rows)
 
+-- MergeAppend cases
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM async_pt WHERE b === 505 ORDER BY b, a;
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: async_pt.b, async_pt.a
+   ->  Async Foreign Scan on public.async_p1 async_pt_1
+         Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+         Filter: (async_pt_1.b === 505)
+         Remote SQL: SELECT a, b, c FROM public.base_tbl1 ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+   ->  Async Foreign Scan on public.async_p2 async_pt_2
+         Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+         Filter: (async_pt_2.b === 505)
+         Remote SQL: SELECT a, b, c FROM public.base_tbl2 ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+   ->  Async Foreign Scan on public.async_p3 async_pt_3
+         Output: async_pt_3.a, async_pt_3.b, async_pt_3.c
+         Filter: (async_pt_3.b === 505)
+         Remote SQL: SELECT a, b, c FROM public.base_tbl3 ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+(14 rows)
+
+SELECT * FROM async_pt WHERE b === 505 ORDER BY b, a;
+  a   |  b  |  c   
+------+-----+------
+ 1505 | 505 | 0505
+ 2505 | 505 | 0505
+ 3505 | 505 | 0505
+(3 rows)
+
+-- Test ExecMergeAppendAsyncReset code path that asserts async requests made
+-- for subplans aren't pending anymore at ReScan
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT o.x, s.b FROM (VALUES (2505), (3505)) o(x), LATERAL (SELECT b FROM async_pt WHERE a = 1505 OR a = o.x ORDER BY b LIMIT 1) s ORDER BY o.x;
+                                                                QUERY PLAN                                                                
+------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Output: "*VALUES*".column1, async_pt.b
+   Sort Key: "*VALUES*".column1
+   ->  Nested Loop
+         Output: "*VALUES*".column1, async_pt.b
+         ->  Values Scan on "*VALUES*"
+               Output: "*VALUES*".column1
+         ->  Limit
+               Output: async_pt.b
+               ->  Merge Append
+                     Sort Key: async_pt.b
+                     ->  Async Foreign Scan on public.async_p1 async_pt_1
+                           Output: async_pt_1.b
+                           Remote SQL: SELECT b FROM public.base_tbl1 WHERE (((a = 1505) OR (a = $1::integer))) ORDER BY b ASC NULLS LAST
+                     ->  Async Foreign Scan on public.async_p2 async_pt_2
+                           Output: async_pt_2.b
+                           Remote SQL: SELECT b FROM public.base_tbl2 WHERE (((a = 1505) OR (a = $1::integer))) ORDER BY b ASC NULLS LAST
+                     ->  Async Foreign Scan on public.async_p3 async_pt_3
+                           Output: async_pt_3.b
+                           Remote SQL: SELECT b FROM public.base_tbl3 WHERE (((a = 1505) OR (a = $1::integer))) ORDER BY b ASC NULLS LAST
+(20 rows)
+
+SELECT o.x, s.b FROM (VALUES (2505), (3505)) o(x), LATERAL (SELECT b FROM async_pt WHERE a = 1505 OR a = o.x ORDER BY b LIMIT 1) s ORDER BY o.x;
+  x   |  b  
+------+-----
+ 2505 | 505
+ 3505 | 505
+(2 rows)
+
+DROP FOREIGN TABLE async_p3;
+DROP TABLE base_tbl3;
 -- Test COPY TO when foreign table is partition
 COPY async_pt TO stdout; --error
 ERROR:  cannot copy from foreign table "async_p1"
 DETAIL:  Partition "async_p1" is a foreign table in partitioned table "async_pt".
 HINT:  Try the COPY (SELECT ...) TO variant.
-DROP FOREIGN TABLE async_p3;
-DROP TABLE base_tbl3;
 -- Check case where the partitioned table has local/remote partitions
 CREATE TABLE async_p3 PARTITION OF async_pt FOR VALUES FROM (3000) TO (4000);
 INSERT INTO async_p3 SELECT 3000 + i, i, to_char(i, 'FM0000') FROM generate_series(0, 999, 5) i;
@@ -12584,7 +12740,38 @@ SELECT * FROM result_tbl ORDER BY a;
 (3 rows)
 
 DELETE FROM result_tbl;
--- partitionwise joins
+-- MergeAppend cases
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM async_pt WHERE b === 505 ORDER BY b, a;
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: async_pt.b, async_pt.a
+   ->  Async Foreign Scan on public.async_p1 async_pt_1
+         Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+         Filter: (async_pt_1.b === 505)
+         Remote SQL: SELECT a, b, c FROM public.base_tbl1 ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+   ->  Async Foreign Scan on public.async_p2 async_pt_2
+         Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+         Filter: (async_pt_2.b === 505)
+         Remote SQL: SELECT a, b, c FROM public.base_tbl2 ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+   ->  Sort
+         Output: async_pt_3.a, async_pt_3.b, async_pt_3.c
+         Sort Key: async_pt_3.b, async_pt_3.a
+         ->  Seq Scan on public.async_p3 async_pt_3
+               Output: async_pt_3.a, async_pt_3.b, async_pt_3.c
+               Filter: (async_pt_3.b === 505)
+(16 rows)
+
+SELECT * FROM async_pt WHERE b === 505 ORDER BY b, a;
+  a   |  b  |  c   
+------+-----+------
+ 1505 | 505 | 0505
+ 2505 | 505 | 0505
+ 3505 | 505 | 0505
+(3 rows)
+
+-- Test partitionwise joins
 SET enable_partitionwise_join TO true;
 CREATE TABLE join_tbl (a1 int, b1 int, c1 text, a2 int, b2 int, c2 text);
 EXPLAIN (VERBOSE, COSTS OFF)
@@ -12714,7 +12901,7 @@ SELECT * FROM join_tbl ORDER BY a1;
 
 DELETE FROM join_tbl;
 RESET enable_partitionwise_join;
--- Test rescan of an async Append node with do_exec_prune=false
+-- Test rescan with (no) parameter changes
 SET enable_hashjoin TO false;
 EXPLAIN (VERBOSE, COSTS OFF)
 INSERT INTO join_tbl SELECT * FROM async_p1 t1, async_pt t2 WHERE t1.a = t2.a AND t1.b = t2.b AND t1.b % 100 = 0;
@@ -12756,6 +12943,87 @@ SELECT * FROM join_tbl ORDER BY a1;
 
 DELETE FROM join_tbl;
 RESET enable_hashjoin;
+-- MergeAppend cases
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT
+	ARRAY(SELECT f.i FROM (SELECT b FROM async_pt ORDER BY b) f(i) ORDER BY f.i LIMIT 10)
+FROM generate_series(1, 3) g(i);
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
+ Function Scan on pg_catalog.generate_series g
+   Output: (InitPlan array_1).col1
+   Function Call: generate_series(1, 3)
+   InitPlan array_1
+     ->  Limit
+           Output: async_pt.b
+           ->  Merge Append
+                 Sort Key: async_pt.b
+                 ->  Async Foreign Scan on public.async_p1 async_pt_1
+                       Output: async_pt_1.b
+                       Remote SQL: SELECT b FROM public.base_tbl1 ORDER BY b ASC NULLS LAST
+                 ->  Async Foreign Scan on public.async_p2 async_pt_2
+                       Output: async_pt_2.b
+                       Remote SQL: SELECT b FROM public.base_tbl2 ORDER BY b ASC NULLS LAST
+                 ->  Sort
+                       Output: async_pt_3.b
+                       Sort Key: async_pt_3.b
+                       ->  Seq Scan on public.async_p3 async_pt_3
+                             Output: async_pt_3.b
+(19 rows)
+
+SELECT
+	ARRAY(SELECT f.i FROM (SELECT b FROM async_pt ORDER BY b) f(i) ORDER BY f.i LIMIT 10)
+FROM generate_series(1, 3) g(i);
+           array           
+---------------------------
+ {0,0,0,5,5,5,10,10,10,15}
+ {0,0,0,5,5,5,10,10,10,15}
+ {0,0,0,5,5,5,10,10,10,15}
+(3 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT
+	ARRAY(SELECT f.i FROM (SELECT b + g.i FROM async_pt WHERE a > g.i ORDER BY b) f(i) ORDER BY f.i LIMIT 10)
+FROM generate_series(1, 3) g(i);
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Function Scan on pg_catalog.generate_series g
+   Output: ARRAY(SubPlan array_1)
+   Function Call: generate_series(1, 3)
+   SubPlan array_1
+     ->  Limit
+           Output: f.i
+           ->  Sort
+                 Output: f.i
+                 Sort Key: f.i
+                 ->  Subquery Scan on f
+                       Output: f.i
+                       ->  Merge Append
+                             Sort Key: async_pt.b
+                             ->  Async Foreign Scan on public.async_p1 async_pt_1
+                                   Output: (async_pt_1.b + g.i), async_pt_1.b
+                                   Remote SQL: SELECT b FROM public.base_tbl1 WHERE ((a > $1::integer)) ORDER BY b ASC NULLS LAST
+                             ->  Async Foreign Scan on public.async_p2 async_pt_2
+                                   Output: (async_pt_2.b + g.i), async_pt_2.b
+                                   Remote SQL: SELECT b FROM public.base_tbl2 WHERE ((a > $1::integer)) ORDER BY b ASC NULLS LAST
+                             ->  Sort
+                                   Output: ((async_pt_3.b + g.i)), async_pt_3.b
+                                   Sort Key: async_pt_3.b
+                                   ->  Seq Scan on public.async_p3 async_pt_3
+                                         Output: (async_pt_3.b + g.i), async_pt_3.b
+                                         Filter: (async_pt_3.a > g.i)
+(25 rows)
+
+SELECT
+	ARRAY(SELECT f.i FROM (SELECT b + g.i FROM async_pt WHERE a > g.i ORDER BY b) f(i) ORDER BY f.i LIMIT 10)
+FROM generate_series(1, 3) g(i);
+           array           
+---------------------------
+ {1,1,1,6,6,6,11,11,11,16}
+ {2,2,2,7,7,7,12,12,12,17}
+ {3,3,3,8,8,8,13,13,13,18}
+(3 rows)
+
 -- Test interaction of async execution with plan-time partition pruning
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT * FROM async_pt WHERE a < 3000;
@@ -12778,6 +13046,21 @@ SELECT * FROM async_pt WHERE a < 2000;
    Output: async_pt.a, async_pt.b, async_pt.c
    Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((a < 2000))
 (3 rows)
+
+-- MergeAppend cases
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM async_pt WHERE a < 3000 ORDER BY b, a;
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: async_pt.b, async_pt.a
+   ->  Async Foreign Scan on public.async_p1 async_pt_1
+         Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+         Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((a < 3000)) ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+   ->  Async Foreign Scan on public.async_p2 async_pt_2
+         Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+         Remote SQL: SELECT a, b, c FROM public.base_tbl2 WHERE ((a < 3000)) ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+(8 rows)
 
 -- Test interaction of async execution with run-time partition pruning
 SET plan_cache_mode TO force_generic_plan;
@@ -12830,6 +13113,52 @@ SELECT * FROM result_tbl ORDER BY a;
 (1 row)
 
 DELETE FROM result_tbl;
+-- MergeAppend cases
+PREPARE async_pt_merge_query (int, int) AS
+  SELECT * FROM async_pt WHERE a < $1 AND b === $2 ORDER BY b, a;
+EXPLAIN (VERBOSE, COSTS OFF)
+EXECUTE async_pt_merge_query (3000, 505);
+                                                           QUERY PLAN                                                           
+--------------------------------------------------------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: async_pt.b, async_pt.a
+   Subplans Removed: 1
+   ->  Async Foreign Scan on public.async_p1 async_pt_1
+         Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+         Filter: (async_pt_1.b === $2)
+         Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((a < $1::integer)) ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+   ->  Async Foreign Scan on public.async_p2 async_pt_2
+         Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+         Filter: (async_pt_2.b === $2)
+         Remote SQL: SELECT a, b, c FROM public.base_tbl2 WHERE ((a < $1::integer)) ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+(11 rows)
+
+EXECUTE async_pt_merge_query (3000, 505);
+  a   |  b  |  c   
+------+-----+------
+ 1505 | 505 | 0505
+ 2505 | 505 | 0505
+(2 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+EXECUTE async_pt_merge_query (2000, 505);
+                                                           QUERY PLAN                                                           
+--------------------------------------------------------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: async_pt.b, async_pt.a
+   Subplans Removed: 2
+   ->  Async Foreign Scan on public.async_p1 async_pt_1
+         Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+         Filter: (async_pt_1.b === $2)
+         Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((a < $1::integer)) ORDER BY b ASC NULLS LAST, a ASC NULLS LAST
+(7 rows)
+
+EXECUTE async_pt_merge_query (2000, 505);
+  a   |  b  |  c   
+------+-----+------
+ 1505 | 505 | 0505
+(1 row)
+
 RESET plan_cache_mode;
 CREATE TABLE local_tbl(a int, b int, c text);
 INSERT INTO local_tbl VALUES (1505, 505, 'foo'), (2505, 505, 'bar');
@@ -13366,6 +13695,111 @@ SELECT a FROM base_tbl WHERE (a, random() > 0) IN (SELECT a, random() > 0 FROM f
 DROP FOREIGN TABLE foreign_tbl CASCADE;
 NOTICE:  drop cascades to foreign table foreign_tbl2
 DROP TABLE base_tbl;
+-- Test partitionwise joins with async MergeAppend
+CREATE TABLE distr1 (i int, j int, k text) PARTITION BY HASH (i);
+CREATE TABLE base1 (i int, j int, k text);
+CREATE TABLE base2 (i int, j int, k text);
+CREATE FOREIGN TABLE distr1_p1 PARTITION OF distr1 FOR VALUES WITH (MODULUS 2, REMAINDER 0)
+  SERVER loopback OPTIONS (table_name 'base1');
+CREATE FOREIGN TABLE distr1_p2 PARTITION OF distr1 FOR VALUES WITH (MODULUS 2, REMAINDER 1)
+  SERVER loopback OPTIONS (table_name 'base2');
+CREATE TABLE distr2 (i int, j int, k text) PARTITION BY HASH (i);
+CREATE TABLE base3 (i int, j int, k text);
+CREATE TABLE base4 (i int, j int, k text);
+CREATE FOREIGN TABLE distr2_p1 PARTITION OF distr2 FOR VALUES WITH (MODULUS 2, REMAINDER 0)
+  SERVER loopback OPTIONS (table_name 'base3');
+CREATE FOREIGN TABLE distr2_p2 PARTITION OF distr2 FOR VALUES WITH (MODULUS 2, REMAINDER 1)
+  SERVER loopback OPTIONS (table_name 'base4');
+INSERT INTO distr1 SELECT i, i*10, 'data_' || i FROM generate_series(1, 1000) i;
+INSERT INTO distr2 SELECT i, i*10, 'data_' || i FROM generate_series(1, 100) i;
+ANALYZE distr1_p1;
+ANALYZE distr1_p2;
+ANALYZE distr2_p1;
+ANALYZE distr2_p2;
+SET enable_partitionwise_join TO ON;
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM distr1, distr2 WHERE distr1.i=distr2.i AND distr2.j > 90 and distr2.k like 'data%'
+ORDER BY distr2.i LIMIT 10;
+                                                                                                    QUERY PLAN                                                                                                     
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: distr1.i, distr1.j, distr1.k, distr2.i, distr2.j, distr2.k
+   ->  Merge Append
+         Sort Key: distr1.i
+         ->  Async Foreign Scan
+               Output: distr1_1.i, distr1_1.j, distr1_1.k, distr2_1.i, distr2_1.j, distr2_1.k
+               Relations: (public.distr1_p1 distr1_1) INNER JOIN (public.distr2_p1 distr2_1)
+               Remote SQL: SELECT r3.i, r3.j, r3.k, r5.i, r5.j, r5.k FROM (public.base1 r3 INNER JOIN public.base3 r5 ON (((r3.i = r5.i)) AND ((r5.j > 90)) AND ((r5.k ~~ 'data%')))) ORDER BY r3.i ASC NULLS LAST
+         ->  Async Foreign Scan
+               Output: distr1_2.i, distr1_2.j, distr1_2.k, distr2_2.i, distr2_2.j, distr2_2.k
+               Relations: (public.distr1_p2 distr1_2) INNER JOIN (public.distr2_p2 distr2_2)
+               Remote SQL: SELECT r4.i, r4.j, r4.k, r6.i, r6.j, r6.k FROM (public.base2 r4 INNER JOIN public.base4 r6 ON (((r4.i = r6.i)) AND ((r6.j > 90)) AND ((r6.k ~~ 'data%')))) ORDER BY r4.i ASC NULLS LAST
+(12 rows)
+
+SELECT * FROM distr1, distr2 WHERE distr1.i=distr2.i AND distr2.j > 90 and distr2.k like 'data%'
+ORDER BY distr2.i LIMIT 10;
+ i  |  j  |    k    | i  |  j  |    k    
+----+-----+---------+----+-----+---------
+ 10 | 100 | data_10 | 10 | 100 | data_10
+ 11 | 110 | data_11 | 11 | 110 | data_11
+ 12 | 120 | data_12 | 12 | 120 | data_12
+ 13 | 130 | data_13 | 13 | 130 | data_13
+ 14 | 140 | data_14 | 14 | 140 | data_14
+ 15 | 150 | data_15 | 15 | 150 | data_15
+ 16 | 160 | data_16 | 16 | 160 | data_16
+ 17 | 170 | data_17 | 17 | 170 | data_17
+ 18 | 180 | data_18 | 18 | 180 | data_18
+ 19 | 190 | data_19 | 19 | 190 | data_19
+(10 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM distr1 LEFT JOIN distr2 ON distr1.i=distr2.i AND distr2.k like 'data%' WHERE distr1.i > 90
+ORDER BY distr1.i LIMIT 20;
+                                                                                                     QUERY PLAN                                                                                                     
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   Output: distr1.i, distr1.j, distr1.k, distr2.i, distr2.j, distr2.k
+   ->  Merge Append
+         Sort Key: distr1.i
+         ->  Async Foreign Scan
+               Output: distr1_1.i, distr1_1.j, distr1_1.k, distr2_1.i, distr2_1.j, distr2_1.k
+               Relations: (public.distr1_p1 distr1_1) LEFT JOIN (public.distr2_p1 distr2_1)
+               Remote SQL: SELECT r4.i, r4.j, r4.k, r6.i, r6.j, r6.k FROM (public.base1 r4 LEFT JOIN public.base3 r6 ON (((r4.i = r6.i)) AND ((r6.k ~~ 'data%')))) WHERE ((r4.i > 90)) ORDER BY r4.i ASC NULLS LAST
+         ->  Async Foreign Scan
+               Output: distr1_2.i, distr1_2.j, distr1_2.k, distr2_2.i, distr2_2.j, distr2_2.k
+               Relations: (public.distr1_p2 distr1_2) LEFT JOIN (public.distr2_p2 distr2_2)
+               Remote SQL: SELECT r5.i, r5.j, r5.k, r7.i, r7.j, r7.k FROM (public.base2 r5 LEFT JOIN public.base4 r7 ON (((r5.i = r7.i)) AND ((r7.k ~~ 'data%')))) WHERE ((r5.i > 90)) ORDER BY r5.i ASC NULLS LAST
+(12 rows)
+
+SELECT * FROM distr1 LEFT JOIN distr2 ON distr1.i=distr2.i AND distr2.k like 'data%' WHERE distr1.i > 90
+ORDER BY distr1.i LIMIT 20;
+  i  |  j   |    k     |  i  |  j   |    k     
+-----+------+----------+-----+------+----------
+  91 |  910 | data_91  |  91 |  910 | data_91
+  92 |  920 | data_92  |  92 |  920 | data_92
+  93 |  930 | data_93  |  93 |  930 | data_93
+  94 |  940 | data_94  |  94 |  940 | data_94
+  95 |  950 | data_95  |  95 |  950 | data_95
+  96 |  960 | data_96  |  96 |  960 | data_96
+  97 |  970 | data_97  |  97 |  970 | data_97
+  98 |  980 | data_98  |  98 |  980 | data_98
+  99 |  990 | data_99  |  99 |  990 | data_99
+ 100 | 1000 | data_100 | 100 | 1000 | data_100
+ 101 | 1010 | data_101 |     |      | 
+ 102 | 1020 | data_102 |     |      | 
+ 103 | 1030 | data_103 |     |      | 
+ 104 | 1040 | data_104 |     |      | 
+ 105 | 1050 | data_105 |     |      | 
+ 106 | 1060 | data_106 |     |      | 
+ 107 | 1070 | data_107 |     |      | 
+ 108 | 1080 | data_108 |     |      | 
+ 109 | 1090 | data_109 |     |      | 
+ 110 | 1100 | data_110 |     |      | 
+(20 rows)
+
+RESET enable_partitionwise_join;
+-- Clean up
+DROP TABLE distr1, distr2, base1, base2, base3, base4;
 ALTER SERVER loopback OPTIONS (DROP async_capable);
 ALTER SERVER loopback2 OPTIONS (DROP async_capable);
 -- ===================================================================

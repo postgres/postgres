@@ -19,5 +19,6 @@
 extern MergeAppendState *ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags);
 extern void ExecEndMergeAppend(MergeAppendState *node);
 extern void ExecReScanMergeAppend(MergeAppendState *node);
+extern void ExecAsyncMergeAppendResponse(AsyncRequest *areq);
 
 #endif							/* NODEMERGEAPPEND_H */

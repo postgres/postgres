@@ -156,6 +156,7 @@ select name, setting from pg_settings where name like 'enable%';
               name              | setting 
 --------------------------------+---------
  enable_async_append            | on
+ enable_async_merge_append      | on
  enable_bitmapscan              | on
  enable_distinct_reordering     | on
  enable_eager_aggregate         | on
@@ -181,7 +182,7 @@ select name, setting from pg_settings where name like 'enable%';
  enable_seqscan                 | on
  enable_sort                    | on
  enable_tidscan                 | on
-(26 rows)
+(27 rows)
 
 -- There are always wait event descriptions for various types.  InjectionPoint
 -- may be present or absent, depending on history since last postmaster start.

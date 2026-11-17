@@ -419,17 +419,20 @@ at a later time.  A process which discovers this type of situation can always
 handle it simply by blocking, but this may waste time that could be spent
 executing some other part of the plan tree where progress could be made
 immediately.  This is particularly likely to occur when the plan tree contains
-an Append node.  Asynchronous execution runs multiple parts of an Append node
-concurrently rather than serially to improve performance.
+an Append or MergeAppend node.  Asynchronous execution runs multiple parts of
+an Append or MergeAppend node concurrently rather than serially to improve
+performance.
 
 For asynchronous execution, an Append node must first request a tuple from an
 async-capable child node using ExecAsyncRequest.  Next, it must execute the
 asynchronous event loop using ExecAppendAsyncEventWait.  Eventually, when a
 child node to which an asynchronous request has been made produces a tuple,
-the Append node will receive it from the event loop via ExecAsyncResponse.  In
-the current implementation of asynchronous execution, the only node type that
-requests tuples from an async-capable child node is an Append, while the only
-node type that might be async-capable is a ForeignScan.
+the Append node will receive it from the event loop via ExecAsyncResponse.
+The same applies to MergeAppend nodes, except that they must execute the event
+loop using ExecMergeAppendAsyncEventWait.  In the current implementation of
+asynchronous execution, the node types that request tuples from an
+async-capable child node are an Append and a MergeAppend, while the only node
+type that might be async-capable is a ForeignScan.
 
 Typically, the ExecAsyncResponse callback is the only one required for nodes
 that wish to request tuples asynchronously.  On the other hand, async-capable

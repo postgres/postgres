@@ -427,6 +427,7 @@
 # - Planner Method Configuration -
 
 #enable_async_append = on
+#enable_async_merge_append = on
 #enable_bitmapscan = on
 #enable_gathermerge = on
 #enable_groupagg = on

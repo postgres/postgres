@@ -1566,6 +1566,12 @@ typedef struct MergeAppendState
 	bool		ms_initialized; /* are subplans started? */
 	struct PartitionPruneState *ms_prune_state;
 	Bitmapset  *ms_valid_subplans;
+	Bitmapset  *ms_asyncplans;	/* asynchronous plans indexes */
+	int			ms_nasyncplans; /* # of asynchronous plans */
+	AsyncRequest **ms_asyncrequests;	/* array of AsyncRequests */
+	Bitmapset  *ms_asyncpending;	/* async plans with an outstanding request */
+	struct WaitEventSet *ms_eventset;	/* WaitEventSet used to configure file
+										 * descriptor wait events */
 } MergeAppendState;
 
 /* ----------------

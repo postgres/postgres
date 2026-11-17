@@ -1632,10 +1632,11 @@ IsForeignPathAsyncCapable(ForeignPath *path);
      Test whether a given <structname>ForeignPath</structname> path can scan
      the underlying foreign relation asynchronously.
      This function will only be called at the end of query planning when the
-     given path is a direct child of an <structname>AppendPath</structname>
-     path and when the planner believes that asynchronous execution improves
-     performance, and should return true if the given path is able to scan the
-     foreign relation asynchronously.
+     given path is a direct child of an <structname>AppendPath</structname> or
+     <structname>MergeAppendPath</structname> path and when the planner
+     believes that asynchronous execution improves performance, and should
+     return true if the given path is able to scan the foreign relation
+     asynchronously.
     </para>
 
     <para>
@@ -1654,7 +1655,8 @@ ForeignAsyncRequest(AsyncRequest *areq);
      <structname>ForeignScan</structname> node.  <literal>areq</literal> is
      the <structname>AsyncRequest</structname> struct describing the
      <structname>ForeignScan</structname> node and the parent
-     <structname>Append</structname> node that requested the tuple from it.
+     <structname>Append</structname> or <structname>MergeAppend</structname>
+     node that requested the tuple from it.
      This function should store the tuple into the slot specified by
      <literal>areq-&gt;result</literal>, and set
      <literal>areq-&gt;request_complete</literal> to <literal>true</literal>;
@@ -1682,10 +1684,14 @@ ForeignAsyncConfigureWait(AsyncRequest *areq);
      This function will only be called when the
      <structname>ForeignScan</structname> node has the
      <literal>areq-&gt;callback_pending</literal> flag set, and should add
-     the event to the <structfield>as_eventset</structfield> of the parent
-     <structname>Append</structname> node described by the
-     <literal>areq</literal>.  See the comments for
-     <function>ExecAsyncConfigureWait</function> in
+     the event to the <structname>WaitEventSet</structname> associated with
+     the parent <structname>Append</structname> or
+     <structname>MergeAppend</structname> node described by the
+     <literal>areq</literal>.
+     It's recommended to use
+     <function>ExecAsyncGetRequestorEventSet</function> to get the
+     <structname>WaitEventSet</structname> from the parent node.
+     See the comments for <function>ExecAsyncConfigureWait</function> in
      <filename>src/backend/executor/execAsync.c</filename> for additional
      information.  When the file descriptor event occurs,
      <function>ForeignAsyncNotify</function> will be called.

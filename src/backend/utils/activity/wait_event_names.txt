@@ -138,6 +138,7 @@ LOGICAL_APPLY_SEND_DATA	"Waiting for a logical replication leader apply process 
 LOGICAL_PARALLEL_APPLY_STATE_CHANGE	"Waiting for a logical replication parallel apply process to change state."
 LOGICAL_SYNC_DATA	"Waiting for a logical replication remote server to send data for initial table synchronization."
 LOGICAL_SYNC_STATE_CHANGE	"Waiting for a logical replication remote server to change state."
+MERGE_APPEND_READY	"Waiting for subplan nodes of a <literal>MergeAppend</literal> plan node to be ready."
 MESSAGE_QUEUE_INTERNAL	"Waiting for another process to be attached to a shared message queue."
 MESSAGE_QUEUE_PUT_MESSAGE	"Waiting to write a protocol message to a shared message queue."
 MESSAGE_QUEUE_RECEIVE	"Waiting to receive bytes from a shared message queue."
