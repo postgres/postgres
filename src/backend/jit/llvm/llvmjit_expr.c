@@ -2060,17 +2060,14 @@ llvm_compile_expr(ExprState *state)
 						 * previous hash operation stored it.
 						 */
 						v_prevhash = l_load(b, TypeDatum, tmp, "prevhash");
+						v_prevhash = LLVMBuildTrunc(b, v_prevhash,
+													LLVMInt32TypeInContext(lc), "");
 
-						/*
-						 * Rotate bits left by 1 bit.  Be careful not to
-						 * overflow uint32 when working with Datum.
-						 */
-						v_tmp1 = LLVMBuildShl(b, v_prevhash, l_datum_const(1),
+						/* Rotate the 32-bit hash value left by 1 bit */
+						v_tmp1 = LLVMBuildShl(b, v_prevhash, l_int32_const(lc, 1),
 											  "");
-						v_tmp1 = LLVMBuildAnd(b, v_tmp1,
-											  l_datum_const(0xffffffff), "");
 						v_tmp2 = LLVMBuildLShr(b, v_prevhash,
-											   l_datum_const(31), "");
+											   l_int32_const(lc, 31), "");
 						v_prevhash = LLVMBuildOr(b, v_tmp1, v_tmp2,
 												 "rotatedhash");
 					}
@@ -2136,7 +2133,9 @@ llvm_compile_expr(ExprState *state)
 							 * Save the rotated hash value and skip to the
 							 * next op.
 							 */
-							LLVMBuildStore(b, v_prevhash, v_resvaluep);
+							LLVMBuildStore(b,
+										   LLVMBuildZExt(b, v_prevhash, TypeDatum, ""),
+										   v_resvaluep);
 						}
 						else
 						{
@@ -2188,15 +2187,18 @@ llvm_compile_expr(ExprState *state)
 						v_prevhash = l_load(b, TypeDatum, tmp, "prevhash");
 
 						/*
-						 * Rotate bits left by 1 bit.  Be careful not to
-						 * overflow uint32 when working with Datum.
+						 * Truncate the value to 32 bits.  This is equivalent
+						 * to the DatumGetUInt32 in execExprInterp.c's
+						 * EEOP_HASHDATUM_NEXT32_STRICT case.
 						 */
-						v_tmp1 = LLVMBuildShl(b, v_prevhash, l_datum_const(1),
+						v_prevhash = LLVMBuildTrunc(b, v_prevhash,
+													LLVMInt32TypeInContext(lc), "");
+
+						/* Rotate the 32-bit hash value left by 1 bit */
+						v_tmp1 = LLVMBuildShl(b, v_prevhash, l_int32_const(lc, 1),
 											  "");
-						v_tmp1 = LLVMBuildAnd(b, v_tmp1,
-											  l_datum_const(0xffffffff), "");
 						v_tmp2 = LLVMBuildLShr(b, v_prevhash,
-											   l_datum_const(31), "");
+											   l_int32_const(lc, 31), "");
 						v_prevhash = LLVMBuildOr(b, v_tmp1, v_tmp2,
 												 "rotatedhash");
 					}
@@ -2207,12 +2209,19 @@ llvm_compile_expr(ExprState *state)
 
 					/*
 					 * For NEXT32 ops, XOR (^) the returned hash value with
-					 * the existing hash value.
+					 * the existing hash value.  We truncate to 32 bits to
+					 * match the DatumGetUInt32() usages in execExprInterp.c's
+					 * EEOP_HASHDATUM_NEXT32_* cases.
 					 */
 					if (opcode == EEOP_HASHDATUM_NEXT32 ||
 						opcode == EEOP_HASHDATUM_NEXT32_STRICT)
+					{
+						v_retval = LLVMBuildTrunc(b, v_retval,
+												  LLVMInt32TypeInContext(lc), "");
 						v_retval = LLVMBuildXor(b, v_prevhash, v_retval,
 												"xorhash");
+						v_retval = LLVMBuildZExt(b, v_retval, TypeDatum, "");
+					}
 
 					LLVMBuildStore(b, v_retval, v_resvaluep);
 					LLVMBuildStore(b, l_sbool_const(0), v_resnullp);
