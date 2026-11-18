@@ -162,6 +162,25 @@ set local enable_sort = off;
 explain (costs off) select * from t left join (select * from (select * from t order by a) v order by a, b) s on s.a = t.a where t.a in (1, 2);
 select * from t left join (select * from (select * from t order by a) v order by a, b) s on s.a = t.a where t.a in (1, 2);
 rollback;
+
+-- try rescan with a LIMIT node where some scans receive a LIMIT NULL and
+-- others receive a LIMIT <n>.
+
+-- Ensure we get an Incremental Sort plan
+explain (costs off)
+select v.n, count(*) from (values (null::int), (3), (null::int)) v(n),
+lateral (select unique1 from tenk1 where hundred < 2
+         order by hundred, unique1 limit v.n) s
+group by v.n
+order by v.n;
+
+-- Check we get the correct results from that plan
+select v.n, count(*) from (values (null::int), (3), (null::int)) v(n),
+lateral (select unique1 from tenk1 where hundred < 2
+         order by hundred, unique1 limit v.n) s
+group by v.n
+order by v.n;
+
 -- Test EXPLAIN ANALYZE with both fullsort and presorted groups.
 select explain_analyze_without_memory('select * from (select * from t order by a) s order by a, b limit 70');
 select jsonb_pretty(explain_analyze_inc_sort_nodes_without_memory('select * from (select * from t order by a) s order by a, b limit 70'));
