@@ -19,6 +19,7 @@
 #include "access/hash_xlog.h"
 #include "access/transam.h"
 #include "access/xlog.h"
+#include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
 #include "miscadmin.h"
 #include "storage/procarray.h"
@@ -500,10 +501,21 @@ hash_xlog_move_page_contents(XLogReaderState *record)
 	else
 	{
 		/*
-		 * we don't care for return value as the purpose of reading bucketbuf
-		 * is to ensure a cleanup lock on primary bucket page.
+		 * The cleanup lock is needed only when hot standby is active, because
+		 * scans cannot run before that. Skipping the read also avoids a torn
+		 * copy of the primary page. This record does not modify that page, so
+		 * it has no full-page image of it. In crash recovery, or on a standby
+		 * started from a base backup, the page on disk can be torn and the
+		 * image that repairs it can come later in the WAL.
 		 */
-		(void) XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL, true, &bucketbuf);
+		if (HotStandbyActiveInReplay())
+		{
+			/*
+			 * we don't care for return value as the purpose of reading
+			 * bucketbuf is to ensure a cleanup lock on primary bucket page.
+			 */
+			(void) XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL, true, &bucketbuf);
+		}
 
 		action = XLogReadBufferForRedo(record, 1, &writebuf);
 	}
@@ -628,10 +640,21 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 	else
 	{
 		/*
-		 * we don't care for return value as the purpose of reading bucketbuf
-		 * is to ensure a cleanup lock on primary bucket page.
+		 * The cleanup lock is needed only when hot standby is active, because
+		 * scans cannot run before that. Skipping the read also avoids a torn
+		 * copy of the primary page. This record does not modify that page, so
+		 * it has no full-page image of it. In crash recovery, or on a standby
+		 * started from a base backup, the page on disk can be torn and the
+		 * image that repairs it can come later in the WAL.
 		 */
-		(void) XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL, true, &bucketbuf);
+		if (HotStandbyActiveInReplay())
+		{
+			/*
+			 * we don't care for return value as the purpose of reading
+			 * bucketbuf is to ensure a cleanup lock on primary bucket page.
+			 */
+			(void) XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL, true, &bucketbuf);
+		}
 
 		action = XLogReadBufferForRedo(record, 1, &writebuf);
 	}
@@ -840,10 +863,21 @@ hash_xlog_delete(XLogReaderState *record)
 	else
 	{
 		/*
-		 * we don't care for return value as the purpose of reading bucketbuf
-		 * is to ensure a cleanup lock on primary bucket page.
+		 * The cleanup lock is needed only when hot standby is active, because
+		 * scans cannot run before that. Skipping the read also avoids a torn
+		 * copy of the primary page. This record does not modify that page, so
+		 * it has no full-page image of it. In crash recovery, or on a standby
+		 * started from a base backup, the page on disk can be torn and the
+		 * image that repairs it can come later in the WAL.
 		 */
-		(void) XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL, true, &bucketbuf);
+		if (HotStandbyActiveInReplay())
+		{
+			/*
+			 * we don't care for return value as the purpose of reading
+			 * bucketbuf is to ensure a cleanup lock on primary bucket page.
+			 */
+			(void) XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL, true, &bucketbuf);
+		}
 
 		action = XLogReadBufferForRedo(record, 1, &deletebuf);
 	}
