@@ -871,7 +871,7 @@ ExecInsert(ModifyTableContext *context,
 	List	   *recheckIndexes = NIL;
 	TupleTableSlot *planSlot = context->planSlot;
 	TupleTableSlot *result = NULL;
-	TransitionCaptureState *ar_insert_trig_tcs;
+	TransitionCaptureState *transition_capture;
 	TupleTableSlot *tcs_original_insert_tuple = NULL;
 	ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
 	OnConflictAction onconflict = node->onConflictAction;
@@ -1283,30 +1283,30 @@ ExecInsert(ModifyTableContext *context,
 	 * if there is one. We need to do this separately for DELETE and INSERT
 	 * because they happen on different tables.
 	 */
-	ar_insert_trig_tcs = mtstate->mt_transition_capture;
-	if (mtstate->operation == CMD_UPDATE && mtstate->mt_transition_capture
-		&& mtstate->mt_transition_capture->tcs_update_new_table)
+	transition_capture = mtstate->mt_transition_capture;
+	if (transition_capture &&
+		(mtstate->operation == CMD_UPDATE ||
+		 (mtstate->operation == CMD_MERGE &&
+		  mtstate->mt_merge_action->mas_action->commandType == CMD_UPDATE)))
 	{
-		ExecARUpdateTriggers(estate, resultRelInfo,
-							 NULL, NULL,
-							 NULL,
-							 NULL,
-							 slot,
-							 NULL,
-							 NULL,
-							 mtstate->mt_transition_capture,
-							 false);
+		if (transition_capture->tcs_update_new_table)
+			ExecARUpdateTriggers(estate, resultRelInfo,
+								 NULL, NULL,
+								 NULL,
+								 NULL,
+								 slot,
+								 NULL,
+								 NULL,
+								 transition_capture,
+								 false);
 
-		/*
-		 * We've already captured the NEW TABLE row, so make sure any AR
-		 * INSERT trigger fired below doesn't capture it again.
-		 */
-		ar_insert_trig_tcs = NULL;
+		/* A moved row does not belong in the INSERT transition table. */
+		transition_capture = NULL;
 	}
 
 	/* AFTER ROW INSERT Triggers */
 	ExecARInsertTriggers(estate, resultRelInfo, slot, NULL,
-						 recheckIndexes, ar_insert_trig_tcs);
+						 recheckIndexes, transition_capture);
 	list_free(recheckIndexes);
 
 	/*
@@ -1559,7 +1559,7 @@ ExecDeleteEpilogue(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 {
 	ModifyTableState *mtstate = context->mtstate;
 	EState	   *estate = context->estate;
-	TransitionCaptureState *ar_delete_trig_tcs;
+	TransitionCaptureState *transition_capture;
 
 	/*
 	 * If this delete is the result of a partition key update that moved the
@@ -1567,26 +1567,23 @@ ExecDeleteEpilogue(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	 * if there is one. We need to do this separately for DELETE and INSERT
 	 * because they happen on different tables.
 	 */
-	ar_delete_trig_tcs = mtstate->mt_transition_capture;
-	if (mtstate->operation == CMD_UPDATE && mtstate->mt_transition_capture &&
-		mtstate->mt_transition_capture->tcs_update_old_table)
+	transition_capture = mtstate->mt_transition_capture;
+	if (transition_capture && changingPart)
 	{
-		ExecARUpdateTriggers(estate, resultRelInfo,
-							 NULL, NULL,
-							 tupleid, oldtuple,
-							 NULL, NULL, NIL, mtstate->mt_transition_capture,
-							 false);
+		if (transition_capture->tcs_update_old_table)
+			ExecARUpdateTriggers(estate, resultRelInfo,
+								 NULL, NULL,
+								 tupleid, oldtuple,
+								 NULL, NULL, NIL, transition_capture,
+								 false);
 
-		/*
-		 * We've already captured the OLD TABLE row, so make sure any AR
-		 * DELETE trigger fired below doesn't capture it again.
-		 */
-		ar_delete_trig_tcs = NULL;
+		/* A moved row does not belong in the DELETE transition table. */
+		transition_capture = NULL;
 	}
 
 	/* AFTER ROW DELETE Triggers */
 	ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple,
-						 ar_delete_trig_tcs, changingPart);
+						 transition_capture, changingPart);
 }
 
 /* ----------------------------------------------------------------

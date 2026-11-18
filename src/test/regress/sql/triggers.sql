@@ -2568,6 +2568,36 @@ select * from merge_conv_table order by a;
 
 drop table merge_conv_table;
 
+-- A MERGE UPDATE that moves a row must capture it as an update.
+create table merge_move (a int, b text) partition by list (a);
+create table merge_move_p1 partition of merge_move for values in (1, 2);
+create table merge_move_p2 partition of merge_move for values in (3, 4);
+insert into merge_move values (1, 'move'), (2, 'delete');
+create trigger move_ins after insert on merge_move
+  referencing new table as new_table
+  for each statement execute function dump_insert();
+create trigger move_upd after update on merge_move
+  referencing old table as old_table new table as new_table
+  for each statement execute function dump_update();
+create trigger move_del after delete on merge_move
+  referencing old table as old_table
+  for each statement execute function dump_delete();
+
+merge into merge_move t using (values (1), (2), (4)) s(a) on t.a = s.a
+when matched and s.a = 1 then update set a = 3
+when matched then delete
+when not matched then insert values (s.a, 'insert');
+
+-- The move must stay out of INSERT and DELETE tables even without an
+-- UPDATE transition table.
+drop trigger move_upd on merge_move;
+merge into merge_move t using (values (3), (4), (2)) s(a) on t.a = s.a
+when matched and s.a = 3 then update set a = 1
+when matched then delete
+when not matched then insert values (s.a, 'insert');
+
+drop table merge_move;
+
 -- cleanup
 drop function dump_insert();
 drop function dump_update();
