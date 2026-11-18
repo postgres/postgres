@@ -114,8 +114,11 @@ copy test_approx_unknown from stdin with (freeze);
 1
 \.
 commit;
+begin;
+set local force_parallel_mode = off;
 select scanned_percent, approx_tuple_count
   from pgstattuple_approx('test_approx_unknown');
+commit;
 
 -- not for the index calls though, of course
 select pgstatindex('test_partition');
