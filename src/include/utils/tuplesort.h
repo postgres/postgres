@@ -261,7 +261,8 @@ extern bool tuplesort_getdatum(Tuplesortstate *state, bool forward,
 
 extern bool tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples,
 								 bool forward);
-
+extern void tuplesort_set_allowbounded(Tuplesortstate *state,
+									   bool allowbounded);
 extern void tuplesort_end(Tuplesortstate *state);
 
 extern void tuplesort_reset(Tuplesortstate *state);
