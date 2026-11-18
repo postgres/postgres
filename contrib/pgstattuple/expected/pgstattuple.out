@@ -250,6 +250,18 @@ select pg_relpages((select reltoastrelid from pg_class where relname = 'test'));
            0
 (1 row)
 
+-- An unknown approximate tuple count is reported as zero.
+begin;
+create temp table test_approx_unknown (id int);
+copy test_approx_unknown from stdin with (freeze);
+commit;
+select scanned_percent, approx_tuple_count
+  from pgstattuple_approx('test_approx_unknown');
+ scanned_percent | approx_tuple_count 
+-----------------+--------------------
+               0 |                  0
+(1 row)
+
 -- not for the index calls though, of course
 select pgstatindex('test_partition');
 ERROR:  relation "test_partition" is not a btree index
