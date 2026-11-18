@@ -557,9 +557,14 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			}
 
 			/* Write the history file to disk */
-			writeTimeLineHistoryFile(stream,
-									 PQgetvalue(res, 0, 0),
-									 PQgetvalue(res, 0, 1));
+			if (!writeTimeLineHistoryFile(stream,
+										  PQgetvalue(res, 0, 0),
+										  PQgetvalue(res, 0, 1)))
+			{
+				/* Error message written in writeTimeLineHistoryFile() */
+				PQclear(res);
+				return false;
+			}
 
 			PQclear(res);
 		}
