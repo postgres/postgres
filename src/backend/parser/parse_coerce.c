@@ -146,9 +146,14 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
  * applies length conversion, and in those cases only, the result will
  * already be properly coerced to the specified typmod.
  *
- * pstate is only used in the case that we are able to resolve the type of
- * a previously UNKNOWN Param.  It is okay to pass pstate = NULL if the
- * caller does not want type information updated for Params.
+ * pstate can be NULL in calls from outside the parser.  This mostly works,
+ * but note the following restrictions:
+ * 1. No p_coerce_param_hook processing is possible, so Params receive
+ * no special treatment.
+ * 2. Whole-row Vars of type RECORD (those referring to non-table FROM items
+ * such as joins or sub-selects) cannot be cast to named composite types,
+ * since we can't resolve their columns.
+ * 3. No error position information will be provided.
  *
  * Note: this function must not modify the given expression tree, only add
  * decoration on top of it.  See transformSetOperationTree, for example.
@@ -1010,7 +1015,7 @@ build_coercion_expression(Node *node,
  *		Coerce a RECORD to a specific composite type.
  *
  * Currently we only support this for inputs that are RowExprs or whole-row
- * Vars.
+ * Vars.  pstate == NULL prevents handling the latter case.
  */
 static Node *
 coerce_record_to_complex(ParseState *pstate, Node *node,
@@ -1040,13 +1045,23 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 	else if (node && IsA(node, Var) &&
 			 ((Var *) node)->varattno == InvalidAttrNumber)
 	{
-		int			rtindex = ((Var *) node)->varno;
-		int			sublevels_up = ((Var *) node)->varlevelsup;
-		int			vlocation = ((Var *) node)->location;
-		ParseNamespaceItem *nsitem;
+		if (pstate)
+		{
+			int			rtindex = ((Var *) node)->varno;
+			int			sublevels_up = ((Var *) node)->varlevelsup;
+			int			vlocation = ((Var *) node)->location;
+			ParseNamespaceItem *nsitem;
 
-		nsitem = GetNSItemByRangeTablePosn(pstate, rtindex, sublevels_up);
-		args = expandNSItemVars(nsitem, sublevels_up, vlocation, NULL);
+			nsitem = GetNSItemByRangeTablePosn(pstate, rtindex, sublevels_up);
+			args = expandNSItemVars(nsitem, sublevels_up, vlocation, NULL);
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_CANNOT_COERCE),
+					 errmsg("cannot cast type %s to %s",
+							format_type_be(RECORDOID),
+							format_type_be(targetTypeId)),
+					 errhint("Cast the whole-row variable to the desired type explicitly.")));
 	}
 	else
 		ereport(ERROR,
@@ -1158,8 +1173,7 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
  *
  * Returns the possibly-transformed node tree.
  *
- * As with coerce_type, pstate may be NULL if no special unknown-Param
- * processing is wanted.
+ * As with coerce_type, pstate may be NULL for calls from outside the parser.
  */
 Node *
 coerce_to_boolean(ParseState *pstate, Node *node,
@@ -1205,8 +1219,7 @@ coerce_to_boolean(ParseState *pstate, Node *node,
  *
  * Returns the possibly-transformed node tree.
  *
- * As with coerce_type, pstate may be NULL if no special unknown-Param
- * processing is wanted.
+ * As with coerce_type, pstate may be NULL for calls from outside the parser.
  */
 Node *
 coerce_to_specific_type_typmod(ParseState *pstate, Node *node,
@@ -1254,8 +1267,7 @@ coerce_to_specific_type_typmod(ParseState *pstate, Node *node,
  *
  * Returns the possibly-transformed node tree.
  *
- * As with coerce_type, pstate may be NULL if no special unknown-Param
- * processing is wanted.
+ * As with coerce_type, pstate may be NULL for calls from outside the parser.
  */
 Node *
 coerce_to_specific_type(ParseState *pstate, Node *node,
@@ -1332,6 +1344,7 @@ parser_coercion_errposition(ParseState *pstate,
  *		This is used for determining the output type of CASE, UNION,
  *		and similar constructs.
  *
+ * 'pstate' is used only for error reporting, and can be NULL.
  * 'exprs' is a *nonempty* list of expressions.  Note that earlier items
  * in the list will be preferred if there is doubt.
  * 'context' is a phrase to use in the error message if we fail to select
@@ -1571,8 +1584,7 @@ select_common_type_from_oids(int nargs, const Oid *typeids, bool noerror)
  * expressions to the desired type.  'context' is a phrase to use in the
  * error message if we fail to coerce.
  *
- * As with coerce_type, pstate may be NULL if no special unknown-Param
- * processing is wanted.
+ * As with coerce_type, pstate may be NULL for calls from outside the parser.
  */
 Node *
 coerce_to_common_type(ParseState *pstate, Node *node,
