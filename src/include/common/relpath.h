@@ -86,10 +86,10 @@ extern int	forkname_chars(const char *str, ForkNumber *fork);
 
 /*
  * The longest possible relation path lengths is from the following format:
- * sprintf(rp.path, "%s/%u/%s/%u/t%d_%u",
+ * sprintf(rp.path, "%s/%u/%s/%u/t%d_%u_%s",
  *         PG_TBLSPC_DIR, spcOid,
  *         TABLESPACE_VERSION_DIRECTORY,
- *         dbOid, procNumber, relNumber);
+ *         dbOid, procNumber, relNumber, forkNames[forkNumber]);
  *
  * Note this does *not* include the trailing null-byte, to make it easier to
  * combine it with other lengths.
