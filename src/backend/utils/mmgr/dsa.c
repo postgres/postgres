@@ -2172,7 +2172,7 @@ make_new_segment(dsa_area *area, size_t requested_pages)
 	}
 
 	/* Create the segment. */
-	segment = dsm_create(total_size, 0);
+	segment = dsm_create(total_size, DSM_CREATE_NULL_IF_MAXSEGMENTS);
 	if (segment == NULL)
 		return NULL;
 	dsm_pin_segment(segment);
