@@ -63,6 +63,7 @@ statapprox_heap(Relation rel, output_type *stat)
 				blkno;
 	Buffer		vmbuffer = InvalidBuffer;
 	BufferAccessStrategy bstrategy;
+	double		estimated_tuple_count;
 	TransactionId OldestXmin;
 
 	OldestXmin = GetOldestNonRemovableTransactionId(rel);
@@ -179,11 +180,11 @@ statapprox_heap(Relation rel, output_type *stat)
 	 * tuples in all-visible pages, so no correction is needed for that, and
 	 * we already accounted for the space in those pages, too.
 	 */
-	stat->tuple_count = vac_estimate_reltuples(rel, nblocks, scanned,
-											   stat->tuple_count);
+	estimated_tuple_count = vac_estimate_reltuples(rel, nblocks, scanned,
+												   stat->tuple_count);
 
-	/* It's not clear if we could get -1 here, but be safe. */
-	stat->tuple_count = Max(stat->tuple_count, 0);
+	/* Report zero when there is not enough information for an estimate. */
+	stat->tuple_count = Max(estimated_tuple_count, 0);
 
 	/*
 	 * Calculate percentages if the relation has one or more pages.
