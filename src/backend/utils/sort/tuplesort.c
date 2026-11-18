@@ -786,6 +786,22 @@ tuplesort_used_bound(Tuplesortstate *state)
 }
 
 /*
+ * tuplesort_set_allowbounded
+ *		Set or unset TUPLESORT_ALLOWBOUNDED sort flag on an existing state.
+ *
+ * NOTE: tuplesort_reset() must be called after this function for the changes
+ * to take effect.
+ */
+void
+tuplesort_set_allowbounded(Tuplesortstate *state, bool allowbounded)
+{
+	if (allowbounded)
+		state->base.sortopt |= TUPLESORT_ALLOWBOUNDED;
+	else
+		state->base.sortopt &= ~TUPLESORT_ALLOWBOUNDED;
+}
+
+/*
  * tuplesort_free
  *
  *	Internal routine for freeing resources of tuplesort.

@@ -722,6 +722,43 @@ select * from t left join (select * from (select * from t order by a) v order by
 (2 rows)
 
 rollback;
+-- try rescan with a LIMIT node where some scans receive a LIMIT NULL and
+-- others receive a LIMIT <n>.
+-- Ensure we get an Incremental Sort plan
+explain (costs off)
+select v.n, count(*) from (values (null::int), (3), (null::int)) v(n),
+lateral (select unique1 from tenk1 where hundred < 2
+         order by hundred, unique1 limit v.n) s
+group by v.n
+order by v.n;
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
+ GroupAggregate
+   Group Key: "*VALUES*".column1
+   ->  Sort
+         Sort Key: "*VALUES*".column1
+         ->  Nested Loop
+               ->  Values Scan on "*VALUES*"
+               ->  Limit
+                     ->  Incremental Sort
+                           Sort Key: tenk1.hundred, tenk1.unique1
+                           Presorted Key: tenk1.hundred
+                           ->  Index Scan using tenk1_hundred on tenk1
+                                 Index Cond: (hundred < 2)
+(12 rows)
+
+-- Check we get the correct results from that plan
+select v.n, count(*) from (values (null::int), (3), (null::int)) v(n),
+lateral (select unique1 from tenk1 where hundred < 2
+         order by hundred, unique1 limit v.n) s
+group by v.n
+order by v.n;
+ n | count 
+---+-------
+ 3 |     3
+   |   400
+(2 rows)
+
 -- Test EXPLAIN ANALYZE with both fullsort and presorted groups.
 select explain_analyze_without_memory('select * from (select * from t order by a) s order by a, b limit 70');
                                          explain_analyze_without_memory                                         
