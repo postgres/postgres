@@ -2826,9 +2826,7 @@ transformCollateClause(ParseState *pstate, CollateClause *c)
 /*
  * Transform a "row compare-op row" construct
  *
- * The inputs are lists of already-transformed expressions.
- * As with coerce_type, pstate may be NULL if no special unknown-Param
- * processing is wanted.
+ * The argument lists are lists of already-transformed expressions.
  *
  * The output may be a single OpExpr, an AND or OR combination of OpExprs,
  * or a RowCompareExpr.  In all cases it is guaranteed to return boolean.
