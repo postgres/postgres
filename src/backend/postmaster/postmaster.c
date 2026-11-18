@@ -2317,12 +2317,13 @@ process_pm_child_exit(void)
 			 * during PM_STARTUP due to some dead-end child crashing: in that
 			 * situation, if the startup process dies on the SIGQUIT, we need
 			 * to transition to PM_WAIT_BACKENDS state which will allow
-			 * PostmasterStateMachine to restart the startup process.  (On the
-			 * other hand, the startup process might complete normally, if we
-			 * were too late with the SIGQUIT.  In that case we'll fall
-			 * through and commence normal operations.)
+			 * PostmasterStateMachine to restart the startup process.
+			 *
+			 * SIGQUIT may arrive too late to change the startup process's
+			 * exit status.  If we signaled it, continue the crash restart
+			 * even if it exits normally.
 			 */
-			if (!EXIT_STATUS_0(exitstatus))
+			if (!EXIT_STATUS_0(exitstatus) || StartupStatus == STARTUP_SIGNALED)
 			{
 				if (StartupStatus == STARTUP_SIGNALED)
 				{
