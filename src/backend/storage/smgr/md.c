@@ -1685,8 +1685,7 @@ _fdvec_resize(SMgrRelation reln,
 }
 
 /*
- * Return the filename for the specified segment of the relation. The
- * returned string is palloc'd.
+ * Return the filename for the specified segment of the relation.
  */
 static MdPathStr
 _mdfd_segpath(SMgrRelation reln, ForkNumber forknum, BlockNumber segno)
