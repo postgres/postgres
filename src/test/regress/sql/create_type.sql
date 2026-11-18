@@ -62,6 +62,12 @@ CREATE FUNCTION bogus_in(cstring)
    AS :'regresslib', 'widget_in'
    LANGUAGE C STRICT IMMUTABLE;
 
+-- Likewise, if the function returns a set, don't create a shell type
+CREATE FUNCTION bogus_in(cstring)
+   RETURNS SETOF bogus_shell
+   AS :'regresslib', 'widget_in'
+   LANGUAGE C STRICT IMMUTABLE;
+
 -- If the column specified with %TYPE does not exist, don't try to create a shell type
 CREATE TEMP TABLE bogus_tbl (col int);
 CREATE FUNCTION bogus_in(cstring)
