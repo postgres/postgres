@@ -216,6 +216,7 @@ extern void ShutdownWalRecovery(void);
 extern void RemovePromoteSignalFiles(void);
 
 extern bool HotStandbyActive(void);
+extern bool HotStandbyActiveInReplay(void);
 extern XLogRecPtr GetXLogReplayRecPtr(TimeLineID *replayTLI);
 extern RecoveryPauseState GetRecoveryPauseState(void);
 extern void SetRecoveryPause(bool recoveryPause);
