@@ -81,6 +81,7 @@ standalone backend|relation|bulkwrite
 standalone backend|relation|init
 standalone backend|relation|normal
 standalone backend|relation|vacuum
+standalone backend|temp relation|normal
 standalone backend|wal|init
 standalone backend|wal|normal
 startup|relation|bulkread
@@ -104,7 +105,7 @@ walsummarizer|wal|init
 walsummarizer|wal|normal
 walwriter|wal|init
 walwriter|wal|normal
-(88 rows)
+(89 rows)
 \a
 -- List of registered statistics kinds.
 SELECT id, name, fixed_amount,
