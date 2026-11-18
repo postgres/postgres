@@ -1038,7 +1038,7 @@ SlabCheck(MemoryContext context)
 {
 	SlabContext *slab = (SlabContext *) context;
 	int			i;
-	int			nblocks = 0;
+	int			nblocks PG_USED_FOR_ASSERTS_ONLY = 0;
 	const char *name = slab->header.name;
 	dlist_iter	iter;
 

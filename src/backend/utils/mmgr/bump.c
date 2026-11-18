@@ -769,7 +769,7 @@ BumpCheck(MemoryContext context)
 	BumpContext *bump = (BumpContext *) context;
 	const char *name = context->name;
 	dlist_iter	iter;
-	Size		total_allocated = 0;
+	Size		total_allocated PG_USED_FOR_ASSERTS_ONLY = 0;
 
 	/* walk all blocks in this context */
 	dlist_foreach(iter, &bump->blocks)
