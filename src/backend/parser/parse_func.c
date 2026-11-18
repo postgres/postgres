@@ -2005,8 +2005,7 @@ unify_hypothetical_args(ParseState *pstate,
  *
  * Caution: given argument list is modified in-place.
  *
- * As with coerce_type, pstate may be NULL if no special unknown-Param
- * processing is wanted.
+ * As with coerce_type, pstate may be NULL for calls from outside the parser.
  */
 void
 make_fn_arguments(ParseState *pstate,
