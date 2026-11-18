@@ -425,6 +425,28 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
          </para>
 
          <para>
+          A prepared transaction applied on the subscriber keeps its locks
+          until the apply worker processes the corresponding
+          <command>COMMIT PREPARED</command> or <command>ROLLBACK
+          PREPARED</command>.  If another session requests a conflicting lock
+          on a table modified by such a transaction (for example, with
+          <command>LOCK</command>, <command>TRUNCATE</command>, or
+          <command>ALTER TABLE</command>), it has to wait, and later
+          conflicting lock requests on that table, including the apply
+          worker's own next change to it, queue behind it.  The apply worker
+          then cannot reach the <command>COMMIT PREPARED</command> or
+          <command>ROLLBACK PREPARED</command>.  This situation is not
+          detected as a deadlock, so replication can remain stalled
+          indefinitely.  To resolve this, cancel the waiting session.
+          Alternatively, disable the subscription, manually roll back the
+          prepared transaction on the subscriber, disable and then re-enable
+          <literal>two_phase</literal> (see
+          <link linkend="sql-altersubscription-params-set"><literal>ALTER SUBSCRIPTION ... SET</literal></link>),
+          and re-enable the subscription.  The transaction is replicated again
+          when it is committed on the publisher.
+         </para>
+
+         <para>
           The implementation of two-phase commit requires that replication
           has successfully finished the initial table synchronization
           phase. So even when <literal>two_phase</literal> is enabled for a
