@@ -255,7 +255,9 @@ void
 read_stream_enable_stats(ReadStream *stream, IOStats *stats)
 {
 	stream->stats = stats;
-	if (stream->stats)
+	/* The same accumulator may span recreated streams of different sizes. */
+	if (stream->stats &&
+		stream->stats->distance_capacity < stream->max_pinned_buffers)
 		stream->stats->distance_capacity = stream->max_pinned_buffers;
 }
 
