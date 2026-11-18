@@ -15,6 +15,7 @@
 
 #include "access/xact.h"
 #include "access/xlog.h"
+#include "access/xlog_internal.h"
 #include "access/xlogrecovery.h"
 #include "access/xlogwait.h"
 #include "catalog/pg_type_d.h"
@@ -31,11 +32,42 @@
 #include "utils/snapmgr.h"
 
 
+/*
+ * Map a target LSN that points inside or just past a WAL page header to the
+ * start of that page.
+ *
+ * No WAL record can end inside a page header, so both LSNs denote the same
+ * point in the WAL.  But when the last record ends exactly at a page
+ * boundary, pg_current_wal_insert_lsn() reports the position after the next
+ * page's header, while the replay, write, and flush positions stay at the
+ * boundary until more WAL is written.  Without this mapping, waiting for
+ * such a target would depend on unrelated WAL activity.
+ *
+ * This is done here rather than in WaitForLSN(), whose internal callers
+ * may want to wait for any WAL past a given record end.
+ */
+static XLogRecPtr
+WaitTargetLSN(XLogRecPtr lsn)
+{
+	uint32		page_offset = lsn % XLOG_BLCKSZ;
+	uint32		header_size;
+
+	if (XLogSegmentOffset(lsn, wal_segment_size) < XLOG_BLCKSZ)
+		header_size = SizeOfXLogLongPHD;
+	else
+		header_size = SizeOfXLogShortPHD;
+
+	if (page_offset > 0 && page_offset <= header_size)
+		return lsn - page_offset;
+	return lsn;
+}
+
 void
 ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 			 DestReceiver *dest)
 {
 	XLogRecPtr	lsn;
+	XLogRecPtr	target_lsn;
 	int			timeout = 0;
 	WaitLSNResult waitLSNResult;
 	WaitLSNType lsnType = WAIT_LSN_TYPE_STANDBY_REPLAY; /* default */
@@ -61,6 +93,7 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 	/* Parse and validate the mandatory LSN */
 	lsn = DatumGetLSN(DirectFunctionCall1(pg_lsn_in,
 										  CStringGetDatum(stmt->lsn_literal)));
+	target_lsn = WaitTargetLSN(lsn);
 
 	foreach_node(DefElem, defel, stmt->options)
 	{
@@ -213,7 +246,7 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 		 lsnType == WAIT_LSN_TYPE_STANDBY_WRITE ||
 		 lsnType == WAIT_LSN_TYPE_STANDBY_FLUSH) &&
 		RecoveryInProgress() &&
-		lsn > GetCurrentLSNForWaitType(lsnType))
+		target_lsn > GetCurrentLSNForWaitType(lsnType))
 	{
 		LOCKTAG		locktag;
 
@@ -234,7 +267,7 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, bool isTopLevel,
 	}
 
 	/* Now wait for the LSN */
-	waitLSNResult = WaitForLSN(lsnType, lsn, timeout);
+	waitLSNResult = WaitForLSN(lsnType, target_lsn, timeout);
 
 	/*
 	 * Process the result of WaitForLSN().  Throw appropriate error if needed.
