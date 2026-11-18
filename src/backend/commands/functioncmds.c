@@ -101,6 +101,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 	 * If the type name contains any modifiers like %TYPE, type[] array
 	 * syntax, or typmod decoration, it's not an input function, or at least
 	 * not one for which we'd want to automatically create a shell type.
+	 * Likewise, an input function never returns a set.
 	 *
 	 * Only C-coded functions can be I/O functions.  We enforce this
 	 * restriction here mainly to prevent littering the catalogs with shell
@@ -108,7 +109,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 	 */
 	attempt_shell_creation =
 		!returnType->pct_type && returnType->arrayBounds == NULL &&
-		returnType->typmods == NIL &&
+		returnType->typmods == NIL && !returnType->setof &&
 		(languageOid == INTERNALlanguageId || languageOid == ClanguageId);
 
 	typtup = LookupTypeName(NULL, returnType, NULL, false);
