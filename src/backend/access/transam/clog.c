@@ -709,11 +709,6 @@ TransactionIdSetStatusBit(TransactionId xid, XidStatus status, XLogRecPtr lsn, i
 
 	/*
 	 * Update the group LSN if the transaction completion LSN is higher.
-	 *
-	 * Note: lsn will be invalid when supplied during InRecovery processing,
-	 * so we don't need to do anything special to avoid LSN updates during
-	 * recovery. After recovery completes the next clog change will set the
-	 * LSN correctly.
 	 */
 	if (XLogRecPtrIsValid(lsn))
 	{

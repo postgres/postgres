@@ -6261,9 +6261,13 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 	if (standbyState == STANDBY_DISABLED)
 	{
 		/*
-		 * Mark the transaction committed in pg_xact.
+		 * Mark the transaction committed in pg_xact. We use the async commit
+		 * protocol during recovery to ensure that minRecoveryPoint is
+		 * advanced before the CLOG is written. This ensures that if we crash,
+		 * we don't see the committed status set for transactions that haven't
+		 * yet recovered.
 		 */
-		TransactionIdCommitTree(xid, parsed->nsubxacts, parsed->subxacts);
+		TransactionIdAsyncCommitTree(xid, parsed->nsubxacts, parsed->subxacts, lsn);
 	}
 	else
 	{
@@ -6279,13 +6283,8 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 		RecordKnownAssignedTransactionIds(max_xid);
 
 		/*
-		 * Mark the transaction committed in pg_xact. We use async commit
-		 * protocol during recovery to provide information on database
-		 * consistency for when users try to set hint bits. It is important
-		 * that we do not set hint bits until the minRecoveryPoint is past
-		 * this commit record. This ensures that if we crash we don't see hint
-		 * bits set on changes made by transactions that haven't yet
-		 * recovered. It's unlikely but it's good to be safe.
+		 * Hot standby also needs the commit LSN so that readers can safely
+		 * set hint bits.
 		 */
 		TransactionIdAsyncCommitTree(xid, parsed->nsubxacts, parsed->subxacts, lsn);
 
