@@ -352,10 +352,8 @@ extern bool tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 									  SortTuple *stup);
 extern bool tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples,
 								 bool forward);
-extern void tuplesort_set_allowbounded(Tuplesortstate *state,
-									   bool allowbounded);
 extern void tuplesort_end(Tuplesortstate *state);
-extern void tuplesort_reset(Tuplesortstate *state);
+extern void tuplesort_reset(Tuplesortstate *state, bool allowbounded);
 
 extern void tuplesort_get_stats(Tuplesortstate *state,
 								TuplesortInstrumentation *stats);

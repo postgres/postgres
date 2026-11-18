@@ -784,22 +784,6 @@ tuplesort_used_bound(Tuplesortstate *state)
 }
 
 /*
- * tuplesort_set_allowbounded
- *		Set or unset TUPLESORT_ALLOWBOUNDED sort flag on an existing state.
- *
- * NOTE: tuplesort_reset() must be called after this function for the changes
- * to take effect.
- */
-void
-tuplesort_set_allowbounded(Tuplesortstate *state, bool allowbounded)
-{
-	if (allowbounded)
-		state->base.sortopt |= TUPLESORT_ALLOWBOUNDED;
-	else
-		state->base.sortopt &= ~TUPLESORT_ALLOWBOUNDED;
-}
-
-/*
  * tuplesort_free
  *
  *	Internal routine for freeing resources of tuplesort.
@@ -924,13 +908,25 @@ tuplesort_updatemax(Tuplesortstate *state)
  *	Reset the tuplesort.  Reset all the data in the tuplesort, but leave the
  *	meta-information in.  After tuplesort_reset, tuplesort is ready to start
  *	a new sort.  This allows avoiding recreation of tuple sort states (and
- *	save resources) when sorting multiple small batches.
+ *	save resources) when sorting multiple small batches.  We also allow the
+ *	TUPLESORT_ALLOWBOUNDED flag to be set/unset here as the bounded
+ *	requirements may change between rescans in Incremental Sort, and we use
+ *	tuplesort_reset() to clear out the tuples ready for that new scan.
  */
 void
-tuplesort_reset(Tuplesortstate *state)
+tuplesort_reset(Tuplesortstate *state, bool allowbounded)
 {
 	tuplesort_updatemax(state);
 	tuplesort_free(state);
+
+	/*
+	 * Do this before calling tuplesort_begin_batch() as it's too late to
+	 * change it once the tuplecontext is recreated.
+	 */
+	if (allowbounded)
+		state->base.sortopt |= TUPLESORT_ALLOWBOUNDED;
+	else
+		state->base.sortopt &= ~TUPLESORT_ALLOWBOUNDED;
 
 	/*
 	 * After we've freed up per-batch memory, re-setup all of the state common
