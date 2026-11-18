@@ -5604,8 +5604,10 @@ parse_jsonb_index_flags(Jsonb *jb)
 	 * chosen the same as jsonb_typeof uses.
 	 */
 	if (type != WJB_BEGIN_ARRAY)
-		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("wrong flag type, only arrays and scalars are allowed")));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("incorrect flag structure"),
+				 errdetail("Flags argument must be a string or array of strings.")));
 
 	while ((type = JsonbIteratorNext(&it, &v, false)) == WJB_ELEM)
 	{
@@ -5640,12 +5642,15 @@ parse_jsonb_index_flags(Jsonb *jb)
 
 	/* expect end of array now */
 	if (type != WJB_END_ARRAY)
-		elog(ERROR, "unexpected end of flag array");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("incorrect flag structure"),
+				 errdetail("Flags argument must be a string or array of strings.")));
 
 	/* get final WJB_DONE and free iterator */
 	type = JsonbIteratorNext(&it, &v, false);
 	if (type != WJB_DONE)
-		elog(ERROR, "unexpected end of flag array");
+		elog(ERROR, "unexpected items after flag array");
 
 	return flags;
 }
