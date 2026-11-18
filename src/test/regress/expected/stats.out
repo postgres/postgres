@@ -72,6 +72,7 @@ standalone backend|relation|bulkwrite
 standalone backend|relation|init
 standalone backend|relation|normal
 standalone backend|relation|vacuum
+standalone backend|temp relation|normal
 standalone backend|wal|init
 standalone backend|wal|normal
 startup|relation|bulkread
@@ -95,7 +96,7 @@ walsummarizer|wal|init
 walsummarizer|wal|normal
 walwriter|wal|init
 walwriter|wal|normal
-(79 rows)
+(80 rows)
 \a
 -- ensure that both seqscan and indexscan plans are allowed
 SET enable_seqscan TO on;
