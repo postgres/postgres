@@ -26,6 +26,8 @@ static FullTransactionId consume_xids_common(FullTransactionId untilxid, uint64 
 
 /*
  * Consume the specified number of XIDs.
+ *
+ * Returns the last XID assigned by this function.
  */
 PG_FUNCTION_INFO_V1(consume_xids);
 Datum
@@ -34,19 +36,21 @@ consume_xids(PG_FUNCTION_ARGS)
 	int64		nxids = PG_GETARG_INT64(0);
 	FullTransactionId lastxid;
 
-	if (nxids < 0)
+	if (nxids <= 0)
 		elog(ERROR, "invalid nxids argument: %" PRId64, nxids);
 
-	if (nxids == 0)
-		lastxid = ReadNextFullTransactionId();
-	else
-		lastxid = consume_xids_common(InvalidFullTransactionId, (uint64) nxids);
+	lastxid = consume_xids_common(InvalidFullTransactionId, (uint64) nxids);
 
 	PG_RETURN_FULLTRANSACTIONID(lastxid);
 }
 
 /*
- * Consume XIDs, up to the given XID.
+ * Advance XID allocation so that the next XID is at least the target.
+ * This may consume XIDs beyond the target.
+ *
+ * Ensures that the current transaction has a top-level XID.
+ * Returns the last XID assigned by this call, or the next XID observed
+ * if no XID was assigned.
  */
 PG_FUNCTION_INFO_V1(consume_xids_until);
 Datum
@@ -63,6 +67,23 @@ consume_xids_until(PG_FUNCTION_ARGS)
 
 	PG_RETURN_FULLTRANSACTIONID(lastxid);
 }
+
+/*
+ * These constants copied from .c files, because they're private.
+ */
+#define COMMIT_TS_XACTS_PER_PAGE (BLCKSZ / 10)
+#define SUBTRANS_XACTS_PER_PAGE (BLCKSZ / sizeof(TransactionId))
+#define CLOG_XACTS_PER_BYTE 4
+#define CLOG_XACTS_PER_PAGE (BLCKSZ * CLOG_XACTS_PER_BYTE)
+
+/*
+ * Take the shortcut in consume_xids_common() only if we have more than this
+ * many XIDs left to consume.  XidSkip() never skips more than
+ * COMMIT_TS_XACTS_PER_PAGE XIDs, which is 3276 with the largest supported
+ * block size (32kB), so this is enough to make sure that the shortcut never
+ * consumes more XIDs than requested.
+ */
+#define XID_SHORTCUT_THRESHOLD 4000
 
 /*
  * Common functionality between the two public functions.
@@ -89,7 +110,11 @@ consume_xids_common(FullTransactionId untilxid, uint64 nxids)
 	 * the cache overflows, but beyond that, we don't keep track of the
 	 * consumed XIDs.
 	 */
-	(void) GetTopTransactionId();
+	if (!FullTransactionIdIsValid(GetTopFullTransactionIdIfAny()))
+	{
+		lastxid = GetTopFullTransactionId();
+		consumed++;
+	}
 
 	for (;;)
 	{
@@ -115,7 +140,7 @@ consume_xids_common(FullTransactionId untilxid, uint64 nxids)
 		 * If we still have plenty of XIDs to consume, try to take a shortcut
 		 * and bump up the nextXid counter directly.
 		 */
-		if (xids_left > 2000 &&
+		if (xids_left > XID_SHORTCUT_THRESHOLD &&
 			consumed - last_reported_at < REPORT_INTERVAL &&
 			MyProc->subxidStatus.overflowed)
 		{
@@ -154,14 +179,6 @@ consume_xids_common(FullTransactionId untilxid, uint64 nxids)
 }
 
 /*
- * These constants copied from .c files, because they're private.
- */
-#define COMMIT_TS_XACTS_PER_PAGE (BLCKSZ / 10)
-#define SUBTRANS_XACTS_PER_PAGE (BLCKSZ / sizeof(TransactionId))
-#define CLOG_XACTS_PER_BYTE 4
-#define CLOG_XACTS_PER_PAGE (BLCKSZ * CLOG_XACTS_PER_BYTE)
-
-/*
  * All the interesting action in GetNewTransactionId happens when we extend
  * the SLRUs, or at the uint32 wraparound. If the nextXid counter is not close
  * to any of those interesting values, take a shortcut and bump nextXID
@@ -192,6 +209,9 @@ XidSkip(FullTransactionId fullxid)
 	if (rem == 0)
 		return 0;
 	distance = Min(distance, CLOG_XACTS_PER_PAGE - rem);
+
+	/* The shortcut threshold in consume_xids_common() relies on this */
+	Assert(distance <= XID_SHORTCUT_THRESHOLD);
 
 	return distance;
 }
