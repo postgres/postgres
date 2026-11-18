@@ -572,7 +572,8 @@ approx_free_percent  | 2.09
         <row>
          <entry><structfield>approx_tuple_count</structfield></entry>
          <entry><type>bigint</type></entry>
-         <entry>Number of live tuples (estimated)</entry>
+         <entry>Number of live tuples (estimated), or zero if there is not
+         enough information to estimate it</entry>
         </row>
         <row>
          <entry><structfield>approx_tuple_len</structfield></entry>
