@@ -1214,6 +1214,87 @@ SKIP:
 	$stale_session->quit;
 }
 
+# 11e. When the last record ends exactly at a WAL page boundary,
+# pg_current_wal_insert_lsn() points past the next page's header, while the
+# flush, write, and replay positions stay at the boundary.  WAIT must treat
+# both positions as the same point instead of waiting for unrelated WAL.
+#
+# A WAL switch gets there without depending on record and header sizes: the
+# switch record is flushed up to the segment end, and the insert LSN then
+# points past the next segment's long page header.  Write a record first so
+# that the switch is not a no-op, and retry if other WAL gets in the way.  A
+# long page header takes at most 40 bytes, and any record after it would add
+# at least 24 more.
+#
+# Then freeze the standby at the boundary, so that the checks below cannot be
+# satisfied by WAL written later.  Stop the walreceiver before pausing replay,
+# as in section 11, and retry if the standby already got past the boundary.
+my $past_header_lsn;
+for (my $attempt = 0; $attempt < 10 && !defined($past_header_lsn); $attempt++)
+{
+	$rcv_primary->safe_psql('postgres',
+		"SELECT pg_logical_emit_message(false, 'p', 'x', false)");
+	$rcv_primary->safe_psql('postgres', "SELECT pg_switch_wal()");
+	my $lsns = $rcv_primary->safe_psql(
+		'postgres', qq[
+		SELECT insert_lsn, flush_lsn
+		FROM (SELECT pg_current_wal_insert_lsn() AS insert_lsn,
+					 pg_current_wal_flush_lsn() AS flush_lsn) s
+		WHERE (flush_lsn - '0/0'::pg_lsn) %
+			  pg_size_bytes(current_setting('wal_segment_size')) = 0
+		  AND insert_lsn - flush_lsn BETWEEN 1 AND 40
+	]);
+	next if $lsns eq '';
+	my ($insert_lsn, $flush_lsn) = split(/\|/, $lsns);
+
+	$rcv_standby->poll_query_until('postgres',
+		"SELECT pg_last_wal_replay_lsn() >= '$flush_lsn'::pg_lsn")
+	  or die "rcv_standby did not replay up to the page boundary";
+	stop_walreceiver($rcv_standby);
+	$rcv_standby->safe_psql('postgres', "SELECT pg_wal_replay_pause()");
+	$rcv_standby->poll_query_until('postgres',
+		"SELECT pg_get_wal_replay_pause_state() = 'paused'")
+	  or die "Timed out waiting for rcv_standby replay to pause";
+
+	my $frozen_at_boundary = $rcv_standby->safe_psql(
+		'postgres', qq[
+		SELECT pg_last_wal_replay_lsn() = '$flush_lsn'::pg_lsn AND
+			   pg_last_wal_receive_lsn() <= '$flush_lsn'::pg_lsn
+	]);
+	if ($frozen_at_boundary eq 't')
+	{
+		$past_header_lsn = $insert_lsn;
+	}
+	else
+	{
+		$rcv_standby->safe_psql('postgres', "SELECT pg_wal_replay_resume()");
+		resume_walreceiver($rcv_standby);
+	}
+}
+ok(defined($past_header_lsn),
+	"insert LSN points past a WAL page header after the last record")
+  or die "could not make the last WAL record end at a segment boundary";
+
+# The timeout only bounds the failure case; the targets are reached already.
+is( $rcv_primary->safe_psql(
+		'postgres', qq[
+		WAIT FOR LSN '$past_header_lsn'
+			WITH (MODE 'primary_flush', timeout '3s', no_throw);
+	]),
+	'success',
+	"primary_flush: target past a page header is reached at the boundary");
+
+foreach my $mode ('standby_replay', 'standby_write', 'standby_flush')
+{
+	is( $rcv_standby->safe_psql(
+			'postgres', qq[
+			WAIT FOR LSN '$past_header_lsn'
+				WITH (MODE '$mode', timeout '3s', no_throw);
+		]),
+		'success',
+		"$mode: target past a page header is reached at the boundary");
+}
+
 $rcv_standby->stop;
 $rcv_primary->stop;
 
