@@ -132,7 +132,11 @@ PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
     continues to hold whatever locks it held.  The intended usage of the
     feature is that a prepared transaction will normally be committed or
     rolled back as soon as an external transaction manager has verified that
-    other databases are also prepared to commit.
+    other databases are also prepared to commit.  A transaction prepared by a
+    logical replication apply worker is normally completed by the
+    subscription's apply worker; see
+    <xref linkend="sql-createsubscription-params-with-two-phase"/> for a
+    lock wait this can cause.
    </para>
 
    <para>
