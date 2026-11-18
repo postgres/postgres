@@ -513,7 +513,7 @@ jobs:
           echo "CXX=${CXX}" >> "$GITHUB_ENV"
 
           echo "PG_TEST_PG_UPGRADE_MODE=${PG_TEST_PG_UPGRADE_MODE}" >> "$GITHUB_ENV"
-          echo "PG_TEST_INITDB_EXTRA_OPTS=${PG_TEST_INITDB_EXTRA_OPTS}" >> "$GITHUB_ENV"
+          echo "PG_TEST_SERVER_POSTGRES_OPTS=${PG_TEST_SERVER_POSTGRES_OPTS}" >> "$GITHUB_ENV"
           echo "PG_TEST_PG_COMBINEBACKUP_MODE=${PG_TEST_PG_COMBINEBACKUP_MODE}" >> "$GITHUB_ENV"
 
       - *nix_sysinfo_step
@@ -575,7 +575,7 @@ jobs:
       - name: Update Environment
         env:
           SANITIZER_FLAGS: -fsanitize=alignment,undefined
-          PG_TEST_INITDB_EXTRA_OPTS: -c io_method=io_uring
+          PG_TEST_SERVER_POSTGRES_OPTS: io_method=io_uring
           CC: ccache gcc -m32
           CXX: ccache g++ -m32
         run: *linux_update_config_cmd
@@ -669,7 +669,7 @@ jobs:
       - name: Update Environment
         env:
           SANITIZER_FLAGS: -fsanitize=address
-          PG_TEST_INITDB_EXTRA_OPTS: -c io_method=io_uring
+          PG_TEST_SERVER_POSTGRES_OPTS: io_method=io_uring
         run: *linux_update_config_cmd
 
       - *nix_sysinfo_step
@@ -753,11 +753,11 @@ jobs:
       # Several buildfarm animals enable these options. Without testing them
       # during CI, it would be easy to cause breakage on the buildfarm with CI
       # passing.
-      PG_TEST_INITDB_EXTRA_OPTS: >-
-        -c debug_copy_parse_plan_trees=on
-        -c debug_write_read_parse_plan_trees=on
-        -c debug_raw_expression_coverage_test=on
-        -c debug_parallel_query=regress
+      PG_TEST_SERVER_POSTGRES_OPTS: >-
+        debug_copy_parse_plan_trees=on
+        debug_write_read_parse_plan_trees=on
+        debug_raw_expression_coverage_test=on
+        debug_parallel_query=regress
 
     steps:
       - *nix_sysinfo_step

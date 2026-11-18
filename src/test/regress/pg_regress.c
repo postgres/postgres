@@ -2372,6 +2372,7 @@ regression_main(int argc, char *argv[],
 		const char *values[4];
 		PGPing		rv;
 		const char *initdb_extra_opts_env;
+		const char *server_opts_env;
 
 		/*
 		 * Prepare the temp instance
@@ -2498,6 +2499,29 @@ regression_main(int argc, char *argv[],
 			while (fgets(line_buf, sizeof(line_buf), extra_conf) != NULL)
 				fputs(line_buf, pg_conf);
 			fclose(extra_conf);
+		}
+
+		/*
+		 * PG_TEST_SERVER_POSTGRES_OPTS allows adding server settings via an
+		 * environment variable.  Unlike PG_TEST_INITDB_EXTRA_OPTS, it does
+		 * not disable the initdb template mechanism, as the options are only
+		 * added to postgresql.conf and not passed to initdb.  The options are
+		 * given as whitespace-separated "name=value" pairs.
+		 *
+		 * There's very similar code in Cluster.pm.
+		 */
+		server_opts_env = getenv("PG_TEST_SERVER_POSTGRES_OPTS");
+		if (server_opts_env != NULL)
+		{
+			char	   *opts = pg_strdup(server_opts_env);
+			char	   *tok;
+
+			fputs("# options from PG_TEST_SERVER_POSTGRES_OPTS\n", pg_conf);
+			for (tok = strtok(opts, " \t\n"); tok != NULL;
+				 tok = strtok(NULL, " \t\n"))
+				fprintf(pg_conf, "%s\n", tok);
+			free(opts);
+			fputs("# end of options from PG_TEST_SERVER_POSTGRES_OPTS\n", pg_conf);
 		}
 
 		fclose(pg_conf);

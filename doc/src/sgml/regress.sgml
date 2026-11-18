@@ -555,6 +555,16 @@ make check PG_TEST_INITDB_EXTRA_OPTS='-k --wal-segsize=4 -c work_mem=50MB'
    </para>
 
    <para>
+    Run-time server settings can be added to the
+    <filename>postgresql.conf</filename> using the environment variable
+    <envar>PG_TEST_SERVER_POSTGRES_OPTS</envar>.  The settings are given as
+    whitespace-separated <literal>name=value</literal> pairs.  For example:
+<screen>
+make check PG_TEST_SERVER_POSTGRES_OPTS='work_mem=50MB debug_discard_caches=1'
+</screen>
+   </para>
+
+   <para>
     For the core regression test suite and other tests driven by
     <command>pg_regress</command>, custom run-time server settings can also be
     set in the <varname>PGOPTIONS</varname> environment variable (for settings

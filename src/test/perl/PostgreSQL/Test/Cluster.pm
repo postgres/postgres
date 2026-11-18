@@ -752,6 +752,24 @@ sub init
 		print $conf "max_wal_senders = 0\n";
 	}
 
+	# PG_TEST_SERVER_POSTGRES_OPTS allows adding server settings via an
+	# environment variable.  Unlike PG_TEST_INITDB_EXTRA_OPTS, it does not
+	# disable the initdb template mechanism, as the options are only added to
+	# postgresql.conf and not passed to initdb.  The options are given as
+	# whitespace-separated "name=value" pairs.
+	#
+	# There's very similar code in pg_regress.c.
+	my $server_opts_env = $ENV{PG_TEST_SERVER_POSTGRES_OPTS};
+	if (defined $server_opts_env)
+	{
+		print $conf "# options from PG_TEST_SERVER_POSTGRES_OPTS\n";
+		foreach my $opt (split(/\s+/, $server_opts_env))
+		{
+			print $conf "$opt\n" if $opt ne '';
+		}
+		print $conf "# end of options from PG_TEST_SERVER_POSTGRES_OPTS\n";
+	}
+
 	print $conf "port = $port\n";
 	if ($use_tcp)
 	{
