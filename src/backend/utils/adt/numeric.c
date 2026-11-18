@@ -7514,6 +7514,22 @@ get_str_from_var_sci(const NumericVar *var, int rscale)
 
 	power_ten_int(exponent, &tmp_var);
 	div_var(var, &tmp_var, &tmp_var, rscale, true, true);
+
+	/*
+	 * Rounding can increase the significand from, say, 9.999 to 10.00,
+	 * breaking our intended formatting.  If that has happened, increase the
+	 * exponent and recompute the significand.  (This is a rare edge case, so
+	 * it doesn't seem worth working harder.)
+	 */
+	if (tmp_var.ndigits > 0 &&
+		(tmp_var.weight > 0 ||
+		 (tmp_var.weight == 0 && tmp_var.digits[0] >= 10)))
+	{
+		exponent++;
+		power_ten_int(exponent, &tmp_var);
+		div_var(var, &tmp_var, &tmp_var, rscale, true, true);
+	}
+
 	sig_out = get_str_from_var(&tmp_var);
 
 	free_var(&tmp_var);

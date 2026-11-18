@@ -1017,6 +1017,19 @@ SELECT exp,
   to_char(('1.2345e'||exp)::numeric, '9.999EEEE') as numeric
 FROM v;
 
+-- Rounding the significand must preserve normalised scientific notation.
+WITH v(val, fmt) AS
+  (VALUES (99::numeric, '9EEEE'),
+          (-99, '9EEEE'),
+          (9.994, '9.99EEEE'),
+          (9.995, '9.99EEEE'),
+          (-9.994, '9.99EEEE'),
+          (-9.995, '9.99EEEE'),
+          (0, '9.99EEEE'),
+          (1, '9.99EEEE'))
+SELECT val, fmt, to_char(val, fmt)
+FROM v;
+
 WITH v(val) AS
   (VALUES('0'::numeric),('-4.2'),('4.2e9'),('1.2e-5'),('inf'),('-inf'),('nan'))
 SELECT val,

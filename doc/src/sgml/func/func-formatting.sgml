@@ -956,10 +956,16 @@
 
      <listitem>
       <para>
-       <literal>EEEE</literal> (scientific notation) cannot be used in
+       <literal>EEEE</literal> represents the exponent of a number written
+       in scientific notation.  The significand is always scaled to have
+       one digit before the decimal point.  Write digit and decimal point
+       patterns to control the number of fractional digits displayed.
+       For example, <literal>9.99EEEE</literal> specifies scientific
+       notation with two fractional digits.
+       <literal>EEEE</literal> cannot be used in
        combination with any of the other formatting patterns or
-       modifiers other than digit and decimal point patterns, and must be at the end of the format string
-       (e.g., <literal>9.99EEEE</literal> is a valid pattern).
+       modifiers other than digit and decimal point patterns,
+       and must be at the end of the format string.
       </para>
      </listitem>
 
