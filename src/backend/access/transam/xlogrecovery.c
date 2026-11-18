@@ -448,7 +448,6 @@ static int	XLogFileReadAnyTLI(XLogSegNo segno, XLogSource source);
 
 static bool CheckForStandbyTrigger(void);
 static void SetPromoteIsTriggered(void);
-static bool HotStandbyActiveInReplay(void);
 
 static void SetCurrentChunkStartTime(TimestampTz xtime);
 static void SetLatestXTime(TimestampTz xtime);
@@ -4614,7 +4613,7 @@ HotStandbyActive(void)
  * Like HotStandbyActive(), but to be used only in WAL replay code,
  * where we don't need to ask any other process what the state is.
  */
-static bool
+bool
 HotStandbyActiveInReplay(void)
 {
 	Assert(AmStartupProcess() || !IsPostmasterEnvironment);
