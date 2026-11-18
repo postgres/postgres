@@ -3,7 +3,12 @@ INSERT INTO rngfunc2 VALUES(1, 11);
 INSERT INTO rngfunc2 VALUES(2, 22);
 INSERT INTO rngfunc2 VALUES(1, 111);
 
-CREATE FUNCTION rngfunct(int) returns setof rngfunc2 as 'SELECT * FROM rngfunc2 WHERE rngfuncid = $1 ORDER BY f2;' LANGUAGE SQL;
+CREATE FUNCTION rngfunct(int) returns setof rngfunc2 as
+  'SELECT * FROM rngfunc2 WHERE rngfuncid = $1 ORDER BY f2;' LANGUAGE SQL;
+
+-- this variant doesn't work
+CREATE FUNCTION rngfunct2(int) returns setof rngfunc2 as
+  'SELECT s FROM (SELECT * FROM rngfunc2) s;' LANGUAGE SQL;
 
 -- function with ORDINALITY
 select * from rngfunct(1) with ordinality as z(a,b,ord);
