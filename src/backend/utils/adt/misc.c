@@ -639,7 +639,7 @@ pg_column_is_updatable(PG_FUNCTION_ARGS)
 {
 	Oid			reloid = PG_GETARG_OID(0);
 	AttrNumber	attnum = PG_GETARG_INT16(1);
-	AttrNumber	col = attnum - FirstLowInvalidHeapAttributeNumber;
+	int			col = attnum - FirstLowInvalidHeapAttributeNumber;
 	bool		include_triggers = PG_GETARG_BOOL(2);
 	int			events;
 
