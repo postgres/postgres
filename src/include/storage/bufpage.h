@@ -242,6 +242,20 @@ typedef PageHeaderData *PageHeader;
 #define SizeOfPageHeaderData (offsetof(PageHeaderData, pd_linp))
 
 /*
+ * Returns true if the page header describes a non-empty, in-bounds free space
+ * range. This does not prove that the page uses the standard page layout.
+ */
+static inline bool
+PageFreeSpaceBoundsAreValid(const PageData *page)
+{
+	const PageHeaderData *phdr = (const PageHeaderData *) page;
+
+	return phdr->pd_lower >= SizeOfPageHeaderData &&
+		phdr->pd_upper > phdr->pd_lower &&
+		phdr->pd_upper <= BLCKSZ;
+}
+
+/*
  * PageIsEmpty
  *		returns true iff no itemid has been allocated on the page
  */

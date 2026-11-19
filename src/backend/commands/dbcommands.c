@@ -36,6 +36,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_am_d.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_database.h"
@@ -110,6 +111,7 @@ typedef struct CreateDBRelInfo
 	RelFileLocator rlocator;	/* physical relation identifier */
 	Oid			reloid;			/* relation oid */
 	bool		permanent;		/* relation is permanent or unlogged */
+	bool		mainfork_page_std;	/* main fork has standard page layout */
 } CreateDBRelInfo;
 
 
@@ -217,7 +219,8 @@ CreateDatabaseUsingWalLog(Oid src_dboid, Oid dst_dboid,
 		LockRelationId(&dstrelid, AccessShareLock);
 
 		/* Copy relation storage from source to the destination. */
-		CreateAndCopyRelationData(srcrlocator, dstrlocator, relinfo->permanent);
+		CreateAndCopyRelationData(srcrlocator, dstrlocator, relinfo->permanent,
+								  relinfo->mainfork_page_std);
 
 		/* Release the relation locks. */
 		UnlockRelationId(&srcrelid, AccessShareLock);
@@ -448,6 +451,19 @@ ScanSourceDatabasePgClassTuple(HeapTupleData *tuple, Oid tbid, Oid dbid,
 	Assert(classForm->relpersistence != RELPERSISTENCE_TEMP);
 	relinfo->permanent =
 		(classForm->relpersistence == RELPERSISTENCE_PERMANENT) ? true : false;
+
+	/*
+	 * Heap tables and B-tree indexes are common cases whose main forks are
+	 * known to use the standard page layout. Other access methods may do so
+	 * as well, but some, such as GIN, have legacy page formats that differ
+	 * from their current format. Keep the classification conservative by
+	 * limiting it to heap and B-tree.
+	 */
+	relinfo->mainfork_page_std =
+		(RELKIND_HAS_TABLE_AM(classForm->relkind) &&
+		 classForm->relam == HEAP_TABLE_AM_OID) ||
+		(classForm->relkind == RELKIND_INDEX &&
+		 classForm->relam == BTREE_AM_OID);
 
 	return relinfo;
 }

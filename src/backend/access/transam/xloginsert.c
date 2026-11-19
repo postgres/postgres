@@ -740,16 +740,13 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			 */
 			if (regbuf->flags & REGBUF_STANDARD)
 			{
-				/* Assume we can omit data between pd_lower and pd_upper */
-				uint16		lower = ((const PageHeaderData *) page)->pd_lower;
-				uint16		upper = ((const PageHeaderData *) page)->pd_upper;
+				const PageHeaderData *phdr = (const PageHeaderData *) page;
 
-				if (lower >= SizeOfPageHeaderData &&
-					upper > lower &&
-					upper <= BLCKSZ)
+				/* Assume we can omit data between pd_lower and pd_upper */
+				if (PageFreeSpaceBoundsAreValid(page))
 				{
-					bimg.hole_offset = lower;
-					cbimg.hole_length = upper - lower;
+					bimg.hole_offset = phdr->pd_lower;
+					cbimg.hole_length = phdr->pd_upper - phdr->pd_lower;
 				}
 				else
 				{
