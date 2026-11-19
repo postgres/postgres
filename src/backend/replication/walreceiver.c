@@ -567,6 +567,8 @@ WalReceiverMain(char *startup_data, size_t startup_data_len)
 					 */
 					for (;;)
 					{
+						ProcessWalRcvInterrupts();
+
 						if (len > 0)
 						{
 							/*
