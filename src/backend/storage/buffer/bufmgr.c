@@ -62,6 +62,7 @@
 #include "storage/smgr.h"
 #include "storage/standby.h"
 #include "utils/memdebug.h"
+#include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/rel.h"
 #include "utils/resowner.h"
@@ -541,7 +542,8 @@ static void FindAndDropRelationBuffers(RelFileLocator rlocator,
 									   BlockNumber firstDelBlock);
 static void RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 										   RelFileLocator dstlocator,
-										   ForkNumber forkNum, bool permanent);
+										   ForkNumber forkNum, bool permanent,
+										   bool page_std);
 static void AtProcExit_Buffers(int code, Datum arg);
 static void CheckForBufferLeaks(void);
 #ifdef USE_ASSERT_CHECKING
@@ -5148,7 +5150,8 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 static void
 RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 							   RelFileLocator dstlocator,
-							   ForkNumber forkNum, bool permanent)
+							   ForkNumber forkNum, bool permanent,
+							   bool page_std)
 {
 	Buffer		srcBuf;
 	Buffer		dstBuf;
@@ -5234,7 +5237,24 @@ RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 
 		/* WAL-log the copied page. */
 		if (use_wal)
-			log_newpage_buffer(dstBuf, true);
+		{
+			bool		allow_page_std = page_std;
+
+			/*
+			 * For page layouts we don't recognize, hole removal is still safe
+			 * if the exact range that WAL would omit contains only zeroes.
+			 */
+			if (!allow_page_std && PageFreeSpaceBoundsAreValid(dstPage))
+			{
+				PageHeader	phdr = (PageHeader) dstPage;
+
+				allow_page_std =
+					pg_memory_is_all_zeros(dstPage + phdr->pd_lower,
+										   phdr->pd_upper - phdr->pd_lower);
+			}
+
+			log_newpage_buffer(dstBuf, allow_page_std);
+		}
 
 		END_CRIT_SECTION();
 
@@ -5256,12 +5276,28 @@ RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
  *
  *		Pass permanent as true for permanent relations and false for
  *		unlogged relations.  Currently this API is not supported for
- *		temporary relations.
+ *		temporary relations.  mainfork_page_std indicates whether the main
+ *		fork uses the standard page layout; all other forks are treated as
+ *		non-standard.
  * --------------------------------------------------------------------
  */
 void
 CreateAndCopyRelationData(RelFileLocator src_rlocator,
 						  RelFileLocator dst_rlocator, bool permanent)
+{
+	CreateAndCopyRelationDataExtended(src_rlocator, dst_rlocator, permanent,
+									  false);
+}
+
+/*
+ * As above, but allow callers that know the main fork's page layout to retain
+ * full-page image hole removal.
+ */
+void
+CreateAndCopyRelationDataExtended(RelFileLocator src_rlocator,
+								  RelFileLocator dst_rlocator,
+								  bool permanent,
+								  bool mainfork_page_std)
 {
 	char		relpersistence;
 	SMgrRelation src_rel;
@@ -5284,7 +5320,7 @@ CreateAndCopyRelationData(RelFileLocator src_rlocator,
 
 	/* copy main fork. */
 	RelationCopyStorageUsingBuffer(src_rlocator, dst_rlocator, MAIN_FORKNUM,
-								   permanent);
+								   permanent, mainfork_page_std);
 
 	/* copy those extra forks that exist */
 	for (ForkNumber forkNum = MAIN_FORKNUM + 1;
@@ -5303,7 +5339,7 @@ CreateAndCopyRelationData(RelFileLocator src_rlocator,
 
 			/* Copy a fork's data, block by block. */
 			RelationCopyStorageUsingBuffer(src_rlocator, dst_rlocator, forkNum,
-										   permanent);
+										   permanent, false);
 		}
 	}
 }

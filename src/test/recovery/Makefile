@@ -11,6 +11,7 @@
 
 EXTRA_INSTALL=contrib/pg_prewarm \
 	contrib/pg_stat_statements \
+	contrib/pg_visibility \
 	contrib/test_decoding \
 	src/test/modules/injection_points
 
