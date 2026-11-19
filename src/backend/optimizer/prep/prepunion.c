@@ -892,6 +892,19 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		bool		can_hash = grouping_is_hashable(groupList);
 
 		/*
+		 * Check that the operators support sorting or hashing.  The parser
+		 * would have checked that individual grouping columns support at
+		 * least one, but it doesn't verify that they all support the same
+		 * method.
+		 */
+		if (!can_sort && !can_hash)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			/* translator: %s is UNION */
+					 errmsg("could not implement %s", "UNION"),
+					 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+
+		/*
 		 * XXX for the moment, take the number of distinct groups as equal to
 		 * the total input size, i.e., the worst case.  This is too
 		 * conservative, but it's not clear how to get a decent estimate of
