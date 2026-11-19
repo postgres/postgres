@@ -1059,10 +1059,18 @@ smgr_redo(XLogReaderState *record)
 				need_fsm_vacuum = true;
 			}
 		}
-		if ((xlrec->flags & SMGR_TRUNCATE_VM) != 0 &&
-			smgrexists(reln, VISIBILITYMAP_FORKNUM))
+		if ((xlrec->flags & SMGR_TRUNCATE_VM) != 0)
 		{
+			/*
+			 * Also tell xlogutils.c about it. Do this even if the VM fork is
+			 * already short enough (e.g. replaying again after a crash), as
+			 * earlier records may have logged invalid pages for it.
+			 */
+			XLogTruncateRelation(xlrec->rlocator, VISIBILITYMAP_FORKNUM,
+								 visibilitymap_truncation_length(xlrec->blkno));
+
 			blocks[nforks] = visibilitymap_prepare_truncate(rel, xlrec->blkno);
+
 			if (BlockNumberIsValid(blocks[nforks]))
 			{
 				forks[nforks] = VISIBILITYMAP_FORKNUM;
