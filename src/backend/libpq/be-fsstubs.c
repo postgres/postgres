@@ -369,6 +369,11 @@ be_loread(PG_FUNCTION_ARGS)
 	if (len < 0)
 		len = 0;
 
+	if (len > MaxAllocSize - VARHDRSZ)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("large object read request is too large")));
+
 	retval = (bytea *) palloc(VARHDRSZ + len);
 	totalread = lo_read(fd, VARDATA(retval), len);
 	SET_VARSIZE(retval, totalread + VARHDRSZ);
