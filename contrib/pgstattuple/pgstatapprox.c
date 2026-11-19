@@ -36,6 +36,7 @@ typedef struct output_type
 	uint64		table_len;
 	double		scanned_percent;
 	uint64		tuple_count;
+	bool		tuple_count_is_unknown;
 	uint64		tuple_len;
 	double		tuple_percent;
 	uint64		dead_tuple_count;
@@ -259,8 +260,10 @@ statapprox_heap(Relation rel, output_type *stat)
 												   p.scanned_new,
 												   stat->tuple_count);
 
-	/* Report zero when there is not enough information for an estimate. */
-	stat->tuple_count = Max(estimated_tuple_count, 0);
+	if (estimated_tuple_count < 0)
+		stat->tuple_count_is_unknown = true;
+	else
+		stat->tuple_count = estimated_tuple_count;
 
 	/*
 	 * Calculate percentages if the relation has one or more pages.
@@ -365,7 +368,8 @@ pgstattuple_approx_internal(Oid relid, FunctionCallInfo fcinfo)
 
 	values[i++] = Int64GetDatum(stat.table_len);
 	values[i++] = Float8GetDatum(stat.scanned_percent);
-	values[i++] = Int64GetDatum(stat.tuple_count);
+	values[i] = Int64GetDatum(stat.tuple_count);
+	nulls[i++] = stat.tuple_count_is_unknown;
 	values[i++] = Int64GetDatum(stat.tuple_len);
 	values[i++] = Float8GetDatum(stat.tuple_percent);
 	values[i++] = Int64GetDatum(stat.dead_tuple_count);

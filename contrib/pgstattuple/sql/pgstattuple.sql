@@ -107,7 +107,7 @@ select pgstattuple((select reltoastrelid from pg_class where relname = 'test'));
 select pgstattuple_approx((select reltoastrelid from pg_class where relname = 'test'));
 select pg_relpages((select reltoastrelid from pg_class where relname = 'test'));
 
--- An unknown approximate tuple count is reported as zero.
+-- An unknown approximate tuple count is reported as NULL.
 begin;
 create temp table test_approx_unknown (id int);
 copy test_approx_unknown from stdin with (freeze);
