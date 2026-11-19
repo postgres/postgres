@@ -13,8 +13,6 @@
 #ifndef PRINT_H
 #define PRINT_H
 
-#include <signal.h>
-
 #include "libpq-fe.h"
 
 
@@ -193,8 +191,6 @@ typedef struct printQueryOpt
 	int			n_translate_columns;	/* length of translate_columns[] */
 } printQueryOpt;
 
-
-extern PGDLLIMPORT volatile sig_atomic_t cancel_pressed;
 
 extern PGDLLIMPORT const printTextFormat pg_asciiformat;
 extern PGDLLIMPORT const printTextFormat pg_asciiformat_old;

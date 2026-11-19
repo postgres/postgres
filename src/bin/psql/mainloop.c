@@ -10,6 +10,7 @@
 #include "command.h"
 #include "common.h"
 #include "common/logging.h"
+#include "fe_utils/cancel.h"
 #include "input.h"
 #include "mainloop.h"
 #include "mb/pg_wchar.h"
@@ -85,7 +86,7 @@ MainLoop(FILE *source)
 		/*
 		 * Clean up after a previous Control-C
 		 */
-		if (cancel_pressed)
+		if (CancelRequested)
 		{
 			if (!pset.cur_cmd_interactive)
 			{
@@ -96,7 +97,7 @@ MainLoop(FILE *source)
 				break;
 			}
 
-			cancel_pressed = false;
+			CancelRequested = false;
 		}
 
 		/*
@@ -118,7 +119,7 @@ MainLoop(FILE *source)
 			prompt_status = PROMPT_READY;
 			need_redisplay = false;
 			pset.stmt_lineno = 1;
-			cancel_pressed = false;
+			CancelRequested = false;
 
 			if (pset.cur_cmd_interactive)
 			{

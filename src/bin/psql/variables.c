@@ -11,6 +11,7 @@
 
 #include "common.h"
 #include "common/logging.h"
+#include "fe_utils/cancel.h"
 #include "variables.h"
 
 /*
@@ -265,7 +266,7 @@ PrintVariables(VariableSpace space)
 	{
 		if (ptr->value)
 			printf("%s = '%s'\n", ptr->name, ptr->value);
-		if (cancel_pressed)
+		if (CancelRequested)
 			break;
 	}
 }
