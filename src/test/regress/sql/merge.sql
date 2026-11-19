@@ -1882,6 +1882,27 @@ SELECT * FROM bug18634t;
 DROP TABLE bug18634t CASCADE;
 DROP TABLE bug18634s, bug18634s2;
 
+-- Test nullingrels for target Vars above the right join generated for MERGE
+-- into a trigger-updatable view with a join source.
+CREATE TABLE src (a int, b int);
+CREATE TABLE tgt (a int, b int);
+CREATE VIEW tgt_v AS SELECT * FROM tgt;
+
+CREATE FUNCTION tgt_v_ins_fn() RETURNS trigger
+  LANGUAGE plpgsql AS $$ BEGIN RETURN new; END $$;
+
+CREATE TRIGGER tgt_v_ins_trig INSTEAD OF INSERT ON tgt_v
+  FOR EACH ROW EXECUTE FUNCTION tgt_v_ins_fn();
+
+MERGE INTO tgt_v t
+  USING (src s JOIN src s2 ON s2.b = s.b) ON t.b = s.b AND t.b = 0
+  WHEN MATCHED AND t.b = 0 THEN DO NOTHING
+  WHEN NOT MATCHED THEN INSERT VALUES (s.a, s.b);
+
+DROP VIEW tgt_v;
+DROP FUNCTION tgt_v_ins_fn();
+DROP TABLE src, tgt;
+
 -- prepare
 
 RESET SESSION AUTHORIZATION;
