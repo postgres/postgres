@@ -3136,6 +3136,8 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 	}
 	else
 	{
+		const char *dqmatch;
+
 		appendStringInfoString(&buf, "AS ");
 
 		tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
@@ -3154,12 +3156,14 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 		 * Since the user is likely to be editing the function body string, we
 		 * shouldn't use a short delimiter that he might easily create a
 		 * conflict with.  Hence prefer "$function$"/"$procedure$", but extend
-		 * if needed.
+		 * if needed.  Each candidate extends the previous one, so we can
+		 * resume searching at the previous match.
 		 */
 		initStringInfo(&dq);
 		appendStringInfoChar(&dq, '$');
 		appendStringInfoString(&dq, (isfunction ? "function" : "procedure"));
-		while (strstr(prosrc, dq.data) != NULL)
+		dqmatch = prosrc;
+		while ((dqmatch = strstr(dqmatch, dq.data)) != NULL)
 			appendStringInfoChar(&dq, 'x');
 		appendStringInfoChar(&dq, '$');
 
