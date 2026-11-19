@@ -1096,7 +1096,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		dblocprovider = src_locprovider;
 	if (dblocale == NULL && dblocprovider == src_locprovider)
 		dblocale = src_locale;
-	if (dbicurules == NULL)
+	if (dbicurules == NULL && dblocprovider == COLLPROVIDER_ICU)
 		dbicurules = src_icurules;
 
 	/* Some encodings are client only */
