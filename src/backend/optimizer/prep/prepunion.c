@@ -933,6 +933,19 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		bool		can_hash = grouping_is_hashable(groupList);
 
 		/*
+		 * Check that the operators support sorting or hashing.  The parser
+		 * would have checked that individual grouping columns support at
+		 * least one, but it doesn't verify that they all support the same
+		 * method.
+		 */
+		if (!can_sort && !can_hash)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			/* translator: %s is UNION */
+					 errmsg("could not implement %s", "UNION"),
+					 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+
+		/*
 		 * result_rel->rows was initialized to the total input size above,
 		 * which is the correct estimate for UNION ALL.  A UNION removes
 		 * duplicates, so override it with the estimated number of distinct

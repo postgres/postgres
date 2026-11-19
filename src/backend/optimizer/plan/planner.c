@@ -4158,6 +4158,18 @@ create_grouping_paths(PlannerInfo *root,
 			flags |= GROUPING_CAN_USE_HASH;
 
 		/*
+		 * Check that the operators support sorting or hashing.  The parser
+		 * would have checked that individual grouping columns support at
+		 * least one, but it doesn't verify that they all support the same
+		 * method.
+		 */
+		if ((flags & (GROUPING_CAN_USE_SORT | GROUPING_CAN_USE_HASH)) == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("could not implement GROUP BY"),
+					 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+
+		/*
 		 * Determine whether partial aggregation is possible.
 		 */
 		if (can_partial_agg(root))
@@ -5508,6 +5520,8 @@ create_final_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 								 NULL,
 								 numDistinctRows));
 	}
+
+	/* Caller will complain if we made no paths */
 
 	return distinct_rel;
 }
