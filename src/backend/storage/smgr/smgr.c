@@ -784,7 +784,7 @@ smgrstartreadv(PgAioHandle *ioh,
  * fsync the relation, so we needn't bother.  Temporary relations also
  * do not require fsync.
  *
- * If more than one block is intended to be read, callers need to use
+ * If more than one block is intended to be written, callers need to use
  * smgrmaxcombine() to check how many blocks can be combined into one IO.
  */
 void
@@ -1053,7 +1053,7 @@ pgaio_io_set_target_smgr(PgAioHandle *ioh,
 	sd->smgr.nblocks = nblocks;
 	sd->smgr.is_temp = SmgrIsTemp(smgr);
 	/* Temp relations should never be fsync'd */
-	sd->smgr.skip_fsync = skip_fsync && !SmgrIsTemp(smgr);
+	sd->smgr.skip_fsync = skip_fsync || SmgrIsTemp(smgr);
 }
 
 /*
