@@ -257,21 +257,12 @@ nextVictimBuffer (which it does not change!), looking for buffers that are
 dirty and not pinned nor marked with a positive usage count.  It pins,
 writes, and releases any such buffer.
 
-If we can assume that reading nextVictimBuffer is an atomic action, then
-the writer doesn't even need to take buffer_strategy_lock in order to look
-for buffers to write; it needs only to spinlock each buffer header for long
-enough to check the dirtybit.  Even without that assumption, the writer
-only needs to take the lock long enough to read the variable value, not
-while scanning the buffers.  (This is a very substantial improvement in
-the contention cost of the writer compared to PG 8.0.)
+The background writer takes the buffer_strategy_lock only briefly to
+determine the starting position for the scan.  On each buffer, it only
+needs to lock the buffer header for long enough to check whether it needs
+to be written.  When writing out a dirty buffer, the background writer
+takes a share-exclusive lock on the buffer (and anyone else who flushes
+buffer contents to disk must do so too).
 
-The background writer takes shared content lock on a buffer while writing it
-out (and anyone else who flushes buffer contents to disk must do so too).
-This ensures that the page image transferred to disk is reasonably consistent.
-We might miss a hint-bit update or two but that isn't a problem, for the same
-reasons mentioned under buffer access rules.
-
-As of 8.4, background writer starts during recovery mode when there is
-some form of potentially extended recovery to perform. It performs an
-identical service to normal processing, except that checkpoints it
-writes are technically restartpoints.
+The background writer also runs during recovery, including crash recovery,
+and performs the same service as in normal processing.
