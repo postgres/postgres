@@ -549,6 +549,8 @@ WalReceiverMain(const void *startup_data, size_t startup_data_len)
 					 */
 					for (;;)
 					{
+						CHECK_FOR_INTERRUPTS();
+
 						if (len > 0)
 						{
 							/*
