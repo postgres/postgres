@@ -3200,10 +3200,21 @@ relation_needs_vacanalyze(Oid relid,
 	 * To calculate the (M)XID age portion of the score, divide the age by its
 	 * respective *_freeze_max_age parameter.  The multixact_freeze_max_age
 	 * variable might be 0 here (i.e., a division-by-zero hazard), so in that
-	 * case we use the mxid_age as the MXID score.
+	 * case we use the mxid_age as the MXID score.  We also account for the
+	 * possibility that recent{Xid,Multi} precedes relfrozenxid/relminmxid due
+	 * to concurrent manual VACUUMs, etc.
 	 */
-	xid_age = TransactionIdIsNormal(relfrozenxid) ? recentXid - relfrozenxid : 0;
-	mxid_age = MultiXactIdIsValid(relminmxid) ? recentMulti - relminmxid : 0;
+	if (TransactionIdIsNormal(relfrozenxid) &&
+		TransactionIdPrecedes(relfrozenxid, recentXid))
+		xid_age = recentXid - relfrozenxid;
+	else
+		xid_age = 0;
+
+	if (MultiXactIdIsValid(relminmxid) &&
+		MultiXactIdPrecedes(relminmxid, recentMulti))
+		mxid_age = recentMulti - relminmxid;
+	else
+		mxid_age = 0;
 
 	scores->xid = (double) xid_age / freeze_max_age;
 	scores->mxid = (double) mxid_age / Max(1, multixact_freeze_max_age);
