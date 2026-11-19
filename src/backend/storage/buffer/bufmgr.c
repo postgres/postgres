@@ -55,6 +55,7 @@
 #include "storage/smgr.h"
 #include "storage/standby.h"
 #include "utils/memdebug.h"
+#include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/rel.h"
 #include "utils/resowner_private.h"
@@ -492,7 +493,8 @@ static void FindAndDropRelFileNodeBuffers(RelFileNode rnode,
 										  BlockNumber firstDelBlock);
 static void RelationCopyStorageUsingBuffer(RelFileNode srcnode,
 										   RelFileNode dstnode,
-										   ForkNumber forkNum, bool permanent);
+										   ForkNumber forkNum, bool permanent,
+										   bool page_std);
 static void AtProcExit_Buffers(int code, Datum arg);
 static void CheckForBufferLeaks(void);
 #ifdef USE_ASSERT_CHECKING
@@ -3770,8 +3772,9 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
  */
 static void
 RelationCopyStorageUsingBuffer(RelFileNode srcnode,
-							   RelFileNode dstnode,
-							   ForkNumber forkNum, bool permanent)
+								   RelFileNode dstnode,
+								   ForkNumber forkNum, bool permanent,
+								   bool page_std)
 {
 	Buffer		srcBuf;
 	Buffer		dstBuf;
@@ -3836,7 +3839,24 @@ RelationCopyStorageUsingBuffer(RelFileNode srcnode,
 
 		/* WAL-log the copied page. */
 		if (use_wal)
-			log_newpage_buffer(dstBuf, true);
+		{
+			bool		allow_page_std = page_std;
+
+			/*
+			 * For page layouts we don't recognize, hole removal is still safe
+			 * if the exact range that WAL would omit contains only zeroes.
+			 */
+			if (!allow_page_std && PageFreeSpaceBoundsAreValid(dstPage))
+			{
+				PageHeader	phdr = (PageHeader) dstPage;
+
+				allow_page_std =
+					pg_memory_is_all_zeros(dstPage + phdr->pd_lower,
+										   phdr->pd_upper - phdr->pd_lower);
+			}
+
+			log_newpage_buffer(dstBuf, allow_page_std);
+		}
 
 		END_CRIT_SECTION();
 
@@ -3863,6 +3883,19 @@ void
 CreateAndCopyRelationData(RelFileNode src_rnode, RelFileNode dst_rnode,
 						  bool permanent)
 {
+	CreateAndCopyRelationDataExtended(src_rnode, dst_rnode, permanent, false);
+}
+
+/*
+ * As above, but allow callers that know the main fork's page layout to retain
+ * full-page image hole removal.
+ */
+void
+CreateAndCopyRelationDataExtended(RelFileNode src_rnode,
+								  RelFileNode dst_rnode,
+								  bool permanent,
+								  bool mainfork_page_std)
+{
 	RelFileNodeBackend rnode;
 	char		relpersistence;
 
@@ -3880,7 +3913,7 @@ CreateAndCopyRelationData(RelFileNode src_rnode, RelFileNode dst_rnode,
 
 	/* copy main fork. */
 	RelationCopyStorageUsingBuffer(src_rnode, dst_rnode, MAIN_FORKNUM,
-								   permanent);
+								   permanent, mainfork_page_std);
 
 	/* copy those extra forks that exist */
 	for (ForkNumber forkNum = MAIN_FORKNUM + 1;
@@ -3899,7 +3932,7 @@ CreateAndCopyRelationData(RelFileNode src_rnode, RelFileNode dst_rnode,
 
 			/* Copy a fork's data, block by block. */
 			RelationCopyStorageUsingBuffer(src_rnode, dst_rnode, forkNum,
-										   permanent);
+										   permanent, false);
 		}
 	}
 
