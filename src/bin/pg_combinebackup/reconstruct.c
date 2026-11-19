@@ -106,6 +106,7 @@ reconstruct_from_incremental_file(char *input_filename,
 	off_t	   *offsetmap;
 	unsigned	block_length;
 	unsigned	i;
+	unsigned	truncation_block_length;
 	unsigned	sidx = n_prior_backups;
 	bool		full_copy_possible = true;
 	int			copy_source_index = -1;
@@ -129,6 +130,7 @@ reconstruct_from_incremental_file(char *input_filename,
 	latest_source = make_incremental_rfile(input_filename);
 	source[n_prior_backups] = latest_source;
 	block_length = find_reconstructed_block_length(latest_source);
+	truncation_block_length = latest_source->truncation_block_length;
 
 	/*
 	 * For each block in the output file, we need to know from which file we
@@ -225,7 +227,7 @@ reconstruct_from_incremental_file(char *input_filename,
 			 * later backup is one that we can't validate.
 			 */
 			blocklength = sb.st_size / BLCKSZ;
-			for (b = 0; b < latest_source->truncation_block_length; ++b)
+			for (b = 0; b < truncation_block_length; ++b)
 			{
 				if (sourcemap[b] == NULL && b < blocklength)
 				{
@@ -265,7 +267,7 @@ reconstruct_from_incremental_file(char *input_filename,
 		{
 			BlockNumber b = s->relative_block_numbers[i];
 
-			if (b < latest_source->truncation_block_length &&
+			if (b < truncation_block_length &&
 				sourcemap[b] == NULL)
 			{
 				sourcemap[b] = s;
@@ -278,6 +280,19 @@ reconstruct_from_incremental_file(char *input_filename,
 				 */
 				full_copy_possible = false;
 			}
+		}
+
+		/*
+		 * Blocks at or beyond this incremental file's truncation_block_length
+		 * were either not present or truncated away before this backup, so
+		 * their contents in any earlier backup are stale and must not be
+		 * used. This also prevents copying an earlier full file whole even if
+		 * its size happens to match latest_source->truncation_block_length.
+		 */
+		if (s->truncation_block_length < truncation_block_length)
+		{
+			truncation_block_length = s->truncation_block_length;
+			full_copy_possible = false;
 		}
 	}
 
