@@ -214,6 +214,8 @@ transform_MERGE_to_join(Query *parse)
 	FromExpr   *target;
 	Node	   *source;
 	int			sourcerti;
+	Relids		nullable_relids;
+	Relids		nullingrel;
 
 	if (parse->commandType != CMD_MERGE)
 		return;
@@ -323,63 +325,57 @@ transform_MERGE_to_join(Query *parse)
 	parse->jointree->quals = NULL;
 
 	/*
-	 * If necessary, mark parse->targetlist entries that refer to the target
-	 * as nullable by the join.  Normally the targetlist will be empty for a
-	 * MERGE, but if the target is a trigger-updatable view, it will contain a
-	 * whole-row Var referring to the expanded view query.
+	 * Find all relations nullable by the join.  If that includes the source
+	 * relation, and it is itself a join, we must include all relations under
+	 * it, since there may be Vars above the new join referring to relations
+	 * under the source join.  That cannot happen for the target relation,
+	 * even if it's an expanded view subquery.
 	 */
-	if (parse->targetList != NIL &&
-		(jointype == JOIN_RIGHT || jointype == JOIN_FULL))
-		parse->targetList = (List *)
-			add_nulling_relids((Node *) parse->targetList,
-							   bms_make_singleton(parse->mergeTargetRelation),
-							   bms_make_singleton(joinrti));
+	if (jointype == JOIN_LEFT)
+		nullable_relids = get_relids_in_jointree(source, true, true);
+	else if (jointype == JOIN_RIGHT)
+		nullable_relids = bms_make_singleton(parse->mergeTargetRelation);
+	else if (jointype == JOIN_FULL)
+	{
+		nullable_relids = get_relids_in_jointree(source, true, true);
+		nullable_relids = bms_add_member(nullable_relids,
+										 parse->mergeTargetRelation);
+	}
+	else
+		nullable_relids = NULL;
+
+	nullingrel = nullable_relids ? bms_make_singleton(joinrti) : NULL;
 
 	/*
-	 * If the source relation is on the outer side of the join, mark any
-	 * source relation Vars in the join condition, actions, and RETURNING list
-	 * as nullable by the join.  These Vars will be added to the targetlist by
-	 * preprocess_targetlist(), so it's important to mark them correctly here.
+	 * Mark Vars used above the join as nullable by the join.  This includes
+	 * Vars in the query targetlist, action expressions, and RETURNING list.
+	 * Vars from the latter expressions will be added to the targetlist by
+	 * preprocess_targetlist(), so they must be marked correctly here.
 	 *
-	 * It might seem that this is not necessary for Vars in the join
-	 * condition, since it is inside the join, but it is also needed above the
-	 * join (in the ModifyTable node) to distinguish between the MATCHED and
-	 * NOT MATCHED BY SOURCE cases -- see ExecMergeMatched().  Note that this
-	 * creates a modified copy of the join condition, for use above the join,
-	 * without modifying the original join condition, inside the join.
+	 * Normally the query targetlist is empty for MERGE, but for a
+	 * trigger-updatable view it contains a whole-row Var referring to the
+	 * expanded view query.
 	 */
-	if (jointype == JOIN_LEFT || jointype == JOIN_FULL)
+	if (nullable_relids != NULL)
 	{
-		Relids		sourcerelids;
-
-		/*
-		 * If the source relation is a join, we must mark any Vars referring
-		 * to relations under the join as well as the join relation itself.
-		 */
-		sourcerelids = get_relids_in_jointree(source, true, true);
-
-		parse->mergeJoinCondition =
-			add_nulling_relids(parse->mergeJoinCondition,
-							   sourcerelids,
-							   bms_make_singleton(joinrti));
+		parse->targetList = (List *)
+			add_nulling_relids((Node *) parse->targetList,
+							   nullable_relids, nullingrel);
 
 		foreach_node(MergeAction, action, parse->mergeActionList)
 		{
 			action->qual =
 				add_nulling_relids(action->qual,
-								   sourcerelids,
-								   bms_make_singleton(joinrti));
+								   nullable_relids, nullingrel);
 
 			action->targetList = (List *)
 				add_nulling_relids((Node *) action->targetList,
-								   sourcerelids,
-								   bms_make_singleton(joinrti));
+								   nullable_relids, nullingrel);
 		}
 
 		parse->returningList = (List *)
 			add_nulling_relids((Node *) parse->returningList,
-							   sourcerelids,
-							   bms_make_singleton(joinrti));
+							   nullable_relids, nullingrel);
 	}
 
 	/*
@@ -402,10 +398,9 @@ transform_MERGE_to_join(Query *parse)
 		Var		   *var;
 		NullTest   *ntest;
 
-		/* source wholerow Var (nullable by the new join) */
+		/* source wholerow Var */
 		var = makeWholeRowVar(rt_fetch(sourcerti, parse->rtable),
 							  sourcerti, 0, false);
-		var->varnullingrels = bms_make_singleton(joinrti);
 
 		/* "src IS NOT NULL" check */
 		ntest = makeNode(NullTest);
@@ -417,6 +412,15 @@ transform_MERGE_to_join(Query *parse)
 		/* combine it with the original join condition */
 		parse->mergeJoinCondition =
 			(Node *) make_and_qual((Node *) ntest, parse->mergeJoinCondition);
+
+		/*
+		 * Mark Vars used in the new join condition as nullable by the join,
+		 * since it will be used above the join.  This creates a copy, without
+		 * modifying the original join condition inside the join.
+		 */
+		parse->mergeJoinCondition =
+			add_nulling_relids(parse->mergeJoinCondition,
+							   nullable_relids, nullingrel);
 	}
 	else
 		parse->mergeJoinCondition = NULL;	/* join condition not needed */
