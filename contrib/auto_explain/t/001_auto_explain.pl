@@ -135,6 +135,17 @@ unlike(
 	qr/Query Identifier:/,
 	"query identifier not logged with compute_query_id=regress, text mode");
 
+# EXPLAIN (BUFFERS) without ANALYZE.  The plan is started but never run, and
+# log_analyze still logs it as if it had been analyzed.  The index scan node
+# must be logged with zero index searches.
+$log_contents = query_log($node,
+	q{EXPLAIN (BUFFERS) SELECT * FROM pg_proc WHERE proname = 'int4pl';});
+
+like(
+	$log_contents,
+	qr/Index Searches: 0/,
+	"index searches logged for EXPLAIN without ANALYZE, text mode");
+
 # JSON format.
 $log_contents = query_log(
 	$node,
