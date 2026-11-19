@@ -2483,7 +2483,7 @@ pgtypes_defmt_scan(union un_fmt_comb *scan_val, int scan_type, char **pstr, char
 	char	   *strtol_end = NULL;
 
 	while (**pstr == ' ')
-		pstr++;
+		(*pstr)++;
 	pstr_end = find_end_token(*pstr, pfmt);
 	if (!pstr_end)
 	{
