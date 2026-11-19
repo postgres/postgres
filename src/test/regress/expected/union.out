@@ -847,6 +847,23 @@ explain (costs off) select '123'::xid union select '123'::xid;
 (6 rows)
 
 reset enable_hashagg;
+-- check for clean failure with incompatible types
+SELECT NULL::tsvector, NULL::aclitem[] UNION SELECT NULL, NULL;
+ERROR:  could not implement UNION
+DETAIL:  Some of the datatypes only support hashing, while others only support sorting.
+SELECT NULL::tsvector, NULL::aclitem[] INTERSECT SELECT NULL, NULL;
+ERROR:  could not implement INTERSECT
+DETAIL:  Some of the datatypes only support hashing, while others only support sorting.
+SELECT NULL::tsvector, NULL::aclitem[] EXCEPT SELECT NULL, NULL;
+ERROR:  could not implement EXCEPT
+DETAIL:  Some of the datatypes only support hashing, while others only support sorting.
+-- in these examples, the sortable column has to be non-constant to get error
+SELECT random()::text::tsvector, NULL::aclitem[] GROUP BY 1,2;
+ERROR:  could not implement GROUP BY
+DETAIL:  Some of the datatypes only support hashing, while others only support sorting.
+SELECT DISTINCT random()::text::tsvector, NULL::aclitem[];
+ERROR:  could not implement DISTINCT
+DETAIL:  Some of the datatypes only support hashing, while others only support sorting.
 --
 -- Mixed types
 --

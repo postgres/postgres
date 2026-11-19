@@ -919,6 +919,19 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		Path	   *first_path = linitial(cheapest.subpaths);
 
 		/*
+		 * Check that the operators support sorting or hashing.  The parser
+		 * would have checked that individual grouping columns support at
+		 * least one, but it doesn't verify that they all support the same
+		 * method.
+		 */
+		if (!can_sort && !can_hash)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			/* translator: %s is UNION */
+					 errmsg("could not implement %s", "UNION"),
+					 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+
+		/*
 		 * Estimate the number of UNION output rows.  In the case when only a
 		 * single UNION child remains, we can use estimate_num_groups() on
 		 * that child.  We must be careful not to do this when that child is

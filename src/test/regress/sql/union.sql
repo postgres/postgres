@@ -267,6 +267,14 @@ explain (costs off) select '123'::xid union select '123'::xid;
 
 reset enable_hashagg;
 
+-- check for clean failure with incompatible types
+SELECT NULL::tsvector, NULL::aclitem[] UNION SELECT NULL, NULL;
+SELECT NULL::tsvector, NULL::aclitem[] INTERSECT SELECT NULL, NULL;
+SELECT NULL::tsvector, NULL::aclitem[] EXCEPT SELECT NULL, NULL;
+-- in these examples, the sortable column has to be non-constant to get error
+SELECT random()::text::tsvector, NULL::aclitem[] GROUP BY 1,2;
+SELECT DISTINCT random()::text::tsvector, NULL::aclitem[];
+
 --
 -- Mixed types
 --

@@ -3574,6 +3574,17 @@ generate_grouped_paths(PlannerInfo *root, RelOptInfo *grouped_rel,
 				grouping_is_hashable(agg_info->group_clauses));
 
 	/*
+	 * Check that the operators support sorting or hashing.  The parser would
+	 * have checked that individual grouping columns support at least one, but
+	 * it doesn't verify that they all support the same method.
+	 */
+	if (!can_sort && !can_hash)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("could not implement GROUP BY"),
+				 errdetail("Some of the datatypes only support hashing, while others only support sorting.")));
+
+	/*
 	 * Consider whether we should generate partially aggregated non-partial
 	 * paths.  We can only do this if we have a non-partial path.
 	 */
