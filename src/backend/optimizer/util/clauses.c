@@ -191,6 +191,8 @@ static Node *substitute_actual_parameters_in_from_mutator(Node *node,
 														  substitute_actual_parameters_in_from_context *context);
 static bool pull_paramids_walker(Node *node, Bitmapset **context);
 
+static bool full_join_expr_nonstrict_walker(Node *node, bool *found_nullable);
+
 
 /*****************************************************************************
  *		Aggregate-function clause manipulation
@@ -1066,6 +1068,8 @@ max_parallel_hazard_walker(Node *node, max_parallel_hazard_context *context)
  * one or more Var or Param nodes (as appropriate for the caller's need), and
  * now wishes to prove that the expression result will be NULL if any of these
  * inputs is NULL.  If we return false, then the proof succeeded.
+ *
+ * full_join_expr_nonstrict_walker() mirrors this logic, so keep the two in sync.
  */
 bool
 contain_nonstrict_functions(Node *clause)
@@ -1207,6 +1211,199 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 
 	return expression_tree_walker(node, contain_nonstrict_functions_walker,
 								  context);
+}
+
+/*
+ * is_full_join_expr_null_preserving
+ *	  Check whether an expression becomes NULL on null-extended input.
+ *
+ * The caller has verified that all referenced rels belong to one input.
+ *
+ * We conservatively require that the expression contains no non-strict
+ * constructs, and at least one level-zero Var or PlaceHolderVar.  The latter
+ * test rules out non-NULL constants and pseudoconstants appearing as COALESCE
+ * arguments.
+ *
+ * A level-zero PlaceHolderVar is evaluated below the join, so its result is
+ * nulled regardless of the contained expression, and we don't look inside
+ * it.  COALESCE is not strict in any one argument, but preserves NULL if all
+ * its arguments do.
+ *
+ * This mirrors contain_nonstrict_functions_walker(), except for the handling
+ * of Vars, PlaceHolderVars and COALESCE, so keep the two in sync.
+ */
+bool
+is_full_join_expr_null_preserving(Node *node)
+{
+	bool		found_nullable = false;
+
+	if (full_join_expr_nonstrict_walker(node, &found_nullable))
+		return false;
+
+	return found_nullable;
+}
+
+/*
+ * Walker for is_full_join_expr_null_preserving.  Returns true if it finds a
+ * construct that might produce non-NULL output for a null-extended input,
+ * and sets *found_nullable if it finds an input nulled by the join.
+ */
+static bool
+full_join_expr_nonstrict_walker(Node *node, bool *found_nullable)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		if (((Var *) node)->varlevelsup == 0)
+			*found_nullable = true;
+		return false;
+	}
+	else if (IsA(node, PlaceHolderVar))
+	{
+		if (((PlaceHolderVar *) node)->phlevelsup == 0)
+		{
+			/* don't descend into the contained expression */
+			*found_nullable = true;
+			return false;
+		}
+		/* else fall through to check the contained expression */
+	}
+	else if (IsA(node, Aggref))
+	{
+		/* an aggregate could return non-null with null input */
+		return true;
+	}
+	else if (IsA(node, GroupingFunc))
+	{
+		/*
+		 * A GroupingFunc doesn't evaluate its arguments, and therefore must
+		 * be treated as nonstrict.
+		 */
+		return true;
+	}
+	else if (IsA(node, WindowFunc))
+	{
+		/* a window function could return non-null with null input */
+		return true;
+	}
+	else if (IsA(node, SubscriptingRef))
+	{
+		SubscriptingRef *sbsref = (SubscriptingRef *) node;
+		const SubscriptRoutines *sbsroutines;
+
+		/* Subscripting assignment is always presumed nonstrict */
+		if (sbsref->refassgnexpr != NULL)
+			return true;
+		/* Otherwise we must look up the subscripting support methods */
+		sbsroutines = getSubscriptingRoutines(sbsref->refcontainertype, NULL);
+		if (!(sbsroutines && sbsroutines->fetch_strict))
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, DistinctExpr))
+	{
+		/* IS DISTINCT FROM is inherently non-strict */
+		return true;
+	}
+	else if (IsA(node, NullIfExpr))
+	{
+		/* NULLIF is inherently non-strict */
+		return true;
+	}
+	else if (IsA(node, ScalarArrayOpExpr))
+	{
+		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
+
+		if (!is_strict_saop(expr, false))
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, BoolExpr))
+	{
+		BoolExpr   *expr = (BoolExpr *) node;
+
+		switch (expr->boolop)
+		{
+			case AND_EXPR:
+			case OR_EXPR:
+				/* AND, OR are inherently non-strict */
+				return true;
+			default:
+				break;
+		}
+	}
+	else if (IsA(node, SubLink))
+	{
+		/* In some cases a sublink might be strict, but in general not */
+		return true;
+	}
+	else if (IsA(node, SubPlan))
+		return true;
+	else if (IsA(node, AlternativeSubPlan))
+		return true;
+	else if (IsA(node, FieldStore))
+		return true;
+	else if (IsA(node, CoerceViaIO))
+	{
+		/*
+		 * CoerceViaIO is strict regardless of whether the I/O functions are,
+		 * so we should skip check_functions_in_node() and just fall through
+		 * to check the arguments.
+		 */
+	}
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		/*
+		 * ArrayCoerceExpr is strict at the array level, regardless of what
+		 * the per-element expression is; so we should ignore elemexpr and
+		 * recurse only into the arg.
+		 */
+		return full_join_expr_nonstrict_walker((Node *) ((ArrayCoerceExpr *) node)->arg,
+											   found_nullable);
+	}
+	else if (IsA(node, CaseExpr))
+		return true;
+	else if (IsA(node, ArrayExpr))
+		return true;
+	else if (IsA(node, RowExpr))
+		return true;
+	else if (IsA(node, RowCompareExpr))
+		return true;
+	else if (IsA(node, CoalesceExpr))
+	{
+		CoalesceExpr *cexpr = (CoalesceExpr *) node;
+		ListCell   *lc;
+
+		/* COALESCE is non-strict, but preserves NULL if all arguments do */
+		foreach(lc, cexpr->args)
+		{
+			if (!is_full_join_expr_null_preserving(lfirst(lc)))
+				return true;
+		}
+		*found_nullable = true;
+		return false;
+	}
+	else if (IsA(node, MinMaxExpr))
+		return true;
+	else if (IsA(node, XmlExpr))
+		return true;
+	else if (IsA(node, NullTest))
+		return true;
+	else if (IsA(node, BooleanTest))
+		return true;
+	else if (IsA(node, JsonConstructorExpr))
+		return true;
+	else
+	{
+		/* Check other function-containing nodes */
+		if (check_functions_in_node(node, contain_nonstrict_functions_checker,
+									NULL))
+			return true;
+	}
+
+	return expression_tree_walker(node, full_join_expr_nonstrict_walker,
+								  found_nullable);
 }
 
 /*****************************************************************************

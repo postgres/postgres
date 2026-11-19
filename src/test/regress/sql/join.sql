@@ -2278,6 +2278,64 @@ select * from int8_tbl t1 left join int8_tbl t2 on t1.q2 = t2.q1,
 select * from int8_tbl t1 left join int8_tbl t2 on t1.q2 = t2.q1,
   lateral (select * from int8_tbl t3 where t2.q1 = t2.q2) ss;
 
+-- non-strict operands must not cause unmatched rows to be filtered out
+explain (costs off)
+select * from (values (null::int), (1)) a(x)
+  full join (values (0), (1)) b(x) on a.x = coalesce(b.x, 0)
+  where coalesce(a.x, coalesce(b.x, 0)) = 0
+  order by a.x, b.x;
+
+select * from (values (null::int), (1)) a(x)
+  full join (values (0), (1)) b(x) on a.x = coalesce(b.x, 0)
+  where coalesce(a.x, coalesce(b.x, 0)) = 0
+  order by a.x, b.x;
+
+explain (costs off)
+select * from (values (0), (1)) a(x)
+  full join (values (null::int), (1)) b(x)
+    on (case when a.x is null then 0 else a.x end) = b.x
+  where coalesce(case when a.x is null then 0 else a.x end, b.x) = 0
+  order by a.x, b.x;
+
+select * from (values (0), (1)) a(x)
+  full join (values (null::int), (1)) b(x)
+    on (case when a.x is null then 0 else a.x end) = b.x
+  where coalesce(case when a.x is null then 0 else a.x end, b.x) = 0
+  order by a.x, b.x;
+
+-- nested merged columns and precomputed expressions remain null-preserving
+explain (costs off)
+select * from (select coalesce(f1, 0) as f1 from int4_tbl) a
+  full join int4_tbl b using (f1)
+  full join int4_tbl c using (f1)
+  where f1 = 0;
+
+select * from (select coalesce(f1, 0) as f1 from int4_tbl) a
+  full join int4_tbl b using (f1)
+  full join int4_tbl c using (f1)
+  where f1 = 0;
+
+-- strict expressions of precomputed values remain null-preserving
+explain (costs off)
+select * from (select coalesce(x, 0) as x from (values (null::int), (1)) v(x)) a
+  full join (values (1), (2)) b(x) on a.x + 0 = b.x
+  where coalesce(a.x + 0, b.x) = 0
+  order by a.x, b.x;
+
+select * from (select coalesce(x, 0) as x from (values (null::int), (1)) v(x)) a
+  full join (values (1), (2)) b(x) on a.x + 0 = b.x
+  where coalesce(a.x + 0, b.x) = 0
+  order by a.x, b.x;
+
+explain (costs off)
+select * from (select coalesce(x, '{0}') as x from (values (null::int[]), ('{1}')) v(x)) a
+  full join (values (1), (2)) b(x) on a.x[1] = b.x
+  where coalesce(a.x[1], b.x) = 0;
+
+select * from (select coalesce(x, '{0}') as x from (values (null::int[]), ('{1}')) v(x)) a
+  full join (values (1), (2)) b(x) on a.x[1] = b.x
+  where coalesce(a.x[1], b.x) = 0;
+
 --
 -- check deductions from FULL JOIN clauses and COALESCE() = constant: the
 -- join clause's operands may appear in either order, but must come from

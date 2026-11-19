@@ -6556,6 +6556,141 @@ select * from int8_tbl t1 left join int8_tbl t2 on t1.q2 = t2.q1,
  4567890123456789 | 4567890123456789 | 4567890123456789 | 4567890123456789 | 4567890123456789 | -4567890123456789
 (10 rows)
 
+-- non-strict operands must not cause unmatched rows to be filtered out
+explain (costs off)
+select * from (values (null::int), (1)) a(x)
+  full join (values (0), (1)) b(x) on a.x = coalesce(b.x, 0)
+  where coalesce(a.x, coalesce(b.x, 0)) = 0
+  order by a.x, b.x;
+                                      QUERY PLAN                                       
+---------------------------------------------------------------------------------------
+ Sort
+   Sort Key: "*VALUES*".column1, "*VALUES*_1".column1
+   ->  Hash Full Join
+         Hash Cond: ("*VALUES*".column1 = COALESCE("*VALUES*_1".column1, 0))
+         Filter: (COALESCE("*VALUES*".column1, COALESCE("*VALUES*_1".column1, 0)) = 0)
+         ->  Values Scan on "*VALUES*"
+         ->  Hash
+               ->  Values Scan on "*VALUES*_1"
+(8 rows)
+
+select * from (values (null::int), (1)) a(x)
+  full join (values (0), (1)) b(x) on a.x = coalesce(b.x, 0)
+  where coalesce(a.x, coalesce(b.x, 0)) = 0
+  order by a.x, b.x;
+ x | x 
+---+---
+   | 0
+   |  
+(2 rows)
+
+explain (costs off)
+select * from (values (0), (1)) a(x)
+  full join (values (null::int), (1)) b(x)
+    on (case when a.x is null then 0 else a.x end) = b.x
+  where coalesce(case when a.x is null then 0 else a.x end, b.x) = 0
+  order by a.x, b.x;
+                                                           QUERY PLAN                                                            
+---------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: "*VALUES*".column1, "*VALUES*_1".column1
+   ->  Hash Full Join
+         Hash Cond: (CASE WHEN ("*VALUES*".column1 IS NULL) THEN 0 ELSE "*VALUES*".column1 END = "*VALUES*_1".column1)
+         Filter: (COALESCE(CASE WHEN ("*VALUES*".column1 IS NULL) THEN 0 ELSE "*VALUES*".column1 END, "*VALUES*_1".column1) = 0)
+         ->  Values Scan on "*VALUES*"
+         ->  Hash
+               ->  Values Scan on "*VALUES*_1"
+(8 rows)
+
+select * from (values (0), (1)) a(x)
+  full join (values (null::int), (1)) b(x)
+    on (case when a.x is null then 0 else a.x end) = b.x
+  where coalesce(case when a.x is null then 0 else a.x end, b.x) = 0
+  order by a.x, b.x;
+ x | x 
+---+---
+ 0 |  
+   |  
+(2 rows)
+
+-- nested merged columns and precomputed expressions remain null-preserving
+explain (costs off)
+select * from (select coalesce(f1, 0) as f1 from int4_tbl) a
+  full join int4_tbl b using (f1)
+  full join int4_tbl c using (f1)
+  where f1 = 0;
+                 QUERY PLAN                  
+---------------------------------------------
+ Merge Full Join
+   ->  Merge Full Join
+         ->  Seq Scan on int4_tbl
+               Filter: (COALESCE(f1, 0) = 0)
+         ->  Materialize
+               ->  Seq Scan on int4_tbl b
+                     Filter: (f1 = 0)
+   ->  Materialize
+         ->  Seq Scan on int4_tbl c
+               Filter: (f1 = 0)
+(10 rows)
+
+select * from (select coalesce(f1, 0) as f1 from int4_tbl) a
+  full join int4_tbl b using (f1)
+  full join int4_tbl c using (f1)
+  where f1 = 0;
+ f1 
+----
+  0
+(1 row)
+
+-- strict expressions of precomputed values remain null-preserving
+explain (costs off)
+select * from (select coalesce(x, 0) as x from (values (null::int), (1)) v(x)) a
+  full join (values (1), (2)) b(x) on a.x + 0 = b.x
+  where coalesce(a.x + 0, b.x) = 0
+  order by a.x, b.x;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Sort
+   Sort Key: (COALESCE("*VALUES*".column1, 0)), "*VALUES*_1".column1
+   ->  Merge Full Join
+         ->  Values Scan on "*VALUES*"
+               Filter: ((COALESCE(column1, 0) + 0) = 0)
+         ->  Materialize
+               ->  Values Scan on "*VALUES*_1"
+                     Filter: (column1 = 0)
+(8 rows)
+
+select * from (select coalesce(x, 0) as x from (values (null::int), (1)) v(x)) a
+  full join (values (1), (2)) b(x) on a.x + 0 = b.x
+  where coalesce(a.x + 0, b.x) = 0
+  order by a.x, b.x;
+ x | x 
+---+---
+ 0 |  
+(1 row)
+
+explain (costs off)
+select * from (select coalesce(x, '{0}') as x from (values (null::int[]), ('{1}')) v(x)) a
+  full join (values (1), (2)) b(x) on a.x[1] = b.x
+  where coalesce(a.x[1], b.x) = 0;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Merge Full Join
+   ->  Values Scan on "*VALUES*"
+         Filter: ((COALESCE(column1, '{0}'::integer[]))[1] = 0)
+   ->  Materialize
+         ->  Values Scan on "*VALUES*_1"
+               Filter: (column1 = 0)
+(6 rows)
+
+select * from (select coalesce(x, '{0}') as x from (values (null::int[]), ('{1}')) v(x)) a
+  full join (values (1), (2)) b(x) on a.x[1] = b.x
+  where coalesce(a.x[1], b.x) = 0;
+  x  | x 
+-----+---
+ {0} |  
+(1 row)
+
 --
 -- check deductions from FULL JOIN clauses and COALESCE() = constant: the
 -- join clause's operands may appear in either order, but must come from
