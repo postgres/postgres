@@ -2258,6 +2258,15 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 		  bms_is_subset(right_relids, sjinfo->syn_lefthand)))
 		return false;
 
+	/*
+	 * For an unmatched row, the other input's expression must become NULL.
+	 * Otherwise COALESCE could supply the constant even when this input's
+	 * expression is different, making the derived restriction invalid.
+	 */
+	if (!is_full_join_expr_null_preserving((Node *) leftvar) ||
+		!is_full_join_expr_null_preserving((Node *) rightvar))
+		return false;
+
 	foreach(lc1, root->eq_classes)
 	{
 		EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
