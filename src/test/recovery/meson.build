@@ -51,6 +51,7 @@ tests += {
       't/055_cascade_reconnect.pl',
       't/056_standby_snapshot_export.pl',
       't/060_multixact_crashed_updater.pl',
+      't/061_recovery_target_prefetch.pl',
     ],
   },
 }
