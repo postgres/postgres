@@ -477,7 +477,7 @@ spgNewHeapItem(SpGistScanOpaque so, int level, SpGistLeafTuple leafTuple,
 	 */
 	if (so->want_itup)
 	{
-		item->value = isnull ? (Datum) 0 :
+		item->value = (isnull || !so->state.config.canReturnData) ? (Datum) 0 :
 			datumCopy(leafValue, so->state.attType.attbyval,
 					  so->state.attType.attlen);
 
@@ -549,7 +549,7 @@ spgLeafTest(SpGistScanOpaque so, SpGistSearchItem *item,
 		in.reconstructedValue = item->value;
 		in.traversalValue = item->traversalValue;
 		in.level = item->level;
-		in.returnData = so->want_itup;
+		in.returnData = so->want_itup && so->state.config.canReturnData;
 		in.leafDatum = SGLTDATUM(leafTuple, &so->state);
 
 		out.leafValue = (Datum) 0;
@@ -617,7 +617,7 @@ spgInitInnerConsistentIn(spgInnerConsistentIn *in,
 	in->traversalMemoryContext = so->traversalCxt;
 	in->traversalValue = item->traversalValue;
 	in->level = item->level;
-	in->returnData = so->want_itup;
+	in->returnData = so->want_itup && so->state.config.canReturnData;
 	in->allTheSame = innerTuple->allTheSame;
 	in->hasPrefix = (innerTuple->prefixSize > 0);
 	in->prefixDatum = SGITDATUM(innerTuple, &so->state);
@@ -1013,8 +1013,9 @@ storeGettuple(SpGistScanOpaque so, ItemPointer heapPtr,
 			spgDeformLeafTuple(leafTuple, so->state.leafTupDesc,
 							   leafDatums, leafIsnulls, isnull);
 
+		/* A key the opclass can't reconstruct is returned as NULL */
 		leafDatums[spgKeyColumn] = leafValue;
-		leafIsnulls[spgKeyColumn] = isnull;
+		leafIsnulls[spgKeyColumn] = isnull || !so->state.config.canReturnData;
 
 		so->reconTups[so->nPtrs] = heap_form_tuple(so->reconTupDesc,
 												   leafDatums,
