@@ -542,6 +542,8 @@ WalReceiverMain(void)
 					 */
 					for (;;)
 					{
+						ProcessWalRcvInterrupts();
+
 						if (len > 0)
 						{
 							/*
