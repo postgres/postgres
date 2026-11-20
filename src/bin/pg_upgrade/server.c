@@ -11,6 +11,7 @@
 
 #include "common/connect.h"
 #include "fe_utils/string_utils.h"
+#include "lib/stringinfo.h"
 #include "libpq/pqcomm.h"
 #include "pg_upgrade.h"
 
@@ -123,30 +124,41 @@ cluster_conn_opts(ClusterInfo *cluster)
 PGresult *
 executeQueryOrDie(PGconn *conn, const char *fmt, ...)
 {
-	static char query[QUERY_ALLOC];
-	va_list		args;
+	int			save_errno = errno;
+	StringInfoData query;
 	PGresult   *result;
 	ExecStatusType status;
 
-	va_start(args, fmt);
-	vsnprintf(query, sizeof(query), fmt, args);
-	va_end(args);
+	initStringInfo(&query);
+	for (;;)
+	{
+		va_list		args;
+		int			needed;
 
-	pg_log(PG_VERBOSE, "executing: %s", query);
-	result = PQexec(conn, query);
+		errno = save_errno;
+		va_start(args, fmt);
+		needed = appendStringInfoVA(&query, fmt, args);
+		va_end(args);
+		if (needed == 0)
+			break;
+		enlargeStringInfo(&query, needed);
+	}
+
+	pg_log(PG_VERBOSE, "executing: %s", query.data);
+	result = PQexec(conn, query.data);
 	status = PQresultStatus(result);
 
 	if ((status != PGRES_TUPLES_OK) && (status != PGRES_COMMAND_OK))
 	{
-		pg_log(PG_REPORT, "SQL command failed\n%s\n%s", query,
+		pg_log(PG_REPORT, "SQL command failed\n%s\n%s", query.data,
 			   PQerrorMessage(conn));
 		PQclear(result);
 		PQfinish(conn);
 		printf(_("Failure, exiting\n"));
 		exit(1);
 	}
-	else
-		return result;
+	pg_free(query.data);
+	return result;
 }
 
 

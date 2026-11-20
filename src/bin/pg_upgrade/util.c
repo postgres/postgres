@@ -12,6 +12,7 @@
 #include <signal.h>
 
 #include "common/username.h"
+#include "lib/stringinfo.h"
 #include "pg_upgrade.h"
 
 LogOpts		log_opts;
@@ -175,13 +176,30 @@ prep_status_progress(const char *fmt, ...)
 static void
 pg_log_v(eLogType type, const char *fmt, va_list ap)
 {
-	char		message[QUERY_ALLOC];
+	int			save_errno = errno;
+	StringInfoData buf;
+	char	   *message;
 
 	/* No incoming message should end in newline; we add that here. */
 	Assert(fmt);
 	Assert(fmt[0] == '\0' || fmt[strlen(fmt) - 1] != '\n');
 
-	vsnprintf(message, sizeof(message), _(fmt), ap);
+	fmt = _(fmt);
+	initStringInfo(&buf);
+	for (;;)
+	{
+		va_list		ap2;
+		int			needed;
+
+		errno = save_errno;
+		va_copy(ap2, ap);
+		needed = appendStringInfoVA(&buf, fmt, ap2);
+		va_end(ap2);
+		if (needed == 0)
+			break;
+		enlargeStringInfo(&buf, needed);
+	}
+	message = buf.data;
 
 	/* PG_VERBOSE and PG_STATUS are only output in verbose mode */
 	/* fopen() on log_opts.internal might have failed, so check it */
@@ -251,6 +269,7 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 
 			/* No default:, we want a warning for omitted cases */
 	}
+	pg_free(message);
 	fflush(stdout);
 }
 
