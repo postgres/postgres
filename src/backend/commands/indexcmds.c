@@ -3640,6 +3640,7 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 	List	   *indexIds = NIL;
 	List	   *newIndexIds = NIL;
 	List	   *relationLocks = NIL;
+	List	   *phase1Rels = NIL;
 	List	   *lockTags = NIL;
 	ListCell   *lc,
 			   *lc2;
@@ -3765,6 +3766,10 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 						indexIds = lappend(indexIds, idx);
 
 						MemoryContextSwitchTo(oldcontext);
+
+						/* Keep it opened until session locks are taken */
+						phase1Rels = lappend(phase1Rels, indexRelation);
+						continue;
 					}
 
 					index_close(indexRelation, NoLock);
@@ -3814,6 +3819,10 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 							/* other fields set later */
 
 							MemoryContextSwitchTo(oldcontext);
+
+							/* Keep it opened until session locks are taken */
+							phase1Rels = lappend(phase1Rels, indexRelation);
+							continue;
 						}
 
 						index_close(indexRelation, NoLock);
@@ -4048,10 +4057,10 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 		newIndexIds = lappend(newIndexIds, newidx);
 
 		/*
-		 * Save lockrelid to protect each relation from drop then close
-		 * relations. The lockrelid on parent relation is not taken here to
-		 * avoid multiple locks taken on the same relation, instead we rely on
-		 * parentRelationIds built earlier.
+		 * Save lockrelid to protect each relation from drop.  The lockrelid
+		 * on parent relation is not taken here to avoid multiple locks taken
+		 * on the same relation, instead we rely on parentRelationIds built
+		 * earlier.
 		 */
 		lockrelid = palloc_object(LockRelId);
 		*lockrelid = indexRel->rd_lockInfo.lockRelId;
@@ -4062,8 +4071,13 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 
 		MemoryContextSwitchTo(oldcontext);
 
+		/*
+		 * Index expressions and predicates of the indexes processed in the
+		 * next iterations are evaluated in this loop, so keep the new index
+		 * opened until the session locks are taken.
+		 */
 		index_close(indexRel, NoLock);
-		index_close(newIndexRel, NoLock);
+		phase1Rels = lappend(phase1Rels, newIndexRel);
 
 		/* Roll back any GUC changes executed by index functions */
 		AtEOXact_GUC(false, save_nestlevel);
@@ -4125,6 +4139,10 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 
 		LockRelationIdForSession(lockrelid, ShareUpdateExclusiveLock);
 	}
+
+	/* Session locks are taken, release the relations opened in phase 1 */
+	ReindexUnpinRelations(phase1Rels);
+	phase1Rels = NIL;
 
 	PopActiveSnapshot();
 	CommitTransactionCommand();
