@@ -520,21 +520,12 @@ void
 RemoveSubscriptionRel(Oid subid, Oid relid)
 {
 	Relation	rel;
-	TableScanDesc scan;
+	SysScanDesc scan;
 	ScanKeyData skey[2];
 	HeapTuple	tup;
 	int			nkeys = 0;
 
 	rel = table_open(SubscriptionRelRelationId, RowExclusiveLock);
-
-	if (OidIsValid(subid))
-	{
-		ScanKeyInit(&skey[nkeys++],
-					Anum_pg_subscription_rel_srsubid,
-					BTEqualStrategyNumber,
-					F_OIDEQ,
-					ObjectIdGetDatum(subid));
-	}
 
 	if (OidIsValid(relid))
 	{
@@ -545,9 +536,23 @@ RemoveSubscriptionRel(Oid subid, Oid relid)
 					ObjectIdGetDatum(relid));
 	}
 
-	/* Do the search and delete what we found. */
-	scan = table_beginscan_catalog(rel, nkeys, skey);
-	while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))
+	if (OidIsValid(subid))
+	{
+		ScanKeyInit(&skey[nkeys++],
+					Anum_pg_subscription_rel_srsubid,
+					BTEqualStrategyNumber,
+					F_OIDEQ,
+					ObjectIdGetDatum(subid));
+	}
+
+	/*
+	 * Do the search and delete what we found.  Use the (srrelid, srsubid)
+	 * index when relid is given; otherwise (DROP SUBSCRIPTION) there is no
+	 * suitable index, so fall back to a heap scan.
+	 */
+	scan = systable_beginscan(rel, SubscriptionRelSrrelidSrsubidIndexId,
+							  OidIsValid(relid), NULL, nkeys, skey);
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		Form_pg_subscription_rel subrel;
 
@@ -584,7 +589,7 @@ RemoveSubscriptionRel(Oid subid, Oid relid)
 
 		CatalogTupleDelete(rel, &tup->t_self);
 	}
-	table_endscan(scan);
+	systable_endscan(scan);
 
 	table_close(rel, RowExclusiveLock);
 }
