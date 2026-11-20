@@ -383,6 +383,18 @@ select jsonb_path_query('"10-03-2017T12:34:56"', '$.datetime("dd-mm-yyyy\"T\"HH2
 select jsonb_path_query('"10-03-2017t12:34:56"', '$.datetime("dd-mm-yyyy\"T\"HH24:MI:SS")');
 select jsonb_path_query('"10-03-2017 12:34:56"', '$.datetime("dd-mm-yyyy\"T\"HH24:MI:SS")');
 
+-- Fill all 20 DCH cache entries (DCH_CACHE_ENTRIES) in standard mode,
+-- then check that recycling an entry for to_char() updates its parsing mode.
+select count(*)
+from (
+  select jsonb_path_query(
+    to_jsonb('x' || g || '1234'),
+    format('$.datetime("\"x%s\"HH24MI")', g)::jsonpath)
+  from generate_series(1, 20) g
+) s;
+select to_char(timestamp '2000-01-01 12:34:00', 'HH24zMI');
+select jsonb_path_query('"12z34"', '$.datetime("HH24zMI")');
+
 -- Test .bigint()
 select jsonb_path_query('null', '$.bigint()');
 select jsonb_path_query('true', '$.bigint()');
