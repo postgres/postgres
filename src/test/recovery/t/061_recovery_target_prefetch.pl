@@ -11,6 +11,13 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+# Prefetching requires posix_fadvise().  Without it, the server rejects the
+# non-zero maintenance_io_concurrency this test relies on.
+if (!check_pg_config("#define HAVE_POSIX_FADVISE 1"))
+{
+	plan skip_all => 'posix_fadvise() not supported by this platform';
+}
+
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(has_archiving => 1, allows_streaming => 1);
 $node_primary->start;
