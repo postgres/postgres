@@ -11773,14 +11773,15 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         The value for <varname>extension_control_path</varname> must be a
         list of absolute directory paths separated by colons (or semi-colons
-        on Windows).  If a list element starts
-        with the special string <literal>$system</literal>, the
+        on Windows).  If a list element is
+        the special string <literal>$system</literal>, the
         compiled-in <productname>PostgreSQL</productname> extension
         directory is substituted for <literal>$system</literal>; this
         is where the extensions provided by the standard
         <productname>PostgreSQL</productname> distribution are installed.
-        (Use <literal>pg_config --sharedir</literal> to find out the name of
-        this directory.) For example:
+        (This is the <filename>extension</filename> subdirectory of the
+        directory shown by <literal>pg_config --sharedir</literal>.)
+        For example:
 <programlisting>
 extension_control_path = '/usr/local/share/postgresql:/home/my_project/share:$system'
 </programlisting>
@@ -11792,7 +11793,9 @@ extension_control_path = 'C:\tools\postgresql;H:\my_project\share;$system'
         subdirectory <filename>extension</filename> which will contain the
         <filename>.control</filename> and <filename>.sql</filename> files; the
         <filename>extension</filename> suffix is automatically appended to
-        each path element.
+        each path element other than <literal>$system</literal>.
+        <literal>$system</literal> cannot be combined with other path
+        components, as in <literal>$system/foo</literal>.
        </para>
 
        <para>
