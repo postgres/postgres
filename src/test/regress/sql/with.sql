@@ -682,6 +682,29 @@ with recursive search_graph(f, t, label) as (
   cycle f, t set is_cycle using path
 select * from search_graph;
 
+-- resjunk columns in the recursive term (from window functions or GROUP BY)
+with recursive t(x) as (
+	select 1
+	union all
+	select max(x) over (order by x) from t
+) cycle x set m using p
+select * from t;
+
+with recursive t(x) as (
+	select 1
+	union all
+	select max(x) over (order by x) + 1 from t where x < 3
+) search depth first by x set o
+select * from t;
+
+with recursive t(x) as (
+	select 1
+	union all
+	select x + 1 from t where x < 3 group by x
+) search breadth first by x set o
+  cycle x set m using p
+select * from t;
+
 -- various syntax errors
 with recursive search_graph(f, t, label) as (
 	select * from graph g

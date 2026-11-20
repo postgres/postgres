@@ -1427,6 +1427,46 @@ select * from search_graph;
  2 | 3 | arc 2 -> 3 | (4,2,3) | f        | {"(1,4)","(4,5)","(5,1)","(1,2)","(2,3)"}
 (25 rows)
 
+-- resjunk columns in the recursive term (from window functions or GROUP BY)
+with recursive t(x) as (
+	select 1
+	union all
+	select max(x) over (order by x) from t
+) cycle x set m using p
+select * from t;
+ x | m |     p     
+---+---+-----------
+ 1 | f | {(1)}
+ 1 | t | {(1),(1)}
+(2 rows)
+
+with recursive t(x) as (
+	select 1
+	union all
+	select max(x) over (order by x) + 1 from t where x < 3
+) search depth first by x set o
+select * from t;
+ x |       o       
+---+---------------
+ 1 | {(1)}
+ 2 | {(1),(2)}
+ 3 | {(1),(2),(3)}
+(3 rows)
+
+with recursive t(x) as (
+	select 1
+	union all
+	select x + 1 from t where x < 3 group by x
+) search breadth first by x set o
+  cycle x set m using p
+select * from t;
+ x |   o   | m |       p       
+---+-------+---+---------------
+ 1 | (0,1) | f | {(1)}
+ 2 | (1,2) | f | {(1),(2)}
+ 3 | (2,3) | f | {(1),(2),(3)}
+(3 rows)
+
 -- various syntax errors
 with recursive search_graph(f, t, label) as (
 	select * from graph g
