@@ -1541,6 +1541,19 @@ select * from t;
  3 | (2,3) | f | {(1),(2),(3)}
 (3 rows)
 
+-- DISTINCT in the recursive term
+with recursive t(x) as (
+	select 1
+	union all
+	select distinct x from t
+) cycle x set m using p
+select * from t;
+ x | m |     p     
+---+---+-----------
+ 1 | f | {(1)}
+ 1 | t | {(1),(1)}
+(2 rows)
+
 -- various syntax errors
 with recursive search_graph(f, t, label) as (
 	select * from graph g
