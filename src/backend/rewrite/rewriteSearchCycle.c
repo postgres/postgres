@@ -492,6 +492,15 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 		newsubquery->targetList = lappend(newsubquery->targetList, tle);
 	}
 
+	/*
+	 * If the subquery had SELECT DISTINCT, rather than adding the new columns
+	 * to the DISTINCT semantics, let's just mark it DISTINCT ON.  (The new
+	 * columns should be immutable functions of the regular columns, or at
+	 * worst stable functions, so this doesn't break any semantics.)
+	 */
+	if (newsubquery->distinctClause)
+		newsubquery->hasDistinctOn = true;
+
 	newrte->subquery = newsubquery;
 	newrte->inFromCl = true;
 	newq2->rtable = list_make1(newrte);
