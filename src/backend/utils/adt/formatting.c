@@ -3789,6 +3789,7 @@ DCH_cache_getnew(const char *str, bool std)
 #endif
 		old->valid = false;
 		strlcpy(old->str, str, DCH_CACHE_SIZE + 1);
+		old->std = std;
 		old->age = (++DCHCounter);
 		/* caller is expected to fill format, then set valid */
 		return old;
