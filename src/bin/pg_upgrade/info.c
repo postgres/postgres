@@ -339,23 +339,34 @@ get_template0_info(ClusterInfo *cluster)
 	int			i_datcollate;
 	int			i_datctype;
 	int			i_datlocale;
+	int			i_daticurules;
 
 	if (GET_MAJOR_VERSION(cluster->major_version) >= 1700)
 		dbres = executeQueryOrDie(conn,
 								  "SELECT encoding, datlocprovider, "
-								  "       datcollate, datctype, datlocale "
+								  "       datcollate, datctype, datlocale, "
+								  "       daticurules "
+								  "FROM	pg_catalog.pg_database "
+								  "WHERE datname='template0'");
+	else if (GET_MAJOR_VERSION(cluster->major_version) >= 1600)
+		dbres = executeQueryOrDie(conn,
+								  "SELECT encoding, datlocprovider, "
+								  "       datcollate, datctype, daticulocale AS datlocale, "
+								  "       daticurules "
 								  "FROM	pg_catalog.pg_database "
 								  "WHERE datname='template0'");
 	else if (GET_MAJOR_VERSION(cluster->major_version) >= 1500)
 		dbres = executeQueryOrDie(conn,
 								  "SELECT encoding, datlocprovider, "
-								  "       datcollate, datctype, daticulocale AS datlocale "
+								  "       datcollate, datctype, daticulocale AS datlocale, "
+								  "       NULL AS daticurules "
 								  "FROM	pg_catalog.pg_database "
 								  "WHERE datname='template0'");
 	else
 		dbres = executeQueryOrDie(conn,
 								  "SELECT encoding, 'c' AS datlocprovider, "
-								  "       datcollate, datctype, NULL AS datlocale "
+								  "       datcollate, datctype, NULL AS datlocale, "
+								  "       NULL AS daticurules "
 								  "FROM	pg_catalog.pg_database "
 								  "WHERE datname='template0'");
 
@@ -370,6 +381,7 @@ get_template0_info(ClusterInfo *cluster)
 	i_datcollate = PQfnumber(dbres, "datcollate");
 	i_datctype = PQfnumber(dbres, "datctype");
 	i_datlocale = PQfnumber(dbres, "datlocale");
+	i_daticurules = PQfnumber(dbres, "daticurules");
 
 	locale->db_encoding = atoi(PQgetvalue(dbres, 0, i_datencoding));
 	locale->db_collprovider = PQgetvalue(dbres, 0, i_datlocprovider)[0];
@@ -379,6 +391,10 @@ get_template0_info(ClusterInfo *cluster)
 		locale->db_locale = NULL;
 	else
 		locale->db_locale = pg_strdup(PQgetvalue(dbres, 0, i_datlocale));
+	if (PQgetisnull(dbres, 0, i_daticurules))
+		locale->db_icu_rules = NULL;
+	else
+		locale->db_icu_rules = pg_strdup(PQgetvalue(dbres, 0, i_daticurules));
 
 	cluster->template0 = locale;
 
