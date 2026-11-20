@@ -279,7 +279,9 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 						(void) pg_strip_crlf(buf);
 
 						free(file);
-						p += cmdend + 1;
+						p += cmdend;
+						if (p[1] != '\0')
+							p++;
 						break;
 					}
 
@@ -294,7 +296,9 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 						if (val)
 							strlcpy(buf, val, sizeof(buf));
 						free(name);
-						p += nameend + 1;
+						p += nameend;
+						if (p[1] != '\0')
+							p++;
 						break;
 					}
 
