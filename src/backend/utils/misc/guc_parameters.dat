@@ -1076,7 +1076,7 @@
 
 { name => 'extension_control_path', type => 'string', context => 'PGC_SUSET', group => 'CLIENT_CONN_OTHER',
   short_desc => 'Sets the path for extension control files.',
-  long_desc => 'The remaining extension script and secondary control files are then loaded from the same directory where the primary control file was found.',
+  long_desc => 'The remaining extension script and secondary control files are then loaded from the same directory where the primary control file was found, unless the primary control file specifies a different directory.',
   flags => 'GUC_SUPERUSER_ONLY',
   variable => 'Extension_control_path',
   boot_val => '"$system"',
