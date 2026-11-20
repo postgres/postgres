@@ -8660,7 +8660,7 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         </para>
         <para>
          Logged statements might reveal sensitive data and even contain
-         plaintext passwords.
+         cleartext passwords.
         </para>
        </note>
       </listitem>

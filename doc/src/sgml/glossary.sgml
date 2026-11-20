@@ -434,6 +434,17 @@
    <glosssee otherterm="glossary-relation" />
   </glossentry>
 
+  <glossentry>
+   <glossterm>Cleartext</glossterm>
+   <glossdef>
+    <para>
+     Unencrypted data; data that exists in an unprotected, human-readable
+     format during storage or transmission. Sometimes used as a synonym for
+     plaintext; the input to an encryption algorithm.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-client">
    <glossterm>Client (process)</glossterm>
    <glossdef>
@@ -1358,6 +1369,16 @@
      in semantic terms the same as a <glossterm linkend="glossary-table">table</glossterm>,
      but whose storage is distributed across several
      <glossterm linkend="glossary-partition">partitions</glossterm>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry>
+   <glossterm>Plain text</glossterm>
+   <glossdef>
+    <para>
+     Unformatted, human-readable text that consists of a sequence of printable
+     characters.
     </para>
    </glossdef>
   </glossentry>

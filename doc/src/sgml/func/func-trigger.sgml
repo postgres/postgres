@@ -60,7 +60,7 @@
        </para>
        <para>
         Automatically updates a <type>tsvector</type> column from associated
-        plain-text document column(s).  The text search configuration to use
+        plain text document column(s).  The text search configuration to use
         is specified by name as a trigger argument.  See
         <xref linkend="textsearch-update-triggers"/> for details.
        </para>
@@ -79,7 +79,7 @@
        </para>
        <para>
         Automatically updates a <type>tsvector</type> column from associated
-        plain-text document column(s).  The text search configuration to use
+        plain text document column(s).  The text search configuration to use
         is taken from a <type>regconfig</type> column of the table.  See
         <xref linkend="textsearch-update-triggers"/> for details.
        </para>

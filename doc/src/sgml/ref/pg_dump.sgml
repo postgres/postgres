@@ -56,7 +56,7 @@ PostgreSQL documentation
 
   <para>
    Dumps can be output in script or archive file formats. Script
-   dumps are plain-text files containing the SQL commands required
+   dumps are plain text files containing the SQL commands required
    to reconstruct the database to the state it was in at the time it was
    saved. To restore from such a script, feed it to <xref
    linkend="app-psql"/>. Script files
@@ -101,7 +101,8 @@ PostgreSQL documentation
     Restoring a dump causes the destination to execute arbitrary code of the
     source superusers' choice.  Partial dumps and partial restores do not limit
     that.  If the source superusers are not trusted, the dumped SQL statements
-    must be inspected before restoring.  Non-plain-text dumps can be inspected
+    must be inspected before restoring.  Dumps in formats other than plain
+    text can be inspected
     by using <application>pg_restore</application>'s <option>--file</option>
     option.  Note that the client running the dump and restore need not trust
     the source or destination superusers.
@@ -315,7 +316,7 @@ PostgreSQL documentation
          <term><literal>plain</literal></term>
          <listitem>
           <para>
-           Output a plain-text <acronym>SQL</acronym> script file (the default).
+           Output a plain text <acronym>SQL</acronym> script file (the default).
           </para>
          </listitem>
         </varlistentry>
@@ -1738,7 +1739,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   <para>
    It is generally recommended to use the <option>-X</option>
    (<option>--no-psqlrc</option>) option when restoring a database from a
-   plain-text <application>pg_dump</application> script to ensure a clean
+   plain text <application>pg_dump</application> script to ensure a clean
    restore process and prevent potential conflicts with
    non-default <application>psql</application> configurations.
   </para>

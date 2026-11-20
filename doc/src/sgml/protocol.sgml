@@ -471,7 +471,7 @@
       <listitem>
        <para>
         The frontend must now send a PasswordMessage containing the
-        password in clear-text form.  If
+        password in cleartext form.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
        </para>
@@ -2087,7 +2087,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    <note>
     <para>
      The bearer token is sent across the connection, as part of the client
-     initial response, and grants access to the database like a clear-text
+     initial response, and grants access to the database like a cleartext
      password. On an unencrypted connection it can be captured by network
      sniffing. For this reason <literal>OAUTHBEARER</literal> should only be
      used over SSL connections.
@@ -3923,7 +3923,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int32(3)</term>
        <listitem>
         <para>
-         Specifies that a clear-text password is required.
+         Specifies that a cleartext password is required.
         </para>
        </listitem>
       </varlistentry>

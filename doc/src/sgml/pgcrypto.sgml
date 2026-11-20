@@ -980,19 +980,19 @@ Applies to: pgp_sym_encrypt, pgp_pub_encrypt
     created when the <literal>cipher-algo</literal> was unavailable under the
     OpenSSL configuration in use. Such faulty messages do not require the
     correct decryption key when <literal>ignore-cipher-failure</literal> is
-    enabled, so there is no guarantee that the decrypted plaintext actually
+    enabled, so there is no guarantee that the decrypted cleartext actually
     originated from a holder of the key.
    </para>
    <para>
     Contrast the case of a message which was correctly encrypted, but the cipher
     that produced it is unavailable under the current <productname>OpenSSL</productname>
-    configuration. Recovering such plaintext via <filename>pgcrypto</filename>
+    configuration. Recovering such cleartext via <filename>pgcrypto</filename>
     requires making the actual cipher available to OpenSSL by, for example,
     enabling the appropriate provider. <literal>ignore-cipher-failure</literal>
     is not necessary or helpful for that scenario. If <quote>decryption</quote>
     of a correctly encrypted message with this option happens to pass PGP
     integrity checks, that result is coincidental and does not make the
-    recovered plaintext trustworthy.
+    recovered cleartext trustworthy.
    </para>
 <literallayout>
 Values: 0, 1
@@ -1338,7 +1338,7 @@ fips_mode() returns boolean
     All <filename>pgcrypto</filename> functions run inside the database server.
     That means that all
     the data and passwords move between <filename>pgcrypto</filename> and client
-    applications in clear text.  Thus you must:
+    applications in cleartext.  Thus you must:
    </para>
 
    <orderedlist>

@@ -30,7 +30,7 @@
    </listitem>
   </itemizedlist>
 
-  Additionally, a number of plain-text <filename>README</filename> files can
+  Additionally, a number of plain text <filename>README</filename> files can
   be found throughout the <productname>PostgreSQL</productname> source tree,
   documenting various implementation issues.
  </para>

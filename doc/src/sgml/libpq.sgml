@@ -1330,7 +1330,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
           <term><literal>password</literal></term>
           <listitem>
            <para>
-            The server must request plaintext password authentication.
+            The server must request cleartext password authentication.
            </para>
           </listitem>
          </varlistentry>
@@ -1851,7 +1851,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
             start SSL handshake directly after establishing the TCP/IP
             connection.  This is only allowed with
             <literal>sslmode=require</literal> or higher, because the weaker
-            settings could lead to unintended fallback to plaintext
+            settings could lead to unintended fallback to cleartext
             authentication when the server does not support direct SSL
             handshake.
            </para>

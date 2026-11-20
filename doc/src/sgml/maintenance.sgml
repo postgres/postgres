@@ -1291,7 +1291,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    <para>
     The server log can contain sensitive information and needs to be protected,
     no matter how or where it is stored, or the destination to which it is routed.
-    For example, some DDL statements might contain plaintext passwords or other
+    For example, some DDL statements might contain cleartext passwords or other
     authentication details. Logged statements at the <literal>ERROR</literal>
     level might show the SQL source code for applications
     and might also contain some parts of data rows. Recording data, events and

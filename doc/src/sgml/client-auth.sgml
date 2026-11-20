@@ -549,7 +549,7 @@ include_dir         <replaceable>directory</replaceable>
          <para>
           Require the client to supply an unencrypted password for
           authentication.
-          Since the password is sent in clear text over the
+          Since the password is sent in cleartext over the
           network, this should not be used on untrusted networks.
           See <xref linkend="auth-password"/> for details.
          </para>
@@ -652,7 +652,7 @@ include_dir         <replaceable>directory</replaceable>
         <listitem>
          <para>
           Authorize and optionally authenticate using a third-party OAuth 2.0
-          identity provider.  Since the bearer token is sent in clear text over
+          identity provider.  Since the bearer token is sent in cleartext over
           the network, this should not be used on untrusted networks.  See
           <xref linkend="auth-oauth"/> for details.
          </para>
@@ -1258,7 +1258,7 @@ omicron         bryanh                  guest1
       <para>
        The method <literal>md5</literal> uses a custom less secure challenge-response
        mechanism.  It prevents password sniffing and avoids storing passwords
-       on the server in plain text but provides no protection if an attacker
+       on the server in cleartext but provides no protection if an attacker
        manages to steal the password hash from the server.  Also, the MD5 hash
        algorithm is nowadays no longer considered secure against determined
        attacks.
@@ -1286,7 +1286,7 @@ omicron         bryanh                  guest1
      <term><literal>password</literal></term>
      <listitem>
       <para>
-       The method <literal>password</literal> sends the password in clear-text and is
+       The method <literal>password</literal> sends the password in cleartext and is
        therefore vulnerable to password <quote>sniffing</quote> attacks. It should
        always be avoided if possible. If the connection is protected by SSL
        encryption then <literal>password</literal> can be used safely, though.
@@ -1320,15 +1320,15 @@ omicron         bryanh                  guest1
     the <literal>scram-sha-256</literal> setting, then it can be used for the
     authentication methods <literal>scram-sha-256</literal>
     and <literal>password</literal> (but password transmission will be in
-    plain text in the latter case).  The authentication method
+    cleartext in the latter case).  The authentication method
     specification <literal>md5</literal> will automatically switch to using
     the <literal>scram-sha-256</literal> method in this case, as explained
     above, so it will also work.  If a password was encrypted using
     the <literal>md5</literal> setting, then it can be used only for
     the <literal>md5</literal> and <literal>password</literal> authentication
-    method specifications (again, with the password transmitted in plain text
+    method specifications (again, with the password transmitted in cleartext
     in the latter case).  (Previous PostgreSQL releases supported storing the
-    password on the server in plain text.  This is no longer possible.)  To
+    password on the server in cleartext.  This is no longer possible.)  To
     check the currently stored password hashes, see the system
     catalog <literal>pg_authid</literal>.
    </para>
@@ -2344,7 +2344,7 @@ host ... ldap ldapbasedn="dc=example,dc=net"
     which are a type of access token used with OAuth 2.0 where the token is an
     opaque string.  The format of the access token is implementation specific
     and is chosen by each authorization server.  The bearer token is sent
-    in clear-text, and is vulnerable to network sniffing.  For this reason
+    in cleartext, and is vulnerable to network sniffing.  For this reason
     OAuth should only be used over SSL connections.
    </para>
 
