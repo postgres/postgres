@@ -220,11 +220,17 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 	TargetEntry *tle;
 	RowExpr    *cycle_col_rowexpr = NULL;
 	RowExpr    *search_col_rowexpr = NULL;
-	List	   *ewcl;
+	List	   *ewcl,
+			   *junk_tles,
+			   *nonjunk_tles;
+	ListCell   *lc;
 	int			cte_rtindex = -1;
 
 	Assert(cte->search_clause || cte->cycle_clause);
 
+	/*
+	 * Copy the whole CTE structure, so we can scribble on it freely.
+	 */
 	cte = copyObject(cte);
 
 	ctequery = castNode(Query, cte->ctequery);
@@ -410,12 +416,36 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 				 errmsg("with a SEARCH or CYCLE clause, the recursive reference to WITH query \"%s\" must be at the top level of its right-hand SELECT",
 						cte->ctename)));
 
+	/*
+	 * Make a copy of the original subquery, which will become a subquery of
+	 * newq2, so it needs to be bumped down in level.
+	 */
 	newsubquery = copyObject(rte2->subquery);
 	IncrementVarSublevelsUp((Node *) newsubquery, 1, 1);
 
 	/*
-	 * Add extra columns to target list of subquery of right subquery
+	 * Add extra columns to target list of subquery of right subquery.
+	 *
+	 * The subquery's targetlist might contain resjunk entries, such as sort
+	 * or grouping columns, which are not part of its output.  Those must stay
+	 * after all the non-resjunk entries, both by convention and because the
+	 * column names we assigned above to the wrapping subquery assume that the
+	 * added columns immediately follow the original output columns.  So
+	 * detach any resjunk entries before adding the new columns, and re-attach
+	 * them afterwards with new resnos.
 	 */
+	nonjunk_tles = junk_tles = NIL;
+	foreach(lc, newsubquery->targetList)
+	{
+		tle = lfirst_node(TargetEntry, lc);
+		if (tle->resjunk)
+			junk_tles = lappend(junk_tles, tle);
+		else
+			nonjunk_tles = lappend(nonjunk_tles, tle);
+	}
+	Assert(list_length(nonjunk_tles) == list_length(cte->ctecolnames));
+	newsubquery->targetList = nonjunk_tles;
+
 	if (cte->search_clause)
 	{
 		Var		   *var;
@@ -451,6 +481,14 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 							  list_length(newsubquery->targetList) + 1,
 							  cte->cycle_clause->cycle_path_column,
 							  false);
+		newsubquery->targetList = lappend(newsubquery->targetList, tle);
+	}
+
+	/* Re-attach the resjunk entries, if any, after the new columns */
+	foreach(lc, junk_tles)
+	{
+		tle = lfirst_node(TargetEntry, lc);
+		tle->resno = list_length(newsubquery->targetList) + 1;
 		newsubquery->targetList = lappend(newsubquery->targetList, tle);
 	}
 
