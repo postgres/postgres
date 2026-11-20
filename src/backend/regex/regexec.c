@@ -249,9 +249,9 @@ pg_regexec(regex_t *re,
 		v->nmatch = nmatch;
 	}
 	v->details = details;
-	v->start = (chr *) string;
-	v->search_start = (chr *) string + search_start;
-	v->stop = (chr *) string + len;
+	v->start = unconstify(chr *, string);
+	v->search_start = unconstify(chr *, string) + search_start;
+	v->stop = unconstify(chr *, string) + len;
 	v->err = 0;
 	v->subdfas = NULL;
 	v->ladfas = NULL;

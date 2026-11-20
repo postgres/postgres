@@ -534,7 +534,7 @@ struct fns
 };
 
 #define STACK_TOO_DEEP(re)	\
-	((*((struct fns *) (re)->re_fns)->stack_too_deep) ())
+	((*((const struct fns *) (re)->re_fns)->stack_too_deep) ())
 
 
 /*

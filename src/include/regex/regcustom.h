@@ -57,6 +57,7 @@
 #define INTERRUPT(re)	CHECK_FOR_INTERRUPTS()
 #undef assert
 #define assert(x)		Assert(x)
+#define VS(x)			(x)
 
 /* internal character type and related */
 typedef pg_wchar chr;			/* the type itself */

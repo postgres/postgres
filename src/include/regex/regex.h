@@ -156,7 +156,7 @@ typedef struct
 	Oid			re_collation;	/* Collation that defines LC_CTYPE behavior */
 	/* the rest is opaque pointers to hidden innards */
 	char	   *re_guts;		/* `char *' is more portable than `void *' */
-	char	   *re_fns;
+	const void *re_fns;
 } pg_regex_t;
 
 /* result reporting (may acquire more fields later) */
