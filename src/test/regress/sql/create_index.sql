@@ -1144,7 +1144,8 @@ REINDEX TABLE CONCURRENTLY concur_appclass_tab;
 DROP TABLE concur_appclass_tab;
 
 -- Check that a function called from an index expression is not able to
--- manipulate a relation involved in the operation.
+-- manipulate a relation involved in the operation. This involves phase 2 of
+-- REINDEX CONCURRENTLY.
 CREATE TABLE concur_reindex_ddl_tab (i int);
 INSERT INTO concur_reindex_ddl_tab VALUES (1);
 -- Use two functions, one volatile called in a second, immutable, one.
@@ -1160,6 +1161,29 @@ REINDEX TABLE CONCURRENTLY concur_reindex_ddl_tab; -- error
 REINDEX INDEX CONCURRENTLY concur_reindex_ddl_ind2; -- ok
 REINDEX INDEX CONCURRENTLY concur_reindex_ddl_ind1; -- ok
 REINDEX INDEX CONCURRENTLY concur_reindex_ddl_ind2; -- dropped
+DROP TABLE concur_reindex_ddl_tab;
+DROP FUNCTION concur_reindex_ddl_im(int);
+DROP FUNCTION concur_reindex_ddl_f();
+-- Same, with the function called when the index definitions are created.
+-- This involves phase 1 of REINDEX CONCURRENTLY.
+CREATE TABLE concur_reindex_ddl_tab (i int);
+INSERT INTO concur_reindex_ddl_tab VALUES (1);
+CREATE FUNCTION concur_reindex_ddl_f() RETURNS void LANGUAGE plpgsql AS
+  'begin end';
+CREATE FUNCTION concur_reindex_ddl_im(int) RETURNS int
+  LANGUAGE plpgsql IMMUTABLE AS
+  'begin perform public.concur_reindex_ddl_f(); return $1; end';
+CREATE INDEX concur_reindex_ddl_ind1 ON concur_reindex_ddl_tab (i);
+CREATE INDEX concur_reindex_ddl_ind2 ON
+  concur_reindex_ddl_tab ((i + concur_reindex_ddl_im(0)));
+CREATE OR REPLACE FUNCTION concur_reindex_ddl_f() RETURNS void
+  LANGUAGE plpgsql AS
+  'begin DROP INDEX public.concur_reindex_ddl_ind1; end';
+REINDEX TABLE CONCURRENTLY concur_reindex_ddl_tab; -- error
+SELECT c.relname, i.indisvalid FROM pg_index i
+  JOIN pg_class c ON c.oid = i.indexrelid
+  WHERE i.indrelid = 'concur_reindex_ddl_tab'::regclass
+  ORDER BY c.relname COLLATE "C";
 DROP TABLE concur_reindex_ddl_tab;
 DROP FUNCTION concur_reindex_ddl_im(int);
 DROP FUNCTION concur_reindex_ddl_f();
