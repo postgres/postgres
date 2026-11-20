@@ -30,7 +30,8 @@ extern void RelationPreserveStorage(RelFileLocator rlocator, bool atCommit);
 extern void RelationPreTruncate(Relation rel);
 extern void RelationTruncate(Relation rel, BlockNumber nblocks);
 extern void RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
-								ForkNumber forkNum, char relpersistence);
+								ForkNumber forkNum, char relpersistence,
+								bool page_std);
 extern bool RelFileLocatorSkippingWAL(RelFileLocator rlocator);
 extern Size EstimatePendingSyncsSpace(void);
 extern void SerializePendingSyncs(Size maxSize, char *startAddress);

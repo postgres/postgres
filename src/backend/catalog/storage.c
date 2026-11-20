@@ -476,7 +476,7 @@ RelationPreTruncate(Relation rel)
  */
 void
 RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
-					ForkNumber forkNum, char relpersistence)
+					ForkNumber forkNum, char relpersistence, bool page_std)
 {
 	bool		use_wal;
 	bool		copying_initfork;
@@ -508,6 +508,7 @@ RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 	for (blkno = 0; blkno < nblocks; blkno++)
 	{
 		BulkWriteBuffer buf;
+		bool		allow_page_std = page_std;
 		int			piv_flags;
 		bool		checksum_failure;
 		bool		verified;
@@ -551,11 +552,20 @@ RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 		}
 
 		/*
-		 * Queue the page for WAL-logging and writing out.  Unfortunately we
-		 * don't know what kind of a page this is, so we have to log the full
-		 * page including any unused space.
+		 * For page layouts we don't recognize, hole removal is still safe if
+		 * the exact range that WAL would omit contains only zeroes.
 		 */
-		smgr_bulk_write(bulkstate, blkno, buf, false);
+		if (use_wal && !allow_page_std &&
+			PageFreeSpaceBoundsAreValid((Page) buf))
+		{
+			PageHeader	phdr = (PageHeader) buf;
+
+			allow_page_std =
+				pg_memory_is_all_zeros((char *) buf + phdr->pd_lower,
+									   phdr->pd_upper - phdr->pd_lower);
+		}
+
+		smgr_bulk_write(bulkstate, blkno, buf, allow_page_std);
 	}
 	smgr_bulk_finish(bulkstate);
 }

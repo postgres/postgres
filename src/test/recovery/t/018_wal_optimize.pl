@@ -391,6 +391,19 @@ wal_skip_threshold = 0
 	check_orphan_relfilenodes($node,
 		"wal_level = $wal_level, no orphan relfilenode remains");
 
+	# Move the table back, this time with a populated visibility map.
+	$node->safe_psql('postgres', q{
+		CREATE EXTENSION pg_visibility;
+		VACUUM (FREEZE) moved;
+		ALTER TABLE moved SET TABLESPACE pg_default;
+	});
+	$node->stop('immediate');
+	$node->start;
+	$result = $node->safe_psql('postgres',
+		"SELECT all_visible, all_frozen FROM pg_visibility_map('moved', 0)");
+	is($result, 't|t',
+		"wal_level = $wal_level, moved visibility map survives recovery");
+
 	return;
 }
 

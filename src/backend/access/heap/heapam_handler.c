@@ -31,6 +31,7 @@
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"
+#include "catalog/pg_am_d.h"
 #include "catalog/storage.h"
 #include "catalog/storage_xlog.h"
 #include "commands/progress.h"
@@ -553,9 +554,13 @@ heapam_relation_copy_data(Relation rel, const RelFileLocator *newrlocator)
 	 */
 	dstrel = RelationCreateStorage(*newrlocator, rel->rd_rel->relpersistence, true);
 
-	/* copy main fork */
+	/*
+	 * Other table AMs can reuse this callback, so ensure we are only passing
+	 * page_std true for standard main-fork pages of the built-in heap AM.
+	 */
 	RelationCopyStorage(RelationGetSmgr(rel), dstrel, MAIN_FORKNUM,
-						rel->rd_rel->relpersistence);
+						rel->rd_rel->relpersistence,
+						rel->rd_rel->relam == HEAP_TABLE_AM_OID);
 
 	/* copy those extra forks that exist */
 	for (ForkNumber forkNum = MAIN_FORKNUM + 1;
@@ -574,7 +579,7 @@ heapam_relation_copy_data(Relation rel, const RelFileLocator *newrlocator)
 				 forkNum == INIT_FORKNUM))
 				log_smgrcreate(newrlocator, forkNum);
 			RelationCopyStorage(RelationGetSmgr(rel), dstrel, forkNum,
-								rel->rd_rel->relpersistence);
+								rel->rd_rel->relpersistence, false);
 		}
 	}
 

@@ -18529,9 +18529,14 @@ index_copy_data(Relation rel, RelFileLocator newrlocator)
 	 */
 	dstrel = RelationCreateStorage(newrlocator, rel->rd_rel->relpersistence, true);
 
-	/* copy main fork */
+	/*
+	 * Assume standard main-fork pages only for B-tree. Other index AMs may
+	 * use standard pages today but still have nonstandard pages from older
+	 * versions (e.g. GIN).
+	 */
 	RelationCopyStorage(RelationGetSmgr(rel), dstrel, MAIN_FORKNUM,
-						rel->rd_rel->relpersistence);
+						rel->rd_rel->relpersistence,
+						rel->rd_rel->relam == BTREE_AM_OID);
 
 	/* copy those extra forks that exist */
 	for (ForkNumber forkNum = MAIN_FORKNUM + 1;
@@ -18550,7 +18555,7 @@ index_copy_data(Relation rel, RelFileLocator newrlocator)
 				 forkNum == INIT_FORKNUM))
 				log_smgrcreate(&newrlocator, forkNum);
 			RelationCopyStorage(RelationGetSmgr(rel), dstrel, forkNum,
-								rel->rd_rel->relpersistence);
+								rel->rd_rel->relpersistence, false);
 		}
 	}
 
