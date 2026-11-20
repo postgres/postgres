@@ -11764,7 +11764,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         A path to search for extensions, specifically extension control files
         (<filename><replaceable>name</replaceable>.control</filename>).  The
         remaining extension script and secondary control files are then loaded
-        from the same directory where the primary control file was found.
+        from the same directory where the primary control file was found,
+        unless the primary control file specifies a different
+        <literal>directory</literal>.
         See <xref linkend="extend-extensions-files"/> for details.
        </para>
 

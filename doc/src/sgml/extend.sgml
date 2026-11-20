@@ -674,9 +674,12 @@ RETURNS anycompatible AS ...
        <para>
         The directory containing the extension's <acronym>SQL</acronym> script
         file(s).  Unless an absolute path is given, the name is relative to
-        the directory where the control file was found.  By default,
-        the script files are looked for in the same directory where the
-        control file was found.
+        the parent of the <filename>extension</filename> directory where the
+        primary control file was found, that is, the installation's
+        <literal>SHAREDIR</literal> directory, or the corresponding
+        <xref linkend="guc-extension-control-path"/> element.  The default
+        behavior is equivalent to specifying
+        <literal>directory = 'extension'</literal>.
        </para>
       </listitem>
      </varlistentry>
