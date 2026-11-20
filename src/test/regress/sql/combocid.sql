@@ -109,3 +109,47 @@ ROLLBACK TO SAVEPOINT subxact;
 SELECT * FROM testcase WHERE id = 1 FOR UPDATE;
 ROLLBACK;
 DROP TABLE testcase;
+
+-- Test for bug reported in
+-- CAOG+RQ6ECiiFH7bb7e1M0bkd0whprp=T0u=rvARSaPOGrY-NDQ@mail.gmail.com.
+-- The bug was not in combocid handling, but the sequence of commands
+-- is very similar to the previous case.
+--
+-- If the new tuple of an UPDATE needs toasting or doesn't fit on the
+-- page, heap_update() temporarily releases the buffer lock.  Before
+-- doing so, it marks the old tuple as locked, and that tripped an
+-- assertion if the tuple was already locked in the same mode earlier
+-- in the transaction, and the multixid also contained an aborted
+-- updating transaction.  The assertion assumed that the multixid on
+-- the tuple was lock-only, but didn't take the possibility of an
+-- aborted updating XID into account.  That was fixed by making
+-- MultiXactIdExpand() to remove the aborted XID in all cases, making
+-- the assertion valid again.
+CREATE TABLE testcase(
+	id int PRIMARY KEY,
+	val text
+);
+INSERT INTO testcase VALUES (1, '');
+BEGIN;
+-- Lock the row in the top transaction
+SELECT id FROM testcase WHERE id = 1 FOR NO KEY UPDATE;
+
+-- Update the row in a subtransaction, creating a multixid, and abort
+-- the subtransaction.
+SAVEPOINT subxact;
+UPDATE testcase SET val = 'subxact' WHERE id = 1;
+ROLLBACK TO SAVEPOINT subxact;
+RELEASE SAVEPOINT subxact;
+
+-- Update the row again in the same top-level transaction.  The new
+-- value is large so that it needs to be toasted; that triggers the
+-- codepath in heap_update() that first locks the tuple.  Thanks to
+-- the FOR NO KEY UPDATE select earlier in the transaction, the tuple
+-- is already locked.
+UPDATE testcase SET val = repeat('x', 10000) WHERE id = 1;
+
+-- Should return the updated tuple
+SELECT id, length(val) FROM testcase;
+COMMIT;
+
+DROP TABLE testcase;
