@@ -384,7 +384,7 @@ dir_write(Walfile *f, const void *buf, size_t count)
 static int
 dir_close(Walfile *f, WalCloseMethod method)
 {
-	int			r;
+	int			r = -1;
 	DirectoryMethodFile *df = (DirectoryMethodFile *) f;
 	DirectoryMethodData *dir_data = (DirectoryMethodData *) f->wwmethod;
 	char		tmppath[MAXPGPATH];
@@ -413,7 +413,8 @@ dir_close(Walfile *f, WalCloseMethod method)
 		if (LZ4F_isError(compressed))
 		{
 			f->wwmethod->lasterrstring = LZ4F_getErrorName(compressed);
-			return -1;
+			(void) close(df->fd);
+			goto cleanup;
 		}
 
 		errno = 0;
@@ -421,7 +422,8 @@ dir_close(Walfile *f, WalCloseMethod method)
 		{
 			/* If write didn't set errno, assume problem is no disk space */
 			f->wwmethod->lasterrno = errno ? errno : ENOSPC;
-			return -1;
+			(void) close(df->fd);
+			goto cleanup;
 		}
 
 		r = close(df->fd);
@@ -497,6 +499,7 @@ dir_close(Walfile *f, WalCloseMethod method)
 		f->wwmethod->lasterrno = errno;
 
 #ifdef USE_LZ4
+cleanup:
 	pg_free(df->lz4buf);
 	/* supports free on NULL */
 	LZ4F_freeCompressionContext(df->ctx);
