@@ -68,7 +68,7 @@ static void libpq_queue_fetch_range(rewind_source *source, const char *path,
 static void libpq_finish_fetch(rewind_source *source);
 static char *libpq_fetch_file(rewind_source *source, const char *path,
 							  size_t *filesize);
-static XLogRecPtr libpq_get_current_wal_insert_lsn(rewind_source *source);
+static XLogRecPtr libpq_get_current_wal_flush_lsn(rewind_source *source);
 static void libpq_destroy(rewind_source *source);
 
 /*
@@ -91,7 +91,7 @@ init_libpq_source(PGconn *conn)
 	src->common.queue_fetch_file = libpq_queue_fetch_file;
 	src->common.queue_fetch_range = libpq_queue_fetch_range;
 	src->common.finish_fetch = libpq_finish_fetch;
-	src->common.get_current_wal_insert_lsn = libpq_get_current_wal_insert_lsn;
+	src->common.get_current_wal_flush_lsn = libpq_get_current_wal_flush_lsn;
 	src->common.destroy = libpq_destroy;
 
 	src->conn = conn;
@@ -202,10 +202,10 @@ run_simple_command(PGconn *conn, const char *sql)
 }
 
 /*
- * Call the pg_current_wal_insert_lsn() function in the remote system.
+ * Call the pg_current_wal_flush_lsn() function in the remote system.
  */
 static XLogRecPtr
-libpq_get_current_wal_insert_lsn(rewind_source *source)
+libpq_get_current_wal_flush_lsn(rewind_source *source)
 {
 	PGconn	   *conn = ((libpq_source *) source)->conn;
 	XLogRecPtr	result;
@@ -213,10 +213,10 @@ libpq_get_current_wal_insert_lsn(rewind_source *source)
 	uint32		lo;
 	char	   *val;
 
-	val = run_simple_query(conn, "SELECT pg_current_wal_insert_lsn()");
+	val = run_simple_query(conn, "SELECT pg_current_wal_flush_lsn()");
 
 	if (sscanf(val, "%X/%08X", &hi, &lo) != 2)
-		pg_fatal("unrecognized result \"%s\" for current WAL insert location", val);
+		pg_fatal("unrecognized result \"%s\" for current WAL flush location", val);
 
 	result = ((uint64) hi) << 32 | lo;
 

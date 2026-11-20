@@ -46,7 +46,7 @@ init_local_source(const char *datadir)
 	src->common.queue_fetch_file = local_queue_fetch_file;
 	src->common.queue_fetch_range = local_queue_fetch_range;
 	src->common.finish_fetch = local_finish_fetch;
-	src->common.get_current_wal_insert_lsn = NULL;
+	src->common.get_current_wal_flush_lsn = NULL;
 	src->common.destroy = local_destroy;
 
 	src->datadir = datadir;
