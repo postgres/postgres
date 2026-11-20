@@ -372,9 +372,9 @@ setup(char *argv0, bool *live_check)
 /*
  * Copy locale and encoding information into the new cluster's template0.
  *
- * We need to copy the encoding, datlocprovider, datcollate, datctype, and
- * daticulocale. We don't need datcollversion because that's never set for
- * template0.
+ * We need to copy the encoding, datlocprovider, datcollate, datctype,
+ * daticulocale, and daticurules. We don't need datcollversion because that's
+ * never set for template0.
  */
 static void
 set_locale_and_encoding(void)
@@ -383,6 +383,7 @@ set_locale_and_encoding(void)
 	char	   *datcollate_literal;
 	char	   *datctype_literal;
 	char	   *daticulocale_literal = NULL;
+	char	   *daticurules_literal = NULL;
 	DbLocaleInfo *locale = old_cluster.template0;
 
 	prep_status("Setting locale and encoding for new cluster");
@@ -404,6 +405,13 @@ set_locale_and_encoding(void)
 	else
 		daticulocale_literal = "NULL";
 
+	if (locale->db_icu_rules)
+		daticurules_literal = PQescapeLiteral(conn_new_template1,
+											  locale->db_icu_rules,
+											  strlen(locale->db_icu_rules));
+	else
+		daticurules_literal = "NULL";
+
 	/* update template0 in new cluster */
 	PQclear(executeQueryOrDie(conn_new_template1,
 							  "UPDATE pg_catalog.pg_database "
@@ -411,18 +419,22 @@ set_locale_and_encoding(void)
 							  "      datlocprovider = '%c', "
 							  "      datcollate = %s, "
 							  "      datctype = %s, "
-							  "      daticulocale = %s "
+							  "      daticulocale = %s, "
+							  "      daticurules = %s "
 							  "  WHERE datname = 'template0' ",
 							  locale->db_encoding,
 							  locale->db_collprovider,
 							  datcollate_literal,
 							  datctype_literal,
-							  daticulocale_literal));
+							  daticulocale_literal,
+							  daticurules_literal));
 
 	PQfreemem(datcollate_literal);
 	PQfreemem(datctype_literal);
 	if (locale->db_iculocale)
 		PQfreemem(daticulocale_literal);
+	if (locale->db_icu_rules)
+		PQfreemem(daticurules_literal);
 
 	PQfinish(conn_new_template1);
 

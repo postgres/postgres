@@ -187,6 +187,7 @@ typedef struct
 	char	   *db_ctype;
 	char		db_collprovider;
 	char	   *db_iculocale;
+	char	   *db_icu_rules;
 	int			db_encoding;
 } DbLocaleInfo;
 
