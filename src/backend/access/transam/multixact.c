@@ -416,6 +416,7 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	int			nmembers;
 	int			i;
 	int			j;
+	bool		alreadyMember;
 
 	Assert(MultiXactIdIsValid(multi));
 	Assert(TransactionIdIsValid(xid));
@@ -454,22 +455,6 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	}
 
 	/*
-	 * If the TransactionId is already a member of the MultiXactId with the
-	 * same status, just return the existing MultiXactId.
-	 */
-	for (i = 0; i < nmembers; i++)
-	{
-		if (TransactionIdEquals(members[i].xid, xid) &&
-			(members[i].status == status))
-		{
-			debug_elog4(DEBUG2, "Expand: %u is already a member of %u",
-						xid, multi);
-			pfree(members);
-			return multi;
-		}
-	}
-
-	/*
 	 * Determine which of the members of the MultiXactId are still of
 	 * interest. This is any running transaction, and also any transaction
 	 * that grabbed something stronger than just a lock and was committed. (An
@@ -477,32 +462,62 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	 * update Xid in a multixact would cause errors elsewhere.)
 	 *
 	 * Removing dead members is not just an optimization: freezing of tuples
-	 * whose Xmax are multis depends on this behavior.
+	 * whose Xmax are multis depends on this behavior.  This can also help the
+	 * caller to calculate a weaker overall lock level for this multixid.  If
+	 * e.g. the caller has already determined that the updating transaction is
+	 * not running, it would be surprising for the result to still contain a
+	 * member with MultiXactStatusUpdate.
 	 *
 	 * Note we have the same race condition here as above: j could be 0 at the
 	 * end of the loop.
 	 */
 	newMembers = palloc_array(MultiXactMember, nmembers + 1);
 
+	alreadyMember = false;
 	for (i = 0, j = 0; i < nmembers; i++)
 	{
-		if (TransactionIdIsInProgress(members[i].xid) ||
-			(ISUPDATE_from_mxstatus(members[i].status) &&
-			 TransactionIdDidCommit(members[i].xid)))
+		if (TransactionIdEquals(members[i].xid, xid) &&
+			(members[i].status == status))
+		{
+			alreadyMember = true;
+			debug_elog4(DEBUG2, "Expand: %u is already a member of %u",
+						xid, multi);
+			newMembers[j].xid = xid;
+			newMembers[j++].status = status;
+		}
+		else if (TransactionIdIsInProgress(members[i].xid) ||
+				 (ISUPDATE_from_mxstatus(members[i].status) &&
+				  TransactionIdDidCommit(members[i].xid)))
 		{
 			newMembers[j].xid = members[i].xid;
 			newMembers[j++].status = members[i].status;
 		}
 	}
 
-	newMembers[j].xid = xid;
-	newMembers[j++].status = status;
-	newMulti = MultiXactIdCreateFromMembers(j, newMembers);
+	/*
+	 * If the TransactionId is already a member of the MultiXactId with the
+	 * same status, and there were no dead members to remove, just return the
+	 * existing MultiXactId.  (The caching in MultiXactIdCreateFromMembers()
+	 * would detect this case too, but let's save the effort.)
+	 */
+	if (alreadyMember && j == nmembers)
+	{
+		newMulti = multi;
+		debug_elog3(DEBUG2, "Expand: returning original multi %u", multi);
+	}
+	else
+	{
+		if (!alreadyMember)
+		{
+			newMembers[j].xid = xid;
+			newMembers[j++].status = status;
+		}
+		newMulti = MultiXactIdCreateFromMembers(j, newMembers);
+		debug_elog3(DEBUG2, "Expand: returning new multi %u", newMulti);
+	}
 
 	pfree(members);
 	pfree(newMembers);
-
-	debug_elog3(DEBUG2, "Expand: returning new multi %u", newMulti);
 
 	return newMulti;
 }
