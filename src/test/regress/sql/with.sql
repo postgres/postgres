@@ -705,6 +705,14 @@ with recursive t(x) as (
   cycle x set m using p
 select * from t;
 
+-- DISTINCT in the recursive term
+with recursive t(x) as (
+	select 1
+	union all
+	select distinct x from t
+) cycle x set m using p
+select * from t;
+
 -- various syntax errors
 with recursive search_graph(f, t, label) as (
 	select * from graph g
