@@ -506,44 +506,19 @@ set_locale_and_encoding(void)
 		datlocale_literal = "NULL";
 
 	/* update template0 in new cluster */
-	if (GET_MAJOR_VERSION(new_cluster.major_version) >= 1700)
-		PQclear(executeQueryOrDie(conn_new_template1,
-								  "UPDATE pg_catalog.pg_database "
-								  "  SET encoding = %d, "
-								  "      datlocprovider = '%c', "
-								  "      datcollate = %s, "
-								  "      datctype = %s, "
-								  "      datlocale = %s "
-								  "  WHERE datname = 'template0' ",
-								  locale->db_encoding,
-								  locale->db_collprovider,
-								  datcollate_literal,
-								  datctype_literal,
-								  datlocale_literal));
-	else if (GET_MAJOR_VERSION(new_cluster.major_version) >= 1500)
-		PQclear(executeQueryOrDie(conn_new_template1,
-								  "UPDATE pg_catalog.pg_database "
-								  "  SET encoding = %d, "
-								  "      datlocprovider = '%c', "
-								  "      datcollate = %s, "
-								  "      datctype = %s, "
-								  "      daticulocale = %s "
-								  "  WHERE datname = 'template0' ",
-								  locale->db_encoding,
-								  locale->db_collprovider,
-								  datcollate_literal,
-								  datctype_literal,
-								  datlocale_literal));
-	else
-		PQclear(executeQueryOrDie(conn_new_template1,
-								  "UPDATE pg_catalog.pg_database "
-								  "  SET encoding = %d, "
-								  "      datcollate = %s, "
-								  "      datctype = %s "
-								  "  WHERE datname = 'template0' ",
-								  locale->db_encoding,
-								  datcollate_literal,
-								  datctype_literal));
+	PQclear(executeQueryOrDie(conn_new_template1,
+							  "UPDATE pg_catalog.pg_database "
+							  "  SET encoding = %d, "
+							  "      datlocprovider = '%c', "
+							  "      datcollate = %s, "
+							  "      datctype = %s, "
+							  "      datlocale = %s "
+							  "  WHERE datname = 'template0' ",
+							  locale->db_encoding,
+							  locale->db_collprovider,
+							  datcollate_literal,
+							  datctype_literal,
+							  datlocale_literal));
 
 	PQfreemem(datcollate_literal);
 	PQfreemem(datctype_literal);
