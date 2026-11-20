@@ -449,12 +449,13 @@ GRANT EXECUTE ON FUNCTION pg_catalog.pg_read_binary_file(text, bigint, bigint, b
     </step>
     <step>
      <para>
-      Create a <filename>backup_label</filename> file to begin WAL replay at
-      the checkpoint created at failover and configure the
-      <filename>pg_control</filename> file with a minimum consistency LSN
-      defined as the result of <literal>pg_current_wal_insert_lsn()</literal>
-      when rewinding from a live source or the last checkpoint LSN when
-      rewinding from a stopped source.
+      Create a <filename>backup_label</filename> file to specify where WAL
+      replay must begin, and configure the <filename>pg_control</filename>
+      file with a minimum consistency LSN.
+      This LSN is obtained after copying the files.  For a live primary,
+      it is the result of <function>pg_current_wal_flush_lsn()</function>;
+      for a live standby, it is the source's minimum recovery point;
+      for a stopped source, it is the last checkpoint LSN.
      </para>
     </step>
     <step>

@@ -743,8 +743,8 @@ perform_rewind(filemap_t *filemap, rewind_source *source,
 	{
 		/*
 		 * The source is a live server. Like in an online backup, it's
-		 * important that we recover all the WAL that was generated while we
-		 * were copying files.
+		 * important that we replay all the WAL needed to make the copied
+		 * files consistent.
 		 */
 		if (ControlFile_source_after.state == DB_IN_ARCHIVE_RECOVERY)
 		{
@@ -758,13 +758,19 @@ perform_rewind(filemap_t *filemap, rewind_source *source,
 		else
 		{
 			/*
-			 * Source is a production, non-standby, server. We must replay to
-			 * the last WAL insert location.
+			 * Source is a live primary server. Use its WAL flush location
+			 * after copying the files as the minimum recovery point. The
+			 * write-ahead rule ensures that all WAL needed for the copied
+			 * data has been flushed by then.
+			 *
+			 * Don't use the WAL insert location: at a page boundary, it can
+			 * point past the next page's header, requiring additional WAL to
+			 * be generated before recovery can reach consistency.
 			 */
 			if (ControlFile_source_after.state != DB_IN_PRODUCTION)
 				pg_fatal("source system was in unexpected state at end of rewind");
 
-			endrec = source->get_current_wal_insert_lsn(source);
+			endrec = source->get_current_wal_flush_lsn(source);
 			endtli = Max(ControlFile_source_after.checkPointCopy.ThisTimeLineID,
 						 ControlFile_source_after.minRecoveryPointTLI);
 		}
