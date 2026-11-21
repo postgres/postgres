@@ -3753,7 +3753,7 @@ keep_going:						/* We will come back to here until there is
 
 				res = PQgetResult(conn);
 				if (res && PQresultStatus(res) == PGRES_TUPLES_OK &&
-					PQntuples(res) == 1)
+					PQntuples(res) == 1 && PQnfields(res) == 1)
 				{
 					char	   *val = PQgetvalue(res, 0, 0);
 
@@ -3820,7 +3820,7 @@ keep_going:						/* We will come back to here until there is
 
 				res = PQgetResult(conn);
 				if (res && PQresultStatus(res) == PGRES_TUPLES_OK &&
-					PQntuples(res) == 1)
+					PQntuples(res) == 1 && PQnfields(res) == 1)
 				{
 					char	   *val = PQgetvalue(res, 0, 0);
 
