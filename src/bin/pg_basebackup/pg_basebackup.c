@@ -1909,9 +1909,9 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		pg_fatal("could not initiate base backup: %s",
 				 PQerrorMessage(conn));
-	if (PQntuples(res) != 1)
-		pg_fatal("server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields",
-				 PQntuples(res), PQnfields(res), 1, 2);
+	if (PQntuples(res) != 1 || PQnfields(res) < 1)
+		pg_fatal("server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d or more fields",
+				 PQntuples(res), PQnfields(res), 1, 1);
 
 	strlcpy(xlogstart, PQgetvalue(res, 0, 0), sizeof(xlogstart));
 
@@ -1940,8 +1940,9 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		pg_fatal("could not get backup header: %s",
 				 PQerrorMessage(conn));
-	if (PQntuples(res) < 1)
-		pg_fatal("no data returned from server");
+	if (PQntuples(res) < 1 || PQnfields(res) < 3)
+		pg_fatal("could not get backup header: got %d rows and %d fields, expected %d or more rows and %d or more fields",
+				 PQntuples(res), PQnfields(res), 1, 3);
 
 	/*
 	 * Sum up the total size, for progress reporting
@@ -2082,8 +2083,9 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		pg_fatal("backup failed: %s",
 				 PQerrorMessage(conn));
-	if (PQntuples(res) != 1)
-		pg_fatal("no write-ahead log end position returned from server");
+	if (PQntuples(res) != 1 || PQnfields(res) < 1)
+		pg_fatal("could not get write-ahead log end position: got %d rows and %d fields, expected %d rows and %d or more fields",
+				 PQntuples(res), PQnfields(res), 1, 1);
 	strlcpy(xlogend, PQgetvalue(res, 0, 0), sizeof(xlogend));
 	if (verbose && includewal != NO_WAL)
 		pg_log_info("write-ahead log end point: %s", xlogend);
