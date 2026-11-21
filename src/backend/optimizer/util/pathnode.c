@@ -439,7 +439,7 @@ set_cheapest(RelOptInfo *parent_rel)
  *	  memory consumption.  We dare not try to free the substructure of a Path,
  *	  since much of it may be shared with other Paths or the query tree itself;
  *	  but just recycling discarded Path nodes is a very useful savings in
- *	  a large join tree.  We can recycle the List nodes of pathlist, too.
+ *	  a large join tree.
  *
  *	  As noted in optimizer/README, deleting a previously-accepted Path is
  *	  safe because we know that Paths of this rel cannot yet be referenced
@@ -449,6 +449,16 @@ set_cheapest(RelOptInfo *parent_rel)
  *	  Path.  Currently this occurs only for IndexPath objects, which may be
  *	  referenced as children of BitmapHeapPaths as well as being paths in
  *	  their own right.  Hence, we don't pfree IndexPaths when rejecting them.
+ *
+ *	  A related but distinct hazard is a Path that was built for, and is
+ *	  still linked to, some other rel than parent_rel.  Some callers
+ *	  (e.g. create_ordered_paths()) pass in another relation's Path without
+ *	  copying it, so that it remains a live member of its original parent's
+ *	  own pathlist.  We detect this generically by comparing the Path's
+ *	  path->parent against parent_rel: they will be equal if the Path was
+ *	  actually built for this rel.  If they are not, we do not free the Path
+ *	  for fear that a live link to it remains in the original parent rel. (In
+ *	  most cases that link would not be used again, but there are exceptions.)
  *
  * 'parent_rel' is the relation entry to which the path corresponds.
  * 'new_path' is a potential path for parent_rel.
@@ -623,11 +633,9 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		{
 			parent_rel->pathlist = foreach_delete_current(parent_rel->pathlist,
 														  p1);
-
-			/*
-			 * Delete the data pointed-to by the deleted cell, if possible
-			 */
-			if (!IsA(old_path, IndexPath))
+			/* Delete the old path, if it's safe; see header comment */
+			if (!IsA(old_path, IndexPath) &&
+				old_path->parent == parent_rel)
 				pfree(old_path);
 		}
 		else
@@ -659,8 +667,9 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	}
 	else
 	{
-		/* Reject and recycle the new path */
-		if (!IsA(new_path, IndexPath))
+		/* Reject and recycle the new path, if it's safe */
+		if (!IsA(new_path, IndexPath) &&
+			new_path->parent == parent_rel)
 			pfree(new_path);
 	}
 }
@@ -786,8 +795,18 @@ add_path_precheck(RelOptInfo *parent_rel, int disabled_nodes,
  *	  another partial path; this requires that there be no other references to
  *	  such paths yet.  Hence, GatherPaths must not be created for a rel until
  *	  we're done creating all partial paths for it.  Unlike add_path, we don't
- *	  take an exception for IndexPaths as partial index paths won't be
+ *	  need an exception for IndexPaths as partial index paths won't be
  *	  referenced by partial BitmapHeapPaths.
+ *
+ *	  But, like add_path, we refrain from pfreeing partial paths that belong
+ *	  to some other rel (i.e. path->parent != parent_rel).  Ordinarily every
+ *	  partial path submitted here was freshly built for parent_rel, but
+ *	  grouping_planner intentionally passes a scan/join rel's paths and
+ *	  partial paths to add_path and add_partial_path for the query's final_rel
+ *	  (the latter so that Gathers can be built from them in outer query
+ *	  levels).  In that usage there are edge cases where add_path can keep a
+ *	  Gather while add_partial_path will reject its underlying partial path,
+ *	  so that if we pfree the partial path we'll have a broken Gather path.
  */
 void
 add_partial_path(RelOptInfo *parent_rel, Path *new_path)
@@ -863,7 +882,9 @@ add_partial_path(RelOptInfo *parent_rel, Path *new_path)
 		{
 			parent_rel->partial_pathlist =
 				foreach_delete_current(parent_rel->partial_pathlist, p1);
-			pfree(old_path);
+			/* Delete the old path, if it's safe; see header comment */
+			if (old_path->parent == parent_rel)
+				pfree(old_path);
 		}
 		else
 		{
@@ -894,8 +915,9 @@ add_partial_path(RelOptInfo *parent_rel, Path *new_path)
 	}
 	else
 	{
-		/* Reject and recycle the new path */
-		pfree(new_path);
+		/* Reject and recycle the new path, if it's safe */
+		if (new_path->parent == parent_rel)
+			pfree(new_path);
 	}
 }
 
