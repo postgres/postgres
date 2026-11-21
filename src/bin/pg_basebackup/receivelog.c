@@ -552,8 +552,10 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			 */
 			if (PQnfields(res) != 2 || PQntuples(res) != 1)
 			{
-				pg_log_warning("unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields",
-							   PQntuples(res), PQnfields(res), 1, 2);
+				pg_log_error("unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields",
+							 PQntuples(res), PQnfields(res), 1, 2);
+				PQclear(res);
+				return false;
 			}
 
 			/* Write the history file to disk */
