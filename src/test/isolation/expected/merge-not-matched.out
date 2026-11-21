@@ -1,0 +1,113 @@
+Parsed test spec with 2 sessions
+
+starting permutation: u1 m2a s2
+step u1: UPDATE tgt SET id = 22, val = val||' updated' WHERE id = 2;
+step m2a: 
+  WITH m AS (
+    MERGE INTO tgt t USING src s ON t.id = s.id
+      WHEN MATCHED THEN UPDATE SET val = t.val||' matched '||s.val
+      WHEN NOT MATCHED BY SOURCE THEN UPDATE SET val = t.val||' not matched'
+      RETURNING merge_action(), s.*, t.*
+  )
+  SELECT * FROM m ORDER BY 4;
+
+merge_action|id|val|id|val                   
+------------+--+---+--+----------------------
+UPDATE      |  |   | 1|t1 not matched        
+UPDATE      |  |   |22|t2 updated not matched
+(2 rows)
+
+step s2: SELECT * FROM tgt ORDER BY id;
+id|val                   
+--+----------------------
+ 1|t1 not matched        
+22|t2 updated not matched
+(2 rows)
+
+
+starting permutation: b1 u1 m2a c1 s2
+step b1: BEGIN ISOLATION LEVEL READ COMMITTED;
+step u1: UPDATE tgt SET id = 22, val = val||' updated' WHERE id = 2;
+step m2a: 
+  WITH m AS (
+    MERGE INTO tgt t USING src s ON t.id = s.id
+      WHEN MATCHED THEN UPDATE SET val = t.val||' matched '||s.val
+      WHEN NOT MATCHED BY SOURCE THEN UPDATE SET val = t.val||' not matched'
+      RETURNING merge_action(), s.*, t.*
+  )
+  SELECT * FROM m ORDER BY 4;
+ <waiting ...>
+step c1: COMMIT;
+step m2a: <... completed>
+merge_action|id|val|id|val                   
+------------+--+---+--+----------------------
+UPDATE      |  |   | 1|t1 not matched        
+UPDATE      |  |   |22|t2 updated not matched
+(2 rows)
+
+step s2: SELECT * FROM tgt ORDER BY id;
+id|val                   
+--+----------------------
+ 1|t1 not matched        
+22|t2 updated not matched
+(2 rows)
+
+
+starting permutation: u1 m2b s2
+step u1: UPDATE tgt SET id = 22, val = val||' updated' WHERE id = 2;
+step m2b: 
+  WITH m AS (
+    MERGE INTO tgt t USING src s ON t.id = s.id
+      WHEN MATCHED THEN UPDATE SET val = t.val||' matched '||s.val
+      WHEN NOT MATCHED BY SOURCE THEN UPDATE SET val = t.val||' not matched'
+      WHEN NOT MATCHED BY TARGET THEN INSERT VALUES (s.id, s.val)
+      RETURNING merge_action(), s.*, t.*
+  )
+  SELECT * FROM m ORDER BY 4;
+
+merge_action|id|val|id|val                   
+------------+--+---+--+----------------------
+UPDATE      |  |   | 1|t1 not matched        
+INSERT      | 2|s2 | 2|s2                    
+UPDATE      |  |   |22|t2 updated not matched
+(3 rows)
+
+step s2: SELECT * FROM tgt ORDER BY id;
+id|val                   
+--+----------------------
+ 1|t1 not matched        
+ 2|s2                    
+22|t2 updated not matched
+(3 rows)
+
+
+starting permutation: b1 u1 m2b c1 s2
+step b1: BEGIN ISOLATION LEVEL READ COMMITTED;
+step u1: UPDATE tgt SET id = 22, val = val||' updated' WHERE id = 2;
+step m2b: 
+  WITH m AS (
+    MERGE INTO tgt t USING src s ON t.id = s.id
+      WHEN MATCHED THEN UPDATE SET val = t.val||' matched '||s.val
+      WHEN NOT MATCHED BY SOURCE THEN UPDATE SET val = t.val||' not matched'
+      WHEN NOT MATCHED BY TARGET THEN INSERT VALUES (s.id, s.val)
+      RETURNING merge_action(), s.*, t.*
+  )
+  SELECT * FROM m ORDER BY 4;
+ <waiting ...>
+step c1: COMMIT;
+step m2b: <... completed>
+merge_action|id|val|id|val                   
+------------+--+---+--+----------------------
+UPDATE      |  |   | 1|t1 not matched        
+INSERT      | 2|s2 | 2|s2                    
+UPDATE      |  |   |22|t2 updated not matched
+(3 rows)
+
+step s2: SELECT * FROM tgt ORDER BY id;
+id|val                   
+--+----------------------
+ 1|t1 not matched        
+ 2|s2                    
+22|t2 updated not matched
+(3 rows)
+
