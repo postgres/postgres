@@ -52,3 +52,11 @@ SELECT count(*) FROM float8tmp WHERE abs(a) = 1890.0::float8;
 RESET enable_seqscan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
+
+-- finite values whose difference overflows float8 (KNN distance must not error)
+CREATE TABLE float8far (a float8);
+CREATE INDEX float8faridx ON float8far USING gist (a);
+INSERT INTO float8far VALUES (1e308), (-1e308);
+EXPLAIN (COSTS OFF)
+SELECT a FROM float8far ORDER BY a <-> 1e308::float8 LIMIT 1;
+SELECT a FROM float8far ORDER BY a <-> 1e308::float8 LIMIT 1;
