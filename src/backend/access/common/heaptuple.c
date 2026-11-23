@@ -1249,7 +1249,7 @@ heap_datum_version_mismatch_error(Oid tupTypeid, Oid descTypeid,
 	/* log details about the mismatch */
 	ereport(LOG_SERVER_ONLY,
 			errcode(ERRCODE_DATUM_VERSION_MISMATCH),
-			errmsg("tuple descriptor for type %s (OID %u), version %X/%X is incompatible with tuple type %s (OID %u), version %X/%X",
+			errmsg("tuple descriptor for type %s (OID %u), version %X/%08X is incompatible with tuple type %s (OID %u), version %X/%08X",
 				   format_type_be(descTypeid), descTypeid,
 				   LSN_FORMAT_ARGS(descVersion),
 				   format_type_be(tupTypeid), tupTypeid,
@@ -1516,7 +1516,7 @@ heap_datum_check(HeapTupleHeader tup, TupleDesc tupleDesc)
 		 * RECORDOID, but could be reached if some caller relabels a versioned
 		 * datum as RECORDOID without going through heap_tuple_set_datum().
 		 */
-		elog(ERROR, "processing record datum (%u, %d) with rowtype tupdesc (%u, %d, %X/%X)",
+		elog(ERROR, "processing record datum (%u, %d) with rowtype tupdesc (%u, %d, %X/%08X)",
 			 tupTypeid, tupTypmod,
 			 tupleDesc->tdtypeid, tupleDesc->tdtypmod,
 			 LSN_FORMAT_ARGS(descVersion));

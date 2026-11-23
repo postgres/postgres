@@ -1196,7 +1196,7 @@ validate_remote_info(WalReceiverConn *wrconn)
 
 	if (res->status != WALRCV_OK_TUPLES)
 		ereport(ERROR,
-				errmsg("could not fetch primary slot name \"%s\" info from the primary server: %s",
+				errmsg("could not fetch information on primary slot (name \"%s\") from the primary server: %s",
 					   PrimarySlotName, res->err),
 				errhint("Check if \"primary_slot_name\" is configured correctly."));
 
@@ -1410,7 +1410,7 @@ slotsync_reread_config(void)
 		Assert(!is_slotsync_worker);
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("replication slot synchronization will stop because of a parameter change"));
+				errmsg("aborting replication slot synchronization because of a parameter change"));
 	}
 
 }

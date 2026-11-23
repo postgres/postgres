@@ -1137,7 +1137,7 @@ CheckAttributeVersions(TupleDesc td, const char *relname, int elevel)
 		ereport(elevel,
 				errmsg("attribute versions of relation \"%s\" are non-monotonic",
 					   relname),
-				errdetail("Version %X/%X of attribute \"%s\" at position %d is lower than version %X/%X of attribute \"%s\" at position %d.",
+				errdetail("Version %X/%08X of attribute \"%s\" at position %d is lower than version %X/%08X of attribute \"%s\" at position %d.",
 						  LSN_FORMAT_ARGS(attVersion),
 						  NameStr(TupleDescAttr(td, attnum - 1)->attname),
 						  attnum,
