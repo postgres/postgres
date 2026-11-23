@@ -78,3 +78,7 @@ SELECT count(*) FROM timestamptztmp WHERE a >  '2018-12-18 10:59:54 GMT+4'::time
 EXPLAIN (COSTS OFF)
 SELECT a, a <-> '2018-12-18 10:59:54 GMT+2' FROM timestamptztmp ORDER BY a <-> '2018-12-18 10:59:54 GMT+2' LIMIT 3;
 SELECT a, a <-> '2018-12-18 10:59:54 GMT+2' FROM timestamptztmp ORDER BY a <-> '2018-12-18 10:59:54 GMT+2' LIMIT 3;
+
+-- same-sign infinities are zero distance apart
+SELECT a, a <-> 'infinity' FROM timestamptztmp ORDER BY a <-> 'infinity' LIMIT 3;
+SELECT a, a <-> '-infinity' FROM timestamptztmp ORDER BY a <-> '-infinity' LIMIT 3;
