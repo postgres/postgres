@@ -1392,6 +1392,25 @@ DROP FUNCTION merge_sf_test;
 DROP FUNCTION merge_sf_test2;
 DROP TABLE sf_target;
 
+-- Check dependencies of rule actions on the target columns of MERGE actions
+-- in WITH
+CREATE TABLE rule_merge_tgt (k int, a int, b int, c int);
+CREATE TABLE rule_merge_src (k int);
+CREATE RULE rule_merge_deps AS ON INSERT TO rule_merge_src
+  DO ALSO WITH m AS (
+    MERGE INTO rule_merge_tgt t USING rule_merge_src s ON t.k = s.k
+      WHEN MATCHED THEN UPDATE SET a = 0
+      WHEN NOT MATCHED THEN INSERT (k, b) VALUES (s.k, 0)
+      RETURNING t.k)
+    SELECT count(*) FROM m;
+ALTER TABLE rule_merge_tgt ALTER COLUMN a TYPE bigint;
+ALTER TABLE rule_merge_tgt DROP COLUMN a;
+ALTER TABLE rule_merge_tgt DROP COLUMN b;
+ALTER TABLE rule_merge_tgt DROP COLUMN c;	-- not assigned, so OK
+SELECT pg_get_ruledef(oid, true) FROM pg_rewrite
+  WHERE rulename = 'rule_merge_deps';
+DROP TABLE rule_merge_src, rule_merge_tgt;
+
 --
 -- Test enabling/disabling
 --

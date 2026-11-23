@@ -312,6 +312,27 @@ CREATE FUNCTION functest_tempseq() RETURNS int
 -- the function will appear in the information_schema tests below.
 DISCARD TEMP;
 
+-- Check dependencies on target columns of INSERT and UPDATE actions of MERGE
+-- within SQL-standard body
+CREATE TABLE functest_mtgt (k int, a int, b int, c int);
+CREATE TABLE functest_msrc (k int, v int);
+
+CREATE FUNCTION functest_merge() RETURNS void
+  BEGIN ATOMIC
+    MERGE INTO functest_mtgt t USING functest_msrc s ON t.k = s.k
+      WHEN MATCHED THEN UPDATE SET a = s.v
+      WHEN NOT MATCHED THEN INSERT (k, b) VALUES (s.k, s.v);
+  END;
+
+ALTER TABLE functest_mtgt ALTER COLUMN a TYPE bigint;
+ALTER TABLE functest_mtgt DROP COLUMN a;
+ALTER TABLE functest_mtgt DROP COLUMN b;
+ALTER TABLE functest_mtgt DROP COLUMN c;	-- not assigned, so OK
+SELECT pg_get_functiondef('functest_merge'::regproc);
+
+DROP FUNCTION functest_merge();
+DROP TABLE functest_mtgt, functest_msrc;
+
 
 -- information_schema tests
 
