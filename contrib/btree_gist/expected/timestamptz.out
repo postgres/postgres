@@ -209,3 +209,20 @@ SELECT a, a <-> '2018-12-18 10:59:54 GMT+2' FROM timestamptztmp ORDER BY a <-> '
  Thu Jan 24 12:28:12 2019 PST | @ 37 days 7 hours 28 mins 18 secs
 (3 rows)
 
+-- same-sign infinities are zero distance apart
+SELECT a, a <-> 'infinity' FROM timestamptztmp ORDER BY a <-> 'infinity' LIMIT 3;
+    a     | ?column? 
+----------+----------
+ infinity | @ 0
+ infinity | @ 0
+ infinity | @ 0
+(3 rows)
+
+SELECT a, a <-> '-infinity' FROM timestamptztmp ORDER BY a <-> '-infinity' LIMIT 3;
+     a     | ?column? 
+-----------+----------
+ -infinity | @ 0
+ -infinity | @ 0
+ -infinity | @ 0
+(3 rows)
+
