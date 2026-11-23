@@ -89,3 +89,39 @@ SELECT a, a <-> '2004-10-26 08:55:08' FROM timestamptmp ORDER BY a <-> '2004-10-
  Mon Nov 29 20:12:43 2004 | @ 34 days 11 hours 17 mins 35 secs
 (3 rows)
 
+-- same-sign infinities are zero distance apart
+SELECT a, a <-> 'infinity' FROM timestamptmp ORDER BY a <-> 'infinity' LIMIT 3;
+    a     | ?column? 
+----------+----------
+ infinity | @ 0
+ infinity | @ 0
+ infinity | @ 0
+(3 rows)
+
+SELECT a, a <-> '-infinity' FROM timestamptmp ORDER BY a <-> '-infinity' LIMIT 3;
+     a     | ?column? 
+-----------+----------
+ -infinity | @ 0
+ -infinity | @ 0
+ -infinity | @ 0
+(3 rows)
+
+-- finite timestamps too far apart to subtract (KNN distance must not error)
+CREATE TABLE timestampfar (a timestamp);
+CREATE INDEX timestampfaridx ON timestampfar USING gist (a);
+INSERT INTO timestampfar VALUES ('4714-11-24 00:00:00 BC'), ('294276-12-31 23:59:59');
+EXPLAIN (COSTS OFF)
+SELECT a FROM timestampfar ORDER BY a <-> '294276-12-31 23:59:59' LIMIT 1;
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Limit
+   ->  Index Only Scan using timestampfaridx on timestampfar
+         Order By: (a <-> 'Sun Dec 31 23:59:59 294276'::timestamp without time zone)
+(3 rows)
+
+SELECT a FROM timestampfar ORDER BY a <-> '294276-12-31 23:59:59' LIMIT 1;
+             a              
+----------------------------
+ Sun Dec 31 23:59:59 294276
+(1 row)
+
