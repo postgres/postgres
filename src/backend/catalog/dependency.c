@@ -205,6 +205,8 @@ static void reportDependentObjects(const ObjectAddresses *targetObjects,
 static void deleteOneObject(const ObjectAddress *object,
 							Relation *depRel, int32 flags);
 static void doDeletion(const ObjectAddress *object, int flags);
+static void add_target_column_dependencies(List *targetList, Oid relid,
+										   find_expr_references_context *context);
 static bool find_expr_references_walker(Node *node,
 										find_expr_references_context *context);
 static void process_function_rte_ref(RangeTblEntry *rte, AttrNumber attnum,
@@ -1920,6 +1922,27 @@ CheckTypeDependencyInSingleRelExpr(Node *expr, Oid relId, Oid typeId)
 }
 
 /*
+ * Record dependencies on the target columns named in the target list of an
+ * INSERT or UPDATE query, or of an INSERT or UPDATE action of a MERGE query.
+ */
+static void
+add_target_column_dependencies(List *targetList, Oid relid,
+							   find_expr_references_context *context)
+{
+	ListCell   *lc;
+
+	foreach(lc, targetList)
+	{
+		TargetEntry *tle = lfirst_node(TargetEntry, lc);
+
+		if (tle->resjunk)
+			continue;			/* ignore junk tlist items */
+		add_object_address(OCLASS_CLASS, relid, tle->resno,
+						   context->addrs);
+	}
+}
+
+/*
  * Recursively search an expression tree for object references.
  *
  * Note: in many cases we do not need to create dependencies on the datatypes
@@ -2435,14 +2458,16 @@ find_expr_references_walker(Node *node,
 		}
 
 		/*
-		 * If the query is an INSERT or UPDATE, we should create a dependency
-		 * on each target column, to prevent the specific target column from
-		 * being dropped.  Although we will visit the TargetEntry nodes again
-		 * during query_tree_walker, we won't have enough context to do this
-		 * conveniently, so do it here.
+		 * If the query is an INSERT, UPDATE, or MERGE, we should create a
+		 * dependency on each target column, to prevent the specific target
+		 * column from being dropped.  Although we will visit the TargetEntry
+		 * nodes again during query_tree_walker, we won't have enough context
+		 * to do this conveniently, so do it here.  (For MERGE, the target
+		 * columns are those of its INSERT and UPDATE actions.)
 		 */
 		if (query->commandType == CMD_INSERT ||
-			query->commandType == CMD_UPDATE)
+			query->commandType == CMD_UPDATE ||
+			query->commandType == CMD_MERGE)
 		{
 			RangeTblEntry *rte;
 
@@ -2453,15 +2478,22 @@ find_expr_references_walker(Node *node,
 			rte = rt_fetch(query->resultRelation, query->rtable);
 			if (rte->rtekind == RTE_RELATION)
 			{
-				foreach(lc, query->targetList)
+				if (query->commandType == CMD_MERGE)
 				{
-					TargetEntry *tle = (TargetEntry *) lfirst(lc);
+					foreach(lc, query->mergeActionList)
+					{
+						MergeAction *action = lfirst_node(MergeAction, lc);
 
-					if (tle->resjunk)
-						continue;	/* ignore junk tlist items */
-					add_object_address(OCLASS_CLASS, rte->relid, tle->resno,
-									   context->addrs);
+						if (action->commandType == CMD_INSERT ||
+							action->commandType == CMD_UPDATE)
+							add_target_column_dependencies(action->targetList,
+														   rte->relid,
+														   context);
+					}
 				}
+				else
+					add_target_column_dependencies(query->targetList,
+												   rte->relid, context);
 			}
 		}
 
