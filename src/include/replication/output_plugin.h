@@ -80,10 +80,14 @@ typedef void (*LogicalDecodeCommitCB) (struct LogicalDecodingContext *ctx,
 									   XLogRecPtr commit_lsn);
 
 /*
- * Called for the generic logical decoding messages.
+ * Called for the generic logical decoding messages. "xid" is the XID of the
+ * (sub)transaction that emitted the message; for a transactional message
+ * emitted in a subtransaction it differs from txn->xid, as txn is the
+ * top-level transaction.
  */
 typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
 										ReorderBufferTXN *txn,
+										TransactionId xid,
 										XLogRecPtr message_lsn,
 										bool transactional,
 										const char *prefix,
@@ -191,10 +195,12 @@ typedef void (*LogicalDecodeStreamChangeCB) (struct LogicalDecodingContext *ctx,
 
 /*
  * Callback for streaming generic logical decoding messages from in-progress
- * transactions.
+ * transactions. "txn" is the top-level transaction and "xid" the XID of the
+ * (sub)transaction that emitted the message.
  */
 typedef void (*LogicalDecodeStreamMessageCB) (struct LogicalDecodingContext *ctx,
 											  ReorderBufferTXN *txn,
+											  TransactionId xid,
 											  XLogRecPtr message_lsn,
 											  bool transactional,
 											  const char *prefix,

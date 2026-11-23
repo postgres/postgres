@@ -55,9 +55,10 @@ static void pgoutput_truncate(LogicalDecodingContext *ctx,
 							  ReorderBufferTXN *txn, int nrelations, Relation relations[],
 							  ReorderBufferChange *change);
 static void pgoutput_message(LogicalDecodingContext *ctx,
-							 ReorderBufferTXN *txn, XLogRecPtr message_lsn,
-							 bool transactional, const char *prefix,
-							 Size sz, const char *message);
+							 ReorderBufferTXN *txn, TransactionId xid,
+							 XLogRecPtr message_lsn, bool transactional,
+							 const char *prefix, Size sz,
+							 const char *message);
 static bool pgoutput_origin_filter(LogicalDecodingContext *ctx,
 								   ReplOriginId origin_id);
 static void pgoutput_begin_prepare_txn(LogicalDecodingContext *ctx,
@@ -1722,11 +1723,11 @@ pgoutput_truncate(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 
 static void
 pgoutput_message(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
-				 XLogRecPtr message_lsn, bool transactional, const char *prefix, Size sz,
-				 const char *message)
+				 TransactionId xid, XLogRecPtr message_lsn, bool transactional,
+				 const char *prefix, Size sz, const char *message)
 {
 	PGOutputData *data = (PGOutputData *) ctx->output_plugin_private;
-	TransactionId xid = InvalidTransactionId;
+	TransactionId stream_xid = InvalidTransactionId;
 
 	if (!data->messages)
 		return;
@@ -1736,7 +1737,7 @@ pgoutput_message(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	 * pgoutput_change.
 	 */
 	if (data->in_streaming)
-		xid = txn->xid;
+		stream_xid = xid;
 
 	/*
 	 * Output BEGIN if we haven't yet. Avoid for non-transactional messages.
@@ -1752,7 +1753,7 @@ pgoutput_message(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 
 	OutputPluginPrepareWrite(ctx, true);
 	logicalrep_write_message(ctx->out,
-							 xid,
+							 stream_xid,
 							 message_lsn,
 							 transactional,
 							 prefix,

@@ -81,7 +81,7 @@ static void change_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 static void truncate_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 								int nrelations, Relation relations[], ReorderBufferChange *change);
 static void message_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
-							   XLogRecPtr message_lsn, bool transactional,
+							   TransactionId xid, XLogRecPtr message_lsn, bool transactional,
 							   const char *prefix, Size message_size, const char *message);
 
 /* streaming callbacks */
@@ -98,7 +98,7 @@ static void stream_commit_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn
 static void stream_change_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 									 Relation relation, ReorderBufferChange *change);
 static void stream_message_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
-									  XLogRecPtr message_lsn, bool transactional,
+									  TransactionId xid, XLogRecPtr message_lsn, bool transactional,
 									  const char *prefix, Size message_size, const char *message);
 static void stream_truncate_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 									   int nrelations, Relation relations[], ReorderBufferChange *change);
@@ -1336,7 +1336,7 @@ filter_by_origin_cb_wrapper(LogicalDecodingContext *ctx, ReplOriginId origin_id)
 
 static void
 message_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
-				   XLogRecPtr message_lsn, bool transactional,
+				   TransactionId xid, XLogRecPtr message_lsn, bool transactional,
 				   const char *prefix, Size message_size, const char *message)
 {
 	LogicalDecodingContext *ctx = cache->private_data;
@@ -1364,7 +1364,7 @@ message_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 	ctx->end_xact = false;
 
 	/* do the actual work: call callback */
-	ctx->callbacks.message_cb(ctx, txn, message_lsn, transactional, prefix,
+	ctx->callbacks.message_cb(ctx, txn, xid, message_lsn, transactional, prefix,
 							  message_size, message);
 
 	/* Pop the error context stack */
@@ -1647,7 +1647,7 @@ stream_change_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 
 static void
 stream_message_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
-						  XLogRecPtr message_lsn, bool transactional,
+						  TransactionId xid, XLogRecPtr message_lsn, bool transactional,
 						  const char *prefix, Size message_size, const char *message)
 {
 	LogicalDecodingContext *ctx = cache->private_data;
@@ -1679,7 +1679,7 @@ stream_message_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 	ctx->end_xact = false;
 
 	/* do the actual work: call callback */
-	ctx->callbacks.stream_message_cb(ctx, txn, message_lsn, transactional, prefix,
+	ctx->callbacks.stream_message_cb(ctx, txn, xid, message_lsn, transactional, prefix,
 									 message_size, message);
 
 	/* Pop the error context stack */

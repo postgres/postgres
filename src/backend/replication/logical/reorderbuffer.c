@@ -920,7 +920,8 @@ ReorderBufferQueueMessage(ReorderBuffer *rb, TransactionId xid,
 		SetupHistoricSnapshot(snapshot_now, NULL);
 		PG_TRY();
 		{
-			rb->message(rb, txn, lsn, false, prefix, message_size, message);
+			rb->message(rb, txn, xid, lsn, false, prefix, message_size,
+						message);
 
 			TeardownHistoricSnapshot(false);
 		}
@@ -2104,13 +2105,13 @@ ReorderBufferApplyMessage(ReorderBuffer *rb, ReorderBufferTXN *txn,
 						  ReorderBufferChange *change, bool streaming)
 {
 	if (streaming)
-		rb->stream_message(rb, txn, change->lsn, true,
-						   change->data.msg.prefix,
+		rb->stream_message(rb, txn, change->txn->xid, change->lsn,
+						   true, change->data.msg.prefix,
 						   change->data.msg.message_size,
 						   change->data.msg.message);
 	else
-		rb->message(rb, txn, change->lsn, true,
-					change->data.msg.prefix,
+		rb->message(rb, txn, change->txn->xid, change->lsn,
+					true, change->data.msg.prefix,
 					change->data.msg.message_size,
 					change->data.msg.message);
 }

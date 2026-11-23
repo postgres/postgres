@@ -72,9 +72,9 @@ static void pg_decode_truncate(LogicalDecodingContext *ctx,
 static bool pg_decode_filter(LogicalDecodingContext *ctx,
 							 ReplOriginId origin_id);
 static void pg_decode_message(LogicalDecodingContext *ctx,
-							  ReorderBufferTXN *txn, XLogRecPtr lsn,
-							  bool transactional, const char *prefix,
-							  Size sz, const char *message);
+							  ReorderBufferTXN *txn, TransactionId xid,
+							  XLogRecPtr lsn, bool transactional,
+							  const char *prefix, Size sz, const char *message);
 static bool pg_decode_filter_prepare(LogicalDecodingContext *ctx,
 									 TransactionId xid,
 									 const char *gid);
@@ -112,9 +112,10 @@ static void pg_decode_stream_change(LogicalDecodingContext *ctx,
 									Relation relation,
 									ReorderBufferChange *change);
 static void pg_decode_stream_message(LogicalDecodingContext *ctx,
-									 ReorderBufferTXN *txn, XLogRecPtr lsn,
-									 bool transactional, const char *prefix,
-									 Size sz, const char *message);
+									 ReorderBufferTXN *txn, TransactionId xid,
+									 XLogRecPtr lsn, bool transactional,
+									 const char *prefix, Size sz,
+									 const char *message);
 static void pg_decode_stream_truncate(LogicalDecodingContext *ctx,
 									  ReorderBufferTXN *txn,
 									  int nrelations, Relation relations[],
@@ -753,8 +754,9 @@ pg_decode_truncate(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 
 static void
 pg_decode_message(LogicalDecodingContext *ctx,
-				  ReorderBufferTXN *txn, XLogRecPtr lsn, bool transactional,
-				  const char *prefix, Size sz, const char *message)
+				  ReorderBufferTXN *txn, TransactionId xid, XLogRecPtr lsn,
+				  bool transactional, const char *prefix, Size sz,
+				  const char *message)
 {
 	TestDecodingData *data = ctx->output_plugin_private;
 	TestDecodingTxnData *txndata;
@@ -954,8 +956,8 @@ pg_decode_stream_change(LogicalDecodingContext *ctx,
  */
 static void
 pg_decode_stream_message(LogicalDecodingContext *ctx,
-						 ReorderBufferTXN *txn, XLogRecPtr lsn, bool transactional,
-						 const char *prefix, Size sz, const char *message)
+						 ReorderBufferTXN *txn, TransactionId xid, XLogRecPtr lsn,
+						 bool transactional, const char *prefix, Size sz, const char *message)
 {
 	/* Output stream start if we haven't yet for transactional messages. */
 	if (transactional)

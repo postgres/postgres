@@ -157,6 +157,53 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
  COMMIT
 (3 rows)
 
+-- Verify that a transactional message emitted in a streamed subtransaction
+-- is associated with the subtransaction's XID.
+CREATE PUBLICATION stream_pub;
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_pgoutput_slot', 'pgoutput');
+ ?column? 
+----------
+ init
+(1 row)
+
+SET debug_logical_replication_streaming = immediate;
+BEGIN;
+SAVEPOINT sp;
+SELECT 'msg_subxact' FROM pg_logical_emit_message(true, 'test', 'msg');
+  ?column?   
+-------------
+ msg_subxact
+(1 row)
+
+ROLLBACK TO SAVEPOINT sp;
+COMMIT;
+-- Check that the streamed MESSAGE ('M') carries the aborted subtransaction's
+-- XID rather than the top-level XID: in pgoutput's wire format, 'M' stores
+-- its 4-byte XID at bytes 2..5, while STREAM ABORT ('A') stores the top-level
+-- XID at bytes 2..5 and the aborted subtransaction's XID at bytes 6..9.
+WITH changes AS (
+	SELECT data
+	FROM pg_logical_slot_get_binary_changes('regression_pgoutput_slot', NULL, NULL,
+		'proto_version', '2', 'publication_names', 'stream_pub',
+		'messages', 'true', 'streaming', 'on')
+)
+SELECT substr(m.data, 2, 4) = substr(a.data, 6, 4) AS subxid_matches
+FROM changes m, changes a
+WHERE get_byte(m.data, 0) = ascii('M')
+  AND get_byte(a.data, 0) = ascii('A');
+ subxid_matches 
+----------------
+ t
+(1 row)
+
+RESET debug_logical_replication_streaming;
+SELECT pg_drop_replication_slot('regression_pgoutput_slot');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+
+DROP PUBLICATION stream_pub;
 DROP TABLE stream_test;
 SELECT pg_drop_replication_slot('regression_slot');
  pg_drop_replication_slot 
