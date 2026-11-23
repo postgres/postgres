@@ -399,7 +399,6 @@ _LoadLOs(ArchiveHandle *AH, TocEntry *te)
 {
 	Oid			oid;
 	lclContext *ctx = (lclContext *) AH->formatData;
-	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 	CompressFileHandle *CFH;
 	char		tocfname[MAXPGPATH];
 	char		line[MAXPGPATH];
@@ -409,14 +408,23 @@ _LoadLOs(ArchiveHandle *AH, TocEntry *te)
 	/*
 	 * Note: before archive v16, there was always only one BLOBS TOC entry,
 	 * now there can be multiple.  Furthermore, although the actual filename
-	 * was always "blobs.toc" before v16, the value of tctx->filename did not
+	 * was always "blobs.toc" before v16, the TOC entry's filename did not
 	 * match that before commit 548e50976 fixed it.  For simplicity we assume
 	 * it must be "blobs.toc" in all archives before v16.
+	 *
+	 * Likewise, the tar format puts the wrong filename into the TOC entry,
+	 * which matters when reading an extracted tar archive.  For simplicity we
+	 * assume it must be "blobs_<dumpId>.toc" in all newer archives.
 	 */
 	if (AH->version < K_VERS_1_16)
 		setFilePath(AH, tocfname, "blobs.toc");
 	else
-		setFilePath(AH, tocfname, tctx->filename);
+	{
+		char		tmp[MAXPGPATH];
+
+		snprintf(tmp, MAXPGPATH, "blobs_%d.toc", te->dumpId);
+		setFilePath(AH, tocfname, tmp);
+	}
 
 	CFH = ctx->LOsTocFH = InitDiscoverCompressFileHandle(tocfname, PG_BINARY_R);
 
@@ -735,8 +743,21 @@ _PrepParallelRestore(ArchiveHandle *AH)
 		 * using compression, the physical file size might not be a very good
 		 * guide to the amount of work involved in restoring the file, but we
 		 * only need an approximate indicator of that.
+		 *
+		 * Note that we can't rely on tctx->filename for BLOBS entries (see
+		 * _LoadLOs()).
 		 */
-		setFilePath(AH, fname, tctx->filename);
+		if (strcmp(te->desc, "BLOBS") != 0)
+			setFilePath(AH, fname, tctx->filename);
+		else if (AH->version < K_VERS_1_16)
+			setFilePath(AH, fname, "blobs.toc");
+		else
+		{
+			char		tmp[MAXPGPATH];
+
+			snprintf(tmp, MAXPGPATH, "blobs_%d.toc", te->dumpId);
+			setFilePath(AH, fname, tmp);
+		}
 
 		if (stat(fname, &st) == 0)
 			te->dataLength = st.st_size;
