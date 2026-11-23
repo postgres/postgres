@@ -53,6 +53,59 @@ id|val
 (2 rows)
 
 
+starting permutation: p_u1 p_m2a p_s2
+step p_u1: UPDATE p_tgt SET id = 22, val = val||' updated' WHERE id = 2;
+step p_m2a: 
+  WITH m AS (
+    MERGE INTO p_tgt t USING src s ON t.id = s.id
+      WHEN MATCHED THEN UPDATE SET id = t.id+100, val = t.val||' matched '||s.val
+      WHEN NOT MATCHED BY SOURCE THEN UPDATE SET id = t.id+100, val = t.val||' not matched'
+      RETURNING merge_action(), s.*, t.tableoid::regclass, t.*
+  )
+  SELECT * FROM m ORDER BY 5;
+
+merge_action|id|val|tableoid| id|val                   
+------------+--+---+--------+---+----------------------
+UPDATE      |  |   |p_tgt_p2|101|t1 not matched        
+UPDATE      |  |   |p_tgt_p2|122|t2 updated not matched
+(2 rows)
+
+step p_s2: SELECT tableoid::regclass, * FROM p_tgt ORDER BY id;
+tableoid| id|val                   
+--------+---+----------------------
+p_tgt_p2|101|t1 not matched        
+p_tgt_p2|122|t2 updated not matched
+(2 rows)
+
+
+starting permutation: b1 p_u1 p_m2a c1 p_s2
+step b1: BEGIN ISOLATION LEVEL READ COMMITTED;
+step p_u1: UPDATE p_tgt SET id = 22, val = val||' updated' WHERE id = 2;
+step p_m2a: 
+  WITH m AS (
+    MERGE INTO p_tgt t USING src s ON t.id = s.id
+      WHEN MATCHED THEN UPDATE SET id = t.id+100, val = t.val||' matched '||s.val
+      WHEN NOT MATCHED BY SOURCE THEN UPDATE SET id = t.id+100, val = t.val||' not matched'
+      RETURNING merge_action(), s.*, t.tableoid::regclass, t.*
+  )
+  SELECT * FROM m ORDER BY 5;
+ <waiting ...>
+step c1: COMMIT;
+step p_m2a: <... completed>
+merge_action|id|val|tableoid| id|val                   
+------------+--+---+--------+---+----------------------
+UPDATE      |  |   |p_tgt_p2|101|t1 not matched        
+UPDATE      |  |   |p_tgt_p2|122|t2 updated not matched
+(2 rows)
+
+step p_s2: SELECT tableoid::regclass, * FROM p_tgt ORDER BY id;
+tableoid| id|val                   
+--------+---+----------------------
+p_tgt_p2|101|t1 not matched        
+p_tgt_p2|122|t2 updated not matched
+(2 rows)
+
+
 starting permutation: u1 m2b s2
 step u1: UPDATE tgt SET id = 22, val = val||' updated' WHERE id = 2;
 step m2b: 
@@ -109,5 +162,64 @@ id|val
  1|t1 not matched        
  2|s2                    
 22|t2 updated not matched
+(3 rows)
+
+
+starting permutation: p_u1 p_m2b p_s2
+step p_u1: UPDATE p_tgt SET id = 22, val = val||' updated' WHERE id = 2;
+step p_m2b: 
+  WITH m AS (
+    MERGE INTO p_tgt t USING src s ON t.id = s.id
+      WHEN MATCHED THEN UPDATE SET id = t.id+100, val = t.val||' matched '||s.val
+      WHEN NOT MATCHED BY SOURCE THEN UPDATE SET id = t.id+100, val = t.val||' not matched'
+      WHEN NOT MATCHED BY TARGET THEN INSERT VALUES (s.id, s.val)
+      RETURNING merge_action(), s.*, t.tableoid::regclass, t.*
+  )
+  SELECT * FROM m ORDER BY 5;
+
+merge_action|id|val|tableoid| id|val                   
+------------+--+---+--------+---+----------------------
+INSERT      | 2|s2 |p_tgt_p1|  2|s2                    
+UPDATE      |  |   |p_tgt_p2|101|t1 not matched        
+UPDATE      |  |   |p_tgt_p2|122|t2 updated not matched
+(3 rows)
+
+step p_s2: SELECT tableoid::regclass, * FROM p_tgt ORDER BY id;
+tableoid| id|val                   
+--------+---+----------------------
+p_tgt_p1|  2|s2                    
+p_tgt_p2|101|t1 not matched        
+p_tgt_p2|122|t2 updated not matched
+(3 rows)
+
+
+starting permutation: b1 p_u1 p_m2b c1 p_s2
+step b1: BEGIN ISOLATION LEVEL READ COMMITTED;
+step p_u1: UPDATE p_tgt SET id = 22, val = val||' updated' WHERE id = 2;
+step p_m2b: 
+  WITH m AS (
+    MERGE INTO p_tgt t USING src s ON t.id = s.id
+      WHEN MATCHED THEN UPDATE SET id = t.id+100, val = t.val||' matched '||s.val
+      WHEN NOT MATCHED BY SOURCE THEN UPDATE SET id = t.id+100, val = t.val||' not matched'
+      WHEN NOT MATCHED BY TARGET THEN INSERT VALUES (s.id, s.val)
+      RETURNING merge_action(), s.*, t.tableoid::regclass, t.*
+  )
+  SELECT * FROM m ORDER BY 5;
+ <waiting ...>
+step c1: COMMIT;
+step p_m2b: <... completed>
+merge_action|id|val|tableoid| id|val                   
+------------+--+---+--------+---+----------------------
+INSERT      | 2|s2 |p_tgt_p1|  2|s2                    
+UPDATE      |  |   |p_tgt_p2|101|t1 not matched        
+UPDATE      |  |   |p_tgt_p2|122|t2 updated not matched
+(3 rows)
+
+step p_s2: SELECT tableoid::regclass, * FROM p_tgt ORDER BY id;
+tableoid| id|val                   
+--------+---+----------------------
+p_tgt_p1|  2|s2                    
+p_tgt_p2|101|t1 not matched        
+p_tgt_p2|122|t2 updated not matched
 (3 rows)
 
