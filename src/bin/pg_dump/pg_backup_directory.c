@@ -754,8 +754,14 @@ _PrepParallelRestore(ArchiveHandle *AH)
 		 * using compression, the physical file size might not be a very good
 		 * guide to the amount of work involved in restoring the file, but we
 		 * only need an approximate indicator of that.
+		 *
+		 * Note that we can't rely on tctx->filename for the BLOBS entry, as
+		 * it is wrong in some archives (e.g., extracted tar archives).
 		 */
-		setFilePath(AH, fname, tctx->filename);
+		if (strcmp(te->desc, "BLOBS") == 0)
+			setFilePath(AH, fname, "blobs.toc");
+		else
+			setFilePath(AH, fname, tctx->filename);
 
 		if (stat(fname, &st) == 0)
 			te->dataLength = st.st_size;
