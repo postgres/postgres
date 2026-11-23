@@ -4077,6 +4077,50 @@ END
 DROP FUNCTION merge_sf_test;
 DROP FUNCTION merge_sf_test2;
 DROP TABLE sf_target;
+-- Check dependencies of rule actions on the target columns of MERGE actions
+-- in WITH
+CREATE TABLE rule_merge_tgt (k int, a int, b int, c int);
+CREATE TABLE rule_merge_src (k int);
+CREATE RULE rule_merge_deps AS ON INSERT TO rule_merge_src
+  DO ALSO WITH m AS (
+    MERGE INTO rule_merge_tgt t USING rule_merge_src s ON t.k = s.k
+      WHEN MATCHED THEN UPDATE SET a = 0
+      WHEN NOT MATCHED THEN INSERT (k, b) VALUES (s.k, 0)
+      RETURNING t.k)
+    SELECT count(*) FROM m;
+ALTER TABLE rule_merge_tgt ALTER COLUMN a TYPE bigint;
+ERROR:  cannot alter type of a column used by a view or rule
+DETAIL:  rule rule_merge_deps on table rule_merge_src depends on column "a".
+ALTER TABLE rule_merge_tgt DROP COLUMN a;
+ERROR:  cannot drop column a of table rule_merge_tgt because other objects depend on it
+DETAIL:  rule rule_merge_deps on table rule_merge_src depends on column a of table rule_merge_tgt
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER TABLE rule_merge_tgt DROP COLUMN b;
+ERROR:  cannot drop column b of table rule_merge_tgt because other objects depend on it
+DETAIL:  rule rule_merge_deps on table rule_merge_src depends on column b of table rule_merge_tgt
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER TABLE rule_merge_tgt DROP COLUMN c;	-- not assigned, so OK
+SELECT pg_get_ruledef(oid, true) FROM pg_rewrite
+  WHERE rulename = 'rule_merge_deps';
+                 pg_get_ruledef                  
+-------------------------------------------------
+ CREATE RULE rule_merge_deps AS                 +
+     ON INSERT TO rule_merge_src DO  WITH m AS (+
+          MERGE INTO rule_merge_tgt AS t        +
+            USING rule_merge_src s              +
+            ON t.k = s.k                        +
+            WHEN MATCHED                        +
+             THEN UPDATE SET a = 0              +
+            WHEN NOT MATCHED                    +
+             THEN INSERT (k, b)                 +
+              VALUES (s.k, 0)                   +
+           RETURNING t.k                        +
+         )                                      +
+  SELECT count(*) AS count                      +
+    FROM m;
+(1 row)
+
+DROP TABLE rule_merge_src, rule_merge_tgt;
 --
 -- Test enabling/disabling
 --
