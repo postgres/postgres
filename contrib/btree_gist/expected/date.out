@@ -89,3 +89,91 @@ SELECT a, a <-> '2001-02-13' FROM datetmp ORDER BY a <-> '2001-02-13' LIMIT 3;
  03-24-2001 |       39
 (3 rows)
 
+-- infinite dates in an index with internal pages (penalty and KNN distance)
+CREATE TABLE dateinf (a date);
+CREATE INDEX dateinfidx ON dateinf USING gist (a);
+INSERT INTO dateinf SELECT '2000-01-01'::date + i FROM generate_series(1, 1000) i;
+INSERT INTO dateinf SELECT 'infinity' FROM generate_series(1, 3);
+INSERT INTO dateinf SELECT '-infinity' FROM generate_series(1, 3);
+EXPLAIN (COSTS OFF)
+SELECT a FROM dateinf ORDER BY a <-> '2000-01-01'::date LIMIT 3;
+                    QUERY PLAN                     
+---------------------------------------------------
+ Limit
+   ->  Index Only Scan using dateinfidx on dateinf
+         Order By: (a <-> '01-01-2000'::date)
+(3 rows)
+
+SELECT a FROM dateinf ORDER BY a <-> '2000-01-01'::date LIMIT 3;
+     a      
+------------
+ 01-02-2000
+ 01-03-2000
+ 01-04-2000
+(3 rows)
+
+SELECT a FROM dateinf ORDER BY a <-> 'infinity'::date LIMIT 3;
+    a     
+----------
+ infinity
+ infinity
+ infinity
+(3 rows)
+
+SELECT a FROM dateinf ORDER BY a <-> '-infinity'::date LIMIT 3;
+     a     
+-----------
+ -infinity
+ -infinity
+ -infinity
+(3 rows)
+
+-- same orderings via sort, which evaluates the <-> operator on every row
+SET enable_seqscan = on;
+SET enable_indexscan = off;
+SET enable_indexonlyscan = off;
+EXPLAIN (COSTS OFF)
+SELECT a FROM dateinf ORDER BY a <-> '2000-01-01'::date LIMIT 3;
+                   QUERY PLAN                   
+------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: ((a <-> '01-01-2000'::date))
+         ->  Seq Scan on dateinf
+(4 rows)
+
+SELECT a FROM dateinf ORDER BY a <-> '2000-01-01'::date LIMIT 3;
+     a      
+------------
+ 01-02-2000
+ 01-03-2000
+ 01-04-2000
+(3 rows)
+
+SELECT a FROM dateinf ORDER BY a <-> 'infinity'::date LIMIT 3;
+    a     
+----------
+ infinity
+ infinity
+ infinity
+(3 rows)
+
+SELECT a FROM dateinf ORDER BY a <-> '-infinity'::date LIMIT 3;
+     a     
+-----------
+ -infinity
+ -infinity
+ -infinity
+(3 rows)
+
+RESET enable_seqscan;
+RESET enable_indexscan;
+RESET enable_indexonlyscan;
+-- and check these distance results directly
+SELECT 'infinity'::date <-> 'infinity'::date, '-infinity'::date <-> '-infinity'::date,
+       'infinity'::date <-> '-infinity'::date, 'infinity'::date <-> '2000-01-01'::date;
+ ?column? | ?column? |  ?column?  |  ?column?  
+----------+----------+------------+------------
+        0 |        0 | 2147483647 | 2147483647
+(1 row)
+

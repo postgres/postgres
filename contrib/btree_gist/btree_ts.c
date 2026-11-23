@@ -7,6 +7,7 @@
 
 #include "btree_gist.h"
 #include "btree_utils_num.h"
+#include "common/int.h"
 #include "utils/fmgrprotos.h"
 #include "utils/timestamp.h"
 #include "utils/float.h"
@@ -111,10 +112,26 @@ gbt_ts_dist(const void *a, const void *b, FmgrInfo *flinfo)
 	const Timestamp *aa = (const Timestamp *) a;
 	const Timestamp *bb = (const Timestamp *) b;
 	Interval   *i;
+	int64		diff;
 
+	/*
+	 * Treat same-sign infinities as equal, as the float8 opclass does; but
+	 * any other case involving infinite inputs yields infinite distance.
+	 */
 	if (TIMESTAMP_NOT_FINITE(*aa) || TIMESTAMP_NOT_FINITE(*bb))
-		return get_float8_infinity();
+		return (*aa == *bb) ? 0.0 : get_float8_infinity();
 
+	/*
+	 * Some valid timestamps are too far apart for their difference to fit in
+	 * an interval.  Avoid throwing an error in that case, just do the
+	 * computation ourselves.  (This is not exactly comparable to what
+	 * timestamp_mi does, since we don't apply interval_justify_hours, but it
+	 * should be close enough.)
+	 */
+	if (pg_sub_s64_overflow(*aa, *bb, &diff))
+		return fabs(((float8) *aa - (float8) *bb) / USECS_PER_SEC);
+
+	/* Otherwise we use timestamp_mi and convert its output to seconds */
 	i = DatumGetIntervalP(DirectFunctionCall2(timestamp_mi,
 											  TimestampGetDatum(*aa),
 											  TimestampGetDatum(*bb)));
@@ -148,9 +165,20 @@ ts_dist(PG_FUNCTION_ARGS)
 	{
 		Interval   *p = palloc_object(Interval);
 
-		p->day = INT_MAX;
-		p->month = INT_MAX;
-		p->time = PG_INT64_MAX;
+		if (a == b)
+		{
+			/* same-sign infinities are equal, as in gbt_ts_dist */
+			p->day = 0;
+			p->month = 0;
+			p->time = 0;
+		}
+		else
+		{
+			/* for all other cases, report interval +Infinity */
+			p->day = INT_MAX;
+			p->month = INT_MAX;
+			p->time = PG_INT64_MAX;
+		}
 		PG_RETURN_INTERVAL_P(p);
 	}
 	else
@@ -172,9 +200,20 @@ tstz_dist(PG_FUNCTION_ARGS)
 	{
 		Interval   *p = palloc_object(Interval);
 
-		p->day = INT_MAX;
-		p->month = INT_MAX;
-		p->time = PG_INT64_MAX;
+		if (a == b)
+		{
+			/* same-sign infinities are equal, as in gbt_ts_dist */
+			p->day = 0;
+			p->month = 0;
+			p->time = 0;
+		}
+		else
+		{
+			/* for all other cases, report interval +Infinity */
+			p->day = INT_MAX;
+			p->month = INT_MAX;
+			p->time = PG_INT64_MAX;
+		}
 		PG_RETURN_INTERVAL_P(p);
 	}
 
