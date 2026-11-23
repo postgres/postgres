@@ -40,7 +40,6 @@
 #include "access/xlogrecord.h"
 #include "storage/bufpage.h"
 #include "storage/bulk_write.h"
-#include "storage/proc.h"
 #include "storage/smgr.h"
 #include "utils/rel.h"
 
@@ -180,6 +179,8 @@ smgr_bulk_finish(BulkWriteState *bulkstate)
 	}
 	else
 	{
+		bool		need_sync;
+
 		/*
 		 * Permanent relation, WAL-logged normally.
 		 *
@@ -194,29 +195,23 @@ smgr_bulk_finish(BulkWriteState *bulkstate)
 		 * replay the WAL starting from the checkpoint, therefore it wouldn't
 		 * replay our earlier WAL records.  So if a checkpoint started after
 		 * the bulk write, fsync the files now.
+		 *
+		 * The sync request is registered before re-checking the redo pointer:
+		 * if it has still not moved, any checkpoint that moves it later
+		 * absorbs the request before syncing.  The first check skips the
+		 * request when a checkpoint already happened during the writes.
 		 */
-
-		/*
-		 * Prevent a checkpoint from starting between the GetRedoRecPtr() and
-		 * smgrregistersync() calls.
-		 */
-		Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
-		MyProc->delayChkptFlags |= DELAY_CHKPT_START;
-
-		if (bulkstate->start_RedoRecPtr != GetRedoRecPtr())
-		{
-			/*
-			 * A checkpoint occurred and it didn't know about our writes, so
-			 * fsync() the relation ourselves.
-			 */
-			MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
-			smgrimmedsync(bulkstate->smgr, bulkstate->forknum);
-			elog(DEBUG1, "flushed relation because a checkpoint occurred concurrently");
-		}
-		else
+		need_sync = (bulkstate->start_RedoRecPtr != GetRedoRecPtr());
+		if (!need_sync)
 		{
 			smgrregistersync(bulkstate->smgr, bulkstate->forknum);
-			MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
+			need_sync = (bulkstate->start_RedoRecPtr != GetRedoRecPtr());
+		}
+
+		if (need_sync)
+		{
+			smgrimmedsync(bulkstate->smgr, bulkstate->forknum);
+			elog(DEBUG1, "flushed relation because a checkpoint occurred concurrently");
 		}
 	}
 }
