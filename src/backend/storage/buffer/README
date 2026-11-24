@@ -216,19 +216,26 @@ whole scan.  This also implies that much of the write traffic caused by such
 a statement will be done by the backend itself and not pushed off onto other
 processes.
 
-For sequential scans, a 256KB ring is used. That's small enough to fit in L2
-cache, which makes transferring pages from OS cache to shared buffer cache
-efficient.  Even less would often be enough, but the ring must be big enough
-to accommodate all pages in the scan that are pinned concurrently.  256KB
-should also be enough to leave a small cache trail for other backends to
-join in a synchronized seq scan.  If a ring buffer is dirtied and its LSN
-updated, we would normally have to write and flush WAL before we could
-re-use the buffer; in this case we instead discard the buffer from the ring
-and (later) choose a replacement using the normal clock-sweep algorithm.
-Hence this strategy works best for scans that are read-only (or at worst
-update hint bits).  In a scan that modifies every page in the scan, like a
-bulk UPDATE or DELETE, the buffers in the ring will always be dirtied and
-the ring strategy effectively degrades to the normal strategy.
+For bulk reads, the requested ring size is at least 256KB. The 256KB target is
+small enough to fit in L2 cache, which makes transferring pages from OS cache
+to shared buffer cache efficient.  Even less would often be enough, but the
+target must be big enough to accommodate all pages in the scan that are pinned
+concurrently.  The 256KB target should also be enough to leave a small cache
+trail for other backends to join in a synchronized seq scan.
+
+The requested ring size is enlarged to accommodate io_combine_limit *
+effective_io_concurrency buffers while I/O is in progress, but no further
+than the backend's pin limit allows.  Like all strategy rings, the actual size
+is capped at 1/8th of shared_buffers and can therefore be less than 256KB.
+
+If a ring buffer is dirtied and its LSN updated, we would normally have to
+write and flush WAL before we could re-use the buffer; in this case we instead
+discard the buffer from the ring and (later) choose a replacement using the
+normal clock-sweep algorithm.  Hence this strategy works best for scans that
+are read-only (or at worst update hint bits).  In a scan that modifies every
+page in the scan, like a bulk UPDATE or DELETE, the buffers in the ring will
+always be dirtied and the ring strategy effectively degrades to the normal
+strategy.
 
 VACUUM uses a ring like sequential scans, however, the size of this ring is
 controlled by the vacuum_buffer_usage_limit GUC.  Dirty pages are not removed
@@ -237,8 +244,7 @@ buffers.  Before introducing the buffer ring strategy in 8.3, VACUUM's buffers
 were sent to the freelist, which was effectively a buffer ring of 1 buffer,
 resulting in excessive WAL flushing.
 
-Bulk writes work similarly to VACUUM.  Currently this applies only to
-COPY IN and CREATE TABLE AS SELECT.  (Might it be interesting to make
+Bulk writes work similarly to VACUUM.  (Might it be interesting to make
 seqscan UPDATE and DELETE use the bulkwrite strategy?)  For bulk writes
 we use a ring size of 16MB (but not more than 1/8th of shared_buffers).
 Smaller sizes have been shown to result in the COPY blocking too often
