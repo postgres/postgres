@@ -1836,7 +1836,7 @@ str_casefold(const char *buff, size_t nbytes, Oid collid)
 
 	if (GetDatabaseEncoding() != PG_UTF8)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Unicode case folding can only be performed if server encoding is UTF8")));
 
 	mylocale = pg_newlocale_from_collation(collid);

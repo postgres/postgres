@@ -439,7 +439,9 @@ currtid_for_view(Relation viewrel, const ItemPointerData *tid)
 			break;
 		}
 	}
-	elog(ERROR, "currtid cannot handle this view");
+	ereport(ERROR,
+			errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			errmsg("currtid cannot handle this view"));
 	return NULL;
 }
 

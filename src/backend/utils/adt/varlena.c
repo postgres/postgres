@@ -5428,7 +5428,7 @@ unicode_norm_form_from_string(const char *formstr)
 	 */
 	if (GetDatabaseEncoding() != PG_UTF8)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Unicode normalization can only be performed if server encoding is UTF8")));
 
 	if (pg_strcasecmp(formstr, "NFC") == 0)
@@ -5488,7 +5488,8 @@ unicode_assigned(PG_FUNCTION_ARGS)
 
 	if (GetDatabaseEncoding() != PG_UTF8)
 		ereport(ERROR,
-				(errmsg("Unicode categorization can only be performed if server encoding is UTF8")));
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Unicode categorization can only be performed if server encoding is UTF8")));
 
 	/* convert to char32_t */
 	size = pg_mbstrlen_with_len(VARDATA_ANY(input), VARSIZE_ANY_EXHDR(input));

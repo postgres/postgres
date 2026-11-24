@@ -47,7 +47,8 @@ pg_control_system(PG_FUNCTION_ARGS)
 	LWLockRelease(ControlFileLock);
 	if (!crc_ok)
 		ereport(ERROR,
-				(errmsg("calculated CRC checksum does not match value stored in file")));
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("calculated CRC checksum does not match value stored in file")));
 
 	values[0] = Int32GetDatum(ControlFile->pg_control_version);
 	nulls[0] = false;
@@ -87,7 +88,8 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 	LWLockRelease(ControlFileLock);
 	if (!crc_ok)
 		ereport(ERROR,
-				(errmsg("calculated CRC checksum does not match value stored in file")));
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("calculated CRC checksum does not match value stored in file")));
 
 	/*
 	 * Calculate name of the WAL file containing the latest checkpoint's REDO
@@ -184,7 +186,8 @@ pg_control_recovery(PG_FUNCTION_ARGS)
 	LWLockRelease(ControlFileLock);
 	if (!crc_ok)
 		ereport(ERROR,
-				(errmsg("calculated CRC checksum does not match value stored in file")));
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("calculated CRC checksum does not match value stored in file")));
 
 	values[0] = LSNGetDatum(ControlFile->minRecoveryPoint);
 	nulls[0] = false;
@@ -225,7 +228,8 @@ pg_control_init(PG_FUNCTION_ARGS)
 	LWLockRelease(ControlFileLock);
 	if (!crc_ok)
 		ereport(ERROR,
-				(errmsg("calculated CRC checksum does not match value stored in file")));
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("calculated CRC checksum does not match value stored in file")));
 
 	values[0] = Int32GetDatum(ControlFile->maxAlign);
 	nulls[0] = false;

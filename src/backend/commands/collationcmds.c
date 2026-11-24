@@ -443,7 +443,8 @@ AlterCollation(AlterCollationStmt *stmt)
 
 	if (collOid == DEFAULT_COLLATION_OID)
 		ereport(ERROR,
-				(errmsg("cannot refresh version of default collation"),
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot refresh version of default collation"),
 		/* translator: %s is an SQL command */
 				 errhint("Use %s instead.",
 						 "ALTER DATABASE ... REFRESH COLLATION VERSION")));
