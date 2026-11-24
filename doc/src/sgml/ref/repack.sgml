@@ -258,8 +258,17 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
     the table using either an index scan on the specified index, or a
     sequential scan followed by sorting.  It will attempt to choose the method
     that will be faster, based on planner cost parameters and available
-    statistical information.  When clustering on an index of an access method
-    other than B-Tree, <command>REPACK</command> always uses an index scan.
+    statistical information.  Setting <xref linkend="guc-enable-indexscan"/>
+    to <literal>off</literal> forces a sequential scan and sort, regardless
+    of <xref linkend="guc-enable-sort"/> and <xref linkend="guc-enable-seqscan"/>.
+    Otherwise, setting either <varname>enable_sort</varname> or
+    <varname>enable_seqscan</varname> to <literal>off</literal> favors an
+    index scan, provided the index is usable.
+   </para>
+
+   <para>
+    When clustering on an index of an access method other than B-Tree,
+    <command>REPACK</command> always uses an index scan.
    </para>
 
    <para>
@@ -292,7 +301,9 @@ REPACK [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] USING
     file of up to the size of the table is needed in addition to the above.
     This method is usually faster than an index scan, but if the disk space
     requirement is intolerable, you can disable this choice by temporarily
-    setting <xref linkend="guc-enable-sort"/> to <literal>off</literal>; or
+    setting <xref linkend="guc-enable-sort"/> to <literal>off</literal>
+    (subject to the conditions described in
+    <xref linkend="sql-repack-notes-on-clustering"/>); or
     omitting <literal>USING INDEX</literal> if the table doesn't need to be
     reordered.
    </para>
