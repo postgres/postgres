@@ -1750,6 +1750,12 @@ ReplicationSlotReserveWal(void)
 	 * independently on the primary, so that a snapshot can be built using the
 	 * record.
 	 *
+	 * During recovery, logical decoding can become enabled before
+	 * GetXLogReplayRecPtr() advances past the status-change record (in
+	 * xlog_redo() or UpdateLogicalDecodingStatusEndOfRecovery()), so advance
+	 * restart_lsn to at least GetLogicalDecodingEnabledLSN() to avoid
+	 * decoding that record.
+	 *
 	 * None of this is needed (or indeed helpful) for physical slots as
 	 * they'll start replay at the last logged checkpoint anyway. Instead,
 	 * return the location of the last redo LSN, where a base backup has to
@@ -1758,7 +1764,12 @@ ReplicationSlotReserveWal(void)
 	if (SlotIsPhysical(slot))
 		restart_lsn = GetRedoRecPtr();
 	else if (RecoveryInProgress())
-		restart_lsn = GetXLogReplayRecPtr(NULL);
+	{
+		XLogRecPtr	replay_lsn = GetXLogReplayRecPtr(NULL);
+		XLogRecPtr	enable_lsn = GetLogicalDecodingEnabledLSN();
+
+		restart_lsn = Max(replay_lsn, enable_lsn);
+	}
 	else
 		restart_lsn = GetXLogInsertRecPtr();
 

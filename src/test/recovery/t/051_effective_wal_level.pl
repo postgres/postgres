@@ -811,6 +811,65 @@ select pg_create_logical_replication_slot('standby5_slot', 'test_decoding');
 	test_wal_level($standby5, "replica|logical",
 		"logical decoding got activated on the promoted standby5 after retry"
 	);
+	$standby5->stop;
+
+	# Test that logical slot creation during end-of-recovery activation does
+	# not reserve a restart_lsn preceding the status-change record.
+
+	# Disable logical decoding on the primary so that standby6 starts with
+	# logical decoding disabled, then activates it upon promotion due to its
+	# local wal_level = 'logical'.
+	$primary->safe_psql('postgres',
+		qq[select pg_drop_replication_slot('test_slot3')]);
+	wait_for_logical_decoding_disabled($primary);
+
+	my $standby6 = PostgreSQL::Test::Cluster->new('standby6');
+	$standby6->init_from_backup($primary, 'my_backup', has_streaming => 1);
+	$standby6->append_conf('postgresql.conf', qq[wal_level = 'logical']);
+	$standby6->start;
+	$primary->wait_for_replay_catchup($standby6);
+
+	# Promote standby6 without waiting and pause the startup process right
+	# after it enables logical decoding and writes the status-change record,
+	# while RecoveryInProgress() is still true.
+	$standby6->safe_psql(
+		'postgres', qq[
+select injection_points_attach('startup-logical-decoding-status-change-end-of-recovery', 'wait');
+select pg_promote(false);
+]);
+	$standby6->wait_for_event('startup',
+		'startup-logical-decoding-status-change-end-of-recovery');
+
+	# Start creating a logical slot and wait until ReplicationSlotReserveWal()
+	# sets restart_lsn while the server is still in recovery.
+	$psql_create_slot =
+	  $standby6->background_psql('postgres', on_error_stop => 0);
+	$psql_create_slot->query_until(
+		qr/create_standby6_slot/,
+		q(\echo create_standby6_slot
+select pg_create_logical_replication_slot('standby6_slot', 'test_decoding');
+));
+	$standby6->poll_query_until('postgres',
+		qq[select restart_lsn is not null from pg_replication_slots where slot_name = 'standby6_slot']
+	) or die "timed out waiting for standby6_slot to reserve WAL";
+
+	# Complete promotion and log a standby snapshot so that the slot creation
+	# can finish finding its decoding start point.
+	$standby6->safe_psql(
+		'postgres', qq[
+select injection_points_detach('startup-logical-decoding-status-change-end-of-recovery');
+select injection_points_wakeup('startup-logical-decoding-status-change-end-of-recovery');
+]);
+	$standby6->poll_query_until('postgres',
+		qq[select not pg_is_in_recovery()])
+	  or die "timed out waiting for standby6 promotion";
+	$standby6->safe_psql('postgres', qq[select pg_log_standby_snapshot()]);
+	$psql_create_slot->quit;
+
+	is($psql_create_slot->{stderr},
+		'',
+		"logical slot creation succeeds during end-of-recovery activation");
+	$standby6->stop;
 }
 
 $primary->stop;

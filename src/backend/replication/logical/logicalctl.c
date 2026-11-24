@@ -99,10 +99,12 @@ typedef struct LogicalDecodingCtlData
 
 	/*
 	 * End LSN of the last XLOG_LOGICAL_DECODING_STATUS_CHANGE record that
-	 * enabled logical decoding, or InvalidXLogRecPtr if none has been
-	 * replayed since the server started. Checking it with
-	 * logical_decoding_enabled tells from which point on WAL was written with
-	 * logical decoding enabled; see StandbyLogicalDecodingEnabledSince().
+	 * enabled logical decoding during recovery (either replayed or written at
+	 * the end of recovery), or InvalidXLogRecPtr if none has occurred since
+	 * the server started. Checking it with logical_decoding_enabled tells
+	 * from which point on WAL was written with logical decoding enabled; see
+	 * GetLogicalDecodingEnabledLSN() and
+	 * StandbyLogicalDecodingEnabledSince().
 	 *
 	 * WAL records that disable logical decoding are deliberately not tracked
 	 * here. logical_decoding_enabled is false while decoding is off, which is
@@ -111,7 +113,7 @@ typedef struct LogicalDecodingCtlData
 	 * This is maintained only during recovery and is not persisted, so it
 	 * says nothing about a status change replayed in an earlier server run.
 	 */
-	XLogRecPtr	last_replayed_enable_lsn;
+	XLogRecPtr	last_enable_lsn;
 } LogicalDecodingCtlData;
 
 static LogicalDecodingCtlData *LogicalDecodingCtl = NULL;
@@ -144,7 +146,7 @@ static bool XLogLogicalInfoUpdatePending = false;
 
 static void update_xlog_logical_info(void);
 static void abort_logical_decoding_activation(int code, Datum arg);
-static void write_logical_decoding_status_update_record(bool status);
+static XLogRecPtr write_logical_decoding_status_update_record(bool status);
 
 static void
 LogicalDecodingCtlShmemRequest(void *arg)
@@ -161,7 +163,7 @@ LogicalDecodingCtlShmemInit(void *arg)
 	LogicalDecodingCtl->xlog_logical_info = false;
 	LogicalDecodingCtl->logical_decoding_enabled = false;
 	LogicalDecodingCtl->pending_disable = false;
-	LogicalDecodingCtl->last_replayed_enable_lsn = InvalidXLogRecPtr;
+	LogicalDecodingCtl->last_enable_lsn = InvalidXLogRecPtr;
 }
 
 /*
@@ -239,6 +241,28 @@ IsLogicalDecodingEnabled(void)
 }
 
 /*
+ * Return the end LSN of the last XLOG_LOGICAL_DECODING_STATUS_CHANGE record
+ * that enabled logical decoding during recovery, or InvalidXLogRecPtr if
+ * none has occurred since the server started.
+ *
+ * last_enable_lsn is maintained only during recovery, so this is
+ * intended for callers that have checked RecoveryInProgress(). Unlike
+ * StandbyLogicalDecodingEnabledSince(), we do not assert RecoveryInProgress()
+ * here because recovery may end concurrently right after the caller's check.
+ */
+XLogRecPtr
+GetLogicalDecodingEnabledLSN(void)
+{
+	XLogRecPtr	lsn;
+
+	LWLockAcquire(LogicalDecodingControlLock, LW_SHARED);
+	lsn = LogicalDecodingCtl->last_enable_lsn;
+	LWLockRelease(LogicalDecodingControlLock);
+
+	return lsn;
+}
+
+/*
  * Return true if logical decoding has been enabled continuously from the given
  * LSN up to the current replay position, that is, if the WAL in that range
  * was written with logical decoding enabled.
@@ -257,7 +281,7 @@ StandbyLogicalDecodingEnabledSince(XLogRecPtr lsn)
 
 	LWLockAcquire(LogicalDecodingControlLock, LW_SHARED);
 	result = LogicalDecodingCtl->logical_decoding_enabled &&
-		lsn >= LogicalDecodingCtl->last_replayed_enable_lsn;
+		lsn >= LogicalDecodingCtl->last_enable_lsn;
 	LWLockRelease(LogicalDecodingControlLock);
 
 	return result;
@@ -299,9 +323,9 @@ AtEOXact_LogicalCtl(void)
 
 /*
  * Writes an XLOG_LOGICAL_DECODING_STATUS_CHANGE WAL record with the given
- * status.
+ * status, and returns the end LSN of the inserted record.
  */
-static void
+static XLogRecPtr
 write_logical_decoding_status_update_record(bool status)
 {
 	XLogRecPtr	recptr;
@@ -310,6 +334,8 @@ write_logical_decoding_status_update_record(bool status)
 	XLogRegisterData(&status, sizeof(bool));
 	recptr = XLogInsert(RM_XLOG_ID, XLOG_LOGICAL_DECODING_STATUS_CHANGE);
 	XLogFlush(recptr);
+
+	return recptr;
 }
 
 /*
@@ -415,7 +441,7 @@ EnableLogicalDecoding(XLogRecPtr lsn)
 	 */
 	Assert(RecoveryInProgress() == XLogRecPtrIsValid(lsn));
 	if (XLogRecPtrIsValid(lsn))
-		LogicalDecodingCtl->last_replayed_enable_lsn = lsn;
+		LogicalDecodingCtl->last_enable_lsn = lsn;
 
 	/* Return if it is already enabled */
 	if (LogicalDecodingCtl->logical_decoding_enabled)
@@ -717,6 +743,8 @@ UpdateLogicalDecodingStatusEndOfRecovery(void)
 	 */
 	if (new_status != LogicalDecodingCtl->logical_decoding_enabled)
 	{
+		XLogRecPtr	recptr;
+
 		/*
 		 * Update both the logical decoding status and logical WAL logging
 		 * status. Unlike toggling these status during non-recovery, we don't
@@ -738,12 +766,17 @@ UpdateLogicalDecodingStatusEndOfRecovery(void)
 		 */
 		LogicalDecodingCtl->pending_disable = false;
 
-		LWLockRelease(LogicalDecodingControlLock);
-
-		write_logical_decoding_status_update_record(new_status);
+		/*
+		 * Write the WAL record and update last_enable_lsn before releasing
+		 * LogicalDecodingControlLock so that concurrent slot creation before
+		 * recovery completes sees the new LSN.
+		 */
+		recptr = write_logical_decoding_status_update_record(new_status);
+		if (new_status)
+			LogicalDecodingCtl->last_enable_lsn = recptr;
 	}
-	else
-		LWLockRelease(LogicalDecodingControlLock);
+
+	LWLockRelease(LogicalDecodingControlLock);
 
 	/*
 	 * With wal_level = logical, XLogLogicalInfoActive() is always true, so no
