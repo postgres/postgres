@@ -692,6 +692,27 @@ SELECT * FROM cluster_aborted_upd;
  1 | 3
 (1 row)
 
+-- CLUSTER must honor enable_sort and enable_seqscan when choosing a scan method.
+CREATE TABLE clstr_sort_test (a int);
+CREATE INDEX clstr_sort_test_idx ON clstr_sort_test (a);
+ANALYZE clstr_sort_test;
+SET random_page_cost = 100000;	-- make seqscan + sort the cheaper choice
+\set VERBOSITY terse
+CLUSTER (VERBOSE) clstr_sort_test USING clstr_sort_test_idx;
+INFO:  clustering "public.clstr_sort_test" using sequential scan and sort
+INFO:  "public.clstr_sort_test": found 0 removable, 0 nonremovable row versions in 0 pages
+SET enable_sort = off;
+CLUSTER (VERBOSE) clstr_sort_test USING clstr_sort_test_idx;
+INFO:  clustering "public.clstr_sort_test" using index scan on "clstr_sort_test_idx"
+INFO:  "public.clstr_sort_test": found 0 removable, 0 nonremovable row versions in 0 pages
+RESET enable_sort;
+SET enable_seqscan = off;
+CLUSTER (VERBOSE) clstr_sort_test USING clstr_sort_test_idx;
+INFO:  clustering "public.clstr_sort_test" using index scan on "clstr_sort_test_idx"
+INFO:  "public.clstr_sort_test": found 0 removable, 0 nonremovable row versions in 0 pages
+\set VERBOSITY default
+RESET enable_seqscan;
+RESET random_page_cost;
 -- clean up
 DROP TABLE clustertest;
 DROP TABLE clstr_1;
@@ -700,4 +721,5 @@ DROP TABLE clstr_3;
 DROP TABLE clstr_4;
 DROP TABLE clstr_expression;
 DROP TABLE cluster_aborted_upd;
+DROP TABLE clstr_sort_test;
 DROP USER regress_clstr_user;

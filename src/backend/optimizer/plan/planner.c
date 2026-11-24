@@ -7197,7 +7197,9 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 									  ForwardScanDirection, false,
 									  NULL, 1.0, false);
 
-	return (seqScanAndSortPath.total_cost < indexScanPath->path.total_cost);
+	/* Compare disabled nodes first, so that enable_sort etc. are honored */
+	return compare_path_costs(&seqScanAndSortPath, &indexScanPath->path,
+							  TOTAL_COST) < 0;
 }
 
 /*
