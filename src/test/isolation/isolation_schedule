@@ -114,6 +114,7 @@ test: vacuum-conflict
 test: vacuum-skip-locked
 test: stats
 test: horizons
+test: broken-hot-chain
 test: predicate-hash
 test: predicate-gist
 test: predicate-gin
