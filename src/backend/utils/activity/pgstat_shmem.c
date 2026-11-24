@@ -263,6 +263,21 @@ pgstat_detach_shmem(void)
  */
 
 /*
+ * Allocate the DSA body for a new variable-numbered pgstats entry.
+ *
+ * Returns InvalidDsaPointer in the event of an allocation failure.
+ */
+dsa_pointer
+pgstat_alloc_entry_body(PgStat_Kind kind)
+{
+	const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
+
+	return dsa_allocate_extended(pgStatLocal.dsa,
+								 kind_info->shared_size,
+								 DSA_ALLOC_ZERO | DSA_ALLOC_NO_OOM);
+}
+
+/*
  * Initialize entry newly-created.
  *
  * Returns NULL in the event of an allocation failure, so as callers can
@@ -273,9 +288,29 @@ PgStatShared_Common *
 pgstat_init_entry(PgStat_Kind kind,
 				  PgStatShared_HashEntry *shhashent)
 {
-	/* Create new stats entry. */
 	dsa_pointer chunk;
+
+	chunk = pgstat_alloc_entry_body(kind);
+	if (chunk == InvalidDsaPointer)
+		return NULL;
+
+	return pgstat_init_entry_ext(kind, shhashent, chunk);
+}
+
+/*
+ * Initialize variable-numbered pgstats entry.
+ *
+ * "chunk" must be a valid pointer, allocated previously by
+ * pgstat_alloc_entry_body().
+ */
+PgStatShared_Common *
+pgstat_init_entry_ext(PgStat_Kind kind,
+					  PgStatShared_HashEntry *shhashent,
+					  dsa_pointer chunk)
+{
 	PgStatShared_Common *shheader;
+
+	Assert(DsaPointerIsValid(chunk));
 
 	/*
 	 * Initialize refcount to 1, marking it as valid / not dropped. The entry
@@ -290,12 +325,6 @@ pgstat_init_entry(PgStat_Kind kind,
 	 */
 	pg_atomic_init_u32(&shhashent->generation, 0);
 	shhashent->dropped = false;
-
-	chunk = dsa_allocate_extended(pgStatLocal.dsa,
-								  pgstat_get_kind_info(kind)->shared_size,
-								  DSA_ALLOC_ZERO | DSA_ALLOC_NO_OOM);
-	if (chunk == InvalidDsaPointer)
-		return NULL;
 
 	shheader = dsa_get_address(pgStatLocal.dsa, chunk);
 	shheader->magic = 0xdeadbeef;
@@ -484,6 +513,19 @@ pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, Oid objoid, bool create,
 	if (create && !shhashent)
 	{
 		bool		shfound;
+		dsa_pointer chunk;
+
+		/* Allocate the stats body before inserting a hash entry. */
+		chunk = pgstat_alloc_entry_body(kind);
+		if (chunk == InvalidDsaPointer)
+		{
+			pgstat_release_entry_ref(key, entry_ref, false);
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+					 errdetail("Failed while allocating entry %d/%u/%u.",
+							   key.kind, key.dboid, key.objoid)));
+		}
 
 		/*
 		 * It's possible that somebody created the entry since the above
@@ -493,24 +535,7 @@ pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, Oid objoid, bool create,
 		shhashent = dshash_find_or_insert(pgStatLocal.shared_hash, &key, &shfound);
 		if (!shfound)
 		{
-			shheader = pgstat_init_entry(kind, shhashent);
-			if (shheader == NULL)
-			{
-				/*
-				 * Failed the allocation of a new entry, so clean up both the
-				 * local reference and the shared hashtable before giving up.
-				 * Clean the local state first, since releasing the dshash
-				 * lock can process a pending interrupt.
-				 */
-				pgstat_release_entry_ref(key, entry_ref, false);
-				dshash_delete_entry(pgStatLocal.shared_hash, shhashent);
-
-				ereport(ERROR,
-						(errcode(ERRCODE_OUT_OF_MEMORY),
-						 errmsg("out of memory"),
-						 errdetail("Failed while allocating entry %d/%u/%u.",
-								   key.kind, key.dboid, key.objoid)));
-			}
+			shheader = pgstat_init_entry_ext(kind, shhashent, chunk);
 			pgstat_acquire_entry_ref(entry_ref, shhashent, shheader);
 
 			if (created_entry != NULL)
@@ -518,6 +543,9 @@ pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, Oid objoid, bool create,
 
 			return entry_ref;
 		}
+
+		/* Concurrent insert won; drop the unused body. */
+		dsa_free(pgStatLocal.dsa, chunk);
 	}
 
 	if (!shhashent)
