@@ -75,3 +75,41 @@ count
 (1 row)
 
 step s1_commit: COMMIT;
+
+starting permutation: s1_b_old s1_b_new s2_update s2_gin s2_indcheckxmin s1_b_old s1_b_new s1_commit
+step s1_b_old: SELECT count(*) FROM broken_hot WHERE b @> ARRAY[1];
+count
+-----
+ 1000
+(1 row)
+
+step s1_b_new: SELECT count(*) FROM broken_hot WHERE b @> ARRAY[2];
+count
+-----
+    0
+(1 row)
+
+step s2_update: UPDATE broken_hot SET a = 2, b = ARRAY[2];
+step s2_gin: CREATE INDEX broken_hot_idx ON broken_hot USING gin (b);
+step s2_indcheckxmin: 
+    SELECT indcheckxmin FROM pg_index
+      WHERE indexrelid = 'broken_hot_idx'::regclass;
+
+indcheckxmin
+------------
+t           
+(1 row)
+
+step s1_b_old: SELECT count(*) FROM broken_hot WHERE b @> ARRAY[1];
+count
+-----
+ 1000
+(1 row)
+
+step s1_b_new: SELECT count(*) FROM broken_hot WHERE b @> ARRAY[2];
+count
+-----
+    0
+(1 row)
+
+step s1_commit: COMMIT;

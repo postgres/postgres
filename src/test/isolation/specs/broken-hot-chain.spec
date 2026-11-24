@@ -35,6 +35,8 @@ setup
 # values, before and after s2 builds its index
 step s1_a_old { SELECT count(*) FROM broken_hot WHERE a = 1; }
 step s1_a_new { SELECT count(*) FROM broken_hot WHERE a = 2; }
+step s1_b_old { SELECT count(*) FROM broken_hot WHERE b @> ARRAY[1]; }
+step s1_b_new { SELECT count(*) FROM broken_hot WHERE b @> ARRAY[2]; }
 step s1_commit { COMMIT; }
 
 
@@ -48,6 +50,7 @@ setup
 step s2_update { UPDATE broken_hot SET a = 2, b = ARRAY[2]; }
 step s2_btree { CREATE INDEX broken_hot_idx ON broken_hot USING btree (a); }
 step s2_brin { CREATE INDEX broken_hot_idx ON broken_hot USING brin (a); }
+step s2_gin { CREATE INDEX broken_hot_idx ON broken_hot USING gin (b); }
 
 # The build must set indcheckxmin
 step s2_indcheckxmin
@@ -60,3 +63,5 @@ permutation s1_a_old s1_a_new s2_update s2_btree s2_indcheckxmin
   s1_a_old s1_a_new s1_commit
 permutation s1_a_old s1_a_new s2_update s2_brin s2_indcheckxmin
   s1_a_old s1_a_new s1_commit
+permutation s1_b_old s1_b_new s2_update s2_gin s2_indcheckxmin
+  s1_b_old s1_b_new s1_commit
