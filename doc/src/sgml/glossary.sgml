@@ -321,7 +321,8 @@
      <glossterm linkend="glossary-shared-memory">shared buffers</glossterm>.
     </para>
     <para>
-     A Buffer Access Strategy sets up references to a limited number of
+     Except for <literal>normal</literal>, each Buffer Access Strategy sets up
+     references to a limited number of
      <glossterm linkend="glossary-shared-memory">shared buffers</glossterm> and
      reuses them circularly.  When the operation requires a new page, a victim
      buffer is chosen from the buffers in the strategy ring, which may require
@@ -329,12 +330,48 @@
      <glossterm linkend="glossary-wal">WAL</glossterm> to permanent storage.
     </para>
     <para>
-     Buffer Access Strategies are used for various operations such as
-     sequential scans of large tables, <command>VACUUM</command>,
-     <command>COPY</command>, <command>CREATE TABLE AS SELECT</command>,
-     <command>ALTER TABLE</command>, <command>CREATE DATABASE</command>,
-     <command>CREATE INDEX</command>, and <command>CLUSTER</command>.
+     The available buffer access strategy types are:
     </para>
+    <variablelist>
+     <varlistentry>
+      <term><literal>normal</literal></term>
+      <listitem>
+       <para>
+        Uses the normal clock-sweep buffer replacement policy without a
+        strategy ring.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>bulkread</literal></term>
+      <listitem>
+       <para>
+        Uses a strategy ring for operations expected to read many pages with
+        little reuse, such as a sequential scan of a large table.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>bulkwrite</literal></term>
+      <listitem>
+       <para>
+        Uses a strategy ring for operations that write many pages, such as
+        <command>COPY FROM</command>.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>vacuum</literal></term>
+      <listitem>
+       <para>
+        Uses a strategy ring for maintenance operations, such as
+        <command>VACUUM</command>.  For <command>VACUUM</command> and
+        <command>ANALYZE</command>, its size can be controlled with
+        <xref linkend="guc-vacuum-buffer-usage-limit"/>.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </glossdef>
   </glossentry>
 

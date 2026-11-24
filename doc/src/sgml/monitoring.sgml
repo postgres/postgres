@@ -3122,7 +3122,9 @@ description | Waiting for a newly initialized WAL file to reach durable storage
         <structfield>context</structfield> <type>text</type>
        </para>
        <para>
-        The context of an I/O operation. Possible values are:
+        The context of an I/O operation. Possible values are listed below (see
+        also <glossterm linkend="glossary-buffer-access-strategy">Buffer
+        Access Strategy</glossterm>):
        </para>
        <itemizedlist>
         <listitem>

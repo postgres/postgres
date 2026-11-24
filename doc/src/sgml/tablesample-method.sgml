@@ -201,11 +201,11 @@ BeginSampleScan (SampleScanState *node,
   <para>
    This function may adjust the fields <literal>node-&gt;use_bulkread</literal>
    and <literal>node-&gt;use_pagemode</literal>.
-   If <literal>node-&gt;use_bulkread</literal> is <literal>true</literal>, which it is by
-   default, the scan will use a buffer access strategy that encourages
-   recycling buffers after use.  It might be reasonable to set this
-   to <literal>false</literal> if the scan will visit only a small fraction of the
-   table's pages.
+   If <literal>node-&gt;use_bulkread</literal> is <literal>true</literal>,
+   which it is by default, the scan will use a <literal>bulkread</literal>
+   buffer access strategy that encourages recycling buffers after use.  It
+   might be reasonable to set this to <literal>false</literal> if the scan
+   will visit only a small fraction of the table's pages.
    If <literal>node-&gt;use_pagemode</literal> is <literal>true</literal>, which it is by
    default, the scan will perform visibility checking in a single pass for
    all tuples on each visited page.  It might be reasonable to set this
