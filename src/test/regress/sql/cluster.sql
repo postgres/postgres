@@ -476,6 +476,22 @@ COMMIT;
 SELECT count(*) FROM cluster_aborted_upd;
 SELECT * FROM cluster_aborted_upd;
 
+-- REPACK must honor enable_sort and enable_seqscan when choosing a scan method.
+CREATE TABLE clstr_sort_test (a int);
+CREATE INDEX clstr_sort_test_idx ON clstr_sort_test (a);
+ANALYZE clstr_sort_test;
+SET random_page_cost = 100000;	-- make seqscan + sort the cheaper choice
+\set VERBOSITY terse
+REPACK (VERBOSE) clstr_sort_test USING INDEX clstr_sort_test_idx;
+SET enable_sort = off;
+REPACK (VERBOSE) clstr_sort_test USING INDEX clstr_sort_test_idx;
+RESET enable_sort;
+SET enable_seqscan = off;
+REPACK (VERBOSE) clstr_sort_test USING INDEX clstr_sort_test_idx;
+\set VERBOSITY default
+RESET enable_seqscan;
+RESET random_page_cost;
+
 -- clean up
 DROP TABLE clustertest;
 DROP TABLE clstr_1;
@@ -485,5 +501,6 @@ DROP TABLE clstr_4;
 DROP TABLE clstr_expression;
 DROP TABLE clstrpart;
 DROP TABLE cluster_aborted_upd;
+DROP TABLE clstr_sort_test;
 
 DROP USER regress_clstr_user;
