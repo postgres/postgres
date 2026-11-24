@@ -1495,8 +1495,8 @@ AlterSubscription_refresh_seq(Subscription *sub, char *conninfo)
 }
 
 /*
- * Common checks for altering failover, two_phase, and retain_dead_tuples
- * options.
+ * Common checks for altering failover, two_phase, retain_dead_tuples, and
+ * conflict_log_destination options.
  */
 static void
 CheckAlterSubOption(Subscription *sub, const char *option,
@@ -1504,13 +1504,17 @@ CheckAlterSubOption(Subscription *sub, const char *option,
 {
 	Assert(strcmp(option, "failover") == 0 ||
 		   strcmp(option, "two_phase") == 0 ||
-		   strcmp(option, "retain_dead_tuples") == 0);
+		   strcmp(option, "retain_dead_tuples") == 0 ||
+		   strcmp(option, "conflict_log_destination") == 0);
 
 	/*
-	 * Altering the retain_dead_tuples option does not update the slot on the
-	 * publisher.
+	 * Only the failover and two_phase options change the slot on the
+	 * publisher. Altering retain_dead_tuples or conflict_log_destination does
+	 * not.
 	 */
-	Assert(!slot_needs_update || strcmp(option, "retain_dead_tuples") != 0);
+	if (slot_needs_update)
+		Assert(strcmp(option, "failover") == 0 ||
+			   strcmp(option, "two_phase") == 0);
 
 	/*
 	 * Do not allow changing the option if the subscription is enabled. This
@@ -1555,6 +1559,10 @@ CheckAlterSubOption(Subscription *sub, const char *option,
 	 * avoid the race conditions described above, but we maintain the
 	 * restriction for both enable and disable operations for the sake of
 	 * consistency.
+	 *
+	 * Also, when two_phase is enabled, do not allow changing the
+	 * conflict_log_destination option to 'log' when the subscription is
+	 * enabled; see AlterSubscription() and DropSubscription() for details.
 	 */
 	if (sub->enabled)
 		ereport(ERROR,
@@ -2110,6 +2118,57 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 						bool		update_relid;
 						Oid			relid = InvalidOid;
 
+						/*
+						 * Similar to DropSubscription(), when two_phase is
+						 * enabled, changing to 'log' drops the conflict log
+						 * table, which can be blocked forever if a prepared
+						 * transaction of the subscription holds a lock on it.
+						 * So allow it only when the subscription is disabled,
+						 * no worker is running, and there are no prepared
+						 * transactions.
+						 *
+						 * XXX Another option would be to allow this on an
+						 * enabled subscription by restarting its workers. We
+						 * chose to require the subscription to be disabled
+						 * instead, following the precedent of existing
+						 * options such as two_phase and retain_dead_tuples
+						 * (see CheckAlterSubOption()).
+						 */
+						if (CONFLICTS_LOGGED_TO_TABLE(old_dest) &&
+							!CONFLICTS_LOGGED_TO_TABLE(opts.conflictlogdest) &&
+							sub->twophasestate != LOGICALREP_TWOPHASE_STATE_DISABLED)
+						{
+							CheckAlterSubOption(sub, "conflict_log_destination",
+												false, isTopLevel);
+
+							/*
+							 * Note that workers may still survive even if the
+							 * subscription has been disabled.
+							 *
+							 * Ensure workers have already exited to avoid
+							 * getting prepared transactions while we are
+							 * dropping the conflict log table.
+							 */
+							if (logicalrep_workers_find(subid, true, true))
+								ereport(ERROR,
+										(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+										 errmsg("cannot alter option \"%s\" when logical replication worker is still running",
+												"conflict_log_destination"),
+										 errhint("Try again after some time.")));
+
+							/*
+							 * Disallow the operation when a prepared
+							 * transaction exists.
+							 */
+							if (LookupGXactBySubid(subid))
+								ereport(ERROR,
+										(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+										 errmsg("cannot alter option \"%s\" when prepared transactions exist",
+												"conflict_log_destination"),
+										 errdetail("Dropping the conflict log table requires a lock that a prepared transaction of this subscription may be holding."),
+										 errhint("Resolve these transactions and try again.")));
+						}
+
 						values[Anum_pg_subscription_subconflictlogdest - 1] =
 							CStringGetTextDatum(ConflictLogDestNames[opts.conflictlogdest]);
 						replaces[Anum_pg_subscription_subconflictlogdest - 1] = true;
@@ -2620,6 +2679,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	Oid			subowner;
 	Oid			subserver;
 	Oid			subconflictlogrelid;
+	char		subtwophasestate;
 	char	   *subconninfo = NULL;
 	Datum		datum;
 	bool		isnull;
@@ -2673,6 +2733,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	subowner = form->subowner;
 	subserver = form->subserver;
 	subconflictlogrelid = form->subconflictlogrelid;
+	subtwophasestate = form->subtwophasestate;
 	must_use_password = !superuser_arg(subowner) && form->subpasswordrequired;
 
 	/* must be owner */
@@ -2748,6 +2809,25 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		logicalrep_worker_stop(w->type, w->subid, w->relid);
 	}
 	list_free(subworkers);
+
+	/*
+	 * Disallow dropping a subscription that has a conflict log table while it
+	 * has a prepared transaction, as we cannot tell whether that transaction
+	 * holds a lock on the table. If it does, dropping the table would wait
+	 * for the lock, but only an apply worker can finish the prepared
+	 * transaction and none can run while we hold the subscription lock. The
+	 * lock manager cannot detect this wait cycle, so the DROP would hang
+	 * until canceled or until the prepared transaction is resolved manually.
+	 */
+	if (OidIsValid(subconflictlogrelid) &&
+		subtwophasestate != LOGICALREP_TWOPHASE_STATE_DISABLED &&
+		LookupGXactBySubid(subid))
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("cannot drop subscription \"%s\" when prepared transactions exist",
+					   subname),
+				errdetail("A prepared transaction of the subscription may hold a lock on the subscription's conflict log table."),
+				errhint("Resolve these transactions and try again."));
 
 	/*
 	 * Remove the no-longer-useful entry in the launcher's table of apply
@@ -2977,6 +3057,7 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 {
 	Form_pg_subscription form;
 	AclResult	aclresult;
+	HeapTuple	curtup = tup;
 
 	form = (Form_pg_subscription) GETSTRUCT(tup);
 
@@ -3027,13 +3108,34 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	if (OidIsValid(form->subserver))
 		GetUserMappingExtended(newOwnerId, form->subserver, WARNING);
 
-	form->subowner = newOwnerId;
-	CatalogTupleUpdate(rel, &tup->t_self, tup);
-
-	/* Update owner of the conflict log table if it exists. */
+	/*
+	 * Update owner of the conflict log table first, if it exists, before
+	 * updating the subscription's row. Changing its owner can wait for a
+	 * prepared transaction of this subscription that holds a lock on it. If
+	 * we had already updated the row, the apply worker could wait for us when
+	 * it updates the row itself, e.g. to disable the subscription after an
+	 * error, while we wait for the prepared transaction to be resolved by the
+	 * apply worker.
+	 */
 	if (OidIsValid(form->subconflictlogrelid))
+	{
+		Oid			subid = form->oid;
+
 		ATExecChangeOwner(form->subconflictlogrelid, newOwnerId, true,
 						  AccessExclusiveLock);
+
+		/*
+		 * The row may have been updated while we waited for the lock, so
+		 * update its current version.
+		 */
+		curtup = SearchSysCacheCopy1(SUBSCRIPTIONOID, ObjectIdGetDatum(subid));
+		if (!HeapTupleIsValid(curtup))
+			elog(ERROR, "cache lookup failed for subscription %u", subid);
+		form = (Form_pg_subscription) GETSTRUCT(curtup);
+	}
+
+	form->subowner = newOwnerId;
+	CatalogTupleUpdate(rel, &curtup->t_self, curtup);
 
 	/* Update owner dependency reference */
 	changeDependencyOnOwner(SubscriptionRelationId,
@@ -3046,6 +3148,9 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	/* Wake up related background processes to handle this change quickly. */
 	ApplyLauncherWakeupAtCommit();
 	LogicalRepWorkersWakeupAtCommit(form->oid);
+
+	if (curtup != tup)
+		heap_freetuple(curtup);
 }
 
 /*

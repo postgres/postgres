@@ -118,11 +118,19 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
   </para>
 
   <para>
-   If a conflict log table exists for the subscription (that is, when
-   <link linkend="sql-createsubscription-params-with-conflict-log-destination">
+   If <link linkend="sql-createsubscription-params-with-conflict-log-destination">
    <literal>conflict_log_destination</literal></link> is set to <literal>table</literal>
-   or <literal>all</literal>), <command>DROP SUBSCRIPTION</command> automatically drops
-   the associated conflict log table.
+   or <literal>all</literal>, the subscription has an associated conflict log
+   table, which <command>DROP SUBSCRIPTION</command> drops along with the
+   subscription. However, <command>DROP SUBSCRIPTION</command> cannot be
+   executed while the subscription has prepared transactions (see
+   <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>),
+   because such a transaction may hold a lock on the conflict log table that is
+   released only when the apply worker processes the corresponding
+   <command>COMMIT PREPARED</command> or <command>ROLLBACK PREPARED</command>.
+   Resolve these transactions first (see
+   <link linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link>)
+   before dropping the subscription.
   </para>
  </refsect1>
 

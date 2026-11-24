@@ -604,6 +604,13 @@ ALTER SUBSCRIPTION regress_conflict_test2 SET (conflict_log_destination = 'table
 SELECT subconflictlogdest, subconflictlogrelid = :old_relid AS relid_unchanged
 FROM pg_subscription WHERE subname = 'regress_conflict_test2';
 
+-- fail - transition from 'table' to 'log' with two_phase requires a disabled subscription
+BEGIN;
+ALTER SUBSCRIPTION regress_conflict_test2 SET (two_phase = true);
+ALTER SUBSCRIPTION regress_conflict_test2 ENABLE;
+ALTER SUBSCRIPTION regress_conflict_test2 SET (conflict_log_destination = 'log');
+ROLLBACK;
+
 -- transition from 'table' to 'log'
 -- should drop the table and clear subconflictlogrelid
 ALTER SUBSCRIPTION regress_conflict_test2 SET (conflict_log_destination = 'log');

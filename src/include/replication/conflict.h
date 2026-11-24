@@ -9,12 +9,14 @@
 #ifndef CONFLICT_H
 #define CONFLICT_H
 
+#include "access/transam.h"
 #include "access/xlogdefs.h"
 #include "datatype/timestamp.h"
 #include "nodes/pg_list.h"
 
 /* Avoid including execnodes.h here */
 typedef struct EState EState;
+typedef struct LogicalRepRelMapEntry LogicalRepRelMapEntry;
 typedef struct ResultRelInfo ResultRelInfo;
 typedef struct TupleTableSlot TupleTableSlot;
 
@@ -72,8 +74,10 @@ typedef struct ConflictTupleInfo
 								 * tuple */
 	Oid			indexoid;		/* OID of the index where the conflict
 								 * occurred */
-	TransactionId xmin;			/* transaction ID of the modification causing
-								 * the conflict */
+	FullTransactionId xmin;		/* full transaction ID of the modification
+								 * causing the conflict, computed while the
+								 * local tuple was still pinned, so it does
+								 * not depend on the tuple afterwards */
 	ReplOriginId origin;		/* origin identifier of the modification */
 	TimestampTz ts;				/* timestamp of when the modification on the
 								 * conflicting local row occurred */
@@ -111,6 +115,7 @@ extern bool GetTupleTransactionInfo(TupleTableSlot *localslot,
 									TimestampTz *localts);
 extern void ReportApplyConflict(EState *estate, ResultRelInfo *relinfo,
 								int elevel, ConflictType type,
+								LogicalRepRelMapEntry *relmapentry,
 								TupleTableSlot *searchslot,
 								TupleTableSlot *remoteslot,
 								List *conflicttuples);

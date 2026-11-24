@@ -723,11 +723,11 @@ WHERE s.subname = 'regress_conflict_test1' AND a.attnum > 0
       5 | remote_xid
       6 | remote_commit_lsn
       7 | remote_commit_ts
-      8 | remote_origin
+      8 | apply_origin
       9 | replica_identity_full
      10 | replica_identity
-     11 | remote_tuple
-     12 | local_conflicts
+     11 | local_conflicts
+     12 | has_omitted_values
 (12 rows)
 
 -- Changing the subscription owner should also update the owner
@@ -797,6 +797,13 @@ FROM pg_subscription WHERE subname = 'regress_conflict_test2';
  table              | t
 (1 row)
 
+-- fail - transition from 'table' to 'log' with two_phase requires a disabled subscription
+BEGIN;
+ALTER SUBSCRIPTION regress_conflict_test2 SET (two_phase = true);
+ALTER SUBSCRIPTION regress_conflict_test2 ENABLE;
+ALTER SUBSCRIPTION regress_conflict_test2 SET (conflict_log_destination = 'log');
+ERROR:  cannot set option "conflict_log_destination" for enabled subscription
+ROLLBACK;
 -- transition from 'table' to 'log'
 -- should drop the table and clear subconflictlogrelid
 ALTER SUBSCRIPTION regress_conflict_test2 SET (conflict_log_destination = 'log');

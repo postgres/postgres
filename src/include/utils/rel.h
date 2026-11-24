@@ -741,16 +741,19 @@ RelationCloseSmgr(Relation relation)
  *
  * We don't log information for unlogged tables (since they don't WAL log
  * anyway), for foreign tables (since they don't WAL log, either),
- * and for system tables (their content is hard to make sense of, and
- * it would complicate decoding slightly for little gain). Note that we *do*
- * log information for user defined catalog tables since they presumably are
- * interesting to the user...
+ * for system tables (their content is hard to make sense of, and
+ * it would complicate decoding slightly for little gain), and for conflict
+ * log tables in the pg_conflict namespace (which are system-managed tables
+ * used internally on subscribers). Note that we *do* log information for
+ * user defined catalog tables since they presumably are interesting to the
+ * user...
  */
 #define RelationIsLogicallyLogged(relation) \
 	(XLogLogicalInfoActive() && \
 	 RelationNeedsWAL(relation) && \
 	 (relation)->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&	\
-	 !IsCatalogRelation(relation))
+	 !IsCatalogRelation(relation) && \
+	 !IsConflictLogTableNamespace(RelationGetNamespace(relation)))
 
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);

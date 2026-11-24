@@ -366,7 +366,17 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       When the <link linkend="sql-createsubscription-params-with-conflict-log-destination"><literal>conflict_log_destination</literal></link>
       parameter is set to <literal>table</literal> or <literal>all</literal>, the system
       automatically creates the conflict log table. Conversely, if the destination is changed to
-      <literal>log</literal>, the conflict log table is automatically dropped.
+      <literal>log</literal>, logging to the table stops and the conflict log
+      table is automatically dropped.
+     </para>
+
+     <para>
+      When <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
+      is enabled, changing <link linkend="sql-createsubscription-params-with-conflict-log-destination"><literal>conflict_log_destination</literal></link>
+      from <literal>table</literal> or <literal>all</literal> to
+      <literal>log</literal> is only allowed when the subscription is disabled
+      and there are no pending prepared transactions, because such transactions
+      may hold a lock on the conflict log table being dropped.
      </para>
     </listitem>
    </varlistentry>

@@ -272,8 +272,10 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
             <term><literal>log</literal></term>
             <listitem>
              <para>
-              Conflict details are recorded in the server log.
-              This is the default behavior.
+              Conflict details are recorded in the server log. This is
+              the default behavior. See
+              <xref linkend="logical-replication-conflict-file-based-logging"/>
+              for details.
              </para>
             </listitem>
            </varlistentry>
@@ -283,15 +285,21 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
              <para>
               The system automatically creates a structured table named
               <literal>pg_conflict_log_&lt;subid&gt;</literal> in the
-              <literal>pg_conflict</literal> schema. This allows for easy
-              querying and analysis of conflicts.
+              <literal>pg_conflict</literal> schema to record resolved
+              conflicts. Conflicts raised at <literal>ERROR</literal> level
+              (which halt replication and abort the transaction) are not
+              recorded in the table; they are always reported to the server log.
+              See <xref linkend="logical-replication-conflict-table-based-logging"/>
+              for details.
              </para>
              <caution>
               <para>
                The conflict log table is strictly tied to the lifecycle of the
                subscription or the <literal>conflict_log_destination</literal> setting. If
                the subscription is dropped, or if the destination is changed to
-               <literal>log</literal>, the table is <emphasis>dropped</emphasis>.
+               <literal>log</literal>, the table is
+               <emphasis>permanently dropped</emphasis>, along with all the
+               conflict data recorded in it.
               </para>
              </caution>
             </listitem>
@@ -300,8 +308,9 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
             <term><literal>all</literal></term>
             <listitem>
              <para>
-              This is equivalent to configuring both destinations <literal>log</literal>
-              and <literal>table</literal> together.
+              Records resolved conflict details to both the server log and the
+              conflict log table. Conflicts raised at <literal>ERROR</literal> level
+              are reported to the server log alone.
              </para>
             </listitem>
            </varlistentry>
@@ -433,8 +442,12 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           <command>LOCK</command>, <command>TRUNCATE</command>, or
           <command>ALTER TABLE</command>), it has to wait, and later
           conflicting lock requests on that table, including the apply
-          worker's own next change to it, queue behind it.  The apply worker
-          then cannot reach the <command>COMMIT PREPARED</command> or
+          worker's own next change to it, queue behind it.  The same can happen
+          with the <link linkend="sql-createsubscription-params-with-conflict-log-destination">conflict log table</link>.
+          A prepared transaction that records a conflict holds a lock on that
+          table, so if another session waits for a conflicting lock on it, the
+          apply worker waits when it records its next conflict.  The apply
+          worker then cannot reach the <command>COMMIT PREPARED</command> or
           <command>ROLLBACK PREPARED</command>.  This situation is not
           detected as a deadlock, so replication can remain stalled
           indefinitely.  To resolve this, cancel the waiting session.

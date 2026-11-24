@@ -256,6 +256,11 @@ extern PGDLLIMPORT bool InitializingApplyWorker;
 
 extern PGDLLIMPORT List *table_states_not_ready;
 
+/* Remote transaction information of the transaction being applied */
+extern void GetRemoteTransactionInfoForConflict(TransactionId *remote_xid,
+												XLogRecPtr *finish_lsn,
+												TimestampTz *commit_ts);
+
 extern void logicalrep_worker_attach(int slot);
 extern LogicalRepWorker *logicalrep_worker_find(LogicalRepWorkerType wtype,
 												Oid subid, Oid relid,

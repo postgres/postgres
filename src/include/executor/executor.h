@@ -22,6 +22,8 @@
 #include "nodes/parsenodes.h"
 #include "utils/memutils.h"
 
+/* Avoid including access/transam.h here */
+typedef struct FullTransactionId FullTransactionId;
 
 /*
  * The "eflags" argument to ExecutorStart and the various ExecInitNode
@@ -784,14 +786,14 @@ extern bool RelationFindReplTupleSeq(Relation rel, LockTupleMode lockmode,
 extern bool RelationFindDeletedTupleInfoSeq(Relation rel, Oid identidxoid,
 											TupleTableSlot *searchslot,
 											TransactionId oldestxmin,
-											TransactionId *delete_xid,
+											FullTransactionId *delete_xid,
 											ReplOriginId *delete_origin,
 											TimestampTz *delete_time);
 extern bool RelationFindDeletedTupleInfoByIndex(Relation rel, Oid idxoid,
 												bool skipduplicates,
 												TupleTableSlot *searchslot,
 												TransactionId oldestxmin,
-												TransactionId *delete_xid,
+												FullTransactionId *delete_xid,
 												ReplOriginId *delete_origin,
 												TimestampTz *delete_time);
 extern void ExecSimpleRelationInsert(ResultRelInfo *resultRelInfo,

@@ -537,7 +537,7 @@ BuildConflictIndexInfo(ResultRelInfo *resultRelInfo, Oid conflictindex)
 static void
 update_most_recent_deletion_info(TupleTableSlot *scanslot,
 								 TransactionId oldestxmin,
-								 TransactionId *delete_xid,
+								 FullTransactionId *delete_xid,
 								 TimestampTz *delete_time,
 								 ReplOriginId *delete_origin)
 {
@@ -579,7 +579,18 @@ update_most_recent_deletion_info(TupleTableSlot *scanslot,
 	if (TransactionIdGetCommitTsData(xmax, &localts, &localorigin) &&
 		TimestampDifferenceExceeds(*delete_time, localts, 0))
 	{
-		*delete_xid = xmax;
+		/*
+		 * Convert xmax to a full transaction ID while the buffer is pinned.
+		 * This is safe because VACUUM cannot advance relfrozenxid past an
+		 * xmax on a pinned page. The result is absolute, so it stays valid
+		 * after the pin is released.
+		 *
+		 * XXX We can't rely on the conflict detection slot's xmin instead, as
+		 * a parallel apply worker uses the leader's oldest_nonremovable_xid,
+		 * which the leader can advance or clear at any time.
+		 */
+		*delete_xid = FullTransactionIdFromAllowableAt(ReadNextFullTransactionId(),
+													   xmax);
 		*delete_time = localts;
 		*delete_origin = localorigin;
 	}
@@ -625,7 +636,7 @@ bool
 RelationFindDeletedTupleInfoSeq(Relation rel, Oid identidxoid,
 								TupleTableSlot *searchslot,
 								TransactionId oldestxmin,
-								TransactionId *delete_xid,
+								FullTransactionId *delete_xid,
 								ReplOriginId *delete_origin,
 								TimestampTz *delete_time)
 {
@@ -637,7 +648,7 @@ RelationFindDeletedTupleInfoSeq(Relation rel, Oid identidxoid,
 
 	Assert(equalTupleDescs(desc, searchslot->tts_tupleDescriptor));
 
-	*delete_xid = InvalidTransactionId;
+	*delete_xid = InvalidFullTransactionId;
 	*delete_origin = InvalidReplOriginId;
 	*delete_time = 0;
 
@@ -713,7 +724,7 @@ RelationFindDeletedTupleInfoByIndex(Relation rel, Oid idxoid,
 									bool skipduplicates,
 									TupleTableSlot *searchslot,
 									TransactionId oldestxmin,
-									TransactionId *delete_xid,
+									FullTransactionId *delete_xid,
 									ReplOriginId *delete_origin,
 									TimestampTz *delete_time)
 {
@@ -728,7 +739,7 @@ RelationFindDeletedTupleInfoByIndex(Relation rel, Oid idxoid,
 	Assert(equalTupleDescs(desc, searchslot->tts_tupleDescriptor));
 	Assert(OidIsValid(idxoid));
 
-	*delete_xid = InvalidTransactionId;
+	*delete_xid = InvalidFullTransactionId;
 	*delete_time = 0;
 	*delete_origin = InvalidReplOriginId;
 
@@ -862,12 +873,21 @@ CheckAndReportConflict(ResultRelInfo *resultRelInfo, EState *estate,
 							  &conflictslot))
 		{
 			ConflictTupleInfo *conflicttuple = palloc0_object(ConflictTupleInfo);
+			TransactionId xmin;
 
 			conflicttuple->slot = conflictslot;
 			conflicttuple->indexoid = uniqueidx;
 
-			GetTupleTransactionInfo(conflictslot, &conflicttuple->xmin,
+			GetTupleTransactionInfo(conflictslot, &xmin,
 									&conflicttuple->origin, &conflicttuple->ts);
+
+			/*
+			 * Convert xmin to a full transaction ID. This is safe because the
+			 * tuple's buffer is pinned, preventing VACUUM from freezing it.
+			 */
+			conflicttuple->xmin =
+				FullTransactionIdFromAllowableAt(ReadNextFullTransactionId(),
+												 xmin);
 
 			conflicttuples = lappend(conflicttuples, conflicttuple);
 		}
@@ -877,7 +897,7 @@ CheckAndReportConflict(ResultRelInfo *resultRelInfo, EState *estate,
 	if (conflicttuples)
 		ReportApplyConflict(estate, resultRelInfo, ERROR,
 							list_length(conflicttuples) > 1 ? CT_MULTIPLE_UNIQUE_CONFLICTS : type,
-							searchslot, remoteslot, conflicttuples);
+							NULL, searchslot, remoteslot, conflicttuples);
 }
 
 /*

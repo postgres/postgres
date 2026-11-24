@@ -2033,120 +2033,134 @@ Included in publications:
    operations will simply be skipped.
   </para>
 
-  <para>
-   Additional logging is triggered, and the conflict statistics are collected (displayed in the
-   <link linkend="monitoring-pg-stat-subscription-stats"><structname>pg_stat_subscription_stats</structname></link> view)
-   in the following <firstterm>conflict</firstterm> cases:
-   <variablelist>
-    <varlistentry id="conflict-insert-exists" xreflabel="insert_exists">
-     <term><literal>insert_exists</literal></term>
-     <listitem>
-      <para>
-       Inserting a row that violates a <literal>NOT DEFERRABLE</literal>
-       unique constraint. Note that to log the origin and commit
-       timestamp details of the conflicting key,
-       <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
-       should be enabled on the subscriber. In this case, an error will be
-       raised until the conflict is resolved manually.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry id="conflict-update-origin-differs" xreflabel="update_origin_differs">
-     <term><literal>update_origin_differs</literal></term>
-     <listitem>
-      <para>
-       Updating a row that was previously modified by another origin.
-       Note that this conflict can only be detected when
-       <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
-       is enabled on the subscriber. Currently, the update is always applied
-       regardless of the origin of the local row.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry id="conflict-update-exists" xreflabel="update_exists">
-     <term><literal>update_exists</literal></term>
-     <listitem>
-      <para>
-       The updated value of a row violates a <literal>NOT DEFERRABLE</literal>
-       unique constraint. Note that to log the origin and commit
-       timestamp details of the conflicting key,
-       <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
-       should be enabled on the subscriber. In this case, an error will be
-       raised until the conflict is resolved manually. Note that when updating a
-       partitioned table, if the updated row value satisfies another partition
-       constraint resulting in the row being inserted into a new partition, the
-       <literal>insert_exists</literal> conflict may arise if the new row
-       violates a <literal>NOT DEFERRABLE</literal> unique constraint.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry id="conflict-update-deleted" xreflabel="update_deleted">
-     <term><literal>update_deleted</literal></term>
-     <listitem>
-      <para>
-       The tuple to be updated was concurrently deleted by another origin. The
-       update will simply be skipped in this scenario. Note that this conflict
-       can only be detected when
-       <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
-       and <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
-       are enabled. Note that if a tuple cannot be found due to the table being
-       truncated, only an <literal>update_missing</literal> conflict will
-       arise. Additionally, if the tuple was deleted by the same origin, an
-       <literal>update_missing</literal> conflict will arise.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry id="conflict-update-missing" xreflabel="update_missing">
-     <term><literal>update_missing</literal></term>
-     <listitem>
-      <para>
-       The row to be updated was not found. The update will simply be
-       skipped in this scenario.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry id="conflict-delete-origin-differs" xreflabel="delete_origin_differs">
-     <term><literal>delete_origin_differs</literal></term>
-     <listitem>
-      <para>
-       Deleting a row that was previously modified by another origin. Note that
-       this conflict can only be detected when
-       <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
-       is enabled on the subscriber. Currently, the delete is always applied
-       regardless of the origin of the local row.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry id="conflict-delete-missing" xreflabel="delete_missing">
-     <term><literal>delete_missing</literal></term>
-     <listitem>
-      <para>
-       The row to be deleted was not found. The delete will simply be
-       skipped in this scenario.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry id="conflict-multiple-unique-conflicts" xreflabel="multiple_unique_conflicts">
-     <term><literal>multiple_unique_conflicts</literal></term>
-     <listitem>
-      <para>
-       Inserting or updating a row violates multiple
-       <literal>NOT DEFERRABLE</literal> unique constraints. Note that to log
-       the origin and commit timestamp details of conflicting keys, ensure
-       that <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
-       is enabled on the subscriber. In this case, an error will be raised until
-       the conflict is resolved manually.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-    Note that there are other conflict scenarios, such as exclusion constraint
-    violations. Currently, we do not provide additional details for them in the
-    log.
-  </para>
+  <sect2 id="logical-replication-conflict-logging">
+   <title>Conflict logging</title>
+   <para>
+    Conflict logging is triggered, and conflict statistics are collected
+    (displayed in the
+    <link linkend="monitoring-pg-stat-subscription-stats"><structname>pg_stat_subscription_stats</structname></link>
+    view) for the conflict cases described below. Depending on the value of
+    <link linkend="sql-createsubscription-params-with-conflict-log-destination"><literal>conflict_log_destination</literal></link>,
+    the conflict information is written to the server log, a conflict log table,
+    or both.
+   </para>
 
-  <para>
-   The log format for logical replication conflicts is as follows:
+   <para>
+    The supported conflict cases are:
+    <variablelist>
+     <varlistentry id="conflict-insert-exists" xreflabel="insert_exists">
+      <term><literal>insert_exists</literal></term>
+      <listitem>
+       <para>
+        Inserting a row that violates a <literal>NOT DEFERRABLE</literal>
+        unique constraint. Note that to log the origin and commit
+        timestamp details of the conflicting key,
+        <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
+        should be enabled on the subscriber. In this case, an error will be
+        raised until the conflict is resolved manually.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry id="conflict-update-origin-differs" xreflabel="update_origin_differs">
+      <term><literal>update_origin_differs</literal></term>
+      <listitem>
+       <para>
+        Updating a row that was previously modified by another origin.
+        Note that this conflict can only be detected when
+        <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
+        is enabled on the subscriber. Currently, the update is always applied
+        regardless of the origin of the local row.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry id="conflict-update-exists" xreflabel="update_exists">
+      <term><literal>update_exists</literal></term>
+      <listitem>
+       <para>
+        The updated value of a row violates a <literal>NOT DEFERRABLE</literal>
+        unique constraint. Note that to log the origin and commit
+        timestamp details of the conflicting key,
+        <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
+        should be enabled on the subscriber. In this case, an error will be
+        raised until the conflict is resolved manually. Note that when updating a
+        partitioned table, if the updated row value satisfies another partition
+        constraint resulting in the row being inserted into a new partition, the
+        <literal>insert_exists</literal> conflict may arise if the new row
+        violates a <literal>NOT DEFERRABLE</literal> unique constraint.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry id="conflict-update-deleted" xreflabel="update_deleted">
+      <term><literal>update_deleted</literal></term>
+      <listitem>
+       <para>
+        The tuple to be updated was concurrently deleted by another origin. The
+        update will simply be skipped in this scenario. Note that this conflict
+        can only be detected when
+        <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
+        and <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
+        are enabled. Note that if a tuple cannot be found due to the table being
+        truncated, only an <literal>update_missing</literal> conflict will
+        arise. Additionally, if the tuple was deleted by the same origin, an
+        <literal>update_missing</literal> conflict will arise.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry id="conflict-update-missing" xreflabel="update_missing">
+      <term><literal>update_missing</literal></term>
+      <listitem>
+       <para>
+        The row to be updated was not found. The update will simply be
+        skipped in this scenario.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry id="conflict-delete-origin-differs" xreflabel="delete_origin_differs">
+      <term><literal>delete_origin_differs</literal></term>
+      <listitem>
+       <para>
+        Deleting a row that was previously modified by another origin. Note that
+        this conflict can only be detected when
+        <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
+        is enabled on the subscriber. Currently, the delete is always applied
+        regardless of the origin of the local row.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry id="conflict-delete-missing" xreflabel="delete_missing">
+      <term><literal>delete_missing</literal></term>
+      <listitem>
+       <para>
+        The row to be deleted was not found. The delete will simply be
+        skipped in this scenario.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry id="conflict-multiple-unique-conflicts" xreflabel="multiple_unique_conflicts">
+      <term><literal>multiple_unique_conflicts</literal></term>
+      <listitem>
+       <para>
+        Inserting or updating a row violates multiple
+        <literal>NOT DEFERRABLE</literal> unique constraints. Note that to log
+        the origin and commit timestamp details of conflicting keys, ensure
+        that <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
+        is enabled on the subscriber. In this case, an error will be raised until
+        the conflict is resolved manually.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+      Note that there are other conflict scenarios, such as exclusion constraint
+      violations. Currently, we do not provide additional details for them in the
+      log.
+    </para>
+
+   <sect3 id="logical-replication-conflict-file-based-logging">
+    <title>File-based logging</title>
+    <para>
+     If the <link linkend="sql-createsubscription-params-with-conflict-log-destination"><literal>conflict_log_destination</literal></link>
+     parameter is set to <literal>log</literal> or <literal>all</literal>, conflicts
+     are logged to the server log using the following format:
 <synopsis>
 LOG:  conflict detected on relation "<replaceable>schemaname</replaceable>.<replaceable>tablename</replaceable>": conflict=<replaceable>conflict_type</replaceable>
 DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>[: <replaceable class="parameter">detail_values</replaceable> [, ... ]].
@@ -2159,182 +2173,448 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>[: <re
     <literal>replica identity</literal> {(<replaceable>column_name</replaceable> <optional>, ...</optional>)=(<replaceable>column_value</replaceable> <optional>, ...</optional>) | full <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)}
 </synopsis>
 
-   The log provides the following information:
-   <variablelist>
-    <varlistentry>
-     <term><literal>LOG</literal></term>
-      <listitem>
+    The log provides the following information:
+    <variablelist>
+     <varlistentry>
+      <term><literal>LOG</literal></term>
+       <listitem>
+        <itemizedlist>
+         <listitem>
+          <para>
+          <replaceable>schemaname</replaceable>.<replaceable>tablename</replaceable>
+          identifies the local relation involved in the conflict.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+          <replaceable>conflict_type</replaceable> is the type of conflict that occurred
+          (e.g., <literal>insert_exists</literal>, <literal>update_exists</literal>).
+          </para>
+         </listitem>
+        </itemizedlist>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>DETAIL</literal></term>
+       <listitem>
        <itemizedlist>
         <listitem>
          <para>
-         <replaceable>schemaname</replaceable>.<replaceable>tablename</replaceable>
-         identifies the local relation involved in the conflict.
+          <replaceable class="parameter">detailed_explanation</replaceable> includes
+          the origin, transaction ID, and commit timestamp of the transaction that
+          modified the local row, if available.
          </para>
         </listitem>
         <listitem>
          <para>
-         <replaceable>conflict_type</replaceable> is the type of conflict that occurred
-         (e.g., <literal>insert_exists</literal>, <literal>update_exists</literal>).
+          The <literal>key</literal> section includes the key values of the local
+          row that violated a unique constraint for
+          <literal>insert_exists</literal>, <literal>update_exists</literal> or
+          <literal>multiple_unique_conflicts</literal> conflicts.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          The <literal>local row</literal> section includes the local row if its
+          origin differs from the remote row for
+          <literal>update_origin_differs</literal> or <literal>delete_origin_differs</literal>
+          conflicts, or if the key value conflicts with the remote row for
+          <literal>insert_exists</literal>, <literal>update_exists</literal> or
+          <literal>multiple_unique_conflicts</literal> conflicts.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          The <literal>remote row</literal> section includes the new row from
+          the remote insert or update operation that caused the conflict. Note that
+          for an update operation, the column value of the new row will be null
+          if the value is unchanged and toasted.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          The <literal>replica identity</literal> section includes the replica
+          identity key values that were used to search for the existing local
+          row to be updated or deleted. This may include the full row value
+          if the local relation is marked with
+          <link linkend="sql-altertable-replica-identity-full"><literal>REPLICA IDENTITY FULL</literal></link>.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <replaceable class="parameter">column_name</replaceable> is the column name.
+          For <literal>local row</literal>, <literal>remote row</literal>, and
+          <literal>replica identity full</literal> cases, column names are
+          logged only if the user lacks the privilege to access all columns of
+          the table. If column names are present, they appear in the same order
+          as the corresponding column values.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <replaceable class="parameter">column_value</replaceable> is the column value.
+          The large column values are truncated to 64 bytes.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          Note that in case of <literal>multiple_unique_conflicts</literal> conflict,
+          multiple <replaceable class="parameter">detailed_explanation</replaceable>
+          and <replaceable class="parameter">detail_values</replaceable> lines
+          will be generated, each detailing the conflict information associated
+          with distinct unique constraints.
          </para>
         </listitem>
        </itemizedlist>
       </listitem>
-    </varlistentry>
+     </varlistentry>
+    </variablelist>
+   </para>
+   </sect3>
 
-    <varlistentry>
-     <term><literal>DETAIL</literal></term>
-      <listitem>
-      <itemizedlist>
-       <listitem>
-        <para>
-         <replaceable class="parameter">detailed_explanation</replaceable> includes
-         the origin, transaction ID, and commit timestamp of the transaction that
-         modified the local row, if available.
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         The <literal>key</literal> section includes the key values of the local
-         row that violated a unique constraint for
-         <literal>insert_exists</literal>, <literal>update_exists</literal> or
-         <literal>multiple_unique_conflicts</literal> conflicts.
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         The <literal>local row</literal> section includes the local row if its
-         origin differs from the remote row for
-         <literal>update_origin_differs</literal> or <literal>delete_origin_differs</literal>
-         conflicts, or if the key value conflicts with the remote row for
-         <literal>insert_exists</literal>, <literal>update_exists</literal> or
-         <literal>multiple_unique_conflicts</literal> conflicts.
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         The <literal>remote row</literal> section includes the new row from
-         the remote insert or update operation that caused the conflict. Note that
-         for an update operation, the column value of the new row will be null
-         if the value is unchanged and toasted.
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         The <literal>replica identity</literal> section includes the replica
-         identity key values that were used to search for the existing local
-         row to be updated or deleted. This may include the full row value
-         if the local relation is marked with
-         <link linkend="sql-altertable-replica-identity-full"><literal>REPLICA IDENTITY FULL</literal></link>.
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         <replaceable class="parameter">column_name</replaceable> is the column name.
-         For <literal>local row</literal>, <literal>remote row</literal>, and
-         <literal>replica identity full</literal> cases, column names are
-         logged only if the user lacks the privilege to access all columns of
-         the table. If column names are present, they appear in the same order
-         as the corresponding column values.
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         <replaceable class="parameter">column_value</replaceable> is the column value.
-         The large column values are truncated to 64 bytes.
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         Note that in case of <literal>multiple_unique_conflicts</literal> conflict,
-         multiple <replaceable class="parameter">detailed_explanation</replaceable>
-         and <replaceable class="parameter">detail_values</replaceable> lines
-         will be generated, each detailing the conflict information associated
-         with distinct unique
-         constraints.
-        </para>
-       </listitem>
-      </itemizedlist>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-  </para>
+   <sect3 id="logical-replication-conflict-table-based-logging">
+    <title>Table-based logging</title>
+    <para>
+     If the <link linkend="sql-createsubscription-params-with-conflict-log-destination"><literal>conflict_log_destination</literal></link>
+     parameter is set to <literal>table</literal> or <literal>all</literal>,
+     a dedicated conflict log table will be automatically created. This table is
+     created in the <literal>pg_conflict</literal> namespace. The name of the
+     conflict log table is
+     <literal>pg_conflict_log_&lt;subid&gt;</literal>. The predefined
+     schema of this table is detailed in
+     <xref linkend="logical-replication-conflict-log-schema"/>.
+    </para>
 
-  <para>
-   Logical replication operations are performed with the privileges of the role
-   which owns the subscription.  Permissions failures on target tables will
-   cause replication conflicts, as will enabled
-   <link linkend="ddl-rowsecurity">row-level security</link> on target tables
-   that the subscription owner is subject to, without regard to whether any
-   policy would ordinarily reject the <command>INSERT</command>,
-   <command>UPDATE</command>, <command>DELETE</command> or
-   <command>TRUNCATE</command> which is being replicated.  This restriction on
-   row-level security may be lifted in a future version of
-   <productname>PostgreSQL</productname>.
-  </para>
+    <note>
+     <para>
+      Only resolved conflicts (logged at <literal>LOG</literal> level where the
+      apply transaction continues) are recorded in the conflict log table.
+      Conflicts that raise an <literal>ERROR</literal> halt replication and are
+      reported to the server log alone.
+     </para>
+    </note>
 
-  <para>
-   A conflict that produces an error will stop the replication; it must be
-   resolved manually by the user.  Details about the conflict can be found in
-   the subscriber's server log.
-  </para>
+    <para>
+     The conflict log table serves as an audit trail for resolved conflicts
+     where replication continues and the transaction successfully commits
+     (such as <literal>update_origin_differs</literal>,
+     <literal>update_missing</literal>, <literal>update_deleted</literal>,
+     <literal>delete_origin_differs</literal>, and
+     <literal>delete_missing</literal>). In these cases, local data may diverge
+     or be overwritten, making a queryable audit log valuable for database
+     administrators to understand why a row changed or was skipped.
+    </para>
 
-  <para>
-   The resolution can be done either by changing data or permissions on the subscriber so
-   that it does not conflict with the incoming change or by skipping the
-   transaction that conflicts with the existing data.  When a conflict produces
-   an error, the replication won't proceed, and the logical replication worker will
-   emit the following kind of message to the subscriber's server log:
+    <para>
+     In contrast, conflicts raised at <literal>ERROR</literal> level (such as
+     <literal>insert_exists</literal>, <literal>update_exists</literal>, and
+     <literal>multiple_unique_conflicts</literal>) halt replication and abort the
+     entire apply transaction. Because the transaction rolls back and no data
+     modifications survive on the subscriber, no data divergence occurs. These
+     errors are always reported to the server log (regardless of the
+     <literal>conflict_log_destination</literal> setting) so that monitoring and
+     alerting systems can capture the replication failure.
+    </para>
+
+    <table id="logical-replication-conflict-log-schema">
+     <title>Conflict Log Table Schema</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Column</entry>
+        <entry>Type</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry><literal>relid</literal></entry>
+        <entry><type>oid</type></entry>
+        <entry>The OID of the local table where the conflict occurred.</entry>
+       </row>
+       <row>
+        <entry><literal>schemaname</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>The schema name of the conflicting table.</entry>
+       </row>
+       <row>
+        <entry><literal>relname</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>The name of the conflicting table.</entry>
+       </row>
+       <row>
+        <entry><literal>conflict_type</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>The type of conflict that occurred (e.g., <literal>update_origin_differs</literal>).</entry>
+       </row>
+       <row>
+        <entry><literal>remote_xid</literal></entry>
+        <entry><type>xid</type></entry>
+        <entry>The remote transaction ID that caused the conflict. Since
+        transaction IDs on the publisher can wrap around, this value may be
+        reused by a later transaction; see <xref linkend="transaction-id"/>
+        for details.</entry>
+       </row>
+       <row>
+        <entry><literal>remote_commit_lsn</literal></entry>
+        <entry><type>pg_lsn</type></entry>
+        <entry>The commit LSN of the remote transaction, or the prepare LSN if the conflict occurs in a transaction that is prepared on the subscriber (see <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>), because the changes are applied at prepare time before <command>COMMIT PREPARED</command> arrives. This is <literal>NULL</literal> if the conflict is handled by a parallel apply worker, because in-progress transactions are streamed and applied before the remote commit or prepare LSN is known.</entry>
+       </row>
+       <row>
+        <entry><literal>remote_commit_ts</literal></entry>
+        <entry><type>timestamptz</type></entry>
+        <entry>The remote commit timestamp of the remote transaction. This is <literal>NULL</literal> if the conflict is handled by a parallel apply worker, because in-progress transactions are streamed and applied before the remote commit timestamp is known. It is also <literal>NULL</literal> if the conflict occurs in a transaction that is prepared on the subscriber (see <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>), because the commit timestamp is known only when <command>COMMIT PREPARED</command> arrives.</entry>
+       </row>
+       <row>
+        <entry><literal>apply_origin</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>The local replication origin under which the change was applied. This is <literal>pg_&lt;subid&gt;</literal> for the apply worker, or <literal>pg_&lt;subid&gt;_&lt;relid&gt;</literal> for a tablesync worker.</entry>
+       </row>
+       <row>
+        <entry><literal>replica_identity_full</literal></entry>
+        <entry><type>boolean</type></entry>
+        <entry>True if the conflicting local row was located using the full tuple, rather than the replica identity key of the local table.</entry>
+       </row>
+       <row>
+        <entry><literal>replica_identity</literal></entry>
+        <entry><type>json</type></entry>
+        <entry>The replica identity key values identifying the conflicting row,
+        as a <acronym>JSON</acronym> object keyed by column name; see below for
+        how the values are represented. This is <literal>NULL</literal> when
+        <literal>replica_identity_full</literal> is <literal>true</literal>.</entry>
+       </row>
+       <row>
+        <entry><literal>local_conflicts</literal></entry>
+        <entry><type>json[]</type></entry>
+        <entry>
+         An array of JSON objects representing the state of the local
+         row(s) that caused the conflict. Each object includes the local
+         transaction ID (<literal>xid</literal>, of type <type>xid8</type>),
+         commit timestamp (<literal>commit_ts</literal>), and the name of the
+         replication origin that last modified the row
+         (<literal>origin</literal>).
+         The <literal>origin</literal> field is <literal>NULL</literal> if
+         the transaction had no replication origin set or if that origin has
+         since been dropped. The column itself is <literal>NULL</literal>
+         if there are no local conflicting rows (e.g., in
+         <literal>update_missing</literal> and
+         <literal>delete_missing</literal> conflicts).
+        </entry>
+       </row>
+       <row>
+        <entry><literal>has_omitted_values</literal></entry>
+        <entry><type>boolean</type></entry>
+        <entry>Indicates whether any value in
+        <literal>replica_identity</literal> was too large to be recorded and
+        was replaced by an <literal>omitted</literal> marker.</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+    <para>
+     Every value in <literal>replica_identity</literal> is written as a
+     <acronym>JSON</acronym> string. For most columns, this is the same text a
+     <command>SELECT</command> of that column would show. Values are quoted
+     whatever the column's type, so values such as numbers, booleans, and
+     <type>jsonb</type> documents all appear as strings:
+<programlisting>
+CREATE TABLE t (id int, tag text, doc jsonb, PRIMARY KEY (id, tag, doc));
+
+SELECT replica_identity FROM pg_conflict.pg_conflict_log_16392;
+                 replica_identity
+-------------------------------------------------
+ {"id":"1","tag":"abc","doc":"{\"x\": 1}"}
+</programlisting>
+    </para>
+
+    <para>
+     Extracting a value with the <literal>-&gt;&gt;</literal> operator yields a
+     form that can be cast back to the column's type, so a recorded replica
+     identity can be used to locate the row it identifies:
+<programlisting>
+SELECT t.* FROM pg_conflict.pg_conflict_log_16392 c, t
+  WHERE t.id  = (c.replica_identity->>'id')::int
+    AND t.tag =  c.replica_identity->>'tag'
+    AND t.doc = (c.replica_identity->>'doc')::jsonb;
+</programlisting>
+     Because container values such as <type>jsonb</type>, arrays and composite
+     types are recorded as strings rather than as nested
+     <acronym>JSON</acronym>, looking inside one requires an explicit cast:
+<programlisting>
+SELECT replica_identity->'doc'->>'x'           FROM ...;   -- NULL
+SELECT (replica_identity->>'doc')::jsonb->>'x' FROM ...;   -- 1
+</programlisting>
+    </para>
+
+    <para>
+     Any setting of the apply worker that controls how a value is converted
+     to text can affect how a key value is written. Examples are
+     <xref linkend="guc-datestyle"/>, <xref linkend="guc-intervalstyle"/>,
+     <xref linkend="guc-timezone"/>, <xref linkend="guc-lc-monetary"/>,
+     <xref linkend="guc-extra-float-digits"/>,
+     <xref linkend="guc-bytea-output"/> and
+     <xref linkend="guc-quote-all-identifiers"/>. If such settings differ
+     between conflicts, the same key can be recorded in different forms, and
+     comparing the recorded text may miss some of them. For settings that
+     affect only the representation, such as
+     <xref linkend="guc-bytea-output"/> and
+     <xref linkend="guc-quote-all-identifiers"/>, cast the value back to the
+     column's type to compare equivalent forms. Here are examples for a
+     <type>bytea</type> key column <literal>b</literal> and a
+     <type>regclass[]</type> key column <literal>r</literal>:
+<programlisting>
+SELECT * FROM ... WHERE replica_identity->>'b' = '\x0102';                    -- may miss rows
+SELECT * FROM ... WHERE (replica_identity->>'b')::bytea = '\x0102';           -- matches all
+SELECT * FROM ... WHERE replica_identity->>'r' = '{pg_class}';                -- may miss rows
+SELECT * FROM ... WHERE (replica_identity->>'r')::regclass[] = '{pg_class}';  -- matches all
+</programlisting>
+    </para>
+
+    <para>
+     Some of these settings also affect how a value is interpreted, for
+     example <xref linkend="guc-datestyle"/>,
+     <xref linkend="guc-intervalstyle"/>, <xref linkend="guc-timezone"/> and
+     <xref linkend="guc-lc-monetary"/>. When casting such recorded values,
+     use the same settings that the apply worker used when recording the
+     conflict. Otherwise, the original value may not be restored correctly.
+     For example,
+     <literal>02/01/2025</literal> means January 2, 2025 with
+     <literal>DMY</literal>, but February 1, 2025 with <literal>MDY</literal>.
+     For intervals, the hours in <literal>-1 02:00:00</literal> are positive
+     with <literal>postgres</literal>, but negative with
+     <literal>sql_standard</literal>. For floating-point keys, keep
+     <xref linkend="guc-extra-float-digits"/> at 1 or higher when recording;
+     zero or negative values round the output and can prevent exact
+     restoration.
+    </para>
+
+    <para>
+     If a key value's text representation is larger than 64kB, it is not
+     recorded. In its place the conflict log stores a small object marking it
+     as omitted and giving its length in bytes, and sets
+     <literal>has_omitted_values</literal> for that row:
+<programlisting>
+ {"id":"1","tag":"abc","doc":{"omitted":true,"length":70000}}
+</programlisting>
+     Large values are omitted rather than truncated, because a truncated value
+     would still look like a real one and would give wrong answers when
+     compared or joined against the table.
+    </para>
+
+    <para>
+     Use the flag to find rows with a missing value, without having to search
+     the <type>json</type> column:
+<programlisting>
+SELECT * FROM pg_conflict.pg_conflict_log_16392 WHERE has_omitted_values;
+</programlisting>
+     A value omitted this way cannot be recovered from the conflict log table.
+    </para>
+
+    <para>
+     Key values are limited to 64kB because <literal>replica_identity</literal>
+     is a <type>json</type> value, which cannot exceed 1GB, and the text form
+     of a value can be longer than the value itself.
+    </para>
+
+    <para>
+     The limit is applied only after a key value's text representation has
+     been produced, so it bounds how much text is stored in the conflict log
+     table but not how large that text becomes while it is being built.
+     Normally this is not a problem, because the publisher had to produce the
+     same text, within the same 1GB limit, in order to send the value. This
+     does not hold in some cases, for example when the key column has a
+     different data type on the subscriber, when the subscription uses
+     <link linkend="sql-createsubscription-params-with-binary"><literal>binary</literal></link>
+     mode so the value is not sent as text, or when the subscriber's
+     <xref linkend="guc-bytea-output"/> or
+     <xref linkend="guc-quote-all-identifiers"/> setting differs from the
+     publisher's. Then the text can exceed 1GB, and the apply worker fails
+     with an error when it tries to log the conflict.
+    </para>
+   </sect3>
+  </sect2>
+
+  <sect2 id="logical-replication-conflict-notes">
+   <title>Notes</title>
+   <para>
+    Logical replication operations are performed with the privileges of the role
+    which owns the subscription.  Permissions failures on target tables will
+    cause replication conflicts, as will enabled
+    <link linkend="ddl-rowsecurity">row-level security</link> on target tables
+    that the subscription owner is subject to, without regard to whether any
+    policy would ordinarily reject the <command>INSERT</command>,
+    <command>UPDATE</command>, <command>DELETE</command> or
+    <command>TRUNCATE</command> which is being replicated.  This restriction on
+    row-level security may be lifted in a future version of
+    <productname>PostgreSQL</productname>.
+   </para>
+
+   <para>
+    A conflict that produces an error will stop the replication; it must be
+    resolved manually by the user.  Details about the conflict can be found in
+    the subscriber's server log.
+   </para>
+
+   <para>
+    The resolution can be done either by changing data or permissions on the subscriber so
+    that it does not conflict with the incoming change or by skipping the
+    transaction that conflicts with the existing data.  When a conflict produces
+    an error, the replication won't proceed, and the logical replication worker will
+    emit the following kind of message to the subscriber's server log:
 <screen>
 ERROR:  conflict detected on relation "public.test": conflict=insert_exists
 DETAIL:  Could not apply remote change: remote row (1, 'remote').
 Key already exists in unique index "test_pkey", modified locally in transaction 800 at 2026-01-16 18:15:25.652759+09: key (c)=(1), local row (1, 'local').
 CONTEXT:  processing remote data for replication origin "pg_16395" during "INSERT" for replication target relation "public.test" in transaction 725 finished at 0/014C0378
 </screen>
-   The LSN of the transaction that contains the change violating the constraint and
-   the replication origin name can be found from the server log (LSN 0/014C0378 and
-   replication origin <literal>pg_16395</literal> in the above case).  The
-   transaction that produced the conflict can be skipped by using
-   <link linkend="sql-altersubscription-params-skip"><command>ALTER SUBSCRIPTION ... SKIP</command></link>
-   with the finish LSN
-   (i.e., LSN 0/014C0378).  The finish LSN could be an LSN at which the transaction
-   is committed or prepared on the publisher.  Alternatively, the transaction can
-   also be skipped by calling the <link linkend="pg-replication-origin-advance">
-   <function>pg_replication_origin_advance()</function></link> function.
-   Before using this function, the subscription needs to be disabled temporarily
-   either by <link linkend="sql-altersubscription-params-disable">
-   <command>ALTER SUBSCRIPTION ... DISABLE</command></link> or, the
-   subscription can be used with the
-   <link linkend="sql-createsubscription-params-with-disable-on-error"><literal>disable_on_error</literal></link>
-   option. Then, you can use <function>pg_replication_origin_advance()</function>
-   function with the <parameter>node_name</parameter> (i.e., <literal>pg_16395</literal>)
-   and the next LSN of the finish LSN (i.e., 0/014C0379).  The current position of
-   origins can be seen in the <link linkend="view-pg-replication-origin-status">
-   <structname>pg_replication_origin_status</structname></link> system view.
-   Please note that skipping the whole transaction includes skipping changes that
-   might not violate any constraint.  This can easily make the subscriber
-   inconsistent.
-   The additional details regarding conflicting rows, such as their origin and
-   commit timestamp can be seen in the <literal>DETAIL</literal> line of the
-   log. But note that this information is only available when
-   <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
-   is enabled on the subscriber. Users can use this information to decide
-   whether to retain the local change or adopt the remote alteration. For
-   instance, the <literal>DETAIL</literal> line in the above log indicates that
-   the existing row was modified locally. Users can manually perform a
-   remote-change-win.
-  </para>
+    The LSN of the transaction that contains the change violating the constraint and
+    the replication origin name can be found from the server log (LSN 0/014C0378 and
+    replication origin <literal>pg_16395</literal> in the above case).  The
+    transaction that produced the conflict can be skipped by using
+    <link linkend="sql-altersubscription-params-skip"><command>ALTER SUBSCRIPTION ... SKIP</command></link>
+    with the finish LSN
+    (i.e., LSN 0/014C0378).  The finish LSN could be an LSN at which the transaction
+    is committed or prepared on the publisher.  Alternatively, the transaction can
+    also be skipped by calling the <link linkend="pg-replication-origin-advance">
+    <function>pg_replication_origin_advance()</function></link> function.
+    Before using this function, the subscription needs to be disabled temporarily
+    either by <link linkend="sql-altersubscription-params-disable">
+    <command>ALTER SUBSCRIPTION ... DISABLE</command></link> or, the
+    subscription can be used with the
+    <link linkend="sql-createsubscription-params-with-disable-on-error"><literal>disable_on_error</literal></link>
+    option. Then, you can use <function>pg_replication_origin_advance()</function>
+    function with the <parameter>node_name</parameter> (i.e., <literal>pg_16395</literal>)
+    and the next LSN of the finish LSN (i.e., 0/014C0379).  The current position of
+    origins can be seen in the <link linkend="view-pg-replication-origin-status">
+    <structname>pg_replication_origin_status</structname></link> system view.
+    Please note that skipping the whole transaction includes skipping changes that
+    might not violate any constraint.  This can easily make the subscriber
+    inconsistent.
+    The additional details regarding conflicting rows, such as their origin and
+    commit timestamp can be seen in the <literal>DETAIL</literal> line of the
+    log. But note that this information is only available when
+    <link linkend="guc-track-commit-timestamp"><varname>track_commit_timestamp</varname></link>
+    is enabled on the subscriber. Users can use this information to decide
+    whether to retain the local change or adopt the remote alteration. For
+    instance, the <literal>DETAIL</literal> line in the above log indicates that
+    the existing row was modified locally. Users can manually perform a
+    remote-change-win.
+   </para>
 
-  <para>
-   When the
-   <link linkend="sql-createsubscription-params-with-streaming"><literal>streaming</literal></link>
-   mode is <literal>parallel</literal>, the finish LSN of failed transactions
-   may not be logged. In that case, it may be necessary to change the streaming
-   mode to <literal>on</literal> or <literal>off</literal> and cause the same
-   conflicts again so the finish LSN of the failed transaction will be written
-   to the server log. For the usage of finish LSN, please refer to <link
-   linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ...
-   SKIP</command></link>.
-  </para>
+   <para>
+    When the
+    <link linkend="sql-createsubscription-params-with-streaming"><literal>streaming</literal></link>
+    mode is <literal>parallel</literal>, the finish LSN of failed transactions
+    may not be logged. In that case, it may be necessary to change the streaming
+    mode to <literal>on</literal> or <literal>off</literal> and cause the same
+    conflicts again so the finish LSN of the failed transaction will be written
+    to the server log. For the usage of finish LSN, please refer to <link
+    linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ...
+    SKIP</command></link>.
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="logical-replication-restrictions">
@@ -2446,6 +2726,14 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
      that do not have a default operator class for B-tree or Hash. However,
      this limitation can be overcome by ensuring that the table has a primary
      key or replica identity defined for it.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Conflict log tables (see <link linkend="sql-createsubscription-params-with-conflict-log-destination"><literal>conflict_log_destination</literal></link> parameter)
+     are never published, even when using <literal>FOR ALL TABLES</literal> in a
+     publication.
     </para>
    </listitem>
   </itemizedlist>
