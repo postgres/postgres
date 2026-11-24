@@ -510,6 +510,20 @@ WaitForOlderSnapshots(TransactionId limitXmin, bool progress)
 		if (progress)
 			pgstat_progress_update_param(PROGRESS_WAITFOR_DONE, i + 1);
 	}
+
+	if (progress)
+	{
+		const int	index[] = {
+			PROGRESS_WAITFOR_TOTAL,
+			PROGRESS_WAITFOR_DONE,
+			PROGRESS_WAITFOR_CURRENT_PID
+		};
+		const int64 values[] = {
+			0, 0, 0
+		};
+
+		pgstat_progress_update_multi_param(3, index, values);
+	}
 }
 
 
