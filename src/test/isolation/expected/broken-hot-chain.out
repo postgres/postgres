@@ -1,0 +1,77 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_a_old s1_a_new s2_update s2_btree s2_indcheckxmin s1_a_old s1_a_new s1_commit
+step s1_a_old: SELECT count(*) FROM broken_hot WHERE a = 1;
+count
+-----
+ 1000
+(1 row)
+
+step s1_a_new: SELECT count(*) FROM broken_hot WHERE a = 2;
+count
+-----
+    0
+(1 row)
+
+step s2_update: UPDATE broken_hot SET a = 2, b = ARRAY[2];
+step s2_btree: CREATE INDEX broken_hot_idx ON broken_hot USING btree (a);
+step s2_indcheckxmin: 
+    SELECT indcheckxmin FROM pg_index
+      WHERE indexrelid = 'broken_hot_idx'::regclass;
+
+indcheckxmin
+------------
+t           
+(1 row)
+
+step s1_a_old: SELECT count(*) FROM broken_hot WHERE a = 1;
+count
+-----
+ 1000
+(1 row)
+
+step s1_a_new: SELECT count(*) FROM broken_hot WHERE a = 2;
+count
+-----
+    0
+(1 row)
+
+step s1_commit: COMMIT;
+
+starting permutation: s1_a_old s1_a_new s2_update s2_brin s2_indcheckxmin s1_a_old s1_a_new s1_commit
+step s1_a_old: SELECT count(*) FROM broken_hot WHERE a = 1;
+count
+-----
+ 1000
+(1 row)
+
+step s1_a_new: SELECT count(*) FROM broken_hot WHERE a = 2;
+count
+-----
+    0
+(1 row)
+
+step s2_update: UPDATE broken_hot SET a = 2, b = ARRAY[2];
+step s2_brin: CREATE INDEX broken_hot_idx ON broken_hot USING brin (a);
+step s2_indcheckxmin: 
+    SELECT indcheckxmin FROM pg_index
+      WHERE indexrelid = 'broken_hot_idx'::regclass;
+
+indcheckxmin
+------------
+t           
+(1 row)
+
+step s1_a_old: SELECT count(*) FROM broken_hot WHERE a = 1;
+count
+-----
+ 1000
+(1 row)
+
+step s1_a_new: SELECT count(*) FROM broken_hot WHERE a = 2;
+count
+-----
+    0
+(1 row)
+
+step s1_commit: COMMIT;
