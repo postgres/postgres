@@ -822,8 +822,12 @@ extern void pgstat_reset_matching_entries(bool (*do_reset) (PgStatShared_HashEnt
 										  TimestampTz ts);
 
 extern void pgstat_request_entry_refs_gc(void);
+extern dsa_pointer pgstat_alloc_entry_body(PgStat_Kind kind);
 extern PgStatShared_Common *pgstat_init_entry(PgStat_Kind kind,
 											  PgStatShared_HashEntry *shhashent);
+extern PgStatShared_Common *pgstat_init_entry_ext(PgStat_Kind kind,
+												  PgStatShared_HashEntry *shhashent,
+												  dsa_pointer chunk);
 
 
 /*
