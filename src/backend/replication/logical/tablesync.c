@@ -126,8 +126,6 @@
 
 List	   *table_states_not_ready = NIL;
 
-static StringInfo copybuf = NULL;
-
 /*
  * Wait until the relation sync state is set in the catalog to the expected
  * one; return true when it happens.
@@ -641,21 +639,26 @@ make_copy_attnamelist(LogicalRepRelMapEntry *rel)
 /*
  * Data source callback for the COPY FROM, which reads from the remote
  * connection and passes the data back to our local COPY.
+ *
+ * copybuf serves as transient storage area between calls.  The allocation
+ * actually belongs to walrcv_receive(), which we must not call again until
+ * we have consumed the entire previous buffer!
  */
 static int
 copy_read_data(void *outbuf, int minread, int maxread)
 {
+	static StringInfoData copybuf = {0};
 	int			bytesread = 0;
 	int			avail;
 
 	/* If there are some leftover data from previous read, use it. */
-	avail = copybuf->len - copybuf->cursor;
+	avail = copybuf.len - copybuf.cursor;
 	if (avail)
 	{
 		if (avail > maxread)
 			avail = maxread;
-		memcpy(outbuf, &copybuf->data[copybuf->cursor], avail);
-		copybuf->cursor += avail;
+		memcpy(outbuf, &copybuf.data[copybuf.cursor], avail);
+		copybuf.cursor += avail;
 		maxread -= avail;
 		bytesread += avail;
 	}
@@ -668,7 +671,8 @@ copy_read_data(void *outbuf, int minread, int maxread)
 
 		for (;;)
 		{
-			/* Try read the data. */
+			/* Try and read more data. We must have consumed all we had. */
+			Assert(copybuf.cursor == copybuf.len);
 			len = walrcv_receive(LogRepWorkerWalRcvConn, &buf, &fd);
 
 			CHECK_FOR_INTERRUPTS();
@@ -680,16 +684,14 @@ copy_read_data(void *outbuf, int minread, int maxread)
 			else
 			{
 				/* Process the data */
-				copybuf->data = buf;
-				copybuf->len = len;
-				copybuf->cursor = 0;
+				initReadOnlyStringInfo(&copybuf, buf, len);
 
-				avail = copybuf->len - copybuf->cursor;
+				avail = copybuf.len - copybuf.cursor;
 				if (avail > maxread)
 					avail = maxread;
-				memcpy(outbuf, &copybuf->data[copybuf->cursor], avail);
+				memcpy(outbuf, &copybuf.data[copybuf.cursor], avail);
 				outbuf = (char *) outbuf + avail;
-				copybuf->cursor += avail;
+				copybuf.cursor += avail;
 				maxread -= avail;
 				bytesread += avail;
 			}
@@ -1203,8 +1205,6 @@ copy_table(Relation rel)
 				 errmsg("could not start initial contents copy for table \"%s.%s\": %s",
 						lrel.nspname, lrel.relname, res->err)));
 	walrcv_clear_result(res);
-
-	copybuf = makeStringInfo();
 
 	pstate = make_parsestate(NULL);
 	(void) addRangeTableEntryForRelation(pstate, rel, AccessShareLock,
