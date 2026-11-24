@@ -2631,17 +2631,14 @@ _brin_parallel_heapscan(BrinBuildState *state, bool *brokenhotchain)
 }
 
 /*
- * Within leader, wait for end of heap scan and merge per-worker results.
+ * Wait for all participants to finish producing their partial summaries.
+ * In the leader, read the summaries in block range order and combine those
+ * for the same range.  Write one summary per range, using an empty summary
+ * for any range with no indexed tuples.
  *
- * After waiting for all workers to finish, merge the per-worker results into
- * the complete index. The results from each worker are sorted by block number
- * (start of the page range). While combining the per-worker results we merge
- * summaries for the same page range, and also fill-in empty summaries for
- * ranges without any tuples.
- *
- * Returns the total number of heap tuples scanned.  Also sets
- * indexInfo->ii_BrokenHotChain if any participant detected a broken HOT chain,
- * so that index.c can mark the index as unsafe for older snapshots.
+ * Return the total number of live heap tuples reported by the participants.
+ * Set indexInfo->ii_BrokenHotChain if any participant detected a potentially
+ * broken HOT chain.
  */
 static double
 _brin_parallel_merge(BrinBuildState *state, IndexInfo *indexInfo)
