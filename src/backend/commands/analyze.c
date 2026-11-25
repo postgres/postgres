@@ -1140,6 +1140,10 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 		 * If a collation has been specified for the index column, use that in
 		 * preference to anything else; but if not, fall back to whatever we
 		 * can get from the expression.
+		 *
+		 * Note: rd_indcollation covers only key columns.  That is OK here,
+		 * because INCLUDE columns cannot be expressions, so index_expr is
+		 * always a key column.
 		 */
 		if (OidIsValid(onerel->rd_indcollation[attnum - 1]))
 			stats->attrcollid = onerel->rd_indcollation[attnum - 1];

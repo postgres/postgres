@@ -1244,7 +1244,7 @@ infer_collation_opclass_match(InferenceElem *elem, Relation idxRel,
 		inferopcinputtype = get_opclass_input_type(elem->inferopclass);
 	}
 
-	for (natt = 1; natt <= idxRel->rd_att->natts; natt++)
+	for (natt = 1; natt <= IndexRelationGetNumberOfKeyAttributes(idxRel); natt++)
 	{
 		Oid			opfamily = idxRel->rd_opfamily[natt - 1];
 		Oid			opcinputtype = idxRel->rd_opcintype[natt - 1];
