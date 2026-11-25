@@ -34,8 +34,6 @@
  */
 #include "postgres.h"
 
-#include <math.h>
-
 #include "access/htup_details.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
@@ -91,18 +89,12 @@ static double patternsel_common(PlannerInfo *root,
 static Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 												  Pattern_Type ptype,
 												  Oid collation,
-												  Const **prefix,
-												  Selectivity *rest_selec);
+												  Const **prefix);
 static Selectivity prefix_selectivity(PlannerInfo *root,
 									  VariableStatData *vardata,
 									  Oid eqopr, Oid ltopr, Oid geopr,
 									  Oid collation,
 									  Const *prefixcon);
-static Selectivity like_selectivity(const char *patt, int pattlen,
-									bool case_insensitive);
-static Selectivity regex_selectivity(const char *patt, int pattlen,
-									 bool case_insensitive,
-									 int fixed_prefix_len);
 static Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc,
 								  Oid collation);
 static Datum string_to_datum(const char *str, Oid datatype);
@@ -278,7 +270,7 @@ match_pattern_prefix(Node *leftop,
 	 * Try to extract a fixed prefix from the pattern.
 	 */
 	pstatus = pattern_fixed_prefix(patt, ptype, expr_coll,
-								   &prefix, NULL);
+								   &prefix);
 
 	/* fail if no fixed prefix */
 	if (pstatus == Pattern_Prefix_None)
@@ -512,7 +504,6 @@ patternsel_common(PlannerInfo *root,
 	Pattern_Prefix_Status pstatus;
 	Const	   *patt;
 	Const	   *prefix = NULL;
-	Selectivity rest_selec = 0;
 	double		nullfrac = 0.0;
 	double		result;
 
@@ -620,17 +611,16 @@ patternsel_common(PlannerInfo *root,
 	}
 
 	/*
-	 * Pull out any fixed prefix implied by the pattern, and estimate the
-	 * fractional selectivity of the remainder of the pattern.  Unlike many
-	 * other selectivity estimators, we use the pattern operator's actual
-	 * collation for this step.  This is not because we expect the collation
-	 * to make a big difference in the selectivity estimate (it seldom would),
-	 * but because we want to be sure we cache compiled regexps under the
-	 * right cache key, so that they can be re-used at runtime.
+	 * Pull out any fixed prefix implied by the pattern.  Unlike many other
+	 * selectivity estimators, we use the pattern operator's actual collation
+	 * for this step.  This is not because we expect the collation to make a
+	 * big difference in the selectivity estimate (it seldom would), but
+	 * because we want to be sure we cache compiled regexps under the right
+	 * cache key, so that they can be re-used at runtime.
 	 */
 	patt = (Const *) other;
 	pstatus = pattern_fixed_prefix(patt, ptype, collation,
-								   &prefix, &rest_selec);
+								   &prefix);
 
 	/*
 	 * If necessary, coerce the prefix constant to the right type.  The only
@@ -659,11 +649,9 @@ patternsel_common(PlannerInfo *root,
 		 * Not exact-match pattern.  If we have a sufficiently large
 		 * histogram, estimate selectivity for the histogram part of the
 		 * population by counting matches in the histogram.  If not, estimate
-		 * selectivity of the fixed prefix and remainder of pattern
-		 * separately, then combine the two to get an estimate of the
-		 * selectivity for the part of the column population represented by
-		 * the histogram.  (For small histograms, we combine these
-		 * approaches.)
+		 * selectivity of the fixed prefix, and use DEFAULT_MATCH_SEL to
+		 * represent the remainder of LIKE and regular expression patterns.
+		 * (For small histograms, we combine these approaches.)
 		 *
 		 * We then add up data for any most-common-values values; these are
 		 * not in the histogram population, and we can get exact answers for
@@ -699,7 +687,10 @@ patternsel_common(PlannerInfo *root,
 											   prefix);
 			else
 				prefixsel = 1.0;
-			heursel = prefixsel * rest_selec;
+
+			heursel = prefixsel;
+			if (ptype != Pattern_Type_Prefix)
+				heursel *= DEFAULT_MATCH_SEL;
 
 			if (selec < 0)		/* fewer than 10 histogram entries? */
 				selec = heursel;
@@ -987,8 +978,6 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  *
  * *prefix is set to a palloc'd prefix string (in the form of a Const node),
  *	or to NULL if no fixed prefix exists for the pattern.
- * If rest_selec is not NULL, *rest_selec is set to an estimate of the
- *	selectivity of the remainder of the pattern (without any fixed prefix).
  * The prefix Const has the same type (TEXT or BYTEA) as the input pattern.
  *
  * The return value distinguishes no fixed prefix, a partial prefix,
@@ -996,8 +985,7 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  */
 
 static Pattern_Prefix_Status
-like_fixed_prefix(Const *patt_const, Const **prefix_const,
-				  Selectivity *rest_selec)
+like_fixed_prefix(Const *patt_const, Const **prefix_const)
 {
 	char	   *match;
 	char	   *patt;
@@ -1051,9 +1039,6 @@ like_fixed_prefix(Const *patt_const, Const **prefix_const,
 	else
 		*prefix_const = string_to_bytea_const(match, match_pos);
 
-	if (rest_selec != NULL)
-		*rest_selec = like_selectivity(&patt[pos], pattlen - pos, false);
-
 	pfree(patt);
 	pfree(match);
 
@@ -1072,8 +1057,7 @@ like_fixed_prefix(Const *patt_const, Const **prefix_const,
  * locale-aware for detecting cased characters.
  */
 static Pattern_Prefix_Status
-like_fixed_prefix_ci(Const *patt_const, Oid collation, Const **prefix_const,
-					 Selectivity *rest_selec)
+like_fixed_prefix_ci(Const *patt_const, Oid collation, Const **prefix_const)
 {
 	text	   *val = DatumGetTextPP(patt_const->constvalue);
 	Oid			typeid = patt_const->consttype;
@@ -1148,19 +1132,6 @@ like_fixed_prefix_ci(Const *patt_const, Oid collation, Const **prefix_const,
 	*prefix_const = string_to_const(match, TEXTOID);
 	pfree(match);
 
-	if (rest_selec != NULL)
-	{
-		int			wrestlen = wpattlen - wpos;
-		char	   *rest;
-		int			rest_mblen;
-
-		rest = palloc(pg_database_encoding_max_length() * wrestlen + 1);
-		rest_mblen = pg_wchar2mb_with_len(&wpatt[wpos], rest, wrestlen);
-
-		*rest_selec = like_selectivity(rest, rest_mblen, true);
-		pfree(rest);
-	}
-
 	pfree(wpatt);
 
 	/* in LIKE, an empty pattern is an exact match! */
@@ -1175,7 +1146,7 @@ like_fixed_prefix_ci(Const *patt_const, Oid collation, Const **prefix_const,
 
 static Pattern_Prefix_Status
 regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
-				   Const **prefix_const, Selectivity *rest_selec)
+				   Const **prefix_const)
 {
 	Oid			typeid = patt_const->consttype;
 	char	   *prefix;
@@ -1199,39 +1170,10 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 	if (prefix == NULL)
 	{
 		*prefix_const = NULL;
-
-		if (rest_selec != NULL)
-		{
-			char	   *patt = TextDatumGetCString(patt_const->constvalue);
-
-			*rest_selec = regex_selectivity(patt, strlen(patt),
-											case_insensitive,
-											0);
-			pfree(patt);
-		}
-
 		return Pattern_Prefix_None;
 	}
 
 	*prefix_const = string_to_const(prefix, typeid);
-
-	if (rest_selec != NULL)
-	{
-		if (exact)
-		{
-			/* Exact match, so there's no additional selectivity */
-			*rest_selec = 1.0;
-		}
-		else
-		{
-			char	   *patt = TextDatumGetCString(patt_const->constvalue);
-
-			*rest_selec = regex_selectivity(patt, strlen(patt),
-											case_insensitive,
-											strlen(prefix));
-			pfree(patt);
-		}
-	}
 
 	pfree(prefix);
 
@@ -1243,26 +1185,23 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 
 static Pattern_Prefix_Status
 pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
-					 Const **prefix, Selectivity *rest_selec)
+					 Const **prefix)
 {
 	Pattern_Prefix_Status result;
 
 	switch (ptype)
 	{
 		case Pattern_Type_Like:
-			result = like_fixed_prefix(patt, prefix, rest_selec);
+			result = like_fixed_prefix(patt, prefix);
 			break;
 		case Pattern_Type_Like_IC:
-			result = like_fixed_prefix_ci(patt, collation, prefix,
-										  rest_selec);
+			result = like_fixed_prefix_ci(patt, collation, prefix);
 			break;
 		case Pattern_Type_Regex:
-			result = regex_fixed_prefix(patt, false, collation,
-										prefix, rest_selec);
+			result = regex_fixed_prefix(patt, false, collation, prefix);
 			break;
 		case Pattern_Type_Regex_IC:
-			result = regex_fixed_prefix(patt, true, collation,
-										prefix, rest_selec);
+			result = regex_fixed_prefix(patt, true, collation, prefix);
 			break;
 		case Pattern_Type_Prefix:
 			/* Prefix type work is trivial.  */
@@ -1276,8 +1215,6 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
 										  patt->constlen),
 								patt->constisnull,
 								patt->constbyval);
-			if (rest_selec != NULL)
-				*rest_selec = 1.0;	/* all */
 			break;
 		default:
 			elog(ERROR, "unrecognized ptype: %d", (int) ptype);
@@ -1377,193 +1314,6 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	prefixsel = Max(prefixsel, eq_sel);
 
 	return prefixsel;
-}
-
-
-/*
- * Estimate the selectivity of a pattern of the specified type.
- * Note that any fixed prefix of the pattern will have been removed already,
- * so actually we may be looking at just a fragment of the pattern.
- *
- * For now, we use a very simplistic approach: fixed characters reduce the
- * selectivity a good deal, character ranges reduce it a little,
- * wildcards (such as % for LIKE or .* for regex) increase it.
- */
-
-#define FIXED_CHAR_SEL	0.20	/* about 1/5 */
-#define CHAR_RANGE_SEL	0.25
-#define ANY_CHAR_SEL	0.9		/* not 1, since it won't match end-of-string */
-#define FULL_WILDCARD_SEL 5.0
-#define PARTIAL_WILDCARD_SEL 2.0
-
-static Selectivity
-like_selectivity(const char *patt, int pattlen, bool case_insensitive)
-{
-	Selectivity sel = 1.0;
-	int			pos;
-
-	/* Skip any leading wildcard; it's already factored into initial sel */
-	for (pos = 0; pos < pattlen; pos++)
-	{
-		if (patt[pos] != '%' && patt[pos] != '_')
-			break;
-	}
-
-	for (; pos < pattlen; pos++)
-	{
-		/* % and _ are wildcard characters in LIKE */
-		if (patt[pos] == '%')
-			sel *= FULL_WILDCARD_SEL;
-		else if (patt[pos] == '_')
-			sel *= ANY_CHAR_SEL;
-		else if (patt[pos] == '\\')
-		{
-			/* Backslash quotes the next character */
-			pos++;
-			if (pos >= pattlen)
-				break;
-			sel *= FIXED_CHAR_SEL;
-		}
-		else
-			sel *= FIXED_CHAR_SEL;
-	}
-	/* Could get sel > 1 if multiple wildcards */
-	if (sel > 1.0)
-		sel = 1.0;
-	return sel;
-}
-
-static Selectivity
-regex_selectivity_sub(const char *patt, int pattlen, bool case_insensitive)
-{
-	Selectivity sel = 1.0;
-	int			paren_depth = 0;
-	int			paren_pos = 0;	/* dummy init to keep compiler quiet */
-	int			pos;
-
-	/* since this function recurses, it could be driven to stack overflow */
-	check_stack_depth();
-
-	for (pos = 0; pos < pattlen; pos++)
-	{
-		if (patt[pos] == '(')
-		{
-			if (paren_depth == 0)
-				paren_pos = pos;	/* remember start of parenthesized item */
-			paren_depth++;
-		}
-		else if (patt[pos] == ')' && paren_depth > 0)
-		{
-			paren_depth--;
-			if (paren_depth == 0)
-				sel *= regex_selectivity_sub(patt + (paren_pos + 1),
-											 pos - (paren_pos + 1),
-											 case_insensitive);
-		}
-		else if (patt[pos] == '|' && paren_depth == 0)
-		{
-			/*
-			 * If unquoted | is present at paren level 0 in pattern, we have
-			 * multiple alternatives; sum their probabilities.
-			 */
-			sel += regex_selectivity_sub(patt + (pos + 1),
-										 pattlen - (pos + 1),
-										 case_insensitive);
-			break;				/* rest of pattern is now processed */
-		}
-		else if (patt[pos] == '[')
-		{
-			bool		negclass = false;
-
-			if (patt[++pos] == '^')
-			{
-				negclass = true;
-				pos++;
-			}
-			if (patt[pos] == ']')	/* ']' at start of class is not special */
-				pos++;
-			while (pos < pattlen && patt[pos] != ']')
-				pos++;
-			if (paren_depth == 0)
-				sel *= (negclass ? (1.0 - CHAR_RANGE_SEL) : CHAR_RANGE_SEL);
-		}
-		else if (patt[pos] == '.')
-		{
-			if (paren_depth == 0)
-				sel *= ANY_CHAR_SEL;
-		}
-		else if (patt[pos] == '*' ||
-				 patt[pos] == '?' ||
-				 patt[pos] == '+')
-		{
-			/* Ought to be smarter about quantifiers... */
-			if (paren_depth == 0)
-				sel *= PARTIAL_WILDCARD_SEL;
-		}
-		else if (patt[pos] == '{')
-		{
-			while (pos < pattlen && patt[pos] != '}')
-				pos++;
-			if (paren_depth == 0)
-				sel *= PARTIAL_WILDCARD_SEL;
-		}
-		else if (patt[pos] == '\\')
-		{
-			/* backslash quotes the next character */
-			pos++;
-			if (pos >= pattlen)
-				break;
-			if (paren_depth == 0)
-				sel *= FIXED_CHAR_SEL;
-		}
-		else
-		{
-			if (paren_depth == 0)
-				sel *= FIXED_CHAR_SEL;
-		}
-	}
-	/* Could get sel > 1 if multiple wildcards */
-	if (sel > 1.0)
-		sel = 1.0;
-	return sel;
-}
-
-static Selectivity
-regex_selectivity(const char *patt, int pattlen, bool case_insensitive,
-				  int fixed_prefix_len)
-{
-	Selectivity sel;
-
-	/* If patt doesn't end with $, consider it to have a trailing wildcard */
-	if (pattlen > 0 && patt[pattlen - 1] == '$' &&
-		(pattlen == 1 || patt[pattlen - 2] != '\\'))
-	{
-		/* has trailing $ */
-		sel = regex_selectivity_sub(patt, pattlen - 1, case_insensitive);
-	}
-	else
-	{
-		/* no trailing $ */
-		sel = regex_selectivity_sub(patt, pattlen, case_insensitive);
-		sel *= FULL_WILDCARD_SEL;
-	}
-
-	/*
-	 * If there's a fixed prefix, discount its selectivity.  We have to be
-	 * careful here since a very long prefix could result in pow's result
-	 * underflowing to zero (in which case "sel" probably has as well).
-	 */
-	if (fixed_prefix_len > 0)
-	{
-		double		prefixsel = pow(FIXED_CHAR_SEL, fixed_prefix_len);
-
-		if (prefixsel > 0.0)
-			sel /= prefixsel;
-	}
-
-	/* Make sure result stays in range */
-	CLAMP_PROBABILITY(sel);
-	return sel;
 }
 
 

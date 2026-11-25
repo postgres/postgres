@@ -1552,24 +1552,24 @@ create role regress_no_child_access;
 revoke all on permtest_grandchild from regress_no_child_access;
 grant select on permtest_parent to regress_no_child_access;
 set session authorization regress_no_child_access;
--- without stats access, these queries would produce hash join plans:
+-- without stats access, these queries would produce nested-loop plans:
 explain (costs off)
   select * from permtest_parent p1 inner join permtest_parent p2
-  on p1.a = p2.a and p1.c ~ 'a1$';
+  on p1.a = p2.a and p1.c ~ '^[0-9a-f]';
 explain (costs off)
   select * from permtest_parent p1 inner join permtest_parent p2
-  on p1.a = p2.a and left(p1.c, 3) ~ 'a1$';
+  on p1.a = p2.a and left(p1.c, 3) ~ '^[0-9a-f]';
 reset session authorization;
 revoke all on permtest_parent from regress_no_child_access;
 grant select(a,c) on permtest_parent to regress_no_child_access;
 set session authorization regress_no_child_access;
 explain (costs off)
   select p2.a, p1.c from permtest_parent p1 inner join permtest_parent p2
-  on p1.a = p2.a and p1.c ~ 'a1$';
+  on p1.a = p2.a and p1.c ~ '^[0-9a-f]';
 -- we will not have access to the expression index's stats here:
 explain (costs off)
   select p2.a, p1.c from permtest_parent p1 inner join permtest_parent p2
-  on p1.a = p2.a and left(p1.c, 3) ~ 'a1$';
+  on p1.a = p2.a and left(p1.c, 3) ~ '^[0-9a-f]';
 reset session authorization;
 revoke all on permtest_parent from regress_no_child_access;
 drop role regress_no_child_access;
