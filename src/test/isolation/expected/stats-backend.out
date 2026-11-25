@@ -1,0 +1,225 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_fetch_consistency_none s2_generate s1_begin s1_save_backend_stats s2_generate s1_check_backend s1_commit
+step s1_fetch_consistency_none: SET stats_fetch_consistency = 'none';
+step s2_generate: 
+  INSERT INTO stats_per_backend_data VALUES (1);
+  SELECT pg_stat_force_next_flush();
+
+pg_stat_force_next_flush
+------------------------
+                        
+(1 row)
+
+step s1_begin: BEGIN;
+step s1_save_backend_stats: 
+  INSERT INTO stats_per_backend_saved
+  SELECT wal_records
+  FROM pg_stat_get_backend_wal(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2'));
+
+step s2_generate: 
+  INSERT INTO stats_per_backend_data VALUES (1);
+  SELECT pg_stat_force_next_flush();
+
+pg_stat_force_next_flush
+------------------------
+                        
+(1 row)
+
+step s1_check_backend: 
+  SELECT current_setting('stats_fetch_consistency') AS fetch_consistency,
+         current.wal_records = saved.wal_records AS unchanged,
+         current.wal_records > saved.wal_records AS advanced
+  FROM pg_stat_get_backend_wal(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2')) AS current
+  CROSS JOIN stats_per_backend_saved AS saved;
+
+fetch_consistency|unchanged|advanced
+-----------------+---------+--------
+none             |f        |t       
+(1 row)
+
+step s1_commit: COMMIT;
+
+starting permutation: s1_fetch_consistency_snapshot s1_begin s1_build_snapshot s2_generate s1_save_backend_stats s1_commit s1_check_backend
+step s1_fetch_consistency_snapshot: SET stats_fetch_consistency = 'snapshot';
+step s1_begin: BEGIN;
+step s1_build_snapshot: 
+  SELECT wal_records >= 0 AS snapshot_created FROM pg_stat_wal;
+
+snapshot_created
+----------------
+t               
+(1 row)
+
+step s2_generate: 
+  INSERT INTO stats_per_backend_data VALUES (1);
+  SELECT pg_stat_force_next_flush();
+
+pg_stat_force_next_flush
+------------------------
+                        
+(1 row)
+
+step s1_save_backend_stats: 
+  INSERT INTO stats_per_backend_saved
+  SELECT wal_records
+  FROM pg_stat_get_backend_wal(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2'));
+
+step s1_commit: COMMIT;
+step s1_check_backend: 
+  SELECT current_setting('stats_fetch_consistency') AS fetch_consistency,
+         current.wal_records = saved.wal_records AS unchanged,
+         current.wal_records > saved.wal_records AS advanced
+  FROM pg_stat_get_backend_wal(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2')) AS current
+  CROSS JOIN stats_per_backend_saved AS saved;
+
+fetch_consistency|unchanged|advanced
+-----------------+---------+--------
+snapshot         |f        |t       
+(1 row)
+
+
+starting permutation: s1_fetch_consistency_cache s2_generate s1_begin s1_save_backend_stats s2_generate s1_check_backend s1_commit s1_check_backend
+step s1_fetch_consistency_cache: SET stats_fetch_consistency = 'cache';
+step s2_generate: 
+  INSERT INTO stats_per_backend_data VALUES (1);
+  SELECT pg_stat_force_next_flush();
+
+pg_stat_force_next_flush
+------------------------
+                        
+(1 row)
+
+step s1_begin: BEGIN;
+step s1_save_backend_stats: 
+  INSERT INTO stats_per_backend_saved
+  SELECT wal_records
+  FROM pg_stat_get_backend_wal(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2'));
+
+step s2_generate: 
+  INSERT INTO stats_per_backend_data VALUES (1);
+  SELECT pg_stat_force_next_flush();
+
+pg_stat_force_next_flush
+------------------------
+                        
+(1 row)
+
+step s1_check_backend: 
+  SELECT current_setting('stats_fetch_consistency') AS fetch_consistency,
+         current.wal_records = saved.wal_records AS unchanged,
+         current.wal_records > saved.wal_records AS advanced
+  FROM pg_stat_get_backend_wal(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2')) AS current
+  CROSS JOIN stats_per_backend_saved AS saved;
+
+fetch_consistency|unchanged|advanced
+-----------------+---------+--------
+cache            |t        |f       
+(1 row)
+
+step s1_commit: COMMIT;
+step s1_check_backend: 
+  SELECT current_setting('stats_fetch_consistency') AS fetch_consistency,
+         current.wal_records = saved.wal_records AS unchanged,
+         current.wal_records > saved.wal_records AS advanced
+  FROM pg_stat_get_backend_wal(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2')) AS current
+  CROSS JOIN stats_per_backend_saved AS saved;
+
+fetch_consistency|unchanged|advanced
+-----------------+---------+--------
+cache            |f        |t       
+(1 row)
+
+
+starting permutation: s1_fetch_consistency_cache s2_generate s1_begin s1_save_backend_stats s2_generate s1_fetch_consistency_snapshot s1_check_backend s1_commit
+step s1_fetch_consistency_cache: SET stats_fetch_consistency = 'cache';
+step s2_generate: 
+  INSERT INTO stats_per_backend_data VALUES (1);
+  SELECT pg_stat_force_next_flush();
+
+pg_stat_force_next_flush
+------------------------
+                        
+(1 row)
+
+step s1_begin: BEGIN;
+step s1_save_backend_stats: 
+  INSERT INTO stats_per_backend_saved
+  SELECT wal_records
+  FROM pg_stat_get_backend_wal(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2'));
+
+step s2_generate: 
+  INSERT INTO stats_per_backend_data VALUES (1);
+  SELECT pg_stat_force_next_flush();
+
+pg_stat_force_next_flush
+------------------------
+                        
+(1 row)
+
+step s1_fetch_consistency_snapshot: SET stats_fetch_consistency = 'snapshot';
+step s1_check_backend: 
+  SELECT current_setting('stats_fetch_consistency') AS fetch_consistency,
+         current.wal_records = saved.wal_records AS unchanged,
+         current.wal_records > saved.wal_records AS advanced
+  FROM pg_stat_get_backend_wal(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2')) AS current
+  CROSS JOIN stats_per_backend_saved AS saved;
+
+fetch_consistency|unchanged|advanced
+-----------------+---------+--------
+snapshot         |f        |t       
+(1 row)
+
+step s1_commit: COMMIT;
+
+starting permutation: s1_check_reset s1_reset_backend s1_check_reset
+step s1_check_reset: 
+  SELECT stats_reset IS NOT NULL AS reset_timestamp_set
+  FROM pg_stat_get_backend_wal(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2'));
+
+reset_timestamp_set
+-------------------
+f                  
+(1 row)
+
+step s1_reset_backend: 
+  SELECT pg_stat_reset_backend_stats(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2'));
+
+pg_stat_reset_backend_stats
+---------------------------
+                           
+(1 row)
+
+step s1_check_reset: 
+  SELECT stats_reset IS NOT NULL AS reset_timestamp_set
+  FROM pg_stat_get_backend_wal(
+    (SELECT pid FROM pg_stat_activity
+     WHERE application_name = 'isolation/stats-backend/s2'));
+
+reset_timestamp_set
+-------------------
+t                  
+(1 row)
+

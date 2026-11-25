@@ -113,6 +113,7 @@ test: vacuum-concurrent-drop
 test: vacuum-conflict
 test: vacuum-skip-locked
 test: stats
+test: stats-backend
 test: horizons
 test: broken-hot-chain
 test: predicate-hash

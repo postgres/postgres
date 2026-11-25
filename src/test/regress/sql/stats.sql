@@ -528,6 +528,16 @@ SELECT wal_bytes > :wal_bytes_before FROM pg_stat_wal;
 SELECT pg_stat_force_next_flush();
 SELECT wal_bytes > :backend_wal_bytes_before FROM pg_stat_get_backend_wal(pg_backend_pid());
 
+-- Test pg_stat_reset_backend_stats() for WAL
+SELECT wal_bytes AS wal_bytes_before_reset FROM pg_stat_get_backend_wal(pg_backend_pid()) \gset
+SELECT pg_stat_reset_backend_stats(pg_backend_pid());
+SELECT wal_bytes AS wal_bytes_after_reset FROM pg_stat_get_backend_wal(pg_backend_pid()) \gset
+SELECT :wal_bytes_after_reset < :wal_bytes_before_reset;
+-- global view should still have the data
+SELECT wal_bytes >= :wal_bytes_before_reset FROM pg_stat_wal;
+-- reset timestamp should be set
+SELECT stats_reset IS NOT NULL FROM pg_stat_get_backend_wal(pg_backend_pid());
+
 -- Test pg_stat_get_backend_idset() and some allied functions.
 -- In particular, verify that their notion of backend ID matches
 -- our temp schema index.
