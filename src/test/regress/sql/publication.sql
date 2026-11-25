@@ -391,6 +391,14 @@ RESET client_min_messages;
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub_dups FOR TABLE testpub_rf_tbl1 WHERE (a = 1), testpub_rf_tbl1 WITH (publish = 'insert');
 CREATE PUBLICATION testpub_dups FOR TABLE testpub_rf_tbl1, testpub_rf_tbl1 WHERE (a = 2) WITH (publish = 'insert');
+-- fail - WHERE clause or column list is not allowed when a child table is
+-- named explicitly and also included through inheritance from its parent
+CREATE TABLE testpub_rf_parent (a int);
+CREATE TABLE testpub_rf_child1 () INHERITS (testpub_rf_parent);
+CREATE TABLE testpub_rf_child2 () INHERITS (testpub_rf_parent);
+CREATE PUBLICATION testpub_dups FOR TABLE testpub_rf_child2, testpub_rf_parent WHERE (a > 0) WITH (publish = 'insert');
+CREATE PUBLICATION testpub_dups FOR TABLE testpub_rf_child2, testpub_rf_parent (a) WITH (publish = 'insert');
+DROP TABLE testpub_rf_child1, testpub_rf_child2, testpub_rf_parent;
 RESET client_min_messages;
 -- fail - publication WHERE clause must be boolean
 ALTER PUBLICATION testpub5 SET TABLE testpub_rf_tbl3 WHERE (1234);
