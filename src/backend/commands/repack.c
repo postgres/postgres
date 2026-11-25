@@ -17,9 +17,10 @@
  * from being reserved), and accumulates the changes in a file.  Once the
  * initial copy is complete, we read the changes from the file and re-apply
  * them on the new heap.  Then we upgrade our ShareUpdateExclusiveLock to
- * AccessExclusiveLock and swap the relfilenodes.  This way, the time we hold
- * a strong lock on the table is much reduced, and the bloat is eliminated.
- *
+ * AccessExclusiveLock, decode and apply any remaining changes that occurred
+ * during the first re-apply pass, and swap the relfilenodes.  This way, the
+ * time we hold a strong lock on the table is much reduced, and the bloat
+ * is eliminated.
  *
  * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
