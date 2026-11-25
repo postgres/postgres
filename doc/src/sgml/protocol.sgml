@@ -6687,7 +6687,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (XLogRecPtr)</term>
        <listitem>
         <para>
-         The LSN of the logical decoding message.
+         The end LSN of the logical decoding message.
         </para>
        </listitem>
       </varlistentry>
