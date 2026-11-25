@@ -430,7 +430,7 @@ dir_close(Walfile f, WalCloseMethod method)
 #endif
 		r = close(df->fd);
 
-	if (r == 0)
+	if (r == 0 && method != CLOSE_UNLINK)
 	{
 		/* Build path to the current version of the file */
 		if (method == CLOSE_NORMAL && df->temp_suffix)
@@ -464,17 +464,6 @@ dir_close(Walfile f, WalCloseMethod method)
 				}
 			}
 		}
-		else if (method == CLOSE_UNLINK)
-		{
-			char	   *filename;
-
-			/* Unlink the file once it's closed */
-			filename = dir_get_file_name(df->pathname, df->temp_suffix);
-			snprintf(tmppath, sizeof(tmppath), "%s/%s",
-					 dir_data->basedir, filename);
-			pg_free(filename);
-			r = unlink(tmppath);
-		}
 		else
 		{
 			/*
@@ -500,6 +489,19 @@ cleanup:
 	/* supports free on NULL */
 	LZ4F_freeCompressionContext(df->ctx);
 #endif
+
+	if (method == CLOSE_UNLINK)
+	{
+		/*
+		 * If unlink fails, report its error if the preceding operations
+		 * succeeded; otherwise, preserve the earlier error.
+		 */
+		if (unlink(df->fullpath) != 0 && r == 0)
+		{
+			dir_data->lasterrno = errno;
+			r = -1;
+		}
+	}
 
 	pg_free(df->pathname);
 	pg_free(df->fullpath);
