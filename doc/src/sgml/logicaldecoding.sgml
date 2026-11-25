@@ -1143,10 +1143,13 @@ typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
       the XID of the transaction that emitted the message; for a
       transactional message emitted in a subtransaction, it is the
       subtransaction's XID while <parameter>txn</parameter> is the top-level
-      transaction. The <parameter>lsn</parameter> has WAL
-      location of the message. The <parameter>transactional</parameter> says
-      if the message was sent as transactional or not. Similar to the change
-      callback, in case of decoding a prepared (but yet uncommitted)
+      transaction. The <parameter>message_lsn</parameter> is the start of
+      the message's WAL record for a transactional message, like the LSN of
+      the other changes in the transaction. For a non-transactional message
+      it is the end of the record.
+      The <parameter>transactional</parameter>
+      says if the message was sent as transactional or not. Similar to the
+      change callback, in case of decoding a prepared (but yet uncommitted)
       transaction or decoding of an uncommitted transaction, this message
       callback might also error out due to simultaneous rollback of
       this very same transaction. In that case, the logical decoding of this
@@ -1378,6 +1381,8 @@ typedef void (*LogicalDecodeStreamMessageCB) (struct LogicalDecodingContext *ctx
       if it was emitted in one. For the other stream callbacks, the XID of
       the subtransaction is available as
       <literal>change-&gt;txn-&gt;xid</literal>.
+      The <parameter>message_lsn</parameter> is the start of the message's
+      WAL record, as only transactional messages are passed to this callback.
      </para>
     </sect3>
 

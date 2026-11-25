@@ -668,7 +668,19 @@ logicalmsg_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	if (!message->transactional)
 		snapshot = SnapBuildGetOrBuildSnapshot(builder);
 
-	ReorderBufferQueueMessage(ctx->reorder, xid, snapshot, buf->endptr,
+	/*
+	 * Transactional messages use origptr as their LSN, like regular DML
+	 * changes.
+	 *
+	 * Non-transactional messages use endptr instead, since we assume that
+	 * each message is applied and confirmed as a unit of its own, like a
+	 * commit. Using origptr would leave the replication slot's
+	 * confirmed_flush pointing at the message record itself. Since decoding
+	 * resumes from the confirmed position inclusive, the message could be
+	 * decoded and sent again after a restart.
+	 */
+	ReorderBufferQueueMessage(ctx->reorder, xid, snapshot,
+							  message->transactional ? buf->origptr : buf->endptr,
 							  message->transactional,
 							  message->message, /* first part of message is
 												 * prefix */

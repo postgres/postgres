@@ -22,6 +22,23 @@ SELECT 'ignorethis' FROM pg_logical_emit_message(true, 'test', 'czechtastic');
 
 SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'force-binary', '0', 'skip-empty-xacts', '1', 'include-xids', '0');
 
+-- Test the reported LSN.  pg_logical_emit_message() returns the end LSN of
+-- the message's WAL record.
+-- For transactional messages, decoding reports the start LSN,
+-- so it must be less than the returned LSN.
+SELECT pg_logical_emit_message(true, 'test', 'lsn_test') AS message_end_lsn \gset
+SELECT lsn < :'message_end_lsn'::pg_lsn AS lsn_before_end
+FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL,
+    'force-binary', '0', 'skip-empty-xacts', '1', 'include-xids', '0')
+WHERE data = 'message: transactional: 1 prefix: test, sz: 8 content:lsn_test';
+
+-- Non-transactional messages use the end LSN, matching the return value.
+SELECT pg_logical_emit_message(false, 'test', 'lsn_test', true) AS message_end_lsn \gset
+SELECT lsn = :'message_end_lsn'::pg_lsn AS lsn_matches_end
+FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL,
+    'force-binary', '0', 'skip-empty-xacts', '1', 'include-xids', '0')
+WHERE data = 'message: transactional: 0 prefix: test, sz: 8 content:lsn_test';
+
 -- test db filtering
 \set prevdb :DBNAME
 \c template1
