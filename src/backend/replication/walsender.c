@@ -277,7 +277,8 @@ static void WalSndKeepalive(bool requestReply, XLogRecPtr writePtr);
 static void WalSndKeepaliveIfNecessary(void);
 static void WalSndCheckTimeOut(void);
 static long WalSndComputeSleeptime(TimestampTz now);
-static void WalSndWait(uint32 socket_events, long timeout, uint32 wait_event);
+static void WalSndWait(uint32 socket_events, long timeout, uint32 wait_event,
+					   XLogRecPtr target_lsn);
 static void WalSndPrepareWrite(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid, bool last_write);
 static void WalSndWriteData(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid, bool last_write);
 static void WalSndUpdateProgress(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xid,
@@ -1681,7 +1682,7 @@ ProcessPendingWrites(void)
 
 		/* Sleep until something happens or we time out */
 		WalSndWait(WL_SOCKET_WRITEABLE | WL_SOCKET_READABLE, sleeptime,
-				   WAIT_EVENT_WAL_SENDER_WRITE_DATA);
+				   WAIT_EVENT_WAL_SENDER_WRITE_DATA, InvalidXLogRecPtr);
 
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
@@ -2024,7 +2025,7 @@ WalSndWaitForWal(XLogRecPtr loc)
 			last_flush = now;
 		}
 
-		WalSndWait(wakeEvents, sleeptime, wait_event);
+		WalSndWait(wakeEvents, sleeptime, wait_event, loc);
 	}
 
 	/* reactivate latch so WalSndLoop knows to continue */
@@ -2972,7 +2973,8 @@ WalSndLoop(WalSndSendDataCallback send_data)
 			}
 
 			/* Sleep until something happens or we time out */
-			WalSndWait(wakeEvents, sleeptime, WAIT_EVENT_WAL_SENDER_MAIN);
+			WalSndWait(wakeEvents, sleeptime, WAIT_EVENT_WAL_SENDER_MAIN,
+					   InvalidXLogRecPtr);
 		}
 	}
 }
@@ -3779,9 +3781,13 @@ WalSndWakeup(bool physical, bool logical)
  * Wait for readiness on the FeBe socket, or a timeout.  The mask should be
  * composed of optional WL_SOCKET_WRITEABLE and WL_SOCKET_READABLE flags.  Exit
  * on postmaster death.
+ *
+ * target_lsn is the required WAL position for
+ * WAIT_EVENT_WAL_SENDER_WAIT_FOR_WAL and is unused for other wait events.
  */
 static void
-WalSndWait(uint32 socket_events, long timeout, uint32 wait_event)
+WalSndWait(uint32 socket_events, long timeout, uint32 wait_event,
+		   XLogRecPtr target_lsn)
 {
 	WaitEvent	event;
 
@@ -3860,7 +3866,32 @@ WalSndWait(uint32 socket_events, long timeout, uint32 wait_event)
 		}
 	}
 	else if (MyWalSnd->kind == REPLICATION_KIND_LOGICAL)
+	{
 		ConditionVariablePrepareToSleep(&WalSndCtl->wal_replay_cv);
+
+		/*
+		 * Recheck the WAL position tested by WalSndWaitForWal() now that
+		 * we're on the waitlist. Otherwise, we could miss a wakeup for a WAL
+		 * flush or replay that occurred before we joined it.
+		 */
+		if (wait_event == WAIT_EVENT_WAL_SENDER_WAIT_FOR_WAL)
+		{
+			XLogRecPtr	flushPtr;
+
+			Assert(XLogRecPtrIsValid(target_lsn));
+
+			if (!RecoveryInProgress())
+				flushPtr = GetFlushRecPtr(NULL);
+			else
+				flushPtr = GetXLogReplayRecPtr(NULL);
+
+			if (flushPtr >= target_lsn)
+			{
+				ConditionVariableCancelSleep();
+				return;
+			}
+		}
+	}
 
 	if (WaitEventSetWait(FeBeWaitSet, timeout, &event, 1, wait_event) == 1 &&
 		(event.events & WL_POSTMASTER_DEATH))
