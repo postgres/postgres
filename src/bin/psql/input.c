@@ -303,7 +303,7 @@ encode_history(void)
 		char	   *cur_ptr;
 
 		/* some platforms declare HIST_ENTRY.line as const char * */
-		for (cur_ptr = (char *) cur_hist->line; *cur_ptr; cur_ptr++)
+		for (cur_ptr = unconstify(char *, (const char *) cur_hist->line); *cur_ptr; cur_ptr++)
 		{
 			if (*cur_ptr == '\n')
 				*cur_ptr = NL_IN_HISTORY;
@@ -323,7 +323,7 @@ decode_history(void)
 		char	   *cur_ptr;
 
 		/* some platforms declare HIST_ENTRY.line as const char * */
-		for (cur_ptr = (char *) cur_hist->line; *cur_ptr; cur_ptr++)
+		for (cur_ptr = unconstify(char *, (const char *) cur_hist->line); *cur_ptr; cur_ptr++)
 		{
 			if (*cur_ptr == NL_IN_HISTORY)
 				*cur_ptr = '\n';
