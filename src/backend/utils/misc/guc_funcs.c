@@ -915,7 +915,7 @@ show_all_settings(PG_FUNCTION_ARGS)
 	for (int i = 0; i < num_vars; i++)
 	{
 		struct config_generic *conf = guc_vars[i];
-		char	   *values[NUM_PG_SETTINGS_ATTS];
+		const char *values[NUM_PG_SETTINGS_ATTS];
 		HeapTuple	tuple;
 
 		/* skip if marked NO_SHOW_ALL or if not visible to current user */
@@ -924,10 +924,17 @@ show_all_settings(PG_FUNCTION_ARGS)
 			continue;
 
 		/* extract values for the current variable */
-		GetConfigOptionValues(conf, (const char **) values);
+		GetConfigOptionValues(conf, values);
 
-		/* build a tuple and store it */
-		tuple = BuildTupleFromCStrings(attinmeta, values);
+		/*
+		 * build a tuple
+		 *
+		 * (BuildTupleFromCStrings() takes char ** but does not modify the
+		 * strings, so it's safe to cast away const here.)
+		 */
+		tuple = BuildTupleFromCStrings(attinmeta, unconstify(char **, values));
+
+		/* store it */
 		tuplestore_puttuple(rsinfo->setResult, tuple);
 	}
 
