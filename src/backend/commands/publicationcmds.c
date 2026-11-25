@@ -1640,6 +1640,7 @@ OpenTableList(List *tables)
 			foreach(child, children)
 			{
 				Oid			childrelid = lfirst_oid(child);
+				Relation	childrel;
 
 				/* Allow query cancel in case this takes a long time */
 				CHECK_FOR_INTERRUPTS();
@@ -1660,7 +1661,7 @@ OpenTableList(List *tables)
 						ereport(ERROR,
 								(errcode(ERRCODE_DUPLICATE_OBJECT),
 								 errmsg("conflicting or redundant WHERE clauses for table \"%s\"",
-										RelationGetRelationName(rel))));
+										get_rel_name(childrelid))));
 
 					/*
 					 * We don't allow to specify column list for both parent
@@ -1672,15 +1673,15 @@ OpenTableList(List *tables)
 						ereport(ERROR,
 								(errcode(ERRCODE_DUPLICATE_OBJECT),
 								 errmsg("conflicting or redundant column lists for table \"%s\"",
-										RelationGetRelationName(rel))));
+										get_rel_name(childrelid))));
 
 					continue;
 				}
 
 				/* find_all_inheritors already got lock */
-				rel = table_open(childrelid, NoLock);
+				childrel = table_open(childrelid, NoLock);
 				pub_rel = palloc(sizeof(PublicationRelInfo));
-				pub_rel->relation = rel;
+				pub_rel->relation = childrel;
 				/* child inherits WHERE clause from parent */
 				pub_rel->whereClause = t->whereClause;
 
