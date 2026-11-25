@@ -123,6 +123,10 @@ static char *_yconv(int a, int b, bool convert_top, bool convert_yy, char *pt, c
  * characters are impossible --- but the time zone name printed by %Z comes
  * from outside and could contain such.)
  *
+ * Also unlike standard strftime(), we will not crash on a null pg_tm pointer,
+ * and we set errno on failures.  Surviving a null pointer is useful because
+ * many callers pass the result of pg_localtime() with no further check.
+ *
  * See also timestamptz_to_str.
  */
 size_t
@@ -132,6 +136,13 @@ pg_strftime(char *s, size_t maxsize, const char *format, const struct pg_tm *t)
 	int			saved_errno = errno;
 	enum warn	warn = IN_NONE;
 
+	if (!t)
+	{
+		errno = EINVAL;
+		if (maxsize > 0)
+			*s = '\0';
+		return 0;
+	}
 	p = _fmt(format, t, s, s + maxsize, &warn);
 	if (!p)
 	{

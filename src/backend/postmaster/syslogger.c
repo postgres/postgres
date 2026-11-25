@@ -1458,6 +1458,7 @@ set_next_rotation_time(void)
 	pg_time_t	now;
 	struct pg_tm *tm;
 	int			rotinterval;
+	long		gmtoff;
 
 	/* nothing to do if time-based rotation is disabled */
 	if (Log_RotationAge <= 0)
@@ -1472,10 +1473,12 @@ set_next_rotation_time(void)
 	rotinterval = Log_RotationAge * SECS_PER_MINUTE;	/* convert to seconds */
 	now = (pg_time_t) time(NULL);
 	tm = pg_localtime(&now, log_timezone);
-	now += tm->tm_gmtoff;
+	/* Fall back to using GMT if pg_localtime() fails for some reason */
+	gmtoff = tm ? tm->tm_gmtoff : 0;
+	now += gmtoff;
 	now -= now % rotinterval;
 	now += rotinterval;
-	now -= tm->tm_gmtoff;
+	now -= gmtoff;
 	next_rotation_time = now;
 }
 
