@@ -2463,6 +2463,8 @@ command_no_begin(const char *query)
 	 */
 	if (wordlen == 6 && pg_strncasecmp(query, "vacuum", 6) == 0)
 		return true;
+	if (wordlen == 6 && pg_strncasecmp(query, "repack", 6) == 0)
+		return true;
 	if (wordlen == 7 && pg_strncasecmp(query, "cluster", 7) == 0)
 	{
 		/* CLUSTER with any arguments is allowed in transactions */
