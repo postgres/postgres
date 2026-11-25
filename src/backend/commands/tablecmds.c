@@ -10244,7 +10244,7 @@ ATPrepAddPrimaryKey(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd,
 				if (!tup)
 					ereport(ERROR,
 							errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-							errmsg("column \"%s\" of table \"%s\" is not marked NOT NULL",
+							errmsg("column \"%s\" in child table \"%s\" is not marked NOT NULL",
 								   strVal(column), get_rel_name(childrelid)));
 				/* verify it's good enough */
 				verifyNotNullPKCompatible(tup, strVal(column));
