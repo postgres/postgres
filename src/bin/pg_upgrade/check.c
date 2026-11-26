@@ -670,7 +670,7 @@ check_and_dump_old_cluster(void)
 	 * parents columns have, but schema restore fails for them.  Verify there
 	 * are none, iff applicable.
 	 */
-	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1800)
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1700)
 		check_for_not_null_inheritance(&old_cluster);
 
 	/*
