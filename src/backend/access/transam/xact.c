@@ -5079,8 +5079,11 @@ IsTransactionBlock(void)
 
 /*
  * IsTransactionOrTransactionBlock --- are we within either a transaction
- * or a transaction block?	(The backend is only really "idle" when this
- * returns false.)
+ * or a transaction block?
+ *
+ * This looks only at the transaction block state, so it returns false while
+ * we're in the middle of starting a transaction, before the transaction
+ * block state has been updated.  See also IsCompletelyOutOfTransaction().
  *
  * This should match up with IsTransactionBlock and IsTransactionState.
  */
@@ -5093,6 +5096,30 @@ IsTransactionOrTransactionBlock(void)
 		return false;
 
 	return true;
+}
+
+/*
+ * IsCompletelyOutOfTransaction --- are we completely out of a transaction?
+ *
+ * The backend is only really "idle" when this returns true.  Note that the
+ * purpose of this function is different from that of IsTransactionState().
+ * IsTransactionState() is used to check if we're in a live transaction where
+ * it's safe to access the database, while IsCompletelyOutOfTransaction() is
+ * used to check if we're completely out of a transaction.  When we're in the
+ * middle of starting or ending a transaction, we're neither in a live
+ * transaction nor completely out of a transaction.
+ *
+ * This differs from !IsTransactionOrTransactionBlock() in that it also checks
+ * the low-level transaction state, so that it returns false while we're in
+ * the middle of StartTransaction(), or cleaning up a transaction that failed
+ * to start.
+ */
+bool
+IsCompletelyOutOfTransaction(void)
+{
+	TransactionState s = CurrentTransactionState;
+
+	return s->blockState == TBLOCK_DEFAULT && s->state == TRANS_DEFAULT;
 }
 
 /*

@@ -744,7 +744,7 @@ pgstat_report_stat(bool force)
 	bool		nowait;
 
 	pgstat_assert_is_up();
-	Assert(!IsTransactionOrTransactionBlock());
+	Assert(IsCompletelyOutOfTransaction());
 
 	/* "absorb" the forced flush even if there's nothing to flush */
 	if (pgStatForceNextFlush)

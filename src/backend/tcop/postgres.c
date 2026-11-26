@@ -528,6 +528,19 @@ ProcessClientReadInterrupt(bool blocked)
 		/* Process notify interrupts, if any */
 		if (notifyInterruptPending)
 			ProcessNotifyInterrupt(true);
+
+		/*
+		 * Processing a catchup or notify interrupt can run a transaction.  If
+		 * the idle stats update timeout fired while we were in it,
+		 * ProcessInterrupts() did not report the stats because we were not
+		 * fully idle, but it did clear InterruptPending.  Process the timeout
+		 * now if that happened.
+		 */
+		if (IdleStatsUpdateTimeoutPending)
+		{
+			InterruptPending = true;
+			CHECK_FOR_INTERRUPTS();
+		}
 	}
 	else if (ProcDiePending)
 	{
@@ -3685,10 +3698,15 @@ ProcessInterrupts(void)
 
 	/*
 	 * If there are pending stats updates and we currently are truly idle
-	 * (matching the conditions in PostgresMain(), report stats now.
+	 * (matching the conditions in PostgresMain()), report stats now.
+	 *
+	 * Note that a backend that's waiting for a command can briefly start a
+	 * transaction to process a sinval catchup or notify interrupt, see
+	 * ProcessClientReadInterrupt().  We must not report stats in the middle
+	 * of that, not even while the transaction is being started.
 	 */
 	if (IdleStatsUpdateTimeoutPending &&
-		DoingCommandRead && !IsTransactionOrTransactionBlock())
+		DoingCommandRead && IsCompletelyOutOfTransaction())
 	{
 		IdleStatsUpdateTimeoutPending = false;
 		pgstat_report_stat(true);

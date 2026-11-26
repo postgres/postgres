@@ -486,6 +486,7 @@ extern void StartParallelWorkerTransaction(char *tstatespace);
 extern void EndParallelWorkerTransaction(void);
 extern bool IsTransactionBlock(void);
 extern bool IsTransactionOrTransactionBlock(void);
+extern bool IsCompletelyOutOfTransaction(void);
 extern char TransactionBlockStatusCode(void);
 extern void AbortOutOfAnyTransaction(void);
 extern void PreventInTransactionBlock(bool isTopLevel, const char *stmtType);
