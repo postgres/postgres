@@ -64,6 +64,9 @@ typedef struct GinBuildShared
 	bool		isconcurrent;
 	int			scantuplesortstates;
 
+	/* Query ID, for report in worker processes */
+	int64		queryid;
+
 	/*
 	 * workersdonecv is used to monitor the progress of workers.  All parallel
 	 * participants must indicate that they are done before leader can use
@@ -1037,6 +1040,7 @@ _gin_begin_parallel(GinBuildState *buildstate, Relation heap, Relation index,
 	ginshared->indexrelid = RelationGetRelid(index);
 	ginshared->isconcurrent = isconcurrent;
 	ginshared->scantuplesortstates = scantuplesortstates;
+	ginshared->queryid = pgstat_get_my_query_id();
 
 	ConditionVariableInit(&ginshared->workersdonecv);
 	SpinLockInit(&ginshared->mutex);
@@ -2155,6 +2159,9 @@ _gin_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 		heapLockmode = ShareUpdateExclusiveLock;
 		indexLockmode = RowExclusiveLock;
 	}
+
+	/* Track query ID */
+	pgstat_report_query_id(ginshared->queryid, false);
 
 	/* Open relations within worker */
 	heapRel = table_open(ginshared->heaprelid, heapLockmode);
