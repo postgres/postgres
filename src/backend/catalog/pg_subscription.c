@@ -765,7 +765,6 @@ UpdateDeadTupleRetentionStatus(Oid subid, bool active)
 	memset(nulls, false, sizeof(nulls));
 	memset(replaces, false, sizeof(replaces));
 
-	/* Set the subscription to disabled. */
 	values[Anum_pg_subscription_subretentionactive - 1] = BoolGetDatum(active);
 	replaces[Anum_pg_subscription_subretentionactive - 1] = true;
 
