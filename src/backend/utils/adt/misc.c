@@ -56,8 +56,6 @@
 typedef struct ValidIOData
 {
 	Oid			typoid;
-	int32		typmod;
-	bool		typname_constant;
 	Oid			typiofunc;
 	Oid			typioparam;
 	FmgrInfo	inputproc;
@@ -740,7 +738,10 @@ pg_input_is_valid_common(FunctionCallInfo fcinfo,
 						 ErrorSaveContext *escontext)
 {
 	char	   *str = text_to_cstring(txt);
+	char	   *typnamestr = text_to_cstring(typname);
 	ValidIOData *my_extra;
+	Oid			typoid;
+	int32		typmod;
 	Datum		converted;
 
 	/*
@@ -755,39 +756,32 @@ pg_input_is_valid_common(FunctionCallInfo fcinfo,
 							   sizeof(ValidIOData));
 		my_extra = (ValidIOData *) fcinfo->flinfo->fn_extra;
 		my_extra->typoid = InvalidOid;
-		/* Detect whether typname argument is constant. */
-		my_extra->typname_constant = get_fn_expr_arg_stable(fcinfo->flinfo, 1);
 	}
 
 	/*
-	 * If the typname argument is constant, we only need to parse it the first
-	 * time through.
+	 * Parse type-name argument to obtain type OID and encoded typmod.  We
+	 * have to do this each time since (a) we don't know if the input string
+	 * is constant and (b) the results could be affected by search_path etc.
 	 */
-	if (my_extra->typoid == InvalidOid || !my_extra->typname_constant)
+	(void) parseTypeString(typnamestr, &typoid, &typmod, NULL);
+
+	/* But if we do get the same type OID, assume we can re-use this work: */
+	if (my_extra->typoid != typoid)
 	{
-		char	   *typnamestr = text_to_cstring(typname);
-		Oid			typoid;
-
-		/* Parse type-name argument to obtain type OID and encoded typmod. */
-		(void) parseTypeString(typnamestr, &typoid, &my_extra->typmod, NULL);
-
-		/* Update type-specific info if typoid changed. */
-		if (my_extra->typoid != typoid)
-		{
-			getTypeInputInfo(typoid,
-							 &my_extra->typiofunc,
-							 &my_extra->typioparam);
-			fmgr_info_cxt(my_extra->typiofunc, &my_extra->inputproc,
-						  fcinfo->flinfo->fn_mcxt);
-			my_extra->typoid = typoid;
-		}
+		my_extra->typoid = InvalidOid;	/* for safety if lookup fails */
+		getTypeInputInfo(typoid,
+						 &my_extra->typiofunc,
+						 &my_extra->typioparam);
+		fmgr_info_cxt(my_extra->typiofunc, &my_extra->inputproc,
+					  fcinfo->flinfo->fn_mcxt);
+		my_extra->typoid = typoid;
 	}
 
 	/* Now we can try to perform the conversion. */
 	return InputFunctionCallSafe(&my_extra->inputproc,
 								 str,
 								 my_extra->typioparam,
-								 my_extra->typmod,
+								 typmod,
 								 (Node *) escontext,
 								 &converted);
 }
