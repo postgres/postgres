@@ -148,6 +148,9 @@ CREATE TABLE atref (c int);
 CREATE FUNCTION atfunc(numeric) RETURNS atcomp IMMUTABLE LANGUAGE plpgsql AS $$BEGIN RETURN ('('||$1||')')::atcomp; END$$;
 CREATE INDEX atref_idx ON atref(atfunc(c));
 ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE bigint CASCADE; -- someday this should work
+DROP INDEX atref_idx;
+CREATE INDEX atref_hash_idx ON atref USING hash (atfunc(c));
+ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE bigint CASCADE; -- someday this should work
 DROP TABLE atref;
 DROP FUNCTION atfunc(numeric);
 DROP TYPE atcomp;
@@ -339,6 +342,9 @@ CREATE FUNCTION construct_test_type_arr(x int, y text) RETURNS test_type1[]
   LANGUAGE plpgsql IMMUTABLE
   AS $$ begin return array[row(x, y)::test_type1]; end; $$;
 CREATE INDEX test_tbl1_idx ON test_tbl1(construct_test_type_arr(x, y));
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
+DROP INDEX test_tbl1_idx;
+CREATE INDEX test_tbl1_idx ON test_tbl1 USING gin (construct_test_type_arr(x, y));
 ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 DROP INDEX test_tbl1_idx;
 DROP FUNCTION construct_test_type_arr;

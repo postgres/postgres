@@ -164,6 +164,10 @@ CREATE FUNCTION atfunc(numeric) RETURNS atcomp IMMUTABLE LANGUAGE plpgsql AS $$B
 CREATE INDEX atref_idx ON atref(atfunc(c));
 ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE bigint CASCADE; -- someday this should work
 ERROR:  cannot alter type "atcomp" because column "atref_idx.atfunc_numeric_c" uses it
+DROP INDEX atref_idx;
+CREATE INDEX atref_hash_idx ON atref USING hash (atfunc(c));
+ALTER TYPE atcomp ALTER ATTRIBUTE a TYPE bigint CASCADE; -- someday this should work
+ERROR:  cannot alter type "atcomp" because index atref_hash_idx uses it
 DROP TABLE atref;
 DROP FUNCTION atfunc(numeric);
 DROP TYPE atcomp;
@@ -367,6 +371,10 @@ CREATE FUNCTION construct_test_type_arr(x int, y text) RETURNS test_type1[]
 CREATE INDEX test_tbl1_idx ON test_tbl1(construct_test_type_arr(x, y));
 ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
 ERROR:  cannot alter type "test_type1" because column "test_tbl1_idx.construct_test_type_arr_x_y" uses it
+DROP INDEX test_tbl1_idx;
+CREATE INDEX test_tbl1_idx ON test_tbl1 USING gin (construct_test_type_arr(x, y));
+ALTER TYPE test_type1 ALTER ATTRIBUTE b TYPE varchar; -- fails
+ERROR:  cannot alter type "test_type1" because index test_tbl1_idx uses it
 DROP INDEX test_tbl1_idx;
 DROP FUNCTION construct_test_type_arr;
 -- Cannot alter composite type if it appears in an extended statistics

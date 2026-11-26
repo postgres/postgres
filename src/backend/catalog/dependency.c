@@ -1868,11 +1868,32 @@ CheckTypeDependencyInExpr(Node *expr, List *rtable, Oid typeId)
 
 /*
  * CheckTypeDependencyInSingleRelExpr - as above, for a single-rel expression
+ *
+ * One difference is that this also checks the return type of the expression.
+ * That's consistent with recordDependencyOnSingleRelExpr(), which adds a
+ * dependency on the return type.
  */
 bool
 CheckTypeDependencyInSingleRelExpr(Node *expr, Oid relId, Oid typeId)
 {
 	RangeTblEntry rte = {0};
+
+	if (expr == NULL)
+		return false;
+
+	/* Also check the result type, matching recordDependencyOnSingleRelExpr */
+	if (IsA(expr, List))
+	{
+		ListCell   *l;
+
+		foreach(l, (List *) expr)
+		{
+			if (exprType(lfirst(l)) == typeId)
+				return true;
+		}
+	}
+	else if (exprType(expr) == typeId)
+		return true;
 
 	/* We gin up a rather bogus rangetable list to handle Vars */
 	rte.type = T_RangeTblEntry;
