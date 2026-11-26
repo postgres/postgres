@@ -434,7 +434,7 @@ read_rel_block_ll(PG_FUNCTION_ARGS)
 
 	pgaio_io_set_handle_data_32(ioh, (uint32 *) bufs, nblocks);
 
-	if (zero_on_error | zero_damaged_pages)
+	if (zero_on_error || zero_damaged_pages)
 		srb_flags |= READ_BUFFERS_ZERO_ON_ERROR;
 	if (ignore_checksum_failure)
 		srb_flags |= READ_BUFFERS_IGNORE_CHECKSUM_FAILURES;

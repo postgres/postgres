@@ -1210,7 +1210,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 	int			i;
 
 	/* check for caller error */
-	Assert(nargs >= 0 || !(expand_variadic | expand_defaults));
+	Assert(nargs >= 0 || !(expand_variadic || expand_defaults));
 
 	/* initialize output fgc_flags to empty */
 	*fgc_flags = 0;
