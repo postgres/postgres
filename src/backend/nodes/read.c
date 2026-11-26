@@ -77,6 +77,23 @@ stringToNodeWithLocations(const char *str)
  *
  *****************************************************************************/
 
+/* Character classes for pg_strtok() */
+#define TOKCLASS_SPACE		0x01	/* ' ', '\n', '\t' */
+#define TOKCLASS_SPECIAL	0x02	/* '(', ')', '{', '}' */
+#define TOKCLASS_NUL		0x04	/* '\0' */
+
+/* Character class lookup table for pg_strtok() */
+static const uint8 pg_strtok_class[256] = {
+	['\0'] = TOKCLASS_NUL,
+	[' '] = TOKCLASS_SPACE,
+	['\n'] = TOKCLASS_SPACE,
+	['\t'] = TOKCLASS_SPACE,
+	['('] = TOKCLASS_SPECIAL,
+	[')'] = TOKCLASS_SPECIAL,
+	['{'] = TOKCLASS_SPECIAL,
+	['}'] = TOKCLASS_SPECIAL,
+};
+
 /*
  * pg_strtok --- retrieve next "token" from a string.
  *
@@ -123,7 +140,7 @@ pg_strtok(ReadNodeContext *ctx, int *length)
 
 	local_str = ctx->str;
 
-	while (*local_str == ' ' || *local_str == '\n' || *local_str == '\t')
+	while (pg_strtok_class[(unsigned char) *local_str] & TOKCLASS_SPACE)
 		local_str++;
 
 	if (*local_str == '\0')
@@ -138,8 +155,7 @@ pg_strtok(ReadNodeContext *ctx, int *length)
 	 */
 	ret_str = local_str;
 
-	if (*local_str == '(' || *local_str == ')' ||
-		*local_str == '{' || *local_str == '}')
+	if (pg_strtok_class[(unsigned char) *local_str] & TOKCLASS_SPECIAL)
 	{
 		/* special 1-character token */
 		local_str++;
@@ -147,11 +163,8 @@ pg_strtok(ReadNodeContext *ctx, int *length)
 	else
 	{
 		/* Normal token, possibly containing backslashes */
-		while (*local_str != '\0' &&
-			   *local_str != ' ' && *local_str != '\n' &&
-			   *local_str != '\t' &&
-			   *local_str != '(' && *local_str != ')' &&
-			   *local_str != '{' && *local_str != '}')
+		while (!(pg_strtok_class[(unsigned char) *local_str] &
+				 (TOKCLASS_SPACE | TOKCLASS_SPECIAL | TOKCLASS_NUL)))
 		{
 			if (*local_str == '\\' && local_str[1] != '\0')
 				local_str += 2;
