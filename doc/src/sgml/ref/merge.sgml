@@ -277,7 +277,6 @@ MERGE INTO [ ONLY ] <replaceable class="parameter">target_table_name</replaceabl
       in both the source and the target relations. A condition on a
       <literal>WHEN NOT MATCHED</literal> clause can only refer to columns from
       the source relation, since by definition there is no matching target row.
-      Only the system attributes from the target table are accessible.
      </para>
     </listitem>
    </varlistentry>
