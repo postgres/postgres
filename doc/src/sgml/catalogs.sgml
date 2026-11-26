@@ -8252,6 +8252,32 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>subconflictlogrelid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       OID of the subscription conflict log table created in the
+       <literal>pg_conflict</literal> namespace, or zero if
+       <link linkend="sql-createsubscription-params-with-conflict-log-destination"><literal>conflict_log_destination</literal></link>
+       is set to <literal>log</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>subconflictlogdest</structfield> <type>text</type>
+      </para>
+      <para>
+       The destination for conflict logging: <literal>log</literal> (server
+       log only), <literal>table</literal> (conflict log table only), or
+       <literal>all</literal> (both). See
+       <link linkend="sql-createsubscription-params-with-conflict-log-destination"><literal>conflict_log_destination</literal></link>
+       for details.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>subconninfo</structfield> <type>text</type>
       </para>
       <para>

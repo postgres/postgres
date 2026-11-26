@@ -315,11 +315,6 @@ CreateTriggerFiringOn(const CreateTrigStmt *stmt, const char *queryString,
 						RelationGetRelationName(rel)),
 				 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 
-	/*
-	 * Conflict log tables are used internally for logical replication
-	 * conflict logging and should not have triggers, as it could disrupt
-	 * conflict logging.
-	 */
 	if (IsConflictLogTableClass(rel->rd_rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -1471,11 +1466,6 @@ RangeVarCallbackForRenameTrigger(const RangeVar *rv, Oid relid, Oid oldrelid,
 	if (!object_ownercheck(RelationRelationId, relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(relid)), rv->relname);
 
-	/*
-	 * Conflict log tables are used internally for logical replication
-	 * conflict logging and should not have triggers, as it could disrupt
-	 * conflict logging.
-	 */
 	if (IsConflictLogTableClass(form))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),

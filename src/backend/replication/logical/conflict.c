@@ -212,10 +212,14 @@ create_conflict_log_table(Oid subid, char *subname, Oid subowner)
 	/* Build the tuple descriptor for the new table. */
 	tupdesc = create_conflict_log_table_tupdesc();
 
-	/* Create conflict log table. */
+	/*
+	 * Create conflict log table. Place it in the database's default
+	 * tablespace, ignoring default_tablespace, so its placement does not
+	 * depend on the session that creates it.
+	 */
 	relid = heap_create_with_catalog(relname,
 									 PG_CONFLICT_NAMESPACE,
-									 0, /* tablespace */
+									 InvalidOid,	/* tablespace */
 									 InvalidOid,	/* relid */
 									 InvalidOid,	/* reltypeid */
 									 InvalidOid,	/* reloftypeid */

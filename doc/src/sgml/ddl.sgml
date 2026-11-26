@@ -3776,7 +3776,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
    <para>
     The <literal>pg_conflict</literal> schema (sometimes referred to as the
-    <emphasis>conflict schema</emphasis>) contains system-managed conflict
+    <firstterm>conflict schema</firstterm>) contains system-managed conflict
     log tables used for logical replication conflict tracking.
     These tables are created and maintained by the system and are not intended for
     direct user manipulation. Unlike <literal>pg_catalog</literal>, the

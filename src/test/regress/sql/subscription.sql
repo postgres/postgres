@@ -661,14 +661,23 @@ DROP TABLE :clt1;
 ALTER SUBSCRIPTION regress_conflict_test1 DISABLE;
 ALTER SUBSCRIPTION regress_conflict_test1 SET (slot_name = NONE);
 
+-- fail - objects depending on the conflict log table need CASCADE
+CREATE VIEW regress_clt_view AS SELECT relid FROM :clt1;
+\set VERBOSITY sqlstate
+ALTER SUBSCRIPTION regress_conflict_test1 SET (conflict_log_destination = 'log');
+DROP SUBSCRIPTION regress_conflict_test1;
+DROP SUBSCRIPTION regress_conflict_test1 RESTRICT;
+\set VERBOSITY default
+
 -- Verify the table OID for reap check
 SELECT 'pg_conflict.pg_conflict_log_' || oid AS internal_tablename FROM pg_subscription WHERE subname = 'regress_conflict_test1' \gset
 
 SET client_min_messages = WARNING;
-DROP SUBSCRIPTION regress_conflict_test1;
+DROP SUBSCRIPTION regress_conflict_test1 CASCADE;
 
 -- should return NULL, meaning the conflict log table was reaped via dependency
 SELECT to_regclass(:'internal_tablename');
+SELECT to_regclass('regress_clt_view');
 
 --
 -- Additional Namespace and Table Protection Tests

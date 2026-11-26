@@ -3888,11 +3888,6 @@ renameatt_check(Oid myrelid, Form_pg_class classform, bool recursing)
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(myrelid)),
 					   NameStr(classform->relname));
 
-	/*
-	 * Conflict log tables are used internally for logical replication
-	 * conflict logging and should not be modified directly, as it could
-	 * disrupt conflict logging.
-	 */
 	if (IsConflictLogTableClass(classform))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -10817,11 +10812,6 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				 errmsg("referenced relation \"%s\" is not a table",
 						RelationGetRelationName(pkrel))));
 
-	/*
-	 * Conflict log tables are used internally for logical replication
-	 * conflict logging and should not be referenced by foreign keys, as it
-	 * could disrupt conflict logging.
-	 */
 	if (IsConflictLogTableClass(pkrel->rd_rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -20957,11 +20947,6 @@ RangeVarCallbackOwnsRelation(const RangeVar *relation,
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(relId)),
 					   relation->relname);
 
-	/*
-	 * Conflict log tables are used internally for logical replication
-	 * conflict logging and should not be modified directly, as it could
-	 * disrupt conflict logging.
-	 */
 	if (IsConflictLogTableClass((Form_pg_class) GETSTRUCT(tuple)))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -21004,11 +20989,6 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 	if (!object_ownercheck(RelationRelationId, relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(relid)), rv->relname);
 
-	/*
-	 * Conflict log tables are used internally for logical replication
-	 * conflict logging and should not be altered directly, as it could
-	 * disrupt conflict logging.
-	 */
 	if (IsConflictLogTableClass(classform))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),

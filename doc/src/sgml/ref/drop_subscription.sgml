@@ -70,12 +70,21 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
 
    <varlistentry>
     <term><literal>CASCADE</literal></term>
-    <term><literal>RESTRICT</literal></term>
-
     <listitem>
      <para>
-      These key words do not have any effect, since there are no dependencies
-      on subscriptions.
+      Automatically drop objects that depend on the subscription's conflict
+      log table (such as views), and in turn all objects that depend on those
+      objects (see <xref linkend="ddl-depend"/>).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the subscription if any objects depend on its conflict
+      log table.  This is the default.
      </para>
     </listitem>
    </varlistentry>

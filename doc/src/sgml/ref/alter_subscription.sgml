@@ -367,7 +367,8 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       parameter is set to <literal>table</literal> or <literal>all</literal>, the system
       automatically creates the conflict log table. Conversely, if the destination is changed to
       <literal>log</literal>, logging to the table stops and the conflict log
-      table is automatically dropped.
+      table is automatically dropped. This fails if any other objects depend on
+      the conflict log table.
      </para>
 
      <para>

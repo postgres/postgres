@@ -264,11 +264,6 @@ DefineQueryRewrite(const char *rulename,
 						RelationGetRelationName(event_relation)),
 				 errdetail_relkind_not_supported(event_relation->rd_rel->relkind)));
 
-	/*
-	 * Conflict log tables are used internally for logical replication
-	 * conflict logging and should not have rules, as it could disrupt
-	 * conflict logging.
-	 */
 	if (IsConflictLogTableClass(event_relation->rd_rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -771,11 +766,6 @@ RangeVarCallbackForRenameRule(const RangeVar *rv, Oid relid, Oid oldrelid,
 				 errmsg("relation \"%s\" cannot have rules", rv->relname),
 				 errdetail_relkind_not_supported(form->relkind)));
 
-	/*
-	 * Conflict log tables are used internally for logical replication
-	 * conflict logging and should not have rules, as it could disrupt
-	 * conflict logging.
-	 */
 	if (IsConflictLogTableClass(form))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),

@@ -150,7 +150,9 @@ static bool alter_sub_conflict_log_dest(Subscription *sub,
 										ConflictLogDest newlogdest,
 										Oid *conflicttablerelid);
 static void drop_sub_conflict_log_table(Oid subid, char *subname,
-										Oid subconflictlogrelid);
+										Oid subconflictlogrelid,
+										DropBehavior behavior,
+										bool is_drop_sub);
 
 /*
  * Common option parsing function for CREATE and ALTER SUBSCRIPTION commands.
@@ -1628,7 +1630,8 @@ alter_sub_conflict_log_dest(Subscription *sub, ConflictLogDest oldlogdest,
 		if (!want_table)
 		{
 			drop_sub_conflict_log_table(sub->oid, sub->name,
-										sub->conflictlogrelid);
+										sub->conflictlogrelid, DROP_RESTRICT,
+										false);
 			update_relid = true;
 		}
 	}
@@ -2625,9 +2628,11 @@ construct_subserver_conninfo(Oid subserver, Oid subowner, char **err)
  * Drop subscription's conflict log table
  *
  * The conflict log table is registered as an internal dependency of the
- * subscription. This function removes the dependency by performing a
- * cascading deletion on the subscription object, which in turn drops the
- * associated conflict log table.
+ * subscription, so it can't be dropped on its own.
+ *
+ * is_drop_sub indicates that the table is dropped through the subscription
+ * object, which keeps the subscription itself. Otherwise, it removes the
+ * internal dependency and drops the table directly.
  *
  * This is used to clean up conflict log tables that are no longer required,
  * preventing accumulation of stale or orphaned relations.
@@ -2637,7 +2642,8 @@ construct_subserver_conninfo(Oid subserver, Oid subowner, char **err)
  * mechanism.
  */
 static void
-drop_sub_conflict_log_table(Oid subid, char *subname, Oid subconflictlogrelid)
+drop_sub_conflict_log_table(Oid subid, char *subname, Oid subconflictlogrelid,
+							DropBehavior behavior, bool is_drop_sub)
 {
 	/* Drop any dependent conflict log table */
 	if (OidIsValid(subconflictlogrelid))
@@ -2650,14 +2656,39 @@ drop_sub_conflict_log_table(Oid subid, char *subname, Oid subconflictlogrelid)
 			elog(ERROR, "cache lookup failed for relation %u",
 				 subconflictlogrelid);
 
-		/*
-		 * By using PERFORM_DELETION_SKIP_ORIGINAL, we ensure that only the
-		 * conflict log table is deleted while the subscription remains.
-		 */
-		ObjectAddressSet(object, SubscriptionRelationId, subid);
-		performDeletion(&object, DROP_CASCADE,
-						PERFORM_DELETION_INTERNAL |
-						PERFORM_DELETION_SKIP_ORIGINAL);
+		if (is_drop_sub)
+		{
+			/*
+			 * The subscription is being dropped, so drop the table through it
+			 * as its internal part.
+			 *
+			 * By using PERFORM_DELETION_SKIP_ORIGINAL, we ensure that only
+			 * the conflict log table is deleted while the subscription
+			 * remains.
+			 */
+			ObjectAddressSet(object, SubscriptionRelationId, subid);
+			performDeletion(&object, behavior,
+							PERFORM_DELETION_INTERNAL |
+							PERFORM_DELETION_SKIP_ORIGINAL);
+		}
+		else
+		{
+			/*
+			 * The subscription stays, so drop only the table, and a RESTRICT
+			 * failure names the table rather than the subscription. Remove
+			 * the internal dependency first, or the table can't be dropped
+			 * without the subscription.
+			 */
+			deleteDependencyRecordsForSpecific(RelationRelationId,
+											   subconflictlogrelid,
+											   DEPENDENCY_INTERNAL,
+											   SubscriptionRelationId,
+											   subid);
+			CommandCounterIncrement();
+
+			ObjectAddressSet(object, RelationRelationId, subconflictlogrelid);
+			performDeletion(&object, behavior, PERFORM_DELETION_INTERNAL);
+		}
 
 		ereport(NOTICE,
 				errmsg("dropped conflict log table \"%s\" for subscription \"%s\"",
@@ -2830,6 +2861,16 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 				errhint("Resolve these transactions and try again."));
 
 	/*
+	 * Drop the conflict log table. This waits for any lock on the table, so
+	 * do it only after the workers are stopped and prepared transactions are
+	 * ruled out above. With RESTRICT it fails if other objects depend on the
+	 * table, so do it before the non-transactional cleanup of origins and the
+	 * slot below.
+	 */
+	drop_sub_conflict_log_table(subid, subname, subconflictlogrelid,
+								stmt->behavior, true);
+
+	/*
 	 * Remove the no-longer-useful entry in the launcher's table of apply
 	 * worker start times.
 	 *
@@ -2869,9 +2910,6 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 										   sizeof(originname));
 		replorigin_drop_by_name(originname, true, false);
 	}
-
-	/* Drop subscription's conflict log table */
-	drop_sub_conflict_log_table(subid, subname, subconflictlogrelid);
 
 	/* Clean up dependencies */
 	deleteDependencyRecordsFor(SubscriptionRelationId, subid, false);
