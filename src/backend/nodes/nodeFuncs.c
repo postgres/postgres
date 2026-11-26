@@ -1398,6 +1398,10 @@ exprLocation(const Node *expr)
 
 	if (expr == NULL)
 		return -1;
+
+	/* Guard against stack overflow due to overly complex expressions */
+	check_stack_depth();
+
 	switch (nodeTag(expr))
 	{
 		case T_RangeVar:
