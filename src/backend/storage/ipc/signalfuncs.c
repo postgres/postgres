@@ -236,7 +236,7 @@ pg_terminate_backend(PG_FUNCTION_ARGS)
 {
 	int			pid;
 	int			r;
-	int			timeout;		/* milliseconds */
+	int64		timeout;		/* milliseconds */
 
 	pid = PG_GETARG_INT32(0);
 	timeout = PG_GETARG_INT64(1);
