@@ -213,7 +213,7 @@ static void rebuild_relation_finish_concurrent(Relation NewHeap, Relation OldHea
 											   Oid identIdx,
 											   TransactionId frozenXid,
 											   MultiXactId cutoffMulti);
-static List *build_new_indexes(Relation NewHeap, Relation OldHeap, List *OldIndexes);
+static List *build_new_indexes(Relation NewHeap, List *OldIndexes);
 static void copy_index_constraints(Relation old_index, Oid new_index_id,
 								   Oid new_heap_id);
 static void copy_attribute_defaults(Oid old_heap_oid, Oid new_heap_oid);
@@ -3462,7 +3462,7 @@ rebuild_relation_finish_concurrent(Relation NewHeap, Relation OldHeap,
 	 * are not necessarily dangerous, but can make user confused if the
 	 * changes they do get lost due to REPACK.)
 	 */
-	ind_oids_new = build_new_indexes(NewHeap, OldHeap, ind_oids_old);
+	ind_oids_new = build_new_indexes(NewHeap, ind_oids_old);
 
 	/*
 	 * The identity index in the new relation appears in the same relative
@@ -3632,17 +3632,17 @@ rebuild_relation_finish_concurrent(Relation NewHeap, Relation OldHeap,
 }
 
 /*
- * Build indexes on NewHeap according to those on OldHeap.
+ * Build indexes on NewHeap according to those on the old heap.
  *
- * OldIndexes is the list of index OIDs on OldHeap. The contained indexes end
- * up locked using ShareUpdateExclusiveLock.
+ * OldIndexes is the list of index OIDs on the old heap. The contained indexes
+ * end up locked using ShareUpdateExclusiveLock.
  *
  * A list of OIDs of the corresponding indexes created on NewHeap is
  * returned. The order of items does match, so we can use these arrays to swap
  * index storage.
  */
 static List *
-build_new_indexes(Relation NewHeap, Relation OldHeap, List *OldIndexes)
+build_new_indexes(Relation NewHeap, List *OldIndexes)
 {
 	List	   *result = NIL;
 
