@@ -125,16 +125,18 @@ ReceiveSharedInvalidMessages(void (*invalFunction) (SharedInvalidationMessage *m
 	} while (nummsgs == MAXINVALMSGS);
 
 	/*
-	 * We are now caught up.  If we received a catchup signal, reset that
-	 * flag, and call SICleanupQueue().  This is not so much because we need
-	 * to flush dead messages right now, as that we want to pass on the
-	 * catchup signal to the next slowest backend.  "Daisy chaining" the
-	 * catchup signal this way avoids creating spikes in system load for what
-	 * should be just a background maintenance activity.
+	 * We are now caught up.  If we received a catchup signal, call
+	 * SICleanupQueue().  This is not so much because we need to flush dead
+	 * messages right now, as that we want to pass on the catchup signal to
+	 * the next slowest backend.  "Daisy chaining" the catchup signal this way
+	 * avoids creating spikes in system load for what should be just a
+	 * background maintenance activity.
+	 *
+	 * SICleanupQueue() resets catchupInterruptPending, unless we got signaled
+	 * again in the meanwhile.
 	 */
 	if (catchupInterruptPending)
 	{
-		catchupInterruptPending = false;
 		elog(DEBUG4, "sinval catchup complete, cleaning queue");
 		SICleanupQueue(false, 0);
 	}

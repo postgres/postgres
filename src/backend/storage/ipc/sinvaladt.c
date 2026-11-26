@@ -556,6 +556,8 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
  * backends as "reset" in the array, and sending PROCSIG_CATCHUP_INTERRUPT
  * to some backend that seems to be getting too far behind.  We signal at
  * most one backend at a time, for reasons explained at the top of the file.
+ * We also clear catchupInterruptPending, unless this backend has been
+ * signaled again since we last caught up.
  *
  * Caution: because we transiently release write lock when we have to signal
  * some other backend, it is NOT guaranteed that there are still minFree
@@ -654,6 +656,20 @@ SICleanupQueue(bool callerHasWriteLock, int minFree)
 		segP->nextThreshold = CLEANUP_MIN;
 	else
 		segP->nextThreshold = (numMsgs / CLEANUP_QUANTUM + 1) * CLEANUP_QUANTUM;
+
+	/*
+	 * Clear our local catchupInterruptPending flag, now that we have
+	 * processed the catchup request.
+	 *
+	 * "signaled" is expected to be false if we were called in response to a
+	 * catchup signal, because the caller consumes all the messages for this
+	 * backend before performing cleanup.  But it's possible that more
+	 * messages arrived after that, causing us to be signaled again.  Don't
+	 * clear catchupInterruptPending in that case, or we'd miss the new
+	 * catchup request.
+	 */
+	if (!segP->procState[MyProcNumber].signaled)
+		catchupInterruptPending = false;
 
 	/*
 	 * Lastly, signal anyone who needs a catchup interrupt.  Since
