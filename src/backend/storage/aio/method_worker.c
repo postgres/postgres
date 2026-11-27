@@ -44,6 +44,7 @@
 #include "storage/lwlock.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
+#include "storage/procsignal.h"
 #include "storage/shmem.h"
 #include "tcop/tcopprot.h"
 #include "utils/injection_point.h"

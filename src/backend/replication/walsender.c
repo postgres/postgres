@@ -88,6 +88,7 @@
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
+#include "storage/procsignal.h"
 #include "storage/subsystems.h"
 #include "tcop/dest.h"
 #include "tcop/tcopprot.h"

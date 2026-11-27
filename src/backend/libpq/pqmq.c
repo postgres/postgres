@@ -22,6 +22,7 @@
 #include "pgstat.h"
 #include "replication/logicalworker.h"
 #include "storage/latch.h"
+#include "storage/procsignal.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/wait_event.h"

@@ -169,6 +169,7 @@
 #include "storage/latch.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
+#include "storage/procsignal.h"
 #include "tcop/tcopprot.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"

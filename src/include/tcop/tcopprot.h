@@ -16,7 +16,6 @@
 
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
-#include "storage/procsignal.h"
 #include "utils/guc.h"
 #include "utils/queryenvironment.h"
 
