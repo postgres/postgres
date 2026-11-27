@@ -83,7 +83,6 @@ static BIO_METHOD *port_bio_method(void);
 static int	ssl_set_port_bio(Port *port);
 
 static DH  *load_dh_file(char *filename, bool isServerStart);
-static DH  *load_dh_buffer(const char *buffer, size_t len);
 static int	ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 static int	dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 static int	verify_cb(int ok, X509_STORE_CTX *ctx);
@@ -1588,32 +1587,6 @@ load_dh_file(char *filename, bool isServerStart)
 }
 
 /*
- *	Load hardcoded DH parameters.
- *
- *	If DH parameters cannot be loaded from a specified file, we can load
- *	the hardcoded DH parameters supplied with the backend to prevent
- *	problems.
- */
-static DH  *
-load_dh_buffer(const char *buffer, size_t len)
-{
-	BIO		   *bio;
-	DH		   *dh = NULL;
-
-	bio = BIO_new_mem_buf(buffer, len);
-	if (bio == NULL)
-		return NULL;
-	dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
-	if (dh == NULL)
-		ereport(DEBUG2,
-				(errmsg_internal("DH load buffer: %s",
-								 SSLerrmessage(ERR_get_error()))));
-	BIO_free(bio);
-
-	return dh;
-}
-
-/*
  *	Passphrase collection callback using ssl_passphrase_command
  */
 static int
@@ -2134,48 +2107,48 @@ found:
 #endif							/* HAVE_SSL_CTX_SET_CLIENT_HELLO_CB */
 
 /*
- * Set DH parameters for generating ephemeral DH keys.  The
- * DH parameters can take a long time to compute, so they must be
- * precomputed.
- *
- * Since few sites will bother to create a parameter file, we also
- * provide a fallback to the parameters provided by the OpenSSL
- * project.
- *
- * These values can be static (once loaded or computed) since the
- * OpenSSL library can efficiently generate random keys from the
- * information provided.
+ * Set DH parameters for generating ephemeral DH keys.
  */
 static bool
 initialize_dh(SSL_CTX *context, bool isServerStart)
 {
-	DH		   *dh = NULL;
-
 	SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
 
 	if (ssl_dh_params_file[0])
+	{
+		DH		   *dh;
+
 		dh = load_dh_file(ssl_dh_params_file, isServerStart);
-	if (!dh)
-		dh = load_dh_buffer(FILE_DH2048, sizeof(FILE_DH2048));
-	if (!dh)
-	{
-		ereport(isServerStart ? FATAL : LOG,
-				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("DH: could not load DH parameters")));
-		return false;
-	}
 
-	if (SSL_CTX_set_tmp_dh(context, dh) != 1)
-	{
-		ereport(isServerStart ? FATAL : LOG,
-				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("DH: could not set DH parameters: %s",
-						SSLerrmessage(ERR_get_error()))));
+		if (!dh)
+			return false;
+
+		if (SSL_CTX_set_tmp_dh(context, dh) != 1)
+		{
+			ereport(isServerStart ? FATAL : LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("DH: could not set DH parameters: %s",
+							SSLerrmessage(ERR_get_error()))));
+			DH_free(dh);
+			return false;
+		}
+
 		DH_free(dh);
-		return false;
+	}
+	else
+	{
+		/* If ssl_dh_params_file is not set, let OpenSSL pick a default. */
+
+		if (SSL_CTX_set_dh_auto(context, 1) != 1)
+		{
+			ereport(isServerStart ? FATAL : LOG,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("DH: could not set DH parameters: %s",
+							SSLerrmessage(ERR_get_error()))));
+			return false;
+		}
 	}
 
-	DH_free(dh);
 	return true;
 }
 

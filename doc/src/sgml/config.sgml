@@ -1687,11 +1687,15 @@ include_dir 'conf.d'
        <para>
         Specifies the name of the file containing Diffie-Hellman parameters
         used for so-called ephemeral DH family of SSL ciphers. The default is
-        empty, in which case compiled-in default DH parameters used. Using
-        custom DH parameters reduces the exposure if an attacker manages to
-        crack the well-known compiled-in DH parameters. You can create your own
-        DH parameters file with the command
-        <command>openssl dhparam -out dhparams.pem 2048</command>.
+        empty, in which case the SSL library selects well-known DH parameters
+        that are consistent with the size of the key associated with the
+        server's certificate.  The default approach is preferred; this
+        parameter is obsolescent.
+       </para>
+
+       <para>
+        This mechanism only affects TLS 1.2 and below.  See <xref
+        linkend="guc-ssl-groups"/> for a similar mechanism for TLS 1.3.
        </para>
 
        <para>
