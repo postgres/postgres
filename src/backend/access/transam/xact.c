@@ -5693,7 +5693,7 @@ SerializeTransactionState(Size maxsize, char *start_address)
 	if (nParallelCurrentXids > 0)
 	{
 		result->nParallelCurrentXids = nParallelCurrentXids;
-		memcpy(&result->parallelCurrentXids[0], ParallelCurrentXids,
+		memcpy(result->parallelCurrentXids, ParallelCurrentXids,
 			   nParallelCurrentXids * sizeof(TransactionId));
 		return;
 	}
@@ -5729,7 +5729,7 @@ SerializeTransactionState(Size maxsize, char *start_address)
 
 	/* Copy data into output area. */
 	result->nParallelCurrentXids = nxids;
-	memcpy(&result->parallelCurrentXids[0], workspace,
+	memcpy(result->parallelCurrentXids, workspace,
 		   nxids * sizeof(TransactionId));
 }
 
@@ -5754,7 +5754,7 @@ StartParallelWorkerTransaction(char *tstatespace)
 		tstate->currentFullTransactionId;
 	currentCommandId = tstate->currentCommandId;
 	nParallelCurrentXids = tstate->nParallelCurrentXids;
-	ParallelCurrentXids = &tstate->parallelCurrentXids[0];
+	ParallelCurrentXids = tstate->parallelCurrentXids;
 
 	CurrentTransactionState->blockState = TBLOCK_PARALLEL_INPROGRESS;
 }
