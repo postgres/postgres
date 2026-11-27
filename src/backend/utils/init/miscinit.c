@@ -208,6 +208,8 @@ InitStandaloneProcess(const char *argv0)
 	 * But we don't unblock SIGQUIT or provide a default handler for it.
 	 */
 	pqinitmask();
+	pqsignal(SIGCHLD, PG_SIG_DFL);	/* system() requires this on some
+									 * platforms */
 	sigprocmask(SIG_SETMASK, &BlockSig, NULL);
 
 	/* Compute paths, no postmaster to inherit from */
