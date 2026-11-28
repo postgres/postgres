@@ -9,9 +9,15 @@
 #include "btree_gist.h"
 #include "btree_utils_var.h"
 #include "utils/builtins.h"
+#include "utils/float.h"
 #include "utils/numeric.h"
 #include "utils/rel.h"
 #include "utils/sortsupport.h"
+
+/* numeric.h should offer this functionality... */
+#define get_numeric_infinity() \
+	DatumGetNumeric(DirectFunctionCall1(float8_numeric, \
+										Float8GetDatum(get_float8_infinity())))
 
 /* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_numeric_compress);
@@ -160,6 +166,7 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 	GBT_VARKEY_R rk,
 				ok,
 				uk;
+	bool		have_error = false;
 
 	rk = gbt_var_key_readable(org);
 	uni = PointerGetDatum(gbt_var_key_copy(&rk));
@@ -167,21 +174,47 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 	ok = gbt_var_key_readable(org);
 	uk = gbt_var_key_readable((GBT_VARKEY *) DatumGetPointer(uni));
 
-	us = DatumGetNumeric(DirectFunctionCall2(numeric_sub,
-											 PointerGetDatum(uk.upper),
-											 PointerGetDatum(uk.lower)));
+	/*
+	 * It's possible for these subtractions to exceed what the numeric type
+	 * can represent, so use numeric_sub_opt_error().  If we get an overflow,
+	 * use Infinity for the key width.  The width can also come out as NaN or
+	 * Infinity because a bound is, so we must attend to both cases below.
+	 */
+	us = numeric_sub_opt_error(DatumGetNumeric(PointerGetDatum(uk.upper)),
+							   DatumGetNumeric(PointerGetDatum(uk.lower)),
+							   &have_error);
+	if (have_error)
+	{
+		us = get_numeric_infinity();
+		have_error = false;
+	}
 
-	os = DatumGetNumeric(DirectFunctionCall2(numeric_sub,
-											 PointerGetDatum(ok.upper),
-											 PointerGetDatum(ok.lower)));
-
-	ds = DatumGetNumeric(DirectFunctionCall2(numeric_sub,
-											 NumericGetDatum(us),
-											 NumericGetDatum(os)));
+	os = numeric_sub_opt_error(DatumGetNumeric(PointerGetDatum(ok.upper)),
+							   DatumGetNumeric(PointerGetDatum(ok.lower)),
+							   &have_error);
+	if (have_error)
+		os = get_numeric_infinity();
 
 	if (numeric_is_nan(us))
 	{
+		/*
+		 * Either we have a NaN bound or the union width is Inf - Inf.  If the
+		 * same is true of the original key, charge 0; otherwise charge the
+		 * maximum.
+		 */
 		if (numeric_is_nan(os))
+			*result = 0.0;
+		else
+			*result = 1.0;
+	}
+	else if (numeric_is_inf(us))
+	{
+		/*
+		 * The union is too wide to measure.  If the original key is just as
+		 * wide it is a cheap home for the new entry; otherwise charge the
+		 * maximum.
+		 */
+		if (numeric_is_inf(os))
 			*result = 0.0;
 		else
 			*result = 1.0;
@@ -189,6 +222,15 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 	else
 	{
 		Numeric		nul = int64_to_numeric(0);
+
+		/*
+		 * The union contains the original key, so os is finite whenever us
+		 * is.  So this subtraction can never see NaN or Infinity; nor can it
+		 * overflow a numeric, since neither input is negative.
+		 */
+		ds = DatumGetNumeric(DirectFunctionCall2(numeric_sub,
+												 NumericGetDatum(us),
+												 NumericGetDatum(os)));
 
 		*result = 0.0;
 
