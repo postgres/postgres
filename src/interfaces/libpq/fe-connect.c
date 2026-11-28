@@ -8064,6 +8064,15 @@ passwordFromFile(const char *hostname, const char *port,
 						   *p1,
 						   *p2;
 
+				/* De-escape the password, before copying it out. */
+				for (p1 = p2 = t; *p1 != ':' && *p1 != '\0'; ++p1, ++p2)
+				{
+					if (*p1 == '\\' && p1[1] != '\0')
+						++p1;
+					*p2 = *p1;
+				}
+				*p2 = '\0';
+
 				ret = strdup(t);
 
 				fclose(fp);
@@ -8075,15 +8084,6 @@ passwordFromFile(const char *hostname, const char *port,
 					*errmsg = libpq_gettext("out of memory");
 					return NULL;
 				}
-
-				/* De-escape password. */
-				for (p1 = p2 = ret; *p1 != ':' && *p1 != '\0'; ++p1, ++p2)
-				{
-					if (*p1 == '\\' && p1[1] != '\0')
-						++p1;
-					*p2 = *p1;
-				}
-				*p2 = '\0';
 
 				return ret;
 			}
