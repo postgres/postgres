@@ -11,15 +11,9 @@
 #include "btree_utils_var.h"
 #include "nodes/miscnodes.h"
 #include "utils/builtins.h"
-#include "utils/float.h"
 #include "utils/numeric.h"
 #include "utils/rel.h"
 #include "utils/sortsupport.h"
-
-/* numeric.h should offer this functionality... */
-#define get_numeric_infinity() \
-	DatumGetNumeric(DirectFunctionCall1(float8_numeric, \
-										Float8GetDatum(get_float8_infinity())))
 
 /* GiST support functions */
 PG_FUNCTION_INFO_V1(gbt_numeric_compress);

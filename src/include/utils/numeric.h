@@ -87,6 +87,8 @@ NumericGetDatum(Numeric X)
  */
 extern bool numeric_is_nan(Numeric num);
 extern bool numeric_is_inf(Numeric num);
+extern Numeric get_numeric_nan(void);
+extern Numeric get_numeric_infinity(void);
 extern int32 numeric_maximum_size(int32 typmod);
 extern char *numeric_out_sci(Numeric num, int scale);
 extern char *numeric_normalize(Numeric num);

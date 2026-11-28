@@ -848,6 +848,28 @@ numeric_is_inf(Numeric num)
 }
 
 /*
+ * get_numeric_nan() -
+ *
+ * Produce a numeric NaN value
+ */
+Numeric
+get_numeric_nan(void)
+{
+	return make_result(&const_nan);
+}
+
+/*
+ * get_numeric_infinity() -
+ *
+ * Produce a numeric +Infinity value
+ */
+Numeric
+get_numeric_infinity(void)
+{
+	return make_result(&const_pinf);
+}
+
+/*
  * numeric_is_integral() -
  *
  *	Is Numeric value integral?
