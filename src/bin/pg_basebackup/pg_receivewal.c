@@ -432,6 +432,7 @@ FindStreamingStart(uint32 *tli)
 			int			fd;
 			ssize_t		r;
 			size_t		uncompressed_size = 0;
+			bool		frame_complete = false;
 			char		fullpath[MAXPGPATH * 2];
 			char	   *outbuf;
 			char	   *readbuf;
@@ -484,6 +485,9 @@ FindStreamingStart(uint32 *tli)
 
 					readp += read_size;
 					uncompressed_size += out_size;
+
+					/* LZ4F_decompress() returns 0 once the frame is complete */
+					frame_complete = (status == 0);
 				}
 
 				/*
@@ -508,6 +512,13 @@ FindStreamingStart(uint32 *tli)
 			{
 				pg_log_warning("compressed segment file \"%s\" has incorrect uncompressed size %zu, skipping",
 							   dirent->d_name, uncompressed_size);
+				continue;
+			}
+
+			if (!frame_complete)
+			{
+				pg_log_warning("compressed segment file \"%s\" is incomplete, skipping",
+							   dirent->d_name);
 				continue;
 			}
 #else
